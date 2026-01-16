@@ -170,7 +170,7 @@
       "custom": "Benutzerdefinierte Ordner",
       "addInfo": [
         "Einen Ordner auswählen, der appid Ordner enthält.",
-        "Bitte für ALI213, Hoodlum, Tenoke, UniverseLAN, RPCS3 einen Ordner wählen, der die Dateien",
+        "Bitte für ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 einen Ordner wählen, der die Dateien",
         "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini oderr RPCS3.exe enthält."
       ],
       "add": "Ordner hinzufügen"

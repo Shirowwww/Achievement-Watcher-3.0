@@ -174,8 +174,8 @@
       "custom": "用户目录",
       "addInfo": [
         "选择一个包含 appid 文件夹的目录。",
-        "对于 ALI213, Hoodlum, Tenoke, UniverseLAN, RPCS3 请选择",
-        "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini 或 RPCS3.exe 文件所在的目录。"
+        "对于 ALI213，Hoodlum，RPCS3，请选择",
+        "ALI213.ini，valve.ini，hlm.ini，ds.ini，steam_api.ini，SteamConfig.ini，tenoke.ini，UniverseLAN.ini 或 RPCS3.exe 文件所在的目录。"
       ],
       "add": "添加目录"
     },

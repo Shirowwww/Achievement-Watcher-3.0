@@ -170,7 +170,7 @@
       "custom": "Користувацькі теки",
       "addInfo": [
         "Оберіть теку, що містить теки appid.",
-        "Для ALI213, Hoodlum, Tenoke, UniverseLAN, RPCS3 оберіть теку, в якій",
+        "Для ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 оберіть теку, в якій",
         "знаходиться файл ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini або RPCS3.exe."
       ],
       "add": "Додати теку"

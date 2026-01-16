@@ -37,12 +37,16 @@
       "version": "Version",
       "edit": "Edit"
     },
+    "watchdog": {
+      "startup": { "name": "Run at login", "description": "Watchdog starts automatically when your system boots." },
+      "kill": { "name": "Keep running", "description": "Keep watchdog running even if the main app closes." }
+    },
     "overlay": {
       "position": "Notification Position",
       "preset": { "name": "Notification Preset", "description": "Legacy uses the 'old' notification system" },
       "hotkey": {
         "name": "Overlay Hotkey",
-        "description": "While ingame, you can press this hotkey to show that game's achievements overlay."
+        "description": "Press this hotkey to show the achievements overlay while ingame."
       },
       "scale": "Notification Scale",
       "duration": "Animation duration"
@@ -75,14 +79,16 @@
       },
       "hideZero": {
         "name": "Hide 0% Game"
-      }
+      },
+      "tray": { "name": "Close to System Tray", "description": "Keep the app running in the background for faster notifications startup." }
     },
     "notification": {
       "title": {
         "common": "Common",
         "toast": "Toast notification",
         "transport": "Transport",
-        "chromium": "Chromium notification"
+        "chromium": "Chromium notification",
+        "watchdog": "Watchdog"
       },
       "info": {
         "toast": "Some features are only available in Windows 10"
@@ -190,7 +196,7 @@
       "custom": "User Dir",
       "addInfo": [
         "Select a folder which contains appid folder(s).",
-        "For ALI213, Hoodlum, Tenoke, UniverseLAN, RPCS3 please select a folder where the",
+        "For ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 please select a folder where the",
         "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini or RPCS3.exe file is located."
       ],
       "add": "Add a Folder"
