@@ -1,0 +1,550 @@
+'use strict';
+
+const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avatar.js'));
+
+(function ($, window, document) {
+  const STEAM_API_KEY_URL = 'https://steamcommunity.com/dev/apikey';
+  const STEP_COUNT = 5;
+  let step = 0;
+  let addedSaveDirs = [];
+  let addedLibraryDirs = [];
+  // Auto-config gate: at first run, proactively detect candidate save folders when the folders step is
+  // first shown so the user reviews/trims real candidates instead of starting from an empty list.
+  let isFirstRunSession = false;
+  let autoDetectedThisSession = false;
+
+  function isFrench() {
+    return String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
+  }
+
+  function text() {
+    return isFrench()
+      ? {
+          settingsLabel: 'Guide de démarrage',
+          settingsButton: 'Ouvrir le guide',
+          settingsHelp: 'Rouvre la configuration guidée : clé API, profil, dossiers, sources et notifications.',
+          eyebrow: 'Première configuration',
+          close: 'Fermer',
+          steps: ['Fonctionnement', 'Compte', 'Clé API', 'Jeux', 'Réglages'],
+          introTitle: 'Comment ça marche',
+          introCopy:
+            "Achievement Watcher scanne les dossiers de sauvegarde connus et tes bibliothèques de jeux, puis le Watchdog reste dans la zone de notification pour les notifications et l'overlay en jeu.",
+          scanTitle: 'Scanner',
+          scanCopy: 'Steam, GOG, Epic, émulateurs et dossiers Goldberg/GBE sont détectés à partir des fichiers de succès.',
+          watchTitle: 'Surveiller',
+          watchCopy: 'Le Watchdog observe les fichiers et les lancements de jeux pour afficher les déblocages pendant que tu joues.',
+          fixTitle: 'Réparer',
+          fixCopy: 'Pour les jeux Steam émulés, le clic droit peut ajouter GBE Fork, les schémas, les DLC et les fichiers de lancement.',
+          profileTitle: 'Profil',
+          profileCopy: "Choisis le pseudo affiché en haut de l'app et ajoute une photo locale si tu veux.",
+          username: 'Pseudo',
+          mainSteam: 'Compte Steam principal',
+          avatarPick: 'Choisir une photo',
+          avatarDefault: 'Par défaut',
+          avatarHint: 'Optionnel. Stocké localement sur ce PC.',
+          apiTitle: 'Clé API Web Steam',
+          apiCopy: 'Une clé améliore la récupération des données Steam. Tu peux laisser vide et la renseigner plus tard.',
+          apiLabel: 'Clé API Web Steam',
+          apiLink: 'Obtenir une clé API Steam',
+          apiNote: 'Utilise la page officielle Steam. La clé est chiffrée avant enregistrement.',
+          foldersTitle: 'Ajouter les jeux sur disque',
+          foldersCopy:
+            'Ajoute des dossiers de sauvegarde/configuration pour certains émulateurs, et des racines de bibliothèques qui contiennent plusieurs jeux installés.',
+          addSave: 'Ajouter un dossier de sauvegarde',
+          smartFind: 'Recherche auto',
+          addLibrary: 'Ajouter une bibliothèque',
+          saveList: 'Dossiers sauvegarde/config',
+          libraryList: 'Bibliothèques',
+          emptyList: 'Rien ajouté pour cette session.',
+          settingsTitle: 'Réglages recommandés',
+          settingsCopy: 'Les interrupteurs les plus utiles au départ. Tout reste modifiable ensuite dans Paramètres.',
+          source: 'Afficher les jeux Steam',
+          notifications: 'Notifications',
+          playtime: 'Suivi du temps de jeu',
+          autoFix: 'Auto-fix des jeux émulés',
+          hidden: 'Succès cachés',
+          merge: 'Fusionner les doublons',
+          show: 'Montrer',
+          hide: 'Cacher',
+          sourceHint: 'Affiche aussi tes jeux Steam légitimes (profil public requis).',
+          notificationsHint: 'Où apparaissent les déblocages : toast Windows, overlay en jeu, ou les deux.',
+          playtimeHint: 'Suit automatiquement le temps de jeu des jeux détectés.',
+          autoFixHint: 'Applique le fix émulateur (GBE Fork, succès, DLC) aux nouveaux jeux émulés.',
+          hiddenHint: 'Révèle le nom et la description des succès cachés avant de les débloquer.',
+          mergeHint: 'Regroupe un même jeu trouvé dans plusieurs sources en une seule vignette.',
+          none: 'Aucun',
+          installed: 'Installés',
+          owned: 'Possédés',
+          toast: 'Toast',
+          overlay: 'Overlay',
+          both: 'Les deux',
+          enabled: 'Activé',
+          disabled: 'Désactivé',
+          back: 'Retour',
+          next: 'Suivant',
+          finish: 'Terminer',
+          skip: 'Passer',
+          saving: 'Enregistrement...',
+          saved: 'Configuration enregistrée.',
+          invalidFolder: 'Ce dossier ne ressemble pas à un dossier de succès pris en charge.',
+          smartRunning: 'Recherche en cours...',
+          smartDone: 'Recherche terminée.',
+          saveError: "Impossible d'enregistrer la configuration.",
+        }
+      : {
+          settingsLabel: 'First-run guide',
+          settingsButton: 'Open guide',
+          settingsHelp: 'Reopen the setup guide for API key, profile, folders, sources, and notifications.',
+          eyebrow: 'First setup',
+          close: 'Close',
+          steps: ['How it works', 'Account', 'API key', 'Games', 'Settings'],
+          introTitle: 'How it works',
+          introCopy:
+            'Achievement Watcher scans known save folders and your game libraries, then the Watchdog keeps running in the tray for unlock notifications and the in-game overlay.',
+          scanTitle: 'Scan',
+          scanCopy: 'Steam, GOG, Epic, emulators and Goldberg/GBE folders are detected from saved achievement files.',
+          watchTitle: 'Watch',
+          watchCopy: 'The background Watchdog watches files and game launches so unlocks appear while you play.',
+          fixTitle: 'Repair',
+          fixCopy: 'For emulated Steam games, the right-click fix can add GBE Fork, schemas, DLC data, and launch helpers.',
+          profileTitle: 'Profile',
+          profileCopy: 'Pick the name shown in the header and optionally set a local avatar.',
+          username: 'Display name',
+          mainSteam: 'Main Steam account',
+          avatarPick: 'Choose photo',
+          avatarDefault: 'Default',
+          avatarHint: 'Optional. Stored locally on this PC.',
+          apiTitle: 'Steam Web API key',
+          apiCopy: 'A key improves Steam metadata retrieval. You can leave it empty and add it later.',
+          apiLabel: 'Steam Web API key',
+          apiLink: 'Get a Steam Web API key',
+          apiNote: 'Use the official Steam page. The key is encrypted before saving.',
+          foldersTitle: 'Add games on disk',
+          foldersCopy: 'Add save/config folders for specific emulators, and library roots that contain many installed games.',
+          addSave: 'Add save folder',
+          smartFind: 'Smart find',
+          addLibrary: 'Add library folder',
+          saveList: 'Save/config folders',
+          libraryList: 'Library folders',
+          emptyList: 'Nothing added this session.',
+          settingsTitle: 'Recommended settings',
+          settingsCopy: 'These are the main switches most users need first. Everything remains editable later in Settings.',
+          source: 'Display Steam games',
+          notifications: 'Notifications',
+          playtime: 'Playtime tracking',
+          autoFix: 'Auto-fix emulated games',
+          hidden: 'Hidden achievements',
+          merge: 'Merge duplicates',
+          show: 'Show',
+          hide: 'Hide',
+          sourceHint: 'Also lists your legitimate Steam games (public profile required).',
+          notificationsHint: 'Where unlocks appear: Windows toast, in-game overlay, or both.',
+          playtimeHint: 'Automatically tracks playtime for detected games.',
+          autoFixHint: 'Applies the emulator fix (GBE Fork, achievements, DLC) to new emulated games.',
+          hiddenHint: 'Reveals hidden achievement names and descriptions before you unlock them.',
+          mergeHint: 'Combines the same game found in several sources into a single tile.',
+          none: 'None',
+          installed: 'Installed',
+          owned: 'Owned',
+          toast: 'Toast',
+          overlay: 'Overlay',
+          both: 'Both',
+          enabled: 'Enabled',
+          disabled: 'Disabled',
+          back: 'Back',
+          next: 'Next',
+          finish: 'Finish',
+          skip: 'Skip',
+          saving: 'Saving...',
+          saved: 'Setup saved.',
+          invalidFolder: 'That folder does not look like a supported achievement folder.',
+          smartRunning: 'Searching...',
+          smartDone: 'Search complete.',
+          saveError: 'Could not save setup.',
+        };
+  }
+
+  function boolValue(v) {
+    return v === 'true';
+  }
+
+  function normalizeDir(dir) {
+    return path.normalize(String(dir || '')).toLowerCase();
+  }
+
+  function setStatus(message, kind) {
+    $('#onboarding-status').removeClass('success error running').addClass(kind || '').text(message || '');
+  }
+
+  function applyText() {
+    const t = text();
+    $('#onboarding-settings-label').text(t.settingsLabel);
+    $('#btn-onboarding-open span').text(t.settingsButton);
+    $('#onboarding-settings-help').text(t.settingsHelp);
+    $('#onboarding-eyebrow').text(t.eyebrow);
+    $('#onboarding-close').attr('title', t.close);
+    $('.onboarding-steps button').each(function (index) {
+      $(this).find('span').text(t.steps[index]);
+    });
+    $('#onboard-intro-title').text(t.introTitle);
+    $('#onboard-intro-copy').text(t.introCopy);
+    $('#onboard-card-scan-title').text(t.scanTitle);
+    $('#onboard-card-scan-copy').text(t.scanCopy);
+    $('#onboard-card-watch-title').text(t.watchTitle);
+    $('#onboard-card-watch-copy').text(t.watchCopy);
+    $('#onboard-card-fix-title').text(t.fixTitle);
+    $('#onboard-card-fix-copy').text(t.fixCopy);
+    $('#onboard-profile-title').text(t.profileTitle);
+    $('#onboard-profile-copy').text(t.profileCopy);
+    $('#onboard-username-label').text(t.username);
+    $('#onboard-main-steam-label').text(t.mainSteam);
+    $('#onboard-avatar-pick span').text(t.avatarPick);
+    $('#onboard-avatar-clear span').text(t.avatarDefault);
+    $('#onboard-avatar-hint').text(t.avatarHint);
+    $('#onboard-api-title').text(t.apiTitle);
+    $('#onboard-api-copy').text(t.apiCopy);
+    $('#onboard-api-label').text(t.apiLabel);
+    $('#onboard-api-link span').text(t.apiLink);
+    $('#onboard-api-note').text(t.apiNote);
+    $('#onboard-folders-title').text(t.foldersTitle);
+    $('#onboard-folders-copy').text(t.foldersCopy);
+    $('#onboard-add-save-dir span').text(t.addSave);
+    $('#onboard-smart-find span').text(t.smartFind);
+    $('#onboard-add-library-dir span').text(t.addLibrary);
+    $('#onboard-save-list-title').text(t.saveList);
+    $('#onboard-library-list-title').text(t.libraryList);
+    $('#onboard-settings-title').text(t.settingsTitle);
+    $('#onboard-settings-copy').text(t.settingsCopy);
+    $('#onboard-source-label').text(t.source);
+    $('#onboard-notification-mode-label').text(t.notifications);
+    $('#onboard-playtime-label').text(t.playtime);
+    $('#onboard-auto-fix-label').text(t.autoFix);
+    $('#onboard-hidden-label').text(t.hidden);
+    $('#onboard-merge-label').text(t.merge);
+    $('#onboard-source-hint').text(t.sourceHint);
+    $('#onboard-notification-mode-hint').text(t.notificationsHint);
+    $('#onboard-playtime-hint').text(t.playtimeHint);
+    $('#onboard-auto-fix-hint').text(t.autoFixHint);
+    $('#onboard-hidden-hint').text(t.hiddenHint);
+    $('#onboard-merge-hint').text(t.mergeHint);
+    $("#onboard-legit-steam option[value='0']").text(t.none);
+    $("#onboard-legit-steam option[value='1']").text(t.installed);
+    $("#onboard-legit-steam option[value='2']").text(t.owned);
+    $("#onboard-notification-mode option[value='toast']").text(t.toast);
+    $("#onboard-notification-mode option[value='overlay']").text(t.overlay);
+    $("#onboard-notification-mode option[value='both']").text(t.both);
+    $("#onboard-playtime option[value='true'], #onboard-auto-fix option[value='true'], #onboard-merge option[value='true']").text(t.enabled);
+    $("#onboard-playtime option[value='false'], #onboard-auto-fix option[value='false'], #onboard-merge option[value='false']").text(t.disabled);
+    $("#onboard-hidden option[value='true']").text(t.show);
+    $("#onboard-hidden option[value='false']").text(t.hide);
+    $('#onboarding-prev span').text(t.back);
+    $('#onboarding-skip').text(t.skip);
+    updateStepButtons();
+    renderDirLists();
+  }
+
+  function populateMainSteamSelect(selected) {
+    const t = text();
+    const selector = $('#onboard-main-steam');
+    selector.empty().append($('<option>').attr('value', '0').text(t.none));
+    try {
+      const list = ipcRenderer.sendSync('get-steam-user-list') || [];
+      for (const user of list) selector.append($('<option>').attr('value', user.user).text(user.name));
+    } catch (err) {
+      debug.log(err);
+    }
+    selector.val(selected || '0');
+  }
+
+  async function refreshAvatarPreview() {
+    const preview = $('#onboard-avatar-preview');
+    try {
+      const avatar = await onboardingAvatar.getAvatar();
+      preview.css('background-image', `url("${avatar}")`);
+    } catch {
+      preview.css('background-image', 'url("../resources/img/avatar.png")');
+    }
+  }
+
+  function populateValues() {
+    $('#onboard-username').val(app.config.general?.username || os.userInfo().username || 'User');
+    $('#onboard-api-key').val(app.config.steam?.apiKey || '');
+    populateMainSteamSelect(app.config.steam?.main || '0');
+    $('#onboard-legit-steam').val(String(app.config.achievement_source?.legitSteam ?? 0));
+    $('#onboard-notification-mode').val(app.config.notification_transport?.mode || 'toast');
+    $('#onboard-playtime').val(String(app.config.notification?.playtime ?? false));
+    $('#onboard-auto-fix').val(String(app.config.emulator?.autoApplyNewGames ?? false));
+    $('#onboard-hidden').val(String(app.config.achievement?.showHidden ?? false));
+    $('#onboard-merge').val(String(app.config.achievement?.mergeDuplicate ?? true));
+    refreshAvatarPreview();
+  }
+
+  function renderDirLists() {
+    const t = text();
+    const render = (selector, rows) => {
+      const list = $(selector);
+      list.empty();
+      if (!rows.length) {
+        list.append($('<li>').addClass('empty').text(t.emptyList));
+        return;
+      }
+      rows.forEach((dir, index) => {
+        const item = $('<li>');
+        item.append($('<span>').text(dir.path || dir));
+        item.append(
+          $('<button>')
+            .attr('type', 'button')
+            .attr('title', t.close)
+            .html('<i class="fas fa-times"></i>')
+            .on('click', () => {
+              rows.splice(index, 1);
+              renderDirLists();
+            })
+        );
+        list.append(item);
+      });
+    };
+    render('#onboard-save-dir-list', addedSaveDirs);
+    render('#onboard-library-dir-list', addedLibraryDirs);
+  }
+
+  function addSaveDir(dir) {
+    const normalized = normalizeDir(dir);
+    if (!normalized || addedSaveDirs.some((item) => normalizeDir(item.path) === normalized)) return;
+    addedSaveDirs.push({ path: dir, notify: true });
+    renderDirLists();
+  }
+
+  function addLibraryDir(dir) {
+    const normalized = normalizeDir(dir);
+    if (!normalized || addedLibraryDirs.some((item) => normalizeDir(item) === normalized)) return;
+    addedLibraryDirs.push(dir);
+    renderDirLists();
+  }
+
+  async function pickSaveDir() {
+    try {
+      const dialog = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), { properties: ['openDirectory', 'showHiddenFiles'] });
+      if (!dialog.filePaths || dialog.filePaths.length === 0) return;
+      if (await userDir.check(dialog.filePaths[0])) addSaveDir(dialog.filePaths[0]);
+      else {
+        remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+          type: 'warning',
+          title: 'Achievement Watcher',
+          message: text().invalidFolder,
+        });
+      }
+    } catch (err) {
+      debug.log(err);
+    }
+  }
+
+  async function smartFindDirs() {
+    const button = $('#onboard-smart-find');
+    button.css('pointer-events', 'none');
+    setStatus(text().smartRunning, 'running');
+    try {
+      for (const dir of await userDir.find()) {
+        try {
+          if (await userDir.check(dir)) addSaveDir(dir);
+        } catch (err) {
+          debug.log(err);
+        }
+      }
+      setStatus(text().smartDone, 'success');
+    } catch (err) {
+      setStatus(`${err}`, 'error');
+      debug.log(err);
+    } finally {
+      button.css('pointer-events', 'initial');
+    }
+  }
+
+  async function pickLibraryDir() {
+    try {
+      const dialog = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), { properties: ['openDirectory', 'showHiddenFiles'] });
+      if (!dialog.filePaths || dialog.filePaths.length === 0) return;
+      addLibraryDir(dialog.filePaths[0]);
+    } catch (err) {
+      debug.log(err);
+    }
+  }
+
+  function showStep(nextStep) {
+    step = Math.max(0, Math.min(STEP_COUNT - 1, nextStep));
+    setStatus('', '');
+    $('.onboarding-step').removeClass('active');
+    $(`.onboarding-step[data-step='${step}']`).addClass('active');
+    $('.onboarding-steps button').removeClass('active');
+    $(`.onboarding-steps button[data-step='${step}']`).addClass('active');
+    updateStepButtons();
+    maybeAutoDetectFolders();
+  }
+
+  // First time the folders step is reached during a first-run session, kick off the smart-find scan so
+  // detected candidate folders are presented for review (the auto-config gate). Runs at most once and
+  // never on a manual reopen from Settings (so it doesn't re-scan every time you open the guide).
+  function maybeAutoDetectFolders() {
+    if (!isFirstRunSession || autoDetectedThisSession) return;
+    if ($(`.onboarding-step[data-step='${step}']`).find('#onboard-smart-find').length === 0) return;
+    autoDetectedThisSession = true;
+    smartFindDirs();
+  }
+
+  function updateStepButtons() {
+    const t = text();
+    $('#onboarding-prev').prop('disabled', step === 0);
+    $('#onboarding-next span').text(step === STEP_COUNT - 1 ? t.finish : t.next);
+    $('#onboarding-next i').toggleClass('fa-check', step === STEP_COUNT - 1).toggleClass('fa-chevron-right', step !== STEP_COUNT - 1);
+  }
+
+  function mergeSaveDirs(existing, additions) {
+    const seen = new Set();
+    const result = [];
+    for (const entry of existing || []) {
+      if (!entry || !entry.path) continue;
+      const key = normalizeDir(entry.path);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push(entry);
+    }
+    for (const entry of additions) {
+      const key = normalizeDir(entry.path);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push(entry);
+    }
+    return result;
+  }
+
+  function mergeLibraryDirs(existing, additions) {
+    const seen = new Set();
+    const result = [];
+    for (const dir of existing || []) {
+      const key = normalizeDir(dir);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      result.push(dir);
+    }
+    for (const dir of additions) {
+      const key = normalizeDir(dir);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      result.push(dir);
+    }
+    return result;
+  }
+
+  async function persist(markComplete = true) {
+    const t = text();
+    setStatus(t.saving, 'running');
+    try {
+      if (!app.config.general) app.config.general = {};
+      if (!app.config.steam) app.config.steam = {};
+      if (!app.config.achievement_source) app.config.achievement_source = {};
+      if (!app.config.notification) app.config.notification = {};
+      if (!app.config.notification_transport) app.config.notification_transport = {};
+      if (!app.config.emulator) app.config.emulator = {};
+      if (!app.config.achievement) app.config.achievement = {};
+
+      app.config.general.username = $('#onboard-username').val().trim() || app.config.general.username || os.userInfo().username || 'User';
+      app.config.general.onboardingCompleted = markComplete;
+      app.config.steam.apiKey = $('#onboard-api-key').val().trim();
+      app.config.steam.main = $('#onboard-main-steam').val() || '0';
+      app.config.achievement_source.legitSteam = parseInt($('#onboard-legit-steam').val(), 10) || 0;
+      app.config.notification_transport.mode = $('#onboard-notification-mode').val() || 'toast';
+      app.config.notification.playtime = boolValue($('#onboard-playtime').val());
+      app.config.emulator.autoApplyNewGames = boolValue($('#onboard-auto-fix').val());
+      app.config.achievement.showHidden = boolValue($('#onboard-hidden').val());
+      app.config.achievement.mergeDuplicate = boolValue($('#onboard-merge').val());
+
+      settings.setUserDataPath(ipcRenderer.sendSync('get-user-data-path-sync'));
+      const [currentSaveDirs, currentLibraryDirs] = await Promise.all([userDir.get(), libraryDirs.get()]);
+      await Promise.all([
+        userDir.save(mergeSaveDirs(currentSaveDirs, addedSaveDirs)),
+        libraryDirs.save(mergeLibraryDirs(currentLibraryDirs, addedLibraryDirs)),
+        settings.save(app.config),
+      ]);
+      $('#user-info .info .name').text(app.config.general.username);
+      setStatus(t.saved, 'success');
+      return true;
+    } catch (err) {
+      setStatus(t.saveError, 'error');
+      debug.log(err);
+      return false;
+    }
+  }
+
+  async function finish() {
+    if (!(await persist(true))) return;
+    hide();
+    resetUI();
+  }
+
+  async function skip() {
+    if (!(await persist(true))) return;
+    hide();
+  }
+
+  function hide() {
+    $('#onboarding').attr('aria-hidden', 'true').hide();
+    setStatus('', '');
+  }
+
+  function show(force) {
+    if (!force && app.config.general?.onboardingCompleted === true) return;
+    isFirstRunSession = !force; // auto-detect candidates only on the genuine first-run guide
+    autoDetectedThisSession = false;
+    addedSaveDirs = [];
+    addedLibraryDirs = [];
+    applyText();
+    populateValues();
+    renderDirLists();
+    showStep(0);
+    $('#onboarding').attr('aria-hidden', 'false').show();
+  }
+
+  window.openAchievementWatcherOnboarding = show;
+
+  $(function () {
+    applyText();
+    $('#onboarding-prev').on('click', () => showStep(step - 1));
+    $('#onboarding-next').on('click', () => {
+      if (step === STEP_COUNT - 1) finish();
+      else showStep(step + 1);
+    });
+    $('#onboarding-skip, #onboarding-close, #onboarding .overlay').on('click', skip);
+    $('.onboarding-steps button').on('click', function () {
+      showStep(parseInt($(this).data('step'), 10));
+    });
+    $('#btn-onboarding-open').on('click', () => show(true));
+    $('#onboard-add-save-dir').on('click', pickSaveDir);
+    $('#onboard-smart-find').on('click', smartFindDirs);
+    $('#onboard-add-library-dir').on('click', pickLibraryDir);
+    $('#onboard-avatar-pick').on('click', async () => {
+      try {
+        const dialog = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
+          properties: ['openFile', 'showHiddenFiles', 'dontAddToRecent'],
+          filters: [{ name: 'Image', extensions: ['jpeg', 'jpg', 'png', 'gif', 'bmp'] }],
+        });
+        if (!dialog.filePaths || dialog.filePaths.length === 0) return;
+        const avatar = await onboardingAvatar.imageFileToBase64(dialog.filePaths[0]);
+        localStorage.setItem('avatar', avatar);
+        await refreshAvatarPreview();
+        const avatarEl = document.querySelector('user-avatar');
+        if (avatarEl && typeof avatarEl.update === 'function') avatarEl.update();
+      } catch (err) {
+        debug.log(err);
+      }
+    });
+    $('#onboard-avatar-clear').on('click', async () => {
+      localStorage.removeItem('avatar');
+      await refreshAvatarPreview();
+      const avatarEl = document.querySelector('user-avatar');
+      if (avatarEl && typeof avatarEl.update === 'function') avatarEl.update();
+    });
+    $('#onboard-api-link').attr('href', STEAM_API_KEY_URL);
+
+    setTimeout(() => show(false), 600);
+  });
+})(window.jQuery, window, document);

@@ -36,26 +36,57 @@ module.exports.load = () => {
       options.general.skippedVersion = 'none';
     }
 
-    // overlay / new notifications
-    if (typeof options.overlay.position !== 'string') {
-      options.overlay.position = 'right-top';
+    if (typeof options.general.onboardingCompleted !== 'boolean') {
+      options.general.onboardingCompleted = false;
+    }
+    if (typeof options.general.startWithWindows !== 'boolean') {
+      options.general.startWithWindows = true;
+    }
+    if (typeof options.general.disableHardwareAccel !== 'boolean') {
+      options.general.disableHardwareAccel = false;
     }
 
-    if (typeof options.overlay.preset !== 'string') {
-      options.overlay.preset = 'default';
-    }
-
+    // overlay = the in-game achievement overlay (Ctrl+Shift+O). Notifications are Windows toasts
+    // now, so the old per-notification look settings (position/preset/scale/duration) are gone.
     if (typeof options.overlay.hotkey !== 'string') {
       options.overlay.hotkey = 'Ctrl+Shift+O';
     }
-
-    if (isNaN(options.overlay.scale)) {
-      options.overlay.scale = 100;
+    // Overlay (in-game) notification look — re-introduced as an OPTIONAL transport (toasts stay default).
+    if (typeof options.overlay.notificationPreset !== 'string') {
+      options.overlay.notificationPreset = 'Default';
     }
-
-    if (isNaN(options.overlay.duration)) {
-      options.overlay.duration = 100;
+    if (options.overlay.notificationPreset === 'Raposo') {
+      options.overlay.notificationPreset = 'Shirow';
     }
+    if (typeof options.overlay.notificationPosition !== 'string') {
+      options.overlay.notificationPosition = 'center-bottom';
+    }
+    // INI values come back as strings (@xan105/ini only type-coerces booleans), so numbers must be
+    // parsed with Number() before validating — a typeof 'number' check would otherwise reset a valid
+    // persisted value to its default on every reload.
+    {
+      const scl = Number(options.overlay.notificationScale);
+      options.overlay.notificationScale = Number.isFinite(scl) && scl > 0 ? scl : 1;
+    }
+    if (typeof options.overlay.notificationSound !== 'string') {
+      options.overlay.notificationSound = '';
+    }
+    // Overlay-notification sound volume (percent, 0–200). Toast sound is system-controlled and unaffected.
+    {
+      const vol = Number(options.overlay.notificationVolume);
+      options.overlay.notificationVolume = Number.isFinite(vol) && vol >= 0 ? vol : 100;
+    }
+    // Overlay-notification on-screen duration: 'auto' (preset self-closes) or a number of seconds (force-close cap).
+    {
+      const dur = Number(options.overlay.notificationDuration);
+      options.overlay.notificationDuration = Number.isFinite(dur) && dur > 0 ? dur : 'auto';
+    }
+    delete options.overlay.position;
+    delete options.overlay.progressPosition;
+    delete options.overlay.playtimePosition;
+    delete options.overlay.preset;
+    delete options.overlay.scale;
+    delete options.overlay.duration;
 
     if (typeof options.achievement.thumbnailPortrait !== 'boolean') {
       options.achievement.thumbnailPortrait = false;
@@ -77,6 +108,10 @@ module.exports.load = () => {
       options.achievement.hideZero = false;
     }
 
+    if (typeof options.achievement.goldbergDownloadIcons !== 'boolean') {
+      options.achievement.goldbergDownloadIcons = false;
+    }
+
     //Source
 
     if (options.achievement_source.legitSteam != 0 && options.achievement_source.legitSteam != 1 && options.achievement_source.legitSteam != 2) {
@@ -95,6 +130,14 @@ module.exports.load = () => {
       options.achievement_source.rpcs3 = true;
     }
 
+    if (typeof options.achievement_source.shadps4 !== 'boolean') {
+      options.achievement_source.shadps4 = true;
+    }
+
+    if (typeof options.achievement_source.xenia !== 'boolean') {
+      options.achievement_source.xenia = true;
+    }
+
     if (typeof options.achievement_source.lumaPlay !== 'boolean') {
       options.achievement_source.lumaPlay = true;
     }
@@ -107,9 +150,36 @@ module.exports.load = () => {
       options.achievement_source.epic = true;
     }
 
+    if (typeof options.achievement_source.ea !== 'boolean') {
+      options.achievement_source.ea = true;
+    }
+
     if (typeof options.achievement_source.importCache !== 'boolean') {
       options.achievement_source.importCache = true;
     }
+
+    //Emulator (GBE Fork setup) — new section, may be absent in older configs.
+    if (!options.emulator || typeof options.emulator !== 'object') options.emulator = {};
+    if (typeof options.emulator.autoApplyNewGames !== 'boolean') {
+      // Migrate the short-lived General-tab key; installs without either key default to OFF — the
+      // automatic full setup (DLL swap) is opt-in, so AW never touches game files unprompted.
+      options.emulator.autoApplyNewGames =
+        typeof options.achievement.autoApplyNewGames === 'boolean' ? options.achievement.autoApplyNewGames : false;
+    }
+    // ColdClient was removed: AW always applies the emulator standalone (DLL swap). Normalize any
+    // stale stored 'coldclient' value back to the single supported mode.
+    options.emulator.mode = 'regular';
+    if (typeof options.emulator.steamlessAutoUnpack !== 'boolean') options.emulator.steamlessAutoUnpack = false;
+    if (typeof options.emulator.steamlessExperimental !== 'boolean') options.emulator.steamlessExperimental = false;
+    if (typeof options.emulator.autoApplyCrackFix !== 'boolean') options.emulator.autoApplyCrackFix = false;
+    if (options.emulator.steamSettingsMode !== 'simple' && options.emulator.steamSettingsMode !== 'advanced') options.emulator.steamSettingsMode = 'simple';
+    if (typeof options.emulator.createLaunchBat !== 'boolean') options.emulator.createLaunchBat = true;
+    if (typeof options.emulator.apiCheckBypass !== 'boolean') options.emulator.apiCheckBypass = false;
+    if (typeof options.emulator.checkUpdates !== 'boolean') options.emulator.checkUpdates = true;
+    if (options.emulator.login !== 'anonymous' && options.emulator.login !== 'steam') options.emulator.login = 'anonymous';
+    if (typeof options.emulator.loginAccountName !== 'string') options.emulator.loginAccountName = '';
+    if (typeof options.emulator.loginPassword !== 'string') options.emulator.loginPassword = '';
+    if (typeof options.emulator.steamId !== 'string') options.emulator.steamId = '';
 
     //Notification
 
@@ -129,6 +199,10 @@ module.exports.load = () => {
       options.notification.playtime = false;
     }
 
+    if (typeof options.notification.platinum !== 'boolean') {
+      options.notification.platinum = true;
+    }
+
     //Toast
 
     if (
@@ -138,14 +212,7 @@ module.exports.load = () => {
     ) {
       options.notification_toast.customToastAudio = '1';
     }
-
-    if (
-      options.notification_toast.toastSouvenir != 0 &&
-      options.notification_toast.toastSouvenir != 1 &&
-      options.notification_toast.toastSouvenir != 2
-    ) {
-      options.notification_toast.toastSouvenir = 0;
-    }
+    delete options.notification_toast.toastSouvenir; // souvenir feature removed
 
     if (typeof options.notification_toast.groupToast !== 'boolean') {
       options.notification_toast.groupToast = false;
@@ -153,14 +220,15 @@ module.exports.load = () => {
 
     //Transport
 
-    if (typeof options.notification_transport.chromium !== 'boolean') {
-      options.notification_transport.chromium = true;
-    }
+    // Drop legacy display-transport flags so the file stays clean. NOTE: `mode` is intentionally
+    // NOT dropped here — it is the (re-introduced) notification delivery mode and must persist
+    // across restarts; it is validated/defaulted a few lines below.
+    delete options.notification_transport.chromium;
+    delete options.notification_transport.toast;
+    delete options.notification_transport.gntp;
 
-    if (typeof options.notification_transport.toast !== 'boolean') {
-      options.notification_transport.toast = true;
-    }
-
+    // WinRT (faster native toast) and balloon (toast fallback) are internal auto-details of the
+    // toast path — not surfaced in the UI but still honored by the toaster.
     if (typeof options.notification_transport.winRT !== 'boolean') {
       options.notification_transport.winRT = true;
     }
@@ -169,13 +237,16 @@ module.exports.load = () => {
       options.notification_transport.balloon = true;
     }
 
+    // Websocket broadcast to external clients — independent of the chosen display mode.
     if (typeof options.notification_transport.websocket !== 'boolean') {
       options.notification_transport.websocket = true;
     }
 
-    if (typeof options.notification_transport.gntp !== 'boolean') {
-      options.notification_transport.gntp = true;
+    // Notification delivery mode: 'toast' (Windows toast), 'overlay' (in-game HTML/CSS preset), or 'both'.
+    if (!['toast', 'overlay', 'both'].includes(options.notification_transport.mode)) {
+      options.notification_transport.mode = 'toast';
     }
+    delete options.notification_transport.overlay;
 
     //Advanced
 
@@ -199,57 +270,13 @@ module.exports.load = () => {
       options.steam.main = '0';
     }
 
-    //Souvenir
-
-    if (typeof options.souvenir_screenshot.screenshot !== 'boolean') {
-      options.souvenir_screenshot.screenshot = true;
-    }
-
-    if (typeof options.souvenir_screenshot.custom_dir !== 'string') {
-      options.souvenir_screenshot.custom_dir = '';
-    }
-
-    if (typeof options.souvenir_screenshot.overwrite_image !== 'boolean') {
-      options.souvenir_screenshot.overwrite_image = false;
-    }
-
-    if (options.souvenir_video.video != 0 && options.souvenir_video.video != 1 && options.souvenir_video.video != 2) {
-      options.souvenir_video.video = 0;
-    }
-
-    if (options.souvenir_video.codec != 0 && options.souvenir_video.codec != 1) {
-      options.souvenir_video.codec = 0;
-    }
-
-    if (typeof options.souvenir_video.colorDepth10bits !== 'boolean') {
-      options.souvenir_video.colorDepth10bits = false;
-    }
-
-    if (typeof options.souvenir_video.custom_dir !== 'string') {
-      options.souvenir_video.custom_dir = '';
-    }
-
-    if (typeof options.souvenir_video.overwrite_video !== 'boolean') {
-      options.souvenir_video.overwrite_video = false;
-    }
-
-    if (
-      options.souvenir_video.duration != 10 &&
-      options.souvenir_video.duration != 15 &&
-      options.souvenir_video.duration != 20 &&
-      options.souvenir_video.duration != 30 &&
-      options.souvenir_video.duration != 45
-    ) {
-      options.souvenir_video.duration = 20;
-    }
-
-    if (options.souvenir_video.framerate != 30 && options.souvenir_video.framerate != 60) {
-      options.souvenir_video.framerate = 60;
-    }
-
-    if (typeof options.souvenir_video.cursor !== 'boolean') {
-      options.souvenir_video.cursor = false;
-    }
+    //Souvenir — drop the stale flat keys (OBS video stays removed); keep the simple screenshot section.
+    delete options.souvenir_screenshot;
+    delete options.souvenir_video;
+    if (!options.souvenir || typeof options.souvenir !== 'object') options.souvenir = {};
+    if (typeof options.souvenir.screenshot !== 'boolean') options.souvenir.screenshot = false;
+    if (typeof options.souvenir.dir !== 'string') options.souvenir.dir = '';
+    delete options.souvenir.combineNotif; // simplified: capture always includes whatever is on screen
 
     //Action
     if (typeof options.action.target !== 'string') {
@@ -262,6 +289,15 @@ module.exports.load = () => {
 
     if (typeof options.action.hide !== 'boolean') {
       options.action.hide = true;
+    }
+
+    // Emulator Steam-login password — AES-encrypted on disk like the Steam Web API key.
+    if (options.emulator && typeof options.emulator.loginPassword === 'string' && options.emulator.loginPassword.includes(':')) {
+      try {
+        options.emulator.loginPassword = aes.decrypt(options.emulator.loginPassword);
+      } catch {
+        options.emulator.loginPassword = '';
+      }
     }
 
     //Steam Key
@@ -281,13 +317,18 @@ module.exports.load = () => {
       general: {
         username: os.userInfo().username || 'User',
         skippedVersion: 'none',
+        onboardingCompleted: false,
+        startWithWindows: true,
+        disableHardwareAccel: false,
       },
       overlay: {
-        position: 'right-top',
-        preset: 'default',
         hotkey: 'Ctrl+Shift+O',
-        scale: 100,
-        duration: 100,
+        notificationPreset: 'Default',
+        notificationPosition: 'center-bottom',
+        notificationScale: 1,
+        notificationSound: '',
+        notificationVolume: 100,
+        notificationDuration: 'auto',
       },
       achievement: {
         thumbnailPortrait: false,
@@ -295,35 +336,52 @@ module.exports.load = () => {
         mergeDuplicate: true,
         timeMergeRecentFirst: false,
         hideZero: false,
+        goldbergDownloadIcons: false,
       },
       achievement_source: {
         legitSteam: 0,
         steamEmu: true,
         greenLuma: true,
         rpcs3: true,
+        shadps4: true,
+        xenia: true,
         lumaPlay: false,
         gog: true,
         epic: true,
+        ea: true,
         importCache: true,
+      },
+      emulator: {
+        autoApplyNewGames: false, // opt-in: one-shot full setup for newly detected unconfigured emulated games (off = never touch game files unprompted)
+        mode: 'regular', // standalone DLL swap — the only mode (ColdClient was removed)
+        steamlessAutoUnpack: false, // run Steamless on the game exe before patching
+        steamlessExperimental: false, // pass --realign for heavily-protected exes
+        autoApplyCrackFix: false, // opt-in: try a confident CrakFiles community-crack match (confident name only, backed-up, idempotent) — off by default since it downloads/overwrites game files
+        steamSettingsMode: 'simple', // 'simple' (AW fetch: DLC + achievements) | 'advanced' (generate_emu_config: + depots/languages)
+        createLaunchBat: true, // legacy, unused (ColdClient removed) — kept so saved configs round-trip
+        apiCheckBypass: false, // opt-in: drop SteamAutoCrack's Steam API ownership-check bypass proxy (winmm.dll) for games that re-check the original DLL/exe after the swap
+        checkUpdates: true, // force a same-day GBE Fork release re-check before applying
+        login: 'anonymous', // 'anonymous' | 'steam' (generate_emu_config richer data — throwaway account!)
+        loginAccountName: '', // optional Steam login username (throwaway account)
+        loginPassword: '', // optional Steam login password — AES-encrypted on disk (like steam.apiKey)
+        steamId: '', // optional account_steamid override for configs.user.ini ('' = let GBE pick)
       },
       notification: {
         notify: true,
         rumble: true,
         notifyOnProgress: true,
         playtime: false,
+        platinum: true,
       },
       notification_toast: {
         customToastAudio: '1',
-        toastSouvenir: 0,
         groupToast: false,
       },
       notification_transport: {
-        chromium: true,
-        toast: true,
         winRT: true,
         balloon: true,
         websocket: true,
-        gntp: true,
+        mode: 'toast',
       },
       notification_advanced: {
         timeTreshold: 10,
@@ -331,20 +389,9 @@ module.exports.load = () => {
         checkIfProcessIsRunning: true,
         iconPrefetch: true,
       },
-      souvenir_screenshot: {
-        screenshot: true,
-        custom_dir: '',
-        overwrite_image: false,
-      },
-      souvenir_video: {
-        video: 0,
-        codec: 0,
-        colorDepth10bits: false,
-        custom_dir: '',
-        overwrite_video: false,
-        duration: 20,
-        framerate: 60,
-        cursor: false,
+      souvenir: {
+        screenshot: false,
+        dir: '',
       },
       action: {
         target: '',
@@ -373,10 +420,26 @@ module.exports.save = (config) => {
     try {
       options = JSON.parse(JSON.stringify(config)); //deep object copy to prevent modifying reference; We want to encrypt key to file but keep it decrypted in memory.
 
-      if (options.steam) {
-        if (options.steam.apiKey) {
-          options.steam.apiKey = aes.encrypt(config.steam.apiKey);
-        }
+      // Encrypt the emulator Steam-login password before it touches disk (kept plaintext in memory).
+      if (options.emulator && typeof options.emulator.loginPassword === 'string' && options.emulator.loginPassword.length > 0) {
+        options.emulator.loginPassword = aes.encrypt(config.emulator.loginPassword);
+      }
+
+      if (!options.steam) options.steam = {};
+      if (typeof options.steam.apiKey === 'string' && options.steam.apiKey.length > 0) {
+        // A key was provided -> store it encrypted.
+        options.steam.apiKey = aes.encrypt(config.steam.apiKey);
+      } else if (options.steam.apiKey === '') {
+        // Explicit clear (empty string) -> drop it from the saved file.
+        delete options.steam.apiKey;
+      } else {
+        // Key not provided by this (possibly partial) save -> preserve whatever is already on disk.
+        // This prevents a background/partial settings write from silently wiping the user's API key
+        // (which then degrades the whole app to slow/unreliable scraping with no indication why).
+        try {
+          const existing = ini.parse(fs.readFileSync(filename, 'utf8'));
+          if (existing && existing.steam && existing.steam.apiKey) options.steam.apiKey = existing.steam.apiKey;
+        } catch {}
       }
     } catch (err) {
       return reject(err);

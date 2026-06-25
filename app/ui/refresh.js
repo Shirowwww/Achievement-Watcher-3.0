@@ -31,8 +31,6 @@ function resetUI() {
   $('#game-config .box .section.content').removeClass('active');
   $('#settings .box section.content').removeClass('active');
   $("#settings .box section.content[data-view='" + elem.data('view') + "']").addClass('active');
-  $('#option_customToastAudio').off('change');
-  console.clear();
   if (app.args.appid) app.args.appid = null;
   if (app.args.name) app.args.name = null;
   app.onStart();

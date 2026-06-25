@@ -2,12 +2,20 @@
 
 const remote = require('@electron/remote');
 const path = require('path');
+// app.js is loaded immediately after this file as a classic script and declares `const fs` in the
+// same global lexical scope. Keep a settings-specific name here or Chromium rejects all of app.js.
+const settingsFs = require('fs');
 
 const appPath = remote.app.getAppPath();
+const { escapeHtml } = require(path.join(appPath, 'util/escapeHtml.js'));
 let listeningHotkey = false;
 let keysDown = new Set();
 let keys = '';
 let holdingKeysCheck = null;
+// Notifications tab auto-saves on every change once the form is populated; this guard prevents
+// the initial `.val(...).change()` population from triggering a save storm / saving stale values.
+let settingsReady = false;
+let notifAutosaveTimer = null;
 
 (function ($, window, document) {
   $(function () {
@@ -18,15 +26,26 @@ let holdingKeysCheck = null;
       if (key === 'Meta') return 'Cmd';
       return key.length === 1 ? key.toUpperCase() : key;
     }
+
+    function updateEmulatorUi() {
+      const advanced = $('#option_steamSettingsMode').val() === 'advanced';
+      const steamLogin = advanced && $('#option_login').val() === 'steam';
+      const steamless = $('#option_steamlessAutoUnpack').val() === 'true';
+
+      $('#option_login').closest('li').toggleClass('is-inactive', !advanced).attr('aria-disabled', String(!advanced));
+      $('#option_steamlessExperimental').closest('li').toggleClass('is-inactive', !steamless).attr('aria-disabled', String(!steamless));
+      $('#emulator-login').toggleClass('is-visible', steamLogin).attr('aria-hidden', String(!steamLogin));
+
+      $('#options-emulator2 select').each(function () {
+        $(this).closest('li').toggleClass('is-on', $(this).val() === 'true').toggleClass('is-off', $(this).val() === 'false');
+      });
+    }
+
     $('title-bar').on('open-settings', function () {
       this.inSettings = true;
+      settingsReady = false; // suppress auto-save while we populate the form below
       listeningHotkey = false;
       keysDown.clear();
-      toastAudio.setUserDataPath(ipcRenderer.sendSync('get-user-data-path-sync'));
-      $('#scaleSlider').val(app.config.overlay.scale);
-      $('#scaleValue').text(app.config.overlay.scale);
-      $('#durationSlider').val(app.config.overlay.duration);
-      $('#durationValue').text(app.config.overlay.duration);
       $('#game-config').hide();
       $('#settings').show();
       $('#settings .box').fadeIn();
@@ -36,6 +55,16 @@ let holdingKeysCheck = null;
           $(`#option_${option}`).val(app.config.achievement[option].toString()).change();
         }
       }
+      if (!app.config.general) app.config.general = {};
+      $('#option_startWithWindows').val(String(app.config.general.startWithWindows !== false)).change();
+      $('#option_disableHardwareAccel').val(String(app.config.general.disableHardwareAccel === true)).change();
+      ipcRenderer
+        .invoke('startup:get-start-with-windows')
+        .then((enabled) => {
+          app.config.general.startWithWindows = enabled === true;
+          $('#option_startWithWindows').val(String(enabled === true)).change();
+        })
+        .catch((err) => debug.log(`startup:get-start-with-windows failed: ${err}`));
 
       for (let option in app.config.achievement_source) {
         if ($(`#option_${option} option[value="${app.config.achievement_source[option]}"]`).length > 0) {
@@ -43,13 +72,19 @@ let holdingKeysCheck = null;
         }
       }
 
-      $('#hotkey').text(app.config.overlay.hotkey);
-      populateOverlayPreset(app.config.overlay.preset);
-      for (let option in app.config.overlay) {
-        if ($(`#option_overlay_${option} option[value="${app.config.overlay[option]}"]`).length > 0) {
-          $(`#option_overlay_${option}`).val(app.config.overlay[option].toString()).change();
+      for (let option in app.config.emulator) {
+        if ($(`#option_${option} option[value="${app.config.emulator[option]}"]`).length > 0) {
+          $(`#option_${option}`).val(app.config.emulator[option].toString()).change();
         }
       }
+      $('#option_mode').val('regular');
+      if (app.config.emulator) {
+        $('#emulator-login-user').val(app.config.emulator.loginAccountName || '');
+        $('#emulator-login-pass').val(app.config.emulator.loginPassword || '');
+      }
+      updateEmulatorUi();
+
+      $('#hotkey').text(app.config.overlay.hotkey);
 
       for (let option in app.config.notification) {
         if ($(`#option_${option} option[value="${app.config.notification[option]}"]`).length > 0) {
@@ -69,44 +104,44 @@ let holdingKeysCheck = null;
         }
       }
 
-      let selectedSound = app.config.notification_toast.customToastAudio;
-      selectedSound = selectedSound === '1' || selectedSound === '0' ? selectedSound : path.basename(toastAudio.getCustom());
-      populateSounds(selectedSound);
-      $('#option_customToastAudio').find('option[value="1"]').attr('data-file', toastAudio.getDefault());
-
-      $('#option_customToastAudio').on('change', function () {
-        try {
-          let value = $(this).val();
-          if (value >= 1) {
-            let filename = $(this).find(':selected').data('file');
-            if (!filename || filename == '') return;
-
-            let file =
-              value === '1'
-                ? path.join(process.env.SystemRoot || process.env.WINDIR, 'media', filename)
-                : path.join(process.env['APPDATA'], 'Achievement Watcher', 'Media', filename);
-            $('#customToastAudio_sample').attr('src', file).get(0).play();
-          }
-        } catch (err) {
-          debug.log(err);
-        }
-      });
-
-      for (let option in app.config.souvenir_screenshot) {
-        if (option === 'custom_dir') {
-          $('#custom_dir_screenshot div.btn').attr('data-path', app.config.souvenir_screenshot[option].toString());
-        } else if ($(`#option_${option} option[value="${app.config.souvenir_screenshot[option]}"]`).length > 0) {
-          $(`#option_${option}`).val(app.config.souvenir_screenshot[option].toString()).change();
-        }
-      }
-
-      for (let option in app.config.souvenir_video) {
-        if (option === 'custom_dir') {
-          $('#custom_dir_video div.btn').attr('data-path', app.config.souvenir_video[option].toString());
-        } else if ($(`#option_${option} option[value="${app.config.souvenir_video[option]}"]`).length > 0) {
-          $(`#option_${option}`).val(app.config.souvenir_video[option].toString()).change();
-        }
-      }
+      // Overlay (in-game) notification controls — enable lives in notification_transport, the look in
+      // overlay.notification*. The preset dropdown is filled from the bundled preset library.
+      const cfgOverlay = app.config.overlay || {};
+      $('#option_notifMode').val(app.config.notification_transport.mode || 'toast').change();
+      $('#option_overlayPosition').val(cfgOverlay.notificationPosition || 'center-bottom').change();
+      $('#option_overlayScale').val(String(cfgOverlay.notificationScale || 1)).change();
+      $('#option_overlayVolume').val(String(cfgOverlay.notificationVolume != null ? cfgOverlay.notificationVolume : 100)).change();
+      $('#option_overlayDuration').val(String(cfgOverlay.notificationDuration || 'auto')).change();
+      const cfgSouvenir = app.config.souvenir || {};
+      $('#option_souvenirScreenshot').val(String(cfgSouvenir.screenshot === true)).change();
+      const souvenirDir = cfgSouvenir.dir && cfgSouvenir.dir.trim() ? cfgSouvenir.dir : souvenirDefaultDir();
+      $('#souvenir-dir-display').text(souvenirDir);
+      $('#btn-souvenir-dir').attr('title', souvenirDir);
+      // The preset/sound dropdowns are filled asynchronously. Auto-save must stay disarmed until BOTH
+      // finish populating: otherwise the `change` event fired while populating runs readNotificationSettings
+      // against a still-empty sound dropdown and persists notificationSound='' (wiping the user's choice).
+      // settingsReady is therefore armed in the Promise.all below, not synchronously at the end of this handler.
+      const presetsReady = ipcRenderer
+        .invoke('list-presets')
+        .then((presets) => {
+          const sel = $('#option_overlayPreset');
+          sel.empty();
+          (presets && presets.length ? presets : ['Default']).forEach((name) => {
+            sel.append($('<option>').attr('value', name).text(name));
+          });
+          sel.val(cfgOverlay.notificationPreset || 'Default');
+        })
+        .catch(() => {});
+      const soundsReady = ipcRenderer
+        .invoke('list-sounds')
+        .then((sounds) => {
+          const sel = $('#option_overlaySound');
+          sel.empty();
+          sel.append($('<option>').attr('value', '').text(sel.attr('data-lang-none') || 'None'));
+          (sounds || []).forEach((name) => sel.append($('<option>').attr('value', name).text(name.replace(/\.[^.]+$/, ''))));
+          sel.val(cfgOverlay.notificationSound || '');
+        })
+        .catch(() => {});
 
       if (app.config.steam) {
         if (app.config.steam.apiKey) {
@@ -133,19 +168,40 @@ let holdingKeysCheck = null;
           debug.log(err);
         });
 
+      $('#settings #libdirlist').empty();
+      libraryDirs
+        .get()
+        .then((libraryDirList) => {
+          for (let dir of libraryDirList) populateLibraryDirList({ dir, reverse: true });
+        })
+        .catch((err) => {
+          //Do nothing
+          debug.log(err);
+        });
+
+      // Populate the Debug tab's read-only diagnostics (versions + API-key status). Wrapped so a
+      // failure here can never block the settings form from opening.
       try {
-        //The API used by windows-focus-assist can change/break at any time in the future.
-        //Show focus assist state for information
-        //disabled this to avoid having this dependency
-        //const { getFocusAssist } = require('windows-focus-assist');
-        //const focusAssist = getFocusAssist();
-        //$('#focus-assist-state span').attr('data-state', focusAssist.value).text(focusAssist.name);
-        //$('#focus-assist-state').show();
-        $('#focus-assist-state').hide();
+        $('#diag-versions').text(
+          `App ${remote.app.getVersion()} · Electron ${process.versions.electron} · Node ${process.versions.node} · Chrome ${process.versions.chrome}`
+        );
+        const hasKey = !!(app.config && app.config.steam && app.config.steam.apiKey);
+        const apikeyEl = $('#diag-apikey');
+        apikeyEl.find('span').last().text(
+          hasKey
+            ? apikeyEl.attr('data-configured') || 'configured'
+            : apikeyEl.attr('data-fallback') || 'not set — using fallback scraping'
+        );
       } catch (err) {
-        $('#focus-assist-state').hide();
         debug.log(err);
       }
+
+      // Form is fully populated (including the async preset/sound dropdowns) -> arm auto-save for the
+      // Notifications tab. Gating on these Promises prevents the populate-time change events from
+      // persisting stale/empty values before the dropdowns have loaded.
+      Promise.all([presetsReady, soundsReady]).then(() => {
+        settingsReady = true;
+      });
     });
 
     window.addEventListener('keydown', (e) => {
@@ -161,7 +217,6 @@ let holdingKeysCheck = null;
       keysDown.delete(normalizeKey(e));
       holdingKeysCheck = setTimeout(() => {
         if (keysDown.size > 0) {
-          console.log(keys);
           keys = Array.from(keysDown).join(' + ');
           $('#hotkey').text(keys);
         }
@@ -176,12 +231,58 @@ let holdingKeysCheck = null;
       $('#hotkey').text('...');
     });
 
-    $('#scaleSlider').on('input', function () {
-      $('#scaleValue').text($(this).val());
+    // --- Debug tab: diagnostics shortcuts ---
+    $('#open-logs').click(function () {
+      try {
+        const userDataPath = ipcRenderer.sendSync('get-user-data-path-sync');
+        remote.shell.openPath(path.join(userDataPath, 'logs'));
+      } catch (err) {
+        debug.log(err);
+      }
+    });
+    $('#open-userdata').click(function () {
+      try {
+        remote.shell.openPath(ipcRenderer.sendSync('get-user-data-path-sync'));
+      } catch (err) {
+        debug.log(err);
+      }
     });
 
-    $('#durationSlider').on('input', function () {
-      $('#durationValue').text($(this).val());
+    // Scan a library folder for Goldberg/GBE installs and report which ones are missing their schema.
+    $('#scan-gbe').click(async function () {
+      const result = $('#scan-gbe-result');
+      try {
+        const goldberg = require(path.join(appPath, 'parser/goldberg.js'));
+        const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
+          title: 'Select a game-library folder to scan',
+          buttonLabel: 'Scan',
+          properties: ['openDirectory', 'dontAddToRecent'],
+        });
+        if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
+        result.text('Scanning…');
+        const found = goldberg.findCompatibleGames(picked.filePaths[0]);
+        if (found.length === 0) {
+          result.text('No Goldberg / GBE Fork installs found in that folder.');
+          return;
+        }
+        const unconfigured = found.filter((g) => !g.hasSchema);
+        const emuLabel = { gbe: 'GBE Fork', goldberg: 'Goldberg', none: 'unknown' };
+        const detail = found
+          .map((g) => `${g.appid || '?'} · ${emuLabel[g.emulator] || g.emulator} — ${g.hasSchema ? `${g.schemaCount} achievements` : 'MISSING achievements.json'}\n  ${g.steamSettings}`)
+          .join('\n');
+        result.text(`Found ${found.length} install(s); ${unconfigured.length} missing their achievements.json schema.`);
+        remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+          type: unconfigured.length ? 'warning' : 'info',
+          title: 'Goldberg / GBE Fork scan',
+          message: `${found.length} install(s) found — ${unconfigured.length} unconfigured`,
+          detail,
+          buttons: ['OK'],
+          noLink: true,
+        });
+      } catch (err) {
+        result.text(`Scan failed: ${err}`);
+        debug.log(err);
+      }
     });
 
     $('#btn-settings-cancel, #settings .overlay').click(function () {
@@ -196,7 +297,6 @@ let holdingKeysCheck = null;
         $("#settings .box section.content[data-view='" + elem.data('view') + "']").addClass('active');
         self.css('pointer-events', 'initial');
         $('title-bar')[0].inSettings = false;
-        $('#option_customToastAudio').off('change');
       });
     });
 
@@ -205,21 +305,23 @@ let holdingKeysCheck = null;
       self.css('pointer-events', 'none');
 
       app.config.overlay.hotkey = $('#hotkey').text();
-      app.config.overlay.scale = $('#scaleSlider').val();
-      app.config.overlay.duration = $('#durationSlider').val();
       $('#options-ui .right')
         .children('select')
         .each(function (index) {
           try {
+            // These General-tab selects persist under `general`, not `achievement` — handled explicitly below.
+            if ($(this)[0].id === 'option_startWithWindows' || $(this)[0].id === 'option_disableHardwareAccel') return;
             if ($(this)[0].id !== '' && $(this).val() !== '') {
               app.config.achievement[$(this)[0].id.replace('option_', '')] =
                 $(this).val() === 'true' ? true : $(this).val() === 'false' ? false : $(this).val();
             }
           } catch (e) {
-            console.warn(e);
+            debug.log(e);
             debug.log('error while reading general settings ui');
           }
         });
+      if (!app.config.general) app.config.general = {};
+      app.config.general.disableHardwareAccel = $('#option_disableHardwareAccel').val() === 'true';
 
       $('#options-source .right')
         .children('select')
@@ -230,52 +332,52 @@ let holdingKeysCheck = null;
                 $(this).val() === 'true' ? true : $(this).val() === 'false' ? false : $(this).val();
             }
           } catch (e) {
-            console.warn(e);
+            debug.log(e);
             debug.log('error while reading ach source settings ui');
           }
         });
+
+      $('#options-emulator .right, #options-emulator2 .right')
+        .children('select')
+        .each(function () {
+          try {
+            if ($(this)[0].id === 'option_goldbergDownloadIcons') return;
+            if ($(this)[0].id !== '' && $(this).val() !== '') {
+              app.config.emulator[$(this)[0].id.replace('option_', '')] =
+                $(this).val() === 'true' ? true : $(this).val() === 'false' ? false : $(this).val();
+            }
+          } catch (e) {
+            debug.log(e);
+            debug.log('error while reading emulator settings ui');
+          }
+        });
+      app.config.achievement.goldbergDownloadIcons = $('#option_goldbergDownloadIcons').val() === 'true';
+      app.config.emulator.mode = 'regular';
+      // Steam login fields (username plain, password AES-encrypted on disk by settings.js).
+      if (app.config.emulator) {
+        app.config.emulator.loginAccountName = $('#emulator-login-user').val().trim();
+        app.config.emulator.loginPassword = $('#emulator-login-pass').val();
+      }
 
       $('#options-notify-common .right')
         .children('select')
         .each(function (index) {
           try {
+            // groupToast sits in the common group visually but persists under notification_toast.
+            if ($(this)[0].id === 'option_groupToast') return;
             if ($(this)[0].id !== '' && $(this).val() !== '') {
               app.config.notification[$(this)[0].id.replace('option_', '')] =
                 $(this).val() === 'true' ? true : $(this).val() === 'false' ? false : $(this).val();
             }
           } catch (e) {
-            console.warn(e);
+            debug.log(e);
             debug.log('error while reading notification common settings ui');
           }
         });
 
-      $('#options-notify-chromium .right')
-        .children('select')
-        .each(function (index) {
-          try {
-            if ($(this)[0].id !== '' && $(this).val() !== '') {
-              app.config.overlay[$(this)[0].id.replace('option_overlay_', '')] =
-                $(this).val() === 'true' ? true : $(this).val() === 'false' ? false : $(this).val();
-            }
-          } catch (e) {
-            console.warn(e);
-            debug.log('error while reading general settings ui');
-          }
-        });
-
-      $('#options-notify-toast .right')
-        .children('select')
-        .each(function (index) {
-          try {
-            if ($(this)[0].id !== '' && $(this).val() !== '') {
-              app.config.notification_toast[$(this)[0].id.replace('option_', '')] =
-                $(this).val() === 'true' ? true : $(this).val() === 'false' ? false : $(this).val();
-            }
-          } catch (e) {
-            console.warn(e);
-            debug.log('error while reading notification toast settings ui');
-          }
-        });
+      if ($('#option_groupToast').val() !== '') {
+        app.config.notification_toast.groupToast = $('#option_groupToast').val() === 'true';
+      }
 
       $('#options-notify-transport .right')
         .children('select')
@@ -286,54 +388,19 @@ let holdingKeysCheck = null;
                 $(this).val() === 'true' ? true : $(this).val() === 'false' ? false : $(this).val();
             }
           } catch (e) {
-            console.warn(e);
+            debug.log(e);
             debug.log('error while reading notification transport settings ui');
           }
         });
-
-      $('#options-souvenir-screenshot .right')
-        .children('select')
-        .each(function (index) {
-          try {
-            if ($(this)[0].id !== '' && $(this).val() !== '') {
-              app.config.souvenir_screenshot[$(this)[0].id.replace('option_', '')] =
-                $(this).val() === 'true' ? true : $(this).val() === 'false' ? false : $(this).val();
-            }
-          } catch (e) {
-            console.warn(e);
-            debug.log('error while reading notification transport settings ui');
-          }
-        });
-
-      $('#options-souvenir-video .right')
-        .children('select')
-        .each(function (index) {
-          try {
-            if ($(this)[0].id !== '' && $(this).val() !== '') {
-              app.config.souvenir_video[$(this)[0].id.replace('option_', '')] =
-                $(this).val() === 'true' ? true : $(this).val() === 'false' ? false : $(this).val();
-            }
-          } catch (e) {
-            console.warn(e);
-            debug.log('error while reading notification transport settings ui');
-          }
-        });
-
-      app.config.souvenir_screenshot.custom_dir = $('#custom_dir_screenshot div.btn').attr('data-path') || '';
-      app.config.souvenir_video.custom_dir = $('#custom_dir_video div.btn').attr('data-path') || '';
-
-      let customToastAudio = $('#option_customToastAudio').find(':selected');
-      if (customToastAudio.val() == 2) toastAudio.setCustom(customToastAudio.data('file'));
 
       let steamApiKey = $('#steamwebapikey').val().trim();
       if (steamApiKey.length > 0) {
         app.config.steam = { apiKey: steamApiKey };
       } else {
-        if (app.config.steam) {
-          if (app.config.steam.apiKey) {
-            delete app.config.steam.apiKey;
-          }
-        }
+        // Empty field -> explicit clear. Use '' (not delete) so settings.save() can tell an
+        // intentional removal apart from a partial save that simply omits the key.
+        if (!app.config.steam) app.config.steam = {};
+        app.config.steam.apiKey = '';
       }
 
       app.config.steam.main = $('#options-mainSteam .right select').val();
@@ -346,45 +413,51 @@ let holdingKeysCheck = null;
         userDirList.push({ path: dir, notify: notify });
       });
 
-      settings.setUserDataPath(ipcRenderer.sendSync('get-user-data-path-sync'));
-      userDir
-        .save(userDirList)
+      let libraryDirList = [];
+      $('#settings #libdirlist > li').each(function () {
+        libraryDirList.push($(this).find('.path span').text());
+      });
+
+      const startWithWindows = $('#option_startWithWindows').val() === 'true';
+      const applyStartup = ipcRenderer
+        .invoke('startup:set-start-with-windows', startWithWindows)
+        .then(() => {
+          if (!app.config.general) app.config.general = {};
+          app.config.general.startWithWindows = startWithWindows;
+        })
         .catch((err) => {
-          remote.dialog.showMessageBoxSync({
-            type: 'error',
-            title: 'Unexpected Error',
-            message: 'Error while saving user dir list',
-            detail: `${err}`,
+          const wrapped = new Error(err && err.message ? err.message : String(err));
+          wrapped.isStartupSettingError = true;
+          throw wrapped;
+        });
+
+      settings.setUserDataPath(ipcRenderer.sendSync('get-user-data-path-sync'));
+      Promise.all([userDir.save(userDirList), libraryDirs.save(libraryDirList), applyStartup])
+        .then(() => settings.save(app.config))
+        .then(() => {
+          $('#settings .box').fadeOut(() => {
+            self.css('pointer-events', 'initial');
+            resetUI();
           });
         })
-        .finally(() => {
-          settings
-            .save(app.config)
-            .then(() => {
-              $('#settings .box').fadeOut(() => {
-                self.css('pointer-events', 'initial');
-                resetUI();
-              });
-            })
-            .catch((err) => {
-              $('#settings .box').fadeOut(() => {
-                $('#settings').hide();
-                let elem = $('#settingNav li').first();
-                $('#settingNav li').removeClass('active');
-                elem.addClass('active');
-                $('#settings .box section.content').removeClass('active');
-                $("#settings .box section.content[data-view='" + elem.data('view') + "']").addClass('active');
-                self.css('pointer-events', 'initial');
-                $('title-bar')[0].inSettings = false;
+        .catch((err) => {
+          $('#settings .box').fadeOut(() => {
+            $('#settings').hide();
+            let elem = $('#settingNav li').first();
+            $('#settingNav li').removeClass('active');
+            elem.addClass('active');
+            $('#settings .box section.content').removeClass('active');
+            $("#settings .box section.content[data-view='" + elem.data('view') + "']").addClass('active');
+            self.css('pointer-events', 'initial');
+            $('title-bar')[0].inSettings = false;
 
-                remote.dialog.showMessageBoxSync({
-                  type: 'error',
-                  title: 'Unexpected Error',
-                  message: 'Error while writing settings to file.',
-                  detail: `${err}`,
-                });
-              });
+            remote.dialog.showMessageBoxSync({
+              type: 'error',
+              title: 'Unexpected Error',
+              message: err && err.isStartupSettingError ? 'Error while updating the startup setting.' : 'Error while saving settings.',
+              detail: `${err}`,
             });
+          });
         });
     });
 
@@ -395,7 +468,9 @@ let holdingKeysCheck = null;
 
       if ('createEvent' in document) {
         let evt = document.createEvent('HTMLEvents');
-        evt.initEvent('change', false, true);
+        // Native <select> change events bubble. Keep the synthetic arrow-control event equivalent so
+        // dependent settings (and delegated auto-save handlers) react immediately.
+        evt.initEvent('change', true, true);
         sel.dispatchEvent(evt);
       } else {
         sel.fireEvent('onchange');
@@ -412,11 +487,88 @@ let holdingKeysCheck = null;
 
       if ('createEvent' in document) {
         let evt = document.createEvent('HTMLEvents');
-        evt.initEvent('change', false, true);
+        evt.initEvent('change', true, true);
         sel.dispatchEvent(evt);
       } else {
         sel.fireEvent('onchange');
       }
+    });
+
+    // Validate the saved Advanced-mode Steam credentials against the real GSE tool. AppID 480
+    // (Spacewar) is used only as a harmless generation target. Interactive Steam Guard/email/captcha
+    // prompts are forwarded to the in-app modal and `-tok` lets GSE retain the resulting refresh token.
+    $('#emulator-login-test').click(async function () {
+      const button = $(this);
+      const status = $('#emulator-login-test-status');
+      const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
+      const emuText = fr
+        ? {
+            missing: "Renseigne d'abord l'identifiant et le mot de passe Steam.",
+            running: "Connexion à Steam… Saisis le code Steam Guard s'il est demandé.",
+            success: 'Connexion Steam réussie. Le refresh token generate_emu_config a été sauvegardé.',
+            failed: 'Échec de la connexion Steam',
+          }
+        : {
+            missing: 'Enter the Steam username and password first.',
+            running: 'Connecting to Steam… Enter the Steam Guard code if requested.',
+            success: 'Steam login successful. The generate_emu_config refresh token was saved.',
+            failed: 'Steam login failed',
+          };
+      const username = $('#emulator-login-user').val().trim();
+      const password = $('#emulator-login-pass').val();
+      const setStatus = (text, cls = '') => status.removeClass('success error').addClass(cls).text(text || '');
+      if (!username || !password) {
+        setStatus(emuText.missing, 'error');
+        return;
+      }
+      if (button.hasClass('disabled')) return;
+      button.addClass('disabled').css('pointer-events', 'none');
+      setStatus(emuText.running, 'running');
+      let generated = null;
+      try {
+        const userData = ipcRenderer.sendSync('get-user-data-path-sync');
+        const genEmu = require(path.join(appPath, 'parser/genEmuConfig.js'));
+        let preferredTag = null;
+        try { preferredTag = settingsFs.readFileSync(path.join(userData, 'cache/gse_fork/latest.txt'), 'utf8').trim() || null; } catch {}
+        const tool = await genEmu.ensureGenerateEmuConfig({
+          cacheDir: path.join(userData, 'cache/gse_emu_config'),
+          preferredTag,
+          log: debug,
+        });
+        const onPrompt = async (question) => {
+          if (typeof window.awPromptText !== 'function') throw new Error('2FA prompt UI is unavailable');
+          return window.awPromptText(`Steam / GSE — ${question}`, '', /password/i.test(question) ? 'password' : 'text');
+        };
+        generated = await genEmu.generate({
+          tool,
+          appid: '480',
+          login: { username, password },
+          onPrompt,
+          timeout: 300000,
+          log: debug,
+        });
+        setStatus(emuText.success, 'success');
+      } catch (err) {
+        debug.log(`[emulator-login-test] ${err}`);
+        setStatus(`${emuText.failed}: ${err.message || err}`, 'error');
+      } finally {
+        if (generated && generated.workDir) {
+          try { settingsFs.rmSync(generated.workDir, { recursive: true, force: true }); } catch {}
+        }
+        button.removeClass('disabled').css('pointer-events', '');
+      }
+    });
+
+    // Bind on the controls themselves as well as using a bubbling event above. This keeps the
+    // dependency UI reliable for keyboard changes, programmatic population and the arrow buttons.
+    $('#options-emulator select, #options-emulator2 select').on('change', updateEmulatorUi);
+
+    // Let the mouse wheel cycle the value displayed between the arrows. This is
+    // especially useful for long lists while keeping the compact control aligned.
+    $('#settings .arrow-list .right').on('wheel', function (event) {
+      event.preventDefault();
+      const direction = event.originalEvent.deltaY > 0 ? '.next' : '.previous';
+      $(this).find(direction).trigger('click');
     });
 
     $('#option_lang').mouseover(function () {
@@ -434,62 +586,8 @@ let holdingKeysCheck = null;
       self.addClass('active');
 
       $('#settings .box section.content').removeClass('active');
-      $("#settings .box section.content[data-view='" + view + "']").addClass('active');
+      $("#settings .box section.content[data-view='" + view + "']").addClass('active').scrollTop(0);
 
-      self.css('pointer-events', 'initial');
-    });
-
-    $('#custom_dir_screenshot div.btn').click(async function () {
-      let self = $(this);
-      self.css('pointer-events', 'none');
-
-      try {
-        const options = {
-          defaultPath: app.config.souvenir_screenshot.custom_dir || process.env['USERPROFILE'],
-          properties: ['openDirectory', 'showHiddenFiles'],
-        };
-        let dialog = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), options);
-        if (dialog.filePaths.length > 0) {
-          $('#custom_dir_screenshot div.btn').attr('data-path', dialog.filePaths[0].toString());
-          debug.log(`screenshot custom folder: ${dialog.filePaths[0]}`);
-        } else {
-          debug.log('screenshot custom folder: User Cancel');
-        }
-      } catch (err) {
-        remote.dialog.showMessageBoxSync({
-          type: 'error',
-          title: 'Unexpected Error',
-          message: 'Error changing screenshot custom folder',
-          detail: `${err}`,
-        });
-      }
-      self.css('pointer-events', 'initial');
-    });
-
-    $('#custom_dir_video div.btn').click(async function () {
-      let self = $(this);
-      self.css('pointer-events', 'none');
-
-      try {
-        const options = {
-          defaultPath: app.config.souvenir_video.custom_dir || process.env['USERPROFILE'],
-          properties: ['openDirectory', 'showHiddenFiles'],
-        };
-        let dialog = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), options);
-        if (dialog.filePaths.length > 0) {
-          $('#custom_dir_video div.btn').attr('data-path', dialog.filePaths[0].toString());
-          debug.log(`video custom folder: ${dialog.filePaths[0]}`);
-        } else {
-          debug.log('video custom folder: User Cancel');
-        }
-      } catch (err) {
-        remote.dialog.showMessageBoxSync({
-          type: 'error',
-          title: 'Unexpected Error',
-          message: 'Error changing video custom folder',
-          detail: `${err}`,
-        });
-      }
       self.css('pointer-events', 'initial');
     });
 
@@ -529,6 +627,90 @@ let holdingKeysCheck = null;
       }
 
       self.css('pointer-events', 'initial');
+    });
+
+    $('#addLibraryDir').click(async function () {
+      let self = $(this);
+      self.css('pointer-events', 'none');
+
+      try {
+        let dialog = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), { properties: ['openDirectory', 'showHiddenFiles'] });
+
+        if (dialog.filePaths.length > 0) {
+          debug.log(`Adding library folder: ${dialog.filePaths}`);
+          populateLibraryDirList({ dir: dialog.filePaths[0] });
+        } else {
+          debug.log('Adding library folder: User Cancel');
+        }
+      } catch (err) {
+        remote.dialog.showMessageBoxSync({
+          type: 'error',
+          title: 'Unexpected Error',
+          message: 'Error adding library folder',
+          detail: `${err}`,
+        });
+      }
+
+      self.css('pointer-events', 'initial');
+    });
+
+    // #7 — Generate configs from the watched/library folders on demand. Persists the current folders,
+    // then runs a full rescan: makeList discovers every game in those folders and applies the one-shot
+    // emulator fix (schema + steam_settings + icons) to unconfigured ones, so they're ready without
+    // waiting for the 15-min background scan or opening each game manually.
+    $('#generate-configs').click(async function () {
+      const self = $(this);
+      self.css('pointer-events', 'none');
+      const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
+      try {
+        // 1) persist the folders currently listed in the UI so the scan uses them
+        let userDirList = [];
+        $('#settings #dirlist > li').each(function () {
+          userDirList.push({ path: $(this).find('.path span').text(), notify: $(this).find('.controls .notify').attr('data-notify') === 'true' });
+        });
+        let libraryDirList = [];
+        $('#settings #libdirlist > li').each(function () {
+          libraryDirList.push($(this).find('.path span').text());
+        });
+        settings.setUserDataPath(ipcRenderer.sendSync('get-user-data-path-sync'));
+        await Promise.all([userDir.save(userDirList), libraryDirs.save(libraryDirList)]);
+
+        // 2) quick Goldberg/GBE count across the library folders for a summary (the full scan below
+        //    covers every source, not just these)
+        let found = [];
+        try {
+          const goldberg = require(path.join(appPath, 'parser/goldberg.js'));
+          for (const dir of libraryDirList) {
+            try {
+              found = found.concat(goldberg.findCompatibleGames(dir));
+            } catch (e) {
+              debug.log(e);
+            }
+          }
+        } catch (e) {
+          debug.log(e);
+        }
+        const unconfigured = found.filter((g) => !g.hasSchema).length;
+        remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+          type: 'info',
+          title: fr ? 'Génération des configs' : 'Generate configs',
+          message: fr
+            ? `${found.length} jeu(x) émulé(s) détecté(s) dans tes dossiers — ${unconfigured} à configurer.`
+            : `${found.length} emulated game(s) found in your folders — ${unconfigured} to configure.`,
+          detail: fr
+            ? 'Un scan complet démarre : les configs et succès manquants sont générés automatiquement.'
+            : 'A full scan is starting: missing configs and achievements are generated automatically.',
+          buttons: ['OK'],
+          noLink: true,
+        });
+
+        // 3) full rescan — discovers the folders and applies the one-shot emulator fix to unconfigured games
+        resetUI();
+      } catch (err) {
+        remote.dialog.showMessageBoxSync({ type: 'error', title: 'Unexpected Error', message: 'Error generating configs', detail: `${err}` });
+      } finally {
+        self.css('pointer-events', 'initial');
+      }
     });
 
     $('#smartFind').click(async function () {
@@ -590,7 +772,6 @@ let holdingKeysCheck = null;
           elem.addClass('active');
           $('#settings .box section.content').removeClass('active');
           $("#settings .box section.content[data-view='" + elem.data('view') + "']").addClass('active');
-          console.clear();
           if (app.args.appid) app.args.appid = null;
           app.onStart();
         })
@@ -605,75 +786,13 @@ let holdingKeysCheck = null;
         });
     });
 
-    $('#gntp_test').click(function () {
-      let self = $(this);
-      self.css('pointer-events', 'none');
+    // Auto-save the Notifications tab: persist immediately on any change, no OK required.
+    $("#settings .box section.content[data-view='notification']").on('change', 'select', autosaveNotifications);
 
-      const ws = new WebSocket('ws://localhost:8082');
-      ws.onerror = (err) => {
-        ws.close();
-        self.css('pointer-events', 'initial');
-        remote.dialog.showMessageBoxSync({
-          type: 'error',
-          title: 'WebSocket Connection Error',
-          message: 'Notification Test Failure.',
-          detail: 'Error in connection establishment: net::ERR_CONNECTION_REFUSED\nIs Watchdog Running ?',
-        });
-      };
-
-      ws.onopen = () => {
-        ws.onmessage = (evt) => {
-          try {
-            let res = JSON.parse(evt.data);
-            if (res.cmd === 'gntp-test') {
-              if (res.success === true) {
-                ws.close();
-                self.css('pointer-events', 'initial');
-              } else if (res.success === false && res.error) {
-                throw res.error;
-              } else {
-                throw 'Unexpected response';
-              }
-            } else {
-              throw 'Unexpected response';
-            }
-          } catch (err) {
-            ws.close();
-            self.css('pointer-events', 'initial');
-            remote.dialog.showMessageBoxSync({
-              type: 'error',
-              title: 'Unexpected Error',
-              message: 'Notification Test Failure.',
-              detail: `${err}`,
-            });
-          }
-        };
-        try {
-          ws.send(JSON.stringify({ cmd: 'gntp-test' }));
-        } catch (err) {
-          ws.close();
-          self.css('pointer-events', 'initial');
-          remote.dialog.showMessageBoxSync({
-            type: 'error',
-            title: 'Unexpected Error',
-            message: 'Notification Test Failure.',
-            detail: `${err}`,
-          });
-        }
-      };
-    });
-
-    $('#chromium_playtime_test').click(async function () {
-      ipcRenderer.send('playtime-test');
-    });
-    $('#chromium_progress_test').click(async function () {
-      ipcRenderer.send('progress-test');
-    });
-    $('#chromium_notify_test').click(async function () {
-      ipcRenderer.send('notify-test');
-    });
-
-    $('#notify_test').click(function () {
+    // Shared by the three Notifications-tab test buttons (achievement/toast, progress, playtime):
+    // spawns a fullscreen dummy window so the toast is visible over it, then asks the watchdog
+    // (over its existing websocket) to fire the given test notification.
+    function runNotificationTest(cmd) {
       let self = $(this);
       self.css('pointer-events', 'none');
 
@@ -701,7 +820,7 @@ let holdingKeysCheck = null;
           ws.onmessage = (evt) => {
             try {
               let res = JSON.parse(evt.data);
-              if (res.cmd === 'toast-test') {
+              if (res.cmd === cmd) {
                 if (res.success === true) {
                   ws.close();
                   setTimeout(() => {
@@ -727,7 +846,7 @@ let holdingKeysCheck = null;
             }
           };
           try {
-            ws.send(JSON.stringify({ cmd: 'toast-test' }));
+            ws.send(JSON.stringify({ cmd }));
           } catch (err) {
             ws.close();
             dummy.close();
@@ -740,6 +859,177 @@ let holdingKeysCheck = null;
           }
         };
       }, 500);
+    }
+
+    // Build overlay test payload for a given notification kind, using the current overlay settings.
+    function overlayTestData(kind) {
+      const preset = $('#option_overlayPreset').val() || 'Default';
+      const sound = $('#option_overlaySound').val() || '';
+      const fr = String((window.app && window.app.config && window.app.config.achievement && window.app.config.achievement.lang) || '')
+        .toLowerCase()
+        .startsWith('fr');
+      const texts = fr
+        ? {
+            toast: { displayName: 'Succès débloqué', description: 'Test overlay — preset ' + preset },
+            progress: { displayName: 'Progression', description: '3 / 10' },
+            playtime: { displayName: 'Hollow Knight', description: 'Vous avez joué pendant 42 minutes' },
+            platinum: { displayName: 'Trophée Platine', description: '100 % complété' },
+          }
+        : {
+            toast: { displayName: 'Achievement Unlocked', description: 'Overlay test — ' + preset + ' preset' },
+            progress: { displayName: 'Progress', description: '3 / 10' },
+            playtime: { displayName: 'Hollow Knight', description: 'You played for 42 minutes' },
+            platinum: { displayName: 'Platinum!', description: '100% completed' },
+          };
+      const volRaw = parseInt($('#option_overlayVolume').val(), 10);
+      const durRaw = $('#option_overlayDuration').val();
+      const durSec = durRaw === 'auto' || !durRaw ? 0 : parseInt(durRaw, 10) || 0;
+      return Object.assign(
+        {
+          preset,
+          position: $('#option_overlayPosition').val() || 'center-bottom',
+          scale: parseFloat($('#option_overlayScale').val()) || 1,
+          volume: Number.isFinite(volRaw) ? volRaw : 100,
+          durationMs: durSec > 0 ? durSec * 1000 : undefined,
+          iconPath: path.join(appPath, 'resources/img/achievement.svg'),
+          // Playtime notifications never play a sound, so its test mirrors that behaviour.
+          soundPath: kind === 'playtime' ? '' : resolveSoundFile(sound),
+        },
+        texts[kind] || texts.toast
+      );
+    }
+    // Route a test through whichever transport(s) the user picked (toast / overlay / both).
+    function fireNotificationTest(kind, btn) {
+      const mode = $('#option_notifMode').val() || 'toast';
+      if (mode === 'toast' || mode === 'both') runNotificationTest.call(btn, kind + '-test');
+      if (mode === 'overlay' || mode === 'both') ipcRenderer.send('spawn-overlay-notification', overlayTestData(kind));
+    }
+    $('#notify_test').click(function () {
+      fireNotificationTest('toast', this);
+    });
+    $('#notify_progress_test').click(function () {
+      fireNotificationTest('progress', this);
+    });
+    $('#notify_playtime_test').click(function () {
+      fireNotificationTest('playtime', this);
+    });
+    $('#notify_platinum_test').click(function () {
+      fireNotificationTest('platinum', this);
+    });
+    // Preview the overlay sound when the dropdown is changed by the user.
+    $('#option_overlaySound').on('change', function () {
+      const v = $(this).val();
+      if (!v) return;
+      try {
+        new Audio('file:///' + resolveSoundFile(v).replace(/\\/g, '/')).play().catch(() => {});
+      } catch (e) {}
+    });
+
+    // Import a custom notification sound: copy it into <userData>/sounds, then refresh the dropdown and
+    // select it (the change triggers a preview + the Notifications-tab auto-save).
+    $('#btn-import-sound').click(async function () {
+      const self = $(this);
+      self.css('pointer-events', 'none');
+      try {
+        const name = await ipcRenderer.invoke('import-sound');
+        if (name) {
+          const sounds = await ipcRenderer.invoke('list-sounds');
+          const sel = $('#option_overlaySound');
+          sel.empty();
+          sel.append($('<option>').attr('value', '').text(sel.attr('data-lang-none') || 'None'));
+          (sounds || []).forEach((n) => sel.append($('<option>').attr('value', n).text(n.replace(/\.[^.]+$/, ''))));
+          sel.val(name).change();
+        }
+      } catch (e) {
+        debug.log(e);
+      }
+      self.css('pointer-events', 'initial');
+    });
+
+    // Reposition the overlay notification popup: spawn a draggable witness using the current preset;
+    // dragging it persists the 'custom' position used when Position = Custom.
+    $('#btn-overlay-reposition').click(function () {
+      const data = overlayTestData('toast');
+      data.position = 'custom';
+      data.reposition = true;
+      data.durationMs = undefined;
+      data.soundPath = '';
+      ipcRenderer.send('spawn-overlay-notification', data);
+      // Make sure the dropdown reflects that custom positioning is now in use.
+      $('#option_overlayPosition').val('custom').change();
+    });
+
+    // Pick a custom folder for souvenir screenshots (empty = default Pictures\Achievement Watcher).
+    $('#btn-souvenir-dir').click(async function () {
+      try {
+        const res = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), { properties: ['openDirectory', 'dontAddToRecent'] });
+        if (res.canceled || !res.filePaths || !res.filePaths.length) return;
+        if (!app.config.souvenir) app.config.souvenir = {};
+        app.config.souvenir.dir = res.filePaths[0];
+        $('#souvenir-dir-display').text(res.filePaths[0]);
+        $('#btn-souvenir-dir').attr('title', res.filePaths[0]);
+        autosaveNotifications();
+      } catch (e) {
+        debug.log(e);
+      }
+    });
+
+    // --- Custom preset builder: live preview + create ---
+    function custInt(id, def) {
+      const n = parseInt($('#' + id).val(), 10);
+      return Number.isFinite(n) ? n : def;
+    }
+    function updatePresetPreview() {
+      const bg = $('#cust-bg').val() || '#16181d';
+      const text = $('#cust-text').val() || '#ffffff';
+      const accent = $('#cust-accent').val() || '#4aa3ff';
+      const opacity = custInt('cust-opacity', 100) / 100;
+      const font = custInt('cust-font', 16);
+      const radius = custInt('cust-radius', 12);
+      const icon = custInt('cust-icon', 64);
+      $('#cust-preview').css({ background: bg, color: text, 'border-left-color': accent, 'border-radius': radius + 'px', 'font-size': font + 'px', opacity: opacity });
+      $('#cust-preview-title').css('color', accent);
+      $('#cust-preview-icon').css({ color: accent, 'font-size': Math.round(icon * 0.62) + 'px' });
+    }
+    $('#options-notify-customiser').on('input change', 'input', updatePresetPreview);
+    updatePresetPreview();
+
+    $('#btn-create-preset').click(async function () {
+      const self = $(this);
+      const status = $('#cust-status');
+      const name = ($('#cust-name').val() || '').trim();
+      if (!name) {
+        status.text(status.attr('data-err') || 'Enter a name first').css('color', '#e66');
+        return;
+      }
+      self.css('pointer-events', 'none');
+      try {
+        const res = await ipcRenderer.invoke('create-custom-preset', {
+          name,
+          bg: $('#cust-bg').val(),
+          text: $('#cust-text').val(),
+          accent: $('#cust-accent').val(),
+          opacity: custInt('cust-opacity', 100) / 100,
+          fontSize: custInt('cust-font', 16),
+          radius: custInt('cust-radius', 12),
+          iconSize: custInt('cust-icon', 64),
+        });
+        if (res && res.ok) {
+          // Refresh the preset dropdown and select the new preset (autosave persists the choice).
+          const presets = await ipcRenderer.invoke('list-presets');
+          const sel = $('#option_overlayPreset');
+          sel.empty();
+          (presets && presets.length ? presets : ['Default']).forEach((n) => sel.append($('<option>').attr('value', n).text(n)));
+          sel.val(res.name).change();
+          status.text((status.attr('data-ok') || 'Created & selected:') + ' ' + res.name).css('color', '#6c6');
+        } else {
+          status.text((status.attr('data-fail') || 'Failed') + (res && res.error ? ': ' + res.error : '')).css('color', '#e66');
+        }
+      } catch (e) {
+        debug.log(e);
+        status.text('Failed: ' + e).css('color', '#e66');
+      }
+      self.css('pointer-events', 'initial');
     });
 
     $('#option_mergeDuplicate')
@@ -750,6 +1040,81 @@ let holdingKeysCheck = null;
       });
   });
 })(window.jQuery, window, document);
+
+function boolifyValue(v) {
+  return v === 'true' ? true : v === 'false' ? false : v;
+}
+
+// Default folder where souvenir screenshots are written when no custom folder is set.
+function souvenirDefaultDir() {
+  try {
+    return path.join(remote.app.getPath('pictures'), 'Achievement Watcher');
+  } catch (e) {
+    return 'Pictures\\Achievement Watcher';
+  }
+}
+
+// Resolve a notification sound name to an absolute path. User-imported sounds (in <userData>/sounds)
+// take priority over the bundled ones (app/sounds), matching the main process's resolveNotificationSound.
+function resolveSoundFile(name) {
+  if (!name) return '';
+  try {
+    const ud = ipcRenderer.sendSync('get-user-data-path-sync');
+    const userPath = path.join(ud, 'sounds', name);
+    if (settingsFs.existsSync(userPath)) return userPath;
+  } catch (e) {}
+  return path.join(appPath, 'sounds', name);
+}
+
+// Read every Notifications-tab control back into app.config. Mirrors the per-section logic of the
+// OK-save handler but scoped to the notification view so it can run on every change (auto-save).
+function readNotificationSettings() {
+  $('#options-notify-common .right')
+    .children('select')
+    .each(function () {
+      if (this.id === 'option_groupToast') return; // persists under notification_toast (handled below)
+      if (this.id !== '' && $(this).val() !== '') app.config.notification[this.id.replace('option_', '')] = boolifyValue($(this).val());
+    });
+  $('#options-notify-transport .right')
+    .children('select')
+    .each(function () {
+      if (this.id !== '' && $(this).val() !== '') app.config.notification_transport[this.id.replace('option_', '')] = boolifyValue($(this).val());
+    });
+  // Group-by-game sits in the common group visually but is persisted under notification_toast.
+  if ($('#option_groupToast').val() !== '') app.config.notification_toast.groupToast = boolifyValue($('#option_groupToast').val());
+
+  // Overlay (in-game) notification — enable in notification_transport, look in overlay.notification*.
+  app.config.notification_transport.mode = $('#option_notifMode').val() || 'toast';
+  if (!app.config.overlay) app.config.overlay = {};
+  app.config.overlay.notificationPreset = $('#option_overlayPreset').val() || 'Default';
+  app.config.overlay.notificationPosition = $('#option_overlayPosition').val() || 'center-bottom';
+  app.config.overlay.notificationScale = parseFloat($('#option_overlayScale').val()) || 1;
+  app.config.overlay.notificationSound = $('#option_overlaySound').val() || '';
+  const volRaw = parseInt($('#option_overlayVolume').val(), 10);
+  app.config.overlay.notificationVolume = Number.isFinite(volRaw) ? volRaw : 100;
+  const durRaw = $('#option_overlayDuration').val();
+  app.config.overlay.notificationDuration = durRaw === 'auto' || !durRaw ? 'auto' : parseInt(durRaw, 10) || 'auto';
+
+  // Souvenir screenshot — dir is set by its own folder-picker button and preserved here.
+  if (!app.config.souvenir) app.config.souvenir = {};
+  app.config.souvenir.screenshot = $('#option_souvenirScreenshot').val() === 'true';
+}
+
+// Debounced auto-save for the Notifications tab. No-op until the form has finished populating.
+function autosaveNotifications() {
+  if (!settingsReady) return;
+  try {
+    readNotificationSettings();
+  } catch (e) {
+    debug.log(e);
+    return;
+  }
+  clearTimeout(notifAutosaveTimer);
+  notifAutosaveTimer = setTimeout(() => {
+    settings.setUserDataPath(ipcRenderer.sendSync('get-user-data-path-sync'));
+    settings.save(app.config).catch((err) => debug.log(err));
+  }, 200);
+}
 
 function populateUserDirList(option) {
   let options = {
@@ -773,7 +1138,7 @@ function populateUserDirList(option) {
   }
 
   let template = `<li>
-                <div class="path"><span>${options.dir}</span></div>
+                <div class="path"><span>${escapeHtml(options.dir)}</span></div>
                 <div class="controls">
                   <ul>
                     <li class="edit"><i class="fas fa-pen"></i></li>
@@ -852,18 +1217,79 @@ function populateUserDirList(option) {
   });
 }
 
-function populateOverlayPreset(selected) {
-  let presetPath = path.join(remote.app.getPath('userData'), 'Presets');
-  const folders = fs
-    .readdirSync(presetPath, { withFileTypes: true })
-    .filter((dirent) => dirent.isDirectory())
-    .map((dirent) => dirent.name);
+function populateLibraryDirList(option) {
+  let options = {
+    dir: option.dir,
+    reverse: option.reverse || false,
+  };
 
-  let selector = $('#option_overlay_preset');
-  selector.empty();
-  for (let preset of folders) {
-    selector.append(`<option value="${preset}" ${preset === selected ? 'selected' : ''}>${preset}</option>`);
+  let alreadyInList = false;
+  $('#settings #libdirlist > li').each(function () {
+    let dir = $(this).find('.path span').text();
+    if (path.normalize(dir) == path.normalize(options.dir)) {
+      alreadyInList = true;
+      return false; //break out of each() loop
+    }
+  });
+
+  if (alreadyInList) {
+    debug.log('-> Already in list');
+    return;
   }
+
+  let template = `<li>
+                <div class="path"><span>${escapeHtml(options.dir)}</span></div>
+                <div class="controls">
+                  <ul>
+                    <li class="edit"><i class="fas fa-pen"></i></li>
+                    <li class="trash"><i class="fas fa-trash-alt"></i></li>
+                  </ul>
+                </div>
+              </li>`;
+
+  if (options.reverse) {
+    $('#settings #libdirlist').append(template);
+  } else {
+    $('#settings #libdirlist').prepend(template);
+  }
+
+  let elem = options.reverse ? $('#settings #libdirlist > li').last() : $('#settings #libdirlist > li').first();
+
+  if (elem.find('.path span').width() >= 350 || options.dir.length > 42) {
+    elem.find('.path').addClass('overflow');
+  }
+
+  elem.find('.controls .trash').click(function () {
+    elem.remove();
+  });
+  elem.find('.controls .edit').click(function () {
+    let dirPath = elem.find('.path span').text();
+
+    let filePaths = remote.dialog.showOpenDialogSync(remote.getCurrentWindow(), {
+      defaultPath: dirPath,
+      properties: ['openDirectory', 'showHiddenFiles'],
+    });
+    try {
+      if (filePaths) {
+        debug.log(`Editing library folder to: ${filePaths}`);
+        elem.find('.path span').text(filePaths[0]);
+        elem.find('.path').removeClass('overflow');
+        if (elem.find('.path span').width() >= 350) {
+          elem.find('.path').addClass('overflow');
+        }
+        debug.log('-> Edited');
+      } else {
+        debug.log('Editing library folder: User Cancel');
+      }
+    } catch (err) {
+      remote.dialog.showMessageBoxSync({
+        type: 'error',
+        title: 'Unexpected Error',
+        message: 'Error editing library folder',
+        detail: `${err}`,
+      });
+    }
+  });
 }
 
 function populateLegitUsers(selected) {
@@ -875,22 +1301,4 @@ function populateLegitUsers(selected) {
   selector.append(defaultOption);
   if (!list || list.length === 0) return;
   for (let user of list) selector.append(`<option value="${user.user}" ${selected === user.user ? 'selected' : ''}>${user.name}</option>`);
-}
-
-function populateSounds(selected) {
-  const supportedExtensions = ['.wav', '.mp3', '.ogg', '.flac', '.m4a', '.aac'];
-  let mediaPath = path.join(remote.app.getPath('userData'), 'Media');
-  const files = fs.readdirSync(mediaPath).filter((f) => supportedExtensions.includes(path.extname(f).toLocaleLowerCase()));
-  let selector = $('#option_customToastAudio');
-  let mutedOption = selector.find('option[value="0"]');
-  let defaultOption = selector.find('option[value="1"]');
-  mutedOption.prop('selected', selected === '0');
-  defaultOption.prop('selected', selected === '1' || !files.includes(selected));
-  selector.empty();
-  selector.append(mutedOption);
-  selector.append(defaultOption);
-  for (let f of files)
-    selector.append(
-      `<option value="2" data-file="${f}" ${selected === path.basename(f) ? 'selected' : ''}>${path.basename(f, path.extname(f))}</option>`
-    );
 }

@@ -7,21 +7,25 @@
       const filter = self
         .val()
         .replace(/<\/?[^>]+>/gi, '')
+        .trim()
         .toUpperCase();
       const gamelist = $('#game-list ul');
       const li = gamelist.children('li');
 
+      // Toggle a class instead of inline display so search COMPOSES with the CSS-driven
+      // "installed only" filter (ul.installed-only li:has([data-installed='0'])). Inline .show()
+      // used to win over that rule, leaking phantom (non-installed) games into results and leaving
+      // them stuck visible after the box was cleared. A tile is shown only when it is neither
+      // search-hidden nor filtered out by installed-only.
       li.each((index, elem) => {
         const _this = $(elem);
         const gameName = _this.find('.game-box .info .title').text().toUpperCase();
-        const gameID = _this.find('.game-box').data('appid');
+        const gameID = String(_this.find('.game-box').data('appid') ?? '');
 
-        if (/^\d+$/.test(filter)) {
-          //If has only digits check steam appid instead of name
-          gameID == filter ? _this.show() : _this.hide();
-        } else {
-          gameName.includes(filter) ? _this.show() : _this.hide();
-        }
+        // Numbers are matched in the title too (e.g. "2" finds "Resident Evil 2"), while an exact
+        // appid still resolves a single game. Empty query => everything matches (filter is cleared).
+        const match = filter === '' || gameName.includes(filter) || gameID === filter;
+        _this.toggleClass('search-hidden', !match);
       });
     });
 
@@ -29,13 +33,7 @@
       const self = $(this);
       const searchValue = self.val().toString().toLowerCase().trim();
       const achievementlist = $('#achievement .achievement-list ul');
-      const li = achievementlist.children('li:not(#hidden-disclaimer)');
-
-      const hidden = $('#lock li#hidden-disclaimer').is(':visible');
-      if (hidden && searchValue.length > 0) {
-        $('#lock ul li.hidden').insertAfter('#hidden-disclaimer');
-        $('#hidden-disclaimer').hide();
-      }
+      const li = achievementlist.children('li');
 
       li.each((index, elem) => {
         const _this = $(elem);
@@ -43,12 +41,11 @@
 
         const achievementName = _this.find('.achievement .content .title').text().toString().toLowerCase();
         const achievementDesc = _this.find('.achievement .content .description').text().toString().toLowerCase();
-        const achievementID = _this.find('.achievement').data('name').toString().toLowerCase();
+        const achievementID = (_this.find('.achievement').data('name') || '').toString().toLowerCase();
 
-        if (!(_this.hasClass('hidden') && hidden))
-          achievementName.includes(searchValue) || achievementDesc.includes(searchValue) || achievementID === searchValue
-            ? _this.show()
-            : _this.hide();
+        achievementName.includes(searchValue) || achievementDesc.includes(searchValue) || achievementID === searchValue
+          ? _this.show()
+          : _this.hide();
       });
     });
 

@@ -10,13 +10,13 @@ const template = `
     <link rel="stylesheet" href="../resources/css/titlebar.css" type="text/css" />
 
     <div class="sf-indicator">
-    <ul id="watchdog-status" class="sf-indicator"><span class="status-dot status-orange"></span><span class="status-text">Checking watchdog status...</span> <span id="start-watchdog"></span></ul>
+    <ul id="watchdog-status" class="sf-indicator"><span class="status-dot status-orange"></span><span class="status-text">Vérification du Watchdog…</span> <span id="start-watchdog"></span></ul>
     </div>
     <ul>
       <li id="btn-close"><i class="fas fa-times"></i></li>
       <li id="btn-maximize"><i class="far fa-window-maximize"></i></li>
-      <li id="btn-settings"><i class="fas fa-cog"></i></li>
       <li id="btn-minimize"><i class="far fa-window-minimize"></i></li>
+      <li id="btn-settings"><i class="fas fa-cog"></i></li>
     </ul>
 `;
 

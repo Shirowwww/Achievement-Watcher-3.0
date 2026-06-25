@@ -1,35 +1,55 @@
 'use strict';
 
+// Paint the global unlock % (rarity) onto the rendered achievement rows. `entries` is the normalized
+// [{name, percent}] shape produced by util/rarity.js, identical for Steam/Epic/GOG.
+function applyRarity(entries) {
+  if (!Array.isArray(entries) || entries.length === 0) return;
+  for (const { name, percent: raw } of entries) {
+    let percent = Math.round(raw * 10) / 10;
+    if (percent > 100) percent = 100;
+
+    const elem = $(`#achievement li .achievement[data-name="${name}"]`);
+    elem.find('.stats .community span.data').text(percent);
+
+    if (percent >= 0 && percent <= 10) {
+      // Keep `rare` as the visual base (glow machinery + community color),
+      // then layer a tier color on top: gold <3%, silver <6%, bronze <=10%.
+      elem.addClass('rare');
+      elem.removeClass('rarity-gold rarity-silver rarity-bronze');
+      if (percent < 3) elem.addClass('rarity-gold');
+      else if (percent < 6) elem.addClass('rarity-silver');
+      else elem.addClass('rarity-bronze');
+    }
+  }
+  $('.achievement-list > .header .sort-ach .sort.percentage').addClass('show');
+  // Rarity arrives asynchronously; reapply a persisted percentage sort now that its values are real.
+  if (typeof window.restoreAchievementSorts === 'function') window.restoreAchievementSorts();
+}
+
 function getGlobalStat(appid, source) {
-  $.ajax({
-    url:
-      source === 'epic'
-        ? `https://api.epicgames.dev/epic/achievements/v1/public/achievements/product/${appid}/locale/en-us?includeAchievements=true`
-        : `https://api.steampowered.com/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v0002/?gameid=${appid}&format=json`,
-    dataType: 'json',
-    ContentType: 'json',
-    type: 'GET',
-    cache: true,
-    timeout: 5000,
-    beforeSend: () => {},
-    success: (data) => {
-      for (const globalStat of source === 'epic' ? data.achievements : data.achievementpercentages.achievements) {
-        const percent = Math.round((globalStat.percent || globalStat.achievement?.rarity?.percent) * 10) / 10;
-        if (percent > 100) percent = 100;
+  let rarity;
+  try {
+    const path = require('path');
+    const remote = require('@electron/remote');
+    rarity = require(path.join(remote.app.getAppPath(), 'util/rarity.js'));
+  } catch (err) {
+    return; // rarity is a non-essential enrichment — never let it break the game view
+  }
 
-        const elem = $(`#achievement li .achievement[data-name="${globalStat.name || globalStat.achievement.name}"]`);
+  // 1. Instant paint from the on-disk sidecar so a repeat/offline view shows tiers immediately
+  //    instead of waiting on (or losing) the network round-trip.
+  try {
+    applyRarity(rarity.readRarityCacheEntries(appid));
+  } catch (err) {
+    /* no cache yet — the refresh below will populate it */
+  }
 
-        elem.find('.stats .community span.data').text(percent);
-
-        if (percent >= 0 && percent <= 10) {
-          elem.addClass('rare');
-        }
-      }
-      $('.achievement-list > .header .sort-ach .sort.percentage').addClass('show');
-    },
-    error: () => {},
-    complete: () => {},
-  });
+  // 2. Background refresh: hits the network only when the cache is stale (TTL-gated inside the util),
+  //    persists the result, and repaints. Failures fall back to whatever the cache already showed.
+  rarity
+    .getRarityEntries(appid, source)
+    .then((entries) => applyRarity(entries))
+    .catch(() => {});
 }
 
 (function ($, window, document) {

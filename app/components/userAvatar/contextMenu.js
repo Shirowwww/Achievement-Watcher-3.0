@@ -87,7 +87,9 @@ function contextMenu(e, position = null) {
       menu.append(
         new MenuItem({
           icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/steam.png')),
-          label: `Import ${self.steamUsers[i].name}'s Steam avatar`,
+          // A lone "&" in a native menu label is an accelerator marker (swallowed); double it so a
+          // Steam name containing "&" renders literally.
+          label: `Import ${String(self.steamUsers[i].name).replace(/&/g, '&&')}'s Steam avatar`,
           click: function () {
             request(self.steamUsers[i].profile.avatarFull, { encoding: 'base64' })
               .then((res) => {
