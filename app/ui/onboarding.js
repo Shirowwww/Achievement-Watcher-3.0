@@ -44,6 +44,8 @@ const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avata
           avatarHint: 'Optionnel. Stocké localement sur ce PC.',
           apiTitle: 'Clé API Web Steam',
           apiCopy: 'Une clé améliore la récupération des données Steam. Tu peux laisser vide et la renseigner plus tard.',
+          apiWarning:
+            '⚠ IMPORTANT : sans clé API, le tout premier chargement de la bibliothèque sera TRÈS LENT — chaque jeu est récupéré en scrapant les pages Steam (plusieurs secondes par jeu). Avec une clé, c’est quasi instantané et plus précis. La fenêtre reste utilisable pendant le chargement, mais c’est vivement recommandé d’en mettre une.',
           apiLabel: 'Clé API Web Steam',
           apiLink: 'Obtenir une clé API Steam',
           apiNote: 'Utilise la page officielle Steam. La clé est chiffrée avant enregistrement.',
@@ -116,6 +118,8 @@ const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avata
           avatarHint: 'Optional. Stored locally on this PC.',
           apiTitle: 'Steam Web API key',
           apiCopy: 'A key improves Steam metadata retrieval. You can leave it empty and add it later.',
+          apiWarning:
+            '⚠ IMPORTANT: without an API key, the very first library load will be VERY SLOW — each game is fetched by scraping the Steam pages (several seconds per game). With a key it is near-instant and more accurate. The window stays usable while it loads, but adding one is strongly recommended.',
           apiLabel: 'Steam Web API key',
           apiLink: 'Get a Steam Web API key',
           apiNote: 'Use the official Steam page. The key is encrypted before saving.',
@@ -203,6 +207,7 @@ const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avata
     $('#onboard-avatar-hint').text(t.avatarHint);
     $('#onboard-api-title').text(t.apiTitle);
     $('#onboard-api-copy').text(t.apiCopy);
+    $('#onboard-api-warning-text').text(t.apiWarning);
     $('#onboard-api-label').text(t.apiLabel);
     $('#onboard-api-link span').text(t.apiLink);
     $('#onboard-api-note').text(t.apiNote);
@@ -484,6 +489,10 @@ const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avata
   async function skip() {
     if (!(await persist(true))) return;
     hide();
+    // First run defers the initial library scan to onboarding (see app.js boot). Skipping still needs
+    // to kick that first scan; resetUI() runs onStart(). A later, user-invoked onboarding (force=true)
+    // has isFirstRunSession=false — the library was already scanned at boot, so we don't rescan here.
+    if (isFirstRunSession) resetUI();
   }
 
   function hide() {

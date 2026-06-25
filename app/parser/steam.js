@@ -257,7 +257,7 @@ module.exports.getGameData = async (cfg) => {
       needSaving = true;
     }
 
-    needSaving = needSaving || GetMissingData(result, cfg.showHidden);
+    needSaving = needSaving || (await GetMissingData(result, cfg.showHidden));
     if (needSaving) {
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
       fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
@@ -492,7 +492,7 @@ const getSteamUsersList = (module.exports.getSteamUsersList = async () => {
 
 async function getSteamUserStatsFromSRV(user, appID) {
   const { ipcRenderer } = require('electron');
-  const result = ipcRenderer.sendSync('get-steam-data', { appid: appID, user, type: 'user' });
+  const result = await ipcRenderer.invoke('get-steam-data', { appid: appID, user, type: 'user' });
   return result;
 }
 
@@ -511,22 +511,22 @@ async function getSteamDataFromSRV(appID, lang) {
   const langObj = steamLanguages.find((language) => language.api === lang);
   const { ipcRenderer } = require('electron');
   const result =
-    ipcRenderer.sendSync('get-steam-data', {
+    (await ipcRenderer.invoke('get-steam-data', {
       appid: appID,
       type: 'common',
       lang: langObj,
-    }) || {};
+    })) || {};
 
   // The supplemental scrapers can legitimately come back empty (obscure title, scrape failed,
   // site unreachable). Default to [] instead of dereferencing `.achievements` on the result, or
   // the whole load throws and the game silently vanishes from the list — same failure as #56.
-  const steamhunters = result.isGame ? ipcRenderer.sendSync('get-steam-data', { appid: appID, type: 'steamhunters' }) : null;
+  const steamhunters = result.isGame ? await ipcRenderer.invoke('get-steam-data', { appid: appID, type: 'steamhunters' }) : null;
   const achievements = Array.isArray(steamhunters?.achievements) ? steamhunters.achievements : [];
 
   const steamcommunity =
     !result.isGame || lang == 'english' || !result.translated
       ? null
-      : ipcRenderer.sendSync('get-steam-data', { appid: appID, type: 'steamcommunity', lang: langObj });
+      : await ipcRenderer.invoke('get-steam-data', { appid: appID, type: 'steamcommunity', lang: langObj });
   const translatedAchievements = Array.isArray(steamcommunity?.achievements) ? steamcommunity.achievements : [];
 
   for (let ach of translatedAchievements) {
@@ -803,7 +803,7 @@ async function findInAppList(appID) {
 
   const app = appidListMap.get(appID);
   if (app) return app.name;
-  const name = ipcRenderer.sendSync('get-steam-data', { appid: appID, type: 'name' });
+  const name = await ipcRenderer.invoke('get-steam-data', { appid: appID, type: 'name' });
   return name;
   throw 'ERR_NAME_NOT_FOUND';
 }
@@ -872,14 +872,14 @@ async function findWorkingLink(appid, basename) {
 // `showHidden` is accepted for call-site compatibility but no longer gates hidden-description
 // backfill: the detail view reveals hidden descriptions on click regardless of the setting, so the
 // real text must always be fetched.
-function GetMissingData(data, showHidden) {
+async function GetMissingData(data, showHidden) {
   let updated = false;
   try {
     const { ipcRenderer } = require('electron');
     let updatedImgs, updatedDesc;
     if (Object.values(data.img).some((im) => !im)) {
       updated = true;
-      updatedImgs = ipcRenderer.sendSync('get-steam-data', { appid: data.appid, type: 'common' });
+      updatedImgs = await ipcRenderer.invoke('get-steam-data', { appid: data.appid, type: 'common' });
       data.img.header = data.img.header || updatedImgs.header || 'header';
       data.img.background = data.img.background || updatedImgs.background || 'page_bg_generated_v6b';
       data.img.portrait = data.img.portrait || updatedImgs.portrait || 'portrait';
@@ -898,7 +898,7 @@ function GetMissingData(data, showHidden) {
     const hasBlankVisible = data.achievement.list.some((ac) => ac.hidden != 1 && (!ac.description || String(ac.description).trim() === ''));
     const hasBlankHidden = data.achievement.list.some((ac) => ac.hidden == 1 && (!ac.description || String(ac.description).trim() === ''));
     if (!triedRecently && (hasBlankVisible || hasBlankHidden)) {
-      updatedDesc = ipcRenderer.sendSync('get-steam-data', { appid: data.appid, type: 'steamhunters' });
+      updatedDesc = await ipcRenderer.invoke('get-steam-data', { appid: data.appid, type: 'steamhunters' });
       // For obscure titles the supplemental lookup can return nothing, leaving `achievements`
       // undefined. Guard against it so a missing response never throws and drops the game (#56).
       const supplemental = updatedDesc && Array.isArray(updatedDesc.achievements) ? updatedDesc.achievements : [];

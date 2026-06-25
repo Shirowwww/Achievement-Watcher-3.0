@@ -412,6 +412,28 @@ ipcMain.on('get-steam-data', async (event, arg) => {
   event.returnValue = await getSteamData({ appid, type: arg.type, user: arg.user, lang: arg.lang });
 });
 
+// Reload the cached config when the renderer saves settings (onboarding finish, Settings auto-save).
+// Keeps configJS — and everything that reads it (the key-driven schema fast path below, background
+// auto-fix, overlay/notification lookups) — in sync without an app restart, so a Steam Web API key
+// entered during onboarding takes effect on the very next scan.
+ipcMain.on('config-saved', async () => {
+  try {
+    await startEngines(); // re-reads options.ini into configJS
+  } catch (err) {
+    debug.log('[config-saved] config reload failed: ' + (err.message || err));
+  }
+});
+
+// Async (invoke) twin of the handler above. The key-less puppeteer scrape inside getSteamData can take
+// up to ~30s per game; driving it through the blocking sendSync above froze the whole renderer for the
+// entire load (most visible on a fresh install with no API key and no cache — the UI hangs from the
+// very first game). Renderer callers use invoke so the UI thread stays responsive while the scrape runs
+// in the main process (which already serialises concurrent scrapes via the currentlyscraping mutex).
+ipcMain.handle('get-steam-data', async (event, arg) => {
+  const appid = +arg.appid;
+  return await getSteamData({ appid, type: arg.type, user: arg.user, lang: arg.lang });
+});
+
 ipcMain.on('get-steam-appid-from-title', async (event, arg) => {
   function normalizeTitle(str) {
     return str

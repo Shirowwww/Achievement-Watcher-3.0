@@ -382,6 +382,23 @@ var app = {
   onStart: function () {
     let self = this;
 
+    // Re-entry guard. onStart is triggered from several places (boot, the 15-min new-game scan, F5 /
+    // refresh, settings save, onboarding finish). makeList streams tiles into #game-list as each game
+    // loads, so two overlapping runs both append and the whole library shows up DUPLICATED — one copy
+    // fully loaded, the other still on the loading spinner. Coalesce instead: if a load is already
+    // running, request a single follow-up pass for when it finishes rather than starting a second
+    // concurrent scan.
+    if (self.listLoadInFlight) {
+      self.listRescanPending = true;
+      return;
+    }
+    self.listLoadInFlight = true;
+    clearTimeout(self.listLoadGuardTimer);
+    // Safety net: a makeList that rejects outright must never wedge the guard permanently.
+    self.listLoadGuardTimer = setTimeout(() => {
+      self.listLoadInFlight = false;
+    }, 5 * 60 * 1000);
+
     debug.log(`${remote.app.name} loading...`);
 
     // Arm background detection so newly-installed games are picked up (and registered with the
@@ -564,6 +581,14 @@ var app = {
         }
       )
       .then((list) => {
+        // Scan finished — release the re-entry guard. If a refresh was requested while this run was in
+        // flight, run exactly one more pass now (the just-finished list is stale) and skip finalising it.
+        clearTimeout(self.listLoadGuardTimer);
+        self.listLoadInFlight = false;
+        if (self.listRescanPending) {
+          self.listRescanPending = false;
+          return self.onStart();
+        }
         loadingElem.elem.hide();
         $('#main-footer').addClass('done');
 
@@ -2336,7 +2361,13 @@ var app = {
 (function ($, window, document) {
   $(function () {
     try {
-      app.onStart();
+      // On a genuine first run, defer the initial library scan until the onboarding guide is done:
+      // onboarding lets the user set their Steam Web API key (and game folders), and finish()/skip()
+      // trigger the first scan via resetUI()/onStart(). Scanning here too would run a slow, key-less
+      // scrape pass that the onboarding key is meant to avoid — so the first real scan picks up the key.
+      if (app.config.general?.onboardingCompleted === true) {
+        app.onStart();
+      }
 
       // Empty-state call to action: jump straight to Settings → Folders so a first-time user with no
       // detected games knows where to point the app. Bound once (static element, survives onStart re-runs).

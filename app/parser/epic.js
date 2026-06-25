@@ -152,7 +152,7 @@ module.exports.getGameData = async (cfg) => {
     // probably hidden achievements, lets try to get steam's data
     if (err.code !== 404) debug.log(err);
     if (!cfg.steamappid) return result;
-    const achs = ipcRenderer.sendSync('get-steam-data', { appid: cfg.steamappid, type: 'steamhunters' });
+    const achs = await ipcRenderer.invoke('get-steam-data', { appid: cfg.steamappid, type: 'steamhunters' });
     list = Array.isArray(achs?.achievements) ? achs.achievements : []; //guard: empty scrape must not throw and drop the game
   }
 
@@ -176,7 +176,7 @@ module.exports.getGameData = async (cfg) => {
     };
     if (links.background) ipcRenderer.send('stylize-background-for-appid', { background: links.background, appid: cfg.appID });
   } else {
-    let imgs = ipcRenderer.sendSync('get-steam-data', { appid: cfg.steamappid, type: 'common' }) || {};
+    let imgs = (await ipcRenderer.invoke('get-steam-data', { appid: cfg.steamappid, type: 'common' })) || {};
     result.img = {
       header: imgs.header || 'header',
       background: imgs.background || 'page_bg_generated_v6b.jpg',

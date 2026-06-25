@@ -446,6 +446,15 @@ module.exports.save = (config) => {
     }
     fs.mkdirSync(path.dirname(filename), { recursive: true });
     fs.writeFileSync(filename, ini.stringify(options), 'utf8');
+    // Tell the main process to reload its cached config. The daemon loads options.ini once at startup
+    // and otherwise keeps the in-memory copy, so a Steam Web API key entered during onboarding (or in
+    // Settings) would not reach the main-process data paths — the key-driven fast schema fetch, the
+    // background emulator auto-fix, overlay/notification lookups — until the next restart. This module
+    // is also require()d by the main process itself (where ipcRenderer is absent), so guard the send.
+    try {
+      const { ipcRenderer } = require('electron');
+      if (ipcRenderer) ipcRenderer.send('config-saved');
+    } catch {}
     return resolve();
   });
 };

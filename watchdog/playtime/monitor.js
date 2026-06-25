@@ -17,7 +17,20 @@ const debug = new (require('@xan105/log'))({
 });
 
 const appdataPath = process.env['APPDATA'];
-const blacklist = require('./filter.json');
+// filter.json is an optional, machine-local process blacklist (gitignored, not shipped, and nothing
+// generates it). On a fresh install/clone it is absent — a hard require() here threw MODULE_NOT_FOUND,
+// crashing the monitor on boot and crash-looping it, which silently killed playtime tracking,
+// game-launch detection and live notifications. Fall back to empty lists so the monitor always starts;
+// the lists are only a noise-reduction optimisation, not required for correctness.
+let blacklist;
+try {
+  blacklist = require('./filter.json');
+} catch {
+  blacklist = { ignore: [], mute: [] };
+}
+if (!blacklist || typeof blacklist !== 'object') blacklist = {};
+if (!Array.isArray(blacklist.ignore)) blacklist.ignore = [];
+if (!Array.isArray(blacklist.mute)) blacklist.mute = [];
 let gameIndex;
 let savedConfigs;
 
