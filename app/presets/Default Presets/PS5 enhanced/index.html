@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Popup Animation</title>
+    <meta name="duration" content="4000" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      body {
+        transform-origin: center center;
+      }
+    </style>
+  </head>
+  <body>
+    <meta width="450" height="150" />
+    <div class="ach">
+      <div class="icon">
+        <img src="" alt="Icon" />
+      </div>
+      <div class="text_wrap">
+        <p class="title"><span class="title-inner"></span></p>
+        <span class="detail"></span>
+      </div>
+      <div class="ring-container">
+        <div class="ringring"></div>
+        <div class="circle">
+          <img src="./psicon.png" height="9" />
+        </div>
+      </div>
+    </div>
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        const metaDur = document.querySelector('meta[name="duration"]');
+        const baseTotal = Math.max(1, Number(metaDur?.content || 4000));
+        function notifyScreenshotReady(delayMs = 0) {
+          const safeDelay = Math.max(0, Number(delayMs) || 0);
+          setTimeout(() => {
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                window.api?.notificationRenderReady?.();
+              });
+            });
+          }, safeDelay);
+        }
+        window.api.onNotification((notificationData) => {
+          const titleEl = document.querySelector(".title");
+          const titleInnerEl = document.querySelector(".title-inner");
+          const detailEl = document.querySelector(".detail");
+          if (
+            notificationData &&
+            notificationData.displayName &&
+            notificationData.description &&
+            notificationData.iconPath
+          ) {
+            titleInnerEl.textContent = notificationData.displayName;
+            detailEl.textContent = notificationData.description;
+            document.querySelector(
+              ".icon img"
+            ).src = `file:///${notificationData.iconPath}`;
+            const scale = Math.max(
+              0.01,
+              parseFloat(notificationData.scale || 1)
+            );
+            const container = document.querySelector(".ach");
+            container?.style?.setProperty("--scale", String(scale));
+          }
+          const container = document.querySelector(".ach");
+          const total = Math.max(0, Number(metaDur?.content || baseTotal));
+          const timelineScale = Math.max(0.1, total / baseTotal);
+          const inDur = Math.max(120, Math.round(300 * timelineScale));
+          const outDur = Math.max(120, Math.round(300 * timelineScale));
+          const outDelay = Math.max(0, total - outDur);
+          container?.style?.setProperty("--inDur", `${inDur}ms`);
+          container?.style?.setProperty("--outDur", `${outDur}ms`);
+          container?.style?.setProperty("--outDelay", `${outDelay}ms`);
+          container?.style?.setProperty("--timeline-scale", String(timelineScale));
+          container.classList.add("active");
+          notifyScreenshotReady(inDur + 80);
+
+          // Title marquee only if overflows
+          requestAnimationFrame(() => {
+            try { titleInnerEl.getAnimations().forEach((a) => a.cancel()); } catch {}
+            titleEl.classList.remove("marquee");
+            void titleEl.offsetWidth;
+            const overflowX = (titleInnerEl.scrollWidth || 0) - (titleEl.clientWidth || 0);
+            if (overflowX > 0) {
+              const px = Math.ceil(overflowX + 24);
+              titleEl.classList.add("marquee");
+              titleInnerEl.animate(
+                [
+                  { transform: "translateX(0)" },
+                  { transform: `translateX(-${px}px)` },
+                ],
+                {
+                  duration: Math.max(3000, Math.round(px / 50) * 1000),
+                  delay: 1200,
+                  easing: "linear",
+                  fill: "both",
+                }
+              );
+            }
+          });
+
+          setTimeout(() => {
+            container.classList.remove("active");
+            window.api.closeNotificationWindow();
+          }, total);
+        });
+      });
+    </script>
+  </body>
+</html>

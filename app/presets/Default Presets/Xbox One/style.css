@@ -1,0 +1,334 @@
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  margin: 0;
+  background: transparent;
+  color: #fff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --scale: 1;
+  --ach-width: 600px;
+  --ach-collapsed-width: 100px;
+  --timeline-scale: 1;
+}
+
+.ach {
+  position: fixed;
+  left: 50%;
+  right: auto;
+  bottom: 0px;
+  top: auto;
+  width: var(--ach-width, 600px);
+  height: 160px;
+  transform: translate(var(--translate-x, -50%), var(--translate-y, 0))
+    scale(var(--scale, 1));
+  transform-origin: var(--origin-x, center) var(--origin-y, bottom);
+  pointer-events: none;
+}
+
+/* .achievement-banner */
+.achievement-banner {
+  position: absolute;
+  bottom: 0;
+  left: calc(50% - (var(--ach-collapsed-width, 100px) / 2));
+  width: var(--ach-collapsed-width, 100px);
+  height: 100px;
+  border-radius: 50px;
+  background-color: transparent;
+  overflow: hidden;
+}
+
+.achievement-banner.animated {
+  animation: mainAnimationFrames linear calc(5s * var(--timeline-scale));
+  animation-delay: calc(1s * var(--timeline-scale));
+  animation-iteration-count: 1;
+  transform-origin: 50% 50%;
+  animation-fill-mode: forwards;
+}
+
+.achievement-banner.animated.achievement-banner-big {
+  width: var(--ach-width, 600px);
+  left: calc(50% - (var(--ach-width, 600px) / 2));
+  background-color: #107c10;
+}
+
+/* Loader animate */
+.achievement-loader {
+  width: var(--ach-collapsed-width, 100px);
+  height: 100px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 50px;
+  background-color: #12a314;
+  z-index: 10;
+  animation: achievementLoaderAnimationFrames ease-out
+    calc(7s * var(--timeline-scale));
+  animation-fill-mode: forwards;
+  transform: scale(0);
+  transform-origin: 50% 50%;
+}
+
+.achievement-loader:nth-of-type(1) {
+  animation: achievementLoaderAnimationFrames;
+  background-color: #139d13;
+  animation-duration: calc(7s * var(--timeline-scale));
+}
+
+.achievement-loader:nth-of-type(2) {
+  animation: achievementLoaderAnimationFrames;
+  background-color: #107c10;
+  animation-delay: calc(0.1s * var(--timeline-scale));
+  animation-duration: calc(6.5s * var(--timeline-scale));
+}
+
+.achievement-loader:nth-of-type(3) {
+  animation: achievementLoaderAnimationFrames;
+  background-color: #139d13;
+  animation-delay: calc(0.25s * var(--timeline-scale));
+  animation-duration: calc(6s * var(--timeline-scale));
+}
+
+.achievement-loader:nth-of-type(4) {
+  animation: achievementLoaderAnimationFrames;
+  background-color: #107c10;
+  animation-delay: calc(0.5s * var(--timeline-scale));
+  animation-duration: calc(5.5s * var(--timeline-scale));
+}
+
+.achievement-loader:nth-of-type(5) {
+  animation: achievementLoaderAnimationFrames;
+  background-color: #139d13;
+  animation-delay: calc(0.75s * var(--timeline-scale));
+  animation-duration: calc(5s * var(--timeline-scale));
+}
+
+.icon img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  margin-top: 10px;
+  margin-left: 10px;
+  z-index: 10;
+  animation: achievementLoaderAnimationFrames;
+  animation-delay: calc(1s * var(--timeline-scale));
+  animation-duration: calc(4.5s * var(--timeline-scale));
+}
+
+@keyframes achievementLoaderAnimationFrames {
+  0% {
+    transform: scaleX(0) scaleY(0);
+    opacity: 0;
+  }
+  10% {
+    transform: scaleX(1) scaleY(1);
+    opacity: 1;
+  }
+  90% {
+    transform: scaleX(1) scaleY(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(0) scaleY(0);
+    opacity: 0;
+  }
+}
+
+.achievement-trophy {
+  background-color: transparent !important;
+  animation: xboxLogoAnimationFrames ease-out calc(4s * var(--timeline-scale));
+  animation-delay: calc(1s * var(--timeline-scale));
+  color: #fff;
+  position: relative;
+}
+
+.achievement-trophy:before {
+  font-size: 3em;
+  top: 32px;
+  left: 20px;
+  position: absolute;
+}
+
+.ach .achievement-banner .text_wrap {
+  position: absolute;
+  width: 450px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: #fff;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+.achievement-banner .text_wrap .title {
+  position: absolute;
+  top: -60px;
+  transform: translateX(-50%) translateX(40px);
+  font-size: 27px;
+  animation: achievementNameAnimationFrames linear
+    calc(2s * var(--timeline-scale));
+  animation-delay: calc(1.4s * var(--timeline-scale));
+  opacity: 0;
+  max-width: 70%;
+  text-align: center;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.achievement-banner .text_wrap .detail {
+  position: absolute;
+  top: -30px;
+  transform: translateX(-50%) translateY(20px);
+  font-size: 20px;
+  animation: achievementTextAnimationFrames linear
+    calc(6s * var(--timeline-scale));
+  animation-delay: calc(2.4s * var(--timeline-scale));
+  opacity: 0;
+  max-width: 60%;
+  text-align: center;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@keyframes xboxLogoAnimationFrames {
+  0% {
+    background-color: transparent !important;
+    transform: scaleX(0) scaleY(0);
+  }
+  5% {
+    background-color: transparent !important;
+    transform: scaleX(1.2) scaleY(1.2);
+  }
+  10% {
+    background-color: transparent !important;
+    transform: scaleX(1) scaleY(1);
+  }
+  90% {
+    background-color: transparent !important;
+    transform: scaleX(1) scaleY(1);
+  }
+  95% {
+    background-color: transparent !important;
+    transform: scaleX(1.2) scaleY(1.2);
+  }
+  100% {
+    background-color: transparent !important;
+    transform: scaleX(0) scaleY(0);
+  }
+}
+
+@keyframes achievementTextAnimationFrames {
+  0% {
+    opacity: 0;
+    transform: translate(25px, 120px);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(25px, 0);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(25px, 0);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(300px, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(300px, 0);
+  }
+}
+
+@keyframes achievementNameAnimationFrames {
+  0% {
+    opacity: 0;
+    transform: translateX(300px);
+  }
+  10% {
+    opacity: 0.5;
+    transform: translateX(100px);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateX(30px);
+  }
+  60% {
+    opacity: 0.8;
+    transform: translateX(30px);
+  }
+  80% {
+    opacity: 1;
+    transform: translateX(30px);
+  }
+  90% {
+    opacity: 1;
+    transform: translate(30px, -50px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(30px, -100px);
+  }
+}
+
+@keyframes mainAnimationFrames {
+  0% {
+  }
+  10% {
+    background-color: #107c10;
+  }
+  15% {
+    width: 100px;
+    height: 100px;
+    left: calc(50% - 50px);
+  }
+  30% {
+    width: 450px;
+    left: calc(50% - 225px);
+  }
+  50% {
+    width: 450px;
+    left: calc(50% - 225px);
+  }
+  80% {
+    width: 450px;
+    left: calc(50% - 225px);
+  }
+  90% {
+    width: 100px;
+    height: 100px;
+    left: calc(50% - 50px);
+    background-color: #107c10;
+  }
+  95% {
+    width: 100px;
+    height: 100px;
+    left: calc(50% - 50px);
+    background-color: transparent;
+  }
+  100% {
+  }
+}

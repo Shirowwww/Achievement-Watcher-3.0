@@ -1,0 +1,256 @@
+@font-face {
+  font-family: "PS5_Font";
+  src: url("SST.ttf");
+  font-weight: normal;
+}
+@font-face {
+  font-family: "PS5_Font";
+  src: url("SSTLight.ttf");
+  font-weight: lighter;
+}
+
+html {
+  overflow: visible;
+  scrollbar-width: none;
+}
+.scroll-container {
+  max-height: 80vh;
+  overflow-y: scroll;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+body {
+  font-family: "PS5_Font", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 150px;
+}
+
+.ach {
+  display: flex;
+  align-items: center;
+  position: relative;
+  box-sizing: border-box;
+  isolation: isolate;
+  background-image: linear-gradient(
+    to right bottom,
+    #2a2a2d,
+    #262629,
+    #232326,
+    #202023,
+    #1c1c1f,
+    #19191c,
+    #161619,
+    #141417,
+    #121215,
+    #101013,
+    #0d0d10,
+    #0a0a0d
+  );
+  color: rgb(239, 242, 245);
+  border-radius: 20px;
+  /* leave space on the right for the ring */
+  padding: 15px 56px 15px 20px;
+  width: fit-content;
+  max-width: 450px;
+  opacity: 0;
+  transform: translateX(0) scale(var(--scale, 1));
+  transform-origin: center center;
+  animation: slideIn var(--inDur, 500ms) ease-out forwards,
+    slideOut var(--outDur, 500ms) ease-in var(--outDelay, 3500ms) forwards;
+}
+
+.ach::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 0.75px;
+  background: linear-gradient(
+    to right bottom,
+    rgba(178, 184, 194, 0.96) 0%,
+    rgba(128, 134, 144, 0.86) 34%,
+    rgba(88, 93, 101, 0.80) 70%,
+    rgba(138, 144, 154, 0.90) 100%
+  );
+  box-shadow: 0 0 0 0.35px rgba(145, 151, 162, 0.26);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ach > * {
+  position: relative;
+  z-index: 1;
+}
+
+.icon {
+  width: 60px;
+  height: 60px;
+  margin-right: 15px;
+}
+
+.icon img {
+  width: 60px;
+  height: 60px;
+  border-radius: 10%;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.text_wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* allow shrinking to avoid overlap */
+  overflow: hidden; /* clip marquee content */
+
+  transform: translateZ(0);
+}
+
+.title {
+  font-size: 20px;
+  line-height: 1.18;
+  margin-bottom: 8px;
+  margin-top: 0px;
+  font-weight: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-top: 1px;
+  padding-bottom: 3px;
+  text-rendering: geometricPrecision;
+}
+
+/* Marquee state only when overflow occurs */
+.title.marquee {
+  text-overflow: clip; /* remove ellipsis while animating */
+}
+
+/* Inner span that actually moves for marquee */
+.title-inner {
+  display: inline-block;
+  will-change: transform;
+  padding-right: 24px; /* breathing room at end of scroll */
+}
+
+.detail {
+  font-family: \"PS5_Font\", \"Segoe UI\", sans-serif;
+  font-size: 16px;
+  line-height: 1.28;
+  opacity: 0.7;
+  font-weight: 300;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  padding-top: 1px;
+  padding-bottom: 4px;
+  text-rendering: geometricPrecision;
+}
+.ring-container {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%) scale(1.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 31px;
+  height: 31px;
+  border-radius: 50%;
+  overflow: hidden; /* dalga icon sınırını geçmesin */
+}
+
+.circle {
+  width: 17px;
+  height: 17px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 51%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-items: center;
+  transform: translate(-50%, -50%);
+}
+
+.ringring {
+  box-sizing: border-box;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  width: 27px;
+  height: 27px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center center;
+  animation: pulsate calc(1s * var(--timeline-scale, 1)) ease-out infinite;
+  opacity: 0;
+}
+@-webkit-keyframes pulsate {
+  0% {
+    -webkit-transform: scale(0.5, 0.5);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    -webkit-transform: scale(1.6, 1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px) scale(var(--scale, 1));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(var(--scale, 1));
+  }
+}
+
+@keyframes slideOut {
+  to {
+    opacity: 0;
+    transform: translateX(20px) scale(var(--scale, 1));
+  }
+}
+
+.ach.active {
+  animation: slideIn var(--inDur, 300ms) ease-out forwards,
+    slideOut var(--outDur, 300ms) ease-in var(--outDelay, 3000ms) forwards;
+}
+
+@keyframes pulsate {
+  0% {
+    transform: translate(-50%, -50%) scale(0.75);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.08);
+    opacity: 0;
+  }
+}
+
+
+.circle img {
+  display: block;
+  background: transparent;
+  transform-origin: center center;
+}

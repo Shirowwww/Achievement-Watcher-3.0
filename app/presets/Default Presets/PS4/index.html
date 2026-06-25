@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Popup Animation</title>
+    <meta name="duration" content="5000" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      body {
+        transform-origin: center center;
+      }
+    </style>
+  </head>
+  <body>
+    <meta width="400" height="125" />
+    <div>
+      <div class="ach">
+        <div class="icon">
+          <img src="" alt="Icon" />
+        </div>
+        <div class="text_wrap">
+          <p class="title"></p>
+          <span class="detail"></span>
+        </div>
+        <div class="ring-container">
+          <div class="ringring"></div>
+          <div class="circle">
+            <img src="./psicon.png" height="9" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        // Helpers similar to Default Presets/Steam for direction + restart
+        const metaDur = document.querySelector('meta[name="duration"]');
+        const baseTotal = Math.max(1, Number(metaDur?.content || 5000));
+        let closeTimer = null;
+        let notificationSeq = 0;
+        function notifyScreenshotReady(delayMs = 0) {
+          const safeDelay = Math.max(0, Number(delayMs) || 0);
+          setTimeout(() => {
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                window.api?.notificationRenderReady?.();
+              });
+            });
+          }, safeDelay);
+        }
+
+        function toFileSrc(iconPath) {
+          if (!iconPath) return "";
+          const p = String(iconPath).replace(/\\/g, "/");
+          return p.startsWith("file://") ? p : `file:///${p}`;
+        }
+
+        function preloadIcon(src, timeoutMs = 180) {
+          return new Promise((resolve) => {
+            if (!src) {
+              resolve("");
+              return;
+            }
+            let settled = false;
+            const done = () => {
+              if (settled) return;
+              settled = true;
+              resolve(src);
+            };
+            const img = new Image();
+            img.decoding = "async";
+            img.onload = done;
+            img.onerror = done;
+            const timer = setTimeout(done, timeoutMs);
+            img.onload = () => {
+              clearTimeout(timer);
+              done();
+            };
+            img.onerror = () => {
+              clearTimeout(timer);
+              done();
+            };
+            img.src = src;
+          });
+        }
+        function computeFromTopFallback() {
+          try {
+            const yMid = (window.screenY || 0) + (window.outerHeight || 0) / 2;
+            const h = screen.availHeight || screen.height || 1080;
+            return yMid < h / 2;
+          } catch {
+            return false;
+          }
+        }
+        function setDirectionByPosition(ach, posString) {
+          const pos = String(posString || "").toLowerCase();
+          const fromTop =
+            pos.includes("top") || (!pos && computeFromTopFallback());
+          const atLeft = pos.includes("left");
+          const atRight = pos.includes("right");
+          ach.classList.remove(
+            "from-top",
+            "from-bottom",
+            "at-left",
+            "at-center",
+            "at-right"
+          );
+          ach.classList.add(fromTop ? "from-top" : "from-bottom");
+          ach.classList.add(
+            atLeft ? "at-left" : atRight ? "at-right" : "at-center"
+          );
+        }
+        function restartAnimation(ach, totalMs) {
+          ach.classList.remove("active");
+          if (closeTimer) {
+            clearTimeout(closeTimer);
+            closeTimer = null;
+          }
+          // Restart on future frames to avoid a forced sync reflow.
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              ach.classList.add("active");
+            });
+          });
+          closeTimer = setTimeout(() => {
+            ach.classList.remove("active");
+            window.api?.closeNotificationWindow?.();
+          }, totalMs);
+        }
+        window.api.onNotification((notificationData) => {
+          const seq = ++notificationSeq;
+          // Element refs
+          const ach = document.querySelector(".ach");
+          const titleEl = document.querySelector(".title");
+          const detailEl = document.querySelector(".detail");
+          const iconEl = document.querySelector(".icon img");
+          let scaleValue = 1;
+          let iconSrc = "";
+
+          if (
+            notificationData &&
+            notificationData.displayName &&
+            notificationData.description &&
+            notificationData.iconPath
+          ) {
+            titleEl.textContent = notificationData.displayName;
+            detailEl.textContent = notificationData.description;
+            iconSrc = toFileSrc(notificationData.iconPath);
+            scaleValue = parseFloat(notificationData.scale || 1) || 1;
+            ach.style.setProperty("--scale", scaleValue);
+          }
+          const startNotification = () => {
+            if (seq !== notificationSeq) return;
+            // Direction + restart like Steam
+            setDirectionByPosition(ach, notificationData?.position);
+            const total = Math.max(0, Number(metaDur?.content || baseTotal));
+            const timelineScale = Math.max(0.1, total / baseTotal);
+            const inDur = Math.max(120, Math.round(500 * timelineScale));
+            const outDur = Math.max(120, Math.round(500 * timelineScale));
+            const outDelay = Math.max(0, total - outDur);
+            ach?.style?.setProperty("--inDur", `${inDur}ms`);
+            ach?.style?.setProperty("--outDur", `${outDur}ms`);
+            ach?.style?.setProperty("--outDelay", `${outDelay}ms`);
+            ach?.style?.setProperty(
+              "--ringDelay",
+              `${Math.max(0, inDur + 80)}ms`
+            );
+            ach?.style?.setProperty("--timeline-scale", String(timelineScale));
+            restartAnimation(ach, total);
+            notifyScreenshotReady(inDur + 120);
+
+            // Defer marquee measurements until entry animation has settled.
+            setTimeout(() => {
+              // TITLE marquee via Web Animations API
+              try {
+                titleEl.getAnimations().forEach((a) => a.cancel());
+              } catch {}
+              titleEl.classList.remove("marquee");
+              const tOverflow = titleEl.scrollWidth - titleEl.clientWidth;
+              if (tOverflow > 0) {
+                const px = Math.ceil(tOverflow + 24);
+                titleEl.classList.add("marquee"); // makes it inline-block under clipping parent
+                titleEl.animate(
+                  [
+                    { transform: "translateX(0)" },
+                    { transform: `translateX(-${px}px)` },
+                  ],
+                  {
+                    duration: Math.max(3000, Math.round(px / 50) * 1000),
+                    delay: 1200,
+                    easing: "linear",
+                    fill: "both",
+                  }
+                );
+              }
+
+              // DETAIL marquee if overflow exceeds 2 lines
+              try {
+                detailEl.getAnimations().forEach((a) => a.cancel());
+              } catch {}
+              detailEl.classList.remove("marquee");
+              const dOverflowY = detailEl.scrollHeight - detailEl.clientHeight;
+              if (dOverflowY > 1) {
+                const dpx = Math.ceil(
+                  detailEl.scrollWidth - detailEl.clientWidth + 24
+                );
+                detailEl.classList.add("marquee");
+                detailEl.animate(
+                  [
+                    { transform: "translateX(0)" },
+                    { transform: `translateX(-${dpx}px)` },
+                  ],
+                  {
+                    duration: Math.max(3000, Math.round(dpx / 45) * 1000),
+                    delay: 1200,
+                    easing: "linear",
+                    fill: "both",
+                  }
+                );
+              }
+            }, Math.max(0, inDur + 80));
+          };
+
+          preloadIcon(iconSrc).then((readySrc) => {
+            if (seq !== notificationSeq) return;
+            if (readySrc) {
+              iconEl.src = readySrc;
+            }
+            startNotification();
+          });
+
+        });
+      });
+    </script>
+  </body>
+</html>

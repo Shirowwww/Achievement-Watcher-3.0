@@ -1,0 +1,336 @@
+@font-face {
+  font-family: "Shirow UI";
+  src: url("./fonts/NotoSans-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Shirow UI";
+  src: url("./fonts/NotoSans-SemiBold.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+html {
+  overflow: hidden;
+  scrollbar-width: none;
+}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --notify-top: #2f4163;
+  --notify-bottom: #1d2941;
+  /* Accent (left bar + logo outline + glows) and timeline bar all share the app's
+     profile-bar blue. */
+  --bar-a: #628bf2;
+  --bar-b: #78a8fb;
+  --bar-c: #98c4ff;
+  --accent: var(--bar-a);
+  --accent-soft: var(--bar-c);
+  --glow: rgba(98, 139, 242, 0.55);
+  --glow-strong: rgba(120, 168, 251, 0.65);
+  --title: #ffffff;
+  --detail: #c3cee0;
+  --timeline-scale: 1;
+  /* full card width vs. the collapsed (icon-only) width it unfurls from */
+  --full-width: 360px;
+  --collapsed-width: 88px;
+}
+
+body {
+  font-family: "Shirow UI", "Segoe UI", sans-serif;
+  background: transparent;
+}
+
+/* Card -------------------------------------------------------------------- */
+.ach {
+  width: var(--collapsed-width);
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: absolute;
+  bottom: 8px;
+  left: 22px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: linear-gradient(155deg, var(--notify-top) 0%, var(--notify-bottom) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  /* Fade / rise handled by the transition; the unfurl + spin + reveal are the
+     keyframes below, all started by the .active class index.html toggles. */
+  opacity: 0;
+  transform: translateY(16px) scale(var(--scale, 1));
+  transform-origin: left bottom;
+  transition: opacity 0.32s ease, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ach.active {
+  opacity: 1;
+  transform: translateY(0) scale(var(--scale, 1));
+  /* Slow, single "unfurl": the card starts at the icon width and stretches open
+     to reveal the text — no infinite alternate loop like the old preset. */
+  animation: aw-unfurl calc(1.05s * var(--timeline-scale)) cubic-bezier(0.22, 1, 0.36, 1) 0.18s forwards;
+}
+/* Mirror the entrance on close: the fold clips the still-visible text naturally,
+   then the compact shape fades away. */
+.ach.leaving {
+  animation: aw-fold-out 0.72s cubic-bezier(0.64, 0, 0.78, 0) forwards;
+  transition: none;
+  pointer-events: none;
+}
+
+/* Same thresholds and palette families as the achievement menu:
+   gold <3%, silver <6%, bronze <=10%. */
+.ach.rarity-gold {
+  --bar-a: #ffd24e;
+  --bar-b: #ffe069;
+  --bar-c: #fff0a8;
+  --accent: #ffd24e;
+  --accent-soft: #fff0a8;
+  --glow: rgba(255, 216, 72, 0.58);
+  --glow-strong: rgba(255, 205, 55, 0.72);
+}
+.ach.rarity-silver {
+  --bar-a: #9fb2cc;
+  --bar-b: #c3d8f2;
+  --bar-c: #eef4fb;
+  --accent: #9fb2cc;
+  --accent-soft: #eef4fb;
+  --glow: rgba(195, 216, 242, 0.56);
+  --glow-strong: rgba(224, 235, 250, 0.72);
+}
+.ach.rarity-bronze {
+  --bar-a: #cd7f32;
+  --bar-b: #e0915a;
+  --bar-c: #f0bd91;
+  --accent: #cd7f32;
+  --accent-soft: #f0bd91;
+  --glow: rgba(205, 111, 41, 0.56);
+  --glow-strong: rgba(233, 153, 83, 0.72);
+}
+
+/* Accent bar on the leading edge (with a gentle glow pulse once settled) */
+.ach::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-soft) 100%);
+}
+.ach.active::before {
+  animation: aw-accent-glow 2.6s ease-in-out calc(1.2s * var(--timeline-scale)) infinite;
+}
+
+/* Depleting timeline along the bottom edge */
+.ach::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  transform-origin: left center;
+  transform: scaleX(0);
+  background: linear-gradient(90deg, var(--bar-a) 0%, var(--bar-b) 62%, var(--bar-c) 100%);
+  box-shadow: 0 0 8px rgba(98, 139, 242, 0.5);
+  opacity: 0;
+}
+.ach.active::after {
+  /* Fade in instead of popping into view, then drain across the dwell. */
+  animation: aw-timeline calc(5s * var(--timeline-scale)) linear calc(1.2s * var(--timeline-scale)) forwards;
+}
+
+/* Icon -------------------------------------------------------------------- */
+.ach .icon {
+  flex: 0 0 auto;
+  height: 60px;
+  width: 60px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 0 0 2px var(--glow);
+  overflow: hidden;
+  opacity: 0;
+  transform: rotate(-540deg) scale(0.2);
+}
+.ach.active .icon {
+  /* Spin-in once (the bit you liked), then a soft idle glow so it feels alive. */
+  animation: aw-spin calc(0.85s * var(--timeline-scale)) cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both,
+    aw-icon-glow 2.6s ease-in-out calc(1.2s * var(--timeline-scale)) infinite;
+}
+.ach.leaving .icon {
+  /* Echo the entrance at the end: one last spin, shrink, then disappear. */
+  animation: aw-spin-out 0.62s cubic-bezier(0.4, 0, 1, 1) 0.06s both;
+}
+.ach .icon img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+/* Text -------------------------------------------------------------------- */
+.ach .text_wrap {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden; /* clip during unfurl + clip marquee */
+  opacity: 0;
+  transform: translateX(12px);
+}
+.ach.active .text_wrap {
+  /* Revealed after the card opens, so the text "arrives" into the unfurled space. */
+  animation: aw-text-reveal calc(0.55s * var(--timeline-scale)) ease calc(0.72s * var(--timeline-scale)) forwards;
+}
+
+/* Each line is a clipping box; its inner .scroll span pans horizontally when the
+   text is wider than the box (see startMarquee in index.html). */
+.title,
+.detail {
+  position: relative;
+  z-index: 1;
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.title .scroll,
+.detail .scroll {
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.title {
+  color: var(--title);
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.25;
+  margin: 0;
+  letter-spacing: 0.2px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.detail {
+  color: var(--detail);
+  font-size: 13.5px;
+  line-height: 1.3;
+  margin-top: 2px;
+}
+
+/* Keyframes --------------------------------------------------------------- */
+@keyframes aw-unfurl {
+  from {
+    width: var(--collapsed-width);
+  }
+  to {
+    width: var(--full-width);
+  }
+}
+
+@keyframes aw-fold-out {
+  0% {
+    width: var(--full-width);
+    opacity: 1;
+    transform: translateY(0) scale(var(--scale, 1));
+  }
+  72% {
+    width: var(--collapsed-width);
+    opacity: 1;
+    transform: translateY(0) scale(var(--scale, 1));
+  }
+  100% {
+    width: var(--collapsed-width);
+    opacity: 0;
+    transform: translateY(10px) scale(calc(var(--scale, 1) * 0.96));
+  }
+}
+
+@keyframes aw-spin {
+  0% {
+    opacity: 0;
+    transform: rotate(-540deg) scale(0.2);
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+@keyframes aw-spin-out {
+  0% {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+  45% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(540deg) scale(0.2);
+  }
+}
+
+@keyframes aw-text-reveal {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes aw-icon-glow {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 2px var(--glow), 0 0 0 rgba(98, 139, 242, 0);
+  }
+  50% {
+    box-shadow: inset 0 0 0 2px var(--glow-strong), 0 0 14px rgba(98, 139, 242, 0.5);
+  }
+}
+
+@keyframes aw-accent-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(98, 139, 242, 0);
+    filter: brightness(1);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(98, 139, 242, 0.6);
+    filter: brightness(1.25);
+  }
+}
+
+@keyframes aw-timeline {
+  from {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.95;
+  }
+  to {
+    transform: scaleX(0);
+    opacity: 0.95;
+  }
+}

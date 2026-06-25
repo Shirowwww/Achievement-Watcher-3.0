@@ -1,0 +1,74 @@
+:root {
+  --transition: 0.3s;
+  --displaytime: 4s;
+  --scale: 1;
+  --roundness: 16px;
+  --slide-distance: 30px;
+}
+
+.ach {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 340px;
+  box-sizing: border-box;
+  padding: 16px 20px;
+  background: rgba(30, 30, 30, 0.9);
+  border-radius: var(--roundness);
+  backdrop-filter: blur(8px);
+  transform: translateY(var(--slide-distance)) scale(0);
+  transform-origin: center center;
+  opacity: 0;
+}
+
+.ach.is-active {
+  animation:
+    ach-in var(--transition) ease-out forwards,
+    ach-hold calc(var(--displaytime) - var(--transition) * 2) ease forwards var(--transition),
+    ach-out var(--transition) ease-in forwards calc(var(--displaytime) - var(--transition));
+}
+
+@keyframes ach-in {
+  to {
+    transform: translateY(0) scale(var(--scale));
+    opacity: 1;
+  }
+}
+
+@keyframes ach-hold {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(var(--scale));
+  }
+}
+
+@keyframes ach-out {
+  to {
+    transform: translateY(calc(var(--slide-distance) * -1)) scale(calc(var(--scale) * 0.9));
+    opacity: 0;
+  }
+}
+
+.icon img {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+}
+
+.text_wrap {
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.title {
+  font-weight: bold;
+  font-size: 18px;
+  margin: 0;
+}
+
+.detail {
+  font-size: 14px;
+  opacity: 0.85;
+}

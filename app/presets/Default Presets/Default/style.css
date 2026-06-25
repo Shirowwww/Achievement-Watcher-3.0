@@ -1,0 +1,337 @@
+html {
+  overflow: hidden;
+  scrollbar-width: none;
+}
+
+:root {
+  --ach-in: 1400ms;
+  --ach-hold: 4000ms;
+  --ach-out: 400ms;
+}
+.scroll-container {
+  max-height: 80vh;
+  overflow-y: scroll;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scroll-container::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.ach {
+  background: #000;
+  display: block;
+  position: fixed;
+  bottom: -255em;
+  left: 50%;
+  margin-left: 0;
+  transform: translate(-50%, 0) scale(var(--scale, 1));
+  transform-origin: center bottom;
+  width: 450px;
+  height: 75px;
+  color: #fff;
+  font-size: 16px;
+  border-radius: 30px;
+  transition: all 0.4s ease;
+}
+
+.ach .icon {
+  font-size: 2.2em;
+  width: 60px;
+  padding: 0.1em 0 0;
+  text-align: center;
+  height: auto;
+}
+
+.ach .icon img {
+  width: 100px;
+  height: auto;
+  border-radius: 60%;
+  text-align: center;
+  margin-top: -25px;
+  margin-left: -10px;
+}
+
+.ach .text_wrap {
+  position: absolute;
+  top: 12px;
+  left: 90px;
+  right: 20px;
+  width: auto;
+  max-height: 5em;
+  overflow: hidden;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+.ach .title {
+  font-size: 1.2em;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+
+.ach .detail {
+  width: 100%;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  margin: 0;
+}
+
+.ach .title.marquee {
+  display: inline-block;
+  text-overflow: clip;
+  overflow: visible;
+}
+
+.ach .detail.marquee {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  -webkit-line-clamp: initial;
+  line-clamp: initial;
+  -webkit-box-orient: initial;
+  will-change: transform;
+  animation: none;
+}
+
+/* keyframes not needed; JS handles marquee */
+
+.ach {
+  -webkit-transition: all 0.1s ease-out;
+  -moz-transition: all 0.1s ease-out;
+  -o-transition: all 0.1s ease-out;
+  transition: all 0.1s ease-out;
+}
+
+@keyframes ach_in_anim {
+  0% {
+    bottom: 1em;
+    width: 65px;
+    margin-left: 0;
+    border-radius: 50%;
+    transform: translate(-50%, 120%) scale(var(--scale, 1));
+  }
+  15% {
+    bottom: 1em;
+    width: 65px;
+    margin-left: 0;
+    transform: translate(-50%, 0) scale(var(--scale, 1));
+  }
+  25% {
+    bottom: 1em;
+    width: 65px;
+    margin-left: 0;
+    transform: translate(-50%, 0) scale(var(--scale, 1));
+  }
+  75% {
+    bottom: 1em;
+    width: 65px;
+    margin-left: 0;
+    transform: translate(-50%, 0) scale(var(--scale, 1));
+  }
+  85% {
+    bottom: 1em;
+    width: 65px;
+    margin-left: 0;
+    border-radius: 50%;
+    transform: translate(-50%, 0) scale(var(--scale, 1));
+  }
+  92% {
+    bottom: 1em;
+    width: 380px;
+    margin-left: 0;
+    border-radius: 10px;
+    transform: translate(-50%, 0) scale(var(--scale, 1));
+  }
+  100% {
+    bottom: 1em;
+    width: 400px;
+    margin-left: 0;
+    border-radius: 10px;
+    transform: translate(-50%, 0) scale(var(--scale, 1));
+  }
+}
+
+@keyframes ach_current {
+  0% {
+    bottom: 1em;
+    width: 400px;
+    margin-left: 0;
+    transform: translate(-50%, 0) scale(var(--scale, 1));
+  }
+  100% {
+    bottom: 1em;
+    width: 400px;
+    margin-left: 0;
+    transform: translate(-50%, 0) scale(var(--scale, 1));
+  }
+}
+
+@keyframes ach_out_anim {
+  0% {
+    bottom: 1em;
+    width: 400px;
+    margin-left: 0;
+    border-radius: 50%;
+    transform: translate(-50%, 0) scale(var(--scale, 1));
+  }
+  16% {
+    bottom: 1em;
+    width: 65px;
+    margin-left: 0;
+    border-radius: 50%;
+    transform: translate(-50%, 0) scale(var(--scale, 1));
+  }
+  20% {
+    bottom: 1em;
+    width: 50px;
+    margin-left: 0;
+    transform: translate(-50%, 0) scale(var(--scale, 1));
+  }
+  34% {
+    bottom: 1em;
+    width: 65px;
+    margin-left: 0;
+    transform: translate(-50%, 0) scale(var(--scale, 1));
+  }
+  70% {
+    bottom: 1em;
+    width: 65px;
+    margin-left: 0;
+    transform: translate(-50%, 0) scale(var(--scale, 1));
+  }
+  100% {
+    bottom: 1em;
+    width: 65px;
+    margin-left: 0;
+    border-radius: 50%;
+    transform: translate(-50%, 500%) scale(var(--scale, 1));
+  }
+}
+
+.active {
+  animation: ach_in_anim var(--ach-in) forwards,
+    ach_current var(--ach-hold) forwards,
+    ach_out_anim var(--ach-out) forwards;
+  animation-delay: 0s, var(--ach-in), calc(var(--ach-in) + var(--ach-hold));
+  animation-fill-mode: forwards;
+}
+
+@keyframes i_in_anim {
+  0% {
+    transform: scale(0);
+  }
+  45% {
+    transform: scale(0);
+  }
+  46% {
+    transform: scale(0.4);
+  }
+  50% {
+    transform: scale(1);
+  }
+  55% {
+    transform: scale(1.2);
+  }
+  60% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(0);
+  }
+}
+
+@keyframes i_current {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes i_out_anim {
+  0% {
+    transform: scale(1);
+  }
+  46% {
+    transform: scale(1);
+  }
+  47% {
+    transform: scale(1.2);
+  }
+  56% {
+    transform: scale(1);
+  }
+  60% {
+    transform: scale(0.4);
+  }
+  65% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(0);
+    opacity: 1;
+  }
+}
+
+.active .icon i {
+  animation: i_in_anim var(--ach-in), i_current var(--ach-hold),
+    i_out_anim var(--ach-out);
+  animation-delay: 0s, var(--ach-in), calc(var(--ach-in) + var(--ach-hold));
+  animation-fill-mode: forwards;
+}
+
+@keyframes text_in_anim {
+  0% {
+    width: 0;
+  }
+  85% {
+    width: 0;
+  }
+  100% {
+    width: 260px;
+  }
+}
+
+@keyframes text_out_anim {
+  0% {
+    width: 260px;
+    opacity: 1;
+  }
+  12% {
+    width: 0;
+    opacity: 1;
+  }
+  100% {
+    width: 0;
+    opacity: 1;
+  }
+}
+
+.active .text_wrap {
+  animation: none;
+}
+.ach .title-inner {
+  display: inline-block;
+  will-change: transform;
+  padding-right: 24px;
+}
