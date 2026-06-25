@@ -10,6 +10,57 @@ const settingsJS = require(path.join(__dirname, '../settings.js'));
 settingsJS.setUserDataPath(app.getPath('userData'));
 const { getSteamUsersList } = require(path.join(__dirname, '../parser/steam.js'));
 
+function getStartupLoginItemOptions(openAtLogin) {
+  const args = [];
+  if (process.defaultApp) args.push(app.getAppPath());
+  args.push('--hidden');
+  return {
+    openAtLogin: openAtLogin === true,
+    path: process.execPath,
+    args,
+  };
+}
+
+function getStartupLoginItemQueryOptions() {
+  const options = getStartupLoginItemOptions(true);
+  return {
+    path: options.path,
+    args: options.args,
+  };
+}
+
+function setStartWithWindows(enabled) {
+  app.setLoginItemSettings(getStartupLoginItemOptions(enabled));
+  return true;
+}
+
+function getStartWithWindows() {
+  const state = app.getLoginItemSettings(getStartupLoginItemQueryOptions());
+  return state.openAtLogin === true;
+}
+
+ipcMain.handle('startup:get-start-with-windows', async () => {
+  return getStartWithWindows();
+});
+
+ipcMain.handle('startup:set-start-with-windows', async (_event, enabled) => {
+  return setStartWithWindows(enabled === true);
+});
+
+// RAR extraction for the CrakFiles community-fix apply. node-unrar-js is WASM+Embind and uses
+// `new Function`, which the renderer's strict CSP forbids — so the renderer delegates the extraction to
+// here (main process, no CSP). Writes the archive's contents into destDir; the renderer then installs
+// them into the game folder. Returns { ok } or { error } (never throws across the IPC boundary).
+const crackFixJS = require(path.join(__dirname, '../parser/crackFix.js'));
+ipcMain.handle('crackfix-extract-rar', async (_event, { archivePath, destDir } = {}) => {
+  try {
+    await crackFixJS.extractRarToDir(archivePath, destDir);
+    return { ok: true };
+  } catch (err) {
+    return { error: (err && (err.message || String(err))) || 'unknown error' };
+  }
+});
+
 // Handler for renderer process
 ipcMain.handle('get-app-name', () => {
   return app.getName();
@@ -34,15 +85,19 @@ ipcMain.on('get-steam-user-list', async (event) => {
 });
 
 ipcMain.on('fetch-icon', async (event, url, appid) => {
-  await fetchIcon(url, appid).then((p) => (event.returnValue = pathToFileURL(p).href));
+  try {
+    const p = await fetchIcon(url, appid);
+    event.returnValue = p ? pathToFileURL(p).href : null;
+  } catch {
+    event.returnValue = null;
+  }
 });
 ipcMain.handle('fetch-icon', async (event, url, appid) => {
   const p = await fetchIcon(url, appid);
-  return pathToFileURL(p).href;
+  return p ? pathToFileURL(p).href : null;
 });
 
-ipcMain.on('close-notification-window', async (event) => {
-  const win = BrowserWindow.fromWebContents(event.sender);
+async function doCloseNotificationWindow(win) {
   if (!win || win.isDestroyed()) return;
   win.setIgnoreMouseEvents(false);
   win.setAlwaysOnTop(false);
@@ -50,7 +105,21 @@ ipcMain.on('close-notification-window', async (event) => {
     win.hide();
     await new Promise((r) => setTimeout(r, 50));
   }
-  win.close();
+  if (!win.isDestroyed()) win.close();
+}
+
+ipcMain.on('close-notification-window', async (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (!win || win.isDestroyed()) return;
+  // Custom-duration freeze-hold (set in createNotificationWindow): if the preset asks to close while the
+  // notification is still in its hold window, defer the close so it stays on screen for the chosen time.
+  const remaining = (win.awFrozenUntil || 0) - Date.now();
+  if (remaining > 0) {
+    win.awFrozenUntil = 0; // defer only once
+    setTimeout(() => doCloseNotificationWindow(win), remaining);
+    return;
+  }
+  doCloseNotificationWindow(win);
 });
 
 module.exports.window = () => {
@@ -91,3 +160,5 @@ module.exports.window = () => {
     event.returnValue = win.isDev;
   });
 };
+
+module.exports.setStartWithWindows = setStartWithWindows;

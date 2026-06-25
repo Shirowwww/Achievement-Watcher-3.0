@@ -1,10 +1,22 @@
-appId: io.github.xan105.achievement.watcher
+appId: io.github.shirowwww.achievement.watcher
 productName: 'Achievement Watcher'
+npmRebuild: false
+
+# Copies watchdog/node_modules into the packed app. electron-builder's
+# extraFiles object form drops node_modules, which otherwise leaves the
+# Watchdog unable to start after install (missing @xan105/log etc.).
+afterPack: ./build/afterPack.js
+
+# Overlay notification presets and sounds must live on disk (not inside app.asar) so the
+# notification window can loadFile() preset HTML and play sound files via file:// URLs.
+asarUnpack:
+  - presets/**
+  - sounds/**
 
 publish:
   provider: github
-  owner: darktakayanagi
-  repo: achievement-watcher
+  owner: Shirowwww
+  repo: Achievement-Watcher-3.0
 
 win:
   icon: ../setup/resources/icon.ico
@@ -33,7 +45,6 @@ files:
   - '!buildme.cmd'
   - '!watchdog/_wip_/**'
   - '!watchdog/patches/**'
-  - '!presets/**'
 
 extraFiles:
   - from: ../watchdog
@@ -43,14 +54,8 @@ extraFiles:
       - '!watchdog/_wip_/**'
       - '!watchdog/patches/**'
 
-  - from: ../node
-    to: ./node
-
-  - from: ../nw
-    to: ./nw
-
-  - from: ../obs
-    to: ./obs
+  # NOTE: the portable node/ (Node 14) is gone since the A2 koffi migration — the monitor now runs
+  # under Electron's own Node via ELECTRON_RUN_AS_NODE (see launchWatchdog in electron/init.js).
 
   - from: ./media
     to: resources/userData/Media
@@ -58,19 +63,8 @@ extraFiles:
   - from: ./Source
     to: resources/userData/Source
 
-  - from: ./presets
-    to: resources/userData/Presets
-
   - from: ./view
     to: resources/userData/view
-
-  - from: ../obs/config/obs-studio/basic/profiles
-    to: resources/userData/obs
-
-  - from: ../obs/config/obs-studio/basic/scenes
-    to: resources/userData/obs
-    filter:
-      - '!**.json.bak'
 
   - from: ../setup/{{app}}
     to: .

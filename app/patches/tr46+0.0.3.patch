@@ -1,0 +1,14 @@
+diff --git a/node_modules/tr46/index.js b/node_modules/tr46/index.js
+index 9ce12ca..a597005 100644
+--- a/node_modules/tr46/index.js
++++ b/node_modules/tr46/index.js
+@@ -1,6 +1,8 @@
+ "use strict";
+ 
+-var punycode = require("punycode");
++// The trailing slash selects the userland package instead of Node's deprecated
++// built-in `punycode` module.
++var punycode = require("punycode/");
+ var mappingTable = require("./lib/mappingTable.json");
+ 
+ var PROCESSING_OPTIONS = {

@@ -4,24 +4,49 @@ const path = require('path');
 const { app } = require('electron');
 app.setName('Achievement Watcher');
 app.setPath('userData', path.join(app.getPath('appData'), app.getName()));
+// Keep GPU acceleration enabled, but avoid Chromium background services AW does not use in tray mode.
+for (const sw of ['disable-extensions', 'disable-component-extensions-with-background-pages', 'disable-default-apps', 'disable-background-networking']) {
+  app.commandLine.appendSwitch(sw);
+}
+// Cap V8 old-space for the main process. It drives the on-demand puppeteer scrape and the windows, but
+// spends most of its life as a resident tray daemon — a 256 MB ceiling bounds heap growth and forces
+// the GC to reclaim earlier when idle, without starving the brief scrape/HTML-parse bursts.
+app.commandLine.appendSwitch('js-flags', '--max-old-space-size=256');
 const CHROMIUM_REVISION = '1108766';
-const { BrowserWindow, dialog, session, shell, ipcMain, globalShortcut } = require('electron');
+const { BrowserWindow, dialog, session, shell, ipcMain, globalShortcut, Tray, Menu, nativeImage, Notification } = require('electron');
 const { autoUpdater } = require('electron-updater');
 autoUpdater.autoInstallOnAppQuit = false;
-const remote = require('@electron/remote/main');
-remote.initialize();
 const minimist = require('minimist');
-const { XMLParser } = require('fast-xml-parser');
-const { exec, spawn } = require('child_process');
+const { exec, execSync, spawn } = require('child_process');
 const fs = require('fs');
-const semver = require('semver');
 const ipc = require(path.join(__dirname, 'ipc.js'));
-const player = require('sound-play');
-const { fetchIcon } = require(path.join(__dirname, '../parser/steam.js'));
 const { pathToFileURL } = require('url');
-const fetch = require('node-fetch');
 const BASE_URL = 'https://www.steamgriddb.com/api/v2';
 const API_KEY = '2a9d32ddd0bfe4e1191b4f6ff56fef60'; // TODO: remove this and load from config file
+
+let remoteMain = null;
+function getRemoteMain() {
+  if (!remoteMain) {
+    remoteMain = require('@electron/remote/main');
+    remoteMain.initialize();
+  }
+  return remoteMain;
+}
+
+let fetchImpl = null;
+function fetch(...args) {
+  if (!fetchImpl) fetchImpl = require('node-fetch');
+  return fetchImpl(...args);
+}
+
+function createXmlParser() {
+  const { XMLParser } = require('fast-xml-parser');
+  return new XMLParser({ ignoreAttributes: false, allowBooleanAttributes: true, cdataPropName: '__cdata' });
+}
+
+function fetchSteamIcon(url, appid) {
+  return require(path.join(__dirname, '../parser/steam.js')).fetchIcon(url, appid);
+}
 
 let client; //lazyload SteamUser
 let clientLoginPromise;
@@ -48,302 +73,106 @@ let settingsJS = null;
 let configJS = null;
 let achievementsJS = null;
 
-if (manifest.config['disable-gpu']) app.disableHardwareAcceleration();
+// Keep GPU hardware acceleration ON (default). Disabling it shaves ~30 MB idle but makes the library
+// scroll janky under software compositing (cover images), which is not worth it for an app whose
+// window is used interactively. Honour the explicit config opt-out, plus the user-facing General-tab
+// toggle. disableHardwareAcceleration() must run before app 'ready', so we read options.ini directly
+// here rather than via the async settings loader / renderer.
+let userDisableGpu = false;
+try {
+  const parsed = require('@xan105/ini').parse(fs.readFileSync(path.join(userData, 'cfg/options.ini'), 'utf8'));
+  const v = parsed && parsed.general && parsed.general.disableHardwareAccel;
+  userDisableGpu = v === true || v === 'true';
+} catch {
+  /* no options.ini yet (first run) -> keep GPU acceleration on */
+}
+if (manifest.config['disable-gpu'] || userDisableGpu) app.disableHardwareAcceleration();
 if (manifest.config.appid) app.setAppUserModelId(manifest.config.appid);
 manifest.config.debug = process.env.NODE_ENV === 'development' || process.defaultApp || /[\\/]electron/.test(process.execPath);
 
 let puppeteerWindow = {};
 let MainWin = null;
-let progressWindow = null;
 let overlayWindow = null;
-let playtimeWindow = null;
-let notificationWindow = null;
-let isplaytimeWindowShowing = false;
-let isNotificationShowing = false;
-let isProgressWindowShowing = false;
 let isOverlayShowing = false;
-const earnedNotificationQueue = [];
-const playtimeQueue = [];
-const progressQueue = [];
 let debug = new (require('@xan105/log'))({
   console: manifest.config.debug || false,
   file: path.join(userData, `logs/renderer.log`),
 });
 
-async function getUserAchievements(appid) {
-  let steamid = 76561198152618007;
-  //TODO: this can be used to get descriptions in other languagues
-  // append to url -> ?l=<languague> - like english/french/etc
-  const url = `https://steamcommunity.com/profiles/${steamid}`;
-  const res = await fetch(url, { redirect: 'manual', headers: { userAgent: 'node-fecth' } });
-  const l = res.headers.get('location');
-  const data = await res.json();
 
-  if (!data.playerstats || !data.playerstats.achievements) {
-    throw new Error('No achievements found or stats are private');
+async function fetchSteamCommunityAchievements(url) {
+  // The steamcommunity achievements page is server-rendered HTML, so a plain HTTP fetch + parse
+  // fully replaces a puppeteer/Chromium scrape here (verified for visible achievements). Returns the
+  // same { img, title, description } shape the callers expect; [] on any failure so nothing throws.
+  try {
+    const htmlParser = require('node-html-parser');
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': manifest.config['user-agent'] || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Accept-Language': 'en-US,en;q=0.9',
+        Cookie: 'birthtime=662716801; wants_mature_content=1', // bypass age gate; ?l= controls language
+      },
+      redirect: 'follow',
+    });
+    if (!res.ok) return [];
+    const html = htmlParser.parse(await res.text());
+    return html.querySelectorAll('.achieveRow').map((row) => {
+      const src = row.querySelector('.achieveImgHolder img')?.getAttribute('src') || '';
+      const img = src ? src.split('/').pop().split('.jpg')[0] : null;
+      const title = row.querySelector('.achieveTxt h3')?.text?.trim() || null;
+      const description = row.querySelector('.achieveTxt h5')?.text?.trim() || null;
+      return { img, title, description };
+    });
+  } catch (err) {
+    debug.log(`steamcommunity fetch failed: ${err}`);
+    return [];
   }
-
-  return data.playerstats.achievements.map((a) => ({
-    apiName: a.apiname,
-    unlocked: a.achieved === 1,
-    name: a.name,
-    description: a.description,
-    unlockTime: a.unlocktime,
-  }));
 }
 
-const steamUserIds = [
-  '76561198028121353',
-  '76561197979911851',
-  '76561198017975643',
-  '76561197993544755',
-  '76561198355953202',
-  '76561198001237877',
-  '76561198237402290',
-  '76561198152618007',
-  '76561198355625888',
-  '76561198213148949',
-  '76561197969050296',
-  '76561198217186687',
-  '76561198037867621',
-  '76561198094227663',
-  '76561198019712127',
-  '76561197963550511',
-  '76561198134044398',
-  '76561198001678750',
-  '76561197973009892',
-  '76561198044596404',
-  '76561197976597747',
-  '76561197969810632',
-  '76561198095049646',
-  '76561198085065107',
-  '76561198864213876',
-  '76561197962473290',
-  '76561198388522904',
-  '76561198033715344',
-  '76561197995070100',
-  '76561198313790296',
-  '76561198063574735',
-  '76561197996432822',
-  '76561197976968076',
-  '76561198281128349',
-  '76561198154462478',
-  '76561198027233260',
-  '76561198842864763',
-  '76561198010615256',
-  '76561198035900006',
-  '76561198122859224',
-  '76561198235911884',
-  '76561198027214426',
-  '76561197970825215',
-  '76561197968410781',
-  '76561198104323854',
-  '76561198001221571',
-  '76561198256917957',
-  '76561198008181611',
-  '76561198407953371',
-  '76561198062901118',
-  '76561197979667190',
-  '76561197974742349',
-  '76561198077213101',
-  '76561198121398682',
-  '76561198019009765',
-  '76561198119667710',
-  '76561197990233857',
-  '76561199130977924',
-  '76561198096081579',
-  '76561198139084236',
-  '76561197971011821',
-  '76561198063728345',
-  '76561198082995144',
-  '76561197963534359',
-  '76561198118726910',
-  '76561198097945516',
-  '76561198124872187',
-  '76561198077248235',
-  '76561198326510209',
-  '76561198109083829',
-  '76561198808371265',
-  '76561198048373585',
-  '76561198005337430',
-  '76561198045455280',
-  '76561197981111953',
-  '76561197992133229',
-  '76561198152760885',
-  '76561198037809069',
-  '76561198382166453',
-  '76561198093753361',
-  '76561198396723427',
-  '76561199168919006',
-  '76561198006391846',
-  '76561198040421250',
-  '76561197994616562',
-  '76561198017902347',
-  '76561198044387084',
-  '76561198172367910',
-  '76561199353305847',
-  '76561198121336040',
-  '76561197972951657',
-  '76561198251835488',
-  '76561198102767019',
-  '76561198021180815',
-  '76561197976796589',
-  '76561197992548975',
-  '76561198367471798',
-  '76561197965978376',
-  '76561197993312863',
-  '76561198128158703',
-  '76561198015685843',
-  '76561198047438206',
-  '76561197971026489',
-  '76561198252374474',
-  '76561198061393233',
-  '76561199173688191',
-  '76561198008797636',
-  '76561197995008105',
-  '76561197984235967',
-  '76561198417144062',
-  '76561197978640923',
-  '76561198219343843',
-  '76561197982718230',
-  '76561198031837797',
-  '76561198039492467',
-  '76561198020125851',
-  '76561198192399786',
-  '76561198028011423',
-  '76561198318111105',
-  '76561198155124847',
-  '76561198168877244',
-  '76561198105279930',
-  '76561197988664525',
-  '76561198996604130',
-  '76561197969148931',
-  '76561198035552258',
-  '76561198015992850',
-  '76561198050474710',
-  '76561198029503957',
-  '76561198026221141',
-  '76561198025653291',
-  '76561198034213886',
-  '76561198096632451',
-  '76561197972378106',
-  '76561197997477460',
-  '76561198054210948',
-  '76561198111433283',
-  '76561198004332929',
-  '76561198045540632',
-  '76561198043532513',
-  '76561199080934614',
-  '76561197970246998',
-  '76561197986240493',
-  '76561198029532782',
-  '76561198018254158',
-  '76561197973230221',
-  '76561198020746864',
-  '76561198158932704',
-  '76561198086250077',
-  '76561198269242105',
-  '76561198294806446',
-  '76561198031164839',
-  '76561198019555404',
-  '76561198048151962',
-  '76561198003041763',
-  '76561198025391492',
-  '76561197962630138',
-  '76561198072936438',
-  '76561198120120943',
-  '76561197984010356',
-  '76561198042965266',
-  '76561198046642155',
-  '76561198015856631',
-  '76561198124865933',
-  '76561198042781427',
-  '76561198443388781',
-  '76561198426000196',
-  '76561198051725954',
-  '76561197992105918',
-  '76561198172925593',
-  '76561198071709714',
-  '76561197981228012',
-  '76561197981027062',
-  '76561198122276418',
-  '76561198019841907',
-  '76561197985091630',
-  '76561199492215670',
-  '76561198106206019',
-  '76561198090111762',
-  '76561198104561325',
-  '76561197991699268',
-  '76561198072361453',
-  '76561198027066612',
-  '76561198032614383',
-  '76561198844130640',
-  '76561198106145311',
-  '76561198079227501',
-  '76561198093579202',
-  '76561198315929726',
-  '76561198171791210',
-  '76561198264362271',
-  '76561198846208086',
-  '76561197991613008',
-  '76561198026306582',
-  '76561197973701057',
-  '76561198028428529',
-  '76561198427572372',
-  '76561197983517848',
-  '76561198085238363',
-  '76561198070220549',
-  '76561198101049562',
-  '76561197969365800',
-  '76561198413266831',
-  '76561198015514779',
-  '76561198811114019',
-  '76561198165450871',
-  '76561197994575642',
-  '76561198034906703',
-  '76561198119915053',
-  '76561198079896896',
-  '76561198008549198',
-  '76561197988052802',
-  '76561198004532679',
-  '76561198002535276',
-  '76561197970545939',
-  '76561197977920776',
-  '76561198007200913',
-  '76561197984605215',
-  '76561198831075066',
-  '76561197970970678',
-  '76561197982273259',
-  '76561197970307937',
-  '76561198413088851',
-  '76561197970360549',
-  '76561198051740093',
-  '76561197966617426',
-  '76561198356842617',
-  '76561198025111129',
-  '76561197996825541',
-  '76561197967716198',
-  '76561197975329196',
-  '76561197998058239',
-  '76561198027668357',
-  '76561197962850521',
-  '76561198258304011',
-  '76561198098314980',
-  '76561198127957838',
-  '76561198060520130',
-  '76561198035612474',
-  '76561198318547224',
-  '76561198020810038',
-  '76561198080773680',
-  '76561198033967307',
-  '76561198034503074',
-  '76561198150467988',
-  '76561197994153029',
-  '76561198026278913',
-  '76561198217979953',
-  '76561197988445370',
-  '76561198083977059',
-];
+// Browser-free achievement schema via the official Steam Web API. Uses IPlayerService/
+// GetGameAchievements rather than the legacy ISteamUserStats/GetSchemaForGame: the legacy endpoint
+// always blanks the description of hidden ("secret") achievements as a spoiler guard, key or no key,
+// which is why hidden achievements were permanently stuck on "…" even for users with a Steam Web API
+// key (#57). GetGameAchievements has no such restriction — verified live against multiple titles
+// (007 First Light, Fast Food Simulator, even 2004's Half-Life 2): every hidden achievement comes
+// back with a real localized_desc.
+// Returns the same shape the steamhunters puppeteer scrape produces, so it is a drop-in
+// replacement when the user has configured a Steam Web API key. Returns:
+//   - an array of achievements on success
+//   - [] when the API responded but the game exposes no achievement schema
+//   - null on a transport/auth error, so the caller can fall back to scraping
+async function getSchemaFromWebAPI(appid, key, lang) {
+  const language = (lang && (lang.api || lang)) || 'english';
+  const url = `https://api.steampowered.com/IPlayerService/GetGameAchievements/v1/?key=${key}&appid=${appid}&language=${encodeURIComponent(language)}`;
+  let res;
+  try {
+    res = await fetch(url);
+  } catch (err) {
+    debug.log(`[${appid}] GetGameAchievements network error: ${err.message}`);
+    return null;
+  }
+  if (!res.ok) {
+    debug.log(`[${appid}] GetGameAchievements HTTP ${res.status}`);
+    return null; // 403 = bad/over-quota key, etc. -> let caller decide to scrape
+  }
+  let json;
+  try {
+    json = await res.json();
+  } catch (err) {
+    return null;
+  }
+  const list = json?.response?.achievements;
+  if (!Array.isArray(list)) return []; // valid response, game just has no achievements
+  return list.map((a) => ({
+    name: a.internal_name,
+    default_value: 0,
+    displayName: a.localized_name,
+    hidden: a.hidden ? 1 : 0,
+    description: a.localized_desc || ' ',
+    icon: `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${appid}/${a.icon}`,
+    icongray: `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${appid}/${a.icon_gray}`,
+  }));
+}
 
 async function getSteamData(request) {
   const appid = request.appid;
@@ -351,12 +180,19 @@ async function getSteamData(request) {
   let user = request.user;
   let userid;
   const lang = request.lang || 'english';
+  if (!configJS) {
+    try {
+      await startEngines(); // makes the Steam Web API key available for the browser-free schema path
+    } catch (err) {
+      debug.log('startEngines (getSteamData) failed: ' + err.message);
+    }
+  }
   try {
     if (type === 'user') {
       const url = `https://steamcommunity.com/profiles/${user}/stats/${appid}/?xml=1`;
       const res = await fetch(url);
       const xml = await res.text();
-      const parser = new XMLParser({ ignoreAttributes: false, allowBooleanAttributes: true, cdataPropName: '__cdata' });
+      const parser = createXmlParser();
       const data = parser.parse(xml);
       const achievements = data?.playerstats?.achievements?.achievement || [];
       const list = Array.isArray(achievements) ? achievements : [achievements];
@@ -374,9 +210,9 @@ async function getSteamData(request) {
     if (type === 'steamcommunity') {
       let info = { appid };
       const url = `https://steamcommunity.com/stats/${appid}/achievements?l=${lang.api}`; //this doesnt give hidden descriptions
-      await scrapeWithPuppeteer(info, { steamcommunity: true, url: url });
+      info.achievements = await fetchSteamCommunityAchievements(url);
       currentlyscraping.steamcommunity = false;
-      if (info.achievements.every((a) => a.description)) {
+      if (info.achievements.length > 0 && info.achievements.every((a) => a.description)) {
         return info;
       }
 
@@ -398,7 +234,7 @@ async function getSteamData(request) {
         validXml = !(xml.startsWith('<!DOCTYPE html') || xml.includes('<html'));
         if (!validXml) continue;
 
-        const parser = new XMLParser({ ignoreAttributes: false, allowBooleanAttributes: true, cdataPropName: '__cdata' });
+        const parser = createXmlParser();
         const data = parser.parse(xml);
         const achievements = data?.playerstats?.achievements?.achievement || [];
         const list = achievements.map((a) => {
@@ -410,7 +246,7 @@ async function getSteamData(request) {
         const allgood = list.every((a) => a.description);
         if (!allgood) continue;
         const url2 = `https://steamcommunity.com/profiles/${userid}/stats/${appid}?l=${lang.api}`; // this for name and description, match them via icon hash
-        await scrapeWithPuppeteer(info, { steamcommunity: true, url: url2 });
+        info.achievements = await fetchSteamCommunityAchievements(url2);
         currentlyscraping.steamcommunity = false;
         return info;
       }
@@ -418,19 +254,31 @@ async function getSteamData(request) {
       return info;
     }
 
-    if (type === 'data') {
+    if (type === 'data' || type === 'steamhunters') {
       let info = { appid };
-      await scrapeWithPuppeteer(info, { steamhunters: true });
-      currentlyscraping.steamhunters = false;
-      while (!info.achievements) {
-        await delay(500);
+      // Fast path: official Steam Web API schema (no headless browser) when a key is configured.
+      // A blocking sendSync from the renderer drives this; the puppeteer scrape below can take up to
+      // 30s per game and freezes the whole UI, so prefer the ~200ms API call whenever possible.
+      const key = configJS?.steam?.apiKey;
+      if (key) {
+        const ach = await getSchemaFromWebAPI(appid, key, request.lang);
+        if (ach !== null) {
+          info.achievements = ach;
+          return info;
+        }
+        // ach === null -> API/auth/network failure; fall through to the scraper below
       }
-      return info;
-    }
-    if (type === 'steamhunters') {
-      let info = { appid };
       await scrapeWithPuppeteer(info, { steamhunters: true });
       currentlyscraping.steamhunters = false;
+      if (type === 'data') {
+        // scrapeWithPuppeteer already ran above; bound this fallback wait so a scrape that never
+        // populates achievements can't hang the blocking sendSync IPC forever (~30s cap).
+        let waited = 0;
+        while (!info.achievements && waited < 60) {
+          await delay(500);
+          waited++;
+        }
+      }
       return info;
     }
     await clientLogOn();
@@ -488,13 +336,26 @@ async function getSteamData(request) {
 async function closePuppeteer() {
   currentlyscraping.steamcommunity = false;
   currentlyscraping.steamhunters = false;
-  if (!puppeteerWindow) puppeteerWindow = {};
-  if (puppeteerWindow.context) await puppeteerWindow.context.close();
-  if (puppeteerWindow.browser) await puppeteerWindow.browser.close();
+  if (!puppeteerWindow) {
+    puppeteerWindow = {};
+    return;
+  }
+  // Detach references FIRST so a concurrent startPuppeteer() spins up a fresh browser instead of
+  // grabbing the one being torn down — that race is how orphaned/duplicate Chromium instances
+  // accumulated (#32). Then close the captured handles, tolerating an already-closed browser.
+  const browser = puppeteerWindow.browser;
+  const context = puppeteerWindow.context;
   puppeteerWindow.browser = undefined;
+  puppeteerWindow.context = undefined;
   puppeteerWindow.pagesh = undefined;
   puppeteerWindow.pagesc = undefined;
-  puppeteerWindow.context = undefined;
+  puppeteerWindow.page = undefined;
+  try {
+    if (context) await context.close();
+  } catch {}
+  try {
+    if (browser) await browser.close();
+  } catch {}
 }
 
 async function startEngines() {
@@ -506,6 +367,10 @@ async function startEngines() {
   if (!achievementsJS) {
     achievementsJS = require(path.join(__dirname, '../parser/achievements.js'));
     achievementsJS.initDebug({ isDev: app.isDev || false, userDataPath: userData });
+    // The per-game emulator setup now runs in the background (so a slow first-run fix can't blow the
+    // scan timeout), finishing after makeList's onGame callback has returned. Register a completion
+    // handler so the daemon still fires its "emulator fix applied" toast when each fix actually lands.
+    if (achievementsJS.setEmulatorFixedHandler) achievementsJS.setEmulatorFixedHandler((g) => notifyEmulatorFixed(g));
   }
 }
 
@@ -537,23 +402,6 @@ async function getCachedData(info) {
   }
 }
 
-ipcMain.on('capture-screen', async (event, { image, game, name }) => {
-  function sanitizeName(name) {
-    // Remove invalid characters
-    name = name.replace(/[<>:"/\\|?*\x00-\x1F]/g, '');
-    // Remove trailing spaces or dots
-    name = name.replace(/[. ]+$/, '');
-    // Trim just in case
-    return name.trim();
-  }
-  if (!configJS.souvenir_screenshot.screenshot || manifest.config.debug) return;
-  const buffer = Buffer.from(image, 'base64');
-  const savePath = path.join(configJS.souvenir_screenshot.custom_dir || app.getPath('pictures'), sanitizeName(game), sanitizeName(name) + '.png');
-  fs.mkdirSync(path.dirname(savePath), { recursive: true });
-  if (!configJS.souvenir_screenshot.overwrite_image && fs.existsSync(savePath)) return;
-  fs.writeFileSync(savePath, buffer);
-});
-
 ipcMain.on('close-puppeteer', async (event, arg) => {
   await closePuppeteer();
   event.returnValue = true;
@@ -580,7 +428,10 @@ ipcMain.on('get-steam-appid-from-title', async (event, arg) => {
   let info = { name: arg.title };
   searchForSteamAppId(info);
   let possibleMatch;
-  while (true) {
+  // searchForSteamAppId populates info.games asynchronously; bound the poll so a failed page load
+  // can't leave this blocking sendSync hanging forever (~30s cap, then return the best partial match).
+  let tries = 0;
+  while (tries < 60) {
     if (info.games) {
       for (let game of info.games) {
         if (normalizeTitle(game.title) === normalizeTitle(arg.title)) {
@@ -594,20 +445,15 @@ ipcMain.on('get-steam-appid-from-title', async (event, arg) => {
       break;
     }
     await delay(500);
+    tries++;
   }
   event.returnValue = possibleMatch;
 });
 
 ipcMain.on('get-title-from-epic-id', async (event, arg) => {
   let info = { appid: arg.appid };
-  await searchForGameName(info);
-  while (true) {
-    if (info.title) {
-      event.returnValue = info.title;
-      return;
-    }
-    await delay(500);
-  }
+  await searchForGameName(info); // bounded internally; info.title may be undefined on a miss
+  event.returnValue = info.title;
 });
 
 ipcMain.on('get-images-for-game', async (event, arg) => {
@@ -665,7 +511,7 @@ ipcMain.on('stylize-background-for-appid', async (event, arg) => {
 
     const processedBuffer = await sharp(buffer)
       .blur(5)
-      .modulate({ saturarion: 0.5 })
+      .modulate({ saturation: 0.5 })
       .composite([
         {
           input: Buffer.from(
@@ -694,7 +540,16 @@ ipcMain.on('fetch-source-img', async (event, arg) => {
       event.returnValue = path.join(process.env['APPDATA'], 'Achievement Watcher', 'Source', 'gog.svg');
       break;
     case 'RPCS3 Emulator':
+    case 'ShadPS4 Emulator':
       event.returnValue = path.join(process.env['APPDATA'], 'Achievement Watcher', 'Source', 'playstation.svg');
+      break;
+    case 'Xenia Emulator':
+      event.returnValue = path.join(process.env['APPDATA'], 'Achievement Watcher', 'Source', 'xbox.svg');
+      break;
+    case 'Unconfigured':
+      // Exe-detected-only entry (no Steam appid match) — use a generic file icon instead of the
+      // Steam logo so these don't look like confirmed Steam games in the list.
+      event.returnValue = path.join(__dirname, '../resources/img/file-text@2x.png');
       break;
     case 'steam':
     default:
@@ -703,39 +558,212 @@ ipcMain.on('fetch-source-img', async (event, arg) => {
   }
 });
 
-ipcMain.on('notify-test', async (event, arg) => {
-  await createNotificationWindow({ appid: 400, ach: 'PORTAL_TRANSMISSION_RECEIVED' });
-});
-
-ipcMain.on('playtime-test', async (event, arg) => {
-  await createPlaytimeWindow({ appid: 400, description: 'Testing notification' });
-});
-ipcMain.on('progress-test', async (event, arg) => {
-  await createProgressWindow({ appid: 400, ach: 'PORTAL_TRANSMISSION_RECEIVED', description: 'Testing progress', count: '50/100' });
-});
-
-ipcMain.on('achievement-data-ready', () => {
-  progressWindow.showInactive();
-});
-
 ipcMain.handle('get-achievements', async (event, appid) => {
   return await getSteamData({ appid, type: 'steamhunters' });
 });
 
+// Kill any Watchdog currently holding the WS port (8082). The Watchdog is a detached nw.exe -> node
+// chain we cannot track by PID, so we target it by its well-known port. This is used before launching
+// a fresh Watchdog so it always loads the current code, while normal app quits leave the background
+// tracker alive for overlay/toast notifications.
+function killWatchdog() {
+  try {
+    const out = execSync('netstat -ano -p tcp', { encoding: 'utf8', windowsHide: true });
+    const pids = new Set();
+    for (const line of out.split('\n')) {
+      if (line.includes(':8082') && /LISTENING/i.test(line)) {
+        const pid = line.trim().split(/\s+/).pop();
+        if (/^\d+$/.test(pid) && pid !== '0') pids.add(pid);
+      }
+    }
+    for (const pid of pids) {
+      try {
+        execSync(`taskkill /F /PID ${pid}`, { windowsHide: true, stdio: 'ignore' });
+        debug.log(`[watchdog] killed stale instance PID ${pid} on port 8082`);
+      } catch {}
+    }
+  } catch (err) {
+    debug.log(`[watchdog] killWatchdog failed: ${err.message}`);
+  }
+}
+
+// Supervise the Watchdog monitor as a child of this (resident, tray-resident) main process.
+//
+// The monitor runs under Electron's OWN runtime: we spawn this very executable in ELECTRON_RUN_AS_NODE
+// mode (so it behaves as plain Node) with an 'ipc' stdio channel. Since the A2 koffi migration, the
+// monitor's native deps (wql-process-monitor, regodit, xinput-ffi) are ABI-stable (koffi) and load
+// fine under Electron's Node ABI, so the bundled portable node.exe (Node 14) is gone. The monitor
+// forwards overlay/notification window requests over IPC (see watchdog SpawnOverlayNotification)
+// straight into parseArgs() here, instead of spawning a second Electron process. The child is
+// supervised (re-spawned on unexpected exit) and killed when the app quits.
+let monitorProc = null;
+let monitorRespawnTimer = null;
+let watchdogStatusInterval = null;
+
+// Route a monitor IPC message. It sends { argv: ['--wintype=overlay'|'notification', ...] } in place
+// of the legacy `Achievement Watcher.exe --wintype=...` spawn; feed it through the existing dispatch.
+function handleMonitorMessage(msg) {
+  try {
+    if (msg && Array.isArray(msg.argv)) parseArgs(minimist(msg.argv));
+  } catch (err) {
+    debug.log(`[monitor] message handling failed: ${err.message || err}`);
+  }
+}
+
+function launchWatchdog() {
+  clearTimeout(monitorRespawnTimer);
+  if (monitorProc && monitorProc.exitCode === null && !monitorProc.killed) {
+    return { ok: true }; // already running — idempotent
+  }
+
+  const baseDir = manifest.config.debug ? path.join(__dirname, '../../') : path.dirname(process.execPath);
+  const wdDir = path.join(baseDir, 'watchdog');
+
+  // Validate the launch chain up front. Missing pieces (notably watchdog/node_modules) would
+  // otherwise fail in ways that are hard to diagnose from a detached child.
+  const requiredPaths = {
+    'watchdog dir': wdDir,
+    'watchdog/node_modules': path.join(wdDir, 'node_modules'),
+  };
+  for (const [label, p] of Object.entries(requiredPaths)) {
+    if (!fs.existsSync(p)) {
+      debug.log(`[monitor] Cannot launch: missing ${label} at ${p}`);
+      return { ok: false, error: `missing ${label}` };
+    }
+  }
+
+  // Sweep any stale detached Watchdog left by an older app version (it would hold port 8082 / the
+  // 'Achievement Watchdog' single-instance lock and double-fire notifications). No-op when none runs.
+  killWatchdog();
+
+  // Run the monitor under Electron's own Node by re-launching this executable in ELECTRON_RUN_AS_NODE
+  // mode (replaces the old bundled portable node.exe). The 'ipc' stdio channel and the child's
+  // process.send()/'message' path are unchanged.
+  // Cap the monitor's V8 old-space (NODE_OPTIONS is honored under ELECTRON_RUN_AS_NODE): the watchdog
+  // is a lightweight event-driven node process (file watchers + WMI + toasts), so a 128 MB ceiling
+  // bounds heap growth and makes the GC reclaim earlier without risking the occasional HTML-parse work.
+  const nodeOpts = [process.env.NODE_OPTIONS, '--max-old-space-size=128'].filter(Boolean).join(' ');
+  const env = { ...process.env, ELECTRON_RUN_AS_NODE: '1', NODE_OPTIONS: nodeOpts };
+
+  try {
+    const child = spawn(process.execPath, ['watchdog.js'], {
+      cwd: wdDir,
+      env,
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'pipe', 'ipc'], // 'ipc' => process.send()/'message' in the child
+    });
+    monitorProc = child;
+    child.stdout?.on('data', (d) => debug.log(`[monitor] ${String(d).trimEnd()}`));
+    child.stderr?.on('data', (d) => debug.log(`[monitor:err] ${String(d).trimEnd()}`));
+    child.on('message', handleMonitorMessage);
+    child.on('error', (err) => debug.log(`[monitor] spawn error: ${err.message}`));
+    child.on('exit', (code, signal) => {
+      debug.log(`[monitor] exited code=${code}${signal ? ` signal=${signal}` : ''}`);
+      if (monitorProc === child) monitorProc = null; // only clear if still the current child
+      // Supervise: respawn after a short backoff unless we're quitting on purpose.
+      if (!app.isQuiting && monitorProc === null) {
+        clearTimeout(monitorRespawnTimer);
+        monitorRespawnTimer = setTimeout(() => launchWatchdog(), 3000);
+      }
+    });
+    debug.log('[monitor] launched (node.exe watchdog.js, ipc channel)');
+    return { ok: true };
+  } catch (err) {
+    debug.log(`[monitor] exception launching: ${err.message}`);
+    return { ok: false, error: err.message };
+  }
+}
+
 ipcMain.handle('start-watchdog', async (event, arg) => {
   event.sender.send('reset-watchdog-status');
-  const wd = spawn(
-    path.join(manifest.config.debug ? path.join(__dirname, '../../') : path.dirname(process.execPath), 'nw/nw.exe'),
-    ['-config', 'watchdog.json'],
-    {
-      cwd: path.join(manifest.config.debug ? path.join(__dirname, '../../') : path.dirname(process.execPath), 'nw/'),
-      detached: true,
-      stdio: 'ignore',
-      shell: false,
-    }
-  );
-  wd.unref(); // Let it run independently
+  // Manual restart from the Settings button: kill the current child then relaunch so it always loads
+  // the current code. The brief delay lets the old child release port 8082 before the new one binds.
+  if (monitorProc) {
+    try {
+      monitorProc.kill();
+    } catch {}
+  }
+  await new Promise((r) => setTimeout(r, 500));
+  return launchWatchdog();
 });
+
+// --- Background emulator auto-fix (daemon) -----------------------------------
+// When the app runs headless in the tray (no window), periodically apply the same one-shot GBE/GSE
+// emulator fix the UI scan does, so a newly-installed emulated game gets configured without the user
+// opening the app. Mirrors the renderer's 15-min new-game poll (app.js scheduleNewGameScan), but only
+// runs while the window is CLOSED — when it's open the renderer handles it. Gated by the existing
+// emulator.autoApplyNewGames opt-out. Fires a Windows toast for each game it actually fixes.
+let bgAutoFixTimer = null;
+let bgAutoFixInFlight = false;
+let bgKnownAppids = null; // baseline of discovered appids; null until the first full pass seeds it
+const BG_AUTOFIX_INTERVAL_MS = 15 * 60 * 1000;
+
+function notifyEmulatorFixed(game) {
+  try {
+    if (configJS && configJS.notification && configJS.notification.notify === false) return; // master notif switch
+    if (!Notification.isSupported || !Notification.isSupported()) return;
+    const fr = String((configJS && configJS.achievement && configJS.achievement.lang) || '')
+      .toLowerCase()
+      .startsWith('fr');
+    const name = (game && game.name) || `AppID ${game && game.appid}`;
+    new Notification({
+      title: fr ? 'Correctif émulateur appliqué' : 'Emulator fix applied',
+      body: fr ? `${name} est prêt — succès activés.` : `${name} is ready — achievements enabled.`,
+      icon: path.join(__dirname, '../resources/icon/icon.png'),
+    }).show();
+    debug.log(`[bg-autofix] toast: emulator fix applied for ${name}`);
+  } catch (err) {
+    debug.log(`[bg-autofix] notify failed: ${err.message || err}`);
+  }
+}
+
+async function runBackgroundAutoFix(reason) {
+  if (MainWin) return; // window open → the renderer's own new-game scan handles fixes
+  if (bgAutoFixInFlight) return;
+  try {
+    await startEngines(); // loads configJS + achievementsJS
+  } catch (err) {
+    debug.log(`[bg-autofix] startEngines failed: ${err.message || err}`);
+    return;
+  }
+  if (!configJS || !configJS.emulator || configJS.emulator.autoApplyNewGames === false) return;
+  bgAutoFixInFlight = true;
+  try {
+    // Once a baseline exists, do a cheap discovery-only poll first and run the heavier full scan only
+    // when a genuinely new install appears (mirrors the renderer's runNewGameScan).
+    if (bgKnownAppids !== null) {
+      const discovered = await achievementsJS.detectInstalledAppids(configJS);
+      const fresh = discovered.filter((id) => !bgKnownAppids.has(String(id)));
+      bgKnownAppids = new Set(discovered.map(String));
+      if (fresh.length === 0) return;
+      debug.log(`[bg-autofix] ${fresh.length} new install(s) detected: ${fresh.join(', ')}`);
+    }
+    if (MainWin) return; // user opened the window during the poll — defer to the renderer
+    debug.log(`[bg-autofix] running headless scan (${reason})`);
+    // makeList drives the same one-shot auto-fix as the UI scan, but the per-game emulator setup now
+    // runs in the background and completes AFTER makeList returns. The "emulator fix applied" toast is
+    // therefore fired by the setEmulatorFixedHandler callback (registered in startEngines) as each fix
+    // actually lands — not collected from onGame here.
+    await achievementsJS.makeList(configJS, () => {}, () => {});
+    try {
+      const all = await achievementsJS.detectInstalledAppids(configJS);
+      bgKnownAppids = new Set(all.map(String));
+    } catch {}
+    debug.log(`[bg-autofix] done — background emulator setup (if any) will toast on completion`);
+  } catch (err) {
+    debug.log(`[bg-autofix] failed: ${err.message || err}`);
+  } finally {
+    bgAutoFixInFlight = false;
+  }
+}
+
+function scheduleBackgroundAutoFix() {
+  if (bgAutoFixTimer) return;
+  // Initial pass shortly after startup (catches games installed while AW was off / closed), then a
+  // periodic poll on the same cadence the renderer uses.
+  setTimeout(() => runBackgroundAutoFix('startup'), 90 * 1000);
+  bgAutoFixTimer = setInterval(() => runBackgroundAutoFix('interval'), BG_AUTOFIX_INTERVAL_MS);
+}
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -751,19 +779,49 @@ async function ensureChromium() {
   return info;
 }
 
+// Microsoft Edge ships with Windows 10/11 and is Chromium-based, so puppeteer can drive it exactly
+// like Chrome (the stealth plugin works on the CDP layer, independent of which Chromium binary runs).
+// Using it as a fallback lets machines without Google Chrome skip the ~170 MB ensureChromium() download.
+function findInstalledEdge() {
+  if (process.platform !== 'win32') return null;
+  const roots = [process.env['ProgramFiles(x86)'], process.env['ProgramFiles'], 'C:\\Program Files (x86)', 'C:\\Program Files'];
+  for (const root of roots) {
+    if (!root) continue;
+    const p = path.join(root, 'Microsoft', 'Edge', 'Application', 'msedge.exe');
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
+
 async function startPuppeteer(headless, strip) {
   const puppeteer = require('puppeteer-extra');
   const StealthPlugin = require('puppeteer-extra-plugin-stealth');
   puppeteer.use(StealthPlugin());
   const ChromeLauncher = require('chrome-launcher');
-  const installedChromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' || ChromeLauncher.Launcher.getInstallations()[0];
-  const chromiumPath = fs.existsSync(installedChromePath) ? installedChromePath : (await ensureChromium()).executablePath;
-  if (!puppeteerWindow.browser)
-    puppeteerWindow.browser = await puppeteer.launch({
-      headless: headless ? 'new' : false,
-      executablePath: chromiumPath,
-      args: ['--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-extensions'],
-    });
+  // The old `'…macOS path…' || ChromeLauncher…` form always short-circuited to the (truthy) macOS
+  // string, so on Windows Puppeteer never reused an installed Chrome and always downloaded Chromium.
+  // Pick per-platform; getInstallations()[0] may be undefined (no Chrome) -> falls back to ensureChromium.
+  const installedChromePath =
+    process.platform === 'darwin'
+      ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+      : ChromeLauncher.Launcher.getInstallations()[0];
+  // Browser preference: installed Chrome → installed Edge (Win10/11) → last-resort ~170 MB Chromium
+  // download. The Edge tier is purely additive; the download path still exists as the final fallback.
+  const localBrowserPath = (installedChromePath && fs.existsSync(installedChromePath) && installedChromePath) || findInstalledEdge();
+  const launchArgs = ['--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-extensions'];
+  if (!puppeteerWindow.browser) {
+    try {
+      const exePath = localBrowserPath || (await ensureChromium()).executablePath;
+      puppeteerWindow.browser = await puppeteer.launch({ headless: headless ? 'new' : false, executablePath: exePath, args: launchArgs });
+    } catch (err) {
+      // A local Chrome/Edge that fails to drive (rare CDP mismatch) must never regress the no-Chrome
+      // case: fall back to the standalone Chromium download and retry once.
+      if (!localBrowserPath) throw err;
+      debug.log(`puppeteer: local browser launch failed (${err.message}); falling back to downloaded Chromium`);
+      const exePath = (await ensureChromium()).executablePath;
+      puppeteerWindow.browser = await puppeteer.launch({ headless: headless ? 'new' : false, executablePath: exePath, args: launchArgs });
+    }
+  }
   if (!puppeteerWindow.context) puppeteerWindow.context = await puppeteerWindow.browser.createIncognitoBrowserContext();
   if (!puppeteerWindow.pagesc) {
     puppeteerWindow.pagesc = await puppeteerWindow.context.newPage();
@@ -787,7 +845,10 @@ async function startPuppeteer(headless, strip) {
 
 async function scrapeWithPuppeteer(info = { appid: 269770 }, alternate) {
   if (alternate?.steamhunters || alternate?.steamcommunity)
-    while ((currentlyscraping.steamhunters && alternate?.steamhunters) || (currentlyscraping.steamcommunity && alternate?.steamcommunity)) delay(100);
+    // NB: `await` is essential here — without it this becomes a tight CPU-pinning busy-loop that
+    // spins at 100% while two scrapes overlap (a direct cause of the watchdog CPU spikes #24/#39).
+    while ((currentlyscraping.steamhunters && alternate?.steamhunters) || (currentlyscraping.steamcommunity && alternate?.steamcommunity))
+      await delay(100);
   currentlyscraping.steamcommunity = alternate?.steamcommunity ? true : currentlyscraping.steamcommunity;
   currentlyscraping.steamhunters = alternate?.steamhunters ? true : currentlyscraping.steamhunters;
   await startPuppeteer(alternate, alternate?.steamhunters);
@@ -1026,7 +1087,10 @@ async function searchForGameName(info = { appid: '' }) {
     await Promise.all(tasks);
   }
 
-  while (!info.title) {
+  // Bound the catalog scan: without a cap, a title that never matches (delisted, renamed, region-
+  // locked) scrapes Epic's store endlessly. Stop after MAX_PAGES; info.title stays undefined on a miss.
+  const MAX_PAGES = 100;
+  while (!info.title && startIndex < MAX_PAGES) {
     await run(startIndex);
     info.title = matchResult;
     startIndex += 5;
@@ -1049,6 +1113,16 @@ function searchForSteamAppId(info = { name: '' }) {
       backgroundThrottling: false,
     },
   });
+  const closeHiddenSearchWindow = () => {
+    try {
+      if (!win.isDestroyed()) win.close();
+    } catch {}
+  };
+  const searchTimeout = setTimeout(() => {
+    if (!info.games) info.games = [];
+    closeHiddenSearchWindow();
+  }, 30000);
+  win.on('closed', () => clearTimeout(searchTimeout));
   win.webContents.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36');
   // Inject JS *before* the page starts executing its own scripts
   win.webContents.on('dom-ready', async () => {
@@ -1123,6 +1197,9 @@ function searchForSteamAppId(info = { name: '' }) {
       info.games = games;
     } catch (error) {
       console.error('Failed to find appid:', error);
+      if (!info.games) info.games = [];
+    } finally {
+      closeHiddenSearchWindow();
     }
   });
 }
@@ -1138,12 +1215,23 @@ function createMainWindow() {
     options.show = false;
     options.webPreferences = {
       devTools: manifest.config.debug || false,
+      // Full contextIsolation is a separate, larger migration (the renderer relies on nodeIntegration
+      // for require/remote). Until then the XSS->RCE surface is held shut by the page CSP (no
+      // 'unsafe-inline' / 'unsafe-eval') + output escaping; the flags below are cheap defence-in-depth.
       nodeIntegration: true,
       contextIsolation: false,
+      nodeIntegrationInWorker: false,
+      nodeIntegrationInSubFrames: false,
       webviewTag: false,
+      enableWebSQL: false,
+      spellcheck: false,
       v8CacheOptions: manifest.config.debug ? 'none' : 'code',
-      enableRemoteModule: true,
-      backgroundThrottling: false,
+      // Tray daemon: the main UI window spends most of its life hidden/minimized. Let Chromium
+      // throttle its background timers then (cuts idle CPU). Safe here because the only renderer
+      // timer is the 15-min new-game scan (far slower than the ~1/min throttle floor) and WebSocket
+      // message handling is unaffected by throttling. The hidden scrape window (searchForSteamAppId)
+      // and the overlay/notification windows keep backgroundThrottling:false — they must run hidden.
+      backgroundThrottling: true,
     };
     //electron 9 crash if no icon exists to specified path
     try {
@@ -1153,6 +1241,7 @@ function createMainWindow() {
     }
     //getSteamData({ appid: 2321470, type: 'user' });
     MainWin = new BrowserWindow(options);
+    getRemoteMain().enable(MainWin.webContents);
 
     //Frameless
     if (options.frame === false) MainWin.isFrameless = true;
@@ -1162,26 +1251,23 @@ function createMainWindow() {
       MainWin.webContents.openDevTools({ mode: 'undocked' });
       MainWin.isDev = true;
       console.info((({ node, electron, chrome }) => ({ node, electron, chrome }))(process.versions));
-      try {
-        const contextMenu = require('electron-context-menu')({
-          append: (defaultActions, params, browserWindow) => [
-            {
-              label: 'Reload',
-              visible: params,
-              click: () => {
-                MainWin.reload();
+      // electron-context-menu is ESM-only in v4+ — must use dynamic import
+      import('electron-context-menu').then((mod) => {
+        const contextMenuFn = mod.default || mod;
+        if (typeof contextMenuFn === 'function') {
+          contextMenuFn({
+            append: (defaultActions, params, browserWindow) => [
+              {
+                label: 'Reload',
+                visible: params,
+                click: () => { if (MainWin) MainWin.reload(); },
               },
-            },
-          ],
-        });
-      } catch (err) {
-        dialog.showMessageBoxSync({
-          type: 'warning',
-          title: 'Context Menu',
-          message: 'Failed to initialize context menu.',
-          detail: `${err}`,
-        });
-      }
+            ],
+          });
+        }
+      }).catch((err) => {
+        console.warn('electron-context-menu init failed:', err.message);
+      });
     }
 
     //User agent
@@ -1201,22 +1287,26 @@ function createMainWindow() {
     MainWin.webContents.on('will-navigate', openExternal); //a href
     MainWin.webContents.on('new-window', openExternal); //a href target="_blank"
 
+    // Hardening: never let the renderer spawn its own BrowserWindow; route real links to the OS
+    // browser instead (modern replacement for the deprecated 'new-window' path above).
+    MainWin.webContents.setWindowOpenHandler(({ url }) => {
+      if (/^https?:\/\//i.test(url)) shell.openExternal(url).catch(() => {});
+      return { action: 'deny' };
+    });
+
+    // Hardening: the app needs no web permissions (camera, mic, geolocation, web-notifications, …) —
+    // its toasts are native and audio samples use <audio>/main-process playback. Deny every request
+    // and check so a compromised renderer can't obtain one.
+    session.defaultSession.setPermissionRequestHandler((wc, permission, callback) => callback(false));
+    session.defaultSession.setPermissionCheckHandler(() => false);
+
     MainWin.loadFile(manifest.config.window.view);
 
-    const isReady = [
-      new Promise(function (resolve) {
-        MainWin.once('ready-to-show', () => {
-          return resolve();
-        }); //Window is loaded and ready to be drawn
-      }),
-      new Promise(function (resolve) {
-        ipcMain.handleOnce('components-loaded', () => {
-          return resolve();
-        }); //Wait for custom event
-      }),
-    ];
-
-    Promise.all(isReady).then(() => {
+    let mainWindowShown = false;
+    const showMainWindow = (reason) => {
+      if (mainWindowShown || !MainWin) return;
+      mainWindowShown = true;
+      debug.log(`[MainWindow] showing (${reason})`);
       MainWin.show();
       MainWin.focus();
       const net = require('net');
@@ -1233,20 +1323,140 @@ function createMainWindow() {
           callback(false);
         });
       }
-      setInterval(() => {
+      // Report monitor status to the renderer (its connection indicator). The monitor is launched and
+      // supervised by the daemon itself (spawned on 'ready', respawned on unexpected exit), so there
+      // is no auto-launch here. Stored + cleared on window close so repeated open/close never leaks
+      // intervals.
+      clearInterval(watchdogStatusInterval);
+      watchdogStatusInterval = setInterval(() => {
         checkWatchdogStatus((running) => {
           if (MainWin) MainWin.webContents.send('watchdog-status', running);
         });
       }, 5000);
+    };
+
+    const isReady = [
+      new Promise(function (resolve) {
+        MainWin.once('ready-to-show', () => {
+          debug.log('[MainWindow] ready-to-show');
+          return resolve();
+        }); //Window is loaded and ready to be drawn
+      }),
+      new Promise(function (resolve) {
+        ipcMain.handleOnce('components-loaded', () => {
+          debug.log('[MainWindow] components-loaded');
+          return resolve();
+        }); //Wait for custom event
+      }),
+    ];
+
+    Promise.all(isReady).then(() => showMainWindow('ready'));
+    // Resilience: never let a hung or failed renderer (e.g. a component import error, or a slow/blocked
+    // data load) keep the window hidden forever. Once the page can paint, show it after a short grace
+    // period even if the 'components-loaded' IPC never arrives.
+    MainWin.once('ready-to-show', () => {
+      setTimeout(() => showMainWindow('fallback-timeout'), 8000);
     });
+    // Absolute last resort: show regardless of paint/IPC events so the app is never invisible.
+    setTimeout(() => showMainWindow('absolute-timeout'), 15000);
 
     MainWin.on('closed', () => {
       MainWin = null;
-      if (shouldQuitApp()) app.quit();
+      // Daemon stays alive in the tray; just release the window-bound status poller. The monitor and
+      // tray are untouched, so background tracking continues.
+      clearInterval(watchdogStatusInterval);
+      watchdogStatusInterval = null;
+      // Closing the window mid-scrape would otherwise leave an orphaned headless Chromium resident
+      // (the renderer fires 'close-puppeteer' only once the game list finishes). Tear it down here so
+      // a key-less scrape can't leak ~100-200 MB into the background tray state (cf. #32).
+      closePuppeteer().catch(() => {});
     });
   } catch (e) {
     debug.log(`Error creating main window: ${e}`);
     if (shouldQuitApp()) app.quit();
+  }
+}
+
+// --- In-game overlay manipulation: nudge / snap / click-through toggle + position persistence -------
+// The overlay (overlay.html) is already drag-movable via -webkit-app-region on its header. These add
+// keyboard fine-positioning and a click-through toggle (so it can pass clicks to the game), registered
+// as global shortcuts only while the overlay is open. Bounds persist to <userData>/cfg/overlayBounds.json
+// (a tiny standalone store, like progressMute.json) and are restored next time the overlay opens.
+function overlayBoundsFile() {
+  return path.join(userData, 'cfg', 'overlayBounds.json');
+}
+function readOverlayBounds() {
+  try {
+    return JSON.parse(fs.readFileSync(overlayBoundsFile(), 'utf8')) || {};
+  } catch {
+    return {};
+  }
+}
+function writeOverlayBounds(patch) {
+  try {
+    const next = Object.assign(readOverlayBounds(), patch);
+    fs.mkdirSync(path.dirname(overlayBoundsFile()), { recursive: true });
+    fs.writeFileSync(overlayBoundsFile(), JSON.stringify(next), 'utf8');
+  } catch (e) {
+    debug.log('[overlay-bounds] ' + (e.message || e));
+  }
+}
+let overlayClickThrough = false;
+function persistInGameBounds() {
+  if (overlayWindow && !overlayWindow.isDestroyed()) writeOverlayBounds({ inGame: overlayWindow.getBounds() });
+}
+function nudgeOverlay(dx, dy) {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  const b = overlayWindow.getBounds();
+  overlayWindow.setBounds({ x: b.x + dx, y: b.y + dy, width: b.width, height: b.height });
+  persistInGameBounds();
+}
+function snapOverlay(corner) {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  const { x: ax, y: ay, width: aw, height: ah } = require('electron').screen.getPrimaryDisplay().workArea;
+  const b = overlayWindow.getBounds();
+  let x = ax;
+  let y = ay;
+  switch (corner) {
+    case 1: x = ax; y = ay; break; // top-left
+    case 2: x = ax + aw - b.width; y = ay; break; // top-right
+    case 3: x = ax + Math.floor((aw - b.width) / 2); y = ay + Math.floor((ah - b.height) / 2); break; // center
+    case 4: x = ax; y = ay + ah - b.height; break; // bottom-left
+    case 5: x = ax + aw - b.width; y = ay + ah - b.height; break; // bottom-right
+  }
+  overlayWindow.setBounds({ x, y, width: b.width, height: b.height });
+  persistInGameBounds();
+}
+function toggleOverlayClickThrough() {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  overlayClickThrough = !overlayClickThrough;
+  overlayWindow.setIgnoreMouseEvents(overlayClickThrough, { forward: true });
+}
+const OVERLAY_SHORTCUT_KEYS = ['Up', 'Down', 'Left', 'Right', '1', '2', '3', '4', '5', 'C'];
+function registerOverlayShortcuts() {
+  const reg = (accel, fn) => {
+    try {
+      globalShortcut.register(accel, fn);
+    } catch (e) {
+      debug.log('[overlay-shortcut] register failed ' + accel + ': ' + (e.message || e));
+    }
+  };
+  reg('CommandOrControl+Alt+Shift+Up', () => nudgeOverlay(0, -20));
+  reg('CommandOrControl+Alt+Shift+Down', () => nudgeOverlay(0, 20));
+  reg('CommandOrControl+Alt+Shift+Left', () => nudgeOverlay(-20, 0));
+  reg('CommandOrControl+Alt+Shift+Right', () => nudgeOverlay(20, 0));
+  reg('CommandOrControl+Alt+Shift+1', () => snapOverlay(1));
+  reg('CommandOrControl+Alt+Shift+2', () => snapOverlay(2));
+  reg('CommandOrControl+Alt+Shift+3', () => snapOverlay(3));
+  reg('CommandOrControl+Alt+Shift+4', () => snapOverlay(4));
+  reg('CommandOrControl+Alt+Shift+5', () => snapOverlay(5));
+  reg('CommandOrControl+Alt+Shift+C', () => toggleOverlayClickThrough());
+}
+function unregisterOverlayShortcuts() {
+  for (const k of OVERLAY_SHORTCUT_KEYS) {
+    try {
+      globalShortcut.unregister('CommandOrControl+Alt+Shift+' + k);
+    } catch {}
   }
 }
 
@@ -1336,16 +1546,33 @@ async function createOverlayWindow(info) {
     overlayWindow.setFocusable(true);
     overlayWindow.blur();
 
+    // Restore the user's last overlay position/size (from drag, nudge or snap), if any.
+    const savedInGame = readOverlayBounds().inGame;
+    if (savedInGame && Number.isFinite(savedInGame.x) && Number.isFinite(savedInGame.y)) {
+      overlayWindow.setBounds({
+        x: savedInGame.x,
+        y: savedInGame.y,
+        width: savedInGame.width || 450,
+        height: savedInGame.height || 800,
+      });
+    }
+    overlayClickThrough = false; // each open starts interactive (drag/scroll), not click-through
+
     overlayWindow.loadFile(path.join(manifest.config.debug ? '' : userData, 'view\\overlay.html'));
     let selectedLanguage = 'english';
     overlayWindow.webContents.on('did-finish-load', () => {
       overlayWindow.webContents.send('show-overlay', info.game);
       overlayWindow.showInactive();
+      registerOverlayShortcuts(); // nudge / snap / click-through, active only while the overlay is open
     });
+
+    // Persist position after a drag (app-region move fires 'moved').
+    overlayWindow.on('moved', persistInGameBounds);
 
     overlayWindow.on('closed', () => {
       isOverlayShowing = false;
       overlayWindow = null;
+      unregisterOverlayShortcuts();
     });
   } catch (e) {
     debug.log(`Error creating overlay window, ${e}`);
@@ -1353,384 +1580,561 @@ async function createOverlayWindow(info) {
   }
 }
 
-async function createNotificationWindow(info) {
-  try {
-    if (isNotificationShowing) {
-      earnedNotificationQueue.push(info);
-      return;
-    }
-    isNotificationShowing = true;
-
-    await startEngines();
-    await getCachedData(info);
-    closePuppeteer();
-    const message = {
-      name: info.game.name,
-      displayName: info.a.displayName || '',
-      description: info.a.description || '',
-      icon: pathToFileURL(await fetchIcon(info.a.icon, info.appid)).href,
-      icon_gray: pathToFileURL(await fetchIcon(info.a.icongray, info.appid)).href,
-      preset: configJS.overlay.preset,
-      position: configJS.overlay.position,
-      scale: parseFloat(configJS.overlay.scale),
-    };
-    if (MainWin) MainWin.webContents.send('achievement-unlock', { appid: info.appid, ach_data: info.a });
-
-    const display = require('electron').screen.getPrimaryDisplay();
-    const { width, height } = display.workAreaSize;
-
-    const preset = message.preset || 'default';
-    const presetFolder = path.join(manifest.config.debug ? path.join(__dirname, '../') : userData, 'presets', preset);
-    const presetHtml = path.join(presetFolder, 'index.html');
-    const position = message.position || 'center-bot';
-    const scale = parseFloat(message.scale * 0.01 || 1);
-
-    const { width: windowWidth, height: windowHeight } = getPresetDimensions(presetFolder);
-
-    const scaledWidth = windowWidth * scale;
-    const scaledHeight = windowHeight * scale;
-
-    let x = 0,
-      y = 0;
-
-    if (position.includes('left')) {
-      x = 20;
-    } else if (position.includes('right')) {
-      x = width - scaledWidth - 20;
-    } else if (position.includes('center')) {
-      x = Math.floor(width / 2 - scaledWidth / 2);
-    }
-
-    if (position.includes('top')) {
-      y = 10;
-    } else if (position.includes('bot')) {
-      y = height - Math.round(scaledHeight) - 20;
-    } else if (position.includes('mid')) {
-      y = height / 2 - Math.round(scaledHeight / 2);
-    }
-
-    notificationWindow = new BrowserWindow({
-      width: scaledWidth,
-      height: scaledHeight,
-      x,
-      y,
-      transparent: true,
-      frame: false,
-      show: false,
-      alwaysOnTop: true,
-      focusable: true,
-      resizable: false,
-      fullscreenable: false,
-      skipTaskbar: true,
-      hasShadow: false,
-      webPreferences: {
-        preload: path.join(__dirname, '../overlayPreload.js'),
-        additionalArguments: [`--isDev=${app.isDev ? 'true' : 'false'}`, `--userDataPath=${userData}`],
-        contextIsolation: true,
-        nodeIntegration: false,
-        backgroundThrottling: false,
-      },
-    });
-
-    if (manifest.config.debug) {
-      notificationWindow.webContents.openDevTools({ mode: 'undocked' });
-      notificationWindow.isDev = true;
-      console.info((({ node, electron, chrome }) => ({ node, electron, chrome }))(process.versions));
-      try {
-        const contextMenu = require('electron-context-menu')({
-          append: (defaultActions, params, browserWindow) => [
-            {
-              label: 'Reload',
-              visible: params,
-              click: () => {
-                notificationWindow.reload();
-              },
-            },
-          ],
-        });
-      } catch (err) {
-        dialog.showMessageBoxSync({
-          type: 'warning',
-          title: 'Context Menu',
-          message: 'Failed to initialize context menu.',
-          detail: `${err}`,
-        });
-      }
-    }
-
-    notificationWindow.setAlwaysOnTop(true, 'screen-saver');
-    notificationWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-    notificationWindow.setFullScreenable(false);
-    notificationWindow.setFocusable(false);
-    setTimeout(() => {
-      notificationWindow.setIgnoreMouseEvents(true, { forward: true });
-    }, 50);
-    //notificationWindow.setIgnoreMouseEvents(true, { forward: true });
-    notificationWindow.info = info;
-
-    let soundFile;
-    if (configJS.notification_toast.customToastAudio === '2' || configJS.notification_toast.customToastAudio === '1') {
-      let toastAudio = require(path.join(__dirname, '../util/toastAudio.js'));
-      soundFile =
-        configJS.notification_toast.customToastAudio === '1'
-          ? path.join(process.env.SystemRoot || process.env.WINDIR, 'media', toastAudio.getDefault())
-          : toastAudio.getCustom();
-    }
-    notificationWindow.webContents.on('did-finish-load', () => {
-      notificationWindow.showInactive();
-      notificationWindow.webContents.send('set-window-scale', scale);
-      notificationWindow.webContents.send('set-animation-scale', (configJS.overlay?.duration ?? 1) * 0.01);
-      notificationWindow.webContents.send('show-notification', {
-        game: message.name,
-        displayName: message.displayName,
-        description: message.description,
-        iconPath: message.icon,
-        scale,
-      });
-      createOverlayWindow({ appid: info.appid, action: 'refresh' });
-      player.play(soundFile);
-    });
-
-    notificationWindow.on('closed', async () => {
-      isNotificationShowing = false;
-      notificationWindow = null;
-      if (earnedNotificationQueue.length > 0) {
-        createNotificationWindow(earnedNotificationQueue.shift());
-        return;
-      }
-      if (shouldQuitApp()) app.quit();
-    });
-
-    notificationWindow.webContents.on('console-message', (e, level, message, line, sourceID) => {
-      debug.log(message, sourceID, line);
-    });
-
-    notificationWindow.loadFile(presetHtml);
-  } catch (e) {
-    debug.log(`Error creating notification window: ${e}`);
-    if (shouldQuitApp()) app.quit();
-  }
-}
-
-async function createPlaytimeWindow(info) {
-  try {
-    if (isplaytimeWindowShowing) {
-      playtimeQueue.push(info);
-      return;
-    }
-    isplaytimeWindowShowing = true;
-
-    const { width: screenWidth } = require('electron').screen.getPrimaryDisplay().workAreaSize;
-    const winWidth = 460;
-    const winHeight = 340;
-    const x = Math.floor((screenWidth - winWidth) / 2);
-    const y = 40;
-
-    playtimeWindow = new BrowserWindow({
-      width: winWidth,
-      height: winHeight,
-      x,
-      y,
-      frame: false,
-      type: 'notification',
-      alwaysOnTop: true,
-      transparent: true,
-      resizable: false,
-      show: false,
-      skipTaskbar: true,
-      focusable: false,
-      fullscreenable: false,
-      webPreferences: {
-        preload: path.join(__dirname, '../overlayPreload.js'),
-        additionalArguments: [`--isDev=${app.isDev ? 'true' : 'false'}`, `--userDataPath=${userData}`],
-        contextIsolation: true,
-        nodeIntegration: false,
-        backgroundThrottling: false,
-      },
-    });
-    setTimeout(() => {
-      playtimeWindow.setIgnoreMouseEvents(true, { forward: true });
-    }, 50);
-    playtimeWindow.setAlwaysOnTop(true, 'screen-saver');
-    playtimeWindow.setVisibleOnAllWorkspaces(true);
-    playtimeWindow.setFullScreenable(false);
-    playtimeWindow.setFocusable(false);
-
-    const desc = info.description;
-    await startEngines();
-    await getCachedData(info);
-    closePuppeteer();
-    info.description = desc;
-    info.headerUrl = pathToFileURL(await fetchIcon(info.game.img.header, info.appid)).href;
-    playtimeWindow.once('ready-to-show', () => {
-      if (playtimeWindow && !playtimeWindow.isDestroyed()) {
-        playtimeWindow.showInactive();
-
-        //const prefs = fs.existsSync(preferencesPath) ? JSON.parse(fs.readFileSync(preferencesPath, 'utf8')) : {};
-        const scale = 1; //prefs.notificationScale || 1;
-
-        playtimeWindow.webContents.send('show-playtime', {
-          ...info,
-          scale,
-        });
-      }
-    });
-    ipcMain.once('close-playtime-window', () => {
-      if (playtimeWindow && !playtimeWindow.isDestroyed()) {
-        playtimeWindow.close();
-      }
-    });
-
-    playtimeWindow.on('closed', () => {
-      isplaytimeWindowShowing = false;
-      playtimeWindow = null;
-      if (playtimeQueue.length > 0) {
-        createPlaytimeWindow(playtimeQueue.shift());
-        return;
-      }
-      if (shouldQuitApp()) app.quit();
-    });
-
-    playtimeWindow.loadFile(path.join(manifest.config.debug ? path.join(__dirname, '..') : userData, 'view', 'playtime.html'));
-  } catch (e) {
-    debug.log(`Error creating playtime window: ${e}`);
-    if (shouldQuitApp()) app.quit();
-  }
-}
-
-async function createProgressWindow(info) {
-  try {
-    if (isProgressWindowShowing) {
-      if (progressWindow.appid !== info.appid) {
-        progressQueue.push(info);
-        return;
-      }
-      progressWindow.close();
-    }
-    isProgressWindowShowing = true;
-    const { width, height } = require('electron').screen.getPrimaryDisplay().workAreaSize;
-
-    progressWindow = new BrowserWindow({
-      width: 350,
-      height: 150,
-      x: 20,
-      y: height - 140,
-      transparent: true,
-      frame: false,
-      alwaysOnTop: true,
-      focusable: true,
-      resizable: false,
-      fullscreenable: false,
-      skipTaskbar: true,
-      hasShadow: false,
-      show: false,
-      webPreferences: {
-        preload: path.join(__dirname, '../overlayPreload.js'),
-        additionalArguments: [`--isDev=${app.isDev ? 'true' : 'false'}`, `--userDataPath=${userData}`],
-        contextIsolation: true,
-        nodeIntegration: false,
-        backgroundThrottling: false,
-      },
-    });
-
-    progressWindow.setAlwaysOnTop(true, 'screen-saver');
-    progressWindow.setVisibleOnAllWorkspaces(true);
-    progressWindow.setFullScreenable(false);
-    progressWindow.setFocusable(true);
-    setTimeout(() => {
-      progressWindow.setIgnoreMouseEvents(true, { forward: true });
-    }, 50);
-
-    await startEngines();
-    await getCachedData(info);
-    closePuppeteer();
-    info.a.icongray = pathToFileURL(await fetchIcon(info.a.icongray, info.appid)).href;
-
-    progressWindow.webContents.on('did-finish-load', () => {
-      progressWindow.showInactive();
-      progressWindow.webContents.send('show-progress', info);
-    });
-
-    progressWindow.on('closed', () => {
-      isProgressWindowShowing = false;
-      progressWindow = null;
-      if (progressQueue.length > 0) {
-        createProgressWindow(progressQueue.shift());
-        return;
-      }
-      if (shouldQuitApp()) app.quit();
-    });
-
-    setTimeout(() => {
-      if (progressWindow && !progressWindow.isDestroyed()) progressWindow.close();
-    }, 5000);
-
-    progressWindow.loadFile(path.join(manifest.config.debug ? path.join(__dirname, '..') : userData, 'view/progress.html'));
-    progressWindow.appid = info.appid;
-  } catch (e) {
-    debug.log(`Error creating progress window: ${e}`);
-    if (shouldQuitApp()) app.quit();
-  }
-}
-
-function getPresetDimensions(presetFolder) {
-  const presetIndexPath = path.join(presetFolder, 'index.html');
-  try {
-    const content = fs.readFileSync(presetIndexPath, 'utf-8');
-    const metaRegex = /<meta\s+width\s*=\s*"(\d+)"\s+height\s*=\s*"(\d+)"\s*\/?>/i;
-    const match = content.match(metaRegex);
-    if (match) {
-      return { width: parseInt(match[1], 10), height: parseInt(match[2], 10) };
-    }
-  } catch (error) {
-    notifyError('Error reading preset: ' + error.message);
-  }
-  // Default values if not defined
-  return { width: 400, height: 200 };
-}
-
 function shouldQuitApp() {
-  const noMain = !MainWin;
-  const noNotifications = !isNotificationShowing && earnedNotificationQueue.length === 0;
-  const noOverlay = !isOverlayShowing;
-  const noProgress = !isProgressWindowShowing && progressQueue.length === 0;
-  const noPlaytime = !isplaytimeWindowShowing && playtimeQueue.length === 0;
-
-  return noMain && noNotifications && noOverlay && noProgress && noPlaytime;
+  // Resident tray daemon: the app stays alive in the system tray with no window. Closing the main
+  // window (or finishing notifications/overlay) must NEVER quit the process — the monitor keeps
+  // running in the background. The app quits only via the tray "Quit" item (which sets app.isQuiting
+  // and calls app.quit() directly). All the historical `if (shouldQuitApp()) app.quit()` call sites
+  // therefore become no-ops.
+  return false;
 }
 
 function parseArgs(args) {
-  let windowType = args['wintype'] || 'main'; // overlay, playtime, progress, achievement
+  let windowType = args['wintype'] || 'main'; // overlay (in-game) or main; notifications are Windows toasts
   let appid = args['appid']; // appid
   let source = args['source'] || 'steam'; // source: steam, epic, gog, luma
-  let ach = args['ach']; // achievement name
   let description = args['description']; // text
-  let count = args['count'] || '0/100'; // count / max_count
   debug.log('opening ' + windowType + ' window');
   switch (windowType) {
-    case 'playtime':
-      createPlaytimeWindow({ appid, source, description });
-      break;
     case 'overlay':
       createOverlayWindow({ appid, source, action: description });
       break;
-    case 'progress':
-      createProgressWindow({ appid, source, ach, count });
-      break;
-    case 'achievement':
-      createNotificationWindow({ appid, source, ach });
+    case 'notification':
+      // Styled overlay notification. The monitor forwards these args over IPC (handleMonitorMessage)
+      // and they are rendered as a BrowserWindow inside this resident daemon — no transient process,
+      // no single-instance forwarding, so no self-quit safety net is needed any more.
+      enqueueNotificationFromArgs(args);
       break;
     case 'main':
     default:
-      autoUpdater.checkForUpdatesAndNotify();
-      checkResources();
-      createMainWindow();
+      // Resident tray daemon: open the UI window on demand. A login-item / `--hidden` start stays in
+      // the tray with no window; a normal launch, a tray "Open", or a second-instance opens it.
+      // Startup-only init (resources, tray, monitor, icon-cache prune) runs once in the 'ready'
+      // handler, not here, so reopening the window never repeats it.
+      if (!args.hidden) createMainWindow();
       break;
   }
 }
 
+// --- Overlay notification (optional transport) — Wave 3 ----------------------
+// Spawns a frameless, transparent, click-through window that renders a notification
+// using a preset (preset = index.html + style.css, copied from the reference project).
+// The preset's own script receives the payload through overlayPreload's `window.api`,
+// animates, then calls window.api.closeNotificationWindow() (handled in ipc.js).
+// Toasts remain the default transport; this only runs when explicitly triggered.
+// Resolve a preset by name from the bundled library (Default Presets, then Users Presets),
+// falling back to "Default". Mirrors the reference project's preset folder lookup.
+function resolvePresetFolder(presetName) {
+  const requestedRaw = String(presetName || 'Default');
+  const requested = requestedRaw === 'Raposo' ? 'Shirow' : requestedRaw;
+  const roots = [
+    path.join(__dirname, '../presets/Default Presets'),
+    path.join(__dirname, '../presets/Users Presets'),
+    path.join(__dirname, '../presets'),
+  ];
+  for (const root of roots) {
+    const f = path.join(root, requested);
+    if (fs.existsSync(path.join(f, 'index.html'))) return f;
+  }
+  for (const root of roots) {
+    const f = path.join(root, 'Default');
+    if (fs.existsSync(path.join(f, 'index.html'))) return f;
+  }
+  return null;
+}
+
+// Read the preset's window size from its <meta width="" height=""> tag (reference convention).
+function getPresetDimensions(presetFolder) {
+  try {
+    const content = fs.readFileSync(path.join(presetFolder, 'index.html'), 'utf8');
+    const m = content.match(/<meta\s+width\s*=\s*"(\d+)"\s+height\s*=\s*"(\d+)"\s*\/?>/i);
+    if (m) return { width: parseInt(m[1], 10), height: parseInt(m[2], 10) };
+  } catch (err) {
+    debug.log('[overlay-notif] preset dimensions read failed: ' + (err.message || err));
+  }
+  return { width: 400, height: 200 };
+}
+
+// Place the window within the primary display's work area for a given position keyword.
+function computeNotificationBounds(position, w, h) {
+  const { x: ax, y: ay, width: aw, height: ah } = require('electron').screen.getPrimaryDisplay().workArea;
+  let x = ax + Math.floor((aw - w) / 2);
+  let y = ay + ah - h;
+  switch (position) {
+    case 'center-top':   x = ax + Math.floor((aw - w) / 2); y = ay;                            break;
+    case 'top-left':     x = ax;                            y = ay;                            break;
+    case 'top-right':    x = ax + aw - w;                   y = ay;                            break;
+    case 'middle-left':  x = ax;                            y = ay + Math.floor((ah - h) / 2); break;
+    case 'middle-right': x = ax + aw - w;                   y = ay + Math.floor((ah - h) / 2); break;
+    case 'bottom-left':  x = ax;                            y = ay + ah - h;                   break;
+    case 'bottom-right': x = ax + aw - w - 10;              y = ay + ah - h;                   break;
+    case 'custom': {
+      // User-positioned via the "Reposition" witness; persisted in overlayBounds.json (notif).
+      const saved = readOverlayBounds().notif;
+      if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)) return { x: saved.x, y: saved.y };
+      x = ax + Math.floor((aw - w) / 2); y = ay + ah - h; // fall back to center-bottom until set
+      break;
+    }
+    case 'center-bottom':
+    default:             x = ax + Math.floor((aw - w) / 2); y = ay + ah - h;                   break;
+  }
+  return { x: Math.max(ax, x), y: Math.max(ay, y) };
+}
+
+function createNotificationWindow(data = {}) {
+  const presetFolder = resolvePresetFolder(data.preset);
+  if (!presetFolder) {
+    debug.log('[overlay-notif] no usable preset found under app/presets');
+    return null;
+  }
+  const presetHtml = path.join(presetFolder, 'index.html');
+
+  const scaleRaw = Number(data.scale);
+  const scale = Number.isFinite(scaleRaw) && scaleRaw > 0 ? scaleRaw : 1;
+  const { width: baseW, height: baseH } = getPresetDimensions(presetFolder);
+  // Grow the window with scale (only when >1) so larger presets are not clipped.
+  const w = Math.ceil(baseW * (scale > 1 ? scale : 1));
+  const h = Math.ceil(baseH * (scale > 1 ? scale : 1));
+  const position = data.position || 'center-bottom';
+  const { x, y } = computeNotificationBounds(position, w, h);
+
+  debug.log('[overlay-notif] preset=' + path.basename(presetFolder) + ' pos=' + position + ' scale=' + scale + ' size=' + w + 'x' + h);
+
+  const notif = new BrowserWindow({
+    width: w,
+    height: h,
+    x,
+    y,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    focusable: false,
+    hasShadow: false,
+    fullscreenable: false,
+    webPreferences: {
+      preload: path.join(__dirname, '../notificationPreload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      backgroundThrottling: false,
+      autoplayPolicy: 'no-user-gesture-required',
+    },
+  });
+
+  notif.setAlwaysOnTop(true, 'screen-saver');
+  notif.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  // Real notifications are click-through; the reposition witness stays interactive so it can be dragged.
+  if (!data.reposition) notif.setIgnoreMouseEvents(true, { forward: true });
+  notif.loadFile(presetHtml);
+
+  // Match the proven overlayWindow pattern: show inactively once content is loaded
+  // (no reliance on 'ready-to-show', which the working in-game overlay also avoids).
+  notif.webContents.on('did-finish-load', () => {
+    if (notif.isDestroyed()) return;
+    notif.webContents.send('show-notification', {
+      displayName: data.displayName != null ? data.displayName : 'Achievement Unlocked',
+      description: data.description != null ? data.description : '',
+      rarityPercent: data.rarityPercent,
+      iconPath: data.iconPath || data.icon || '',
+      scale,
+      // Forwarded so presets that support it can match their animation to the user's duration.
+      durationMs: Number.isFinite(Number(data.durationMs)) ? Number(data.durationMs) : undefined,
+    });
+    notif.showInactive();
+    // Optional notification sound — played inside the (renderer) notification window. Volume is a
+    // 0–200 percent setting: use a WebAudio gain node for >100% (Audio.volume caps at 1.0), and fall
+    // back to Audio.volume (clamped) if WebAudio is unavailable.
+    if (data.soundPath) {
+      // In packaged builds the sound lives under app.asar.unpacked (see electron-builder asarUnpack).
+      const u = String(data.soundPath).replace(/\\/g, '/').replace('app.asar/', 'app.asar.unpacked/');
+      const src = u.startsWith('file://') ? u : 'file:///' + u;
+      const gain = Math.max(0, Math.min(2, (Number(data.volume) != null && Number.isFinite(Number(data.volume)) ? Number(data.volume) : 100) / 100));
+      notif.webContents
+        .executeJavaScript(
+          '(function(){try{var a=new Audio(' + JSON.stringify(src) + ');var g=' + gain + ';' +
+          'try{var C=window.AudioContext||window.webkitAudioContext;if(C&&g!==1){var ctx=new C();var s=ctx.createMediaElementSource(a);var n=ctx.createGain();n.gain.value=g;s.connect(n);n.connect(ctx.destination);}else{a.volume=Math.min(1,g);}}catch(e){a.volume=Math.min(1,g);}' +
+          'a.play().catch(function(){});}catch(e){}})();'
+        )
+        .catch(() => {});
+    }
+    // Reposition mode: overlay a full-window drag region so the user can place the popup, and persist
+    // the chosen top-left as the 'custom' anchor. executeJavaScript is privileged (bypasses preset CSP).
+    if (data.reposition) {
+      notif.webContents
+        .executeJavaScript(
+          "(function(){var d=document.createElement('div');d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;-webkit-app-region:drag;cursor:move;z-index:2147483647';document.documentElement.appendChild(d);})();"
+        )
+        .catch(() => {});
+    }
+    // Custom duration: hold the notification on screen by FREEZING all animations after ~3s for the
+    // chosen time, then resume. Preset-agnostic — it pauses existing AND newly-started animations during
+    // the hold (an interval catches the exit animation), and the close is deferred (see ipc.js, via
+    // awFrozenUntil) so a preset's own self-close can't cut the hold short. 'auto' = no freeze.
+    const holdMs = Number.isFinite(Number(data.durationMs)) && Number(data.durationMs) > 0 ? Number(data.durationMs) : 0;
+    if (holdMs > 0 && !data.reposition) {
+      const FREEZE_AFTER = 3000;
+      notif.awFrozenUntil = Date.now() + FREEZE_AFTER + holdMs + 1200; // +tail so the exit can finish
+      notif.webContents
+        .executeJavaScript(
+          '(function(){var F=' + FREEZE_AFTER + ',H=' + holdMs + ';' +
+          'function all(){try{return document.getAnimations?document.getAnimations():[];}catch(e){return [];}}' +
+          'setTimeout(function(){' +
+          'all().forEach(function(a){try{a.pause();}catch(e){}});' +
+          'var iv=setInterval(function(){all().forEach(function(a){try{a.pause();}catch(e){}});},100);' +
+          'setTimeout(function(){clearInterval(iv);all().forEach(function(a){try{a.play();}catch(e){}});},H);' +
+          '},F);})();'
+        )
+        .catch(() => {});
+    }
+  });
+
+  if (data.reposition) {
+    notif.on('moved', () => writeOverlayBounds({ notif: { x: notif.getBounds().x, y: notif.getBounds().y } }));
+  }
+
+  // Safety net: the preset normally closes itself via window.api.closeNotificationWindow(). With a
+  // custom duration the freeze-hold above plays ~3s, freezes for that time, then exits, so the catch-all
+  // must outlast 3s + hold + exit (never cut it short — the close defer in ipc.js targets ~3s+hold+1.2s).
+  // 'auto' keeps the 20s catch-all; the reposition witness stays up much longer so there's time to place it.
+  const customMs = Number(data.durationMs);
+  const closeAfter = data.reposition ? 120000 : Number.isFinite(customMs) && customMs > 0 ? 3000 + customMs + 4000 : 20000;
+  const safety = setTimeout(() => {
+    if (!notif.isDestroyed()) notif.close();
+  }, closeAfter);
+  notif.on('closed', () => clearTimeout(safety));
+
+  return notif;
+}
+
+// Serial queue: one overlay notification on screen at a time. The next opens once the current
+// window closes (each preset closes itself via window.api.closeNotificationWindow()).
+let notifQueue = [];
+let notifActive = false;
+
+// Guard against the same overlay notification rendering twice in quick succession. This matters when
+// the main app is open: the persistent process receives every Watchdog-forwarded notification, so a
+// duplicate spawn (e.g. two rapid playtime/unlock events, or a forwarding race) would stack two
+// identical overlays. Keyed by content within a short window. Transient app-closed processes each
+// handle a single notification, so their map is always empty and never falsely suppresses.
+const recentNotifKeys = new Map();
+function isDuplicateNotification(data) {
+  try {
+    const key = [data.displayName || '', data.description || '', data.iconPath || data.icon || ''].join('');
+    const now = Date.now();
+    for (const [k, t] of recentNotifKeys) if (now - t > 5000) recentNotifKeys.delete(k);
+    const last = recentNotifKeys.get(key);
+    recentNotifKeys.set(key, now);
+    return last != null && now - last < 5000;
+  } catch {
+    return false;
+  }
+}
+
+function enqueueNotification(data) {
+  data = data || {};
+  if (MainWin && isDuplicateNotification(data)) {
+    debug.log('[overlay-notif] duplicate suppressed (app open): ' + (data.displayName || ''));
+    return;
+  }
+  notifQueue.push(data);
+  processNotificationQueue();
+}
+function processNotificationQueue() {
+  if (notifActive) return;
+  const data = notifQueue.shift();
+  if (!data) return;
+  notifActive = true;
+  let win = null;
+  try {
+    win = createNotificationWindow(data);
+  } catch (err) {
+    debug.log('[overlay-notif] spawn failed: ' + (err.message || err));
+  }
+  if (!win) {
+    notifActive = false;
+    if (notifQueue.length) {
+      setTimeout(processNotificationQueue, 50);
+    } else if (shouldQuitApp()) {
+      // No window was created (e.g. unresolvable preset) and nothing is queued. In a transient
+      // Watchdog-spawned notification process there is now nothing to wait on and 'window-all-closed'
+      // will never fire, so quit immediately rather than sit idle holding the single-instance lock
+      // (which blocks the main app from launching).
+      app.quit();
+    }
+    return;
+  }
+  win.on('closed', () => {
+    notifActive = false;
+    setTimeout(processNotificationQueue, 150);
+  });
+}
+
+ipcMain.on('spawn-overlay-notification', (event, data) => {
+  enqueueNotification(data || {});
+});
+
+// Build an overlay notification from the CLI args the Watchdog passes to a `--wintype=notification`
+// process. This process never runs startEngines (that's the main-window path), so configJS is null
+// here — load the user's overlay settings (preset/position/scale/sound) directly from options.ini so
+// the notification respects them. The icon is passed as a URL and resolved from the on-disk cache the
+// Watchdog already prefetched into; a short race guards against a slow/offline fetch hanging the
+// transient process (it would otherwise never reach window-all-closed and quit).
+async function enqueueNotificationFromArgs(args) {
+  let cfg = configJS;
+  if (!cfg) {
+    try {
+      // settings.load() is async — it must be awaited, otherwise cfg is a pending Promise and the
+      // user's overlay preset/position/scale/sound are silently ignored (always falling back to the
+      // 'Default' preset, which also raises the risk of an unresolvable preset → no window).
+      cfg = await require(path.join(__dirname, '../settings.js')).load();
+    } catch {
+      cfg = {};
+    }
+  }
+  const ov = (cfg && cfg.overlay) || {};
+
+  let iconPath = '';
+  if (args.icon) {
+    try {
+      iconPath =
+        (await Promise.race([fetchSteamIcon(String(args.icon), args.appid), new Promise((resolve) => setTimeout(() => resolve(''), 4000))])) || '';
+    } catch {
+      /* icon is optional */
+    }
+  }
+
+  // Playtime (and any caller passing --silent) must never play the overlay sound.
+  const silent = !!args.silent;
+  const langFr = String((cfg && cfg.achievement && cfg.achievement.lang) || '')
+    .toLowerCase()
+    .startsWith('fr');
+  const displayName =
+    (args.displayName != null && String(args.displayName).trim()) ||
+    (args.gameDisplayName != null && String(args.gameDisplayName).trim()) ||
+    (langFr ? 'Succès débloqué' : 'Achievement Unlocked');
+
+  const durSec = ov.notificationDuration === 'auto' || ov.notificationDuration == null ? 0 : Number(ov.notificationDuration) || 0;
+  enqueueNotification({
+    preset: ov.notificationPreset || 'Default',
+    position: ov.notificationPosition || 'center-bottom',
+    scale: ov.notificationScale || 1,
+    volume: Number.isFinite(Number(ov.notificationVolume)) ? Number(ov.notificationVolume) : 100,
+    durationMs: durSec > 0 ? durSec * 1000 : undefined,
+    // Playtime notifications pass the game name in both fields. Keeping the dedicated game-name
+    // fallback prevents a lost/empty displayName argument from becoming "Achievement Unlocked".
+    displayName,
+    description: args.description != null ? String(args.description) : '',
+    rarityPercent: Number.isFinite(Number(args.rarityPercent)) ? Number(args.rarityPercent) : null,
+    iconPath,
+    soundPath: silent ? '' : resolveNotificationSound(ov.notificationSound),
+  });
+}
+
+// Notification sounds live in two places: bundled (app/sounds) and user-imported (<userData>/sounds).
+// A user file shadows a bundled file of the same name.
+function userSoundsDir() {
+  return path.join(userData, 'sounds');
+}
+function resolveNotificationSound(name) {
+  if (!name) return '';
+  for (const p of [path.join(userSoundsDir(), name), path.join(__dirname, '../sounds', name)]) {
+    try {
+      if (fs.existsSync(p)) return p;
+    } catch {}
+  }
+  return '';
+}
+
+// List available preset names (Default Presets + Users Presets) for the settings dropdown.
+ipcMain.handle('list-presets', async () => {
+  const out = [];
+  const roots = [path.join(__dirname, '../presets/Default Presets'), path.join(__dirname, '../presets/Users Presets')];
+  for (const root of roots) {
+    try {
+      for (const name of fs.readdirSync(root)) {
+        if (fs.existsSync(path.join(root, name, 'index.html')) && !out.includes(name)) out.push(name);
+      }
+    } catch {}
+  }
+  out.sort((a, b) => a.localeCompare(b));
+  return out;
+});
+
+// --- Custom preset builder (Phase 3 customiser) -----------------------------------------------------
+// Generate a notification-overlay preset into "Users Presets/<name>" from simple visual settings. The
+// index.html is a FIXED, payload-consuming engine (same contract as the bundled presets:
+// window.api.onNotification → fill .title/.detail/.icon, add .active, close after the duration); only the
+// generated style.css differs, driven by :root CSS variables. This guarantees every generated preset is
+// structurally compatible with createNotificationWindow.
+const CUSTOM_PRESET_INDEX_HTML = [
+  '<!DOCTYPE html>',
+  '<html lang="en"><head>',
+  '<meta charset="UTF-8" />',
+  '<link rel="stylesheet" href="style.css" />',
+  '<meta name="duration" content="6000" />',
+  '<meta width="450" height="120" />',
+  '<title>AW Custom Preset</title>',
+  '</head><body>',
+  '<div class="ach"><div class="icon"><img src="" alt="" /></div>',
+  '<div class="text_wrap"><p class="title"></p><span class="detail"></span></div></div>',
+  '<script>',
+  "window.addEventListener('DOMContentLoaded', function () {",
+  "  var metaDur = document.querySelector('meta[name=\"duration\"]');",
+  '  var base = Math.max(1, Number((metaDur && metaDur.content) || 6000));',
+  '  function onPayload(displayName, description, iconPath, scale) {',
+  "    var ach = document.querySelector('.ach');",
+  "    var titleEl = document.querySelector('.title');",
+  "    var detailEl = document.querySelector('.detail');",
+  "    var iconEl = document.querySelector('.icon img');",
+  '    if (displayName != null) titleEl.textContent = displayName;',
+  '    if (description != null) detailEl.textContent = description;',
+  '    if (iconPath) { var p = String(iconPath).replace(/\\\\/g, "/"); iconEl.src = p.indexOf("file://") === 0 ? p : "file:///" + p; }',
+  "    else { iconEl.style.display = 'none'; }",
+  '    var s = Math.max(0.01, parseFloat(scale || 1) || 1);',
+  "    ach.style.setProperty('--scale', String(s));",
+  '    var total = Math.max(0, Number((metaDur && metaDur.content) || base));',
+  '    var t = Math.max(0.1, total / base);',
+  '    var inMs = Math.max(120, Math.round(520 * t));',
+  '    var outMs = Math.max(120, Math.round(380 * t));',
+  '    var holdMs = Math.max(0, total - inMs - outMs);',
+  "    ach.style.setProperty('--ach-in', inMs + 'ms');",
+  "    ach.style.setProperty('--ach-hold', holdMs + 'ms');",
+  "    ach.style.setProperty('--ach-out', outMs + 'ms');",
+  "    ach.classList.add('active');",
+  '    if (window.api && window.api.notificationRenderReady) window.api.notificationRenderReady();',
+  '    setTimeout(function () {',
+  "      ach.classList.remove('active');",
+  '      if (window.api && window.api.closeNotificationWindow) window.api.closeNotificationWindow();',
+  '    }, total);',
+  '  }',
+  '  if (window.api && window.api.onNotification) window.api.onNotification(function (d) {',
+  '    onPayload(d && d.displayName, d && d.description, d && (d.iconPath || d.icon), d && d.scale);',
+  '  });',
+  '});',
+  '</script></body></html>',
+].join('\n');
+
+function buildCustomPresetCss(o) {
+  const num = (v, def, min, max) => {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return def;
+    return Math.max(min, Math.min(max, n));
+  };
+  const color = (v, def) => (typeof v === 'string' && /^(#[0-9a-f]{3,8}|rgba?\([^)]*\)|[a-z]+)$/i.test(v.trim()) ? v.trim() : def);
+  const bg = color(o.bg, '#16181d');
+  const text = color(o.text, '#ffffff');
+  const accent = color(o.accent, '#4aa3ff');
+  const opacity = num(o.opacity, 1, 0.2, 1);
+  const fontSize = num(o.fontSize, 16, 10, 28);
+  const radius = num(o.radius, 12, 0, 40);
+  const iconSize = num(o.iconSize, 64, 24, 110);
+  return [
+    ':root {',
+    `  --bg: ${bg};`,
+    `  --text: ${text};`,
+    `  --accent: ${accent};`,
+    `  --opacity: ${opacity};`,
+    `  --font-size: ${fontSize}px;`,
+    `  --radius: ${radius}px;`,
+    `  --icon-size: ${iconSize}px;`,
+    '  --ach-in: 520ms; --ach-hold: 5000ms; --ach-out: 380ms;',
+    '}',
+    'html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }',
+    '.ach {',
+    '  position: fixed; left: 50%; bottom: 16px;',
+    '  transform: translate(-50%, 170%) scale(var(--scale, 1)); transform-origin: center bottom;',
+    '  display: flex; align-items: center; gap: 12px; box-sizing: border-box;',
+    '  width: 420px; padding: 12px 18px;',
+    '  background: var(--bg); color: var(--text);',
+    '  border-radius: var(--radius); border-left: 4px solid var(--accent);',
+    "  font-family: 'Segoe UI', system-ui, sans-serif; font-size: var(--font-size);",
+    '  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); opacity: 0;',
+    '}',
+    '.ach .icon img { width: var(--icon-size); height: var(--icon-size); border-radius: 14%; object-fit: cover; display: block; }',
+    '.ach .text_wrap { display: flex; flex-direction: column; min-width: 0; }',
+    '.ach .title { margin: 0; font-weight: 700; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }',
+    '.ach .detail { margin: 0; opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }',
+    '@keyframes aw_in { from { transform: translate(-50%, 170%) scale(var(--scale, 1)); opacity: 0; } to { transform: translate(-50%, 0) scale(var(--scale, 1)); opacity: var(--opacity); } }',
+    '@keyframes aw_hold { from, to { transform: translate(-50%, 0) scale(var(--scale, 1)); opacity: var(--opacity); } }',
+    '@keyframes aw_out { from { transform: translate(-50%, 0) scale(var(--scale, 1)); opacity: var(--opacity); } to { transform: translate(-50%, 170%) scale(var(--scale, 1)); opacity: 0; } }',
+    '.active { animation: aw_in var(--ach-in) cubic-bezier(0.2, 0.8, 0.2, 1) forwards, aw_hold var(--ach-hold) forwards, aw_out var(--ach-out) ease-in forwards; animation-delay: 0s, var(--ach-in), calc(var(--ach-in) + var(--ach-hold)); }',
+    '',
+  ].join('\n');
+}
+
+ipcMain.handle('create-custom-preset', async (event, opts = {}) => {
+  try {
+    const rawName = String(opts.name || '').trim();
+    // Folder-safe name; keep it readable. Reject empties and reserved/odd names.
+    const name = rawName.replace(/[<>:"/\\|?* -]/g, '').replace(/\s+/g, ' ').trim().slice(0, 48);
+    if (!name) return { ok: false, error: 'invalid-name' };
+    const dir = path.join(__dirname, '../presets/Users Presets', name);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'index.html'), CUSTOM_PRESET_INDEX_HTML, 'utf8');
+    fs.writeFileSync(path.join(dir, 'style.css'), buildCustomPresetCss(opts), 'utf8');
+    debug.log('[custom-preset] wrote ' + dir);
+    return { ok: true, name };
+  } catch (err) {
+    debug.log('[custom-preset] failed: ' + (err.message || err));
+    return { ok: false, error: String(err.message || err) };
+  }
+});
+
+// List available notification sound files for the overlay sound dropdown (bundled + user-imported).
+ipcMain.handle('list-sounds', async () => {
+  const set = new Set();
+  for (const dir of [path.join(__dirname, '../sounds'), userSoundsDir()]) {
+    try {
+      for (const f of fs.readdirSync(dir)) if (/\.(wav|mp3|ogg)$/i.test(f)) set.add(f);
+    } catch {}
+  }
+  return [...set].sort((a, b) => a.localeCompare(b));
+});
+
+// Import a custom notification sound: copy a user-picked audio file into <userData>/sounds and return
+// its (possibly de-duplicated) filename so the renderer can select it. Returns null on cancel/failure.
+ipcMain.handle('import-sound', async () => {
+  try {
+    const res = await dialog.showOpenDialog({
+      title: 'Choose a notification sound',
+      properties: ['openFile', 'dontAddToRecent'],
+      filters: [{ name: 'Audio', extensions: ['wav', 'mp3', 'ogg'] }],
+    });
+    if (res.canceled || !res.filePaths || !res.filePaths.length) return null;
+    const src = res.filePaths[0];
+    const dir = userSoundsDir();
+    fs.mkdirSync(dir, { recursive: true });
+    const ext = path.extname(src);
+    const stem = path.basename(src, ext);
+    let base = stem + ext;
+    let dest = path.join(dir, base);
+    // Don't clobber a different existing file of the same name — suffix " (n)".
+    let i = 1;
+    while (fs.existsSync(dest)) {
+      try {
+        if (fs.realpathSync(dest) === fs.realpathSync(src)) return base; // same file already imported
+      } catch {}
+      base = `${stem} (${i++})${ext}`;
+      dest = path.join(dir, base);
+    }
+    fs.copyFileSync(src, dest);
+    return base;
+  } catch (err) {
+    debug.log('[import-sound] ' + (err.message || err));
+    return null;
+  }
+});
+
+// NOTE: overlay notifications are no longer rendered from an app-side WebSocket bridge. The Watchdog
+// now spawns a `--wintype=notification` process for each overlay notification (see watchdog
+// notification/toaster.js), so they appear with the main app closed; when the app is open the
+// single-instance lock forwards the args to it via 'second-instance'. This avoids the duplicate that
+// a still-listening bridge would cause and removes the "app must be open" requirement.
+
 function checkResources() {
   function copyFolderRecursive(src, dst) {
+    if (!fs.existsSync(src)) return;
     fs.mkdirSync(dst, { recursive: true });
     const entries = fs.readdirSync(src, { withFileTypes: true });
     for (const e of entries) {
@@ -1756,9 +2160,6 @@ function checkResources() {
 
   const resourcesPath = path.join(manifest.config.debug ? path.join(__dirname, '..') : path.join(process.resourcesPath, 'userdata'));
 
-  const presets = path.join(resourcesPath, 'presets');
-  copyFolderRecursive(presets, path.join(userData, 'Presets'));
-
   const media = path.join(resourcesPath, 'Media');
   copyFolderRecursive(media, path.join(userData, 'Media'));
 
@@ -1768,26 +2169,63 @@ function checkResources() {
   const source = path.join(resourcesPath, 'Source');
   copyFolderRecursive(source, path.join(userData, 'Source'));
 
-  if (!fs.existsSync(path.join(app.getPath('appData'), 'obs-studio', 'basic', 'profiles', 'AW'))) {
-    const profile = path.join(resourcesPath, 'obs', 'AW');
-    copyFolderRecursive(profile, path.join(app.getPath('appData'), 'obs-studio', 'basic', 'profiles', 'AW'));
-    fs.copyFileSync(path.join(resourcesPath, 'obs', 'AW.json'), path.join(app.getPath('appData'), 'obs-studio', 'basic', 'scenes', 'AW.json'));
-  }
+  // Startup registration is user-controlled from Settings > General.
+}
 
-  app.setLoginItemSettings({
-    openAtLogin: true,
-    path: path.join(manifest.config.debug ? path.join(__dirname, '../../') : path.dirname(process.execPath), 'nw/nw.exe'),
-    args: ['-config', 'watchdog.json'],
-  });
+// System tray — the app lives here. Single left-click / "Open" shows the UI window; "Quit" is the only
+// way to actually exit (it sets app.isQuiting so before-quit tears down the monitor).
+let tray = null;
+function createTray() {
+  if (tray) return tray;
+  try {
+    const iconPath = path.join(__dirname, '../resources/icon/icon.ico');
+    const image = nativeImage.createFromPath(iconPath);
+    tray = new Tray(image.isEmpty() ? iconPath : image);
+    tray.setToolTip('Achievement Watcher');
+    const rebuildMenu = () => {
+      const contextMenu = Menu.buildFromTemplate([
+        { label: 'Open Achievement Watcher', click: () => createMainWindow() },
+        {
+          label: 'Restart background monitor',
+          click: () => {
+            if (monitorProc) {
+              try {
+                monitorProc.kill();
+              } catch {}
+            }
+            setTimeout(() => launchWatchdog(), 500);
+          },
+        },
+        { type: 'separator' },
+        {
+          label: 'Quit',
+          click: () => {
+            app.isQuiting = true;
+            app.quit();
+          },
+        },
+      ]);
+      tray.setContextMenu(contextMenu);
+    };
+    rebuildMenu();
+    tray.on('click', () => createMainWindow());
+    tray.on('double-click', () => createMainWindow());
+    debug.log('[tray] created');
+  } catch (err) {
+    debug.log(`[tray] failed to create: ${err.message || err}`);
+  }
+  return tray;
 }
 
 try {
-  if (app.requestSingleInstanceLock() !== true) app.quit();
-
+  const gotSingleInstanceLock = app.requestSingleInstanceLock();
+  if (!gotSingleInstanceLock) {
+    app.quit();
+  } else {
   autoUpdater.on('update-downloaded', async (info) => {
     await startEngines();
     const skippedVersion = configJS.general.skippedVersion;
-    if (skippedVersion.toLowerCase() !== 'none' && semver.gte(skippedVersion, info.version)) {
+    if (skippedVersion.toLowerCase() !== 'none' && require('semver').gte(skippedVersion, info.version)) {
       return;
     }
     const { response } = await dialog.showMessageBox({
@@ -1810,11 +2248,46 @@ try {
   app
     .on('ready', async function () {
       ipc.window();
+      // Startup-only init for the resident tray daemon (runs once, regardless of --hidden):
+      // load config, copy resources, sync the login item, create the tray, then spawn/supervise the monitor.
+      try {
+        await startEngines();
+      } catch (err) {
+        debug.log('[startEngines] failed before startup sync: ' + err.message);
+      }
+      try {
+        checkResources();
+      } catch (err) {
+        debug.log('[checkResources] failed: ' + err.message);
+      }
+      if (!manifest.config.debug) {
+        try {
+          ipc.setStartWithWindows(configJS?.general?.startWithWindows !== false);
+        } catch (err) {
+          debug.log('[startup] failed to sync login item: ' + (err.message || err));
+        }
+      }
+      createTray();
+      launchWatchdog();
+      scheduleBackgroundAutoFix(); // headless emulator auto-fix while the window stays closed
+      // Cap the per-appid icon cache off the startup critical path (LRU by access time, ~1 GiB
+      // default; no-op when under cap).
+      setTimeout(() => {
+        try {
+          const { pruneIconCache } = require(path.join(__dirname, '../util/iconCache.js'));
+          const r = pruneIconCache(path.join(userData, 'steam_cache', 'icon'));
+          if (r.count > 0)
+            debug.log(`[iconCache] pruned ${r.count} folder(s), freed ${(r.freed / 1048576).toFixed(0)}MB (was ${(r.before / 1048576).toFixed(0)}MB)`);
+        } catch (err) {
+          debug.log('[iconCache] prune skipped: ' + (err.message || err));
+        }
+      }, 15000);
       const args = minimist(process.argv.slice(1));
-      parseArgs(args);
+      parseArgs(args); // opens the window unless launched with --hidden
     })
     .on('window-all-closed', function () {
-      if (shouldQuitApp()) app.quit();
+      // Resident tray daemon: do NOT quit when the window closes — the tray + background monitor stay
+      // alive. The app exits only via the tray "Quit" item.
     })
     .on('web-contents-created', (event, contents) => {
       contents.on('new-window', (event, url) => {
@@ -1822,9 +2295,27 @@ try {
       });
     })
     .on('second-instance', async (event, argv, cwd) => {
+      // A second launch (user re-running the exe, e.g. from the Start menu while it sits hidden in
+      // the tray) should surface the UI window.
+      debug.log(`[second-instance] argv=${JSON.stringify(argv || [])}`);
       const args = minimist(argv.slice(1));
-      parseArgs(args);
+      if ((args['wintype'] || 'main') === 'main') createMainWindow();
+      else parseArgs(args);
+    })
+    .on('before-quit', function () {
+      // Resident tray daemon: the monitor is our supervised child, so terminate it on a real quit
+      // instead of leaking a background process. app.isQuiting also disables the respawn supervisor.
+      app.isQuiting = true;
+      clearTimeout(monitorRespawnTimer);
+      if (monitorProc) {
+        debug.log('[monitor] terminating monitor child on quit');
+        try {
+          monitorProc.kill();
+        } catch {}
+        monitorProc = null;
+      }
     });
+  }
 } catch (err) {
   dialog.showErrorBox('Critical Error', `Failed to initialize:\n${err}`);
   app.quit();
