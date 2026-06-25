@@ -1,0 +1,49 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# The app + watchdog are Windows-only and ship native deps (registry-js, sharp,
+# and koffi-based watchdog modules). The unit tests run under standalone Node and
+# do not load those native modules, so we install with --ignore-scripts: this
+# skips the native build step (which would need a full Visual Studio toolchain on
+# the runner) while still installing every package. Runtime patches are re-applied
+# explicitly with patch-package.
+env:
+  npm_config_audit: 'false'
+  npm_config_fund: 'false'
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            app/package-lock.json
+            watchdog/package-lock.json
+
+      - name: Install app dependencies
+        working-directory: app
+        run: |
+          npm ci --ignore-scripts
+          npx patch-package
+
+      - name: Install watchdog dependencies
+        working-directory: watchdog
+        run: npm ci --ignore-scripts
+
+      - name: Run app tests
+        working-directory: app
+        run: npm test
+
+      - name: Run watchdog tests
+        working-directory: watchdog
+        run: npm test
