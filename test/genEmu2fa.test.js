@@ -1,0 +1,48 @@
+'use strict';
+
+// Exercise the interactive wrapper without contacting Steam: the command shim emits a Steam Guard
+// prompt without a newline (like WebAuth), waits on stdin, then produces a minimal generated config.
+const assert = require('assert');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const gen = require(path.join(__dirname, '..', 'app', 'parser', 'genEmuConfig.js'));
+
+(async () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-genemu-2fa-'));
+  let result = null;
+  try {
+    const shim = path.join(temp, 'generate_emu_config.cmd');
+    fs.writeFileSync(
+      shim,
+      '@echo off\r\n' +
+        'set /p CODE=Enter Steam Guard code: 1>&2\r\n' +
+        'if not "%CODE%"=="246810" exit /b 9\r\n' +
+        'mkdir "%~dp0_OUTPUT\\480\\steam_settings"\r\n' +
+        'echo %*>"%~dp0_OUTPUT\\480\\steam_settings\\args.txt"\r\n' +
+        'echo ok>"%~dp0_OUTPUT\\480\\steam_settings\\achievements.json"\r\n'
+    );
+    const prompts = [];
+    result = await gen.generate({
+      tool: { exe: shim, tag: 'test' },
+      appid: '480',
+      login: { username: 'throwaway', password: 'secret' },
+      onPrompt: async (question) => {
+        prompts.push(question);
+        return '246810';
+      },
+      timeout: 10000,
+    });
+    assert.strictEqual(prompts.length, 1, 'Steam Guard prompt must be forwarded exactly once');
+    assert.match(prompts[0], /Steam Guard code/i);
+    assert.match(result.steamSettings, /_OUTPUT[\\/]480[\\/]steam_settings$/, 'current GSE _OUTPUT layout must be detected');
+    assert.match(fs.readFileSync(path.join(result.steamSettings, 'args.txt'), 'utf8'), /-tok/, 'login must persist its refresh token');
+    console.log('PASS: generate_emu_config forwards 2FA and enables refresh-token persistence');
+  } finally {
+    if (result && result.workDir) fs.rmSync(result.workDir, { recursive: true, force: true });
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+})().catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});
