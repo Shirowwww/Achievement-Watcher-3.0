@@ -5,8 +5,13 @@ const ini = require('@xan105/ini');
 const parentFind = require('find-up');
 const omit = require('lodash.omit');
 const fs = require('@xan105/fs');
-const regedit = require('regodit');
 const sse = require('./sse.js');
+
+// regodit is ESM-only (koffi) since v2; load it lazily via dynamic import (cached by Node's module
+// registry) and use the async `regodit/promises` subpath (the `.promises` namespace was dropped and
+// the functions were renamed PascalCase -> camelCase in v2).
+let regeditPromise = null;
+const loadRegedit = () => regeditPromise || (regeditPromise = import('regodit/promises'));
 
 const files = {
   achievement: [
@@ -91,7 +96,8 @@ module.exports.getFolders = async (userDir_file) => {
   ];
 
   try {
-    const mydocs = await regedit.promises.RegQueryStringValueAndExpand(
+    const regedit = await loadRegedit();
+    const mydocs = await regedit.regQueryStringValueAndExpand(
       'HKCU',
       'Software/Microsoft/Windows/CurrentVersion/Explorer/User Shell Folders',
       'Personal'
@@ -310,7 +316,7 @@ module.exports.parse = async (filePath) => {
       let convert = {};
       for (let i in local.State) {
         if (Object.prototype.hasOwnProperty.call(local.State, i)) {
-          if (local.local.State[i] == '0101') {
+          if (local.State[i] == '0101') {
             convert[`${i}`] = {
               Achieved: '1',
               UnlockTime: new DataView(new Uint8Array(Buffer.from(local.Time[i].toString(), 'hex')).buffer).getUint32(0, true) || null,
@@ -321,6 +327,7 @@ module.exports.parse = async (filePath) => {
       local = convert;
     } else if (local.ACHIEVEMENTS) {
       //TENOKE
+      let convert = {};
       for (let i in local.ACHIEVEMENTS) {
         if (!Object.prototype.hasOwnProperty.call(local.ACHIEVEMENTS, i)) continue;
         const key = i.replace(/^"|"$/g, '');
@@ -336,6 +343,7 @@ module.exports.parse = async (filePath) => {
           UnlockTime: time,
         };
       }
+      local = convert;
     } else {
       local = omit(local.ACHIEVE_DATA || local, filter);
     }
@@ -417,12 +425,13 @@ module.exports.parse = async (filePath) => {
 module.exports.getFoldersLuma = async () => {
   let data = [];
 
-  let users = regedit.RegListAllSubkeys('HKCU', 'SOFTWARE/LumaPlay');
+  const regedit = await loadRegedit();
+  let users = await regedit.regListAllSubkeys('HKCU', 'SOFTWARE/LumaPlay');
   if (!users) return data;
 
   for (let user of users) {
     try {
-      let appidList = regedit.RegListAllSubkeys('HKCU', `SOFTWARE/LumaPlay/${user}`);
+      let appidList = await regedit.regListAllSubkeys('HKCU', `SOFTWARE/LumaPlay/${user}`);
       if (!appidList) continue;
 
       for (let appid of appidList) {

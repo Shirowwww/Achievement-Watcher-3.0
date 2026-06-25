@@ -1,18 +1,25 @@
 'use strict';
 
-const util = require('util');
-const { exec } = require('child_process');
+const os = require('os');
 
-const priority = {
-  idle: 64,
-  'below normal': 16384,
-  normal: 32,
-  'above normal': 32768,
-  'high priority': 128,
-  'real time': 256,
+/*
+  Set a process's scheduling priority.
+
+  Previously shelled out to `wmic process ... CALL setpriority`, but WMIC is deprecated and
+  removed from Windows 11 24H2+, where the call fails. Node's built-in os.setPriority() does
+  the same thing with no external process and works on every supported OS/version. The legacy
+  WMIC priority words are mapped to the equivalent Node nice values (os.constants.priority).
+*/
+const niceByLevel = {
+  idle: os.constants.priority.PRIORITY_LOW, // 19
+  'below normal': os.constants.priority.PRIORITY_BELOW_NORMAL, // 10
+  normal: os.constants.priority.PRIORITY_NORMAL, // 0
+  'above normal': os.constants.priority.PRIORITY_ABOVE_NORMAL, // -7
+  'high priority': os.constants.priority.PRIORITY_HIGH, // -14
+  'real time': os.constants.priority.PRIORITY_HIGHEST, // -20
 };
 
 module.exports.set = async (level, pid = process.pid) => {
-  if (!priority.hasOwnProperty(level)) throw 'Unknown priority level';
-  await util.promisify(exec)('wmic process where "ProcessId=' + pid + '" CALL setpriority ' + priority[`${level}`], { windowsHide: true });
+  if (!Object.prototype.hasOwnProperty.call(niceByLevel, level)) throw 'Unknown priority level';
+  os.setPriority(pid, niceByLevel[level]);
 };

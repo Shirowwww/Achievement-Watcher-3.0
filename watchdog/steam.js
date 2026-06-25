@@ -1,11 +1,28 @@
 'use strict';
 
 const path = require('path');
+const debug = require('./util/log.js');
 const urlParser = require('url');
 const fs = require('fs');
 const request = require('request-zero');
 const steamLang = require('./steam.json');
 const htmlParser = require('node-html-parser');
+
+// Coerce a possibly non-string schema name into a usable display title (issue #54): handles a plain
+// string, a { name } wrapper, a localized { english, … } map (prefers english), a number, and falls
+// back to the appid so a toast never shows "[object Object]". Mirrors normalizeGameName in the
+// renderer's parser/achievements.js (kept local since the watchdog is a separate process).
+function normalizeName(name, appID) {
+  if (typeof name === 'string') return name;
+  if (name && typeof name === 'object') {
+    if (typeof name.name === 'string' && name.name.trim()) return name.name;
+    if (typeof name.english === 'string' && name.english.trim()) return name.english;
+    const first = Object.values(name).find((v) => typeof v === 'string' && v.trim());
+    if (first) return first;
+  }
+  if (typeof name === 'number') return String(name);
+  return String(appID);
+}
 
 module.exports.loadSteamData = async (appID, lang, key, binary = null) => {
   if (!steamLang.some((language) => language.api === lang)) {
@@ -27,10 +44,11 @@ module.exports.loadSteamData = async (appID, lang, key, binary = null) => {
       } else {
         result = await getSteamDataFromSRV(appID, lang);
       }
-      fs.mkdirSync(filePath, { recursive: true });
+      fs.mkdirSync(path.dirname(filePath), { recursive: true });
       fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
     }
 
+    if (result && typeof result.name !== 'string') result.name = normalizeName(result.name, appID);
     return result;
   } catch (err) {
     throw `Could not load Steam data for ${appID} - ${lang}: ${err}`;
@@ -77,12 +95,24 @@ function getSteamDataFromSRV(appID, lang) {
 }
 
 async function getSteamData(appID, lang, key) {
-  const url = `https://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v0002/?key=${key}&appid=${appID}&l=${lang}&format=json`;
+  // IPlayerService/GetGameAchievements (not the legacy ISteamUserStats/GetSchemaForGame) so hidden
+  // achievements keep their real description — same root-cause fix as the renderer (#57). Mapped to
+  // the {name, displayName, hidden, description, icon, icongray} shape the rest of the watchdog uses.
+  const url = `https://api.steampowered.com/IPlayerService/GetGameAchievements/v1/?key=${key}&appid=${appID}&language=${lang}`;
 
   const data = await request.getJson(url);
 
-  const schema = data.game.availableGameStats;
-  if (!(schema && schema.achievements && schema.achievements.length > 0)) throw "Schema doesn't have any achievement";
+  const list = data && data.response && data.response.achievements;
+  if (!Array.isArray(list) || list.length === 0) throw "Schema doesn't have any achievement";
+  const achievements = list.map((a) => ({
+    name: a.internal_name,
+    defaultvalue: 0,
+    displayName: a.localized_name,
+    hidden: a.hidden ? 1 : 0,
+    description: a.localized_desc || '',
+    icon: `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${appID}/${a.icon}`,
+    icongray: `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${appID}/${a.icon_gray}`,
+  }));
   let store = await getDataFromSteamStore(+appID);
   const result = {
     name: await findInAppList(+appID),
@@ -97,8 +127,8 @@ async function getSteamData(appID, lang, key) {
         : 'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/480/winner.jpg',
     },
     achievement: {
-      total: schema.achievements.length,
-      list: schema.achievements,
+      total: achievements.length,
+      list: achievements,
     },
   };
 
@@ -124,7 +154,7 @@ async function findInAppList(appID) {
     let list = data.applist.apps;
     list.sort((a, b) => b.appid - a.appid); //recent first
 
-    fs.mkdirSync(filepath, { recursive: true });
+    fs.mkdirSync(path.dirname(filepath), { recursive: true });
     fs.writeFileSync(filepath, JSON.stringify(list, null, 2));
 
     const app = list.find((app) => app.appid === appID);

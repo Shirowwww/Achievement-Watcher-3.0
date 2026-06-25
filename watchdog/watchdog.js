@@ -13,7 +13,7 @@ process.on('unhandledRejection', (reason, promise) => {
 const debug = require('./util/log.js');
 const instance = new (require('single-instance'))('Achievement Watchdog');
 const os = require('os');
-const { spawn } = require('child_process');
+const { spawn, exec } = require('child_process');
 const path = require('path');
 const getStartApps = require('get-startapps');
 const watch = require('node-watch');
@@ -22,20 +22,25 @@ const moment = require('moment');
 const websocket = require('./websocket.js');
 const processPriority = require('./util/priority.js');
 const fs = require('fs');
-const reg = require('native-reg');
 const request = require('request-zero');
 const settings = require('./settings.js');
 const monitor = require('./monitor.js');
+const parseWithRetry = require('./util/parseWithRetry.js');
+const waitForFileStable = require('./util/waitForFileStable.js');
+const notificationDedup = require('./util/notificationDedup.js');
+const progressMute = require('./util/progressMute.js');
+const rarity = require('./util/rarity.js');
 const steam = require('./steam.js');
 const track = require('./track.js');
 const playtimeMonitor = require('./playtime/monitor.js');
 const notify = require('./notification/toaster.js');
+const shadps4Watch = require('./console/shadps4Watch.js');
+const eaWatch = require('./console/eaWatch.js');
 const { crc32 } = require('crc');
 const { isWinRTAvailable } = require('powertoast');
 const { isFullscreenAppRunning } = require('./queryUserNotificationState.js');
-const { enableObs, startObs, recordGame, setRecordPath, setRecordResolution } = require('./obsHandler.js');
-const userShellFolder = require('./util/userShellFolder.js');
-let hotkeys; // required later to avoid io conflict
+const GlobalHotkey = require('./util/globalHotkey.js');
+const humanizeDuration = require('humanize-duration');
 
 const cfg_file = {
   option: path.join(process.env['APPDATA'], 'Achievement Watcher/cfg', 'options.ini'),
@@ -45,37 +50,34 @@ const cfg_file = {
 const appRoot = path.join(__dirname, '../');
 
 let isDev = process.env.NODE_ENV === 'development';
-let iohookRunning = false;
 let runningAppid;
 let overlayOpened = false;
-let overlayHotkey;
+const overlayHotkey = new GlobalHotkey({ debug });
 let runningGames = [];
 
-function parseOverlayHotkey(hotkey) {
-  overlayHotkey = hotkey
-    .split('+')
-    .map((part) => part.trim().toLowerCase())
-    .join(' + ');
-}
-
 function RegisterOverlayHotkey(hotkey) {
-  parseOverlayHotkey(hotkey);
-  debug.log('Registering Overlay hotkey...');
-  if (iohookRunning) return;
-  hotkeys.on({
-    hotkeys: overlayHotkey,
-    matchAllModifiers: true,
-    callback: function () {
+  overlayHotkey.register(hotkey, () => {
       if (runningAppid) {
         SpawnOverlayNotification([`--wintype=overlay`, `--appid=${runningAppid}`, `--description=${overlayOpened ? 'close' : 'open'}`]);
         overlayOpened = !overlayOpened;
       }
-    },
   });
-  iohookRunning = true;
 }
 
 function SpawnOverlayNotification(args) {
+  // When the monitor runs as a child of the Electron main process (it is spawned with an 'ipc' stdio
+  // channel), forward the window args over IPC so main renders the overlay/notification inside the
+  // resident tray daemon — no separate Electron process, no single-instance forwarding. main feeds
+  // these straight into its existing parseArgs() dispatch (--wintype=overlay|notification ...).
+  // Falls back to the legacy detached spawn when run standalone (e.g. `node watchdog.js` in dev).
+  if (typeof process.send === 'function' && process.connected) {
+    try {
+      process.send({ argv: args });
+      return;
+    } catch (err) {
+      debug.error(`[overlay] IPC send failed, falling back to spawn: ${err}`);
+    }
+  }
   debug.log('Spawning achievement notification...');
   if (isDev) {
     const electronPath = require(path.join(appRoot, '../app/node_modules/electron')); // assumes 'electron' is installed in node_modules
@@ -100,7 +102,6 @@ var app = {
   cache: [],
   options: {},
   watcher: [],
-  luma_keys: [],
   tick: 0,
   toastID: 'Microsoft.XboxApp_8wekyb3d8bbwe!Microsoft.XboxApp',
   start: async function () {
@@ -112,10 +113,17 @@ var app = {
       const net = require('net');
       const PIPE_NAME = '\\\\.\\pipe\\AchievementWatchdogPipe';
 
-      const server = net.createServer(() => {});
-      server.listen(PIPE_NAME, () => {
-        console.log('Watchdog process running, pipe open');
-      });
+      // The options.ini watcher re-invokes start() on every settings change; only open the named pipe
+      // once. A second listen() on the already-bound pipe throws EADDRINUSE (previously surfaced via
+      // the global uncaughtException handler) and leaks a server handle on each reload. Guard it, and
+      // attach an error handler so a stray pipe error can never crash the watchdog.
+      if (!self.pipeServer) {
+        self.pipeServer = net.createServer(() => {});
+        self.pipeServer.on('error', (err) => debug.error(`[pipe] ${err}`));
+        self.pipeServer.listen(PIPE_NAME, () => {
+          console.log('Watchdog process running, pipe open');
+        });
+      }
       processPriority
         .set('high priority')
         .then(() => {
@@ -127,21 +135,27 @@ var app = {
 
       debug.log('Loading Options ...');
       self.options = await settings.load(cfg_file.option);
+      self.cfgOptionPath = cfg_file.option; // used to locate the per-game progress-mute store
       debug.log(self.options);
 
       RegisterOverlayHotkey(self.options.overlay.hotkey);
-      enableObs(self.options.souvenir_video.video != '0');
 
-      try {
-        startObs(true).then(async () => {
-          await setRecordPath(userShellFolder['myvideo']);
-          await setRecordResolution();
+      if (isWinRTAvailable() === true && self.options.notification_transport.winRT === true) {
+        debug.log('[Toast] will use WinRT');
+      } else {
+        debug.warn('[Toast] will use PowerShell (WinRT unavailable or disabled)');
+        // #46: when WinRT isn't used, powertoast shells out to PowerShell — if PowerShell isn't on
+        // PATH (a reported cause of silently-missing toasts) nothing appears. Probe it and surface a
+        // clear, actionable error instead of failing silently.
+        exec('powershell -NoProfile -Command "exit 0"', { windowsHide: true }, (err) => {
+          if (err)
+            debug.error(
+              '[Toast] PowerShell is not reachable on PATH — toast notifications will NOT appear. ' +
+                'Fix: enable WinRT in Settings, or add Windows PowerShell to PATH ' +
+                '(C:\\Windows\\System32\\WindowsPowerShell\\v1.0). (issue #46)'
+            );
         });
-      } catch (err) {
-        debug.log(err);
       }
-      if (isWinRTAvailable() === true && self.options.notification_transport.winRT === true) debug.log('[Toast] will use WinRT');
-      else debug.warn('[Toast] will use PowerShell');
 
       getStartApps
         .has({ id: 'GamingOverlay' })
@@ -179,7 +193,6 @@ var app = {
           if (evt === 'update') {
             debug.log('option file change detected -> reloading');
             self.watcher.forEach((watcher) => watcher.close());
-            self.stop_lumaPlay();
             self.start();
           }
         });
@@ -198,7 +211,23 @@ var app = {
           debug.log(err);
         }
       }
-      self.watch_lumaPlay();
+
+      // ShadPS4 (PS4 emulator) live trophy toasts — isolated from the Steam watch path above. Re-run
+      // on each settings reload (start() tears down its previous watchers first). toastID is read live
+      // since it resolves asynchronously after start().
+      try {
+        await shadps4Watch.start({ options: self.options, getToastID: () => self.toastID, notify });
+      } catch (err) {
+        debug.error(`[shadps4] ${err}`);
+      }
+
+      // EA Desktop live achievement toasts: parse EA's rotating verbose log and diff against a local
+      // baseline, independent from the Steam save-file watcher.
+      try {
+        await eaWatch.start({ options: self.options, getToastID: () => self.toastID, notify });
+      } catch (err) {
+        debug.error(`[ea] ${err}`);
+      }
     } catch (err) {
       debug.error(err);
       instance.unlock();
@@ -249,7 +278,15 @@ var app = {
         if (options.disableCheckIfProcessIsRunning === true) {
           isRunning = true;
         } else if (self.options.notification_advanced.checkIfProcessIsRunning) {
-          if (await isFullscreenAppRunning()) {
+          if (runningGames.some((g) => String(g.appid) === appID)) {
+            // The playtime monitor already detected this appid as running, via a robust
+            // appid-based match that tolerates a process name differing from the index
+            // binary (e.g. tlou-ii.exe vs the stored tlou-ii-l.exe). Trust it instead of
+            // re-checking a possibly-wrong binary with tasklist, which would otherwise
+            // wrongly suppress the unlock notification for those games.
+            isRunning = true;
+            debug.log('Game already tracked as running by the playtime monitor. Assuming process is running');
+          } else if (await isFullscreenAppRunning()) {
             isRunning = true;
             debug.log('Fullscreen application detected on primary display. Assuming process is running');
           } else if (game.binary) {
@@ -276,10 +313,43 @@ var app = {
         }
 
         if (isRunning) {
-          let achievements = await monitor.parse(name);
+          // Let the game finish writing the save file before reading it (node-watch has no
+          // awaitWriteFinish). parseWithRetry below still guards the residual race.
+          await waitForFileStable(name);
+
+          let achievements = await parseWithRetry(() => monitor.parse(name), {
+            onError: (err, attempt) => {
+              debug.warn(`Achievement parse attempt ${attempt + 1} failed for "${name}": ${err.message || err}`);
+            },
+          });
 
           if (achievements.length > 0) {
             let cache = await track.load(appID);
+
+            // Global unlock % per achievement, used to flag a toast as "rare" (<10% of players).
+            // Fetched at most once per game per watchdog session (memoized on the cached schema
+            // object); shares the renderer's sidecar cache so it's usually already on disk.
+            if (!game.__rarityMap) {
+              game.__rarityMap = await rarity.getRarityMap(appID).catch(() => new Map());
+            }
+            const rarityMap = game.__rarityMap;
+
+            // Boot-seed / anti-avalanche. The first time we ever observe a game there is no persisted
+            // baseline, so a pre-existing save full of already-unlocked achievements would otherwise
+            // fire as a notification storm — emulators that omit unlock timestamps get stamped "now"
+            // (further down), and disableCheckTimestamp folders bypass the time gate entirely. On that
+            // first observation, record the current state as the baseline silently and notify nothing;
+            // every later unlock is diffed against this baseline and notifies normally.
+            const seedOnly = (!Array.isArray(cache) || cache.length === 0) && achievements.filter((a) => a.Achieved).length > 1;
+            if (seedOnly) debug.log(`Boot-seed: first observation of ${appID} (${achievements.filter((a) => a.Achieved).length} pre-unlocked) > seeding baseline silently`);
+
+            // Platinum (100% completion) detection. Snapshot the prior unlock count so we only fire
+            // when *this* scan flips the game from incomplete to fully unlocked, and only when a real
+            // unlock notification fired this scan (guards against firing on first load of old saves).
+            const platinumTotal = Array.isArray(game.achievement.list) ? game.achievement.list.length : 0;
+            const platinumPrevUnlocked = cache.filter((a) => a.Achieved == 1).length;
+            let platinumNewUnlock = false;
+            let platinumIcon = null;
 
             let j = 0;
             for (let i in achievements) {
@@ -308,9 +378,19 @@ var app = {
 
                   if (!previous.Achieved && achievements[i].Achieved) {
                     if (!achievements[i].UnlockTime || achievements[i].UnlockTime == 0) achievements[i].UnlockTime = moment().unix();
+                    if (seedOnly) continue; // baseline seeding: record the unlock, suppress the toast
                     let elapsedTime = moment().diff(moment.unix(achievements[i].UnlockTime), 'seconds');
                     if (options.disableCheckTimestamp || (elapsedTime >= 0 && elapsedTime <= self.options.notification_advanced.timeTreshold)) {
                       debug.log('Unlocked:' + ach.displayName);
+
+                      // Belt-and-suspenders against duplicate toasts: a node-watch double-fire or an
+                      // emulator that rewrites the save twice can race the per-game cache (track.save)
+                      // so two scans diff against the same baseline and both fire. Drop the exact repeat
+                      // here, independent of file/cache write timing (the global tick gate is coarser).
+                      if (!notificationDedup.shouldNotify({ appid: game.appid, achievementName: ach.name })) {
+                        debug.log('Duplicate unlock event suppressed (dedup):' + ach.displayName);
+                        continue;
+                      }
 
                       try {
                         if (self.options.action.target) {
@@ -343,6 +423,14 @@ var app = {
                         debug.error(`Action failed: ${err}`);
                       }
 
+                      // Use the same one-decimal rounding and <=10% cutoff as the achievement menu,
+                      // then forward the percentage so overlay presets can apply the matching tier.
+                      const rarePct = rarityMap.get(ach.name);
+                      const rareFr = (self.options.achievement.lang || '').toLowerCase().startsWith('fr');
+                      const rounded = Math.round(rarePct * 10) / 10;
+                      const isRare = Number.isFinite(rounded) && rounded >= 0 && rounded <= 10;
+                      const attribution = isRare ? (rareFr ? `Rare · ${rounded} %` : `Rare · ${rounded}%`) : rareFr ? 'Succès' : 'Achievement';
+
                       await notify(
                         {
                           source: game.source,
@@ -351,6 +439,7 @@ var app = {
                           achievementName: ach.name,
                           achievementDisplayName: ach.displayName,
                           achievementDescription: ach.description,
+                          rarityPercent: isRare ? rounded : null,
                           icon: ach.icon,
                           time: achievements[i].UnlockTime,
                           delay: j,
@@ -358,32 +447,30 @@ var app = {
                         {
                           notify: self.options.notification.notify,
                           transport: {
-                            toast: self.options.notification_transport.toast,
-                            gntp: self.options.notification_transport.gntp,
-                            websocket: self.options.notification_transport.websocket,
-                            chromium: self.options.notification_transport.chromium,
+                            toast: app.options.notification_transport.mode !== 'overlay',
+                            websocket: self.options.notification_transport.websocket || app.options.notification_transport.mode !== 'toast',
+                            overlay:
+                              app.options.notification_transport.mode === 'overlay' || app.options.notification_transport.mode === 'both',
                           },
                           toast: {
                             appid: self.toastID,
                             winrt: self.options.notification_transport.winRT,
                             balloonFallback: self.options.notification_transport.balloon,
                             customAudio: self.options.notification_toast.customToastAudio,
-                            imageIntegration: self.options.notification_toast.toastSouvenir,
+                            imageIntegration: '0',
                             group: self.options.notification_toast.groupToast,
-                            attribution: 'Achievement',
+                            cropIcon: true,
+                            attribution: attribution,
                           },
                           prefetch: self.options.notification_advanced.iconPrefetch,
-                          souvenir: {
-                            screenshot: self.options.souvenir_screenshot.screenshot,
-                            video: self.options.souvenir_video.video,
-                            screenshot_options: self.options.souvenir_screenshot,
-                            video_options: self.options.souvenir_video,
-                          },
                           rumble: self.options.notification.rumble,
+                          souvenir: self.options.souvenir || null,
                         }
                       );
 
                       j += 1;
+                      platinumNewUnlock = true;
+                      platinumIcon = ach.icon;
                     } else {
                       debug.warn('Outatime:' + ach.displayName);
                     }
@@ -393,7 +480,7 @@ var app = {
                       achievements[i].UnlockTime = previous.UnlockTime;
                   } else if (!achievements[i].Achieved && achievements[i].MaxProgress > 0 && +previous.CurProgress < +achievements[i].CurProgress) {
                     debug.log('Progress update:' + ach.displayName);
-                    if (self.options.notification.notifyOnProgress)
+                    if (!seedOnly && self.options.notification.notifyOnProgress && !progressMute.isMuted(game.appid, self.cfgOptionPath))
                       await notify(
                         {
                           appid: game.appid,
@@ -410,24 +497,21 @@ var app = {
                         {
                           notify: self.options.notification.notify,
                           transport: {
-                            toast: self.options.notification_transport.toast,
-                            gntp: self.options.notification_transport.gntp,
-                            websocket: self.options.notification_transport.websocket,
-                            chromium: self.options.notification_transport.chromium,
+                            toast: app.options.notification_transport.mode !== 'overlay',
+                            websocket: self.options.notification_transport.websocket || app.options.notification_transport.mode !== 'toast',
+                            overlay:
+                              app.options.notification_transport.mode === 'overlay' || app.options.notification_transport.mode === 'both',
                           },
                           toast: {
                             appid: self.toastID,
                             winrt: self.options.notification_transport.winRT,
                             balloonFallback: self.options.notification_transport.balloon,
                             customAudio: '0',
-                            imageIntegration: self.options.notification_toast.toastSouvenir,
+                            imageIntegration: '0',
                             group: self.options.notification_toast.groupToast,
+                            cropIcon: true,
                           },
                           prefetch: self.options.notification_advanced.iconPrefetch,
-                          souvenir: {
-                            screenshot: false,
-                            video: 0,
-                          },
                           rumble: false,
                         }
                       );
@@ -446,6 +530,54 @@ var app = {
               }
             }
             await track.save(appID, achievements);
+
+            // Fire a dedicated Platinum toast when this scan flips the game to 100%.
+            const platinumNowUnlocked = achievements.filter((a) => a.Achieved == 1).length;
+            if (
+              platinumNewUnlock &&
+              platinumTotal > 0 &&
+              platinumPrevUnlocked < platinumTotal &&
+              platinumNowUnlocked >= platinumTotal &&
+              self.options.notification.platinum !== false
+            ) {
+              debug.log(`Platinum (100%): ${game.name}`);
+              const platinumFr = (self.options.achievement.lang || '').toLowerCase().startsWith('fr');
+              const platinumLabel = platinumFr ? 'Trophée Platine' : 'Platinum';
+              const platinumDesc = platinumFr ? 'Trophée platine débloqué — 100 % complété !' : 'Platinum unlocked — 100% completed!';
+              await notify(
+                {
+                  source: game.source,
+                  appid: game.appid,
+                  gameDisplayName: game.name,
+                  achievementDisplayName: game.name,
+                  achievementDescription: platinumDesc,
+                  icon: platinumIcon || undefined,
+                  image: `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`,
+                  time: moment().unix(),
+                },
+                {
+                  notify: self.options.notification.notify,
+                  transport: {
+                    toast: app.options.notification_transport.mode !== 'overlay',
+                    websocket: self.options.notification_transport.websocket || app.options.notification_transport.mode !== 'toast',
+                    overlay:
+                      app.options.notification_transport.mode === 'overlay' || app.options.notification_transport.mode === 'both',
+                  },
+                  toast: {
+                    appid: self.toastID,
+                    winrt: self.options.notification_transport.winRT,
+                    balloonFallback: self.options.notification_transport.balloon,
+                    customAudio: self.options.notification_toast.customToastAudio,
+                    imageIntegration: '1',
+                    group: self.options.notification_toast.groupToast,
+                    cropIcon: true,
+                    attribution: platinumLabel,
+                  },
+                  prefetch: self.options.notification_advanced.iconPrefetch,
+                  rumble: self.options.notification.rumble,
+                }
+              );
+            }
           }
         } else {
           debug.warn(`game's process "${game.binary}" not running`);
@@ -454,84 +586,6 @@ var app = {
         debug.warn(err);
       }
     });
-  },
-  watch_lumaPlay: async function () {
-    return;
-    let self = this;
-    debug.log(`watching changes in LumaPlay`);
-    const BASE_PATH = 'SOFTWARE\\LumaPlay';
-    const HIVE = reg.HKEY.HKEY_CURRENT_USER;
-    const baseKey = reg.openKey(HIVE, BASE_PATH, reg.Access.ALL_ACCESS);
-
-    // Watch for changes under SOFTWARE\LumaPlay
-    this.luma_keys.push(baseKey);
-    reg.watch(baseKey, (change) => {
-      console.log('Registry change detected at LumaPlay');
-
-      // enumerate subkeys
-      const userKeys = reg.subKeys(baseKey);
-      userKeys.forEach((userId) => {
-        const userKey = reg.openKey(HIVE, `${BASE_PATH}\\${userId}`, reg.Access.ALL_ACCESS);
-        const gameKeys = reg.subKeys(userKey);
-
-        gameKeys.forEach((gameId) => {
-          const gamePath = `${BASE_PATH}\\${userId}\\${gameId}\\Achievements`;
-          try {
-            const gameKey = reg.openKey(HIVE, gamePath, reg.Access.ALL_ACCESS);
-            const values = reg.values(gameKey);
-
-            const dwordValues = values
-              .filter((v) => v.type === 'REG_DWORD')
-              .reduce((acc, v) => {
-                acc[v.name] = v.value;
-                return acc;
-              }, {});
-
-            //update achievements.json (cached file in aw folder luma_cache)
-            const folderPath = path.join(process.cwd(), gameId);
-            if (!fs.existsSync(folderPath)) {
-              fs.mkdirSync(folderPath, { recursive: true });
-            }
-
-            const jsonFile = path.join(folderPath, 'achievements.json');
-            let existingData = {};
-
-            if (fs.existsSync(jsonFile)) {
-              try {
-                existingData = JSON.parse(fs.readFileSync(jsonFile, 'utf-8'));
-              } catch {
-                existingData = {};
-              }
-            }
-
-            const newKeys = [];
-            for (const key of Object.keys(dwordValues)) {
-              if (!(key in existingData)) {
-                existingData[key] = {
-                  earned: true,
-                  earned_time: Math.floor(Date.now() / 1000),
-                };
-                newKeys.push(key);
-              }
-            }
-
-            if (newKeys.length) {
-              fs.writeFileSync(jsonFile, JSON.stringify(existingData, null, 2), 'utf-8');
-              fs.utimesSync(folderPath, new Date(), new Date());
-              console.log(`\n${gameId}: ${newKeys.join(', ')}`);
-            }
-          } catch (err) {
-            // ignore if Achievements key doesn’t exist
-          }
-        });
-      });
-    });
-  },
-  stop_lumaPlay: function () {
-    for (const key of this.luma_keys) {
-      reg.closeKey(key);
-    }
-    this.luma_keys = [];
   },
   load: async function (appID) {
     try {
@@ -564,7 +618,7 @@ var app = {
       if (fs.existsSync(cacheFile)) {
         cache = JSON.parse(fs.readFileSync(cacheFile, { encoding: 'utf8' }));
       }
-      let cached = cache.find((g) => g.gogid === game.appid);
+      let cached = cache.find((g) => g.gogid === appID);
       if (cached) return cached.steamid;
       const url = `https://gamesdb.gog.com/platforms/gog/external_releases/${appID}`;
       let gameinfo = await request.getJson(url);
@@ -582,9 +636,9 @@ var app = {
       let cache = [];
 
       if (fs.existsSync(cacheFile)) {
-        cache = JSON.parse(fs.readFileSync(filePath, { encoding: 'utf8' }));
+        cache = JSON.parse(fs.readFileSync(cacheFile, { encoding: 'utf8' }));
       }
-      let cached = cache.find((g) => g.gogid === game.appid);
+      let cached = cache.find((g) => g.gogid === appID);
       if (cached) return cached.steamid;
     } catch (err) {
       throw err;
@@ -595,7 +649,6 @@ var app = {
 (async () => {
   try {
     await instance.lock();
-    hotkeys = require('node-hotkeys');
 
     app.start().catch((err) => {
       debug.log(err);
@@ -621,33 +674,50 @@ var app = {
           runningAppid = appid;
         });
 
-        monitor.on('notify', async ([game, time]) => {
-          if (time) {
+        monitor.on('notify', async ([game, playedSeconds]) => {
+          // Launch event emits [game]; the stop event emits [game, playedSeconds] (a number, possibly 0).
+          const isExit = playedSeconds != null;
+          if (isExit) {
             let gameIndex = runningGames.findIndex((g) => g.appid === game.appid);
             if (gameIndex !== -1) runningGames.splice(gameIndex, 1);
           } else {
             runningGames.push(game);
-            recordGame(game);
-            await setRecordPath(userShellFolder['myvideo']);
-            await setRecordResolution();
           }
           if (app.options.notification.playtime) {
+            // Localize the playtime text here (the monitor stays language-agnostic and emits raw seconds).
+            const fr = (app.options.achievement.lang || '').toLowerCase().startsWith('fr');
+            let description;
+            if (isExit) {
+              const humanized =
+                playedSeconds < 60
+                  ? humanizeDuration(playedSeconds * 1000, { language: fr ? 'fr' : 'en', units: ['s'], round: true })
+                  : humanizeDuration(playedSeconds * 1000, {
+                      language: fr ? 'fr' : 'en',
+                      conjunction: fr ? ' et ' : ' and ',
+                      units: ['h', 'm'],
+                      round: true,
+                    });
+              description = fr ? `Vous avez joué pendant ${humanized}` : `You played for ${humanized}`;
+            } else {
+              description = fr ? 'Suivi du temps de jeu en cours' : 'Tracking playtime';
+            }
             notify(
               {
+                notificationType: 'playtime',
                 appid: game.appid,
                 gameDisplayName: game.name,
-                achievementDisplayName: game.name,
-                achievementDescription: time ? time : 'Tracking playtime',
+                achievementDisplayName: game.name || (fr ? 'Temps de jeu' : 'Playtime'),
+                achievementDescription: description,
                 icon: `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${game.appid}/${game.icon}.jpg`,
                 image: `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`,
+                silent: true, // playtime overlay notifications never play a sound
               },
               {
                 notify: app.options.notification.notify,
                 transport: {
-                  toast: app.options.notification_transport.toast,
-                  gntp: app.options.notification_transport.gntp,
-                  websocket: false,
-                  chromium: app.options.notification_transport.chromium,
+                  toast: app.options.notification_transport.mode !== 'overlay',
+                  websocket: app.options.notification_transport.mode !== 'toast',
+                  overlay: app.options.notification_transport.mode === 'overlay' || app.options.notification_transport.mode === 'both',
                 },
                 toast: {
                   appid: app.toastID,
@@ -659,12 +729,7 @@ var app = {
                   cropIcon: true,
                   attribution: 'Achievement Watcher',
                 },
-                gntpLabel: 'Playtime',
                 prefetch: app.options.notification_advanced.iconPrefetch,
-                souvenir: {
-                  screenshot: false,
-                  video: 0,
-                },
                 rumble: false,
               }
             );

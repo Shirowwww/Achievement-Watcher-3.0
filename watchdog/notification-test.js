@@ -5,11 +5,13 @@ const path = require('path');
 const toast = require('powertoast');
 const balloon = require('powerballoon');
 const getStartApps = require('get-startapps');
-const regedit = require('regodit');
-const gntp = require('./notification/transport/gntp.js');
 const settings = require('./settings.js');
-const xinput = require('xinput-ffi');
 const player = require('sound-play');
+
+// xinput-ffi is ESM-only (koffi) since v2; load it lazily via dynamic import (cached by Node) only
+// when the test toast actually rumbles. Best-effort: a load failure (no XInput runtime) is swallowed.
+let xinputPromise = null;
+const loadXinput = () => xinputPromise || (xinputPromise = import('xinput-ffi').catch(() => null));
 
 const cfg_file = path.join(process.env['APPDATA'], 'Achievement Watcher/cfg', 'options.ini');
 
@@ -36,23 +38,21 @@ module.exports.toast = async () => {
       message = 'WinRT';
     }
 
+    // See toast.js: only '2' (custom file) needs sound-play; '1' uses the toast's own native sound.
     let soundFile;
-    if (options.notification_toast.customToastAudio === '2' || options.notification_toast.customToastAudio === '1') {
+    if (options.notification_toast.customToastAudio === '2') {
       let toastAudio = require(path.join(__dirname, './util/toastAudio.js'));
-      soundFile =
-        options.notification_toast.customToastAudio === '1'
-          ? path.join(process.env.SystemRoot || process.env.WINDIR, 'media', toastAudio.getDefault())
-          : toastAudio.getCustom();
+      soundFile = toastAudio.getCustom();
     }
     let payload = {
       appID: 'Microsoft.XboxApp_8wekyb3d8bbwe!Microsoft.XboxApp',
       uniqueID: 'TOAST_TEST',
       title: 'Achievement Watcher',
       message: options.notification.showDesc ? `${message}\nHello World` : `${message}`,
-      icon: 'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/480/winner.jpg',
+      icon: 'https://cdn.cloudflare.steamstatic.com/steam/apps/367520/capsule_184x69.jpg',
       attribution: 'Achievement',
-      silent: options.notification_toast.customToastAudio == '0' || soundFile ? true : false,
-      audio: options.notification_toast.customToastAudio == '2' ? 'ms-winsoundevent:Notification.Achievement' : null,
+      silent: options.notification_toast.customToastAudio === '0' || (options.notification_toast.customToastAudio === '2' && !!soundFile) ? true : false,
+      audio: options.notification_toast.customToastAudio === '2' && !soundFile ? 'ms-winsoundevent:Notification.Achievement' : null,
     };
 
     if (options.notification_toast.groupToast) options.group = { id: 'TOAST_TEST_GROUP', title: 'Achievement Watcher' };
@@ -91,29 +91,156 @@ module.exports.toast = async () => {
     }
 
     if (options.notification.rumble) {
-      xinput.rumble().catch(() => {});
+      const xinput = await loadXinput();
+      if (xinput) xinput.rumble().catch(() => {});
     }
   } catch (err) {
     throw err;
   }
 };
 
-module.exports.gntp = async () => {
+// Mirrors the achievement-progress toast watchdog.js fires on notifyOnProgress (silent, no
+// attribution, percent progress bar) so the test button reflects real rendering.
+module.exports.progress = async () => {
   try {
     const options = await settings.load(cfg_file);
 
-    if (await gntp.hasGrowl()) {
-      await gntp.send({
-        title: 'Achievement Watcher',
-        message: options.notification.showDesc ? 'Grrr!\nHello World' : 'Grrr!',
-        icon: './notification/icon/icon.png',
-      });
+    const hasXboxOverlay = await getStartApps.has({ id: 'GamingOverlay' });
+    const win_ver = os.release().split('.');
 
-      if (options.notification.rumble) {
-        xinput.rumble().catch(() => {});
+    let payload = {
+      appID: 'Microsoft.XboxApp_8wekyb3d8bbwe!Microsoft.XboxApp',
+      uniqueID: 'PROGRESS_TEST',
+      title: 'Far Traveler',
+      message: 'Travel 1000 light-years in a single game.',
+      icon: 'https://cdn.cloudflare.steamstatic.com/steam/apps/367520/capsule_184x69.jpg',
+      cropIcon: true,
+      silent: true,
+      progress: { percent: 30, footer: '3/10' },
+    };
+
+    if (options.notification_advanced.appID && options.notification_advanced.appID !== '') {
+      payload.appID = options.notification_advanced.appID;
+    } else if (win_ver[0] == '6' && (win_ver[1] == '3' || win_ver[1] == '2')) {
+      payload.appID = 'microsoft.XboxLIVEGames_8wekyb3d8bbwe!Microsoft.XboxLIVEGames';
+    } else if (hasXboxOverlay === true) {
+      payload.appID = 'Microsoft.XboxGamingOverlay_8wekyb3d8bbwe!App';
+    }
+
+    if (options.notification_transport.winRT === false) payload.disableWinRT = true;
+
+    try {
+      await toast(payload);
+    } catch (err) {
+      if (options.notification_transport.balloon) {
+        await balloon({
+          title: payload.title,
+          message: `[ 3/10 ]\n${payload.message}`,
+          ico: './notification/icon/icon.ico',
+        });
+      } else {
+        throw err;
       }
-    } else {
-      throw 'GNTP endpoint unreachable!';
+    }
+  } catch (err) {
+    throw err;
+  }
+};
+
+// Mirrors the playtime toast watchdog.js fires (silent, hero/header image, "Achievement Watcher"
+// attribution) so the test button reflects real rendering.
+module.exports.playtime = async () => {
+  try {
+    const options = await settings.load(cfg_file);
+
+    const hasXboxOverlay = await getStartApps.has({ id: 'GamingOverlay' });
+    const win_ver = os.release().split('.');
+
+    let payload = {
+      appID: 'Microsoft.XboxApp_8wekyb3d8bbwe!Microsoft.XboxApp',
+      uniqueID: 'PLAYTIME_TEST',
+      title: 'Hollow Knight',
+      message: '0h 42m',
+      icon: 'https://cdn.cloudflare.steamstatic.com/steam/apps/367520/capsule_184x69.jpg',
+      headerImg: 'https://cdn.cloudflare.steamstatic.com/steam/apps/367520/header.jpg',
+      attribution: 'Achievement Watcher',
+      cropIcon: true,
+      silent: true,
+    };
+
+    if (options.notification_advanced.appID && options.notification_advanced.appID !== '') {
+      payload.appID = options.notification_advanced.appID;
+    } else if (win_ver[0] == '6' && (win_ver[1] == '3' || win_ver[1] == '2')) {
+      payload.appID = 'microsoft.XboxLIVEGames_8wekyb3d8bbwe!Microsoft.XboxLIVEGames';
+    } else if (hasXboxOverlay === true) {
+      payload.appID = 'Microsoft.XboxGamingOverlay_8wekyb3d8bbwe!App';
+    }
+
+    if (options.notification_transport.winRT === false) payload.disableWinRT = true;
+
+    try {
+      await toast(payload);
+    } catch (err) {
+      if (options.notification_transport.balloon) {
+        await balloon({
+          title: payload.title,
+          message: payload.message,
+          ico: './notification/icon/icon.ico',
+        });
+      } else {
+        throw err;
+      }
+    }
+  } catch (err) {
+    throw err;
+  }
+};
+
+// Mirrors the platinum toast watchdog.js fires when a game hits 100% (hero/header image,
+// "Platinum" attribution) so the test button reflects real rendering.
+module.exports.platinum = async () => {
+  try {
+    const options = await settings.load(cfg_file);
+
+    const hasXboxOverlay = await getStartApps.has({ id: 'GamingOverlay' });
+    const win_ver = os.release().split('.');
+
+    const platinumFr = (options.achievement.lang || '').toLowerCase().startsWith('fr');
+
+    let payload = {
+      appID: 'Microsoft.XboxApp_8wekyb3d8bbwe!Microsoft.XboxApp',
+      uniqueID: 'PLATINUM_TEST',
+      title: 'Hollow Knight',
+      message: platinumFr ? 'Trophée platine débloqué — 100 % complété !' : 'Platinum unlocked — 100% completed!',
+      icon: 'https://cdn.cloudflare.steamstatic.com/steam/apps/367520/capsule_184x69.jpg',
+      headerImg: 'https://cdn.cloudflare.steamstatic.com/steam/apps/367520/header.jpg',
+      attribution: platinumFr ? 'Trophée Platine' : 'Platinum',
+      cropIcon: true,
+      silent: true,
+    };
+
+    if (options.notification_advanced.appID && options.notification_advanced.appID !== '') {
+      payload.appID = options.notification_advanced.appID;
+    } else if (win_ver[0] == '6' && (win_ver[1] == '3' || win_ver[1] == '2')) {
+      payload.appID = 'microsoft.XboxLIVEGames_8wekyb3d8bbwe!Microsoft.XboxLIVEGames';
+    } else if (hasXboxOverlay === true) {
+      payload.appID = 'Microsoft.XboxGamingOverlay_8wekyb3d8bbwe!App';
+    }
+
+    if (options.notification_transport.winRT === false) payload.disableWinRT = true;
+
+    try {
+      await toast(payload);
+    } catch (err) {
+      if (options.notification_transport.balloon) {
+        await balloon({
+          title: payload.title,
+          message: payload.message,
+          ico: './notification/icon/icon.ico',
+        });
+      } else {
+        throw err;
+      }
     }
   } catch (err) {
     throw err;

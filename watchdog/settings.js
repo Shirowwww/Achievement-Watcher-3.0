@@ -84,6 +84,21 @@ module.exports.load = async (cfg_file) => {
       fixFile = true;
     }
 
+    if (typeof options.achievement_source.gog !== 'boolean') {
+      options.achievement_source.gog = true;
+      fixFile = true;
+    }
+
+    if (typeof options.achievement_source.epic !== 'boolean') {
+      options.achievement_source.epic = true;
+      fixFile = true;
+    }
+
+    if (typeof options.achievement_source.ea !== 'boolean') {
+      options.achievement_source.ea = true;
+      fixFile = true;
+    }
+
     if (typeof options.achievement_source.importCache !== 'boolean') {
       options.achievement_source.importCache = true;
       fixFile = true;
@@ -111,6 +126,11 @@ module.exports.load = async (cfg_file) => {
       fixFile = true;
     }
 
+    if (typeof options.notification.platinum !== 'boolean') {
+      options.notification.platinum = true;
+      fixFile = true;
+    }
+
     //Toast
 
     if (
@@ -121,13 +141,8 @@ module.exports.load = async (cfg_file) => {
       options.notification_toast.customToastAudio = '1';
       fixFile = true;
     }
-
-    if (
-      options.notification_toast.toastSouvenir != '0' &&
-      options.notification_toast.toastSouvenir != '1' &&
-      options.notification_toast.toastSouvenir != '2'
-    ) {
-      options.notification_toast.toastSouvenir = '0';
+    if (options.notification_toast.toastSouvenir != null) {
+      delete options.notification_toast.toastSouvenir; // souvenir feature removed
       fixFile = true;
     }
 
@@ -138,8 +153,18 @@ module.exports.load = async (cfg_file) => {
 
     //Transport
 
-    if (typeof options.notification_transport.toast !== 'boolean') {
-      options.notification_transport.toast = true;
+    // Drop legacy display-transport flags from old configs. NOTE: `mode` is intentionally kept —
+    // it is the (re-introduced) notification delivery mode (toast/overlay/both) and must persist
+    // across restarts; it is validated/defaulted a few lines below. Deleting it here used to reset
+    // the user's choice back to 'toast' on every watchdog settings load.
+    if (
+      options.notification_transport.chromium != null ||
+      options.notification_transport.toast != null ||
+      options.notification_transport.gntp != null
+    ) {
+      delete options.notification_transport.chromium;
+      delete options.notification_transport.toast;
+      delete options.notification_transport.gntp;
       fixFile = true;
     }
 
@@ -158,8 +183,12 @@ module.exports.load = async (cfg_file) => {
       fixFile = true;
     }
 
-    if (typeof options.notification_transport.gntp !== 'boolean') {
-      options.notification_transport.gntp = true;
+    if (!['toast', 'overlay', 'both'].includes(options.notification_transport.mode)) {
+      options.notification_transport.mode = 'toast';
+      fixFile = true;
+    }
+    if (options.notification_transport.overlay !== undefined) {
+      delete options.notification_transport.overlay;
       fixFile = true;
     }
 
@@ -185,66 +214,23 @@ module.exports.load = async (cfg_file) => {
       fixFile = true;
     }
 
-    //Souvenir
-
-    if (typeof options.souvenir_screenshot.screenshot !== 'boolean') {
-      options.souvenir_screenshot.screenshot = true;
+    //Souvenir — drop the stale flat keys (OBS video stays removed); keep the simple screenshot section.
+    if (options.souvenir_screenshot != null || options.souvenir_video != null) {
+      delete options.souvenir_screenshot;
+      delete options.souvenir_video;
       fixFile = true;
     }
-
-    if (typeof options.souvenir_screenshot.custom_dir !== 'string') {
-      options.souvenir_screenshot.custom_dir = '';
+    if (!options.souvenir || typeof options.souvenir !== 'object') options.souvenir = {};
+    if (typeof options.souvenir.screenshot !== 'boolean') {
+      options.souvenir.screenshot = false;
       fixFile = true;
     }
-
-    if (typeof options.souvenir_screenshot.overwrite_image !== 'boolean') {
-      options.souvenir_screenshot.overwrite_image = false;
+    if (typeof options.souvenir.dir !== 'string') {
+      options.souvenir.dir = '';
       fixFile = true;
     }
-
-    if (options.souvenir_video.video != 0 && options.souvenir_video.video != 1 && options.souvenir_video.video != 2) {
-      options.souvenir_video.video = 0;
-      fixFile = true;
-    }
-
-    if (options.souvenir_video.codec != 0 && options.souvenir_video.codec != 1) {
-      options.souvenir_video.codec = 0;
-      fixFile = true;
-    }
-
-    if (typeof options.souvenir_video.colorDepth10bits !== 'boolean') {
-      options.souvenir_video.colorDepth10bits = false;
-      fixFile = true;
-    }
-
-    if (typeof options.souvenir_video.custom_dir !== 'string') {
-      options.souvenir_video.custom_dir = '';
-      fixFile = true;
-    }
-
-    if (typeof options.souvenir_video.overwrite_video !== 'boolean') {
-      options.souvenir_video.overwrite_video = false;
-      fixFile = true;
-    }
-
-    if (
-      options.souvenir_video.duration != 10 &&
-      options.souvenir_video.duration != 15 &&
-      options.souvenir_video.duration != 20 &&
-      options.souvenir_video.duration != 30 &&
-      options.souvenir_video.duration != 45
-    ) {
-      options.souvenir_video.duration = 20;
-      fixFile = true;
-    }
-
-    if (options.souvenir_video.framerate != 30 && options.souvenir_video.framerate != 60) {
-      options.souvenir_video.framerate = 60;
-      fixFile = true;
-    }
-
-    if (typeof options.souvenir_video.cursor !== 'boolean') {
-      options.souvenir_video.cursor = false;
+    if ('combineNotif' in options.souvenir) {
+      delete options.souvenir.combineNotif; // simplified: capture always includes whatever is on screen
       fixFile = true;
     }
 
@@ -297,6 +283,9 @@ module.exports.load = async (cfg_file) => {
         greenLuma: true,
         rpcs3: true,
         lumaPlay: false,
+        gog: true,
+        epic: true,
+        ea: true,
         importCache: true,
       },
       notification: {
@@ -304,18 +293,17 @@ module.exports.load = async (cfg_file) => {
         rumble: true,
         notifyOnProgress: true,
         playtime: false,
+        platinum: true,
       },
       notification_toast: {
         customToastAudio: '1',
-        toastSouvenir: '0',
         groupToast: false,
       },
       notification_transport: {
-        toast: true,
         winRT: true,
         balloon: true,
         websocket: true,
-        gntp: true,
+        mode: 'toast',
       },
       notification_advanced: {
         timeTreshold: 10,
@@ -323,20 +311,9 @@ module.exports.load = async (cfg_file) => {
         checkIfProcessIsRunning: true,
         iconPrefetch: true,
       },
-      souvenir_screenshot: {
-        screenshot: true,
-        custom_dir: '',
-        overwrite_image: false,
-      },
-      souvenir_video: {
-        video: 0,
-        codec: 0,
-        colorDepth10bits: false,
-        custom_dir: '',
-        overwrite_video: false,
-        duration: 20,
-        framerate: 60,
-        cursor: false,
+      souvenir: {
+        screenshot: false,
+        dir: '',
       },
       action: {
         target: '',

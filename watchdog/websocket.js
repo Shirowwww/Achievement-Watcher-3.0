@@ -159,15 +159,23 @@ function incoming(message) {
         debug.log(`WS[${this.id}] Sending notification`);
         this.send(JSON.stringify(dummy));
       }
-    } else if (req.cmd === 'toast-test') {
-      debug.log(`WS[${this.id}] received command 'toast-test'`);
+    } else if (req.cmd === 'toast-test' || req.cmd === 'progress-test' || req.cmd === 'playtime-test' || req.cmd === 'platinum-test') {
+      debug.log(`WS[${this.id}] received command '${req.cmd}'`);
 
-      test
-        .toast()
+      const run =
+        req.cmd === 'progress-test'
+          ? test.progress
+          : req.cmd === 'playtime-test'
+          ? test.playtime
+          : req.cmd === 'platinum-test'
+          ? test.platinum
+          : test.toast;
+
+      run()
         .then(() => {
           this.send(
             JSON.stringify({
-              cmd: 'toast-test',
+              cmd: req.cmd,
               success: true,
             })
           );
@@ -175,36 +183,21 @@ function incoming(message) {
         .catch((err) => {
           this.send(
             JSON.stringify({
-              cmd: 'toast-test',
-              success: false,
-              error: `${err}`,
-            })
-          );
-        });
-    } else if (req.cmd === 'gntp-test') {
-      debug.log(`WS[${this.id}] received command 'gntp-test'`);
-
-      test
-        .gntp()
-        .then(() => {
-          this.send(
-            JSON.stringify({
-              cmd: 'gntp-test',
-              success: true,
-            })
-          );
-        })
-        .catch((err) => {
-          this.send(
-            JSON.stringify({
-              cmd: 'gntp-test',
+              cmd: req.cmd,
               success: false,
               error: `${err}`,
             })
           );
         });
     } else {
-      debug.warn(`WS[${this.id}] received unknow command`);
+      debug.warn(`WS[${this.id}] received unknow command '${req.cmd}'`);
+      // Always answer, even on an unknown command: otherwise the renderer's notification-test flow
+      // (which opens a fullscreen dummy and waits for a reply) hangs on a black screen forever.
+      try {
+        this.send(JSON.stringify({ cmd: req.cmd || 'unknown', success: false, error: `unknown command '${req.cmd}'` }));
+      } catch (err) {
+        debug.error(`WS[${this.id}] ${err}`);
+      }
     }
   } catch (err) {
     debug.error(`WS[${this.id}] ${err}`);

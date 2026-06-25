@@ -1,32 +1,44 @@
 'use strict';
 
 const path = require('path');
-const fs = require('@xan105/fs');
-const userShellFolder = require('../util/userShellFolder.js');
-const videoCapture = require('@xan105/video-capture');
-const screenshot = require('@xan105/screenshot');
+const fs = require('fs');
 const toast = require('./transport/toast.js');
 const balloon = require('powerballoon');
-const gntp = require('./transport/gntp.js');
-const xinput = require('xinput-ffi');
 const fetch = require('./prefetch.js');
 const { broadcast } = require('../websocket.js');
-const regedit = require('regodit');
-const { takeScreenshot, saveAndMoveReplay, setRecordPath } = require('../obsHandler.js');
 
 const debug = require('../util/log.js');
 
-let videoIsRecording = false;
+// regodit & xinput-ffi are ESM-only (koffi) since their v2+ majors; load them lazily via dynamic
+// import (cached by Node's module registry) so this CommonJS module graph stays intact. regodit's
+// async API moved to the `regodit/promises` subpath and its functions were renamed PascalCase ->
+// camelCase. Controller rumble stays best-effort: a load failure (no XInput runtime, headless
+// session, etc.) must never take down the toast path, so we swallow it and disable rumble.
+let regeditPromise = null;
+const loadRegedit = () => regeditPromise || (regeditPromise = import('regodit/promises'));
+
+let xinputPromise = null;
+const loadXinput = () =>
+  xinputPromise ||
+  (xinputPromise = import('xinput-ffi').catch((err) => {
+    debug.warn(`[rumble] xinput-ffi unavailable, rumble disabled: ${err.message || err}`);
+    return null;
+  }));
 
 module.exports = async (message, option = {}) => {
   try {
+    // A playtime card is about the game, not an unlocked achievement. Force its title from the
+    // dedicated game field so no generic/localized achievement label can leak into this toast.
+    if (message.notificationType === 'playtime' && message.gameDisplayName) {
+      message.achievementDisplayName = message.gameDisplayName;
+    }
+
     const options = {
       notify: option.notify != null ? option.notify : true,
       transport: {
         toast: option.transport.toast != null ? option.transport.toast : true,
-        gntp: option.transport.gntp || false,
         websocket: option.transport.websocket || false,
-        chromium: option.transport.chromium != null ? option.transport.chromium : true,
+        overlay: option.transport.overlay || false,
       },
       toast: {
         appid: option.toast.appid,
@@ -38,15 +50,9 @@ module.exports = async (message, option = {}) => {
         cropIcon: option.toast.cropIcon || false,
         attribution: option.toast.attribution || null,
       },
-      gntpLabel: option.gntpLabel,
       prefetch: option.prefetch != null ? option.prefetch : true,
-      souvenir: {
-        screenshot: option.souvenir.screenshot || false,
-        video: option.souvenir.video >= 0 && option.souvenir.video <= 2 ? option.souvenir.video : 0,
-        screenshot_options: option.souvenir.screenshot_options || {},
-        video_options: option.souvenir.video_options || {},
-      },
       rumble: option.rumble != null ? option.rumble : true,
+      souvenir: option.souvenir || null,
     };
 
     if (options.notify) {
@@ -59,6 +65,7 @@ module.exports = async (message, option = {}) => {
           achievement: message.achievementName,
           displayName: message.achievementDisplayName,
           description: message.achievementDescription,
+          rarityPercent: message.rarityPercent,
           icon: message.icon,
           time: message.time,
         };
@@ -68,6 +75,49 @@ module.exports = async (message, option = {}) => {
         broadcast(notification);
       }
 
+      // Overlay transport: spawn the styled in-game overlay notification ourselves so it shows even
+      // when the main app is closed (Watchdog runs in the background). The spawned `--wintype=notification`
+      // process reads the user's overlay preset/position/scale/sound from options.ini and renders on top
+      // of the game; if the main app is already open, the single-instance lock forwards the args to it
+      // instead (no duplicate). Done before prefetch so the icon stays a URL — the app resolves it from
+      // the same on-disk cache the Watchdog prefetches into.
+      if (options.transport.overlay) {
+        debug.log('Overlay notification (spawn)');
+        try {
+          const watchdog = require('../watchdog.js');
+          const description = message.progress
+            ? `[ ${message.progress.current}/${message.progress.max} ] ${message.achievementDescription || ''}`
+            : message.achievementDescription || '';
+          const overlayArgs = [
+            '--wintype=notification',
+            `--appid=${message.appid || ''}`,
+            `--gameDisplayName=${message.gameDisplayName || ''}`,
+            `--displayName=${message.achievementDisplayName || ''}`,
+            `--description=${description}`,
+            `--icon=${message.icon || ''}`,
+          ];
+          if (message.rarityPercent != null && message.rarityPercent !== '' && Number.isFinite(Number(message.rarityPercent))) {
+            overlayArgs.push(`--rarityPercent=${Number(message.rarityPercent)}`);
+          }
+          // Some notifications (e.g. playtime) must never play the overlay sound.
+          if (message.silent) overlayArgs.push('--silent=1');
+          watchdog.SpawnOverlayNotification(overlayArgs);
+        } catch (err) {
+          debug.error(err);
+        }
+      }
+
+      // Souvenir screenshot — achievement unlocks only (never progress/playtime). Non-blocking; a short
+      // delay lets the on-screen toast or overlay popup appear so it's included in the shot. Saved under
+      // <dir>/<game>/<date> - <achievement>.png.
+      if (options.souvenir && options.souvenir.screenshot && !message.silent && !message.progress) {
+        setTimeout(() => {
+          require('./souvenir.js')
+            .capture({ game: message.gameDisplayName, achievement: message.achievementDisplayName, dir: options.souvenir.dir })
+            .catch(() => {});
+        }, 800);
+      }
+
       debug.log(`Prefetching...`);
       if (message.icon) {
         message.icon = await fetch(message.icon, message.appid);
@@ -75,18 +125,6 @@ module.exports = async (message, option = {}) => {
 
       if (options.transport.toast && options.toast.imageIntegration != '0' && message.image) {
         message.image = await fetch(message.image, message.appid);
-      }
-
-      if (options.transport.chromium) {
-        const watchdog = require('../watchdog.js');
-        let t = options.gntpLabel && options.gntpLabel === 'Playtime' ? 'playtime' : message.progress ? 'progress' : 'achievement';
-        watchdog.SpawnOverlayNotification([
-          `--wintype=${t}`,
-          `--appid=${message.appid}`,
-          `--ach=${message.achievementName}`,
-          `--description=${message.achievementDescription}`,
-          `--count=${message.progress?.current}/${message.progress?.max}`,
-        ]);
       }
 
       if (options.transport.toast) {
@@ -117,129 +155,23 @@ module.exports = async (message, option = {}) => {
         debug.log('Toast notification is disabled > SKIPPING');
       }
 
-      if (options.transport.gntp) {
-        debug.log('GNTP');
-        try {
-          if (await gntp.hasGrowl()) {
-            debug.log('Sending GNTP Grrr!');
-
-            let notification = {
-              title: message.achievementDisplayName,
-              message: message.achievementDescription,
-              icon: message.icon,
-            };
-
-            if (options.gntpLabel) notification.label = options.gntpLabel;
-
-            if (message.progress) notification.message = `[ ${message.progress.current}/${message.progress.max} ]\n${message.achievementDescription}`;
-
-            await gntp.send(notification);
-          } else {
-            debug.error('GNTP endpoint unreachable');
-          }
-        } catch (err) {
-          debug.error(err);
-        }
-      } else {
-        debug.log('GNTP notification is disabled > SKIPPING');
-      }
-
       if (options.rumble) {
-        if (!options.transport.toast) message.delay = 0;
-        const duration =
-          +(await regedit.promises.RegQueryIntegerValue('HKCU', 'Control Panel/Accessibility', 'MessageDuration').catch(() => {
-            return null;
-          })) || 5;
-        setTimeout(function () {
-          debug.log('XInput Rumble');
-          xinput.rumble({ forceStateWhileRumble: true }).catch((err) => {
-            debug.warn(err);
-          });
-        }, duration * 1000 * message.delay || 0);
-      }
-    }
-    if (false) {
-      //options.souvenir.screenshot) {
-      debug.log('Souvenir: screenshot');
-      try {
-        const filePath = path.join(
-          options.souvenir.screenshot_options.custom_dir || userShellFolder['mypictures'],
-          fs.win32.sanitizeFileName(message.gameDisplayName),
-          fs.win32.sanitizeFileName(message.achievementDisplayName) + '.png'
-        );
-        debug.log(`"${filePath}"`);
-        let ssTaken = false;
-        try {
-          ssTaken = await takeScreenshot(filePath, options.souvenir.screenshot_options.overwrite_image, 3000);
-          message.image = filePath;
-        } catch (e) {
-          ssTaken = false;
-          debug.error(e);
-        }
-        if (!ssTaken) {
-          if (options.toast.imageIntegration != '0') {
-            message.image = await screenshot(filePath, options.souvenir.screenshot_options.overwrite_image);
-          } else {
-            screenshot(filePath, options.souvenir.screenshot_options.overwrite_image).catch((err) => {
-              debug.error(err);
+        const xinput = await loadXinput();
+        if (xinput) {
+          if (!options.transport.toast) message.delay = 0;
+          const regedit = await loadRegedit();
+          const duration =
+            +(await regedit.regQueryIntegerValue('HKCU', 'Control Panel/Accessibility', 'MessageDuration').catch(() => {
+              return null;
+            })) || 5;
+          setTimeout(function () {
+            debug.log('XInput Rumble');
+            xinput.rumble({ forceStateWhileRumble: true }).catch((err) => {
+              debug.warn(err);
             });
-          }
+          }, duration * 1000 * message.delay || 0);
         }
-      } catch (err) {
-        debug.error(err);
       }
-    } else {
-      debug.log('Skipping souvenir: screenshot');
-    }
-
-    if (options.souvenir.video > 0 && videoIsRecording === false) {
-      debug.log('Souvenir: video');
-      try {
-        try {
-          const filePath = path.join(
-            options.souvenir.video_options.custom_dir || userShellFolder['myvideo'],
-            fs.win32.sanitizeFileName(message.gameDisplayName),
-            fs.win32.sanitizeFileName(message.achievementDisplayName) + '.mkv'
-          );
-          videoIsRecording = true;
-          debug.log(`"${filePath}"`);
-          await setRecordPath(options.souvenir.video_options.custom_dir || userShellFolder['myvideo']);
-          saveAndMoveReplay(filePath).then(() => {
-            videoIsRecording = false;
-          });
-        } catch (er) {
-          debug.error(er);
-          const filePath = path.join(
-            options.souvenir.video_options.custom_dir || userShellFolder['myvideo'],
-            fs.win32.sanitizeFileName(message.gameDisplayName),
-            fs.win32.sanitizeFileName(message.achievementDisplayName) + '.mp4'
-          );
-          debug.log(`"${filePath}"`);
-          videoIsRecording = true;
-          const vendor = options.souvenir.video == 1 ? 'nvenc' : 'amf';
-          const encoder = options.souvenir.video_options.codec == 1 ? 'hevc' : 'h264';
-          videoCapture
-            .hwencode(filePath, `${encoder}_${vendor}`, {
-              overwrite: options.souvenir.video_options.overwrite_video,
-              timeLength: `00:00:${options.souvenir.video_options.duration}`,
-              framerate: options.souvenir.video_options.framerate,
-              bits10: options.souvenir.video_options.colorDepth10bits,
-              mouse: options.souvenir.video_options.cursor,
-              audioInterface: 'virtual-audio-capturer',
-            })
-            .then(() => {
-              videoIsRecording = false;
-            })
-            .catch((err) => {
-              videoIsRecording = false;
-              debug.error(err);
-            });
-        }
-      } catch (err) {
-        debug.error(err);
-      }
-    } else {
-      debug.log('Skipping souvenir: video');
     }
   } catch (err) {
     debug.log(err);

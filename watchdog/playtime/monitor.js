@@ -4,9 +4,6 @@ const os = require('os');
 const path = require('path');
 const fs = require('fs');
 const request = require('request-zero');
-const regedit = require('regodit');
-const WQL = require('wql-process-monitor');
-const humanizeDuration = require('humanize-duration');
 const EventEmitter = require('emittery');
 const tasklist = require('win-tasklist');
 const Timer = require('./timer.js');
@@ -45,57 +42,37 @@ const filter = {
   },
 };
 
-function getCommandLine(pid) {
-  return new Promise((resolve, reject) => {
-    exec(`wmic process where ProcessId=${pid} get CommandLine`, (err, stdout) => {
-      if (err) return reject(err);
-
-      const lines = stdout.trim().split('\n');
-      if (lines.length < 2) return resolve(null);
-
-      resolve(lines[1].trim()); // First line is "CommandLine"
-    });
-  });
-}
-
-async function getParentProcess(pid) {
-  try {
-    const parentList = await WQL.promises.query({
-      select: ['ParentProcessId'],
-      from: 'Win32_Process',
-      where: `ProcessId = ${pid}`,
-    });
-    if (!parentList.length) return null;
-    const parentPid = parentList[0].ParentProcessId;
-
-    const info = await WQL.promises.query({
-      select: ['Name'],
-      from: 'Win32_Process',
-      where: `ProcessId = ${parentPid}`,
-    });
-    return info.length ? info[0].Name : null;
-  } catch (_) {
-    return null;
-  }
+// Case-insensitive match of a running process name against a game's stored binary, tolerating the
+// Unreal Engine "<name>-Win64-Shipping.exe" variant. Returns false for entries with a missing/empty
+// binary so a malformed index entry can never silently cross-track a process that belongs to another
+// game (issue #36), and never throws on a null binary.
+function binaryMatchesProcess(binary, process) {
+  if (typeof binary !== 'string') return false;
+  const b = binary.trim().toLowerCase();
+  if (!b) return false;
+  const p = String(process || '').toLowerCase();
+  if (!p) return false;
+  return b === p || b.replace('.exe', '-win64-shipping.exe') === p;
 }
 
 async function init() {
   const emitter = new EventEmitter();
 
+  // wql-process-monitor is ESM-only (koffi) since v2 — load it via dynamic import (Node caches it).
+  const WQL = await import('wql-process-monitor');
+
   let nowPlaying = [];
   gameIndex = await getGameIndex();
   await getSavedConfigs();
 
-  await WQL.promises.createEventSink();
-  const processMonitor = await WQL.promises.subscribe({
-    /*
-		Elevated process (scene release are usually UAC elevated via appcompatibility out of the box)
-		Set built-in filter to false 
-		cf: https://github.com/xan105/node-processMonitor/issues/2
-		*/
-    filterWindowsNoise: false,
-    filterUsualProgramLocations: false,
-    filter: filter.ignore,
+  // createEventSink() is auto-invoked by subscribe() since v2, so we no longer call it explicitly.
+  // The built-in "Windows noise"/"usual program locations" filters were removed in v2; we intentionally
+  // never used them anyway (filterWindowsNoise/filterUsualProgramLocations were both false) because
+  // elevated processes — scene releases are usually UAC-elevated out of the box — must still be caught.
+  // We only exclude known OS/background noise by process name via bin.filter (filter.ignore).
+  // cf: https://github.com/xan105/node-processMonitor/issues/2
+  const processMonitor = await WQL.subscribe({
+    bin: { filter: filter.ignore, whitelist: false },
   });
 
   processMonitor.on('creation', async ([process, pid, filepath]) => {
@@ -104,14 +81,8 @@ async function init() {
     if (filter.mute.dir.some((dirpath) => path.parse(filepath).dir.toLowerCase().startsWith(dirpath.toLowerCase()))) return;
     if (filter.mute.file.some((bin) => bin.toLowerCase() === process.toLowerCase())) return;
 
-    const parent = await getParentProcess(pid);
-    //if (!parent) return;
-
     const games = gameIndex.filter(
-      (game) =>
-        (game.binary.toLowerCase() === process.toLowerCase() ||
-          game.binary.replace('.exe', '-Win64-Shipping.exe').toLowerCase() === process.toLowerCase()) && //thanks UE -.-'
-        !game.name.toLowerCase().includes('demo')
+      (game) => binaryMatchesProcess(game.binary, process) && !String(game.name || '').toLowerCase().includes('demo')
     );
 
     let game;
@@ -145,11 +116,8 @@ async function init() {
 
     if (!game) return;
     debug.log(`DB Hit for ${game.name}(${game.appid}) ["${filepath}"]`);
-    game.pid = pid;
     //TODO: get launched game and add it to exeList
     //TODO: check for game updates?
-
-    //let args = getCommandLine(pid);
 
     //RunningAppID is not that reliable and this intefere with Greenluma; Commenting out for now
     /*const runningAppID = await regedit.promises.RegQueryIntegerValue("HKCU","SOFTWARE/Valve/Steam", "RunningAppID") || 0;
@@ -162,32 +130,39 @@ async function init() {
       }
     }*/
 
-    if (!nowPlaying.includes(game)) {
-      //Only one instance allowed
-
+    //A game can spawn several processes (e.g. TLOU II runs crs-video.exe for the
+    //intro alongside the main tlou-ii.exe). Track them as a Set of pids on a single
+    //session so the timer starts once and only ends when every process is gone,
+    //rather than restarting/duplicating the session per extra process.
+    const alreadyPlaying = nowPlaying.find((g) => g.appid === game.appid);
+    if (alreadyPlaying) {
+      alreadyPlaying.pids.add(pid);
+      debug.log(`Tracking additional process "${process}"(${pid}) for ${game.name}`);
+    } else {
       const playing = Object.assign(game, {
-        pid: pid,
+        pids: new Set([pid]),
         timer: new Timer(),
       });
       debug.log(playing);
 
       nowPlaying.push(playing);
-    } else {
-      debug.warn('Only one game instance allowed');
+      emitter.emit('enable-overlay', game.appid);
+      emitter.emit('notify', [game]);
     }
-    emitter.emit('enable-overlay', game.appid);
-    emitter.emit('notify', [game]);
   });
 
   processMonitor.on('deletion', ([process, pid]) => {
-    const game = nowPlaying.find(
-      (game) =>
-        game.pid === pid &&
-        (game.binary.toLowerCase() === process.toLowerCase() ||
-          game.binary.replace('.exe', '-Win64-Shipping.exe').toLowerCase() === process.toLowerCase()) //thanks UE -.-'
-    );
+    //Match on pid alone: it already uniquely identifies a process we chose to track in
+    //nowPlaying, so re-checking the stored binary here is both redundant and harmful.
+    //Many games run under a process name that differs from their gameIndex entry (e.g.
+    //tlou-ii.exe vs the stored tlou-ii-l.exe); the old binary check never matched on exit,
+    //so the timer never stopped and playtime was never recorded.
+    const game = nowPlaying.find((g) => g.pids.has(pid));
 
     if (!game) return;
+
+    game.pids.delete(pid);
+    if (game.pids.size > 0) return; //other processes of this game are still running
 
     debug.log(`Stop playing ${game.name}(${game.appid})`);
     game.timer.stop();
@@ -200,18 +175,12 @@ async function init() {
 
     debug.log('playtime: ' + Math.floor(playedtime / 60) + 'min');
 
-    let humanized;
-    if (playedtime < 60) {
-      humanized = humanizeDuration(playedtime * 1000, { language: 'en', units: ['s'] });
-    } else {
-      humanized = humanizeDuration(playedtime * 1000, { language: 'en', conjunction: ' and ', units: ['h', 'm'], round: true });
-    }
-
     TimeTrack(game.appid, playedtime).catch((err) => {
       debug.error(err);
     });
     emitter.emit('disable-overlay');
-    emitter.emit('notify', [game, 'You played for ' + humanized]);
+    // Emit the raw played seconds; the watchdog formats & localizes the notification text.
+    emitter.emit('notify', [game, playedtime]);
   });
 
   return emitter;
