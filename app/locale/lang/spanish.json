@@ -1,103 +1,407 @@
 {
   "achievements": "Logros",
-  "perfectGame": "Juegos perfectos",
-  "completionRate": "Tasa media de completado de juegos",
+  "perfectGame": "Juegos completados",
+  "completionRate": "Tasa media de finalización",
   "emptyList": "Sin juegos",
+  "emptyListHint": "Aún no se han encontrado logros. Añade la carpeta donde tus juegos guardan sus archivos de logros y luego actualiza (F5).",
+  "emptyListAction": "Abrir ajustes de carpetas",
+  "installedOnly": "Mostrar solo los juegos instalados",
+  "sort": {
+    "tooltip": {
+      "alpha": "Nombre: A → Z",
+      "percent": "Progreso",
+      "time": "Fecha del logro",
+      "played": "Última vez jugado"
+    },
+    "label": {
+      "alpha": {
+        "asc": "Nombre: A → Z",
+        "desc": "Nombre: Z → A"
+      },
+      "percent": {
+        "asc": "Progreso: bajo → alto",
+        "desc": "Progreso: alto → bajo"
+      },
+      "time": {
+        "asc": "Logro: más antiguo → más reciente",
+        "desc": "Logro: más reciente → más antiguo"
+      },
+      "played": {
+        "asc": "Jugado: más antiguo → más reciente",
+        "desc": "Jugado: más reciente → más antiguo"
+      },
+      "rarity": {
+        "asc": "Rareza: más raro → más común",
+        "desc": "Rareza: más común → más raro"
+      }
+    },
+    "action": {
+      "reverse": "haz clic para invertir",
+      "clear": "haz clic para quitar el orden"
+    }
+  },
   "loading": "Cargando",
-  "unlocked": "Desbloqueados",
-  "locked": "Bloqueados",
-  "globalStat": "de jugadores tienen esto",
+  "unlocked": "Desbloqueado",
+  "locked": "Bloqueado",
+  "globalStat": "de los jugadores lo tiene",
   "hiddenRemain": "logros ocultos restantes",
-  "revealedOnceUnlocked": "Los detalles de cada logro se revelarán una vez desbloqueados",
-  "noneUnlocked": "Ningún logro desbloqueado todavía",
-  "play": "¡Empezar a jugar!",
-  "scrollUp": "Desplazarse hacia arriba",
+  "revealedOnceUnlocked": "Los detalles de cada logro se revelarán al desbloquearlo",
+  "hiddenDescriptionPlaceholder": "Oculto — haz clic para revelar",
+  "noneUnlocked": "Aún no hay logros desbloqueados",
+  "play": "¡A jugar !",
+  "noneUnlockedHint": "¿No ves ningún desbloqueo? Consulta la sección de Preguntas frecuentes / Solución de problemas de",
+  "scrollUp": "Subir",
   "allGamesBackButton": "Todos los juegos",
   "removeFromList": "Quitar de la lista",
+  "buildIconPrefetchCache": "Almacenar en caché los iconos de logros",
+  "contextMenu": {
+    "resetPlaytime": "Restablecer tiempo de juego",
+    "muteProgress": "Silenciar notificaciones de progreso",
+    "unmuteProgress": "Reactivar notificaciones de progreso",
+    "generateAchievementsJson": "Exportar achievements.json",
+    "diagnose": "Diagnosticar emulador",
+    "backupGBE": "Copia de seguridad de la configuración…",
+    "restoreGBE": "Restaurar copia de seguridad de la configuración…",
+    "installGBE": "Aplicar arreglo de emulador…",
+    "removeDRM": "Quitar DRM…",
+    "crackfix": "Buscar un arreglo de la comunidad…",
+    "openIconCache": "Caché de iconos",
+    "openDbCache": "Caché de datos (.db)",
+    "openInstallLocation": "Instalación del juego",
+    "groupGame": "Juego",
+    "groupEmulator": "Emulador y herramientas",
+    "groupFolders": "Carpetas",
+    "groupLinks": "Enlaces útiles",
+    "groupCover": "Carátula"
+  },
   "settings": {
-    "title": "Configuraciones",
+    "title": "Ajustes",
     "sideMenu": {
       "general": "General",
+      "overlay": "Overlay",
       "notification": "Notificación",
       "souvenir": "Souvenir",
       "folder": "Carpetas",
       "source": "Fuente",
-      "advanced": "Avanzado",
-      "debug": "Depurar"
+      "advanced": "Avanzado"
     },
     "common": {
       "show": "Mostrar",
       "hide": "Ocultar",
-      "enable": "Habilitar",
-      "disable": "Deshabilitar",
+      "enable": "Activado",
+      "disable": "Desactivado",
       "cancel": "Cancelar",
       "save": "Guardar",
       "version": "Versión",
-      "edit": "Edit"
+      "maintainedBy": "mantenido por",
+      "fork": "Fork",
+      "original": "Original v1.6.8",
+      "edit": "Editar"
+    },
+    "watchdog": {
+      "startup": {
+        "name": "Ejecutar al iniciar sesión",
+        "description": "Watchdog se inicia automáticamente al arrancar el sistema."
+      },
+      "kill": {
+        "name": "Mantener en ejecución",
+        "description": "Mantén Watchdog en ejecución aunque se cierre la app principal."
+      }
+    },
+    "overlay": {
+      "position": "Posición del logro",
+      "progressPosition": "Posición del progreso",
+      "playtimePosition": "Posición del tiempo de juego",
+      "preset": {
+        "name": "Preajuste de notificación",
+        "description": "Legacy usa el «antiguo» sistema de notificaciones"
+      },
+      "hotkey": {
+        "name": "Atajo del overlay",
+        "description": "Pulsa este atajo para mostrar el overlay de logros durante el juego."
+      },
+      "scale": "Tamaño de la notificación",
+      "duration": "Duración de la animación"
     },
     "general": {
+      "sectionTitle": "Interfaz y comportamiento",
       "language": {
         "name": "Idioma",
-        "description": ["Ayuda a la traducción", "aquí"]
+        "description": "Idioma de la interfaz. Los datos de los juegos se obtienen en este idioma cuando está disponible."
       },
       "thumbnail": {
-        "name": "Orientación de miniaturas",
+        "name": "Orientación de las miniaturas",
+        "description": "Vertical muestra carátulas altas; Horizontal muestra las imágenes de cabecera anchas de Steam.",
         "value": {
-          "portrait": "Retrato",
-          "landscape": "Paisaje"
+          "portrait": "Vertical",
+          "landscape": "Horizontal"
         }
       },
       "hiddenAch": {
-        "name": "Logros ocultos"
+        "name": "Logros ocultos",
+        "description": "Revela el nombre y la descripción de los logros ocultos antes de desbloquearlos."
       },
       "mergeDuplicates": {
-        "name": "Fusionar duplicados"
+        "name": "Combinar duplicados",
+        "description": "Combina el mismo juego encontrado en varias fuentes en una sola ficha."
       },
       "timeMerge": {
-        "name": "Marca de tiempo al fusionar",
-        "description": "Cuando se fusionan duplicados, ¿qué valor de fecha se prefiere?",
+        "name": "Combinar marca de tiempo",
+        "description": "Al combinar duplicados, ¿qué valor de tiempo es preferible ?",
         "value": {
           "recent": "Reciente",
           "oldest": "Más antiguo"
         }
       },
       "hideZero": {
-        "name": "Ocultar juegos al 0%"
+        "name": "Ocultar juegos al 0%",
+        "description": "Oculta los juegos en los que aún no has desbloqueado ningún logro."
+      },
+      "startup": {
+        "name": "Iniciar con el sistema",
+        "description": "Inicia Achievement Watcher automáticamente con Windows, oculto en la bandeja."
+      },
+      "onboarding": {
+        "name": "Guía de primer inicio",
+        "button": "Abrir la guía",
+        "description": "Vuelve a abrir la configuración guiada para la clave API, el perfil, las carpetas, las fuentes y las notificaciones."
+      },
+      "hardwareAccel": {
+        "name": "Desactivar la aceleración por hardware",
+        "description": "Desactiva la aceleración de GPU si el overlay o la ventana funcionan mal. Requiere reiniciar."
+      },
+      "tray": {
+        "name": "Minimizar a la bandeja del sistema",
+        "description": "Mantén la app en segundo plano para un inicio más rápido de las notificaciones."
+      }
+    },
+    "emulator": {
+      "nav": "Emulador",
+      "sectionTitle": "Configuración del emulador (GBE Fork)",
+      "intro": "Valores predeterminados usados por la acción de clic derecho «Aplicar arreglo de emulador». Elige cómo se omite Steam y cuántos datos del juego se obtienen.",
+      "coreTitle": "Configuración principal",
+      "advancedTitle": "Opciones avanzadas",
+      "loginTitle": "Inicio de sesión de Steam (solo cuenta desechable)",
+      "loginWarning": "Cuenta desechable",
+      "loginDesc": "Se usa solo cuando «Fuente de datos» está en Inicio de sesión de Steam. La contraseña se guarda cifrada en este PC y solo se envía a Steam mediante generate_emu_config. Se solicita la 2FA de Steam Guard cuando es necesario. Déjalo vacío para que se te pregunte cada vez.",
+      "loginUser": "Nombre de usuario de Steam",
+      "loginPass": "Contraseña de Steam",
+      "loginTest": "Probar la conexión",
+      "loginTestHint": "Steam / Steam Guard",
+      "loginTestRunning": "Conectando a Steam… Introduce el código de Steam Guard si se solicita.",
+      "loginTestSuccess": "Inicio de sesión de Steam correcto. Se guardó el refresh token de generate_emu_config.",
+      "loginTestMissing": "Introduce primero el nombre de usuario y la contraseña de Steam.",
+      "loginTestFailed": "Error al iniciar sesión en Steam",
+      "autoApply": {
+        "name": "Arreglar automáticamente los juegos recién detectados",
+        "description": "Ejecuta una vez toda la cadena Aplicar arreglo de emulador para un juego emulado recién detectado y sin configurar: gestión de SteamStub, GBE Fork, logros, DLC, identidad/idioma y datos avanzados si están activados. Activado de forma predeterminada.",
+        "value": {
+          "false": "Desactivado",
+          "true": "Activado"
+        }
+      },
+      "mode": {
+        "name": "Modo del emulador",
+        "description": "Regular reemplaza la steam_api(64).dll del juego. ColdClient la conserva y carga el steamclient emulado de GBE Fork mediante un loader — mayor cobertura para juegos difíciles.",
+        "value": {
+          "regular": "Regular (reemplazar DLL)",
+          "coldclient": "ColdClient (GBE Fork)"
+        }
+      },
+      "steamSettings": {
+        "name": "Datos de steam_settings",
+        "description": "Simple usa la obtención propia de Achievement Watcher (anónima). Advanced ejecuta generate_emu_config para la cobertura de depots/idiomas.",
+        "value": {
+          "simple": "Simple (rápido)",
+          "advanced": "Advanced (completo)"
+        }
+      },
+      "login": {
+        "name": "Fuente de datos (Advanced)",
+        "description": "El inicio de sesión de Steam permite a generate_emu_config obtener datos completos de DLC/depots. Usa SOLO una cuenta desechable — nunca la principal.",
+        "value": {
+          "anonymous": "Anónimo",
+          "steam": "Inicio de sesión de Steam"
+        }
+      },
+      "steamless": {
+        "name": "Quitar automáticamente el DRM SteamStub",
+        "description": "Ejecuta Steamless sobre el exe del juego antes de parchear para quitar el DRM SteamStub de Valve (el original se conserva como .steamstub.bak). No tiene efecto si no hay stub.",
+        "value": {
+          "false": "Desactivado",
+          "true": "Activado"
+        }
+      },
+      "steamlessExp": {
+        "name": "Steamless experimental",
+        "description": "Realinea las secciones durante el desempaquetado para una mejor compatibilidad con EXE muy protegidos. Solo importa si el desempaquetado automático está activado.",
+        "value": {
+          "false": "Desactivado",
+          "true": "Activado"
+        }
+      },
+      "crackFix": {
+        "name": "Aplicar automáticamente un arreglo de la comunidad (CrakFiles)",
+        "description": "En cada arreglo, descarga y aplica automáticamente un arreglo de la comunidad con coincidencia segura de la lista CrakFiles (solo coincidencia exacta de nombre + enlace de pixeldrain; los archivos sobrescritos se respaldan). Activado de forma predeterminada — desactívalo si no quieres que AW descargue/sobrescriba archivos del juego desde una fuente de la comunidad.",
+        "value": {
+          "false": "Desactivado",
+          "true": "Activado"
+        }
+      },
+      "apiCheckBypass": {
+        "name": "Omitir la comprobación de propiedad de la API de Steam",
+        "description": "Desactivado de forma predeterminada. Coloca el proxy de omisión de SteamAutoCrack (winmm.dll) + una configuración de redirección, para que los juegos que vuelven a comprobar la steam_api/exe original tras el cambio se inicien y desbloqueen igualmente. Descarga el proxy desde su release oficial.",
+        "value": {
+          "false": "Desactivado",
+          "true": "Activado"
+        }
+      },
+      "launchBat": {
+        "name": "Crear Launch.bat como alternativa",
+        "description": "Cuando Steamless no puede quitar un exe SteamStub y AW recurre a ColdClient, también escribe un Launch.bat para el loader correspondiente.",
+        "value": {
+          "true": "Activado",
+          "false": "Desactivado"
+        }
+      },
+      "checkUpdates": {
+        "name": "Buscar actualizaciones de GBE Fork",
+        "description": "Vuelve a comprobar en GitHub la última build de GBE Fork antes de aplicar (descarga solo si es más reciente). Desactiva para usar siempre la build en caché.",
+        "value": {
+          "true": "Activado",
+          "false": "Desactivado"
+        }
+      },
+      "goldbergIcons": {
+        "name": "GBE/Goldberg — descargar iconos",
+        "description": "Cuando está activado, la reparación automática que escribe una steam_settings/achievements.json faltante también descarga los iconos de logros desde el CDN de Steam.",
+        "value": {
+          "disabled": "Desactivado (rápido)",
+          "enabled": "Activado"
+        }
       }
     },
     "notification": {
       "title": {
         "common": "Común",
-        "toast": "Notificación emergente",
-        "transport": "Transporte"
+        "toast": "Notificación toast",
+        "transport": "Transporte",
+        "chromium": "Notificación Chromium",
+        "watchdog": "Watchdog",
+        "test": "Prueba",
+        "overlay": "Overlay en el juego"
       },
       "info": {
-        "toast": "Algunas características solo están disponibles en Windows 10"
+        "toast": "Algunas funciones solo están disponibles en Windows 10",
+        "autoSave": "Los cambios en esta pestaña se guardan automáticamente."
+      },
+      "test": {
+        "achievement": "Logro",
+        "progress": "Progreso",
+        "playtime": "Tiempo de juego",
+        "toast": "Toast de Windows",
+        "platinum": "Platino",
+        "overlay": "Overlay"
       },
       "option": {
+        "transportMode": {
+          "name": "Transporte de notificaciones",
+          "description": "Elige un único sistema de notificación activo",
+          "value": {
+            "chromium": "Chromium (con estilo)",
+            "toast": "Toast de Windows",
+            "none": "Desactivado"
+          }
+        },
         "notification": {
           "name": "Notificación",
-          "description": "Notificar al desbloquear un logro si es posible"
+          "description": "Notificar al desbloquear un logro, si es posible"
         },
         "rumble": {
-          "name": "Vibración del gamepad (XInput)",
-          "description": "Vibra el primer controlador al desbloquear un logro"
+          "name": "Vibración del mando (XInput)",
+          "description": "Hace vibrar el primer mando al desbloquear un logro"
         },
         "notifyOnProgress": {
-          "name": "Reporte de progreso",
-          "description": "Notificar sobre el progreso de los logros si es posible"
+          "name": "Informe de progreso",
+          "description": "Notificar el progreso de los logros, si es posible"
         },
-        "customToastAudio": {
-          "name": "Sonido de notif. emergente",
-          "description": "Especifica el sonido que se reproducirá cuando se muestra una notificación emergente",
+        "playtime": {
+          "name": "Seguimiento del tiempo de juego",
+          "description": "Notificar al inicio/fin del seguimiento"
+        },
+        "platinum": {
+          "name": "Platino (100%)",
+          "description": "Lanza un toast dedicado cuando un juego alcanza el 100% de finalización"
+        },
+        "mode": {
+          "name": "Tipo de notificación",
+          "description": "Dónde aparecen las notificaciones de desbloqueo: toast de Windows, overlay en el juego o ambos",
           "value": {
-            "systemDefault": "Por defecto",
+            "toast": "Toast",
+            "overlay": "Overlay",
+            "both": "Ambos"
+          }
+        },
+        "overlayPreset": "Preajuste",
+        "overlayPresetDesc": "Tema visual del popup overlay en el juego",
+        "overlayPosition": "Posición",
+        "overlayPositionDesc": "Dónde aparece el popup overlay en la pantalla",
+        "overlayScale": "Tamaño",
+        "overlayScaleDesc": "Tamaño del popup overlay",
+        "overlaySound": "Sonido",
+        "overlaySoundDesc": "Sonido reproducido cuando aparece el popup overlay",
+        "overlaySoundImport": "Importar un sonido personalizado…",
+        "overlayVolume": "Volumen",
+        "overlayVolumeDesc": "Volumen del sonido del popup overlay (el sonido del toast lo controla Windows)",
+        "overlayDuration": "Duración",
+        "overlayDurationDesc": "Cuánto tiempo permanece el popup overlay en pantalla. Auto deja decidir al preajuste; un valor limita el tiempo en pantalla.",
+        "overlayDurationAuto": "Auto",
+        "customiser": {
+          "title": "Preajuste personalizado",
+          "intro": "Crea tu propio preajuste de notificación overlay.",
+          "name": "Nombre",
+          "namePlaceholder": "Mi preajuste",
+          "background": "Fondo",
+          "text": "Texto",
+          "accent": "Acento",
+          "opacity": "Opacidad",
+          "fontSize": "Tamaño del texto",
+          "corners": "Esquinas",
+          "iconSize": "Tamaño del icono",
+          "create": "Crear preajuste",
+          "errName": "Introduce primero un nombre",
+          "created": "Creado y seleccionado:",
+          "failed": "Error"
+        },
+        "souvenirTitle": "Captura souvenir",
+        "souvenirScreenshot": "Captura al desbloquear",
+        "souvenirScreenshotDesc": "Captura la pantalla cuando se desbloquea un logro. Guardado por juego.",
+        "souvenirDir": "Carpeta de guardado",
+        "souvenirDirHelp": "Las capturas se guardan en <carpeta>\\<juego>\\<fecha> - <logro>.png. Vacío = Imágenes\\Achievement Watcher.",
+        "soundNone": "Ninguno",
+        "position": {
+          "centerBottom": "Abajo centro",
+          "centerTop": "Arriba centro",
+          "topLeft": "Arriba izquierda",
+          "topRight": "Arriba derecha",
+          "bottomLeft": "Abajo izquierda",
+          "bottomRight": "Abajo derecha",
+          "middleLeft": "Centro izquierda",
+          "middleRight": "Centro derecha",
+          "custom": "Personalizada"
+        },
+        "reposition": "Reposiciona el popup (arrástralo donde quieras)",
+        "customToastAudio": {
+          "name": "Sonido del toast",
+          "description": "Especifica el sonido que se reproduce al mostrar un toast",
+          "value": {
+            "systemDefault": "Predeterminado",
             "muted": "Silenciado"
           }
         },
         "toastSouvenir": {
-          "name": "Souvenir emergente",
-          "description": "Muestra la captura de pantalla souvenir dentro de la notif. emergente",
+          "name": "Souvenir en el toast",
+          "description": "Mostrar la captura souvenir dentro del toast",
           "value": {
             "top": "Arriba",
             "bottom": "Abajo"
@@ -105,106 +409,163 @@
         },
         "groupToast": {
           "name": "Agrupar por juego",
-          "description": "Visualmente agrupar las notif. emergentes del mismo juego en el Centro de acciones"
+          "description": "Agrupa visualmente los toast del mismo juego en el Centro de notificaciones"
         },
         "useToast": {
-          "name": "Notificación emergente",
-          "description": "Notificación emergente de Windows 8-10"
+          "name": "Notificación toast",
+          "description": "Notificación toast de Windows 8-10"
         },
         "useWinRT": {
-          "name": "WinRT API",
-          "description": "Usar WinRT si está disponible para una notificación más rápida en lugar de PowerShell"
+          "name": "API WinRT",
+          "description": "Usa WinRT si está disponible para toasts más rápidos en lugar de PowerShell"
         },
         "useBalloon": {
-          "name": "Globo descriptivo",
-          "description": "Usar globo descriptivo si la notificación emergente falla"
+          "name": "Globo de información",
+          "description": "Recurre al globo de información si la notificación toast falla"
         },
         "useWS": {
-          "description": "Transmitir los logros a todos los clientes conectados"
+          "description": "Transmite el logro a todos los clientes conectados"
+        },
+        "useChromium": {
+          "name": "Notificación Chromium",
+          "description": "Usa Chromium para mostrar notificaciones con estilo."
         }
       }
     },
     "souvenir": {
       "title": {
-        "screenshot": "Screenshot",
-        "video": "Video"
+        "screenshot": "Captura",
+        "video": "Vídeo"
       },
       "option": {
         "screenshot": {
           "name": "Souvenir",
-          "description": "Tomar una captura de pantalla cuando desbloquees un logro"
+          "description": "Hacer una captura cuando desbloqueas un logro"
         },
         "video": {
-          "name": "Video souvenir",
-          "description": "Record a short video when you unlock an achievement using the hardware encoder of your GPU"
+          "name": "Souvenir en vídeo",
+          "description": "Graba un vídeo corto cuando desbloqueas un logro usando el codificador por hardware de tu GPU"
         },
         "overwrite": {
-          "name": "Overwrite if existing file"
+          "name": "Sobrescribir si el archivo existe"
         },
         "custom_dir": {
-          "name": "Save location"
+          "name": "Ubicación de guardado"
         },
         "codec": {
-          "name": "Video codec",
-          "description": "H.265/HEVC is more performant but less supported"
+          "name": "Códec de vídeo",
+          "description": "H.265/HEVC es más eficiente pero menos compatible"
         },
         "colorDepth": {
-          "name": "Color depth",
-          "description": "10bits is only available for H.265/HEVC"
+          "name": "Profundidad de color",
+          "description": "10 bits solo está disponible para H.265/HEVC"
         },
         "duration": {
-          "name": "Duration"
+          "name": "Duración"
         },
         "framerate": {
-          "name": "Framerate"
+          "name": "Fotogramas por segundo"
         },
         "cursor": {
-          "name": "Mouse cursor"
+          "name": "Cursor del ratón"
         }
       }
     },
     "folder": {
-      "headline": "Dónde buscar los archivos de logros:",
-      "default": "Directorios por defecto",
-      "custom": "Directorios de usuario",
+      "headline": "Dónde buscar los archivos de logros :",
+      "default": "Carpeta predeterminada",
+      "custom": "Carpeta del usuario",
       "addInfo": [
-        "Seleccionar una carpeta que contenga carpetas appid.",
-        "Para ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 por favor, seleccionar la carpeta donde",
-        "los archivos ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini o RPCS3.exe se encuentran."
+        "Selecciona una carpeta que contenga carpetas appid.",
+        "Para ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 selecciona una carpeta donde se encuentre el",
+        "archivo ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini o RPCS3.exe."
       ],
-      "add": "Agregar una carpeta"
+      "add": "Añadir una carpeta",
+      "library": "Carpetas de biblioteca",
+      "libraryInfo": [
+        "Selecciona una carpeta que contenga muchas carpetas de instalación de juegos (p. ej. D:\\Games, E:\\SteamLibrary).",
+        "Todos los juegos que contenga se analizarán en busca de logros Goldberg/GBE, aunque nunca se hayan iniciado."
+      ],
+      "addLibrary": "Añadir una carpeta de biblioteca",
+      "generateConfigs": "Generar configuraciones"
     },
     "source": {
+      "title": "Fuentes de juegos",
       "legitSteam": {
         "name": "Mostrar juegos de Steam",
-        "description": "¡Steam debe estar instalado y tu perfil de Steam debe ser público!",
+        "description": "¡ Steam debe estar instalado y tu perfil de Steam ser público !",
         "value": {
           "none": "Ninguno",
           "installed": "Instalados",
-          "owned": "Adquiridos"
+          "owned": "En propiedad"
         }
       },
       "steamEmu": {
-        "name": "Emulador de Steam"
+        "name": "Emulador de Steam",
+        "description": "Lee los logros escritos por Goldberg / GBE Fork y emuladores de Steam similares."
       },
       "greenLuma": {
         "description": "GreenLuma 2020/2024/2025 y Reborn"
       },
       "rpcs3": {
-        "description": "Emulador de Playstation 3"
+        "description": "Emulador de PlayStation 3"
       },
       "lumaPlay": {
         "description": "Emulador de Uplay"
       },
+      "ea": {
+        "name": "EA Desktop",
+        "description": "Lee el registro local de logros de EA Desktop — solo para juegos instalados fuera de las carpetas gestionadas por EA (títulos crackeados)."
+      },
       "importCache": {
-        "name": "Importar caché de notificación",
-        "description": "Importar el caché de Watchdog como otra fuente de logros"
+        "name": "Importar caché de notificaciones",
+        "description": "Importa la caché de Watchdog como otra fuente de logros"
       }
     },
     "advanced": {
-      "blacklistTitle": "Lista negra de AppIDs",
-      "blacklistButton": "Reiniciar lista negra",
-      "blacklistInfo": "Clic derecho en cualquier cajón de juegos para agregarlo a la lista negra."
+      "maintenanceTitle": "Configuración y mantenimiento",
+      "fixAll": {
+        "name": "Arreglar todos los juegos detectados",
+        "button": "Arreglar todos los juegos",
+        "description": "Ejecuta el arreglo de emulador (GBE Fork, logros, DLC) en cada juego emulado detectado con una carpeta de instalación conocida.",
+        "confirm": "¿Aplicar el arreglo de emulador a cada juego detectado con una carpeta de instalación conocida? Los archivos existentes se respaldan antes de sobrescribirse.",
+        "running": "Arreglando juegos…",
+        "progress": "Arreglando %cur% / %total% — %name%",
+        "done": "Hecho — %fixed% juego(s) arreglado(s), %skipped% omitido(s), %failed% fallido(s).",
+        "none": "No hay ningún juego detectado con una carpeta de instalación conocida para arreglar."
+      },
+      "diag": {
+        "title": "Diagnóstico",
+        "apiKeyLabel": "Clave de la API Web de Steam :",
+        "apiKeyConfigured": "configurada",
+        "apiKeyFallback": "sin configurar — usando obtención automática",
+        "logsFolder": "Abrir la carpeta de logs",
+        "dataFolder": "Abrir la carpeta de datos",
+        "goldbergTitle": "Goldberg / GBE Fork",
+        "goldbergDesc": "Analiza una carpeta de biblioteca de juegos en busca de instalaciones Goldberg / GBE Fork y marca las que carecen de su esquema steam_settings/achievements.json. Usa el menú de clic derecho de un juego (Diagnosticar / Reparar) para arreglar una.",
+        "scanFolder": "Analizar una carpeta…",
+        "winNotifTitle": "Ajustes de notificaciones de Windows",
+        "focusAssist": "Asistente de concentración",
+        "notifActions": "Notificaciones y acciones",
+        "winNotifDesc": "Windows 10 >= 1903 : la regla automática del asistente de concentración para apps a pantalla completa (solo alarmas de forma predeterminada) puede suprimir las notificaciones toast — ponla en «Desactivado» si los toasts no aparecen en el juego."
+      },
+      "blacklistTitle": "Lista negra de AppID",
+      "blacklistButton": "Restablecer lista negra",
+      "blacklistInfo": "Haz clic derecho en una ficha de juego para añadirla a la lista negra.",
+      "apiKey": {
+        "title": "Clave de la API Web de Steam",
+        "description": "Algunos datos de Steam requieren una clave personal de la API Web de Steam.",
+        "fallback": "Deja este campo vacío para usar la obtención automática. Si falla, introduce tu propia clave.",
+        "create": "Crear una clave API",
+        "terms": "Condiciones de uso de la API de Steam",
+        "label": "Tu clave de la API Web de Steam",
+        "security": "La clave se cifra con AES-256-CBC antes de guardarse en este ordenador."
+      },
+      "mainSteam": {
+        "title": "Cuenta principal de Steam",
+        "name": "Filtrar por usuario",
+        "description": "Mostrar solo los logros de Steam de la cuenta seleccionada"
+      }
     }
   }
 }

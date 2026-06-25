@@ -1,53 +1,571 @@
 {
-  "achievements": "รางวัลความสำเร็จ",
-  "perfectGame": "เกมที่สมบูรณ์แบบ",
-  "completionRate": "อัตราความสำเร็จต่อเกมโดยเฉลี่ย",
+  "achievements": "ความสำเร็จ",
+  "perfectGame": "เกมที่เล่นจบแล้ว",
+  "completionRate": "อัตราการทำสำเร็จเฉลี่ย",
   "emptyList": "ไม่มีเกม",
+  "emptyListHint": "ยังไม่พบความสำเร็จ เพิ่มโฟลเดอร์ที่เกมของคุณบันทึกไฟล์ความสำเร็จ แล้วรีเฟรช (F5)",
+  "emptyListAction": "เปิดการตั้งค่าโฟลเดอร์",
+  "installedOnly": "แสดงเฉพาะเกมที่ติดตั้งแล้ว",
+  "sort": {
+    "tooltip": {
+      "alpha": "ชื่อ: A → Z",
+      "percent": "ความคืบหน้า",
+      "time": "วันที่ปลดล็อกความสำเร็จ",
+      "played": "เล่นล่าสุด"
+    },
+    "label": {
+      "alpha": {
+        "asc": "ชื่อ: A → Z",
+        "desc": "ชื่อ: Z → A"
+      },
+      "percent": {
+        "asc": "ความคืบหน้า: น้อย → มาก",
+        "desc": "ความคืบหน้า: มาก → น้อย"
+      },
+      "time": {
+        "asc": "ความสำเร็จ: เก่าสุด → ใหม่สุด",
+        "desc": "ความสำเร็จ: ใหม่สุด → เก่าสุด"
+      },
+      "played": {
+        "asc": "เล่น: เก่าสุด → ใหม่สุด",
+        "desc": "เล่น: ใหม่สุด → เก่าสุด"
+      },
+      "rarity": {
+        "asc": "ความหายาก: หายากสุด → ทั่วไปสุด",
+        "desc": "ความหายาก: ทั่วไปสุด → หายากสุด"
+      }
+    },
+    "action": {
+      "reverse": "คลิกเพื่อสลับลำดับ",
+      "clear": "คลิกเพื่อล้างการเรียงลำดับ"
+    }
+  },
   "loading": "กำลังโหลด",
-  "unlocked": "ได้รับแล้ว",
-  "locked": "ยังไม่ได้รับ",
-  "globalStat": "จากผู้เล่นทั้งหมด",
-  "hiddenRemain": "รางวัลความสำเร็จลับที่เหลือ",
-  "revealedOnceUnlocked": "รายละเอียดในแต่ละรางวัลความสำเร็จจะแสดงให้เห็นหลังจากปลดล็อคแล้ว",
-  "noneUnlocked": "ยังไม่ได้รับรางวัลความสำเร็จ",
-  "play": "ไปเล่น!",
+  "unlocked": "ปลดล็อกแล้ว",
+  "locked": "ล็อกอยู่",
+  "globalStat": "ของผู้เล่นมีสิ่งนี้",
+  "hiddenRemain": "ความสำเร็จที่ซ่อนอยู่เหลืออยู่",
+  "revealedOnceUnlocked": "รายละเอียดของแต่ละความสำเร็จจะถูกเปิดเผยเมื่อปลดล็อก",
+  "hiddenDescriptionPlaceholder": "ซ่อนอยู่ — คลิกเพื่อเปิดเผย",
+  "noneUnlocked": "ยังไม่มีความสำเร็จที่ปลดล็อก",
+  "play": "เริ่มเล่นเลย !",
+  "noneUnlockedHint": "ไม่เห็นการปลดล็อกใด ๆ ใช่ไหม? ดูส่วนคำถามที่พบบ่อย / การแก้ปัญหาของ",
   "scrollUp": "เลื่อนขึ้น",
-  "allGamesBackButton": "เกมส์ทั้งหมด",
+  "allGamesBackButton": "เกมทั้งหมด",
+  "removeFromList": "นำออกจากรายการ",
+  "buildIconPrefetchCache": "แคชไอคอนความสำเร็จ",
+  "contextMenu": {
+    "resetPlaytime": "รีเซ็ตเวลาเล่น",
+    "muteProgress": "ปิดเสียงการแจ้งเตือนความคืบหน้า",
+    "unmuteProgress": "เปิดการแจ้งเตือนความคืบหน้า",
+    "generateAchievementsJson": "ส่งออก achievements.json",
+    "diagnose": "วินิจฉัยอีมูเลเตอร์",
+    "backupGBE": "สำรองข้อมูลการตั้งค่า…",
+    "restoreGBE": "กู้คืนข้อมูลสำรองการตั้งค่า…",
+    "installGBE": "ใช้การแก้ไขอีมูเลเตอร์…",
+    "removeDRM": "นำ DRM ออก…",
+    "crackfix": "ค้นหาการแก้ไขจากชุมชน…",
+    "openIconCache": "แคชไอคอน",
+    "openDbCache": "แคชข้อมูล (.db)",
+    "openInstallLocation": "ตำแหน่งติดตั้งเกม",
+    "groupGame": "เกม",
+    "groupEmulator": "อีมูเลเตอร์และเครื่องมือ",
+    "groupFolders": "โฟลเดอร์",
+    "groupLinks": "ลิงก์ที่เป็นประโยชน์",
+    "groupCover": "ปก"
+  },
   "settings": {
     "title": "การตั้งค่า",
     "sideMenu": {
       "general": "ทั่วไป",
+      "overlay": "โอเวอร์เลย์",
       "notification": "การแจ้งเตือน",
-      "folder": "โฟลเดอร์"
+      "souvenir": "ของที่ระลึก",
+      "folder": "โฟลเดอร์",
+      "source": "แหล่งที่มา",
+      "advanced": "ขั้นสูง"
     },
     "common": {
-      "show": "เอาสิ",
-      "hide": "ไม่เอา",
-      "enable": "เอาสิ",
-      "disable": "ไม่เอา",
+      "show": "แสดง",
+      "hide": "ซ่อน",
+      "enable": "เปิดใช้งาน",
+      "disable": "ปิดใช้งาน",
       "cancel": "ยกเลิก",
-      "save": "ตกลง",
-      "version": "รุ่น"
+      "save": "บันทึก",
+      "version": "เวอร์ชัน",
+      "maintainedBy": "ดูแลโดย",
+      "fork": "Fork",
+      "original": "ต้นฉบับ v1.6.8",
+      "edit": "แก้ไข"
+    },
+    "watchdog": {
+      "startup": {
+        "name": "เรียกใช้เมื่อเข้าสู่ระบบ",
+        "description": "Watchdog จะเริ่มทำงานโดยอัตโนมัติเมื่อระบบบูต"
+      },
+      "kill": {
+        "name": "ทำงานต่อไป",
+        "description": "ให้ Watchdog ทำงานต่อแม้ว่าแอปหลักจะปิด"
+      }
+    },
+    "overlay": {
+      "position": "ตำแหน่งความสำเร็จ",
+      "progressPosition": "ตำแหน่งความคืบหน้า",
+      "playtimePosition": "ตำแหน่งเวลาเล่น",
+      "preset": {
+        "name": "พรีเซ็ตการแจ้งเตือน",
+        "description": "Legacy ใช้ระบบการแจ้งเตือน «แบบเก่า»"
+      },
+      "hotkey": {
+        "name": "ปุ่มลัดโอเวอร์เลย์",
+        "description": "กดปุ่มลัดนี้เพื่อแสดงโอเวอร์เลย์ความสำเร็จขณะอยู่ในเกม"
+      },
+      "scale": "ขนาดการแจ้งเตือน",
+      "duration": "ระยะเวลาแอนิเมชัน"
     },
     "general": {
+      "sectionTitle": "อินเทอร์เฟซและพฤติกรรม",
       "language": {
-        "name": "ภาษา"
+        "name": "ภาษา",
+        "description": "ภาษาของอินเทอร์เฟซ ข้อมูลเกมจะถูกดึงเป็นภาษานี้เมื่อมีให้บริการ"
+      },
+      "thumbnail": {
+        "name": "การวางแนวภาพย่อ",
+        "description": "แนวตั้งแสดงปกแบบสูง; แนวนอนแสดงภาพส่วนหัวแบบกว้างของ Steam",
+        "value": {
+          "portrait": "แนวตั้ง",
+          "landscape": "แนวนอน"
+        }
       },
       "hiddenAch": {
-        "name": "รางวัลความสำเร็จลับ"
+        "name": "ความสำเร็จที่ซ่อนอยู่",
+        "description": "เปิดเผยชื่อและคำอธิบายของความสำเร็จที่ซ่อนอยู่ก่อนที่คุณจะปลดล็อก"
       },
       "mergeDuplicates": {
-        "name": "รวมรายการที่ซ้ำกัน"
+        "name": "รวมรายการที่ซ้ำกัน",
+        "description": "รวมเกมเดียวกันที่พบในหลายแหล่งเข้าเป็นไทล์เดียว"
+      },
+      "timeMerge": {
+        "name": "การรวมการประทับเวลา",
+        "description": "เมื่อรวมรายการที่ซ้ำกัน ค่าเวลาใดที่ควรใช้มากกว่า?",
+        "value": {
+          "recent": "ล่าสุด",
+          "oldest": "เก่าสุด"
+        }
       },
       "hideZero": {
-        "name": "ซ่อนเกม 0%"
+        "name": "ซ่อนเกมที่ 0%",
+        "description": "ซ่อนเกมที่คุณยังไม่ได้ปลดล็อกความสำเร็จใด ๆ"
+      },
+      "startup": {
+        "name": "เรียกใช้เมื่อเริ่มต้นระบบ",
+        "description": "เริ่ม Achievement Watcher โดยอัตโนมัติพร้อม Windows โดยซ่อนไว้ในถาดระบบ"
+      },
+      "onboarding": {
+        "name": "คู่มือการเริ่มใช้งานครั้งแรก",
+        "button": "เปิดคู่มือ",
+        "description": "เปิดคู่มือการตั้งค่าอีกครั้ง: คีย์ API, โปรไฟล์, โฟลเดอร์, แหล่งที่มา และการแจ้งเตือน"
+      },
+      "hardwareAccel": {
+        "name": "ปิดการเร่งด้วยฮาร์ดแวร์",
+        "description": "ปิดการเร่ง GPU หากโอเวอร์เลย์หรือหน้าต่างทำงานผิดปกติ ต้องรีสตาร์ท"
+      },
+      "tray": {
+        "name": "ย่อลงถาดระบบ",
+        "description": "ให้แอปทำงานในพื้นหลังเพื่อให้การแจ้งเตือนเริ่มทำงานเร็วขึ้น"
+      }
+    },
+    "emulator": {
+      "nav": "อีมูเลเตอร์",
+      "sectionTitle": "การตั้งค่าอีมูเลเตอร์ (GBE Fork)",
+      "intro": "ค่าเริ่มต้นที่ใช้โดยการกระทำคลิกขวา «ใช้การแก้ไขอีมูเลเตอร์» เลือกวิธีหลีกเลี่ยง Steam และจำนวนข้อมูลเกมที่จะดึง",
+      "coreTitle": "การกำหนดค่าหลัก",
+      "advancedTitle": "ตัวเลือกขั้นสูง",
+      "loginTitle": "เข้าสู่ระบบ Steam (บัญชีใช้แล้วทิ้งเท่านั้น)",
+      "loginWarning": "บัญชีใช้แล้วทิ้ง",
+      "loginDesc": "ใช้เฉพาะเมื่อ «แหล่งข้อมูล» ตั้งค่าเป็นเข้าสู่ระบบ Steam รหัสผ่านจะถูกเก็บแบบเข้ารหัสบนพีซีนี้และส่งไปยัง Steam เท่านั้นโดย generate_emu_config จะมีการขอ Steam Guard 2FA เมื่อจำเป็น เว้นว่างไว้เพื่อให้ถามทุกครั้ง",
+      "loginUser": "ชื่อผู้ใช้ Steam",
+      "loginPass": "รหัสผ่าน Steam",
+      "loginTest": "ทดสอบการเชื่อมต่อ",
+      "loginTestHint": "Steam / Steam Guard",
+      "loginTestRunning": "กำลังเชื่อมต่อกับ Steam… ป้อนรหัส Steam Guard หากมีการร้องขอ",
+      "loginTestSuccess": "เข้าสู่ระบบ Steam สำเร็จ บันทึกโทเค็นรีเฟรชของ generate_emu_config แล้ว",
+      "loginTestMissing": "ป้อนชื่อผู้ใช้และรหัสผ่าน Steam ก่อน",
+      "loginTestFailed": "เข้าสู่ระบบ Steam ล้มเหลว",
+      "autoApply": {
+        "name": "แก้ไขเกมที่ตรวจพบใหม่โดยอัตโนมัติ",
+        "description": "เรียกใช้ขั้นตอนการแก้ไขอีมูเลเตอร์ทั้งหมดหนึ่งครั้งสำหรับเกมจำลองที่ตรวจพบใหม่และยังไม่ได้กำหนดค่า: การจัดการ SteamStub, GBE Fork, ความสำเร็จ, DLC, ตัวตน/ภาษา และข้อมูลขั้นสูงเมื่อเปิดใช้งาน เปิดใช้งานตามค่าเริ่มต้น",
+        "value": {
+          "false": "ปิดใช้งาน",
+          "true": "เปิดใช้งาน"
+        }
+      },
+      "mode": {
+        "name": "โหมดอีมูเลเตอร์",
+        "description": "Regular จะสลับ steam_api(64).dll ของเกม ColdClient จะเก็บไว้และโหลด steamclient ที่จำลองของ GBE Fork ผ่านโหลดเดอร์ — ครอบคลุมเกมที่ดื้อรั้นได้กว้างกว่า",
+        "value": {
+          "regular": "Regular (เปลี่ยน DLL)",
+          "coldclient": "ColdClient (GBE Fork)"
+        }
+      },
+      "steamSettings": {
+        "name": "ข้อมูล steam_settings",
+        "description": "Simple ใช้การดึงข้อมูลของ Achievement Watcher เอง (ไม่ระบุตัวตน) Advanced เรียกใช้ generate_emu_config เพื่อครอบคลุม depot/ภาษา",
+        "value": {
+          "simple": "Simple (เร็ว)",
+          "advanced": "Advanced (สมบูรณ์)"
+        }
+      },
+      "login": {
+        "name": "แหล่งข้อมูล (Advanced)",
+        "description": "การเข้าสู่ระบบ Steam ช่วยให้ generate_emu_config ดึงข้อมูล DLC/depot ครบถ้วน ใช้เฉพาะบัญชีใช้แล้วทิ้งเท่านั้น — ห้ามใช้บัญชีหลักของคุณ",
+        "value": {
+          "anonymous": "ไม่ระบุตัวตน",
+          "steam": "เข้าสู่ระบบ Steam"
+        }
+      },
+      "steamless": {
+        "name": "ถอด DRM SteamStub อัตโนมัติ",
+        "description": "เรียกใช้ Steamless บน exe ของเกมก่อนแพตช์เพื่อถอด DRM SteamStub ของ Valve (เก็บต้นฉบับเป็น .steamstub.bak) ไม่มีผลเมื่อไม่มี stub",
+        "value": {
+          "false": "ปิดใช้งาน",
+          "true": "เปิดใช้งาน"
+        }
+      },
+      "steamlessExp": {
+        "name": "Steamless ทดลอง",
+        "description": "จัดเรียงเซกชันใหม่ระหว่างการแตกไฟล์เพื่อความเข้ากันได้ที่ดีขึ้นกับ EXE ที่ป้องกันอย่างหนัก มีผลเฉพาะเมื่อเปิดการแตกไฟล์อัตโนมัติ",
+        "value": {
+          "false": "ปิดใช้งาน",
+          "true": "เปิดใช้งาน"
+        }
+      },
+      "crackFix": {
+        "name": "ใช้การแก้ไขจากชุมชนอัตโนมัติ (CrakFiles)",
+        "description": "ทุกครั้งที่แก้ไข จะดาวน์โหลดและใช้การแก้ไขจากชุมชนที่ตรงกันอย่างมั่นใจจากรายการ CrakFiles โดยอัตโนมัติ (เฉพาะชื่อที่ตรงกันทุกประการ + ลิงก์ pixeldrain; ไฟล์ที่ถูกเขียนทับจะถูกสำรองไว้) เปิดตามค่าเริ่มต้น — ปิดหากคุณไม่ต้องการให้ AW ดาวน์โหลด/เขียนทับไฟล์เกมจากแหล่งของชุมชน",
+        "value": {
+          "false": "ปิดใช้งาน",
+          "true": "เปิดใช้งาน"
+        }
+      },
+      "apiCheckBypass": {
+        "name": "ข้ามการตรวจสอบความเป็นเจ้าของ Steam API",
+        "description": "ปิดตามค่าเริ่มต้น วางพร็อกซีข้ามของ SteamAutoCrack (winmm.dll) + การกำหนดค่าการเปลี่ยนเส้นทาง เพื่อให้เกมที่ตรวจสอบ steam_api/exe ดั้งเดิมอีกครั้งหลังการสลับยังคงเปิดและปลดล็อกได้ ดาวน์โหลดพร็อกซีจากรีลีสอย่างเป็นทางการ",
+        "value": {
+          "false": "ปิดใช้งาน",
+          "true": "เปิดใช้งาน"
+        }
+      },
+      "launchBat": {
+        "name": "สร้าง Launch.bat เป็นทางสำรอง",
+        "description": "เมื่อ Steamless ไม่สามารถถอด exe ที่เป็น SteamStub ได้ และ AW กลับไปใช้ ColdClient จะเขียน Launch.bat สำหรับโหลดเดอร์ที่ตรงกันด้วย",
+        "value": {
+          "true": "เปิดใช้งาน",
+          "false": "ปิดใช้งาน"
+        }
+      },
+      "checkUpdates": {
+        "name": "ตรวจสอบการอัปเดต GBE Fork",
+        "description": "ตรวจสอบ GitHub สำหรับบิลด์ GBE Fork ล่าสุดอีกครั้งก่อนใช้งาน (ดาวน์โหลดเฉพาะเมื่อใหม่กว่า) ปิดเพื่อใช้บิลด์ที่แคชไว้เสมอ",
+        "value": {
+          "true": "เปิดใช้งาน",
+          "false": "ปิดใช้งาน"
+        }
+      },
+      "goldbergIcons": {
+        "name": "GBE/Goldberg — ดาวน์โหลดไอคอน",
+        "description": "เมื่อเปิดใช้งาน การซ่อมแซมอัตโนมัติที่เขียน steam_settings/achievements.json ที่หายไป จะดาวน์โหลดไอคอนความสำเร็จจาก Steam CDN ด้วย",
+        "value": {
+          "disabled": "ปิดใช้งาน (เร็ว)",
+          "enabled": "เปิดใช้งาน"
+        }
+      }
+    },
+    "notification": {
+      "title": {
+        "common": "ทั่วไป",
+        "toast": "การแจ้งเตือน Toast",
+        "transport": "การส่ง",
+        "chromium": "การแจ้งเตือน Chromium",
+        "watchdog": "Watchdog",
+        "test": "ทดสอบ",
+        "overlay": "โอเวอร์เลย์ในเกม"
+      },
+      "info": {
+        "toast": "บางฟีเจอร์ใช้ได้เฉพาะใน Windows 10",
+        "autoSave": "การเปลี่ยนแปลงในแท็บนี้จะถูกบันทึกโดยอัตโนมัติ"
+      },
+      "test": {
+        "achievement": "ความสำเร็จ",
+        "progress": "ความคืบหน้า",
+        "playtime": "เวลาเล่น",
+        "toast": "Windows Toast",
+        "platinum": "แพลทินัม",
+        "overlay": "โอเวอร์เลย์"
+      },
+      "option": {
+        "transportMode": {
+          "name": "การส่งการแจ้งเตือน",
+          "description": "เลือกระบบการแจ้งเตือนที่ใช้งานเพียงระบบเดียว",
+          "value": {
+            "chromium": "Chromium (มีสไตล์)",
+            "toast": "Windows Toast",
+            "none": "ปิดใช้งาน"
+          }
+        },
+        "notification": {
+          "name": "การแจ้งเตือน",
+          "description": "แจ้งเตือนเมื่อปลดล็อกความสำเร็จหากเป็นไปได้"
+        },
+        "rumble": {
+          "name": "การสั่นของเกมแพด (XInput)",
+          "description": "สั่นคอนโทรลเลอร์ตัวแรกเมื่อปลดล็อกความสำเร็จ"
+        },
+        "notifyOnProgress": {
+          "name": "รายงานความคืบหน้า",
+          "description": "แจ้งเตือนความคืบหน้าของความสำเร็จหากเป็นไปได้"
+        },
+        "playtime": {
+          "name": "การติดตามเวลาเล่น",
+          "description": "แจ้งเตือนเมื่อเริ่ม/สิ้นสุดการติดตาม"
+        },
+        "platinum": {
+          "name": "แพลทินัม (100%)",
+          "description": "แสดง toast เฉพาะเมื่อเกมทำสำเร็จถึง 100%"
+        },
+        "mode": {
+          "name": "ประเภทการแจ้งเตือน",
+          "description": "ที่ที่การแจ้งเตือนการปลดล็อกปรากฏ: Windows toast, โอเวอร์เลย์ในเกม หรือทั้งสอง",
+          "value": {
+            "toast": "Toast",
+            "overlay": "โอเวอร์เลย์",
+            "both": "ทั้งสอง"
+          }
+        },
+        "overlayPreset": "พรีเซ็ต",
+        "overlayPresetDesc": "ธีมภาพของป็อปอัปโอเวอร์เลย์ในเกม",
+        "overlayPosition": "ตำแหน่ง",
+        "overlayPositionDesc": "ที่ที่ป็อปอัปโอเวอร์เลย์ปรากฏบนหน้าจอ",
+        "overlayScale": "ขนาด",
+        "overlayScaleDesc": "ขนาดของป็อปอัปโอเวอร์เลย์",
+        "overlaySound": "เสียง",
+        "overlaySoundDesc": "เสียงที่เล่นเมื่อป็อปอัปโอเวอร์เลย์ปรากฏ",
+        "overlaySoundImport": "นำเข้าเสียงที่กำหนดเอง…",
+        "overlayVolume": "ระดับเสียง",
+        "overlayVolumeDesc": "ระดับเสียงของป็อปอัปโอเวอร์เลย์ (เสียง toast ควบคุมโดย Windows)",
+        "overlayDuration": "ระยะเวลา",
+        "overlayDurationDesc": "ระยะเวลาที่ป็อปอัปโอเวอร์เลย์อยู่บนหน้าจอ Auto ให้พรีเซ็ตเป็นผู้ตัดสิน; การตั้งค่าจะจำกัดเวลาบนหน้าจอ",
+        "overlayDurationAuto": "Auto",
+        "customiser": {
+          "title": "พรีเซ็ตที่กำหนดเอง",
+          "intro": "สร้างพรีเซ็ตการแจ้งเตือนโอเวอร์เลย์ของคุณเอง",
+          "name": "ชื่อ",
+          "namePlaceholder": "พรีเซ็ตของฉัน",
+          "background": "พื้นหลัง",
+          "text": "ข้อความ",
+          "accent": "สีเน้น",
+          "opacity": "ความทึบ",
+          "fontSize": "ขนาดตัวอักษร",
+          "corners": "มุม",
+          "iconSize": "ขนาดไอคอน",
+          "create": "สร้างพรีเซ็ต",
+          "errName": "ป้อนชื่อก่อน",
+          "created": "สร้างและเลือกแล้ว:",
+          "failed": "ล้มเหลว"
+        },
+        "souvenirTitle": "ภาพหน้าจอที่ระลึก",
+        "souvenirScreenshot": "ภาพหน้าจอเมื่อปลดล็อก",
+        "souvenirScreenshotDesc": "จับภาพหน้าจอเมื่อปลดล็อกความสำเร็จ บันทึกแยกตามเกม",
+        "souvenirDir": "โฟลเดอร์บันทึก",
+        "souvenirDirHelp": "ภาพหน้าจอจะถูกบันทึกไปยัง <โฟลเดอร์>\\<เกม>\\<วันที่> - <ความสำเร็จ>.png ว่าง = รูปภาพ\\Achievement Watcher",
+        "soundNone": "ไม่มี",
+        "position": {
+          "centerBottom": "ล่างกลาง",
+          "centerTop": "บนกลาง",
+          "topLeft": "บนซ้าย",
+          "topRight": "บนขวา",
+          "bottomLeft": "ล่างซ้าย",
+          "bottomRight": "ล่างขวา",
+          "middleLeft": "กลางซ้าย",
+          "middleRight": "กลางขวา",
+          "custom": "กำหนดเอง"
+        },
+        "reposition": "ย้ายตำแหน่งป็อปอัป (ลากไปยังที่ที่คุณต้องการ)",
+        "customToastAudio": {
+          "name": "เสียง Toast",
+          "description": "ระบุเสียงที่จะเล่นเมื่อแสดง toast",
+          "value": {
+            "systemDefault": "ค่าเริ่มต้น",
+            "muted": "ปิดเสียง"
+          }
+        },
+        "toastSouvenir": {
+          "name": "ของที่ระลึกใน Toast",
+          "description": "แสดงภาพหน้าจอที่ระลึกภายใน toast",
+          "value": {
+            "top": "ด้านบน",
+            "bottom": "ด้านล่าง"
+          }
+        },
+        "groupToast": {
+          "name": "จัดกลุ่มตามเกม",
+          "description": "จัดกลุ่ม toast ของเกมเดียวกันด้วยภาพในศูนย์การแจ้งเตือน"
+        },
+        "useToast": {
+          "name": "การแจ้งเตือน Toast",
+          "description": "การแจ้งเตือน toast ของ Windows 8-10"
+        },
+        "useWinRT": {
+          "name": "WinRT API",
+          "description": "ใช้ WinRT หากมี เพื่อ toast ที่เร็วกว่าแทน PowerShell"
+        },
+        "useBalloon": {
+          "name": "คำแนะนำแบบบอลลูน",
+          "description": "กลับไปใช้คำแนะนำแบบบอลลูนเมื่อการแจ้งเตือน toast ล้มเหลว"
+        },
+        "useWS": {
+          "description": "เผยแพร่ความสำเร็จไปยังไคลเอนต์ที่เชื่อมต่อทั้งหมด"
+        },
+        "useChromium": {
+          "name": "การแจ้งเตือน Chromium",
+          "description": "ใช้ Chromium เพื่อแสดงการแจ้งเตือนที่มีสไตล์"
+        }
+      }
+    },
+    "souvenir": {
+      "title": {
+        "screenshot": "ภาพหน้าจอ",
+        "video": "วิดีโอ"
+      },
+      "option": {
+        "screenshot": {
+          "name": "ของที่ระลึก",
+          "description": "ถ่ายภาพหน้าจอเมื่อคุณปลดล็อกความสำเร็จ"
+        },
+        "video": {
+          "name": "ของที่ระลึกวิดีโอ",
+          "description": "บันทึกวิดีโอสั้น ๆ เมื่อคุณปลดล็อกความสำเร็จโดยใช้ตัวเข้ารหัสฮาร์ดแวร์ของ GPU ของคุณ"
+        },
+        "overwrite": {
+          "name": "เขียนทับหากมีไฟล์อยู่"
+        },
+        "custom_dir": {
+          "name": "ตำแหน่งบันทึก"
+        },
+        "codec": {
+          "name": "ตัวแปลงสัญญาณวิดีโอ",
+          "description": "H.265/HEVC มีประสิทธิภาพมากกว่าแต่รองรับน้อยกว่า"
+        },
+        "colorDepth": {
+          "name": "ความลึกสี",
+          "description": "10 บิตใช้ได้เฉพาะกับ H.265/HEVC"
+        },
+        "duration": {
+          "name": "ระยะเวลา"
+        },
+        "framerate": {
+          "name": "อัตราเฟรม"
+        },
+        "cursor": {
+          "name": "เคอร์เซอร์เมาส์"
+        }
       }
     },
     "folder": {
-      "headline": "หาไฟล์รางวัลความสำเร็จได้ที่ไหน",
-      "default": "โฟลเดอร์เริ่มต้น",
-      "custom": "โฟลเดอร์ผู้ใช้",
-      "add": "เพิ่มโฟลเดอร์"
+      "headline": "ตำแหน่งที่จะค้นหาไฟล์ความสำเร็จ:",
+      "default": "ไดเรกทอรีเริ่มต้น",
+      "custom": "ไดเรกทอรีผู้ใช้",
+      "addInfo": [
+        "เลือกโฟลเดอร์ที่มีโฟลเดอร์ appid",
+        "สำหรับ ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 โปรดเลือกโฟลเดอร์ที่มีไฟล์",
+        "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini หรือ RPCS3.exe อยู่"
+      ],
+      "add": "เพิ่มโฟลเดอร์",
+      "library": "โฟลเดอร์คลัง",
+      "libraryInfo": [
+        "เลือกโฟลเดอร์ที่มีโฟลเดอร์ติดตั้งเกมจำนวนมาก (เช่น D:\\Games, E:\\SteamLibrary)",
+        "เกมทั้งหมดภายในจะถูกสแกนหาความสำเร็จ Goldberg/GBE แม้ว่าจะไม่เคยเปิดเล่นก็ตาม"
+      ],
+      "addLibrary": "เพิ่มโฟลเดอร์คลัง",
+      "generateConfigs": "สร้างการตั้งค่า"
+    },
+    "source": {
+      "title": "แหล่งที่มาของเกม",
+      "legitSteam": {
+        "name": "แสดงเกม Steam",
+        "description": "ต้องติดตั้ง Steam และโปรไฟล์ Steam ของคุณต้องเป็นสาธารณะ!",
+        "value": {
+          "none": "ไม่มี",
+          "installed": "ติดตั้งแล้ว",
+          "owned": "เป็นเจ้าของ"
+        }
+      },
+      "steamEmu": {
+        "name": "อีมูเลเตอร์ Steam",
+        "description": "อ่านความสำเร็จที่เขียนโดย Goldberg / GBE Fork และอีมูเลเตอร์ Steam ที่คล้ายกัน"
+      },
+      "greenLuma": {
+        "description": "GreenLuma 2020/2024/2025 และ Reborn"
+      },
+      "rpcs3": {
+        "description": "อีมูเลเตอร์ PlayStation 3"
+      },
+      "lumaPlay": {
+        "description": "อีมูเลเตอร์ Uplay"
+      },
+      "ea": {
+        "name": "EA Desktop",
+        "description": "อ่านบันทึกความสำเร็จในเครื่องของ EA Desktop — เฉพาะเกมที่ติดตั้งนอกโฟลเดอร์ที่จัดการโดย EA (เกมที่ถูกแคร็ก)"
+      },
+      "importCache": {
+        "name": "นำเข้าแคชการแจ้งเตือน",
+        "description": "นำเข้าแคชของ Watchdog เป็นอีกแหล่งของความสำเร็จ"
+      }
+    },
+    "advanced": {
+      "maintenanceTitle": "การตั้งค่าและการบำรุงรักษา",
+      "fixAll": {
+        "name": "แก้ไขเกมที่ตรวจพบทั้งหมด",
+        "button": "แก้ไขเกมทั้งหมด",
+        "description": "เรียกใช้การแก้ไขอีมูเลเตอร์ (GBE Fork, ความสำเร็จ, DLC) กับเกมจำลองที่ตรวจพบทุกเกมที่มีโฟลเดอร์ติดตั้งที่ทราบ",
+        "confirm": "ใช้การแก้ไขอีมูเลเตอร์กับเกมที่ตรวจพบทุกเกมที่มีโฟลเดอร์ติดตั้งที่ทราบ? ไฟล์ที่มีอยู่จะถูกสำรองก่อนถูกเขียนทับ",
+        "running": "กำลังแก้ไขเกม…",
+        "progress": "กำลังแก้ไข %cur% / %total% — %name%",
+        "done": "เสร็จสิ้น — แก้ไข %fixed% เกม, ข้าม %skipped%, ล้มเหลว %failed%",
+        "none": "ไม่มีเกมที่ตรวจพบที่มีโฟลเดอร์ติดตั้งที่ทราบให้แก้ไข"
+      },
+      "diag": {
+        "title": "การวินิจฉัย",
+        "apiKeyLabel": "คีย์ Steam Web API:",
+        "apiKeyConfigured": "กำหนดค่าแล้ว",
+        "apiKeyFallback": "ไม่ได้ตั้งค่า — ใช้การดึงข้อมูลสำรอง",
+        "logsFolder": "เปิดโฟลเดอร์บันทึก",
+        "dataFolder": "เปิดโฟลเดอร์ข้อมูล",
+        "goldbergTitle": "Goldberg / GBE Fork",
+        "goldbergDesc": "สแกนโฟลเดอร์คลังเกมหาการติดตั้ง Goldberg / GBE Fork และทำเครื่องหมายรายการที่ขาดสคีมา steam_settings/achievements.json ใช้เมนูคลิกขวาของเกม (วินิจฉัย / ซ่อม) เพื่อแก้ไขรายการหนึ่ง",
+        "scanFolder": "สแกนโฟลเดอร์…",
+        "winNotifTitle": "การตั้งค่าการแจ้งเตือน Windows",
+        "focusAssist": "ตัวช่วยโฟกัส",
+        "notifActions": "การแจ้งเตือนและการดำเนินการ",
+        "winNotifDesc": "Windows 10 >= 1903 : กฎอัตโนมัติของตัวช่วยโฟกัสสำหรับแอปเต็มจอ (ค่าเริ่มต้นเป็นการปลุกเท่านั้น) อาจระงับการแจ้งเตือน toast — ตั้งเป็น «ปิด» หาก toast ไม่ปรากฏในเกม"
+      },
+      "blacklistTitle": "บัญชีดำ AppID",
+      "blacklistButton": "รีเซ็ตบัญชีดำ",
+      "blacklistInfo": "คลิกขวาที่ไทล์เกมเพื่อเพิ่มลงในบัญชีดำ",
+      "apiKey": {
+        "title": "คีย์ Steam Web API",
+        "description": "ข้อมูล Steam บางอย่างต้องใช้คีย์ Steam Web API ส่วนตัว",
+        "fallback": "เว้นช่องนี้ว่างไว้เพื่อใช้การดึงข้อมูลอัตโนมัติ หากล้มเหลว ให้ป้อนคีย์ของคุณเอง",
+        "create": "สร้างคีย์ API",
+        "terms": "ข้อกำหนดการใช้งาน Steam API",
+        "label": "คีย์ Steam Web API ของคุณ",
+        "security": "คีย์จะถูกเข้ารหัสด้วย AES-256-CBC ก่อนถูกเก็บไว้บนคอมพิวเตอร์เครื่องนี้"
+      },
+      "mainSteam": {
+        "title": "บัญชี Steam หลัก",
+        "name": "กรองตามผู้ใช้",
+        "description": "แสดงเฉพาะความสำเร็จ Steam ของบัญชีที่เลือก"
+      }
     }
   }
 }

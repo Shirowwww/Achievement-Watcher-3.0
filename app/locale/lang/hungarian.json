@@ -1,215 +1,571 @@
 {
-  "achievements": "Teljesítmény",
-  "perfectGame": "Tökéletes játék",
-  "completionRate": "Átlagos játékteljesítési mutató",
-  "emptyList": "Nincsenek játékok",
+  "achievements": "Teljesítmények",
+  "perfectGame": "Befejezett játékok",
+  "completionRate": "Átl. teljesítési arány",
+  "emptyList": "Nincs játék",
+  "emptyListHint": "Még nem található teljesítmény. Add hozzá a mappát, ahová a játékaid a teljesítményfájlokat mentik, majd frissíts (F5).",
+  "emptyListAction": "Mappabeállítások megnyitása",
+  "installedOnly": "Csak a telepített játékok megjelenítése",
+  "sort": {
+    "tooltip": {
+      "alpha": "Név: A → Z",
+      "percent": "Haladás",
+      "time": "Teljesítmény dátuma",
+      "played": "Utoljára játszva"
+    },
+    "label": {
+      "alpha": {
+        "asc": "Név: A → Z",
+        "desc": "Név: Z → A"
+      },
+      "percent": {
+        "asc": "Haladás: alacsony → magas",
+        "desc": "Haladás: magas → alacsony"
+      },
+      "time": {
+        "asc": "Teljesítmény: legrégebbi → legújabb",
+        "desc": "Teljesítmény: legújabb → legrégebbi"
+      },
+      "played": {
+        "asc": "Játszva: legrégebbi → legújabb",
+        "desc": "Játszva: legújabb → legrégebbi"
+      },
+      "rarity": {
+        "asc": "Ritkaság: legritkább → leggyakoribb",
+        "desc": "Ritkaság: leggyakoribb → legritkább"
+      }
+    },
+    "action": {
+      "reverse": "kattints a megfordításhoz",
+      "clear": "kattints a rendezés törléséhez"
+    }
+  },
   "loading": "Betöltés",
-  "unlocked": "Feloldott",
-  "locked": "Zárolt",
-  "globalStat": "-nyi játékosnak van meg",
-  "hiddenRemain": "rejtett teljesítmény van még",
-  "revealedOnceUnlocked": "A rejtett teljesítmények leírásai feloldás után lesznek felfedve",
-  "noneUnlocked": "Még nem oldottál fel teljesítményt",
-  "play": "Kezdj játszani!",
-  "scrollUp": "Vissza a tetejére",
-  "allGamesBackButton": "Összes Játék",
-  "removeFromList": "Hozzáadás a Feketelistához",
-  "buildIconPrefetchCache": "Értesítési ikonok gyorsítótárának létrehozása",
+  "unlocked": "Feloldva",
+  "locked": "Zárolva",
+  "globalStat": "játékosnak van meg",
+  "hiddenRemain": "rejtett teljesítmény maradt",
+  "revealedOnceUnlocked": "Az egyes teljesítmények részletei a feloldás után jelennek meg",
+  "hiddenDescriptionPlaceholder": "Rejtett — kattints a megjelenítéshez",
+  "noneUnlocked": "Még nincs feloldott teljesítmény",
+  "play": "Kezdj játszani !",
+  "noneUnlockedHint": "Nem látsz feloldásokat? Nézd meg a GYIK / Hibaelhárítás részét",
+  "scrollUp": "Fel",
+  "allGamesBackButton": "Összes játék",
+  "removeFromList": "Eltávolítás a listából",
+  "buildIconPrefetchCache": "Teljesítményikonok gyorsítótárazása",
+  "contextMenu": {
+    "resetPlaytime": "Játékidő visszaállítása",
+    "muteProgress": "Folyamatértesítések némítása",
+    "unmuteProgress": "Folyamatértesítések bekapcsolása",
+    "generateAchievementsJson": "achievements.json exportálása",
+    "diagnose": "Emulátor diagnosztizálása",
+    "backupGBE": "Konfiguráció biztonsági mentése…",
+    "restoreGBE": "Konfiguráció biztonsági mentésének visszaállítása…",
+    "installGBE": "Emulátorjavítás alkalmazása…",
+    "removeDRM": "DRM eltávolítása…",
+    "crackfix": "Közösségi javítás keresése…",
+    "openIconCache": "Ikon-gyorsítótár",
+    "openDbCache": "Adat-gyorsítótár (.db)",
+    "openInstallLocation": "Játéktelepítés",
+    "groupGame": "Játék",
+    "groupEmulator": "Emulátor és eszközök",
+    "groupFolders": "Mappák",
+    "groupLinks": "Hasznos linkek",
+    "groupCover": "Borító"
+  },
   "settings": {
     "title": "Beállítások",
     "sideMenu": {
       "general": "Általános",
+      "overlay": "Overlay",
       "notification": "Értesítés",
       "souvenir": "Emlék",
       "folder": "Mappák",
       "source": "Forrás",
-      "advanced": "Haladó",
-      "debug": "Hibakeresés"
+      "advanced": "Speciális"
     },
     "common": {
-      "show": "Felfedés",
+      "show": "Megjelenítés",
       "hide": "Elrejtés",
-      "enable": "Engedélyezve",
-      "disable": "Letiltva",
+      "enable": "Bekapcsolva",
+      "disable": "Kikapcsolva",
       "cancel": "Mégse",
       "save": "Mentés",
       "version": "Verzió",
-      "edit": "Tallózás"
+      "maintainedBy": "karbantartja",
+      "fork": "Fork",
+      "original": "Eredeti v1.6.8",
+      "edit": "Szerkesztés"
+    },
+    "watchdog": {
+      "startup": {
+        "name": "Indítás bejelentkezéskor",
+        "description": "A Watchdog automatikusan elindul a rendszer indításakor."
+      },
+      "kill": {
+        "name": "Futás fenntartása",
+        "description": "Tartsd futásban a Watchdogot akkor is, ha a fő alkalmazás bezárul."
+      }
+    },
+    "overlay": {
+      "position": "Teljesítmény pozíciója",
+      "progressPosition": "Folyamat pozíciója",
+      "playtimePosition": "Játékidő pozíciója",
+      "preset": {
+        "name": "Értesítési előbeállítás",
+        "description": "A Legacy a „régi” értesítési rendszert használja"
+      },
+      "hotkey": {
+        "name": "Overlay gyorsbillentyű",
+        "description": "Nyomd meg ezt a gyorsbillentyűt a teljesítmény-overlay megjelenítéséhez játék közben."
+      },
+      "scale": "Értesítés mérete",
+      "duration": "Animáció időtartama"
     },
     "general": {
+      "sectionTitle": "Felület és viselkedés",
       "language": {
         "name": "Nyelv",
-        "description": ["Segíts a fordításban", "itt"]
+        "description": "A felület nyelve. A játékadatok ezen a nyelven töltődnek le, ha elérhető."
       },
       "thumbnail": {
-        "name": "Indexkép tájolása",
+        "name": "Bélyegképek tájolása",
+        "description": "Az Álló magas borítókat mutat; a Fekvő széles Steam fejlécképeket mutat.",
         "value": {
-          "portrait": "Portré",
-          "landscape": "Tájkép"
+          "portrait": "Álló",
+          "landscape": "Fekvő"
         }
       },
       "hiddenAch": {
-        "name": "Rejtett teljesítmények"
+        "name": "Rejtett teljesítmények",
+        "description": "A rejtett teljesítmények nevének és leírásának megjelenítése a feloldás előtt."
       },
       "mergeDuplicates": {
-        "name": "Duplikációk egybeolvasztása"
+        "name": "Duplikátumok egyesítése",
+        "description": "A több forrásban megtalált azonos játék egyesítése egyetlen csempévé."
       },
       "timeMerge": {
-        "name": "Időbélyeg egybeolvasztása",
-        "description": "Duplikációk egybeolvasztásánál milyen idő legyen preferálva?",
+        "name": "Időbélyeg egyesítése",
+        "description": "Duplikátumok egyesítésekor melyik időérték előnyösebb ?",
         "value": {
-          "recent": "Utóbbi",
-          "oldest": "Régebbi"
+          "recent": "Legújabb",
+          "oldest": "Legrégebbi"
         }
       },
       "hideZero": {
-        "name": "0%-os játékok elrejtése"
+        "name": "0%-os játékok elrejtése",
+        "description": "Elrejti azokat a játékokat, amelyekben még egyetlen teljesítményt sem oldottál fel."
+      },
+      "startup": {
+        "name": "Indítás a rendszerrel",
+        "description": "Az Achievement Watchert automatikusan elindítja a Windowsszal, elrejtve a tálcán."
+      },
+      "onboarding": {
+        "name": "Első indítási útmutató",
+        "button": "Útmutató megnyitása",
+        "description": "A beállítási útmutató újranyitása: API-kulcs, profil, mappák, források és értesítések."
+      },
+      "hardwareAccel": {
+        "name": "Hardveres gyorsítás kikapcsolása",
+        "description": "Kapcsold ki a GPU-gyorsítást, ha az overlay vagy az ablak hibásan működik. Újraindítást igényel."
+      },
+      "tray": {
+        "name": "Kicsinyítés a tálcára",
+        "description": "Tartsd az alkalmazást a háttérben az értesítések gyorsabb indulásához."
+      }
+    },
+    "emulator": {
+      "nav": "Emulátor",
+      "sectionTitle": "Emulátor beállítása (GBE Fork)",
+      "intro": "A jobb gombos Emulátorjavítás alkalmazása művelet által használt alapértékek. Válaszd ki, hogyan kerüli meg a Steamet és mennyi játékadatot tölt le.",
+      "coreTitle": "Alapkonfiguráció",
+      "advancedTitle": "Speciális beállítások",
+      "loginTitle": "Steam bejelentkezés (csak eldobható fiók)",
+      "loginWarning": "Eldobható fiók",
+      "loginDesc": "Csak akkor használatos, ha az „Adatforrás” Steam bejelentkezésre van állítva. A jelszó titkosítva tárolódik ezen a gépen, és csak a Steamnek küldi el a generate_emu_config. A Steam Guard 2FA szükség esetén kérve van. Hagyd üresen, hogy minden alkalommal rákérdezzen.",
+      "loginUser": "Steam felhasználónév",
+      "loginPass": "Steam jelszó",
+      "loginTest": "Kapcsolat tesztelése",
+      "loginTestHint": "Steam / Steam Guard",
+      "loginTestRunning": "Kapcsolódás a Steamhez… Add meg a Steam Guard kódot, ha kéri.",
+      "loginTestSuccess": "Steam bejelentkezés sikeres. A generate_emu_config frissítési token mentve.",
+      "loginTestMissing": "Először add meg a Steam felhasználónevet és jelszót.",
+      "loginTestFailed": "Steam bejelentkezés sikertelen",
+      "autoApply": {
+        "name": "Újonnan észlelt játékok automatikus javítása",
+        "description": "Egyszer lefuttatja a teljes Emulátorjavítás alkalmazása láncot egy újonnan észlelt, beállítatlan emulált játékhoz: SteamStub kezelés, GBE Fork, teljesítmények, DLC-k, identitás/nyelv, és Speciális adatok, ha engedélyezve. Alapértelmezetten bekapcsolva.",
+        "value": {
+          "false": "Kikapcsolva",
+          "true": "Bekapcsolva"
+        }
+      },
+      "mode": {
+        "name": "Emulátor mód",
+        "description": "A Regular lecseréli a játék steam_api(64).dll fájlját. A ColdClient megtartja és betölti a GBE Fork emulált steamclientjét egy loaderrel — szélesebb lefedettség a makacs játékokhoz.",
+        "value": {
+          "regular": "Regular (DLL csere)",
+          "coldclient": "ColdClient (GBE Fork)"
+        }
+      },
+      "steamSettings": {
+        "name": "steam_settings adatok",
+        "description": "A Simple az Achievement Watcher saját letöltését használja (névtelen). Az Advanced lefuttatja a generate_emu_config-ot a depó/nyelvi lefedettséghez.",
+        "value": {
+          "simple": "Simple (gyors)",
+          "advanced": "Advanced (teljes)"
+        }
+      },
+      "login": {
+        "name": "Adatforrás (Advanced)",
+        "description": "A Steam bejelentkezés lehetővé teszi a generate_emu_config számára a teljes DLC/depó adatok lekérését. CSAK eldobható fiókot használj — soha a fő fiókodat.",
+        "value": {
+          "anonymous": "Névtelen",
+          "steam": "Steam bejelentkezés"
+        }
+      },
+      "steamless": {
+        "name": "SteamStub DRM automatikus eltávolítása",
+        "description": "Lefuttatja a Steamlesst a játék exe-jén a javítás előtt, hogy eltávolítsa a Valve SteamStub DRM-jét (az eredeti .steamstub.bak néven megmarad). Nincs hatása, ha nincs stub.",
+        "value": {
+          "false": "Kikapcsolva",
+          "true": "Bekapcsolva"
+        }
+      },
+      "steamlessExp": {
+        "name": "Steamless kísérleti",
+        "description": "Kicsomagolás közben újraigazítja a szakaszokat a jobb kompatibilitásért az erősen védett EXE-kkel. Csak akkor számít, ha az automatikus kicsomagolás be van kapcsolva.",
+        "value": {
+          "false": "Kikapcsolva",
+          "true": "Bekapcsolva"
+        }
+      },
+      "crackFix": {
+        "name": "Közösségi javítás automatikus alkalmazása (CrakFiles)",
+        "description": "Minden javításkor automatikusan letölt és alkalmaz egy biztosan egyező közösségi javítást a CrakFiles listából (csak pontos névegyezés + pixeldrain link; a felülírt fájlokról biztonsági mentés készül). Alapértelmezetten bekapcsolva — kapcsold ki, ha nem akarod, hogy az AW közösségi forrásból töltsön le/írjon felül játékfájlokat.",
+        "value": {
+          "false": "Kikapcsolva",
+          "true": "Bekapcsolva"
+        }
+      },
+      "apiCheckBypass": {
+        "name": "Steam API tulajdonellenőrzés megkerülése",
+        "description": "Alapértelmezetten kikapcsolva. Lerakja a SteamAutoCrack megkerülő proxyját (winmm.dll) + egy átirányítási konfigurációt, hogy a csere után az eredeti steam_api/exe-t újraellenőrző játékok mégis elinduljanak és feloldjanak. A proxyt a hivatalos kiadásából tölti le.",
+        "value": {
+          "false": "Kikapcsolva",
+          "true": "Bekapcsolva"
+        }
+      },
+      "launchBat": {
+        "name": "Launch.bat létrehozása tartalékként",
+        "description": "Ha a Steamless nem tud eltávolítani egy SteamStub exe-t és az AW ColdClientre vált, egy Launch.bat-ot is ír a megfelelő loaderhez.",
+        "value": {
+          "true": "Bekapcsolva",
+          "false": "Kikapcsolva"
+        }
+      },
+      "checkUpdates": {
+        "name": "GBE Fork frissítések keresése",
+        "description": "Alkalmazás előtt újra ellenőrzi a GitHubon a legújabb GBE Fork buildet (csak akkor tölti le, ha újabb). Kapcsold ki, hogy mindig a gyorsítótárazott buildet használja.",
+        "value": {
+          "true": "Bekapcsolva",
+          "false": "Kikapcsolva"
+        }
+      },
+      "goldbergIcons": {
+        "name": "GBE/Goldberg — ikonok letöltése",
+        "description": "Ha be van kapcsolva, a hiányzó steam_settings/achievements.json-t író automatikus javítás a teljesítményikonokat is letölti a Steam CDN-ről.",
+        "value": {
+          "disabled": "Kikapcsolva (gyors)",
+          "enabled": "Bekapcsolva"
+        }
       }
     },
     "notification": {
       "title": {
-        "common": "Alap",
-        "toast": "Értesítés",
-        "transport": "Megjelenítés"
+        "common": "Közös",
+        "toast": "Toast értesítés",
+        "transport": "Átvitel",
+        "chromium": "Chromium értesítés",
+        "watchdog": "Watchdog",
+        "test": "Teszt",
+        "overlay": "Játékon belüli overlay"
       },
       "info": {
-        "toast": "Néhány funkció csak Windows 10 rendszeren érhető el"
+        "toast": "Egyes funkciók csak Windows 10-en érhetők el",
+        "autoSave": "Az ezen a lapon végzett módosítások automatikusan mentődnek."
+      },
+      "test": {
+        "achievement": "Teljesítmény",
+        "progress": "Folyamat",
+        "playtime": "Játékidő",
+        "toast": "Windows Toast",
+        "platinum": "Platina",
+        "overlay": "Overlay"
       },
       "option": {
+        "transportMode": {
+          "name": "Értesítések átvitele",
+          "description": "Válassz egyetlen aktív értesítési rendszert",
+          "value": {
+            "chromium": "Chromium (stílusos)",
+            "toast": "Windows Toast",
+            "none": "Kikapcsolva"
+          }
+        },
         "notification": {
           "name": "Értesítés",
-          "description": "Értesítés lehetséges teljesítmény feloldásnál"
+          "description": "Értesítés teljesítmény feloldásakor, ha lehetséges"
         },
         "rumble": {
-          "name": "Játékvezérlő rezgés (XInput)",
-          "description": "Teljesítmény feloldásánál rezgést generál az elsődleges játékvezérlőn"
+          "name": "Kontroller rezgése (XInput)",
+          "description": "Teljesítmény feloldásakor megrezegteti az első kontrollert"
         },
         "notifyOnProgress": {
-          "name": "Haladás jelentés",
-          "description": "Értesítés lehetséges teljesítmény haladásnál"
+          "name": "Folyamatjelentés",
+          "description": "Értesítés a teljesítmény folyamatáról, ha lehetséges"
         },
         "playtime": {
-          "name": "Játékidő követés",
-          "description": "Értesítés a követés kezdetekor/befejezésekor"
+          "name": "Játékidő követése",
+          "description": "Értesítés a követés kezdetekor/végekor"
         },
+        "platinum": {
+          "name": "Platina (100%)",
+          "description": "Külön toastot indít, amikor egy játék eléri a 100%-os teljesítést"
+        },
+        "mode": {
+          "name": "Értesítés típusa",
+          "description": "Hol jelennek meg a feloldási értesítések: Windows toast, játékon belüli overlay, vagy mindkettő",
+          "value": {
+            "toast": "Toast",
+            "overlay": "Overlay",
+            "both": "Mindkettő"
+          }
+        },
+        "overlayPreset": "Előbeállítás",
+        "overlayPresetDesc": "A játékon belüli overlay felugró ablak vizuális témája",
+        "overlayPosition": "Pozíció",
+        "overlayPositionDesc": "Hol jelenik meg a felugró overlay a képernyőn",
+        "overlayScale": "Méret",
+        "overlayScaleDesc": "A felugró overlay mérete",
+        "overlaySound": "Hang",
+        "overlaySoundDesc": "A felugró overlay megjelenésekor lejátszott hang",
+        "overlaySoundImport": "Egyéni hang importálása…",
+        "overlayVolume": "Hangerő",
+        "overlayVolumeDesc": "A felugró overlay hangjának hangereje (a toast hangját a Windows vezérli)",
+        "overlayDuration": "Időtartam",
+        "overlayDurationDesc": "Meddig marad a felugró overlay a képernyőn. Az Auto az előbeállításra bízza; egy érték korlátozza a képernyőn töltött időt.",
+        "overlayDurationAuto": "Auto",
+        "customiser": {
+          "title": "Egyéni előbeállítás",
+          "intro": "Készítsd el saját overlay értesítési előbeállításodat.",
+          "name": "Név",
+          "namePlaceholder": "Az előbeállításom",
+          "background": "Háttér",
+          "text": "Szöveg",
+          "accent": "Kiemelés",
+          "opacity": "Átlátszatlanság",
+          "fontSize": "Betűméret",
+          "corners": "Sarkok",
+          "iconSize": "Ikonméret",
+          "create": "Előbeállítás létrehozása",
+          "errName": "Először adj meg egy nevet",
+          "created": "Létrehozva és kiválasztva:",
+          "failed": "Sikertelen"
+        },
+        "souvenirTitle": "Emlék képernyőkép",
+        "souvenirScreenshot": "Képernyőkép feloldáskor",
+        "souvenirScreenshotDesc": "Képernyőképet készít, amikor egy teljesítmény feloldódik. Játékonként mentve.",
+        "souvenirDir": "Mentési mappa",
+        "souvenirDirHelp": "A képernyőképek ide mentődnek: <mappa>\\<játék>\\<dátum> - <teljesítmény>.png. Üres = Képek\\Achievement Watcher.",
+        "soundNone": "Nincs",
+        "position": {
+          "centerBottom": "Lent középen",
+          "centerTop": "Fent középen",
+          "topLeft": "Fent balra",
+          "topRight": "Fent jobbra",
+          "bottomLeft": "Lent balra",
+          "bottomRight": "Lent jobbra",
+          "middleLeft": "Középen balra",
+          "middleRight": "Középen jobbra",
+          "custom": "Egyéni"
+        },
+        "reposition": "Felugró ablak áthelyezése (húzd oda, ahová szeretnéd)",
         "customToastAudio": {
-          "name": "Értesítés hangja",
-          "description": "Meghatározza a lejászott hangot az értesítés megjelenítésekor",
+          "name": "Toast hang",
+          "description": "Megadja a toast megjelenésekor lejátszandó hangot",
           "value": {
             "systemDefault": "Alapértelmezett",
-            "muted": "Néma"
+            "muted": "Némítva"
           }
         },
         "toastSouvenir": {
-          "name": "Értesítéses emlék",
-          "description": "Emlék képernyőmentés mutatása az értesítésben",
+          "name": "Emlék a toastban",
+          "description": "Az emlék képernyőkép megjelenítése a toaston belül",
           "value": {
-            "top": "Felül",
-            "bottom": "Alul"
+            "top": "Fent",
+            "bottom": "Lent"
           }
         },
         "groupToast": {
-          "name": "Csoportosítás játék alapján",
-          "description": "Csoportos értesítés az azonos játékból a Műveletközpontban"
+          "name": "Csoportosítás játék szerint",
+          "description": "Az azonos játék toastjainak vizuális csoportosítása a Műveletközpontban"
         },
         "useToast": {
-          "name": "Értesítés",
-          "description": "Windows 8-10 értesítés"
+          "name": "Toast értesítés",
+          "description": "Windows 8-10 toast értesítés"
         },
         "useWinRT": {
           "name": "WinRT API",
-          "description": "A gyorsabb értesítés érdekében WinRT használata a PowerShell helyett, ha elérhető"
+          "description": "WinRT használata, ha elérhető, gyorsabb toasthoz a PowerShell helyett"
         },
         "useBalloon": {
-          "name": "Buborék értesítés",
-          "description": "Buborék értesítés használata, ha a sima értesítés nem működik"
+          "name": "Buboréksúgó",
+          "description": "Visszaesés buboréksúgóra a toast értesítés sikertelensége esetén"
         },
         "useWS": {
-          "description": "Teljesítmény közvetítése az összes csatlakozott kliens felé"
+          "description": "A teljesítmény közvetítése minden csatlakozott klienshez"
+        },
+        "useChromium": {
+          "name": "Chromium értesítés",
+          "description": "A Chromiumot használja stílusos értesítések megjelenítéséhez."
         }
       }
     },
     "souvenir": {
       "title": {
-        "screenshot": "Képernyőmentés",
+        "screenshot": "Képernyőkép",
         "video": "Videó"
       },
       "option": {
         "screenshot": {
           "name": "Emlék",
-          "description": "Képernyőmentés készítése, teljesítmény feloldásánál"
+          "description": "Készíts képernyőképet, amikor feloldasz egy teljesítményt"
         },
         "video": {
           "name": "Videó emlék",
-          "description": "Rövid videó készítése a GPU használatával, teljesítmény feloldásánál"
+          "description": "Rögzíts egy rövid videót, amikor feloldasz egy teljesítményt, a GPU hardveres kódolójával"
         },
         "overwrite": {
-          "name": "Meglévő fájl felülírása"
+          "name": "Felülírás, ha a fájl létezik"
         },
         "custom_dir": {
-          "name": "Mentés helye"
+          "name": "Mentési hely"
         },
         "codec": {
           "name": "Videó kodek",
-          "description": "A H.265/HEVC jobb teljesítményű, de kevésbé támogatott"
+          "description": "A H.265/HEVC teljesítményesebb, de kevésbé támogatott"
         },
         "colorDepth": {
           "name": "Színmélység",
-          "description": "A 10 bites csak a H.265/HEVC részére elérhető"
+          "description": "A 10 bit csak H.265/HEVC esetén érhető el"
         },
         "duration": {
           "name": "Időtartam"
         },
         "framerate": {
-          "name": "Képkocka"
+          "name": "Képkockasebesség"
         },
         "cursor": {
-          "name": "Kurzor"
+          "name": "Egérkurzor"
         }
       }
     },
     "folder": {
-      "headline": "Teljesítmény fájlok keresésének helyei:",
-      "default": "Alapértelmezett mappák",
-      "custom": "Felhasználói mappák",
+      "headline": "Hol keresse a teljesítményfájlokat :",
+      "default": "Alapértelmezett mappa",
+      "custom": "Felhasználói mappa",
       "addInfo": [
-        "Válassz ki olyan mappát, ami tartalmaz appid mappá(ka)t.",
-        "Az ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 mappáknál olyan mappát válassz ki, ahol az",
+        "Válassz egy mappát, amely appid mappákat tartalmaz.",
+        "ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 esetén válassz egy mappát, ahol a",
         "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini vagy RPCS3.exe fájl található."
       ],
-      "add": "Mappa hozzáadása"
+      "add": "Mappa hozzáadása",
+      "library": "Könyvtármappák",
+      "libraryInfo": [
+        "Válassz egy mappát, amely sok játéktelepítési mappát tartalmaz (pl. D:\\Games, E:\\SteamLibrary).",
+        "Az összes benne lévő játékot beolvassa Goldberg/GBE teljesítményekre, még ha soha nem is indították el."
+      ],
+      "addLibrary": "Könyvtármappa hozzáadása",
+      "generateConfigs": "Konfigurációk generálása"
     },
     "source": {
+      "title": "Játékforrások",
       "legitSteam": {
-        "name": "Steam-es játékok mutatása",
-        "description": "A Steam-nek telepítve kell lennie és a Steam profilodnak nyilvánosnak kell lennie!",
+        "name": "Steam játékok megjelenítése",
+        "description": "A Steamnek telepítve kell lennie, a Steam profilodnak pedig nyilvánosnak !",
         "value": {
-          "none": "Letiltva",
+          "none": "Nincs",
           "installed": "Telepített",
-          "owned": "Megvásárolt"
+          "owned": "Birtokolt"
         }
       },
       "steamEmu": {
-        "name": "Steam emulátor"
+        "name": "Steam emulátor",
+        "description": "Beolvassa a Goldberg / GBE Fork és hasonló Steam emulátorok által írt teljesítményeket."
       },
       "greenLuma": {
         "description": "GreenLuma 2020/2024/2025 és Reborn"
       },
       "rpcs3": {
-        "description": "Playstation 3 emulátor"
+        "description": "PlayStation 3 emulátor"
       },
       "lumaPlay": {
         "description": "Uplay emulátor"
       },
+      "ea": {
+        "name": "EA Desktop",
+        "description": "Beolvassa az EA Desktop helyi teljesítménynaplóját — csak az EA által kezelt mappákon kívül telepített játékokhoz (feltört címek)."
+      },
       "importCache": {
         "name": "Értesítési gyorsítótár importálása",
-        "description": "Watchdog gyorsítótár importálása mint egy másik teljesítmény forrás"
+        "description": "A Watchdog gyorsítótárának importálása újabb teljesítményforrásként"
       }
     },
     "advanced": {
-      "blacklistTitle": "AppID Fekelista",
-      "blacklistButton": "Feketelista törlése",
-      "blacklistInfo": "Jobb klikk egy játékdobozra a Feketelistához adáshoz."
+      "maintenanceTitle": "Beállítás és karbantartás",
+      "fixAll": {
+        "name": "Az összes észlelt játék javítása",
+        "button": "Összes játék javítása",
+        "description": "Lefuttatja az emulátorjavítást (GBE Fork, teljesítmények, DLC-k) minden észlelt emulált játékon, amelynek ismert a telepítési mappája.",
+        "confirm": "Alkalmazod az emulátorjavítást minden észlelt játékra, amelynek ismert a telepítési mappája? A meglévő fájlokról biztonsági mentés készül a felülírás előtt.",
+        "running": "Játékok javítása…",
+        "progress": "Javítás %cur% / %total% — %name%",
+        "done": "Kész — %fixed% játék javítva, %skipped% kihagyva, %failed% sikertelen.",
+        "none": "Nincs ismert telepítési mappájú észlelt játék a javításhoz."
+      },
+      "diag": {
+        "title": "Diagnosztika",
+        "apiKeyLabel": "Steam Web API kulcs :",
+        "apiKeyConfigured": "beállítva",
+        "apiKeyFallback": "nincs beállítva — tartalék lekérdezés használata",
+        "logsFolder": "Naplómappa megnyitása",
+        "dataFolder": "Adatmappa megnyitása",
+        "goldbergTitle": "Goldberg / GBE Fork",
+        "goldbergDesc": "Átvizsgál egy játékkönyvtár-mappát Goldberg / GBE Fork telepítések után, és megjelöli azokat, amelyekből hiányzik a steam_settings/achievements.json séma. Egy javításához használd a játék jobb gombos menüjét (Diagnosztizálás / Javítás).",
+        "scanFolder": "Mappa átvizsgálása…",
+        "winNotifTitle": "Windows értesítési beállítások",
+        "focusAssist": "Koncentrációsegéd",
+        "notifActions": "Értesítések és műveletek",
+        "winNotifDesc": "Windows 10 >= 1903 : a teljes képernyős alkalmazásokra vonatkozó koncentrációsegéd automatikus szabálya (alapból csak ébresztők) elnyomhatja a toast értesítéseket — állítsd „Ki” értékre, ha a toastok nem jelennek meg játék közben."
+      },
+      "blacklistTitle": "AppID feketelista",
+      "blacklistButton": "Feketelista visszaállítása",
+      "blacklistInfo": "Kattints jobb gombbal egy játékcsempére, hogy felvedd a feketelistára.",
+      "apiKey": {
+        "title": "Steam Web API kulcs",
+        "description": "Egyes Steam adatokhoz személyes Steam Web API kulcs szükséges.",
+        "fallback": "Hagyd üresen ezt a mezőt az automatikus lekéréshez. Ha az nem sikerül, add meg a saját kulcsodat.",
+        "create": "API kulcs létrehozása",
+        "terms": "Steam API használati feltételek",
+        "label": "A Steam Web API kulcsod",
+        "security": "A kulcs AES-256-CBC titkosítással van ellátva, mielőtt erre a számítógépre mentődik."
+      },
+      "mainSteam": {
+        "title": "Fő Steam fiók",
+        "name": "Szűrés felhasználó szerint",
+        "description": "Csak a kiválasztott fiók Steam teljesítményeinek megjelenítése"
+      }
     }
   }
 }

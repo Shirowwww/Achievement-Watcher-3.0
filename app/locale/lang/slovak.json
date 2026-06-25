@@ -1,123 +1,407 @@
 {
-  "achievements": "achievementov",
-  "perfectGame": "perfektných hier",
-  "completionRate": "priem. odomknutých achievementov",
-  "emptyList": "Žiadna hra",
+  "achievements": "Achievementy",
+  "perfectGame": "Dokončené hry",
+  "completionRate": "Priem. miera dokončenia",
+  "emptyList": "Žiadne hry",
+  "emptyListHint": "Zatiaľ neboli nájdené žiadne achievementy. Pridajte priečinok, kam vaše hry ukladajú súbory achievementov, a potom obnovte (F5).",
+  "emptyListAction": "Otvoriť nastavenia priečinkov",
+  "installedOnly": "Zobraziť iba nainštalované hry",
+  "sort": {
+    "tooltip": {
+      "alpha": "Názov: A → Z",
+      "percent": "Postup",
+      "time": "Dátum achievementu",
+      "played": "Naposledy hrané"
+    },
+    "label": {
+      "alpha": {
+        "asc": "Názov: A → Z",
+        "desc": "Názov: Z → A"
+      },
+      "percent": {
+        "asc": "Postup: nízky → vysoký",
+        "desc": "Postup: vysoký → nízky"
+      },
+      "time": {
+        "asc": "Achievement: najstarší → najnovší",
+        "desc": "Achievement: najnovší → najstarší"
+      },
+      "played": {
+        "asc": "Hrané: najstaršie → najnovšie",
+        "desc": "Hrané: najnovšie → najstaršie"
+      },
+      "rarity": {
+        "asc": "Vzácnosť: najvzácnejší → najbežnejší",
+        "desc": "Vzácnosť: najbežnejší → najvzácnejší"
+      }
+    },
+    "action": {
+      "reverse": "kliknite pre obrátenie",
+      "clear": "kliknite pre zrušenie zoradenia"
+    }
+  },
   "loading": "Načítava sa",
   "unlocked": "Odomknuté",
   "locked": "Zamknuté",
-  "globalStat": "hráčov získalo",
-  "hiddenRemain": "skrytých achievementov ostáva",
-  "revealedOnceUnlocked": "Podrobnosti o každom z achievementov sa zobrazia po jeho odomknutí",
-  "noneUnlocked": "Zatiaľ nebol odomknutý žiadny achievement",
+  "globalStat": "hráčov to má",
+  "hiddenRemain": "skrytých achievementov zostáva",
+  "revealedOnceUnlocked": "Podrobnosti každého achievementu sa zobrazia po jeho odomknutí",
+  "hiddenDescriptionPlaceholder": "Skryté — kliknite pre zobrazenie",
+  "noneUnlocked": "Zatiaľ žiadny odomknutý achievement",
   "play": "Začnite hrať !",
-  "scrollUp": "Posunúť nahor",
+  "noneUnlockedHint": "Nevidíte žiadne odomknutia? Pozrite si sekciu FAQ / Riešenie problémov",
+  "scrollUp": "Nahor",
   "allGamesBackButton": "Všetky hry",
   "removeFromList": "Odstrániť zo zoznamu",
-  "buildIconPrefetchCache": "Vytvoriť cache ikon oznámení",
+  "buildIconPrefetchCache": "Uložiť ikony achievementov do vyrovnávacej pamäte",
+  "contextMenu": {
+    "resetPlaytime": "Resetovať čas hrania",
+    "muteProgress": "Stlmiť upozornenia na postup",
+    "unmuteProgress": "Zapnúť upozornenia na postup",
+    "generateAchievementsJson": "Exportovať achievements.json",
+    "diagnose": "Diagnostikovať emulátor",
+    "backupGBE": "Zálohovať konfiguráciu…",
+    "restoreGBE": "Obnoviť zálohu konfigurácie…",
+    "installGBE": "Použiť opravu emulátora…",
+    "removeDRM": "Odstrániť DRM…",
+    "crackfix": "Nájsť komunitnú opravu…",
+    "openIconCache": "Vyrovnávacia pamäť ikon",
+    "openDbCache": "Vyrovnávacia pamäť dát (.db)",
+    "openInstallLocation": "Inštalácia hry",
+    "groupGame": "Hra",
+    "groupEmulator": "Emulátor a nástroje",
+    "groupFolders": "Priečinky",
+    "groupLinks": "Užitočné odkazy",
+    "groupCover": "Obal"
+  },
   "settings": {
     "title": "Nastavenia",
     "sideMenu": {
       "general": "Všeobecné",
-      "overlay": "Prekrytie",
-      "notification": "Upozornenie",
-      "souvenir": "Suvenír",
+      "overlay": "Overlay",
+      "notification": "Upozornenia",
+      "souvenir": "Spomienka",
       "folder": "Priečinky",
       "source": "Zdroj",
-      "advanced": "Pokročilé",
-      "debug": "Debug"
+      "advanced": "Pokročilé"
     },
     "common": {
-      "show": "Ukázať",
+      "show": "Zobraziť",
       "hide": "Skryť",
-      "enable": "Zapnúť",
-      "disable": "Vypnúť",
+      "enable": "Zapnuté",
+      "disable": "Vypnuté",
       "cancel": "Zrušiť",
       "save": "Uložiť",
       "version": "Verzia",
+      "maintainedBy": "spravuje",
+      "fork": "Fork",
+      "original": "Originál v1.6.8",
       "edit": "Upraviť"
     },
-    "overlay": {
-      "position": "Poloha oznámenia",
-      "preset": { 
-	   "name": "Predvolené nastavenie oznámení", 
-	   "description": "Legacy používa starý systém oznámení" 
-	  },
-      "hotkey": {
-        "name": "Klávesová skratka pre prekrytie",
-        "description": "Počas hry môžete stlačiť túto klávesovú skratku, aby sa zobrazili achievementy tejto hry."
+    "watchdog": {
+      "startup": {
+        "name": "Spustiť pri prihlásení",
+        "description": "Watchdog sa spustí automaticky pri štarte systému."
       },
-      "scale": "Mierka oznámení",
-      "duration": "Trvanie animácie"
+      "kill": {
+        "name": "Nechať bežať",
+        "description": "Nechať Watchdog bežať, aj keď sa hlavná aplikácia zatvorí."
+      }
+    },
+    "overlay": {
+      "position": "Pozícia achievementu",
+      "progressPosition": "Pozícia postupu",
+      "playtimePosition": "Pozícia času hrania",
+      "preset": {
+        "name": "Predvoľba upozornení",
+        "description": "Legacy používa „starý“ systém upozornení"
+      },
+      "hotkey": {
+        "name": "Klávesová skratka overlayu",
+        "description": "Stlačte túto skratku na zobrazenie overlayu achievementov v hre."
+      },
+      "scale": "Veľkosť upozornenia",
+      "duration": "Dĺžka animácie"
     },
     "general": {
+      "sectionTitle": "Rozhranie a správanie",
       "language": {
         "name": "Jazyk",
-        "description": ["Pomôcť s prekladom", "tu"]
+        "description": "Jazyk rozhrania. Dáta hier sa načítavajú v tomto jazyku, ak je k dispozícii."
       },
       "thumbnail": {
         "name": "Orientácia miniatúr",
+        "description": "Na výšku zobrazuje vysoké obaly; Na šírku zobrazuje široké hlavičkové obrázky Steamu.",
         "value": {
           "portrait": "Na výšku",
           "landscape": "Na šírku"
         }
       },
       "hiddenAch": {
-        "name": "Skryté achievementy"
+        "name": "Skryté achievementy",
+        "description": "Zobraziť názov a popis skrytých achievementov ešte pred ich odomknutím."
       },
       "mergeDuplicates": {
-        "name": "Zlúčiť duplikáty"
+        "name": "Zlúčiť duplicity",
+        "description": "Zlúčiť tú istú hru nájdenú vo viacerých zdrojoch do jednej dlaždice."
       },
       "timeMerge": {
-        "name": "Zlúčenie časových značiek",
-        "description": "Ktorá časová značka bude pri zlučovaní duplikátov preferovaná",
+        "name": "Zlúčenie časovej značky",
+        "description": "Ktorá časová hodnota je pri zlučovaní duplicít uprednostnená ?",
         "value": {
-          "recent": "Najnovšía",
+          "recent": "Najnovšia",
           "oldest": "Najstaršia"
         }
       },
       "hideZero": {
-        "name": "Skryť hry s 0% odomknutých achievemenov"
+        "name": "Skryť hry s 0 %",
+        "description": "Skryje hry, v ktorých ste zatiaľ neodomkli žiadny achievement."
+      },
+      "startup": {
+        "name": "Spustiť pri štarte",
+        "description": "Spustí Achievement Watcher automaticky s Windows, skrytý v oznamovacej oblasti."
+      },
+      "onboarding": {
+        "name": "Sprievodca prvým spustením",
+        "button": "Otvoriť sprievodcu",
+        "description": "Znovu otvoriť sprievodcu nastavením: API kľúč, profil, priečinky, zdroje a upozornenia."
+      },
+      "hardwareAccel": {
+        "name": "Vypnúť hardvérovú akceleráciu",
+        "description": "Vypnite akceleráciu GPU, ak sa overlay alebo okno správajú zle. Vyžaduje reštart."
+      },
+      "tray": {
+        "name": "Minimalizovať do oznamovacej oblasti",
+        "description": "Nechať aplikáciu bežať na pozadí pre rýchlejšie spustenie upozornení."
+      }
+    },
+    "emulator": {
+      "nav": "Emulátor",
+      "sectionTitle": "Nastavenie emulátora (GBE Fork)",
+      "intro": "Predvolené hodnoty používané akciou pravého tlačidla Použiť opravu emulátora. Zvoľte, ako sa obchádza Steam a koľko dát hry sa načítava.",
+      "coreTitle": "Základná konfigurácia",
+      "advancedTitle": "Pokročilé možnosti",
+      "loginTitle": "Prihlásenie do Steamu (iba jednorazový účet)",
+      "loginWarning": "Jednorazový účet",
+      "loginDesc": "Používa sa iba, keď je „Zdroj dát“ nastavený na Prihlásenie do Steamu. Heslo je uložené šifrovane na tomto PC a odosiela sa iba do Steamu pomocou generate_emu_config. 2FA Steam Guard sa vyžaduje podľa potreby. Ponechajte prázdne, aby ste boli opýtaní zakaždým.",
+      "loginUser": "Používateľské meno Steam",
+      "loginPass": "Heslo Steam",
+      "loginTest": "Otestovať pripojenie",
+      "loginTestHint": "Steam / Steam Guard",
+      "loginTestRunning": "Pripája sa k Steamu… Zadajte kód Steam Guard, ak bude vyžiadaný.",
+      "loginTestSuccess": "Prihlásenie do Steamu úspešné. Obnovovací token generate_emu_config bol uložený.",
+      "loginTestMissing": "Najprv zadajte používateľské meno a heslo Steam.",
+      "loginTestFailed": "Prihlásenie do Steamu zlyhalo",
+      "autoApply": {
+        "name": "Automaticky opravovať novo zistené hry",
+        "description": "Jednorazovo spustí celý reťazec Použiť opravu emulátora pre novo zistenú, nenakonfigurovanú emulovanú hru: spracovanie SteamStub, GBE Fork, achievementy, DLC, identita/jazyk a pokročilé dáta, ak sú zapnuté. V predvolenom nastavení zapnuté.",
+        "value": {
+          "false": "Vypnuté",
+          "true": "Zapnuté"
+        }
+      },
+      "mode": {
+        "name": "Režim emulátora",
+        "description": "Regular vymení steam_api(64).dll hry. ColdClient ju ponechá a načíta emulovaný steamclient z GBE Fork cez loader — širšie pokrytie pre tvrdohlavé hry.",
+        "value": {
+          "regular": "Regular (vymeniť DLL)",
+          "coldclient": "ColdClient (GBE Fork)"
+        }
+      },
+      "steamSettings": {
+        "name": "Dáta steam_settings",
+        "description": "Simple používa vlastné načítavanie Achievement Watcher (anonymne). Advanced spustí generate_emu_config pre pokrytie depotov/jazykov.",
+        "value": {
+          "simple": "Simple (rýchle)",
+          "advanced": "Advanced (úplné)"
+        }
+      },
+      "login": {
+        "name": "Zdroj dát (Advanced)",
+        "description": "Prihlásenie do Steamu umožní generate_emu_config stiahnuť úplné dáta DLC/depotov. Používajte IBA jednorazový účet — nikdy hlavný.",
+        "value": {
+          "anonymous": "Anonymne",
+          "steam": "Prihlásenie do Steamu"
+        }
+      },
+      "steamless": {
+        "name": "Automaticky odstrániť DRM SteamStub",
+        "description": "Spustí Steamless na exe hry pred záplatou, aby odstránil DRM SteamStub od Valve (originál zachovaný ako .steamstub.bak). Bez účinku, ak žiadny stub nie je.",
+        "value": {
+          "false": "Vypnuté",
+          "true": "Zapnuté"
+        }
+      },
+      "steamlessExp": {
+        "name": "Steamless experimentálny",
+        "description": "Pri rozbaľovaní znovu zarovná sekcie pre lepšiu kompatibilitu so silno chránenými EXE. Záleží len, ak je automatické rozbaľovanie zapnuté.",
+        "value": {
+          "false": "Vypnuté",
+          "true": "Zapnuté"
+        }
+      },
+      "crackFix": {
+        "name": "Automaticky použiť komunitnú opravu (CrakFiles)",
+        "description": "Pri každej oprave automaticky stiahne a použije isto zodpovedajúcu komunitnú opravu zo zoznamu CrakFiles (iba presná zhoda názvu + odkaz pixeldrain; prepísané súbory sa zálohujú). V predvolenom nastavení zapnuté — vypnite, ak nechcete, aby AW sťahoval/prepisoval súbory hry z komunitného zdroja.",
+        "value": {
+          "false": "Vypnuté",
+          "true": "Zapnuté"
+        }
+      },
+      "apiCheckBypass": {
+        "name": "Obídenie kontroly vlastníctva Steam API",
+        "description": "V predvolenom nastavení vypnuté. Umiestni obchádzacie proxy SteamAutoCrack (winmm.dll) + konfiguráciu presmerovania, aby sa hry, ktoré po výmene znovu kontrolujú pôvodný steam_api/exe, napriek tomu spustili a odomkli. Stiahne proxy z jeho oficiálneho vydania.",
+        "value": {
+          "false": "Vypnuté",
+          "true": "Zapnuté"
+        }
+      },
+      "launchBat": {
+        "name": "Vytvoriť Launch.bat ako záložné riešenie",
+        "description": "Keď Steamless nemôže odstrániť exe SteamStub a AW prejde na ColdClient, zapíše aj Launch.bat pre zodpovedajúci loader.",
+        "value": {
+          "true": "Zapnuté",
+          "false": "Vypnuté"
+        }
+      },
+      "checkUpdates": {
+        "name": "Kontrolovať aktualizácie GBE Fork",
+        "description": "Pred použitím znovu skontroluje na GitHube najnovšie zostavenie GBE Fork (stiahne len, ak je novšie). Vypnite, aby ste vždy používali zostavenie z vyrovnávacej pamäte.",
+        "value": {
+          "true": "Zapnuté",
+          "false": "Vypnuté"
+        }
+      },
+      "goldbergIcons": {
+        "name": "GBE/Goldberg — stiahnuť ikony",
+        "description": "Keď je zapnuté, automatická oprava, ktorá zapisuje chýbajúci steam_settings/achievements.json, stiahne aj ikony achievementov zo Steam CDN.",
+        "value": {
+          "disabled": "Vypnuté (rýchle)",
+          "enabled": "Zapnuté"
+        }
       }
     },
     "notification": {
       "title": {
-        "common": "Všeobecné",
-        "toast": "Vyskakovacie oznámenie",
-        "transport": "Transport",
-        "chromium": "Oznámenie Chromium"
+        "common": "Spoločné",
+        "toast": "Toast upozornenie",
+        "transport": "Prenos",
+        "chromium": "Upozornenie Chromium",
+        "watchdog": "Watchdog",
+        "test": "Test",
+        "overlay": "Overlay v hre"
       },
       "info": {
-        "toast": "Niektoré funkcie sú dostupné iba v systéme Windows 10"
+        "toast": "Niektoré funkcie sú dostupné iba vo Windows 10",
+        "autoSave": "Zmeny na tejto karte sa ukladajú automaticky."
+      },
+      "test": {
+        "achievement": "Achievement",
+        "progress": "Postup",
+        "playtime": "Čas hrania",
+        "toast": "Windows Toast",
+        "platinum": "Platina",
+        "overlay": "Overlay"
       },
       "option": {
+        "transportMode": {
+          "name": "Prenos upozornení",
+          "description": "Vyberte jeden aktívny systém upozornení",
+          "value": {
+            "chromium": "Chromium (štylizované)",
+            "toast": "Windows Toast",
+            "none": "Vypnuté"
+          }
+        },
         "notification": {
-          "name": "Oznámenie",
-          "description": "Ak je to možné, upozorniť na odomknutie achievementu"
+          "name": "Upozornenie",
+          "description": "Upozorniť pri odomknutí achievementu, ak je to možné"
         },
         "rumble": {
-          "name": "Vibrácie herného ovládača (XInput)",
-          "description": "Pri odomknutí achievementu zavibruje prvý ovládač"
+          "name": "Vibrácie ovládača (XInput)",
+          "description": "Pri odomknutí achievementu rozvibruje prvý ovládač"
         },
         "notifyOnProgress": {
-          "name": "Progres achievementu",
-          "description": "Ak je to možné, dostávať oznámenia o progrese jednotlivých achievementov"
+          "name": "Hlásenie o postupe",
+          "description": "Upozorniť na postup achievementu, ak je to možné"
         },
         "playtime": {
           "name": "Sledovanie času hrania",
-          "description": "Oznámiť začiatok/koniec sledovania"
+          "description": "Upozorniť pri začatí/ukončení sledovania"
         },
-        "customToastAudio": {
-          "name": "Zvuk oznámenia",
-          "description": "Určuje zvuk, ktorý sa má prehrať pri zobrazení oznámenia",
+        "platinum": {
+          "name": "Platina (100 %)",
+          "description": "Spustí vyhradený toast, keď hra dosiahne 100% dokončenie"
+        },
+        "mode": {
+          "name": "Typ upozornenia",
+          "description": "Kde sa zobrazujú upozornenia o odomknutí: Windows toast, overlay v hre alebo oboje",
           "value": {
-            "systemDefault": "Predvolený",
-            "muted": "Stíšený"
+            "toast": "Toast",
+            "overlay": "Overlay",
+            "both": "Oboje"
+          }
+        },
+        "overlayPreset": "Predvoľba",
+        "overlayPresetDesc": "Vizuálny motív vyskakovacieho overlayu v hre",
+        "overlayPosition": "Pozícia",
+        "overlayPositionDesc": "Kde sa na obrazovke zobrazí vyskakovací overlay",
+        "overlayScale": "Veľkosť",
+        "overlayScaleDesc": "Veľkosť vyskakovacieho overlayu",
+        "overlaySound": "Zvuk",
+        "overlaySoundDesc": "Zvuk prehraný pri zobrazení vyskakovacieho overlayu",
+        "overlaySoundImport": "Importovať vlastný zvuk…",
+        "overlayVolume": "Hlasitosť",
+        "overlayVolumeDesc": "Hlasitosť zvuku vyskakovacieho overlayu (zvuk toast ovláda Windows)",
+        "overlayDuration": "Trvanie",
+        "overlayDurationDesc": "Ako dlho vyskakovací overlay zostane na obrazovke. Auto nechá rozhodnúť predvoľbu; hodnota obmedzí čas na obrazovke.",
+        "overlayDurationAuto": "Auto",
+        "customiser": {
+          "title": "Vlastná predvoľba",
+          "intro": "Vytvorte vlastnú predvoľbu upozornení overlayu.",
+          "name": "Názov",
+          "namePlaceholder": "Moja predvoľba",
+          "background": "Pozadie",
+          "text": "Text",
+          "accent": "Zvýraznenie",
+          "opacity": "Priehľadnosť",
+          "fontSize": "Veľkosť písma",
+          "corners": "Rohy",
+          "iconSize": "Veľkosť ikony",
+          "create": "Vytvoriť predvoľbu",
+          "errName": "Najprv zadajte názov",
+          "created": "Vytvorené a vybrané:",
+          "failed": "Zlyhalo"
+        },
+        "souvenirTitle": "Spomienkový snímok",
+        "souvenirScreenshot": "Snímok pri odomknutí",
+        "souvenirScreenshotDesc": "Zhotoví snímku obrazovky pri odomknutí achievementu. Ukladá sa podľa hry.",
+        "souvenirDir": "Priečinok na ukladanie",
+        "souvenirDirHelp": "Snímky sa ukladajú do <priečinok>\\<hra>\\<dátum> - <achievement>.png. Prázdne = Obrázky\\Achievement Watcher.",
+        "soundNone": "Žiadny",
+        "position": {
+          "centerBottom": "Dole v strede",
+          "centerTop": "Hore v strede",
+          "topLeft": "Hore vľavo",
+          "topRight": "Hore vpravo",
+          "bottomLeft": "Dole vľavo",
+          "bottomRight": "Dole vpravo",
+          "middleLeft": "V strede vľavo",
+          "middleRight": "V strede vpravo",
+          "custom": "Vlastné"
+        },
+        "reposition": "Zmeniť umiestnenie vyskakovacieho okna (presuňte ho, kam chcete)",
+        "customToastAudio": {
+          "name": "Zvuk toast",
+          "description": "Určuje zvuk prehraný pri zobrazení toast",
+          "value": {
+            "systemDefault": "Predvolené",
+            "muted": "Stlmené"
           }
         },
         "toastSouvenir": {
-          "name": "Suvenír v oznámení",
-          "description": "Zobraziť screenshot suveníru v oznámení",
+          "name": "Spomienka v toast",
+          "description": "Zobraziť spomienkový snímok vnútri toast",
           "value": {
             "top": "Hore",
             "bottom": "Dole"
@@ -125,56 +409,56 @@
         },
         "groupToast": {
           "name": "Zoskupiť podľa hry",
-          "description": "Vizuálne zoskupiť upozornenia z rovnakej hry v Centre akcií"
+          "description": "Vizuálne zoskupiť toasty tej istej hry v Centre akcií"
         },
         "useToast": {
-          "name": "Vyskakovanie oznámenie",
-          "description": "Vyskakovanie oznámenie systémov Windows 8 a 10"
+          "name": "Toast upozornenie",
+          "description": "Toast upozornenie Windows 8-10"
         },
         "useWinRT": {
           "name": "WinRT API",
-          "description": "Ak je k dispozícii, použije WinRT pre rýchlejšie zobrazenie oznámení namiesto PowerShell."
+          "description": "Použiť WinRT, ak je dostupné, pre rýchlejšie toasty namiesto PowerShellu"
         },
         "useBalloon": {
-          "name": "Bublinková nápoveda",
-          "description": "Návrat k bublinkovej nápovede v prípade zlyhania vyskakovacieho oznámenia"
+          "name": "Bublinová nápoveda",
+          "description": "Pri zlyhaní toast upozornenia prejsť na bublinovú nápovedu"
         },
         "useWS": {
-          "description": "Vysielať achievement do všetkých pripojených klientov"
+          "description": "Vysielať achievement všetkým pripojeným klientom"
         },
         "useChromium": {
-          "name": "Oznámenie Chromium",
-          "description": "Používa Chromium na zobrazenie štýlových oznámení"
+          "name": "Upozornenie Chromium",
+          "description": "Používa Chromium na zobrazenie štylizovaných upozornení."
         }
       }
     },
     "souvenir": {
       "title": {
-        "screenshot": "Screenshot",
+        "screenshot": "Snímka obrazovky",
         "video": "Video"
       },
       "option": {
         "screenshot": {
-          "name": "Suvenír",
-          "description": "Pri odomknutí achievementu urobí snímku obrazovky"
+          "name": "Spomienka",
+          "description": "Zhotoviť snímku obrazovky pri odomknutí achievementu"
         },
         "video": {
-          "name": "Video suvenír",
-          "description": "Pri odomknutí achievementu nahrá krátke video pomocou hardvérového enkódera vašej GPU"
+          "name": "Video spomienka",
+          "description": "Nahrať krátke video pri odomknutí achievementu pomocou hardvérového kodéra vašej GPU"
         },
         "overwrite": {
-          "name": "Prepísať existujúci súbor"
+          "name": "Prepísať, ak súbor existuje"
         },
         "custom_dir": {
-          "name": "Vlastný adresár"
+          "name": "Umiestnenie na uloženie"
         },
         "codec": {
           "name": "Video kodek",
-          "description": "H.265/HEVC sú výkonnejšie, ale menej podporované"
+          "description": "H.265/HEVC je výkonnejší, ale menej podporovaný"
         },
         "colorDepth": {
-          "name": "Hĺbka farieb",
-          "description": "10 bitov je k dispozícii iba pre H.265/HEVC"
+          "name": "Farebná hĺbka",
+          "description": "10 bitov je dostupných iba pre H.265/HEVC"
         },
         "duration": {
           "name": "Trvanie"
@@ -188,20 +472,28 @@
       }
     },
     "folder": {
-      "headline": "Kde hľadať súbory s achievementmi :",
-      "default": "Predvolený adresár",
-      "custom": "Adresár používateľa",
+      "headline": "Kde hľadať súbory achievementov :",
+      "default": "Predvolený priečinok",
+      "custom": "Priečinok používateľa",
       "addInfo": [
-        "Vyberte priečinok, ktorý obsahuje priečinok/priečinky appid.",
-        "Pre ALI213, Hoodlum, Tenoke, UniverseLAN, RPCS3 prosím vyberte priečinok, kde",
-        "sa nachádza súbor ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini alebo RPCS3.exe."
+        "Vyberte priečinok obsahujúci priečinky appid.",
+        "Pre ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 vyberte priečinok, v ktorom sa nachádza súbor",
+        "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini alebo RPCS3.exe."
       ],
-      "add": "Pridať priečinok"
+      "add": "Pridať priečinok",
+      "library": "Priečinky knižnice",
+      "libraryInfo": [
+        "Vyberte priečinok obsahujúci veľa inštalačných priečinkov hier (napr. D:\\Games, E:\\SteamLibrary).",
+        "Všetky hry vnútri budú prehľadané na achievementy Goldberg/GBE, aj keď nikdy neboli spustené."
+      ],
+      "addLibrary": "Pridať priečinok knižnice",
+      "generateConfigs": "Generovať konfigurácie"
     },
     "source": {
+      "title": "Zdroje hier",
       "legitSteam": {
-        "name": "Zobraziť hry zo Steamu",
-        "description": "Musíte mať nainštalovaný Steam a váš profil služby Steam musí byť verejný!",
+        "name": "Zobraziť hry Steam",
+        "description": "Steam musí byť nainštalovaný a váš profil Steam verejný !",
         "value": {
           "none": "Žiadne",
           "installed": "Nainštalované",
@@ -209,30 +501,70 @@
         }
       },
       "steamEmu": {
-        "name": "Emulátor Steamu"
+        "name": "Emulátor Steam",
+        "description": "Číta achievementy zapísané emulátormi Goldberg / GBE Fork a podobnými emulátormi Steam."
       },
       "greenLuma": {
         "description": "GreenLuma 2020/2024/2025 a Reborn"
       },
       "rpcs3": {
-        "description": "Emulátor Playstation 3"
+        "description": "Emulátor PlayStation 3"
       },
       "lumaPlay": {
         "description": "Emulátor Uplay"
       },
+      "ea": {
+        "name": "EA Desktop",
+        "description": "Číta miestny záznam achievementov EA Desktop — iba pre hry nainštalované mimo priečinkov spravovaných EA (cracknuté tituly)."
+      },
       "importCache": {
-        "name": "Importovať cache oznámení",
-        "description": "Importovať cache z Watchdog ako ďalší zdroj achievementov"
+        "name": "Importovať vyrovnávaciu pamäť upozornení",
+        "description": "Importovať vyrovnávaciu pamäť Watchdogu ako ďalší zdroj achievementov"
       }
     },
     "advanced": {
-      "blacklistTitle": "Zaradiť AppID na čiernu listinu",
+      "maintenanceTitle": "Nastavenie a údržba",
+      "fixAll": {
+        "name": "Opraviť všetky zistené hry",
+        "button": "Opraviť všetky hry",
+        "description": "Spustí opravu emulátora (GBE Fork, achievementy, DLC) na každej zistenej emulovanej hre so známym inštalačným priečinkom.",
+        "confirm": "Použiť opravu emulátora na každú zistenú hru so známym inštalačným priečinkom? Existujúce súbory sa pred prepísaním zálohujú.",
+        "running": "Opravujú sa hry…",
+        "progress": "Opravuje sa %cur% / %total% — %name%",
+        "done": "Hotovo — opravených hier: %fixed%, preskočené: %skipped%, zlyhané: %failed%.",
+        "none": "Žiadna zistená hra so známym inštalačným priečinkom na opravu."
+      },
+      "diag": {
+        "title": "Diagnostika",
+        "apiKeyLabel": "Kľúč Steam Web API :",
+        "apiKeyConfigured": "nakonfigurované",
+        "apiKeyFallback": "nenastavené — používa sa záložné načítanie",
+        "logsFolder": "Otvoriť priečinok logov",
+        "dataFolder": "Otvoriť priečinok dát",
+        "goldbergTitle": "Goldberg / GBE Fork",
+        "goldbergDesc": "Prehľadá priečinok knižnice hier na inštalácie Goldberg / GBE Fork a označí tie, ktorým chýba schéma steam_settings/achievements.json. Na opravu jednej použite kontextovú ponuku hry (Diagnostikovať / Opraviť).",
+        "scanFolder": "Prehľadať priečinok…",
+        "winNotifTitle": "Nastavenia upozornení Windows",
+        "focusAssist": "Asistent sústredenia",
+        "notifActions": "Upozornenia a akcie",
+        "winNotifDesc": "Windows 10 >= 1903 : automatické pravidlo asistenta sústredenia pre celoobrazovkové aplikácie (predvolene iba budíky) môže potlačiť toast upozornenia — nastavte na „Vypnuté“, ak sa toasty v hre nezobrazujú."
+      },
+      "blacklistTitle": "Čierna listina AppID",
       "blacklistButton": "Resetovať čiernu listinu",
-      "blacklistInfo": "Pre pridanie hry na čiernu listinu kliknite pravým tlačidlom myši na kartu hry",
+      "blacklistInfo": "Kliknite pravým tlačidlom na dlaždicu hry pre pridanie na čiernu listinu.",
+      "apiKey": {
+        "title": "Kľúč Steam Web API",
+        "description": "Niektoré dáta Steamu vyžadujú osobný kľúč Steam Web API.",
+        "fallback": "Ponechajte toto pole prázdne pre automatické načítanie. Ak zlyhá, zadajte vlastný kľúč.",
+        "create": "Vytvoriť kľúč API",
+        "terms": "Podmienky používania Steam API",
+        "label": "Váš kľúč Steam Web API",
+        "security": "Kľúč je pred uložením do tohto počítača šifrovaný pomocou AES-256-CBC."
+      },
       "mainSteam": {
-        "title": "Hlavný účet na Steame",
+        "title": "Hlavný účet Steam",
         "name": "Filtrovať podľa používateľa",
-        "description": "Zobraziť achievementy zo Steamu iba pre vybraný účet"
+        "description": "Zobraziť achievementy Steam iba vybraného účtu"
       }
     }
   }

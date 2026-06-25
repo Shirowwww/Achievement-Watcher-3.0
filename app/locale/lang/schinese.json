@@ -1,108 +1,407 @@
 {
   "achievements": "成就",
-  "perfectGame": "完美达成的游戏数",
-  "completionRate": "游戏平均完成率",
+  "perfectGame": "已完成的游戏",
+  "completionRate": "平均完成率",
   "emptyList": "暂无游戏",
+  "emptyListHint": "尚未找到任何成就。请添加游戏保存成就文件的文件夹，然后刷新（F5）。",
+  "emptyListAction": "打开文件夹设置",
+  "installedOnly": "仅显示已安装的游戏",
+  "sort": {
+    "tooltip": {
+      "alpha": "名称: A → Z",
+      "percent": "进度",
+      "time": "成就解锁日期",
+      "played": "最近游玩"
+    },
+    "label": {
+      "alpha": {
+        "asc": "名称: A → Z",
+        "desc": "名称: Z → A"
+      },
+      "percent": {
+        "asc": "进度: 从低到高",
+        "desc": "进度: 从高到低"
+      },
+      "time": {
+        "asc": "成就: 从旧到新",
+        "desc": "成就: 从新到旧"
+      },
+      "played": {
+        "asc": "游玩: 从旧到新",
+        "desc": "游玩: 从新到旧"
+      },
+      "rarity": {
+        "asc": "稀有度: 从稀有到常见",
+        "desc": "稀有度: 从常见到稀有"
+      }
+    },
+    "action": {
+      "reverse": "点击以反转",
+      "clear": "点击以清除排序"
+    }
+  },
   "loading": "加载中",
   "unlocked": "已解锁",
-  "locked": "未解锁",
-  "globalStat": "所有玩家的百分比",
-  "hiddenRemain": "项隐藏成就未解锁",
-  "revealedOnceUnlocked": "每项成就的详情将在解锁后显示",
+  "locked": "已锁定",
+  "globalStat": "的玩家拥有此成就",
+  "hiddenRemain": "个隐藏成就剩余",
+  "revealedOnceUnlocked": "每个成就的详情将在解锁后显示",
+  "hiddenDescriptionPlaceholder": "隐藏 — 点击显示",
   "noneUnlocked": "尚未解锁任何成就",
-  "play": "快来玩吧！",
+  "play": "开始游戏 !",
+  "noneUnlockedHint": "没有看到任何解锁？请查看常见问题 / 故障排除部分：",
   "scrollUp": "向上滚动",
   "allGamesBackButton": "所有游戏",
-  "removeFromList": "从列表中删除",
-  "buildIconPrefetchCache": "构建用于通知的图标缓存",
+  "removeFromList": "从列表中移除",
+  "buildIconPrefetchCache": "缓存成就图标",
+  "contextMenu": {
+    "resetPlaytime": "重置游戏时长",
+    "muteProgress": "静音进度通知",
+    "unmuteProgress": "取消静音进度通知",
+    "generateAchievementsJson": "导出 achievements.json",
+    "diagnose": "诊断模拟器",
+    "backupGBE": "备份配置…",
+    "restoreGBE": "恢复配置备份…",
+    "installGBE": "应用模拟器修复…",
+    "removeDRM": "移除 DRM…",
+    "crackfix": "查找社区修复…",
+    "openIconCache": "图标缓存",
+    "openDbCache": "数据缓存 (.db)",
+    "openInstallLocation": "游戏安装位置",
+    "groupGame": "游戏",
+    "groupEmulator": "模拟器与工具",
+    "groupFolders": "文件夹",
+    "groupLinks": "实用链接",
+    "groupCover": "封面"
+  },
   "settings": {
     "title": "设置",
     "sideMenu": {
-      "general": "通用",
+      "general": "常规",
+      "overlay": "叠加层",
       "notification": "通知",
       "souvenir": "纪念",
-      "folder": "目录",
+      "folder": "文件夹",
       "source": "来源",
-      "advanced": "高级",
-      "debug": "调试"
+      "advanced": "高级"
     },
     "common": {
       "show": "显示",
       "hide": "隐藏",
-      "enable": "启用",
-      "disable": "禁用",
+      "enable": "已启用",
+      "disable": "已禁用",
       "cancel": "取消",
       "save": "保存",
       "version": "版本",
+      "maintainedBy": "维护者",
+      "fork": "分支",
+      "original": "原版 v1.6.8",
       "edit": "编辑"
     },
+    "watchdog": {
+      "startup": {
+        "name": "登录时运行",
+        "description": "系统启动时 Watchdog 会自动启动。"
+      },
+      "kill": {
+        "name": "保持运行",
+        "description": "即使主应用关闭，也保持 Watchdog 运行。"
+      }
+    },
+    "overlay": {
+      "position": "成就位置",
+      "progressPosition": "进度位置",
+      "playtimePosition": "游戏时长位置",
+      "preset": {
+        "name": "通知预设",
+        "description": "Legacy 使用「旧」通知系统"
+      },
+      "hotkey": {
+        "name": "叠加层快捷键",
+        "description": "按下此快捷键可在游戏中显示成就叠加层。"
+      },
+      "scale": "通知大小",
+      "duration": "动画时长"
+    },
     "general": {
+      "sectionTitle": "界面与行为",
       "language": {
         "name": "语言",
-        "description": ["帮助翻译", "点击此处"]
+        "description": "界面语言。在可用时，游戏数据将以此语言获取。"
       },
       "thumbnail": {
         "name": "缩略图方向",
+        "description": "竖向显示纵向封面图；横向显示宽幅 Steam 头图。",
         "value": {
-          "portrait": "纵向",
+          "portrait": "竖向",
           "landscape": "横向"
         }
       },
       "hiddenAch": {
-        "name": "隐藏成就"
+        "name": "隐藏成就",
+        "description": "在解锁前显示隐藏成就的名称和描述。"
       },
       "mergeDuplicates": {
-        "name": "合并重复项"
+        "name": "合并重复项",
+        "description": "将在多个来源中找到的同一游戏合并为单个卡片。"
       },
       "timeMerge": {
         "name": "时间戳合并",
-        "description": "合并重复项时，首选哪个时间值？",
+        "description": "合并重复项时，优先使用哪个时间值？",
         "value": {
-          "recent": "最近的",
-          "oldest": "最早的"
+          "recent": "较新",
+          "oldest": "较旧"
         }
       },
       "hideZero": {
-        "name": "隐藏未解锁任何成就的游戏"
+        "name": "隐藏 0% 的游戏",
+        "description": "隐藏你尚未解锁任何成就的游戏。"
+      },
+      "startup": {
+        "name": "随系统启动",
+        "description": "随 Windows 自动启动 Achievement Watcher，并隐藏在托盘中。"
+      },
+      "onboarding": {
+        "name": "首次运行向导",
+        "button": "打开向导",
+        "description": "重新打开设置向导：API 密钥、个人资料、文件夹、来源和通知。"
+      },
+      "hardwareAccel": {
+        "name": "禁用硬件加速",
+        "description": "如果叠加层或窗口出现异常，请关闭 GPU 加速。需要重启。"
+      },
+      "tray": {
+        "name": "最小化到系统托盘",
+        "description": "让应用在后台运行，以便更快地启动通知。"
+      }
+    },
+    "emulator": {
+      "nav": "模拟器",
+      "sectionTitle": "模拟器设置 (GBE Fork)",
+      "intro": "右键「应用模拟器修复」操作所使用的默认值。选择如何绕过 Steam 以及获取多少游戏数据。",
+      "coreTitle": "核心配置",
+      "advancedTitle": "高级选项",
+      "loginTitle": "Steam 登录（仅限一次性账号）",
+      "loginWarning": "一次性账号",
+      "loginDesc": "仅当「数据来源」设为 Steam 登录时使用。密码会以加密方式存储在此 PC 上，并仅由 generate_emu_config 发送给 Steam。需要时会要求 Steam Guard 双重验证。留空则每次都会询问。",
+      "loginUser": "Steam 用户名",
+      "loginPass": "Steam 密码",
+      "loginTest": "测试连接",
+      "loginTestHint": "Steam / Steam Guard",
+      "loginTestRunning": "正在连接 Steam… 如有要求，请输入 Steam Guard 验证码。",
+      "loginTestSuccess": "Steam 登录成功。generate_emu_config 刷新令牌已保存。",
+      "loginTestMissing": "请先输入 Steam 用户名和密码。",
+      "loginTestFailed": "Steam 登录失败",
+      "autoApply": {
+        "name": "自动修复新检测到的游戏",
+        "description": "对新检测到的、未配置的模拟游戏运行一次完整的「应用模拟器修复」流程：SteamStub 处理、GBE Fork、成就、DLC、身份/语言，以及启用时的高级数据。默认启用。",
+        "value": {
+          "false": "已禁用",
+          "true": "已启用"
+        }
+      },
+      "mode": {
+        "name": "模拟器模式",
+        "description": "Regular 替换游戏的 steam_api(64).dll。ColdClient 保留它，并通过加载器加载 GBE Fork 的模拟 steamclient — 对顽固游戏覆盖更广。",
+        "value": {
+          "regular": "Regular（替换 DLL）",
+          "coldclient": "ColdClient (GBE Fork)"
+        }
+      },
+      "steamSettings": {
+        "name": "steam_settings 数据",
+        "description": "Simple 使用 Achievement Watcher 自身的获取（匿名）。Advanced 运行 generate_emu_config 以覆盖仓库/语言。",
+        "value": {
+          "simple": "Simple（快速）",
+          "advanced": "Advanced（完整）"
+        }
+      },
+      "login": {
+        "name": "数据来源 (Advanced)",
+        "description": "Steam 登录可让 generate_emu_config 拉取完整的 DLC/仓库数据。请仅使用一次性账号 — 切勿使用主账号。",
+        "value": {
+          "anonymous": "匿名",
+          "steam": "Steam 登录"
+        }
+      },
+      "steamless": {
+        "name": "自动解除 SteamStub DRM",
+        "description": "在打补丁前对游戏 exe 运行 Steamless，以剥离 Valve 的 SteamStub DRM（原文件保留为 .steamstub.bak）。无 stub 时不执行任何操作。",
+        "value": {
+          "false": "已禁用",
+          "true": "已启用"
+        }
+      },
+      "steamlessExp": {
+        "name": "Steamless 实验性",
+        "description": "在解包过程中重新对齐区段，以更好地兼容受重度保护的 EXE。仅在自动解包开启时才有意义。",
+        "value": {
+          "false": "已禁用",
+          "true": "已启用"
+        }
+      },
+      "crackFix": {
+        "name": "自动应用社区修复 (CrakFiles)",
+        "description": "每次修复时，自动从 CrakFiles 列表下载并应用可确信匹配的社区修复（仅限名称完全匹配 + pixeldrain 链接；被覆盖的文件会被备份）。默认开启 — 如果你不希望 AW 从社区来源下载/覆盖游戏文件，请将其关闭。",
+        "value": {
+          "false": "已禁用",
+          "true": "已启用"
+        }
+      },
+      "apiCheckBypass": {
+        "name": "绕过 Steam API 所有权检查",
+        "description": "默认关闭。放置 SteamAutoCrack 的绕过代理（winmm.dll）+ 一个重定向配置，使在替换后重新检查原始 steam_api/exe 的游戏仍能启动并解锁。代理从其官方发行版下载。",
+        "value": {
+          "false": "已禁用",
+          "true": "已启用"
+        }
+      },
+      "launchBat": {
+        "name": "创建 Launch.bat 作为后备",
+        "description": "当 Steamless 无法剥离 SteamStub exe 且 AW 回退到 ColdClient 时，同时为对应的加载器写入一个 Launch.bat。",
+        "value": {
+          "true": "已启用",
+          "false": "已禁用"
+        }
+      },
+      "checkUpdates": {
+        "name": "检查 GBE Fork 更新",
+        "description": "在应用前重新在 GitHub 上检查最新的 GBE Fork 版本（仅在更新时下载）。关闭则始终使用缓存版本。",
+        "value": {
+          "true": "已启用",
+          "false": "已禁用"
+        }
+      },
+      "goldbergIcons": {
+        "name": "GBE/Goldberg — 下载图标",
+        "description": "启用后，写入缺失 steam_settings/achievements.json 的自动修复也会从 Steam CDN 下载成就图标。",
+        "value": {
+          "disabled": "已禁用（快速）",
+          "enabled": "已启用"
+        }
       }
     },
     "notification": {
       "title": {
         "common": "通用",
         "toast": "Toast 通知",
-        "transport": "传输"
+        "transport": "传输",
+        "chromium": "Chromium 通知",
+        "watchdog": "Watchdog",
+        "test": "测试",
+        "overlay": "游戏内叠加层"
       },
       "info": {
-        "toast": "某些功能仅 Windows 10 可用"
+        "toast": "部分功能仅在 Windows 10 中可用",
+        "autoSave": "此选项卡中的更改会自动保存。"
+      },
+      "test": {
+        "achievement": "成就",
+        "progress": "进度",
+        "playtime": "游戏时长",
+        "toast": "Windows Toast",
+        "platinum": "白金",
+        "overlay": "叠加层"
       },
       "option": {
+        "transportMode": {
+          "name": "通知传输",
+          "description": "选择一个有效的通知系统",
+          "value": {
+            "chromium": "Chromium（带样式）",
+            "toast": "Windows Toast",
+            "none": "已禁用"
+          }
+        },
         "notification": {
           "name": "通知",
-          "description": "尽可能在成就解锁时通知"
+          "description": "可能时在解锁成就时通知"
         },
         "rumble": {
-          "name": "手柄震动（XInput）",
-          "description": "解锁成就时震动第一个手柄"
+          "name": "手柄震动 (XInput)",
+          "description": "解锁成就时使第一个手柄震动"
         },
         "notifyOnProgress": {
           "name": "进度报告",
-          "description": "尽可能通知成就进度"
+          "description": "可能时在成就有进度时通知"
         },
         "playtime": {
-          "name": "游戏时间追踪",
-          "description": "在开始或结束游戏时间追踪时通知"
+          "name": "游戏时长跟踪",
+          "description": "在跟踪开始/结束时通知"
         },
+        "platinum": {
+          "name": "白金 (100%)",
+          "description": "当游戏达到 100% 完成度时触发专门的 toast"
+        },
+        "mode": {
+          "name": "通知类型",
+          "description": "解锁通知的显示位置：Windows toast、游戏内叠加层，或两者",
+          "value": {
+            "toast": "Toast",
+            "overlay": "叠加层",
+            "both": "两者"
+          }
+        },
+        "overlayPreset": "预设",
+        "overlayPresetDesc": "游戏内叠加层弹窗的视觉主题",
+        "overlayPosition": "位置",
+        "overlayPositionDesc": "叠加层弹窗在屏幕上的显示位置",
+        "overlayScale": "大小",
+        "overlayScaleDesc": "叠加层弹窗的大小",
+        "overlaySound": "声音",
+        "overlaySoundDesc": "叠加层弹窗出现时播放的声音",
+        "overlaySoundImport": "导入自定义声音…",
+        "overlayVolume": "音量",
+        "overlayVolumeDesc": "叠加层弹窗声音的音量（toast 声音由 Windows 控制）",
+        "overlayDuration": "持续时间",
+        "overlayDurationDesc": "叠加层弹窗在屏幕上停留的时长。Auto 由预设决定；设置数值则限制屏幕停留时间。",
+        "overlayDurationAuto": "Auto",
+        "customiser": {
+          "title": "自定义预设",
+          "intro": "创建你自己的叠加层通知预设。",
+          "name": "名称",
+          "namePlaceholder": "我的预设",
+          "background": "背景",
+          "text": "文本",
+          "accent": "强调色",
+          "opacity": "不透明度",
+          "fontSize": "字体大小",
+          "corners": "圆角",
+          "iconSize": "图标大小",
+          "create": "创建预设",
+          "errName": "请先输入名称",
+          "created": "已创建并选择：",
+          "failed": "失败"
+        },
+        "souvenirTitle": "纪念截图",
+        "souvenirScreenshot": "解锁时截图",
+        "souvenirScreenshotDesc": "在解锁成就时捕获屏幕。按游戏保存。",
+        "souvenirDir": "保存文件夹",
+        "souvenirDirHelp": "截图保存到 <文件夹>\\<游戏>\\<日期> - <成就>.png。留空 = 图片\\Achievement Watcher。",
+        "soundNone": "无",
+        "position": {
+          "centerBottom": "底部居中",
+          "centerTop": "顶部居中",
+          "topLeft": "左上",
+          "topRight": "右上",
+          "bottomLeft": "左下",
+          "bottomRight": "右下",
+          "middleLeft": "中部居左",
+          "middleRight": "中部居右",
+          "custom": "自定义"
+        },
+        "reposition": "重新定位弹窗（拖到你想要的位置）",
         "customToastAudio": {
-          "name": "通知音效",
-          "description": "指定显示 Toast 通知时播放的音效",
+          "name": "Toast 声音",
+          "description": "指定显示 toast 时播放的声音",
           "value": {
             "systemDefault": "默认",
-            "muted": "静音"
+            "muted": "已静音"
           }
         },
         "toastSouvenir": {
-          "name": "显示纪念",
-          "description": "在通知里显示纪念截图",
+          "name": "Toast 中的纪念",
+          "description": "在 toast 内显示纪念截图",
           "value": {
             "top": "顶部",
             "bottom": "底部"
@@ -110,22 +409,26 @@
         },
         "groupToast": {
           "name": "按游戏分组",
-          "description": "将操作中心中相同游戏的 Toast 通知分为一组"
+          "description": "在操作中心内按同一游戏对 toast 进行视觉分组"
         },
         "useToast": {
           "name": "Toast 通知",
-          "description": "Windows 8-10 Toast 通知"
+          "description": "Windows 8-10 toast 通知"
         },
         "useWinRT": {
           "name": "WinRT API",
-          "description": "使用 WinRT 代替 PowerShell 来更快地显示 Toast 通知（如果可用）"
+          "description": "如果可用，使用 WinRT 以获得比 PowerShell 更快的 toast"
         },
         "useBalloon": {
           "name": "气球提示",
-          "description": "在 Toast 通知不可用时使用气球提示"
+          "description": "当 toast 通知失败时回退到气球提示"
         },
         "useWS": {
-          "description": "向所有连接的客户端广播成就"
+          "description": "向所有已连接的客户端广播成就"
+        },
+        "useChromium": {
+          "name": "Chromium 通知",
+          "description": "使用 Chromium 显示带样式的通知。"
         }
       }
     },
@@ -137,79 +440,132 @@
       "option": {
         "screenshot": {
           "name": "纪念",
-          "description": "解锁成就时截图"
+          "description": "在解锁成就时截图"
         },
         "video": {
           "name": "视频纪念",
-          "description": "解锁成就时使用 GPU 的硬件编码器录制一段短视频"
+          "description": "使用你 GPU 的硬件编码器，在解锁成就时录制一段短视频"
         },
         "overwrite": {
-          "name": "覆盖现有文件"
+          "name": "如文件已存在则覆盖"
         },
         "custom_dir": {
-          "name": "保存路径"
+          "name": "保存位置"
         },
         "codec": {
-          "name": "视频编码",
-          "description": "H.265/HEVC 性能更高但兼容性较差"
+          "name": "视频编解码器",
+          "description": "H.265/HEVC 性能更高但兼容性较低"
         },
         "colorDepth": {
-          "name": "色深",
-          "description": "10bits 仅适用于 H.265/HEVC"
+          "name": "色彩深度",
+          "description": "10 位仅在 H.265/HEVC 下可用"
         },
         "duration": {
-          "name": "持续时间"
+          "name": "时长"
         },
         "framerate": {
           "name": "帧率"
         },
         "cursor": {
-          "name": "鼠标指针"
+          "name": "鼠标光标"
         }
       }
     },
     "folder": {
-      "headline": "在哪里查找成就文件：",
+      "headline": "在何处查找成就文件：",
       "default": "默认目录",
       "custom": "用户目录",
       "addInfo": [
-        "选择一个包含 appid 文件夹的目录。",
-        "对于 ALI213，Hoodlum，RPCS3，请选择",
-        "ALI213.ini，valve.ini，hlm.ini，ds.ini，steam_api.ini，SteamConfig.ini，tenoke.ini，UniverseLAN.ini 或 RPCS3.exe 文件所在的目录。"
+        "选择一个包含 appid 文件夹的文件夹。",
+        "对于 ALI213、Hoodlum、TENOKE、UniverseLAN、RPCS3，请选择以下文件所在的文件夹：",
+        "ALI213.ini、valve.ini、hlm.ini、ds.ini、steam_api.ini、SteamConfig.ini、tenoke.ini、UniverseLAN.ini 或 RPCS3.exe。"
       ],
-      "add": "添加目录"
+      "add": "添加文件夹",
+      "library": "库文件夹",
+      "libraryInfo": [
+        "选择一个包含多个游戏安装文件夹的文件夹（例如 D:\\Games、E:\\SteamLibrary）。",
+        "其中的所有游戏都会被扫描 Goldberg/GBE 成就，即使从未启动过。"
+      ],
+      "addLibrary": "添加库文件夹",
+      "generateConfigs": "生成配置"
     },
     "source": {
+      "title": "游戏来源",
       "legitSteam": {
         "name": "显示 Steam 游戏",
-        "description": "必须安装 Steam 并将您的 Steam 个人资料公开！",
+        "description": "Steam 必须已安装，且你的 Steam 个人资料须为公开！",
         "value": {
-          "none": "不显示",
+          "none": "无",
           "installed": "已安装",
-          "owned": "已拥有"
+          "owned": "拥有"
         }
       },
       "steamEmu": {
-        "name": "Steam 模拟器"
+        "name": "Steam 模拟器",
+        "description": "读取由 Goldberg / GBE Fork 及类似 Steam 模拟器写入的成就。"
       },
       "greenLuma": {
-        "description": "GreenLuma 2020/2024/2025 与 Reborn"
+        "description": "GreenLuma 2020/2024/2025 及 Reborn"
       },
       "rpcs3": {
-        "description": "PS3 模拟器"
+        "description": "PlayStation 3 模拟器"
       },
       "lumaPlay": {
         "description": "Uplay 模拟器"
       },
+      "ea": {
+        "name": "EA Desktop",
+        "description": "读取 EA Desktop 的本地成就日志 — 仅限安装在 EA 托管文件夹之外的游戏（破解版）。"
+      },
       "importCache": {
         "name": "导入通知缓存",
-        "description": "导入 Watchdog 的缓存作为成就的另一个来源"
+        "description": "将 Watchdog 的缓存作为另一个成就来源导入"
       }
     },
     "advanced": {
+      "maintenanceTitle": "设置与维护",
+      "fixAll": {
+        "name": "修复所有检测到的游戏",
+        "button": "修复所有游戏",
+        "description": "对每个已知安装文件夹、检测到的模拟游戏运行模拟器修复（GBE Fork、成就、DLC）。",
+        "confirm": "对每个已知安装文件夹的检测到的游戏应用模拟器修复？现有文件会在覆盖前被备份。",
+        "running": "正在修复游戏…",
+        "progress": "正在修复 %cur% / %total% — %name%",
+        "done": "完成 — 已修复 %fixed% 个游戏，跳过 %skipped% 个，失败 %failed% 个。",
+        "none": "没有已知安装文件夹的可修复检测游戏。"
+      },
+      "diag": {
+        "title": "诊断",
+        "apiKeyLabel": "Steam Web API 密钥：",
+        "apiKeyConfigured": "已配置",
+        "apiKeyFallback": "未设置 — 使用后备抓取",
+        "logsFolder": "打开日志文件夹",
+        "dataFolder": "打开数据文件夹",
+        "goldbergTitle": "Goldberg / GBE Fork",
+        "goldbergDesc": "扫描游戏库文件夹中的 Goldberg / GBE Fork 安装，并标记缺少 steam_settings/achievements.json 架构的项目。使用游戏的右键菜单（诊断 / 修复）来修复其中一项。",
+        "scanFolder": "扫描文件夹…",
+        "winNotifTitle": "Windows 通知设置",
+        "focusAssist": "专注助手",
+        "notifActions": "通知和操作",
+        "winNotifDesc": "Windows 10 >= 1903：针对全屏应用的专注助手自动规则（默认仅闹钟）可能会抑制 toast 通知 — 如果游戏内不出现 toast，请将其设为「关闭」。"
+      },
       "blacklistTitle": "AppID 黑名单",
       "blacklistButton": "重置黑名单",
-      "blacklistInfo": "右键点击一个游戏，将其添加到黑名单中。"
+      "blacklistInfo": "右键点击游戏卡片可将其加入黑名单。",
+      "apiKey": {
+        "title": "Steam Web API 密钥",
+        "description": "某些 Steam 数据需要个人的 Steam Web API 密钥。",
+        "fallback": "将此字段留空以使用自动获取。如果失败，请输入你自己的密钥。",
+        "create": "创建 API 密钥",
+        "terms": "Steam API 使用条款",
+        "label": "你的 Steam Web API 密钥",
+        "security": "密钥在保存到此计算机之前会使用 AES-256-CBC 加密。"
+      },
+      "mainSteam": {
+        "title": "Steam 主账号",
+        "name": "按用户筛选",
+        "description": "仅显示所选账号的 Steam 成就"
+      }
     }
   }
 }

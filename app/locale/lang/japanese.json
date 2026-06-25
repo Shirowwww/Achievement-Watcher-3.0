@@ -1,26 +1,570 @@
 {
   "achievements": "実績",
-  "perfectGame": "全実績解除",
-  "completionRate": "ゲームの平均達成率",
-  "emptyList": "ノーゲーム",
-  "loading": "ロード中",
-  "locked": "残っている",
-  "globalStat": "すべてのプレイヤーのうち",
-  "hiddenRemain": "個の秘密の実績が残っている",
-  "revealedOnceUnlocked": "各実績の詳細はアンロック時に明らかとなる",
+  "perfectGame": "コンプリート済みゲーム",
+  "completionRate": "平均達成率",
+  "emptyList": "ゲームなし",
+  "emptyListHint": "まだ実績が見つかりません。ゲームが実績ファイルを保存するフォルダーを追加してから更新（F5）してください。",
+  "emptyListAction": "フォルダー設定を開く",
+  "installedOnly": "インストール済みのゲームのみ表示",
+  "sort": {
+    "tooltip": {
+      "alpha": "名前: A → Z",
+      "percent": "進捗",
+      "time": "実績の解除日",
+      "played": "最終プレイ日"
+    },
+    "label": {
+      "alpha": {
+        "asc": "名前: A → Z",
+        "desc": "名前: Z → A"
+      },
+      "percent": {
+        "asc": "進捗: 低い → 高い",
+        "desc": "進捗: 高い → 低い"
+      },
+      "time": {
+        "asc": "実績: 古い → 新しい",
+        "desc": "実績: 新しい → 古い"
+      },
+      "played": {
+        "asc": "プレイ: 古い → 新しい",
+        "desc": "プレイ: 新しい → 古い"
+      },
+      "rarity": {
+        "asc": "レア度: 希少 → 一般的",
+        "desc": "レア度: 一般的 → 希少"
+      }
+    },
+    "action": {
+      "reverse": "クリックで逆順",
+      "clear": "クリックで並べ替えを解除"
+    }
+  },
+  "loading": "読み込み中",
+  "unlocked": "解除済み",
+  "locked": "ロック中",
+  "globalStat": "のプレイヤーが取得",
+  "hiddenRemain": "個の隠し実績が残っています",
+  "revealedOnceUnlocked": "各実績の詳細は解除後に表示されます",
+  "hiddenDescriptionPlaceholder": "隠し — クリックで表示",
+  "noneUnlocked": "まだ解除した実績はありません",
+  "play": "プレイを始めよう !",
+  "noneUnlockedHint": "解除が表示されませんか？ FAQ／トラブルシューティングのセクションを確認してください：",
+  "scrollUp": "上へスクロール",
   "allGamesBackButton": "すべてのゲーム",
+  "removeFromList": "リストから削除",
+  "buildIconPrefetchCache": "実績アイコンをキャッシュ",
+  "contextMenu": {
+    "resetPlaytime": "プレイ時間をリセット",
+    "muteProgress": "進捗通知をミュート",
+    "unmuteProgress": "進捗通知をオン",
+    "generateAchievementsJson": "achievements.json をエクスポート",
+    "diagnose": "エミュレーターを診断",
+    "backupGBE": "設定をバックアップ…",
+    "restoreGBE": "設定のバックアップを復元…",
+    "installGBE": "エミュレーター修正を適用…",
+    "removeDRM": "DRM を削除…",
+    "crackfix": "コミュニティ修正を探す…",
+    "openIconCache": "アイコンキャッシュ",
+    "openDbCache": "データキャッシュ (.db)",
+    "openInstallLocation": "ゲームのインストール先",
+    "groupGame": "ゲーム",
+    "groupEmulator": "エミュレーターとツール",
+    "groupFolders": "フォルダー",
+    "groupLinks": "便利なリンク",
+    "groupCover": "カバー"
+  },
   "settings": {
     "title": "設定",
+    "sideMenu": {
+      "general": "一般",
+      "overlay": "オーバーレイ",
+      "notification": "通知",
+      "souvenir": "記念",
+      "folder": "フォルダー",
+      "source": "ソース",
+      "advanced": "詳細"
+    },
     "common": {
+      "show": "表示",
+      "hide": "非表示",
+      "enable": "有効",
+      "disable": "無効",
       "cancel": "キャンセル",
-      "save": "OK"
+      "save": "保存",
+      "version": "バージョン",
+      "maintainedBy": "メンテナー",
+      "fork": "フォーク",
+      "original": "オリジナル v1.6.8",
+      "edit": "編集"
+    },
+    "watchdog": {
+      "startup": {
+        "name": "ログイン時に起動",
+        "description": "システム起動時に Watchdog が自動的に開始します。"
+      },
+      "kill": {
+        "name": "実行を継続",
+        "description": "メインアプリを閉じても Watchdog の実行を継続します。"
+      }
+    },
+    "overlay": {
+      "position": "実績の位置",
+      "progressPosition": "進捗の位置",
+      "playtimePosition": "プレイ時間の位置",
+      "preset": {
+        "name": "通知プリセット",
+        "description": "Legacy は「旧」通知システムを使用します"
+      },
+      "hotkey": {
+        "name": "オーバーレイのホットキー",
+        "description": "このホットキーを押すと、ゲーム中に実績オーバーレイを表示します。"
+      },
+      "scale": "通知のサイズ",
+      "duration": "アニメーション時間"
     },
     "general": {
+      "sectionTitle": "インターフェースと動作",
       "language": {
-        "name": "言語"
+        "name": "言語",
+        "description": "インターフェースの言語。可能な場合、ゲームデータはこの言語で取得されます。"
+      },
+      "thumbnail": {
+        "name": "サムネイルの向き",
+        "description": "縦向きは縦長のカバーアートを表示し、横向きは横長の Steam ヘッダー画像を表示します。",
+        "value": {
+          "portrait": "縦向き",
+          "landscape": "横向き"
+        }
       },
       "hiddenAch": {
-        "name": "個の秘密の実績"
+        "name": "隠し実績",
+        "description": "隠し実績の名前と説明を、解除する前に表示します。"
+      },
+      "mergeDuplicates": {
+        "name": "重複を統合",
+        "description": "複数のソースで見つかった同じゲームを 1 つのタイルに統合します。"
+      },
+      "timeMerge": {
+        "name": "タイムスタンプの統合",
+        "description": "重複を統合する際、どちらの時間値を優先しますか？",
+        "value": {
+          "recent": "新しい",
+          "oldest": "古い"
+        }
+      },
+      "hideZero": {
+        "name": "0% のゲームを非表示",
+        "description": "まだ実績を 1 つも解除していないゲームを非表示にします。"
+      },
+      "startup": {
+        "name": "起動時に開始",
+        "description": "Achievement Watcher を Windows と一緒に自動起動し、トレイに隠します。"
+      },
+      "onboarding": {
+        "name": "初回起動ガイド",
+        "button": "ガイドを開く",
+        "description": "API キー、プロフィール、フォルダー、ソース、通知のセットアップガイドを再度開きます。"
+      },
+      "hardwareAccel": {
+        "name": "ハードウェアアクセラレーションを無効化",
+        "description": "オーバーレイやウィンドウの動作が不安定な場合、GPU アクセラレーションをオフにします。再起動が必要です。"
+      },
+      "tray": {
+        "name": "システムトレイに最小化",
+        "description": "通知をより速く起動するため、アプリをバックグラウンドで実行し続けます。"
+      }
+    },
+    "emulator": {
+      "nav": "エミュレーター",
+      "sectionTitle": "エミュレーター設定 (GBE Fork)",
+      "intro": "右クリックの「エミュレーター修正を適用」アクションで使用される既定値。Steam の回避方法と取得するゲームデータ量を選択します。",
+      "coreTitle": "基本設定",
+      "advancedTitle": "詳細オプション",
+      "loginTitle": "Steam ログイン（使い捨てアカウントのみ）",
+      "loginWarning": "使い捨てアカウント",
+      "loginDesc": "「データソース」が Steam ログインに設定されている場合のみ使用されます。パスワードはこの PC に暗号化して保存され、generate_emu_config によって Steam にのみ送信されます。必要に応じて Steam Guard 2FA が求められます。毎回確認する場合は空欄のままにしてください。",
+      "loginUser": "Steam ユーザー名",
+      "loginPass": "Steam パスワード",
+      "loginTest": "接続をテスト",
+      "loginTestHint": "Steam / Steam Guard",
+      "loginTestRunning": "Steam に接続中… 要求されたら Steam Guard コードを入力してください。",
+      "loginTestSuccess": "Steam ログインに成功しました。generate_emu_config の更新トークンが保存されました。",
+      "loginTestMissing": "先に Steam のユーザー名とパスワードを入力してください。",
+      "loginTestFailed": "Steam ログインに失敗しました",
+      "autoApply": {
+        "name": "新しく検出されたゲームを自動修正",
+        "description": "新しく検出された未設定のエミュレートゲームに対し、「エミュレーター修正を適用」の全工程を一度実行します：SteamStub 処理、GBE Fork、実績、DLC、ID／言語、有効な場合は詳細データ。既定で有効。",
+        "value": {
+          "false": "無効",
+          "true": "有効"
+        }
+      },
+      "mode": {
+        "name": "エミュレーターモード",
+        "description": "Regular はゲームの steam_api(64).dll を差し替えます。ColdClient はそれを残し、ローダー経由で GBE Fork のエミュレート steamclient を読み込みます — 手強いゲームに対してより広い対応。",
+        "value": {
+          "regular": "Regular (DLL を差し替え)",
+          "coldclient": "ColdClient (GBE Fork)"
+        }
+      },
+      "steamSettings": {
+        "name": "steam_settings データ",
+        "description": "Simple は Achievement Watcher 独自の取得（匿名）を使用します。Advanced はデポ／言語対応のため generate_emu_config を実行します。",
+        "value": {
+          "simple": "Simple (高速)",
+          "advanced": "Advanced (完全)"
+        }
+      },
+      "login": {
+        "name": "データソース (Advanced)",
+        "description": "Steam ログインにより generate_emu_config が完全な DLC／デポデータを取得できます。必ず使い捨てアカウントのみを使用してください — メインアカウントは絶対に使わないでください。",
+        "value": {
+          "anonymous": "匿名",
+          "steam": "Steam ログイン"
+        }
+      },
+      "steamless": {
+        "name": "SteamStub DRM を自動解除",
+        "description": "パッチ前にゲームの exe で Steamless を実行し、Valve の SteamStub DRM を除去します（オリジナルは .steamstub.bak として保持）。スタブがない場合は何もしません。",
+        "value": {
+          "false": "無効",
+          "true": "有効"
+        }
+      },
+      "steamlessExp": {
+        "name": "Steamless 実験的",
+        "description": "展開時にセクションを再整列し、強力に保護された EXE との互換性を高めます。自動解除が有効な場合のみ意味があります。",
+        "value": {
+          "false": "無効",
+          "true": "有効"
+        }
+      },
+      "crackFix": {
+        "name": "コミュニティ修正を自動適用 (CrakFiles)",
+        "description": "修正のたびに、CrakFiles リストから確実に一致するコミュニティ修正を自動でダウンロードして適用します（名前の完全一致 + pixeldrain リンクのみ。上書きされるファイルはバックアップされます）。既定で有効 — AW がコミュニティソースからゲームファイルをダウンロード／上書きするのを望まない場合は無効にしてください。",
+        "value": {
+          "false": "無効",
+          "true": "有効"
+        }
+      },
+      "apiCheckBypass": {
+        "name": "Steam API 所有権チェックの回避",
+        "description": "既定で無効。SteamAutoCrack の回避プロキシ（winmm.dll）+ リダイレクト設定を配置し、差し替え後に元の steam_api/exe を再チェックするゲームでも起動・解除できるようにします。プロキシは公式リリースからダウンロードします。",
+        "value": {
+          "false": "無効",
+          "true": "有効"
+        }
+      },
+      "launchBat": {
+        "name": "フォールバック用に Launch.bat を作成",
+        "description": "Steamless が SteamStub の exe を解除できず AW が ColdClient にフォールバックする場合、対応するローダー用に Launch.bat も書き込みます。",
+        "value": {
+          "true": "有効",
+          "false": "無効"
+        }
+      },
+      "checkUpdates": {
+        "name": "GBE Fork の更新を確認",
+        "description": "適用前に最新の GBE Fork ビルドを GitHub で再確認します（新しい場合のみダウンロード）。常にキャッシュ済みビルドを使用するには無効にしてください。",
+        "value": {
+          "true": "有効",
+          "false": "無効"
+        }
+      },
+      "goldbergIcons": {
+        "name": "GBE/Goldberg — アイコンをダウンロード",
+        "description": "有効にすると、欠落した steam_settings/achievements.json を書き込む自動修復が、実績アイコンも Steam CDN からダウンロードします。",
+        "value": {
+          "disabled": "無効 (高速)",
+          "enabled": "有効"
+        }
+      }
+    },
+    "notification": {
+      "title": {
+        "common": "共通",
+        "toast": "トースト通知",
+        "transport": "トランスポート",
+        "chromium": "Chromium 通知",
+        "watchdog": "Watchdog",
+        "test": "テスト",
+        "overlay": "ゲーム内オーバーレイ"
+      },
+      "info": {
+        "toast": "一部の機能は Windows 10 でのみ利用できます",
+        "autoSave": "このタブの変更は自動的に保存されます。"
+      },
+      "test": {
+        "achievement": "実績",
+        "progress": "進捗",
+        "playtime": "プレイ時間",
+        "toast": "Windows トースト",
+        "platinum": "プラチナ",
+        "overlay": "オーバーレイ"
+      },
+      "option": {
+        "transportMode": {
+          "name": "通知のトランスポート",
+          "description": "アクティブな通知システムを 1 つ選択します",
+          "value": {
+            "chromium": "Chromium (スタイル付き)",
+            "toast": "Windows トースト",
+            "none": "無効"
+          }
+        },
+        "notification": {
+          "name": "通知",
+          "description": "可能なら実績解除時に通知します"
+        },
+        "rumble": {
+          "name": "ゲームパッドの振動 (XInput)",
+          "description": "実績解除時に最初のコントローラーを振動させます"
+        },
+        "notifyOnProgress": {
+          "name": "進捗レポート",
+          "description": "可能なら実績の進捗を通知します"
+        },
+        "playtime": {
+          "name": "プレイ時間の追跡",
+          "description": "追跡の開始／終了時に通知します"
+        },
+        "platinum": {
+          "name": "プラチナ (100%)",
+          "description": "ゲームが 100% 達成に到達したとき専用のトーストを表示します"
+        },
+        "mode": {
+          "name": "通知の種類",
+          "description": "解除通知の表示場所：Windows トースト、ゲーム内オーバーレイ、または両方",
+          "value": {
+            "toast": "トースト",
+            "overlay": "オーバーレイ",
+            "both": "両方"
+          }
+        },
+        "overlayPreset": "プリセット",
+        "overlayPresetDesc": "ゲーム内オーバーレイのポップアップの外観テーマ",
+        "overlayPosition": "位置",
+        "overlayPositionDesc": "オーバーレイのポップアップが画面上のどこに表示されるか",
+        "overlayScale": "サイズ",
+        "overlayScaleDesc": "オーバーレイのポップアップのサイズ",
+        "overlaySound": "サウンド",
+        "overlaySoundDesc": "オーバーレイのポップアップ表示時に再生されるサウンド",
+        "overlaySoundImport": "カスタムサウンドをインポート…",
+        "overlayVolume": "音量",
+        "overlayVolumeDesc": "オーバーレイのポップアップ音の音量（トースト音は Windows が制御します）",
+        "overlayDuration": "表示時間",
+        "overlayDurationDesc": "オーバーレイのポップアップが画面に表示される時間。Auto はプリセットに任せ、値を指定すると表示時間を制限します。",
+        "overlayDurationAuto": "Auto",
+        "customiser": {
+          "title": "カスタムプリセット",
+          "intro": "独自のオーバーレイ通知プリセットを作成します。",
+          "name": "名前",
+          "namePlaceholder": "マイプリセット",
+          "background": "背景",
+          "text": "テキスト",
+          "accent": "アクセント",
+          "opacity": "不透明度",
+          "fontSize": "フォントサイズ",
+          "corners": "角",
+          "iconSize": "アイコンサイズ",
+          "create": "プリセットを作成",
+          "errName": "先に名前を入力してください",
+          "created": "作成して選択しました：",
+          "failed": "失敗"
+        },
+        "souvenirTitle": "記念スクリーンショット",
+        "souvenirScreenshot": "解除時にスクリーンショット",
+        "souvenirScreenshotDesc": "実績解除時に画面をキャプチャします。ゲームごとに保存されます。",
+        "souvenirDir": "保存フォルダー",
+        "souvenirDirHelp": "スクリーンショットは <フォルダー>\\<ゲーム>\\<日付> - <実績>.png に保存されます。空欄 = ピクチャ\\Achievement Watcher。",
+        "soundNone": "なし",
+        "position": {
+          "centerBottom": "下中央",
+          "centerTop": "上中央",
+          "topLeft": "左上",
+          "topRight": "右上",
+          "bottomLeft": "左下",
+          "bottomRight": "右下",
+          "middleLeft": "中央左",
+          "middleRight": "中央右",
+          "custom": "カスタム"
+        },
+        "reposition": "ポップアップの位置を変更（好きな場所にドラッグ）",
+        "customToastAudio": {
+          "name": "トースト音",
+          "description": "トースト表示時に再生する音を指定します",
+          "value": {
+            "systemDefault": "既定",
+            "muted": "ミュート"
+          }
+        },
+        "toastSouvenir": {
+          "name": "トースト内の記念",
+          "description": "記念スクリーンショットをトースト内に表示します",
+          "value": {
+            "top": "上",
+            "bottom": "下"
+          }
+        },
+        "groupToast": {
+          "name": "ゲームごとにグループ化",
+          "description": "アクションセンター内で同じゲームのトーストを視覚的にグループ化します"
+        },
+        "useToast": {
+          "name": "トースト通知",
+          "description": "Windows 8-10 のトースト通知"
+        },
+        "useWinRT": {
+          "name": "WinRT API",
+          "description": "PowerShell の代わりに、利用可能なら WinRT を使用してより高速なトースト"
+        },
+        "useBalloon": {
+          "name": "バルーンチップ",
+          "description": "トースト通知が失敗したときバルーンチップにフォールバックします"
+        },
+        "useWS": {
+          "description": "接続中のすべてのクライアントに実績をブロードキャストします"
+        },
+        "useChromium": {
+          "name": "Chromium 通知",
+          "description": "Chromium を使用してスタイル付き通知を表示します。"
+        }
+      }
+    },
+    "souvenir": {
+      "title": {
+        "screenshot": "スクリーンショット",
+        "video": "動画"
+      },
+      "option": {
+        "screenshot": {
+          "name": "記念",
+          "description": "実績を解除したときにスクリーンショットを撮ります"
+        },
+        "video": {
+          "name": "記念動画",
+          "description": "GPU のハードウェアエンコーダーを使い、実績を解除したときに短い動画を録画します"
+        },
+        "overwrite": {
+          "name": "ファイルが存在する場合は上書き"
+        },
+        "custom_dir": {
+          "name": "保存場所"
+        },
+        "codec": {
+          "name": "動画コーデック",
+          "description": "H.265/HEVC は高性能ですが対応が少なめです"
+        },
+        "colorDepth": {
+          "name": "色深度",
+          "description": "10 ビットは H.265/HEVC でのみ利用できます"
+        },
+        "duration": {
+          "name": "長さ"
+        },
+        "framerate": {
+          "name": "フレームレート"
+        },
+        "cursor": {
+          "name": "マウスカーソル"
+        }
+      }
+    },
+    "folder": {
+      "headline": "実績ファイルを探す場所：",
+      "default": "既定のディレクトリ",
+      "custom": "ユーザーディレクトリ",
+      "addInfo": [
+        "appid フォルダーを含むフォルダーを選択してください。",
+        "ALI213、Hoodlum、TENOKE、UniverseLAN、RPCS3 の場合は、次のファイルがあるフォルダーを選択してください：",
+        "ALI213.ini、valve.ini、hlm.ini、ds.ini、steam_api.ini、SteamConfig.ini、tenoke.ini、UniverseLAN.ini または RPCS3.exe。"
+      ],
+      "add": "フォルダーを追加",
+      "library": "ライブラリフォルダー",
+      "libraryInfo": [
+        "多数のゲームインストールフォルダーを含むフォルダーを選択してください（例：D:\\Games、E:\\SteamLibrary）。",
+        "中のすべてのゲームは、一度も起動していなくても Goldberg/GBE 実績がスキャンされます。"
+      ],
+      "addLibrary": "ライブラリフォルダーを追加",
+      "generateConfigs": "設定を生成"
+    },
+    "source": {
+      "title": "ゲームソース",
+      "legitSteam": {
+        "name": "Steam ゲームを表示",
+        "description": "Steam がインストールされ、Steam プロフィールが公開されている必要があります！",
+        "value": {
+          "none": "なし",
+          "installed": "インストール済み",
+          "owned": "所有"
+        }
+      },
+      "steamEmu": {
+        "name": "Steam エミュレーター",
+        "description": "Goldberg / GBE Fork や類似の Steam エミュレーターが書き込んだ実績を読み取ります。"
+      },
+      "greenLuma": {
+        "description": "GreenLuma 2020/2024/2025 および Reborn"
+      },
+      "rpcs3": {
+        "description": "PlayStation 3 エミュレーター"
+      },
+      "lumaPlay": {
+        "description": "Uplay エミュレーター"
+      },
+      "ea": {
+        "name": "EA Desktop",
+        "description": "EA Desktop のローカル実績ログを読み取ります — EA の管理フォルダー外にインストールされたゲーム（クラック版）のみ。"
+      },
+      "importCache": {
+        "name": "通知キャッシュをインポート",
+        "description": "Watchdog のキャッシュを別の実績ソースとしてインポートします"
+      }
+    },
+    "advanced": {
+      "maintenanceTitle": "セットアップとメンテナンス",
+      "fixAll": {
+        "name": "検出されたすべてのゲームを修正",
+        "button": "すべてのゲームを修正",
+        "description": "インストールフォルダーが判明している、検出されたすべてのエミュレートゲームにエミュレーター修正（GBE Fork、実績、DLC）を実行します。",
+        "confirm": "インストールフォルダーが判明している検出済みの各ゲームにエミュレーター修正を適用しますか？ 既存のファイルは上書き前にバックアップされます。",
+        "running": "ゲームを修正中…",
+        "progress": "修正中 %cur% / %total% — %name%",
+        "done": "完了 — %fixed% 個のゲームを修正、%skipped% 個をスキップ、%failed% 個が失敗。",
+        "none": "インストールフォルダーが判明している修正対象の検出済みゲームがありません。"
+      },
+      "diag": {
+        "title": "診断",
+        "apiKeyLabel": "Steam Web API キー：",
+        "apiKeyConfigured": "設定済み",
+        "apiKeyFallback": "未設定 — フォールバックのスクレイピングを使用",
+        "logsFolder": "ログフォルダーを開く",
+        "dataFolder": "データフォルダーを開く",
+        "goldbergTitle": "Goldberg / GBE Fork",
+        "goldbergDesc": "ゲームライブラリフォルダーをスキャンして Goldberg / GBE Fork のインストールを探し、steam_settings/achievements.json スキーマが欠落しているものを示します。1 つを修正するには、ゲームの右クリックメニュー（診断 / 修復）を使用してください。",
+        "scanFolder": "フォルダーをスキャン…",
+        "winNotifTitle": "Windows 通知設定",
+        "focusAssist": "集中モード",
+        "notifActions": "通知とアクション",
+        "winNotifDesc": "Windows 10 >= 1903 ：全画面アプリ向けの集中モード自動ルール（既定ではアラームのみ）がトースト通知を抑制することがあります — ゲーム中にトーストが表示されない場合は「オフ」に設定してください。"
+      },
+      "blacklistTitle": "AppID ブラックリスト",
+      "blacklistButton": "ブラックリストをリセット",
+      "blacklistInfo": "ゲームのタイルを右クリックしてブラックリストに追加します。",
+      "apiKey": {
+        "title": "Steam Web API キー",
+        "description": "一部の Steam データには個人の Steam Web API キーが必要です。",
+        "fallback": "自動取得を使用するには、この欄を空欄のままにしてください。失敗した場合はご自身のキーを入力してください。",
+        "create": "API キーを作成",
+        "terms": "Steam API 利用規約",
+        "label": "あなたの Steam Web API キー",
+        "security": "キーはこのコンピューターに保存される前に AES-256-CBC で暗号化されます。"
+      },
+      "mainSteam": {
+        "title": "メイン Steam アカウント",
+        "name": "ユーザーで絞り込み",
+        "description": "選択したアカウントの Steam 実績のみを表示します"
       }
     }
   }

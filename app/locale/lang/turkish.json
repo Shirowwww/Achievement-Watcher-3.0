@@ -1,31 +1,89 @@
 {
   "achievements": "Başarımlar",
-  "perfectGame": "Kusursuz Oyunlar",
-  "completionRate": "Ort. Oyun Tamamlama Oranı",
-  "emptyList": "Oyun bulunamadı",
+  "perfectGame": "Tamamlanan oyunlar",
+  "completionRate": "Ort. tamamlama oranı",
+  "emptyList": "Oyun yok",
+  "emptyListHint": "Henüz başarım bulunamadı. Oyunlarının başarım dosyalarını kaydettiği klasörü ekle, ardından yenile (F5).",
+  "emptyListAction": "Klasör ayarlarını aç",
+  "installedOnly": "Yalnızca yüklü oyunları göster",
+  "sort": {
+    "tooltip": {
+      "alpha": "Ad: A → Z",
+      "percent": "İlerleme",
+      "time": "Başarım tarihi",
+      "played": "Son oynama"
+    },
+    "label": {
+      "alpha": {
+        "asc": "Ad: A → Z",
+        "desc": "Ad: Z → A"
+      },
+      "percent": {
+        "asc": "İlerleme: düşük → yüksek",
+        "desc": "İlerleme: yüksek → düşük"
+      },
+      "time": {
+        "asc": "Başarım: eskiden → yeniye",
+        "desc": "Başarım: yeniden → eskiye"
+      },
+      "played": {
+        "asc": "Oynama: eskiden → yeniye",
+        "desc": "Oynama: yeniden → eskiye"
+      },
+      "rarity": {
+        "asc": "Nadirlik: en nadir → en yaygın",
+        "desc": "Nadirlik: en yaygın → en nadir"
+      }
+    },
+    "action": {
+      "reverse": "tersine çevirmek için tıkla",
+      "clear": "sıralamayı temizlemek için tıkla"
+    }
+  },
   "loading": "Yükleniyor",
-  "unlocked": "Kilidi açıldı",
+  "unlocked": "Açıldı",
   "locked": "Kilitli",
-  "globalStat": "oyuncuların % 'si buna sahip",
-  "hiddenRemain": "kalan gizli başarımlar",
-  "revealedOnceUnlocked": "Her bir başarımın açıklamaları, kilidi açıldığında gösterilecektir.",
-  "noneUnlocked": "Henüz hiçbir başarımın kilidi açılmadı",
+  "globalStat": "oyuncuda bu var",
+  "hiddenRemain": "gizli başarım kaldı",
+  "revealedOnceUnlocked": "Her başarımın ayrıntıları açıldığında gösterilecek",
+  "hiddenDescriptionPlaceholder": "Gizli — göstermek için tıkla",
+  "noneUnlocked": "Henüz açılmış başarım yok",
   "play": "Oynamaya başla !",
-  "scrollUp": "Yukarı kaydır",
-  "allGamesBackButton": "Bütün oyunlar",
+  "noneUnlockedHint": "Hiç açılan görmüyor musun? SSS / Sorun Giderme bölümüne bak:",
+  "scrollUp": "Yukarı çık",
+  "allGamesBackButton": "Tüm oyunlar",
   "removeFromList": "Listeden kaldır",
-  "buildIconPrefetchCache": "Bildirim simgesi önbelleği oluştur",
+  "buildIconPrefetchCache": "Başarım simgelerini önbelleğe al",
+  "contextMenu": {
+    "resetPlaytime": "Oynama süresini sıfırla",
+    "muteProgress": "İlerleme bildirimlerini sustur",
+    "unmuteProgress": "İlerleme bildirimlerini aç",
+    "generateAchievementsJson": "achievements.json dışa aktar",
+    "diagnose": "Emülatörü tanıla",
+    "backupGBE": "Yapılandırmayı yedekle…",
+    "restoreGBE": "Yapılandırma yedeğini geri yükle…",
+    "installGBE": "Emülatör düzeltmesini uygula…",
+    "removeDRM": "DRM'yi kaldır…",
+    "crackfix": "Topluluk düzeltmesi ara…",
+    "openIconCache": "Simge önbelleği",
+    "openDbCache": "Veri önbelleği (.db)",
+    "openInstallLocation": "Oyun kurulumu",
+    "groupGame": "Oyun",
+    "groupEmulator": "Emülatör ve araçlar",
+    "groupFolders": "Klasörler",
+    "groupLinks": "Yararlı bağlantılar",
+    "groupCover": "Kapak"
+  },
   "settings": {
     "title": "Ayarlar",
     "sideMenu": {
-      "general": "Genel ",
-      "overlay": "Arayüz",
+      "general": "Genel",
+      "overlay": "Yer paylaşımı",
       "notification": "Bildirim",
-      "souvenir": "Hatıra",
+      "souvenir": "Anı",
       "folder": "Klasörler",
       "source": "Kaynak",
-      "advanced": "Gelişmiş",
-      "debug": "Hata ayıklama"
+      "advanced": "Gelişmiş"
     },
     "common": {
       "show": "Göster",
@@ -34,150 +92,379 @@
       "disable": "Devre dışı",
       "cancel": "İptal",
       "save": "Kaydet",
-      "version": "Versiyon",
+      "version": "Sürüm",
+      "maintainedBy": "geliştiren",
+      "fork": "Fork",
+      "original": "Orijinal v1.6.8",
       "edit": "Düzenle"
     },
-    "overlay": {
-      "position": "Bildirim Pozisyonu",
-      "preset": { "name": "Bildirim Ön Ayarı", "description": "Legacy (eski) sürüm, 'eski' bildirim sistemini kullanır" },
-      "hotkey": {
-        "name": "Arayüz Kısayol Tuşu",
-        "description": "Oyun sırasında, oyunun başarılarını göstermek için bu kısayol tuşuna basabilirsiniz."
+    "watchdog": {
+      "startup": {
+        "name": "Oturum açılışında çalıştır",
+        "description": "Watchdog, sistem açıldığında otomatik olarak başlar."
       },
-      "scale": "Bildirim Boyutu",
+      "kill": {
+        "name": "Çalışmaya devam et",
+        "description": "Ana uygulama kapansa bile Watchdog'u çalışır durumda tut."
+      }
+    },
+    "overlay": {
+      "position": "Başarım konumu",
+      "progressPosition": "İlerleme konumu",
+      "playtimePosition": "Oynama süresi konumu",
+      "preset": {
+        "name": "Bildirim ön ayarı",
+        "description": "Legacy, „eski” bildirim sistemini kullanır"
+      },
+      "hotkey": {
+        "name": "Yer paylaşımı kısayolu",
+        "description": "Oyun içindeyken başarım yer paylaşımını göstermek için bu kısayola bas."
+      },
+      "scale": "Bildirim boyutu",
       "duration": "Animasyon süresi"
     },
     "general": {
+      "sectionTitle": "Arayüz ve davranış",
       "language": {
         "name": "Dil",
-        "description": ["Çeviriye yardımcı olun", "buradan"]
+        "description": "Arayüz dili. Oyun verileri, mevcut olduğunda bu dilde alınır."
       },
       "thumbnail": {
-        "name": "Önizleme görselinin yönü",
+        "name": "Küçük resim yönü",
+        "description": "Dikey, uzun kapak görsellerini gösterir; Yatay, geniş Steam başlık görsellerini gösterir.",
         "value": {
           "portrait": "Dikey",
           "landscape": "Yatay"
         }
       },
       "hiddenAch": {
-        "name": "Gizli Başarımlar"
+        "name": "Gizli başarımlar",
+        "description": "Gizli başarımların adını ve açıklamasını açmadan önce göster."
       },
       "mergeDuplicates": {
-        "name": "Kopyaları Birleştir"
+        "name": "Yinelenenleri birleştir",
+        "description": "Birden çok kaynakta bulunan aynı oyunu tek bir karoda birleştir."
       },
       "timeMerge": {
-        "name": "Zamana göre birleştirme",
-        "description": "Kopyaları birleştirirken hangi zaman değeri tercih edilsin?",
+        "name": "Zaman damgası birleştirme",
+        "description": "Yinelenenler birleştirilirken hangi zaman değeri tercih edilir ?",
         "value": {
-          "recent": "En son",
+          "recent": "Yeni",
           "oldest": "En eski"
         }
       },
       "hideZero": {
-        "name": "%0 Başarımlı Oyunları Gizle"
+        "name": "%0 oyunları gizle",
+        "description": "Henüz hiçbir başarım açmadığın oyunları gizler."
+      },
+      "startup": {
+        "name": "Başlangıçta çalıştır",
+        "description": "Achievement Watcher'ı Windows ile otomatik olarak, tepside gizli başlatır."
+      },
+      "onboarding": {
+        "name": "İlk çalıştırma kılavuzu",
+        "button": "Kılavuzu aç",
+        "description": "API anahtarı, profil, klasörler, kaynaklar ve bildirimler için kurulum kılavuzunu yeniden aç."
+      },
+      "hardwareAccel": {
+        "name": "Donanım hızlandırmayı devre dışı bırak",
+        "description": "Yer paylaşımı veya pencere düzgün çalışmıyorsa GPU hızlandırmasını kapat. Yeniden başlatma gerektirir."
+      },
+      "tray": {
+        "name": "Sistem tepsisine küçült",
+        "description": "Bildirimlerin daha hızlı başlaması için uygulamayı arka planda çalışır tut."
+      }
+    },
+    "emulator": {
+      "nav": "Emülatör",
+      "sectionTitle": "Emülatör kurulumu (GBE Fork)",
+      "intro": "Sağ tık Emülatör düzeltmesini uygula eyleminin kullandığı varsayılanlar. Steam'in nasıl atlatılacağını ve ne kadar oyun verisinin alınacağını seç.",
+      "coreTitle": "Temel yapılandırma",
+      "advancedTitle": "Gelişmiş seçenekler",
+      "loginTitle": "Steam girişi (yalnızca tek kullanımlık hesap)",
+      "loginWarning": "Tek kullanımlık hesap",
+      "loginDesc": "Yalnızca „Veri kaynağı” Steam girişi olarak ayarlandığında kullanılır. Parola bu bilgisayarda şifreli olarak saklanır ve yalnızca generate_emu_config tarafından Steam'e gönderilir. Gerektiğinde Steam Guard 2FA istenir. Her seferinde sorulması için boş bırak.",
+      "loginUser": "Steam kullanıcı adı",
+      "loginPass": "Steam parolası",
+      "loginTest": "Bağlantıyı test et",
+      "loginTestHint": "Steam / Steam Guard",
+      "loginTestRunning": "Steam'e bağlanılıyor… İstenirse Steam Guard kodunu gir.",
+      "loginTestSuccess": "Steam girişi başarılı. generate_emu_config yenileme jetonu kaydedildi.",
+      "loginTestMissing": "Önce Steam kullanıcı adını ve parolasını gir.",
+      "loginTestFailed": "Steam girişi başarısız",
+      "autoApply": {
+        "name": "Yeni algılanan oyunları otomatik düzelt",
+        "description": "Yeni algılanan, yapılandırılmamış bir emüle oyun için tüm Emülatör düzeltmesini uygula zincirini bir kez çalıştırır: SteamStub işleme, GBE Fork, başarımlar, DLC'ler, kimlik/dil ve etkinse Gelişmiş veriler. Varsayılan olarak etkin.",
+        "value": {
+          "false": "Devre dışı",
+          "true": "Etkin"
+        }
+      },
+      "mode": {
+        "name": "Emülatör modu",
+        "description": "Regular, oyunun steam_api(64).dll dosyasını değiştirir. ColdClient onu tutar ve GBE Fork'un emüle steamclient'ını bir loader aracılığıyla yükler — inatçı oyunlar için daha geniş kapsama.",
+        "value": {
+          "regular": "Regular (DLL değiştir)",
+          "coldclient": "ColdClient (GBE Fork)"
+        }
+      },
+      "steamSettings": {
+        "name": "steam_settings verisi",
+        "description": "Simple, Achievement Watcher'ın kendi getirmesini kullanır (anonim). Advanced, depo/dil kapsamı için generate_emu_config çalıştırır.",
+        "value": {
+          "simple": "Simple (hızlı)",
+          "advanced": "Advanced (tam)"
+        }
+      },
+      "login": {
+        "name": "Veri kaynağı (Advanced)",
+        "description": "Steam girişi, generate_emu_config'in tam DLC/depo verisini çekmesini sağlar. YALNIZCA tek kullanımlık bir hesap kullan — asla ana hesabını.",
+        "value": {
+          "anonymous": "Anonim",
+          "steam": "Steam girişi"
+        }
+      },
+      "steamless": {
+        "name": "SteamStub DRM'yi otomatik çıkar",
+        "description": "Yamadan önce oyunun exe dosyasında Steamless çalıştırarak Valve'ın SteamStub DRM'sini çıkarır (orijinal .steamstub.bak olarak saklanır). Stub yoksa etkisizdir.",
+        "value": {
+          "false": "Devre dışı",
+          "true": "Etkin"
+        }
+      },
+      "steamlessExp": {
+        "name": "Steamless deneysel",
+        "description": "Çıkarma sırasında bölümleri yeniden hizalayarak ağır korumalı EXE'lerle daha iyi uyumluluk sağlar. Yalnızca otomatik çıkarma açıkken önemlidir.",
+        "value": {
+          "false": "Devre dışı",
+          "true": "Etkin"
+        }
+      },
+      "crackFix": {
+        "name": "Topluluk düzeltmesini otomatik uygula (CrakFiles)",
+        "description": "Her düzeltmede, CrakFiles listesinden güvenle eşleşen bir topluluk düzeltmesini otomatik olarak indirir ve uygular (yalnızca tam ad eşleşmesi + pixeldrain bağlantısı; üzerine yazılan dosyalar yedeklenir). Varsayılan olarak açık — AW'nin bir topluluk kaynağından oyun dosyalarını indirmesini/üzerine yazmasını istemiyorsan kapat.",
+        "value": {
+          "false": "Devre dışı",
+          "true": "Etkin"
+        }
+      },
+      "apiCheckBypass": {
+        "name": "Steam API sahiplik denetimini atla",
+        "description": "Varsayılan olarak kapalı. SteamAutoCrack'in atlatma proxy'sini (winmm.dll) + bir yönlendirme yapılandırması bırakır; böylece değiştirmeden sonra orijinal steam_api/exe'yi yeniden denetleyen oyunlar yine de başlar ve açılır. Proxy'yi resmi sürümünden indirir.",
+        "value": {
+          "false": "Devre dışı",
+          "true": "Etkin"
+        }
+      },
+      "launchBat": {
+        "name": "Yedek için Launch.bat oluştur",
+        "description": "Steamless bir SteamStub exe'yi çıkaramadığında ve AW ColdClient'a geri döndüğünde, ilgili loader için ayrıca bir Launch.bat yazar.",
+        "value": {
+          "true": "Etkin",
+          "false": "Devre dışı"
+        }
+      },
+      "checkUpdates": {
+        "name": "GBE Fork güncellemelerini denetle",
+        "description": "Uygulamadan önce en son GBE Fork derlemesi için GitHub'ı yeniden denetler (yalnızca daha yeniyse indirir). Her zaman önbellekteki derlemeyi kullanmak için kapat.",
+        "value": {
+          "true": "Etkin",
+          "false": "Devre dışı"
+        }
+      },
+      "goldbergIcons": {
+        "name": "GBE/Goldberg — simgeleri indir",
+        "description": "Etkinleştirildiğinde, eksik bir steam_settings/achievements.json yazan otomatik onarım, başarım simgelerini de Steam CDN'den indirir.",
+        "value": {
+          "disabled": "Devre dışı (hızlı)",
+          "enabled": "Etkin"
+        }
       }
     },
     "notification": {
       "title": {
-        "common": "Yaygın",
-        "toast": "Kısa süreli açılır bildirim",
-        "transport": "Aktarma",
-        "chromium": "Chromium bildirim sistemi"
+        "common": "Ortak",
+        "toast": "Toast bildirimi",
+        "transport": "Taşıma",
+        "chromium": "Chromium bildirimi",
+        "watchdog": "Watchdog",
+        "test": "Test",
+        "overlay": "Oyun içi yer paylaşımı"
       },
       "info": {
-        "toast": "Bazı özellikler yalnızca Windows 10 'da mevcuttur"
+        "toast": "Bazı özellikler yalnızca Windows 10'da kullanılabilir",
+        "autoSave": "Bu sekmedeki değişiklikler otomatik olarak kaydedilir."
+      },
+      "test": {
+        "achievement": "Başarım",
+        "progress": "İlerleme",
+        "playtime": "Oynama süresi",
+        "toast": "Windows Toast",
+        "platinum": "Platin",
+        "overlay": "Yer paylaşımı"
       },
       "option": {
+        "transportMode": {
+          "name": "Bildirim taşıması",
+          "description": "Tek bir etkin bildirim sistemi seç",
+          "value": {
+            "chromium": "Chromium (stilli)",
+            "toast": "Windows Toast",
+            "none": "Devre dışı"
+          }
+        },
         "notification": {
           "name": "Bildirim",
-          "description": "Mümkünse başarı kilidini açtığında bildir"
+          "description": "Mümkünse başarım açıldığında bildir"
         },
         "rumble": {
-          "name": "Gamepad Titreşimi (XInput)",
-          "description": "Bir başarının kilidini açarken ilk olan kontrolcü titretir"
+          "name": "Oyun kumandası titreşimi (XInput)",
+          "description": "Bir başarım açıldığında ilk kumandayı titretir"
         },
         "notifyOnProgress": {
           "name": "İlerleme raporu",
-          "description": "Mümkünse başarı ilerlemesini bildirin"
+          "description": "Mümkünse başarım ilerlemesinde bildir"
         },
         "playtime": {
-          "name": "Oyun süresi takibi",
-          "description": "İzleme başlarken/biterken bildir"
+          "name": "Oynama süresi takibi",
+          "description": "Takip başlangıcı/bitişinde bildir"
         },
+        "platinum": {
+          "name": "Platin (%100)",
+          "description": "Bir oyun %100 tamamlamaya ulaştığında özel bir toast gönderir"
+        },
+        "mode": {
+          "name": "Bildirim türü",
+          "description": "Açılış bildirimlerinin nerede görüneceği: Windows toast, oyun içi yer paylaşımı veya her ikisi",
+          "value": {
+            "toast": "Toast",
+            "overlay": "Yer paylaşımı",
+            "both": "Her ikisi"
+          }
+        },
+        "overlayPreset": "Ön ayar",
+        "overlayPresetDesc": "Oyun içi yer paylaşımı açılır penceresinin görsel teması",
+        "overlayPosition": "Konum",
+        "overlayPositionDesc": "Yer paylaşımı açılır penceresinin ekranda nerede görüneceği",
+        "overlayScale": "Boyut",
+        "overlayScaleDesc": "Yer paylaşımı açılır penceresinin boyutu",
+        "overlaySound": "Ses",
+        "overlaySoundDesc": "Yer paylaşımı açılır penceresi göründüğünde çalınan ses",
+        "overlaySoundImport": "Özel bir ses içe aktar…",
+        "overlayVolume": "Ses düzeyi",
+        "overlayVolumeDesc": "Yer paylaşımı açılır penceresi sesinin düzeyi (toast sesi Windows tarafından kontrol edilir)",
+        "overlayDuration": "Süre",
+        "overlayDurationDesc": "Yer paylaşımı açılır penceresinin ekranda ne kadar kalacağı. Auto ön ayarın karar vermesini sağlar; bir değer ekranda kalma süresini sınırlar.",
+        "overlayDurationAuto": "Auto",
+        "customiser": {
+          "title": "Özel ön ayar",
+          "intro": "Kendi yer paylaşımı bildirim ön ayarını oluştur.",
+          "name": "Ad",
+          "namePlaceholder": "Ön ayarım",
+          "background": "Arka plan",
+          "text": "Metin",
+          "accent": "Vurgu",
+          "opacity": "Saydamlık",
+          "fontSize": "Yazı boyutu",
+          "corners": "Köşeler",
+          "iconSize": "Simge boyutu",
+          "create": "Ön ayar oluştur",
+          "errName": "Önce bir ad gir",
+          "created": "Oluşturuldu ve seçildi:",
+          "failed": "Başarısız"
+        },
+        "souvenirTitle": "Anı ekran görüntüsü",
+        "souvenirScreenshot": "Açılışta ekran görüntüsü",
+        "souvenirScreenshotDesc": "Bir başarım açıldığında ekranı yakalar. Oyun başına kaydedilir.",
+        "souvenirDir": "Kayıt klasörü",
+        "souvenirDirHelp": "Ekran görüntüleri <klasör>\\<oyun>\\<tarih> - <başarım>.png içine kaydedilir. Boş = Resimler\\Achievement Watcher.",
+        "soundNone": "Yok",
+        "position": {
+          "centerBottom": "Alt orta",
+          "centerTop": "Üst orta",
+          "topLeft": "Üst sol",
+          "topRight": "Üst sağ",
+          "bottomLeft": "Alt sol",
+          "bottomRight": "Alt sağ",
+          "middleLeft": "Orta sol",
+          "middleRight": "Orta sağ",
+          "custom": "Özel"
+        },
+        "reposition": "Açılır pencereyi yeniden konumlandır (istediğin yere sürükle)",
         "customToastAudio": {
-          "name": "Bildirim sesi",
-          "description": "Bir bildirim görüntülendiğinde çalınacak sesi belirler",
+          "name": "Toast sesi",
+          "description": "Bir toast görüntülendiğinde çalınacak sesi belirtir",
           "value": {
             "systemDefault": "Varsayılan",
             "muted": "Sessiz"
           }
         },
         "toastSouvenir": {
-          "name": "Hatıra bildirimi",
-          "description": "Bildirimin içinde hatıra ekran görüntüsünü görüntüle",
+          "name": "Toast içinde anı",
+          "description": "Anı ekran görüntüsünü toast içinde göster",
           "value": {
-            "top": "Üst",
-            "bottom": "Alt"
+            "top": "Üstte",
+            "bottom": "Altta"
           }
         },
         "groupToast": {
-          "name": "Oyuna göre gruplandır",
-          "description": "Eylem Merkezi'nde aynı oyundan bildirimleri görsel olarak grupla"
+          "name": "Oyuna göre grupla",
+          "description": "Aynı oyunun toast'larını İşlem Merkezi içinde görsel olarak grupla"
         },
         "useToast": {
-          "name": "Kısa süreli açılır bildirim",
-          "description": "Windows 8 -10 bildirimi"
+          "name": "Toast bildirimi",
+          "description": "Windows 8-10 toast bildirimi"
         },
         "useWinRT": {
           "name": "WinRT API",
-          "description": "Daha hızlı bildirim için PowerShell yerine mümkünse WinRT kullanın"
+          "description": "PowerShell yerine daha hızlı toast için varsa WinRT kullan"
         },
         "useBalloon": {
           "name": "Balon ipucu",
-          "description": "Kısa süreli açılır bildirimi başarısız olursa balon ipucuna geri dön"
+          "description": "Toast bildirimi başarısız olursa balon ipucuna geri dön"
         },
         "useWS": {
-          "description": "Başarımı tüm bağlı istemcilere yayınlayın"
+          "description": "Başarımı bağlı tüm istemcilere yayınla"
         },
         "useChromium": {
-          "name": "Chromium bildirim sistemi",
-          "description": "Stilize bildirimleri göstermek için Chromium kullanır."
+          "name": "Chromium bildirimi",
+          "description": "Stilli bildirimler göstermek için Chromium kullanır."
         }
       }
     },
     "souvenir": {
       "title": {
-        "screenshot": "Ekran Görüntüsü",
+        "screenshot": "Ekran görüntüsü",
         "video": "Video"
       },
       "option": {
         "screenshot": {
-          "name": "Hatıra",
-          "description": "Bir başarımın kilidini açtığınızda ekran görüntüsü alın"
+          "name": "Anı",
+          "description": "Bir başarım açtığında ekran görüntüsü al"
         },
         "video": {
-          "name": "Video hatıra",
-          "description": "GPU'nuzun donanım kodlayıcısını kullanarak bir başarının kilidini açtığınızda kısa bir video kaydedin"
+          "name": "Video anı",
+          "description": "Bir başarım açtığında GPU'nun donanım kodlayıcısını kullanarak kısa bir video kaydet"
         },
         "overwrite": {
-          "name": "Varolan dosyanın üzerine yaz"
+          "name": "Dosya varsa üzerine yaz"
         },
         "custom_dir": {
-          "name": "Konumu kaydet"
+          "name": "Kayıt konumu"
         },
         "codec": {
-          "name": "Video kodlayıcı",
-          "description": "H.265/HEVC daha performanslı ancak daha az destekleniyor"
+          "name": "Video kodeği",
+          "description": "H.265/HEVC daha verimli ama daha az destekleniyor"
         },
         "colorDepth": {
           "name": "Renk derinliği",
-          "description": "10bits yalnızca H.265/HEVC için kullanılabilir"
+          "description": "10 bit yalnızca H.265/HEVC için kullanılabilir"
         },
         "duration": {
           "name": "Süre"
         },
         "framerate": {
-          "name": "Kare sayısı"
+          "name": "Kare hızı"
         },
         "cursor": {
           "name": "Fare imleci"
@@ -185,51 +472,99 @@
       }
     },
     "folder": {
-      "headline": "Başarım dosyalarının konumu:",
-      "default": "Varsayılan Dizin",
-      "custom": "Kullanıcı Dizini",
+      "headline": "Başarım dosyalarının nerede aranacağı :",
+      "default": "Varsayılan dizin",
+      "custom": "Kullanıcı dizini",
       "addInfo": [
-        "AppID içeren bir klasör seçin.",
-        "ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 için lütfen klasör seçin",
-        "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini ve RPCS3.exe dosyası bulunur."
+        "appid klasörleri içeren bir klasör seç.",
+        "ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 için şu dosyanın bulunduğu bir klasör seç:",
+        "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini veya RPCS3.exe."
       ],
-      "add": "Klasör ekle"
+      "add": "Klasör ekle",
+      "library": "Kütüphane klasörleri",
+      "libraryInfo": [
+        "Birçok oyun kurulum klasörü içeren bir klasör seç (örn. D:\\Games, E:\\SteamLibrary).",
+        "İçindeki tüm oyunlar, hiç başlatılmamış olsalar bile Goldberg/GBE başarımları için taranacak."
+      ],
+      "addLibrary": "Kütüphane klasörü ekle",
+      "generateConfigs": "Yapılandırmaları oluştur"
     },
     "source": {
+      "title": "Oyun kaynakları",
       "legitSteam": {
-        "name": "Steam Oyunlarını Göster",
-        "description": "Steam yüklenmeli ve Steam profiliniz herkese açık olmalıdır!",
+        "name": "Steam oyunlarını göster",
+        "description": "Steam kurulu ve Steam profilin herkese açık olmalı !",
         "value": {
-          "none": "Boş",
-          "installed": "Yüklendi",
-          "owned": "Sahip Olunan"
+          "none": "Hiçbiri",
+          "installed": "Yüklü",
+          "owned": "Sahip olunan"
         }
       },
       "steamEmu": {
-        "name": "Steam emülatörü"
+        "name": "Steam emülatörü",
+        "description": "Goldberg / GBE Fork ve benzeri Steam emülatörleri tarafından yazılan başarımları okur."
       },
       "greenLuma": {
         "description": "GreenLuma 2020/2024/2025 ve Reborn"
       },
       "rpcs3": {
-        "description": "Playstation 3 Emülatörü"
+        "description": "PlayStation 3 emülatörü"
       },
       "lumaPlay": {
         "description": "Uplay emülatörü"
       },
+      "ea": {
+        "name": "EA Desktop",
+        "description": "EA Desktop'un yerel başarım günlüğünü okur — yalnızca EA'nın yönettiği klasörlerin dışına kurulan oyunlar için (cracklenmiş başlıklar)."
+      },
       "importCache": {
         "name": "Bildirim önbelleğini içe aktar",
-        "description": "İzleyicinin önbelleğini ek bir başarı kaynağı olarak içe aktar"
+        "description": "Watchdog'un önbelleğini başka bir başarım kaynağı olarak içe aktar"
       }
     },
     "advanced": {
-      "blacklistTitle": "AppID Kara Listesi",
+      "maintenanceTitle": "Kurulum ve bakım",
+      "fixAll": {
+        "name": "Algılanan tüm oyunları düzelt",
+        "button": "Tüm oyunları düzelt",
+        "description": "Kurulum klasörü bilinen, algılanan her emüle oyunda emülatör düzeltmesini (GBE Fork, başarımlar, DLC'ler) çalıştırır.",
+        "confirm": "Kurulum klasörü bilinen, algılanan her oyuna emülatör düzeltmesi uygulansın mı? Mevcut dosyalar üzerine yazılmadan önce yedeklenir.",
+        "running": "Oyunlar düzeltiliyor…",
+        "progress": "Düzeltiliyor %cur% / %total% — %name%",
+        "done": "Bitti — %fixed% oyun düzeltildi, %skipped% atlandı, %failed% başarısız.",
+        "none": "Düzeltilecek, kurulum klasörü bilinen algılanan oyun yok."
+      },
+      "diag": {
+        "title": "Tanılama",
+        "apiKeyLabel": "Steam Web API anahtarı :",
+        "apiKeyConfigured": "yapılandırıldı",
+        "apiKeyFallback": "ayarlanmadı — yedek kazıma kullanılıyor",
+        "logsFolder": "Günlük klasörünü aç",
+        "dataFolder": "Veri klasörünü aç",
+        "goldbergTitle": "Goldberg / GBE Fork",
+        "goldbergDesc": "Bir oyun kütüphanesi klasörünü Goldberg / GBE Fork kurulumları için tarar ve steam_settings/achievements.json şeması eksik olanları işaretler. Birini düzeltmek için bir oyunun sağ tık menüsünü (Tanıla / Onar) kullan.",
+        "scanFolder": "Bir klasör tara…",
+        "winNotifTitle": "Windows bildirim ayarları",
+        "focusAssist": "Odak Yardımcısı",
+        "notifActions": "Bildirimler ve eylemler",
+        "winNotifDesc": "Windows 10 >= 1903 : tam ekran uygulamalar için odak yardımcısı otomatik kuralı (varsayılan olarak yalnızca alarmlar) toast bildirimlerini engelleyebilir — toast'lar oyun içinde görünmüyorsa „Kapalı” olarak ayarla."
+      },
+      "blacklistTitle": "AppID kara listesi",
       "blacklistButton": "Kara listeyi sıfırla",
-      "blacklistInfo": "Kara listeye eklemek için bir oyun kutusuna sağ tıklayın.",
+      "blacklistInfo": "Bir oyun karosuna sağ tıklayarak kara listeye ekle.",
+      "apiKey": {
+        "title": "Steam Web API anahtarı",
+        "description": "Bazı Steam verileri kişisel bir Steam Web API anahtarı gerektirir.",
+        "fallback": "Otomatik almayı kullanmak için bu alanı boş bırak. Başarısız olursa kendi anahtarını gir.",
+        "create": "Bir API anahtarı oluştur",
+        "terms": "Steam API Kullanım Koşulları",
+        "label": "Steam Web API anahtarın",
+        "security": "Anahtar, bu bilgisayara kaydedilmeden önce AES-256-CBC ile şifrelenir."
+      },
       "mainSteam": {
-        "title": "Ana Steam Hesabı",
+        "title": "Ana Steam hesabı",
         "name": "Kullanıcıya göre filtrele",
-        "description": "Yalnızca seçilen hesabın Steam başarılarını göster"
+        "description": "Yalnızca seçili hesabın Steam başarımlarını göster"
       }
     }
   }

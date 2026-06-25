@@ -3,18 +3,62 @@
   "perfectGame": "Perfect Games",
   "completionRate": "Avg. Game Completion Rate",
   "emptyList": "No Games",
+  "emptyListHint": "No achievements found yet. Add the folder where your games store their achievement files, then refresh (F5).",
+  "emptyListAction": "Open folder settings",
+  "installedOnly": "Show installed games only",
+  "sort": {
+    "tooltip": {
+      "alpha": "Name: A → Z",
+      "percent": "Progress",
+      "time": "Achievement date",
+      "played": "Last played"
+    },
+    "label": {
+      "alpha": { "asc": "Name: A → Z", "desc": "Name: Z → A" },
+      "percent": { "asc": "Progress: low → high", "desc": "Progress: high → low" },
+      "time": { "asc": "Achievement: oldest → newest", "desc": "Achievement: newest → oldest" },
+      "played": { "asc": "Played: oldest → newest", "desc": "Played: newest → oldest" },
+      "rarity": { "asc": "Rarity: rarest → most common", "desc": "Rarity: most common → rarest" }
+    },
+    "action": {
+      "reverse": "click to reverse",
+      "clear": "click to clear sorting"
+    }
+  },
   "loading": "Loading",
   "unlocked": "Unlocked",
   "locked": "Locked",
   "globalStat": "of players have this",
   "hiddenRemain": "hidden achievements remaining",
   "revealedOnceUnlocked": "Details for each achievement will be revealed once unlocked",
+  "hiddenDescriptionPlaceholder": "Hidden — click to reveal",
   "noneUnlocked": "No achievement unlocked yet",
   "play": "Start playing !",
+  "noneUnlockedHint": "Not seeing any unlocks? Check the FAQ / Troubleshooting section of the",
   "scrollUp": "Scroll up",
   "allGamesBackButton": "All Games",
   "removeFromList": "Remove from list",
-  "buildIconPrefetchCache": "Build icon notification cache",
+  "buildIconPrefetchCache": "Cache achievement icons",
+  "contextMenu": {
+    "resetPlaytime": "Reset playtime",
+    "muteProgress": "Mute progress notifications",
+    "unmuteProgress": "Unmute progress notifications",
+    "generateAchievementsJson": "Export achievements.json",
+    "diagnose": "Diagnose emulator",
+    "backupGBE": "Back up configuration…",
+    "restoreGBE": "Restore configuration backup…",
+    "installGBE": "Apply emulator fix…",
+    "removeDRM": "Remove DRM…",
+    "crackfix": "Find a community fix…",
+    "openIconCache": "Icon cache",
+    "openDbCache": "Data cache (.db)",
+    "openInstallLocation": "Game installation",
+    "groupGame": "Game",
+    "groupEmulator": "Emulator & tools",
+    "groupFolders": "Folders",
+    "groupLinks": "Useful links",
+    "groupCover": "Cover"
+  },
   "settings": {
     "title": "Settings",
     "sideMenu": {
@@ -24,17 +68,19 @@
       "souvenir": "Souvenir",
       "folder": "Folders",
       "source": "Source",
-      "advanced": "Advanced",
-      "debug": "Debug"
+      "advanced": "Advanced"
     },
     "common": {
       "show": "Show",
       "hide": "Hide",
-      "enable": "Enable",
-      "disable": "Disable",
+      "enable": "Enabled",
+      "disable": "Disabled",
       "cancel": "Cancel",
       "save": "Save",
       "version": "Version",
+      "maintainedBy": "maintained by",
+      "fork": "Fork",
+      "original": "Original v1.6.8",
       "edit": "Edit"
     },
     "watchdog": {
@@ -42,7 +88,9 @@
       "kill": { "name": "Keep running", "description": "Keep watchdog running even if the main app closes." }
     },
     "overlay": {
-      "position": "Notification Position",
+      "position": "Achievement Position",
+      "progressPosition": "Progress Position",
+      "playtimePosition": "Playtime Position",
       "preset": { "name": "Notification Preset", "description": "Legacy uses the 'old' notification system" },
       "hotkey": {
         "name": "Overlay Hotkey",
@@ -52,22 +100,26 @@
       "duration": "Animation duration"
     },
     "general": {
+      "sectionTitle": "Interface and behavior",
       "language": {
         "name": "Language",
-        "description": ["Help the translation", "here"]
+        "description": "Interface language. Game data is fetched in this language when available."
       },
       "thumbnail": {
         "name": "Thumbnail orientation",
+        "description": "Portrait shows tall box-art covers; Landscape shows wide Steam header images.",
         "value": {
           "portrait": "Portrait",
           "landscape": "Landscape"
         }
       },
       "hiddenAch": {
-        "name": "Hidden Achievements"
+        "name": "Hidden Achievements",
+        "description": "Reveal the name and description of hidden achievements before you unlock them."
       },
       "mergeDuplicates": {
-        "name": "Merge Duplicates"
+        "name": "Merge Duplicates",
+        "description": "Combine the same game found in several sources into a single tile."
       },
       "timeMerge": {
         "name": "Timestamp merge",
@@ -78,9 +130,99 @@
         }
       },
       "hideZero": {
-        "name": "Hide 0% Game"
+        "name": "Hide 0% Game",
+        "description": "Hide games for which you haven't unlocked any achievement yet."
+      },
+      "startup": {
+        "name": "Launch at startup",
+        "description": "Starts Achievement Watcher automatically with Windows, hidden in the tray."
+      },
+      "onboarding": {
+        "name": "First-run guide",
+        "button": "Open guide",
+        "description": "Reopen the setup guide for API key, profile, folders, sources, and notifications."
+      },
+      "hardwareAccel": {
+        "name": "Disable hardware acceleration",
+        "description": "Turn off GPU acceleration if the overlay or window misbehaves. Requires a restart."
       },
       "tray": { "name": "Close to System Tray", "description": "Keep the app running in the background for faster notifications startup." }
+    },
+    "emulator": {
+      "nav": "Emulator",
+      "sectionTitle": "Emulator setup (GBE Fork)",
+      "intro": "Defaults used by the right-click Apply emulator fix action. Choose how Steam is bypassed and how much game data is fetched.",
+      "coreTitle": "Core configuration",
+      "advancedTitle": "Advanced options",
+      "loginTitle": "Steam login (throwaway account only)",
+      "loginWarning": "Throwaway account",
+      "loginDesc": "Used only when \"Data source\" is set to Steam login. The password is stored encrypted on this PC and sent only to Steam by generate_emu_config. Steam Guard 2FA is prompted when needed. Leave empty to be asked each time.",
+      "loginUser": "Steam username",
+      "loginPass": "Steam password",
+      "loginTest": "Test connection",
+      "loginTestHint": "Steam / Steam Guard",
+      "loginTestRunning": "Connecting to Steam… Enter the Steam Guard code if requested.",
+      "loginTestSuccess": "Steam login successful. The generate_emu_config refresh token was saved.",
+      "loginTestMissing": "Enter the Steam username and password first.",
+      "loginTestFailed": "Steam login failed",
+      "autoApply": {
+        "name": "Automatically fix newly detected games",
+        "description": "Runs the full Apply emulator fix chain once for a newly detected, unconfigured emulated game: SteamStub handling, GBE Fork, achievements, DLCs, identity/language, and Advanced data when enabled. Enabled by default.",
+        "value": { "false": "Disabled", "true": "Enabled" }
+      },
+      "mode": {
+        "name": "Emulator mode",
+        "description": "Regular swaps the game's steam_api(64).dll. ColdClient keeps it and loads GBE Fork's emulated steamclient via a loader — broader coverage for stubborn games.",
+        "value": { "regular": "Regular (replace DLL)", "coldclient": "ColdClient (GBE Fork)" }
+      },
+      "steamSettings": {
+        "name": "steam_settings data",
+        "description": "Simple uses Achievement Watcher's own fetch (anonymous). Advanced runs generate_emu_config for depot/language coverage.",
+        "value": { "simple": "Simple (fast)", "advanced": "Advanced (complete)" }
+      },
+      "login": {
+        "name": "Data source (Advanced)",
+        "description": "Steam login lets generate_emu_config pull complete DLC/depot data. Use a THROWAWAY account only — never your main.",
+        "value": { "anonymous": "Anonymous", "steam": "Steam login" }
+      },
+      "steamless": {
+        "name": "Auto-unpack SteamStub DRM",
+        "description": "Runs Steamless on the game exe before patching to strip Valve's SteamStub DRM (original kept as .steamstub.bak). No-op when there's no stub.",
+        "value": { "false": "Disabled", "true": "Enabled" }
+      },
+      "steamlessExp": {
+        "name": "Steamless experimental",
+        "description": "Realigns sections during unpack for better compatibility with heavily-protected EXEs. Only matters when auto-unpack is on.",
+        "value": { "false": "Disabled", "true": "Enabled" }
+      },
+      "crackFix": {
+        "name": "Auto-apply community fix (CrakFiles)",
+        "description": "On every fix, automatically downloads and applies a confident-match community fix from the CrakFiles list (exact name match + pixeldrain link only; overwritten files are backed up). On by default — disable it if you don't want AW downloading/overwriting game files from a community source.",
+        "value": { "false": "Disabled", "true": "Enabled" }
+      },
+      "apiCheckBypass": {
+        "name": "Steam API ownership-check bypass",
+        "description": "Off by default. Drops SteamAutoCrack's bypass proxy (winmm.dll) + a redirect config so games that re-check the original steam_api/exe after the swap still launch and unlock. Downloads the proxy from its official release.",
+        "value": { "false": "Disabled", "true": "Enabled" }
+      },
+      "launchBat": {
+        "name": "Create Launch.bat for fallback",
+        "description": "When Steamless cannot strip a SteamStub exe and AW falls back to ColdClient, also writes a Launch.bat for the matching loader.",
+        "value": { "true": "Enabled", "false": "Disabled" }
+      },
+      "checkUpdates": {
+        "name": "Check for GBE Fork updates",
+        "description": "Re-checks GitHub for the latest GBE Fork build before applying (downloads only if newer). Disable to always use the cached build.",
+        "value": { "true": "Enabled", "false": "Disabled" }
+      },
+      "goldbergIcons": {
+        "name": "GBE/Goldberg — download icons",
+        "description": "When enabled, the auto-repair that writes a missing steam_settings/achievements.json also downloads achievement icons from the Steam CDN.",
+        "value": {
+          "disabled": "Disabled (fast)",
+          "enabled": "Enabled"
+        }
+      }
     },
     "notification": {
       "title": {
@@ -88,12 +230,32 @@
         "toast": "Toast notification",
         "transport": "Transport",
         "chromium": "Chromium notification",
-        "watchdog": "Watchdog"
+        "watchdog": "Watchdog",
+        "test": "Test",
+        "overlay": "In-game overlay"
       },
       "info": {
-        "toast": "Some features are only available in Windows 10"
+        "toast": "Some features are only available in Windows 10",
+        "autoSave": "Changes on this tab are saved automatically."
+      },
+      "test": {
+        "achievement": "Achievement",
+        "progress": "Progress",
+        "playtime": "Playtime",
+        "toast": "Windows Toast",
+        "platinum": "Platinum",
+        "overlay": "Overlay"
       },
       "option": {
+        "transportMode": {
+          "name": "Notification transport",
+          "description": "Choose a single active notification system",
+          "value": {
+            "chromium": "Chromium (styled)",
+            "toast": "Windows Toast",
+            "none": "Disabled"
+          }
+        },
         "notification": {
           "name": "Notification",
           "description": "Notify on achievement unlock if possible"
@@ -110,6 +272,68 @@
           "name": "Playtime tracking",
           "description": "Notify on tracking start/end"
         },
+        "platinum": {
+          "name": "Platinum (100%)",
+          "description": "Fire a dedicated toast when a game reaches 100% completion"
+        },
+        "mode": {
+          "name": "Notification type",
+          "description": "Where unlock notifications appear: Windows toast, the in-game overlay, or both",
+          "value": {
+            "toast": "Toast",
+            "overlay": "Overlay",
+            "both": "Both"
+          }
+        },
+        "overlayPreset": "Preset",
+        "overlayPresetDesc": "Visual theme of the in-game overlay popup",
+        "overlayPosition": "Position",
+        "overlayPositionDesc": "Where the overlay popup appears on screen",
+        "overlayScale": "Scale",
+        "overlayScaleDesc": "Size of the overlay popup",
+        "overlaySound": "Sound",
+        "overlaySoundDesc": "Sound played when the overlay popup appears",
+        "overlaySoundImport": "Import a custom sound…",
+        "overlayVolume": "Volume",
+        "overlayVolumeDesc": "Loudness of the overlay popup sound (toast sound is controlled by Windows)",
+        "overlayDuration": "Duration",
+        "overlayDurationDesc": "How long the overlay popup stays on screen. Auto lets the preset decide; a value caps the on-screen time.",
+        "overlayDurationAuto": "Auto",
+        "customiser": {
+          "title": "Custom preset",
+          "intro": "Build your own overlay notification preset.",
+          "name": "Name",
+          "namePlaceholder": "My preset",
+          "background": "Background",
+          "text": "Text",
+          "accent": "Accent",
+          "opacity": "Opacity",
+          "fontSize": "Font size",
+          "corners": "Corners",
+          "iconSize": "Icon size",
+          "create": "Create preset",
+          "errName": "Enter a name first",
+          "created": "Created & selected:",
+          "failed": "Failed"
+        },
+        "souvenirTitle": "Souvenir screenshot",
+        "souvenirScreenshot": "Screenshot on unlock",
+        "souvenirScreenshotDesc": "Capture the screen when an achievement unlocks. Saved per game.",
+        "souvenirDir": "Save folder",
+        "souvenirDirHelp": "Screenshots are saved to <folder>\\<game>\\<date> - <achievement>.png. Empty = Pictures\\Achievement Watcher.",
+        "soundNone": "None",
+        "position": {
+          "centerBottom": "Center bottom",
+          "centerTop": "Center top",
+          "topLeft": "Top left",
+          "topRight": "Top right",
+          "bottomLeft": "Bottom left",
+          "bottomRight": "Bottom right",
+          "middleLeft": "Middle left",
+          "middleRight": "Middle right",
+          "custom": "Custom"
+        },
+        "reposition": "Reposition the popup (drag it where you want)",
         "customToastAudio": {
           "name": "Toast sound",
           "description": "Specifies the sound to play when a toast is displayed",
@@ -199,9 +423,17 @@
         "For ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 please select a folder where the",
         "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini or RPCS3.exe file is located."
       ],
-      "add": "Add a Folder"
+      "add": "Add a Folder",
+      "library": "Library Folders",
+      "libraryInfo": [
+        "Select a folder that holds many game install folders (e.g. D:\\Games, E:\\SteamLibrary).",
+        "All games inside will be scanned for Goldberg/GBE achievements, even if never launched."
+      ],
+      "addLibrary": "Add a Library Folder",
+      "generateConfigs": "Generate configs"
     },
     "source": {
+      "title": "Game sources",
       "legitSteam": {
         "name": "Display Steam Games",
         "description": "Steam must be installed and your Steam profile public !",
@@ -212,7 +444,8 @@
         }
       },
       "steamEmu": {
-        "name": "Steam emulator"
+        "name": "Steam emulator",
+        "description": "Read achievements written by Goldberg / GBE Fork and similar Steam emulators."
       },
       "greenLuma": {
         "description": "GreenLuma 2020/2024/2025 and Reborn"
@@ -223,15 +456,54 @@
       "lumaPlay": {
         "description": "Uplay emulator"
       },
+      "ea": {
+        "name": "EA Desktop",
+        "description": "Read EA Desktop's local achievement log — only for games installed outside EA's managed folders (cracked titles)."
+      },
       "importCache": {
         "name": "Import notification cache",
         "description": "Import Watchdog's cache as another source of achievement"
       }
     },
     "advanced": {
+      "maintenanceTitle": "Setup & maintenance",
+      "fixAll": {
+        "name": "Fix all detected games",
+        "button": "Fix all games",
+        "description": "Run the emulator fix (GBE Fork, achievements, DLCs) on every detected emulated game that has a known install folder.",
+        "confirm": "Apply the emulator fix to every detected game with a known install folder? Existing files are backed up before being overwritten.",
+        "running": "Fixing games…",
+        "progress": "Fixing %cur% / %total% — %name%",
+        "done": "Done — %fixed% game(s) fixed, %skipped% skipped, %failed% failed.",
+        "none": "No detected game with a known install folder to fix."
+      },
+      "diag": {
+        "title": "Diagnostics",
+        "apiKeyLabel": "Steam Web API key :",
+        "apiKeyConfigured": "configured",
+        "apiKeyFallback": "not set — using fallback scraping",
+        "logsFolder": "Open logs folder",
+        "dataFolder": "Open data folder",
+        "goldbergTitle": "Goldberg / GBE Fork",
+        "goldbergDesc": "Scan a game-library folder for Goldberg / GBE Fork installs and flag the ones missing their steam_settings/achievements.json schema. Use a game's right-click menu (Diagnose / Repair) to fix one.",
+        "scanFolder": "Scan a folder…",
+        "winNotifTitle": "Windows notification settings",
+        "focusAssist": "Focus Assist",
+        "notifActions": "Notifications & actions",
+        "winNotifDesc": "Windows 10 >= 1903 : the focus-assist auto-rule for fullscreen apps (alarms only by default) can suppress toast notifications — set it to \"Off\" if toasts don't appear in-game."
+      },
       "blacklistTitle": "AppID Blacklist",
       "blacklistButton": "Reset blacklist",
       "blacklistInfo": "Right click on a gamebox to add it to the blacklist.",
+      "apiKey": {
+        "title": "Steam Web API key",
+        "description": "Some Steam data requires a personal Steam Web API key.",
+        "fallback": "Leave this field empty to use automatic retrieval. If that fails, enter your own key.",
+        "create": "Create an API key",
+        "terms": "Steam API Terms of Use",
+        "label": "Your Steam Web API key",
+        "security": "The key is encrypted with AES-256-CBC before it is stored on this computer."
+      },
       "mainSteam": {
         "title": "Main Steam Account",
         "name": "Filter by user",
