@@ -1,33 +1,35 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Report a problem with Achievement Watcher
 title: ''
 labels: bug
 assignees: ''
-
 ---
 
-⚠️ The github issue tracker is not a piracy helpdesk 🙃
-I would like to remind you that I do not endorse piracy. AW's purpose is merely educational.
-They are other places to discuss _"how to make x game work"_. Unless it directly concerns AW's ability to parse achievement in this case please do speak up.
+> Please keep reports focused on Achievement Watcher's behaviour. The issue tracker is not a piracy helpdesk.
 
 **Describe the bug**
-A clear and concise description of what the bug is.
+A clear and concise description of what goes wrong.
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
-
-**To Reproduce**
-If possible the steps to reproduce the behavior:
+**Steps to reproduce**
 1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+2. Click on '...'
+3. See error
 
-**Log(s)**
-Logs don't lie 🙃 ! And are very useful to me.
-They are located in `%AppData%\Achievement Watcher\logs`
-Please do share them (in zip archive or whatever)
+**Expected behaviour**
+What you expected to happen.
 
-**Additional context / Screenshot**
-Add any other context about the problem here.
+**Actual behaviour**
+What actually happened (include screenshots if helpful).
+
+**Environment**
+- OS: [e.g. Windows 11 24H2]
+- App version: [e.g. 3.0.0]
+- Source/emulator involved: [e.g. Steam, Goldberg/GBE, GOG, RPCS3...]
+
+**Logs**
+Logs are very helpful. They live in `%AppData%\Achievement Watcher\logs`.
+Please attach the relevant log (a zip is fine).
+
+**Additional context**
+Anything else that might help.

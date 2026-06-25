@@ -1,17 +1,20 @@
 ---
-name: Question
-about: You have a question and it's not a bug per say
+name: Question / support
+about: Ask a question about using Achievement Watcher
 title: ''
-labels: Question
+labels: question
 assignees: ''
-
 ---
 
-⚠️ The github issue tracker is not a piracy helpdesk 🙃
-I would like to remind you that I do not endorse piracy. AW's purpose is merely educational.
+> Please keep questions focused on Achievement Watcher. The issue tracker is not a piracy helpdesk.
 
-💡 Did you try to find the answer in the readme and or wiki ? If no then please have a quick look.
+**Before asking**
+- [ ] I checked the [README](../../README.md) and [BUILD.md](../../BUILD.md).
+- [ ] I searched existing issues for a similar question.
 
-💡 Did you search the issue tracker for a similar question ? If no then please do a quick search.
+**Your question**
+Describe what you're trying to do and where you're stuck.
 
-Ok so now, please do ask you question 😇
+**Environment (if relevant)**
+- OS: [e.g. Windows 11 24H2]
+- App version: [e.g. 3.0.0]
