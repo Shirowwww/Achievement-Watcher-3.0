@@ -1,7 +1,0 @@
-User-Agent: *
-Disallow: /*.jpg$
-Disallow: /*.png$
-Disallow: /*.gif$
-Disallow: /*.svg$
-Disallow: /*.ico$ 
-Disallow: /resources/
