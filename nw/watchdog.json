@@ -1,6 +1,0 @@
-{
-  "bin": "../node/node.exe",
-  "args": "watchdog",
-  "cwd": "../watchdog",
-  "env": ["NODE_SKIP_PLATFORM_CHECK=1"]
-}
