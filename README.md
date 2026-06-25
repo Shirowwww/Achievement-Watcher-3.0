@@ -1,141 +1,190 @@
-# 🔶 Achievement Watcher Fork
+<div align="center">
 
-> [!IMPORTANT]
-> This fork is maintained by **Darktakayanagi** and adds personal improvements and new features on top of the original Achievement Watcher by [Xan105](https://github.com/xan105/Achievement-Watcher).
->
-> This fork is not a takeover, replacement, or official continuation of the original project. It is intended for public use under the LGPL-3.0 license.
+# 🏆 Achievement Watcher 3.0
 
-## Notable Changes
+### A clean, modern achievement file parser for PC games — with real-time notifications.
 
-- Steam API key no longer required
-- Play button to run games from within the app
-- video souvenir now captures also the moments before triggering an achievement, possible with OBS Studio (developed by the OBS Project & licensed under the GNU GPL v2. [Source code](https://github.com/obsproject/obs-studio))
-- Chromium Notifications (developed by [@PSerban93](https://github.com/PSerban93))
-- Support for GOG/EPIC/UPLAY games
-- Support for more Steam emus
+Bring achievements from your PC games and supported emulators into **one modern Windows library**, with progress, rarity, playtime and a live notification the moment you unlock something.
 
-### **Planed Features**
+![version](https://img.shields.io/badge/version-3.0.0-blue)
+![platform](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows)
+![electron](https://img.shields.io/badge/Electron-42-47848F?logo=electron&logoColor=white)
+![node](https://img.shields.io/badge/Node.js-24-339933?logo=node.js&logoColor=white)
+![license](https://img.shields.io/badge/license-LGPL--3.0-green)
 
-- Support for RetroAchievements (From Atari 2600 to PlayStation 2, and everything in between.)
-- Support for PS4 and Xbox360
-- Controller UI Navigation
-
-## Features Overview
-
-(WIP - Video here)
-
-<hr />
-<hr />
-
-# Original README
-
-**⚠️ NB: The cache server was shutdown over a year ago.<br />
-You need a Steam Web API key for the app to be able to fetch data from Steam.<br />
-You can acquire one [by filling out this form](https://steamcommunity.com/dev/apikey).<br />
-Enter your key in `Settings > Advanced`.**
-
-<hr />
-
-A sexy achievement file parser with real-time notification, automatic screenshot and playtime tracking.<br />
-View every achievement earned on your PC whether it's coming from Steam, a Steam emulator, and more.<br />
-To see the full list of what this app can import please see the [**Wiki/Compatibility**](https://github.com/xan105/Achievement-Watcher/wiki/Compatibility).
-
-<table >
+<table>
 <tr>
-<td align="left"><img src="https://github.com/xan105/Achievement-Watcher/raw/1.x/screenshot/home.png" width="400px"></td>
-<td align="left"><img src="https://github.com/xan105/Achievement-Watcher/raw/1.x/screenshot/ach_view.png" width="400px"></td>
+<td align="center"><img src="screenshot/home.png" width="440px"><br><sub>Unified game library</sub></td>
+<td align="center"><img src="screenshot/achievements.png" width="440px"><br><sub>Per-game achievements & rarity</sub></td>
 </tr>
 </table>
 
-The original idea behind this app was that some steam emulators generate a text file where your unlocked achievements are stored.
-But they aren't very friendly to know which is which, here is an example :
+</div>
 
-```ini
-[NEW_ACHIEVEMENT_1_1]
-Achieved=1
-CurProgress=0
-MaxProgress=0
-UnlockTime=0000000000
-[SteamAchievements]
-00000=NEW_ACHIEVEMENT_1_1
-Count=1
+> **Achievement Watcher 3.0** is an improved, modernized fork of [Xan105's original Achievement Watcher](https://github.com/xan105/Achievement-Watcher) (via [darktakayanagi](https://github.com/darktakayanagi/Achievement-Watcher)), distributed under **LGPL-3.0**.
+
+---
+
+## ✨ What's new in 3.0
+
+Version 3.0 is a large stability, security, compatibility and feature pass on top of the base fork.
+
+- 🔒 **Modern, hardened platform** — Electron 12 → 42 (Chromium 148, Node 24), every major dependency updated, XSS hardening, a tightened Content-Security-Policy, and **Windows 11 24H2+** compatibility (WMIC removed everywhere).
+- 🧰 **System-tray app** — runs quietly in the tray; closing the window keeps tracking, playtime and notifications alive in the background. One lighter background process, one runtime.
+- ⚡ **Faster & lighter** — bounded-concurrency loading, an optional browser-free data path with a Steam Web API key, a roughly halved emulator scan, a size-capped icon cache, and a ~80 MB smaller install.
+- 🔔 **Reworked notifications** — Windows **toasts**, an in-game **overlay** (presets, sounds, custom preset builder), or **both**; "Rare · X%" labels, platinum toasts, per-game progress mute, and a duplicate guard.
+- 🧩 **Goldberg / GBE tooling** — diagnose & repair `steam_settings`, install the maintained GBE Fork runtime, strip Steam DRM, and auto-fix new emulated games in the background ([details](#-goldberg--gbe-emulator-handling)).
+- 🕵️ **Smarter detection** — an "installed games only" filter, rewritten per-game executable detection, and automatic new-game detection that registers fresh installs for playtime tracking.
+- 🎮 **More sources** — ShadPS4 (PS4, live toasts), Xenia (Xbox 360), and EA Desktop, plus GreenLuma / Uplay / RPCS3 / Epic load fixes.
+- 🎨 **Modern dark UI** — refreshed library, details, settings and dialogs; resizable window; advanced cover management; broader FR/EN localization.
+
+<div align="center">
+<img src="screenshot/live.gif" width="60%"><br>
+<sub>Real-time toast the moment an achievement unlocks</sub>
+</div>
+
+See [CHANGELOG.md](CHANGELOG.md) for the full notes and the [docs](docs/) for guides.
+
+---
+
+## 🎯 Supported sources
+
+- ✅ Legitimate **Steam** libraries and common Steam emulator save formats (**Goldberg / GBE Fork**, **GreenLuma**, …)
+- ✅ **GOG**, **Epic Games**, **Ubisoft Connect** and **EA Desktop**
+- 🎮 **RPCS3** (PS3) trophies
+- 🎮 **ShadPS4** (PS4) trophies — *including live unlock notifications*
+- 🎮 **Xenia** (Xbox 360) achievements — *library display*
+
+> A Steam Web API key is **optional** — it improves and speeds up Steam lookups, but the app falls back to automatic retrieval without one.
+
+---
+
+## 📥 Install & use
+
+1. Download the latest `Achievement.Watcher.Setup.3.0.0.exe` from the [**Releases**](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases) page.
+2. Install and launch Achievement Watcher — it lives in the system tray; click the tray icon to open the library.
+3. Open **Settings** to configure game folders, sources, notifications and the optional Steam Web API key.
+4. Leave it running: the background tracker auto-starts at sign-in and keeps live notifications and playtime working even with the window closed.
+
+> 💡 On first run, the setup guide auto-detects common save/achievement folders. If a game isn't detected, add its folder from **Settings → Folders → Generate configs**, or set its executable from the game's configuration dialog.
+
+<div align="center">
+<img src="screenshot/settings.png" width="640px"><br>
+<sub>Settings — interface, sources, notifications, folders and emulator tools</sub>
+</div>
+
+---
+
+## 🔔 Notifications
+
+Choose how unlocks are announced in **Settings → Notification**:
+
+- **Toast** — native Windows notifications (with progress bar and game hero image for playtime).
+- **Overlay** — a styled in-game popup drawn on top of the game, with a library of presets and sounds.
+- **Both** — toast *and* overlay.
+
+Extras: a no-code **custom preset builder** (colours, opacity, font/icon size, corners, live preview), **custom sounds** (import your own `.wav`/`.mp3`/`.ogg`), adjustable overlay **volume & duration**, movable/click-through overlays, "Rare · X%" labels for sub-10% unlocks, platinum toasts, and per-game progress-notification muting.
+
+<table>
+<tr>
+<td align="center"><img src="screenshot/notifications.png" width="460px"><br><sub>Custom overlay preset builder</sub></td>
+<td align="center"><img src="screenshot/overlay.png" width="320px"><br><sub>In-game overlay popup</sub></td>
+</tr>
+</table>
+
+---
+
+## 🧩 Goldberg / GBE emulator handling
+
+Games that run through a Steam emulator (Goldberg, GBE Fork, and similar setups) store their achievements locally instead of on Steam. Achievement Watcher reads those saves, and can also **set up or repair the emulator runtime** for a game so its achievements are tracked correctly and pop up in-game.
+
+**What it does** (right-click a game → *Emulator & tools*)
+
+- **Diagnose** — a clear report of the game's emulator setup (which emulator, schema vs. save state, missing icons or descriptions, app-id mismatches).
+- **Repair `steam_settings`** — rebuilds a correct achievement schema, icons, app id, DLC list and identity config, matching the names Steam actually uses.
+- **Apply emulator fix (GBE Fork)** — installs the maintained [GBE Fork](https://github.com/Detanup01/gbe_fork) `steam_api(64).dll`, writes `steam_settings`, and creates the save folder so the game shows up immediately.
+- **Remove Steam DRM (Steamless)** — strips Valve's SteamStub from a game's executable when a plain DLL swap won't load.
+- **Back up / Restore configuration** — snapshot the emulator files before changes, and roll back a bad fix.
+
+New emulated games can also be **fixed automatically in the background** (toggle in Settings → Emulator).
+
+**When to use it** — when a cracked/emulated game's achievements aren't detected, descriptions are blank, or in-game pop-ups don't appear.
+
+**What gets modified**
+
+- The game's `steam_api.dll` / `steam_api64.dll` is replaced (original kept as `*.bak`).
+- Files inside `steam_settings/` are written or refreshed (previous versions snapshotted under `steam_settings/.aw-backups/`).
+- Optionally the game executable is unpacked by Steamless (original kept as `*.steamstub.bak`).
+
+**Precautions**
+
+- Use this only on games you own, for legitimate, personal achievement tracking.
+- It modifies game files. Backups are made automatically, but use it at your own risk.
+- It does **not** bypass online ownership checks, and it can't track PlayStation-PSPC Steam ports (e.g. *The Last of Us Part II*, *God of War*) — those trophies never reach the Steam API any emulator watches (use a RUNE release, which Achievement Watcher monitors out of the box).
+- Antivirus tools sometimes flag emulator DLLs — see [Security & false positives](#-security--false-positives).
+
+> Guides: [docs/emulator-setup.md](docs/emulator-setup.md) (user guide) · [GOLDBERG-GBE.md](GOLDBERG-GBE.md) (technical reference).
+
+---
+
+## 🛠️ Notable bugfixes & improvements
+
+- Hidden achievement descriptions resolve correctly even with a Steam Web API key (`GetGameAchievements`), and stale blank entries are repaired in place.
+- Persistent rarity (global unlock % and gold/silver/bronze tiers) cached per game — shown instantly and offline.
+- No more permanent blacklisting after a single transient load failure; GreenLuma, Uplay, RPCS3 and Epic first-load failures fixed.
+- Emulator notification edge cases (3DM, TENOKE, GOG/Nemirtingas, `[object Object]` titles) now notify correctly.
+- Executable auto-detection rewritten so each game resolves to its own binary instead of several sharing one.
+- Self-healing config — a corrupted folder database is quarantined and defaults restored instead of silently disabling your folders.
+- Window resizable down to 900 × 600; the main window can no longer get stuck invisible at startup.
+
+---
+
+## 🔧 Build from source
+
+Requirements: Windows and **Node.js ≥ 20.18** (Node 22+ recommended). Electron is downloaded automatically; native dependencies ship prebuilt — no Visual Studio / Python / node-gyp needed.
+
+```powershell
+cd watchdog
+npm ci
+cd ..\app
+npm ci
+npm run build
 ```
 
-So which achievement is NEW_ACHIEVEMENT_1_1 ? You'll have to ask the steam API or look online in a site like the steamdb to find out.
-So let's just do that automagically :)
+The NSIS installer is written to `app/dist/`. Full details (dev run, portable build, known gotchas, versioning) are in [BUILD.md](BUILD.md).
 
-# Notification on achievement unlocking
+Run the automated checks from the repository root:
 
-Not as sexy as a directX Overlay but it's the next best thing.<br />
-Display a notification when you unlock an achievement via<br />
-
-- [Toast notification](https://github.com/xan105/Achievement-Watcher/wiki/Toast-notification) (Windows 8 / 10)
-- [Websocket](https://github.com/xan105/Achievement-Watcher/wiki/Websocket-Notification-'API') (Usage example: Twitch overlay)
-- [GNTP (Growl)](<https://github.com/xan105/Achievement-Watcher/wiki/GNTP-(Growl-Notification-Transport-Protocol)>) (Recommended for Windows 7)
-
-⚠️ **Please verify your system settings for this to work properly**. [More info](https://github.com/xan105/Achievement-Watcher/wiki/Toast-notification#windows-settings)<br />
-You can test notification in Settings > Debug to make sure your system is correctly configured or seems to be.<br />
-There is a lot of things to check so make sure to have a look at the [wiki](https://github.com/xan105/Achievement-Watcher/wiki/Notification-%22Not-Working%22) before asking for help.
-
-<p align="center">
-  <img src="https://github.com/xan105/Achievement-Watcher/raw/1.x/screenshot/live.gif">
-</p>
-
-📸 If you have enabled the _souvenir_ option(s) then a screenshot and/or video will be taken when you unlock an achievement.<br />
-
-# 📖 Wiki and troubleshoot
-
-There is a lot to say about this app. So for more info, configuration, troubleshoot, common issues etc ...<br />
-Please kindly see the [Wiki](https://github.com/xan105/Achievement-Watcher/wiki), thank you.
-
-# Translation Help
-
-I do my best to translate everything for every supported language by Steam, but it's rather difficult and I don't speak that much languages.<br />
-Fluent in another language ? Any help to add/modify/improve would be greatly appreciated.
-
-More details [here](https://github.com/xan105/achievement-watcher/tree/1.x/app/locale)
-
-# How to build
-
-### Prequisites:
-
-You will need Node.js 14.x in x64 with NPM installed.<br/>
-Innosetup 5 unicode with preprocessor and [Inno Download Plugin](https://mitrichsoftware.wordpress.com/inno-setup-tools/inno-download-plugin/) (building the setup)<br/>
-
-For Node.js you globally need asar and json :<br/>
-
-```
-npm install -g asar json
+```powershell
+node --test test\*.test.js
+node --test watchdog\test\*.test.js
 ```
 
-There will be some native_module to compile so you'll need :<br/>
-VS2017 / C++ build tools, Python ~2.7~ 3.x (node-gyp), and the Windows SDK **10.0.17134.0** (1803 Redstone 4)
+---
 
-### Build:
+## 🔐 Security & false positives
 
-Install `node_modules` folders with `npm install.cmd`<br/>
-or do it yourself with `npm ci` in `/app`, `/service/updater` and `/service/watchdog`.<br/>
-Use `buildme.cmd` in the root folder to build.
+Achievement Watcher is built from source with standard, **non-obfuscated** Electron + Node packaging.
 
-### Notes:
+- Some Electron apps — and the emulator-helper DLLs this tool can download on demand — are occasionally flagged as false positives by Windows Defender or other antivirus engines. This is a known industry issue with unsigned Electron builds and Steam-emulator binaries, not evidence of malware.
+- **Download builds only from the [official Releases page](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases).** Never install a build from a third-party mirror.
+- Each release publishes the installer alongside its checksum; verify the SHA-256 of your download before installing.
+- The installer is self-signed by electron-builder (not a trusted certificate). A proper code-signing certificate can be added in the future to reduce warnings.
 
-- Most of the native code is now shipped as prebuilt binaries. If you want to compile them yourself I invit you to check out their corresponding repo.<br/>
-  NB: Golang cgo requires a gcc compiler installed and set in PATH (recommended : http://tdm-gcc.tdragon.net/download).
+If your antivirus quarantines a file, prefer reporting the false positive to your AV vendor over disabling protection.
 
-- Innosetup is expected to be installed in `C:\Program Files (x86)\Inno Setup 5` if that is not the case then update `buildme.cmd` with the correct path.
+---
 
-- If NPM gives you some trouble, try to delete every `package-lock.json`.
+## 🤝 Contributing & issues
 
-# Legal
+Bug reports and feature requests are welcome via the [issue tracker](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues) — please use the provided templates and include your OS, app version and relevant logs (`%AppData%\Achievement Watcher\logs`).
 
-⚠️ **Software provided here is purely for informational purposes and does not provide nor encourage illegal access to copyrighted material.**<br />
+> The issue tracker is **not** a piracy helpdesk. Please keep reports focused on Achievement Watcher's behaviour.
 
-Software provided here is to be use at your own risk. This is provided as is without any express or implied warranty.<br />
-In no event or circumstances will the authors or company be held liable for any damage to yourself or your computer that may arise from the installation or use of the free software aswell as his documentation that is provided on this website.<br />
-And for anything that may occur as a result of your use, or inability to use the materials provided via this website.<br />
+---
 
-Software provided here is not affiliated nor associated with any cracking scene groups.<br />
+## ⚖️ Credits & legal
 
-Software provided here is not affiliated nor associated with Steam, © Valve Corporation, Uplay, © Ubisoft and data from theirs API is provided as is without any express or implied warranty.<br />
+Created originally by [Xan105](https://github.com/xan105/Achievement-Watcher), extended by [darktakayanagi](https://github.com/darktakayanagi/Achievement-Watcher) and the fork contributors. See [NOTICE.md](NOTICE.md) for full attribution.
 
-Other trademarks, copyright are the property of their respective owners. No copyright or trademark infringement is intended by using third-party resources. Except where otherwise specified, the contents of this project is subject to copyright.<br />
+This software does not provide copyrighted game content or bypass ownership checks. It is supplied **as-is** and is **not affiliated** with Valve, Sony, Microsoft, GOG, Epic Games or Ubisoft. All trademarks belong to their respective owners.

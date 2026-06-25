@@ -5,9 +5,10 @@ Achievement Watcher is licensed under the [LGPL-3.0 License](./LICENSE).
 ## Contributors
 
 - **Xan105** – Original author of Achievement Watcher (v1.6.8 and earlier)
-- **Darktakayanagi** – Maintainer of this fork, developer of v2.0 and later
+- **Darktakayanagi** – Maintainer of the upstream fork, developer of v2.0 and later
+- **Shirowwww** – Maintainer of this 3.0 fork
 
 ## Third-Party Libraries
 
-- **OBS Studio** – GPLv2, used for video souvenir capture
-- **Chromium Notifications** – integrated from [@PSerban93](https://github.com/PSerban93)
+- **Overlay notifications** – ported from [@PSerban93](https://github.com/PSerban93)
+- **EA Desktop local achievement parser** – ported from [@PSerban93/Achievements](https://github.com/PSerban93/Achievements) (MIT, Copyright 2025 JokerVerse)
