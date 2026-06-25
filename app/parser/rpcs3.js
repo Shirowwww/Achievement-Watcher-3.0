@@ -65,6 +65,10 @@ module.exports.getGameData = async (dir) => {
       emptyTag: null,
     });
 
+    // xml2js with explicitArray:false collapses a single <trophy> into an object instead of an
+    // array, so a game with exactly one trophy would crash on .length/.map. Normalize to an array.
+    const trophies = Array.isArray(schema.trophy) ? schema.trophy : schema.trophy ? [schema.trophy] : [];
+
     let result = {
       name: schema['title-name'],
       appid: schema.npcommid,
@@ -74,8 +78,8 @@ module.exports.getGameData = async (dir) => {
         //TODO: get background/portrait images
       },
       achievement: {
-        total: schema.trophy.length,
-        list: schema.trophy.map((trophy) => {
+        total: trophies.length,
+        list: trophies.map((trophy) => {
           return {
             name: parseInt(trophy['$'].id),
             hidden: trophy['$'].hidden === 'yes' ? 1 : 0,

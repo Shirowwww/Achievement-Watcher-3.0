@@ -153,7 +153,7 @@ module.exports.getGameData = async (cfg) => {
     if (err.code !== 404) debug.log(err);
     if (!cfg.steamappid) return result;
     const achs = ipcRenderer.sendSync('get-steam-data', { appid: cfg.steamappid, type: 'steamhunters' });
-    list = achs.achievements;
+    list = Array.isArray(achs?.achievements) ? achs.achievements : []; //guard: empty scrape must not throw and drop the game
   }
 
   result = {
@@ -167,16 +167,16 @@ module.exports.getGameData = async (cfg) => {
   };
   if (!cfg.steamappid) {
     // if its exclusive then use epic images instead of steam's
-    const links = ipcRenderer.sendSync('get-images-for-game', { name: title });
+    const links = ipcRenderer.sendSync('get-images-for-game', { name: title }) || {};
     result.img = {
       header: links.landscape,
       background: links.background,
       portrait: links.portrait,
       icon: links.icon,
     };
-    ipcRenderer.send('stylize-background-for-appid', { background: links.background, appid: cfg.appID });
+    if (links.background) ipcRenderer.send('stylize-background-for-appid', { background: links.background, appid: cfg.appID });
   } else {
-    let imgs = ipcRenderer.sendSync('get-steam-data', { appid: cfg.steamappid, type: 'common' });
+    let imgs = ipcRenderer.sendSync('get-steam-data', { appid: cfg.steamappid, type: 'common' }) || {};
     result.img = {
       header: imgs.header || 'header',
       background: imgs.background || 'page_bg_generated_v6b.jpg',
@@ -184,7 +184,12 @@ module.exports.getGameData = async (cfg) => {
       icon: imgs.icon,
     };
   }
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
+  // Don't persist an empty result: an empty achievement list is almost always a transient fetch
+  // failure (Epic API / steamhunters down), and caching it would hide the game until the cache is
+  // cleared — the same trap as the permanent blacklist (#55). Cache only when we have data.
+  if (list.length > 0) {
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
+  }
   return result;
 };

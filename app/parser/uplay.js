@@ -11,8 +11,12 @@ const steamLanguages = require(path.join(__dirname, '../locale/steam.json'));
 
 let debug;
 module.exports.initDebug = ({ isDev, userDataPath }) => {
+  // Was `remote.getCurrentWindow().isDev` — but `remote` is not imported here, so this threw the
+  // moment it ran. It never actually ran (achievements.initDebug forgot to call us), which left
+  // `debug` undefined and made every `debug.log(...)` throw "Cannot read property 'log' of
+  // undefined", skipping every UPLAY* game. Use the passed-in flag, like the other parsers.
   debug = new (require('@xan105/log'))({
-    console: remote.getCurrentWindow().isDev || false,
+    console: isDev || false,
     file: path.join(userDataPath, 'logs/uplay.log'),
   });
 };
@@ -95,6 +99,28 @@ module.exports.scan = async () => {
   }
 };
 
+// Set of Ubisoft Connect appids that are actually INSTALLED (have an Installs registry key with an
+// InstallDir), as opposed to merely owned/seen (which is what scanLegit() enumerates from the
+// achievements cache). Memoized for the session — registry rarely changes mid-run, and this is hit
+// once per uPlay game during a scan. Used to drive the "show installed only" filter.
+let _installedUplayAppids = null;
+module.exports.getInstalledAppids = () => {
+  if (_installedUplayAppids) return _installedUplayAppids;
+  try {
+    const subs = listRegistryAllSubkeys('HKLM', 'SOFTWARE/WOW6432Node/Ubisoft/Launcher/Installs');
+    _installedUplayAppids = new Set((subs || []).map((s) => String(s)));
+  } catch (err) {
+    _installedUplayAppids = new Set();
+  }
+  return _installedUplayAppids;
+};
+
+// True when a uPlay appid (with or without the "UPLAY" prefix) is installed per the registry.
+module.exports.isInstalled = (appid) => {
+  const id = String(appid).replace(/^UPLAY/i, '');
+  return module.exports.getInstalledAppids().has(id);
+};
+
 module.exports.scanLegit = async (onlyInstalled = false) => {
   //Uplay /*Unused function; As of writing there is no way to get legit user ach unlocked data*/
   try {
@@ -156,7 +182,13 @@ module.exports.getGameData = async (appid, lang) => {
       schema = JSON.parse(fs.readFileSync(cacheFile));
     } else {
       try {
-        schema = await getUplayDataFromSRV(appid);
+        // request-zero's socket timeout (request.cjs) calls req.destroy() with no error argument,
+        // which per Node's http docs does NOT emit 'error' on the request. So a stalled connection
+        // (server accepts but never responds, e.g. an uncached/newly-released appid like AC Shadows)
+        // leaves this promise neither resolved nor rejected forever, hanging the whole game list
+        // (makeList awaits every game via Promise.all). Race it against our own timeout so a stuck
+        // server always falls through to the local-cache fallback below instead of freezing the UI.
+        schema = await withTimeout(getUplayDataFromSRV(appid), 15000, `Timed out fetching UPLAY${appid} schema from server`);
       } catch (err) {
         debug.log(`Failed to get schema from server for UPLAY${appid}; Trying to generate from local Uplay installation ...`);
 
@@ -164,13 +196,15 @@ module.exports.getGameData = async (appid, lang) => {
         if (!uplayPath) throw "Uplay not found : can't generate schema if uplay is not installed.";
         schema = await generateSchemaFromLocalCache(appid, uplayPath);
         try {
-          await shareCache(schema);
+          await withTimeout(shareCache(schema), 15000, `Timed out sharing UPLAY${appid} cache to server`);
         } catch (err) {
           debug.log(`Failed to share UPLAY${appid} cache to server => ${err}`);
         }
       }
       fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
-      fs.writeFile(cacheFile, JSON.stringify(schema, null, 2)).catch((err) => {});
+      // fs.writeFile (callback API) throws synchronously without a callback; use the promise API
+      // so the .catch() is valid — otherwise this threw and the uPlay game failed its first load.
+      fs.promises.writeFile(cacheFile, JSON.stringify(schema, null, 2)).catch((err) => {});
     }
 
     //Lang Loading
@@ -256,7 +290,7 @@ async function generateSchemaFromLocalCache(appid, uplayPath) {
 
           if (game.achievement.list.hasOwnProperty(lang.api)) throw `Ach list for ${lang.api} has already been set ! (Discarding ${isoCode})`;
 
-          let content = archive.readAsText(entry.entryName).trim().split('\r\n');
+          let content = archive.readAsText(entry.entryName).trim().split(/\r?\n/).filter((l) => l.length > 0);
 
           game.achievement.list[`${lang.api}`] = content.map((line) => {
             let col = line.split('\t');
@@ -308,6 +342,22 @@ async function generateSchemaFromLocalCache(appid, uplayPath) {
     debug.log(err);
     throw `Failed to generate schema for UPLAY${appid} => ${err}`;
   }
+}
+
+function withTimeout(promise, ms, message) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
 }
 
 function getUplayDataFromSRV(appID, lang = null) {
@@ -385,7 +435,7 @@ let indexDB = {
       for (let i in data) {
         if (Object.prototype.hasOwnProperty.call(data, i)) {
           try {
-            let doc = yaml.safeLoad(data[i].replace(filter[1], '').replace(filter[2], ''));
+            let doc = yaml.load(data[i].replace(filter[1], '').replace(filter[2], ''));
 
             let game = {
               index: null,

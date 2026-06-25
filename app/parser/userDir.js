@@ -26,12 +26,40 @@ const steam_emu_cfg_file_supported = [
   'UniverseLAN.ini',
 ];
 
+// Quarantine a corrupted config file (rename to <file>.corrupt-<timestamp>) so its raw bytes are
+// preserved for manual recovery while a clean default is written in its place.
+function quarantineCorruptConfig(f, err) {
+  try {
+    const backup = `${f}.corrupt-${Date.now()}`;
+    fs.renameSync(f, backup);
+    console.warn(`[userDir] corrupt config ${f} (${err.message}); quarantined to ${backup}, resetting`);
+  } catch (e) {
+    try { fs.unlinkSync(f); } catch {}
+    console.warn(`[userDir] corrupt config ${f} (${err.message}); could not quarantine (${e.message}), overwriting`);
+  }
+}
+
 module.exports.get = async () => {
   try {
-    if (!fs.existsSync(file)) await this.save([]);
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (!fs.existsSync(file)) {
+      await this.save([]);
+      return [];
+    }
+    const raw = fs.readFileSync(file, 'utf8');
+    try {
+      return JSON.parse(raw);
+    } catch (parseErr) {
+      // Genuine corruption (e.g. a write interrupted by a crash/power loss). A transient I/O lock
+      // throws before JSON.parse and is handled by the outer catch — so we never quarantine a good
+      // file just because antivirus/the indexer held it open for a moment.
+      quarantineCorruptConfig(file, parseErr);
+      try { await this.save([]); } catch {}
+      return [];
+    }
   } catch (err) {
-    throw err;
+    // I/O error (file locked, permission issue, …) — degrade to empty without destroying the file.
+    console.warn(`[userDir] could not read ${file}: ${err.message}`);
+    return [];
   }
 };
 
@@ -50,7 +78,7 @@ module.exports.find = async () => {
   try {
     const search = steam_emu_cfg_file_supported
       .filter((el) => el !== 'steam_api.ini') //cause a lot of false positive
-      .concat(['rpcs3.exe']) //add rpcs3
+      .concat(['rpcs3.exe', 'shadPS4.exe', 'shadps4.exe', 'xenia.exe', 'xenia_canary.exe']) //emulator binaries
       .map((el) => {
         return '**/' + el;
       }); //glob pattern
@@ -74,7 +102,7 @@ module.exports.check = async (dirpath) => {
   try {
     let result = false;
 
-    const accepted_files = steam_emu_cfg_file_supported.concat(['rpcs3.exe']);
+    const accepted_files = steam_emu_cfg_file_supported.concat(['rpcs3.exe', 'shadPS4.exe', 'shadps4.exe', 'xenia.exe', 'xenia_canary.exe']);
 
     //check for appID folder(s)
     let scan = await glob('([0-9]+)', { cwd: dirpath, onlyDirectories: true });
@@ -270,12 +298,23 @@ module.exports.scan = async (dir) => {
         }
       }
     } else if (file === 'tenoke.ini') {
-      result.push({
-        appid: info.TENOKE.id.split('#')[0].trim(),
-        data: { type: 'file', path: path.join(dir, 'SteamData') },
-      });
+      if (info.TENOKE && info.TENOKE.id) {
+        let steamDataDir = path.join(dir, 'SteamData');
+        if (!fs.existsSync(steamDataDir)) {
+          // Unreal Engine titles keep tenoke.ini at the game root but the SteamData folder nested
+          // deeper (e.g. <game>/<Name>/Binaries/Win64/SteamData) — locate it instead of assuming
+          // it sits next to the cfg (issue #12). Bounded depth keeps the search cheap.
+          const found = await glob('**/SteamData', { cwd: dir, onlyDirectories: true, absolute: true, deep: 6, suppressErrors: true });
+          if (found.length > 0) steamDataDir = found[0];
+        }
+        result.push({
+          appid: info.TENOKE.id.split('#')[0].trim(),
+          data: { type: 'file', path: steamDataDir },
+        });
+      }
     } else if (file === 'UniverseLAN.ini') {
-      result.push({ appid: info.GameSettings.AppID, data: { type: 'file', path: path.join(dir, 'UniverseLANData') } });
+      if (info.GameSettings && info.GameSettings.AppID)
+        result.push({ appid: info.GameSettings.AppID, data: { type: 'file', path: path.join(dir, 'UniverseLANData') } });
     }
   } catch (err) {
     /*Do nothing*/
