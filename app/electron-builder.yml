@@ -19,7 +19,7 @@ publish:
   repo: Achievement-Watcher-3.0
 
 win:
-  icon: ../setup/resources/icon.ico
+  icon: build/icon.ico
   target: nsis
   artifactName: 'Achievement.Watcher.Setup.${version}.${ext}'
 
@@ -32,11 +32,10 @@ nsis:
   warningsAsErrors: false
   deleteAppDataOnUninstall: false
   installerSidebar: left.bmp
-  installerIcon: ../setup/resources/icon.ico
+  installerIcon: build/icon.ico
   differentialPackage: true
 
 directories:
-  app: .
   buildResources: ./build
 
 files:
@@ -66,10 +65,3 @@ extraFiles:
 
   - from: ./view
     to: resources/userData/view
-
-  - from: ../setup/{{app}}
-    to: .
-    filter:
-      - '**'
-      - '!resources/**'
-      - '!AchievementWatcher.exe'

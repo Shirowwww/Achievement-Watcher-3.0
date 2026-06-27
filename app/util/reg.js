@@ -1,7 +1,28 @@
 const { execFile } = require('child_process');
-const { HKEY, enumerateValues, enumerateKeys, setValue, createKey } = require('registry-js');
+
+let registryJs = null;
+let registryLoadError = null;
+
+try {
+  registryJs = require('registry-js');
+} catch (err) {
+  registryLoadError = err;
+}
+
+function requireRegistry() {
+  if (registryJs) return registryJs;
+  const message = registryLoadError && registryLoadError.message ? registryLoadError.message : 'unknown error';
+  const err = new Error(`Windows registry support is unavailable: ${message}`);
+  err.cause = registryLoadError;
+  throw err;
+}
+
+function optionalRegistry() {
+  return registryJs;
+}
 
 function hkeyFromString(hive) {
+  const { HKEY } = requireRegistry();
   const map = {
     hkcr: HKEY.HKEY_CLASSES_ROOT,
     hkcu: HKEY.HKEY_CURRENT_USER,
@@ -13,6 +34,7 @@ function hkeyFromString(hive) {
 }
 
 function writeRegistryString(hive, keyPath, valueName, value) {
+  const { setValue, createKey } = requireRegistry();
   const hiveEnum = hkeyFromString(hive);
   if (!hiveEnum) throw new Error(`Unsupported hive: ${hive}`);
 
@@ -27,6 +49,7 @@ function writeRegistryString(hive, keyPath, valueName, value) {
 }
 
 function writeRegistryDword(hive, keyPath, valueName, value) {
+  const { setValue, createKey } = requireRegistry();
   const hiveEnum = hkeyFromString(hive);
   if (!hiveEnum) throw new Error(`Unsupported hive: ${hive}`);
 
@@ -43,6 +66,9 @@ function writeRegistryDword(hive, keyPath, valueName, value) {
 }
 
 function ListRegistryAllValues(hive, key) {
+  const registry = optionalRegistry();
+  if (!registry) return [];
+  const { enumerateValues } = registry;
   const hiveEnum = hkeyFromString(hive);
   if (!hiveEnum) throw new Error(`Unsupported hive: ${hive}`);
 
@@ -56,6 +82,9 @@ function ListRegistryAllValues(hive, key) {
 }
 
 function listRegistryAllSubkeys(hive, key) {
+  const registry = optionalRegistry();
+  if (!registry) return [];
+  const { enumerateKeys } = registry;
   const hiveEnum = hkeyFromString(hive);
   if (!hiveEnum) throw new Error(`Unsupported hive: ${hive}`);
 
@@ -66,6 +95,9 @@ function listRegistryAllSubkeys(hive, key) {
 }
 
 function readRegistryInteger(hive, key, valueName) {
+  const registry = optionalRegistry();
+  if (!registry) return null;
+  const { enumerateValues } = registry;
   const hiveEnum = hkeyFromString(hive);
   if (!hiveEnum) throw new Error(`Unsupported hive: ${hive}`);
 
@@ -82,6 +114,9 @@ function readRegistryInteger(hive, key, valueName) {
 }
 
 function readRegistryString(hive, key, valueName) {
+  const registry = optionalRegistry();
+  if (!registry) return null;
+  const { enumerateValues } = registry;
   const hiveEnum = hkeyFromString(hive);
   if (!hiveEnum) throw new Error(`Unsupported hive: ${hive}`);
 
@@ -101,6 +136,9 @@ function readRegistryString(hive, key, valueName) {
 }
 
 function readRegistryStringAndExpand(hive, key, valueName) {
+  const registry = optionalRegistry();
+  if (!registry) return null;
+  const { enumerateValues } = registry;
   const hiveEnum = hkeyFromString(hive);
   if (!hiveEnum) throw new Error(`Unsupported hive: ${hive}`);
 
@@ -122,6 +160,9 @@ function readRegistryStringAndExpand(hive, key, valueName) {
 }
 
 function regKeyExists(hive, key) {
+  const registry = optionalRegistry();
+  if (!registry) return false;
+  const { enumerateKeys, enumerateValues } = registry;
   const hiveEnum = hkeyFromString(hive);
   if (!hiveEnum) throw new Error(`Unsupported hive: ${hive}`);
 
@@ -130,7 +171,13 @@ function regKeyExists(hive, key) {
   const subkeys = enumerateKeys(hiveEnum, normalizedKey);
 
   // If the key doesn't exist, enumerateKeys returns an empty array
-  return subkeys.length > 0 || listValuesSafe(hiveEnum, normalizedKey).length > 0;
+  let values = [];
+  try {
+    values = enumerateValues(hiveEnum, normalizedKey);
+  } catch {
+    values = [];
+  }
+  return subkeys.length > 0 || values.length > 0;
 }
 
 // Helper to expand %VAR% env vars in a string (Windows style)

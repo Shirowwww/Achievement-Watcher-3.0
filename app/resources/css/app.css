@@ -3794,31 +3794,33 @@ body {
 
 #settingNav {
   min-width: 192px;
-  padding: 6px;
+  padding: 7px;
   border-radius: var(--radius-md);
-  background: rgba(29, 48, 70, 0.4);
-  border: 1px solid rgba(145, 175, 211, 0.08);
+  background: rgba(18, 32, 48, 0.62);
+  border: 1px solid rgba(145, 175, 211, 0.12);
   align-self: stretch;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
 }
 
 #settingNav ul {
   display: grid;
-  gap: 4px;
+  gap: 5px;
 }
 
 #settingNav li {
   box-sizing: border-box;
   width: 100%;
-  min-height: 44px;
+  min-height: 42px;
   display: flex;
   align-items: center;
   gap: 11px;
-  padding: 10px 13px;
+  padding: 9px 13px;
   border: 1px solid transparent;
-  border-radius: 9px;
+  border-radius: 8px;
   color: #afbed0;
   font-family: 'Open-Sans';
   font-size: 14px;
+  transition: color 0.14s ease, background 0.14s ease, border-color 0.14s ease;
 }
 
 #settingNav li i {
@@ -3841,9 +3843,9 @@ body {
 
 #settingNav li.active {
   color: #fff;
-  background: rgba(86, 126, 219, 0.23);
+  background: rgba(86, 126, 219, 0.26);
   border-color: rgba(115, 156, 255, 0.2);
-  box-shadow: inset 3px 0 0 var(--accent), 0 8px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: inset 3px 0 0 var(--accent), 0 10px 22px rgba(0, 0, 0, 0.13);
 }
 
 #settings .box .content {
@@ -4161,6 +4163,109 @@ body {
   color: #7fa8e6;
 }
 
+#settings .content[data-view='guide'] {
+  overflow-y: auto;
+}
+
+#settings .platform-guide-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding: 15px 17px;
+  border: 1px solid rgba(145, 177, 215, 0.15);
+  border-radius: 8px;
+  background: rgba(35, 56, 82, 0.52);
+}
+
+#settings .platform-guide-icon {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: #dce8ff;
+  background: rgba(104, 143, 222, 0.24);
+  border: 1px solid rgba(142, 178, 244, 0.18);
+}
+
+#settings .platform-guide-settings .platform-guide-head .title {
+  margin: 1px 0 6px;
+  padding: 0;
+  border: 0;
+  color: #f4f7fc;
+  font-size: 16px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+#settings .platform-guide-head p {
+  margin: 0;
+  color: #b7c8da;
+  line-height: 1.5;
+}
+
+#settings .platform-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+}
+
+#settings .guide-panel {
+  min-width: 0;
+  border: 1px solid rgba(145, 177, 215, 0.12);
+  border-radius: 8px;
+  background: rgba(16, 29, 44, 0.58);
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.018);
+}
+
+#settings .guide-panel summary {
+  min-height: 43px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 13px;
+  color: #edf3fb;
+  font-family: 'Open-Sans';
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+#settings .guide-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+#settings .guide-panel summary i {
+  width: 18px;
+  text-align: center;
+  color: #8eb0df;
+}
+
+#settings .guide-panel[open] summary {
+  border-bottom: 1px solid rgba(145, 177, 215, 0.08);
+  background: rgba(84, 119, 175, 0.14);
+}
+
+#settings .guide-panel ul {
+  margin: 0;
+  padding: 12px 15px 14px 30px;
+}
+
+#settings .guide-panel li {
+  margin: 0 0 8px;
+  color: #b9c6d6;
+  line-height: 1.45;
+}
+
+#settings .guide-panel li:last-child {
+  margin-bottom: 0;
+}
+
 #steamwebapikey,
 #game-config .launch-args-row input {
   min-height: 38px;
@@ -4229,6 +4334,10 @@ body {
 
   #settings .arrow-list li .right {
     width: 190px;
+  }
+
+  #settings .platform-guide-grid {
+    grid-template-columns: 1fr;
   }
 
   #achievement .achievement-list ul > li {

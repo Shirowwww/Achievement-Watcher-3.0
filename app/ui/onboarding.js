@@ -425,6 +425,11 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
           debug.log(err);
         }
       }
+      if (libraryDirs.find) {
+        for (const dir of await libraryDirs.find()) {
+          addLibraryDir(dir);
+        }
+      }
       setStatus(text().smartDone, 'success');
     } catch (err) {
       setStatus(`${err}`, 'error');

@@ -2,6 +2,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const saveRoots = require(path.join(__dirname, 'saveRoots.js'));
 
 // Library roots (e.g. C:\Jeux, D:\Games, E:\SteamLibrary): folders that hold many game install
 // dirs, used by achievements.js as scan roots for Goldberg/GBE/unconfigured install detection.
@@ -49,6 +50,10 @@ module.exports.get = async () => {
     console.warn(`[libraryDirs] could not read ${file}: ${err.message}`);
     return [...DEFAULTS];
   }
+};
+
+module.exports.find = async () => {
+  return saveRoots.discoverLibraryRoots();
 };
 
 module.exports.save = async (data) => {

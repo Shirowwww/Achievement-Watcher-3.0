@@ -1,16 +1,15 @@
-# 3.0.2
+# 3.0.3
 
-Small stability release focused on game detection, duplicate entries, playtime tracking and first-run language setup.
+Small stability release focused on startup reliability, folder detection and settings cleanup.
 
 ## Changes
 
-- Better executable detection when the main `.exe` is in the game folder and Steam API files are nested deeper.
-- Stronger merge between installed games, save metadata, covers and cached metadata to avoid duplicate tiles.
-- Removed/ignored games stop playtime tracking immediately.
-- Wallpaper Engine and its helper processes are excluded from game tracking.
-- First-run language choice is required before the initial library scan.
-- All supported UI languages now include the onboarding text.
+- Improved automatic detection of Steam emulator save folders and common library locations.
+- Better first-run and Smart Find scanning for save folders and game libraries.
+- More reliable recognition of app-id folders used by common emulators.
+- Reorganized settings into clearer sections with an expanded platform guide.
+- Small build, installer and configuration cleanups.
 
 ## Download
 
-Download `Achievement.Watcher.Setup.3.0.2.exe` from this release.
+Download `Achievement.Watcher.Setup.3.0.3.exe` from this release.

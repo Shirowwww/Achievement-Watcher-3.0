@@ -2,7 +2,7 @@
   "private": true,
   "name": "Achievement-Watcher",
   "description": "A sexy achievement file parser with real-time notification.",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "main": "./electron/init.js",
   "engines": {
     "node": ">=18.0.0"
@@ -10,16 +10,14 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test \"../test/*.test.js\"",
-    "native-rebuild": "electron-rebuild",
-    "clean": "npm prune --production",
+    "clean": "npm prune --omit=dev",
     "prepare": "patch-package",
-    "prepare:watchdog": "cd ../watchdog && npm prune --production",
+    "prepare:watchdog": "cd ../watchdog && npm prune --omit=dev",
     "build": "npm run prepare:watchdog && electron-builder --config electron-builder.yml --publish never"
   },
   "author": "Anthony Beaumont",
   "license": "LGPL-3.0-only",
   "devDependencies": {
-    "@electron/rebuild": "^4.0.4",
     "electron": "^42.4.0",
     "electron-builder": "^26.15.3",
     "electron-context-menu": "^4.1.2",
