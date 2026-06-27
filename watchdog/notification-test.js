@@ -4,9 +4,9 @@ const os = require('os');
 const path = require('path');
 const toast = require('powertoast');
 const balloon = require('powerballoon');
-const getStartApps = require('get-startapps');
+const startApps = require('./util/startApps.js');
 const settings = require('./settings.js');
-const player = require('sound-play');
+const soundPlayer = require('./util/soundPlayer.js');
 
 // xinput-ffi is ESM-only (koffi) since v2; load it lazily via dynamic import (cached by Node) only
 // when the test toast actually rumbles. Best-effort: a load failure (no XInput runtime) is swallowed.
@@ -28,7 +28,7 @@ module.exports.toast = async () => {
   try {
     const options = await settings.load(cfg_file);
 
-    const hasXboxOverlay = await getStartApps.has({ id: 'GamingOverlay' });
+    const hasXboxOverlay = await startApps.has({ id: 'GamingOverlay' });
     const win_ver = os.release().split('.');
 
     let message;
@@ -55,7 +55,7 @@ module.exports.toast = async () => {
       audio: options.notification_toast.customToastAudio === '2' && !soundFile ? 'ms-winsoundevent:Notification.Achievement' : null,
     };
 
-    if (options.notification_toast.groupToast) options.group = { id: 'TOAST_TEST_GROUP', title: 'Achievement Watcher' };
+    if (options.notification_toast.groupToast) payload.group = { id: 'TOAST_TEST_GROUP', title: 'Achievement Watcher' };
 
     if (options.notification_transport.winRT === false) options.disableWinRT = true;
 
@@ -68,12 +68,12 @@ module.exports.toast = async () => {
     }
 
     try {
+      await toast(payload);
       if (soundFile)
-        player.play(soundFile).catch((e) => {
+        soundPlayer.play(soundFile).catch((e) => {
           const debug = require('./util/log.js');
           debug.log(`Error playing toast sound:  ${e}`);
         });
-      await toast(payload);
     } catch (err) {
       if (options.notification_transport.balloon) {
         try {
@@ -105,7 +105,7 @@ module.exports.progress = async () => {
   try {
     const options = await settings.load(cfg_file);
 
-    const hasXboxOverlay = await getStartApps.has({ id: 'GamingOverlay' });
+    const hasXboxOverlay = await startApps.has({ id: 'GamingOverlay' });
     const win_ver = os.release().split('.');
 
     let payload = {
@@ -153,7 +153,7 @@ module.exports.playtime = async () => {
   try {
     const options = await settings.load(cfg_file);
 
-    const hasXboxOverlay = await getStartApps.has({ id: 'GamingOverlay' });
+    const hasXboxOverlay = await startApps.has({ id: 'GamingOverlay' });
     const win_ver = os.release().split('.');
 
     let payload = {
@@ -202,7 +202,7 @@ module.exports.platinum = async () => {
   try {
     const options = await settings.load(cfg_file);
 
-    const hasXboxOverlay = await getStartApps.has({ id: 'GamingOverlay' });
+    const hasXboxOverlay = await startApps.has({ id: 'GamingOverlay' });
     const win_ver = os.release().split('.');
 
     const platinumFr = (options.achievement.lang || '').toLowerCase().startsWith('fr');

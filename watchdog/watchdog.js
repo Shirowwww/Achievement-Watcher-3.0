@@ -13,9 +13,8 @@ process.on('unhandledRejection', (reason, promise) => {
 const debug = require('./util/log.js');
 const instance = new (require('single-instance'))('Achievement Watchdog');
 const os = require('os');
-const { spawn, exec } = require('child_process');
+const { spawn, execFile } = require('child_process');
 const path = require('path');
-const getStartApps = require('get-startapps');
 const watch = require('node-watch');
 const tasklist = require('win-tasklist');
 const moment = require('moment');
@@ -41,6 +40,8 @@ const { isWinRTAvailable } = require('powertoast');
 const { isFullscreenAppRunning } = require('./queryUserNotificationState.js');
 const GlobalHotkey = require('./util/globalHotkey.js');
 const humanizeDuration = require('humanize-duration');
+const { resolvePowerShell } = require('./util/powershell.js');
+const startApps = require('./util/startApps.js');
 
 const cfg_file = {
   option: path.join(process.env['APPDATA'], 'Achievement Watcher/cfg', 'options.ini'),
@@ -147,17 +148,17 @@ var app = {
         // #46: when WinRT isn't used, powertoast shells out to PowerShell — if PowerShell isn't on
         // PATH (a reported cause of silently-missing toasts) nothing appears. Probe it and surface a
         // clear, actionable error instead of failing silently.
-        exec('powershell -NoProfile -Command "exit 0"', { windowsHide: true }, (err) => {
+        execFile(resolvePowerShell(), ['-NoProfile', '-NonInteractive', '-Command', 'exit 0'], { windowsHide: true }, (err) => {
           if (err)
             debug.error(
-              '[Toast] PowerShell is not reachable on PATH — toast notifications will NOT appear. ' +
-                'Fix: enable WinRT in Settings, or add Windows PowerShell to PATH ' +
-                '(C:\\Windows\\System32\\WindowsPowerShell\\v1.0). (issue #46)'
+              '[Toast] PowerShell is not reachable — PowerShell fallback toasts will NOT appear. ' +
+                'Fix: enable WinRT in Settings, or repair Windows PowerShell at ' +
+                'C:\\Windows\\System32\\WindowsPowerShell\\v1.0. (issue #46)'
             );
         });
       }
 
-      getStartApps
+      startApps
         .has({ id: 'GamingOverlay' })
         .then((hasXboxOverlay) => {
           let win_ver = os.release().split('.');
@@ -173,7 +174,7 @@ var app = {
           debug.log(`[Toast] will use appid: "${self.toastID}"`);
         })
         .then(() => {
-          return getStartApps.isValidAUMID(self.toastID);
+          return startApps.isValidAUMID(self.toastID);
         })
         .then((res) => {
           if (!res) {

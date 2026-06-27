@@ -45,6 +45,9 @@ module.exports.load = () => {
     if (typeof options.general.disableHardwareAccel !== 'boolean') {
       options.general.disableHardwareAccel = false;
     }
+    if (typeof options.general.closeToTray !== 'boolean') {
+      options.general.closeToTray = true;
+    }
 
     // overlay = the in-game achievement overlay (Ctrl+Shift+O). Notifications are Windows toasts
     // now, so the old per-notification look settings (position/preset/scale/duration) are gone.
@@ -320,6 +323,7 @@ module.exports.load = () => {
         onboardingCompleted: false,
         startWithWindows: true,
         disableHardwareAccel: false,
+        closeToTray: true,
       },
       overlay: {
         hotkey: 'Ctrl+Shift+O',

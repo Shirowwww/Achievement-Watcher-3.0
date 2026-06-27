@@ -206,7 +206,7 @@ let _claimedDirs = new Set();
 // the chosen Steam account, the user/library folders and the blacklist — any of those changing forces
 // a fresh scan. Per-game unlock state is always read fresh, so a cache hit never hides a new unlock.
 let _discoverCache = null; // { key, time, appidList, folderIndex, claimedDirs }
-const DISCOVER_TTL_MS = 15000;
+const DISCOVER_TTL_MS = 60000;
 const GAME_LOAD_TIMEOUT_MS = 45000;
 
 // Install folders whose first-run emulator setup (download/run generate_emu_config + Steamless +
@@ -1616,7 +1616,8 @@ module.exports.makeList = async (option, callbackProgress, onGame = () => {}) =>
       // staggered by 10ms): with a Web API key that is a burst of N parallel fetches, and the disk
       // reads / sockets / file handles all spike together. A small worker pool caps how many games
       // load in parallel while they still stream into the UI via onGame as each one resolves.
-      const CONCURRENCY = 6;
+      const hasSteamApiKey = !!(option.steam && option.steam.apiKey);
+      const CONCURRENCY = hasSteamApiKey ? 6 : 3;
       let cursor = 0;
       const worker = async () => {
         while (cursor < finalList.length) {

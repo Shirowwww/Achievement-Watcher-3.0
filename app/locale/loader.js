@@ -145,6 +145,12 @@ function translateUI(lang, locale, template) {
     startup.find("select option[value='true']").text(clear(template.settings.common.enable));
     startup.find("select option[value='false']").text(clear(template.settings.common.disable));
   }
+  if (template.settings.general.tray) {
+    $('#close-tray-settings-label').text(clear(template.settings.general.tray.name));
+    $('#close-tray-settings-help').text(clear(template.settings.general.tray.description));
+    $("#option_closeToTray option[value='true']").text(clear(template.settings.common.enable));
+    $("#option_closeToTray option[value='false']").text(clear(template.settings.common.disable));
+  }
   if (template.settings.general.onboarding) {
     $('#onboarding-settings-label').text(clear(template.settings.general.onboarding.name));
     $('#btn-onboarding-open span').text(clear(template.settings.general.onboarding.button));

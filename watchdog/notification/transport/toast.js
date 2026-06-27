@@ -1,8 +1,9 @@
 'use strict';
 
 const toast = require('powertoast');
-const player = require('sound-play');
-const path = require('path');
+const soundPlayer = require('../../util/soundPlayer.js');
+
+const TOAST_QUEUE_SOUND_DELAY_MS = 5000;
 
 module.exports = async (message, options) => {
   // customAudio: '0' muted | '1' system default toast sound | '2' custom audio file.
@@ -56,10 +57,13 @@ module.exports = async (message, options) => {
       footer: `${message.progress.current}/${message.progress.max}`,
     };
   }
-  if (soundFile)
-    player.play(soundFile).catch((e) => {
+  await toast(notification);
+
+  if (soundFile) {
+    const queueDelay = Math.max(0, Number(message.delay) || 0) * TOAST_QUEUE_SOUND_DELAY_MS;
+    soundPlayer.play(soundFile, { delayMs: queueDelay }).catch((e) => {
       const debug = require('../../util/log.js');
       debug.log(`Error playing toast sound:  ${e}`);
     });
-  await toast(notification);
+  }
 };

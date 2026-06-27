@@ -373,6 +373,10 @@ function diagnose({ gameDir, appid, schema, savesRoots }) {
     if (!/^\s*\[user::general\]/im.test(userConfig) || !/^\s*account_name\s*=\s*\S/im.test(userConfig) || !/^\s*language\s*=\s*\S/im.test(userConfig)) {
       add('warning', 'BAD_USER_CONFIG', 'configs.user.ini is missing account_name and/or language under [user::general].');
     }
+    const savePathMatch = userConfig.match(/^\s*local_save_path\s*=\s*(.+?)\s*$/im);
+    if (savePathMatch && savePathMatch[1] && savePathMatch[1].trim()) {
+      add('warning', 'CUSTOM_SAVE_PATH', `configs.user.ini sets local_save_path=${savePathMatch[1].trim()} — runtime saves may be written outside AW's monitored GSE Saves folder.`);
+    }
   }
 
   // achievements.json
@@ -437,7 +441,7 @@ function diagnose({ gameDir, appid, schema, savesRoots }) {
   if (report.save && report.save.exists) {
     add('info', 'SAVE_PRESENT', `Runtime save found (${report.save.type}): ${report.save.earned}/${report.save.total} unlocked.`);
   } else {
-    add('info', 'NO_SAVE_YET', 'No runtime save written yet — the game has unlocked 0 achievements, so all appear locked (expected).');
+    add('info', 'NO_SAVE_YET', 'No runtime save has been written yet. If achievements unlocked in-game, the emulator/token may not be creating GSE/Goldberg save files or may be writing to a custom local_save_path.');
   }
 
   report.ok = !report.issues.some((i) => i.level === 'error');

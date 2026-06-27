@@ -2,6 +2,7 @@
 
 const { spawn } = require('child_process');
 const path = require('path');
+const { resolvePowerShell } = require('./powershell.js');
 
 const MODIFIERS = new Map([
   ['alt', 0x0001],
@@ -102,7 +103,7 @@ class GlobalHotkey {
 
     const script = path.join(__dirname, 'registerHotkey.ps1');
     const child = spawn(
-      'powershell.exe',
+      resolvePowerShell(),
       [
         '-NoProfile',
         '-NonInteractive',

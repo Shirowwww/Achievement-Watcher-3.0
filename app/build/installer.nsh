@@ -24,6 +24,7 @@ Var PS_CLOSE_AW
   ; Copy media, presets, view to your app's AppData
   StrCpy $APPDATA_MYAPP "$APPDATA\Achievement Watcher"
   CreateDirectory "$APPDATA_MYAPP"
+  DetailPrint "Keeping existing settings and cache in $APPDATA_MYAPP"
 !macroend
 
 

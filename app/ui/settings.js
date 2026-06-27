@@ -16,6 +16,17 @@ let holdingKeysCheck = null;
 // the initial `.val(...).change()` population from triggering a save storm / saving stale values.
 let settingsReady = false;
 let notifAutosaveTimer = null;
+const SETTINGS_SAVE_TIMEOUT_MS = 30000;
+
+function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_MS) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`${label} timed out after ${Math.round(timeoutMs / 1000)}s`)), timeoutMs);
+    }),
+  ]).finally(() => clearTimeout(timer));
+}
 
 (function ($, window, document) {
   $(function () {
@@ -58,6 +69,7 @@ let notifAutosaveTimer = null;
       if (!app.config.general) app.config.general = {};
       $('#option_startWithWindows').val(String(app.config.general.startWithWindows !== false)).change();
       $('#option_disableHardwareAccel').val(String(app.config.general.disableHardwareAccel === true)).change();
+      $('#option_closeToTray').val(String(app.config.general.closeToTray !== false)).change();
       ipcRenderer
         .invoke('startup:get-start-with-windows')
         .then((enabled) => {
@@ -310,7 +322,7 @@ let notifAutosaveTimer = null;
         .each(function (index) {
           try {
             // These General-tab selects persist under `general`, not `achievement` — handled explicitly below.
-            if ($(this)[0].id === 'option_startWithWindows' || $(this)[0].id === 'option_disableHardwareAccel') return;
+            if ($(this)[0].id === 'option_startWithWindows' || $(this)[0].id === 'option_disableHardwareAccel' || $(this)[0].id === 'option_closeToTray') return;
             if ($(this)[0].id !== '' && $(this).val() !== '') {
               app.config.achievement[$(this)[0].id.replace('option_', '')] =
                 $(this).val() === 'true' ? true : $(this).val() === 'false' ? false : $(this).val();
@@ -322,6 +334,7 @@ let notifAutosaveTimer = null;
         });
       if (!app.config.general) app.config.general = {};
       app.config.general.disableHardwareAccel = $('#option_disableHardwareAccel').val() === 'true';
+      app.config.general.closeToTray = $('#option_closeToTray').val() !== 'false';
 
       $('#options-source .right')
         .children('select')
@@ -432,8 +445,8 @@ let notifAutosaveTimer = null;
         });
 
       settings.setUserDataPath(ipcRenderer.sendSync('get-user-data-path-sync'));
-      Promise.all([userDir.save(userDirList), libraryDirs.save(libraryDirList), applyStartup])
-        .then(() => settings.save(app.config))
+      withSettingsTimeout(Promise.all([userDir.save(userDirList), libraryDirs.save(libraryDirList), applyStartup]), 'Saving folders/startup')
+        .then(() => withSettingsTimeout(settings.save(app.config), 'Writing options.ini'))
         .then(() => {
           $('#settings .box').fadeOut(() => {
             self.css('pointer-events', 'initial');

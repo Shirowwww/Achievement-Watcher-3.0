@@ -33,6 +33,8 @@ the game's local `steam_settings` schema when available.
 - Test from **Settings → Notification** or the **Diagnostics** tab.
 - For the in-game **overlay**, confirm the delivery mode is *overlay* or *both* and that a
   preset is selected.
+- Older builds called the styled popup "Chromium notifications". In 3.0 this is the
+  **Overlay** mode; the old Chromium transport is no longer a separate option.
 
 ## Playtime isn't tracked
 

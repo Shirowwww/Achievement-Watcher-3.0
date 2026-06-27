@@ -30,6 +30,7 @@ nsis:
   include: build/installer.nsh
   displayLanguageSelector: false
   warningsAsErrors: false
+  deleteAppDataOnUninstall: false
   installerSidebar: left.bmp
   installerIcon: ../setup/resources/icon.ico
   differentialPackage: true

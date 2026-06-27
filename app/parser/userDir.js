@@ -112,6 +112,12 @@ module.exports.check = async (dirpath) => {
     scan = await glob('*.{ini,exe}', { cwd: dirpath, onlyFiles: true });
     for (let file of scan) if (accepted_files.some((filename) => filename === file)) return (result = true);
 
+    // Some GOG/UniverseLAN and repack layouts keep the config below the selected game root
+    // (for example <Game>/Engine/Binaries/.../UniverseLAN.ini). Accept that root, then scan()
+    // will resolve the real config folder at low depth.
+    scan = await glob(steam_emu_cfg_file_supported.map((name) => `**/${name}`), { cwd: dirpath, onlyFiles: true, deep: 4, suppressErrors: true });
+    if (scan.length > 0) return (result = true);
+
     return result;
   } catch (err) {
     throw err;
@@ -315,6 +321,24 @@ module.exports.scan = async (dir) => {
     } else if (file === 'UniverseLAN.ini') {
       if (info.GameSettings && info.GameSettings.AppID)
         result.push({ appid: info.GameSettings.AppID, data: { type: 'file', path: path.join(dir, 'UniverseLANData') } });
+    }
+
+    if (result.length === 0) {
+      const nested = await glob(steam_emu_cfg_file_supported.map((name) => `**/${name}`), {
+        cwd: dir,
+        onlyFiles: true,
+        absolute: true,
+        deep: 4,
+        suppressErrors: true,
+      });
+      const seen = new Set([path.resolve(dir).toLowerCase()]);
+      for (const filepath of nested) {
+        const cfgDir = path.parse(filepath).dir;
+        const key = path.resolve(cfgDir).toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        result.push(...(await module.exports.scan(cfgDir)));
+      }
     }
   } catch (err) {
     /*Do nothing*/

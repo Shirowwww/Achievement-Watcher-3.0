@@ -23,6 +23,8 @@ const ipc = require(path.join(__dirname, 'ipc.js'));
 const { pathToFileURL } = require('url');
 const BASE_URL = 'https://www.steamgriddb.com/api/v2';
 const API_KEY = '2a9d32ddd0bfe4e1191b4f6ff56fef60'; // TODO: remove this and load from config file
+const startupArgs = minimist(process.argv.slice(1));
+const safeMode = startupArgs['safe-mode'] === true || startupArgs.safeMode === true || startupArgs['reset-window'] === true;
 
 let remoteMain = null;
 function getRemoteMain() {
@@ -86,7 +88,7 @@ try {
 } catch {
   /* no options.ini yet (first run) -> keep GPU acceleration on */
 }
-if (manifest.config['disable-gpu'] || userDisableGpu) app.disableHardwareAcceleration();
+if (manifest.config['disable-gpu'] || userDisableGpu || safeMode) app.disableHardwareAcceleration();
 if (manifest.config.appid) app.setAppUserModelId(manifest.config.appid);
 manifest.config.debug = process.env.NODE_ENV === 'development' || process.defaultApp || /[\\/]electron/.test(process.execPath);
 
@@ -99,6 +101,12 @@ let debug = new (require('@xan105/log'))({
   file: path.join(userData, `logs/renderer.log`),
 });
 
+process.on('uncaughtException', (err) => {
+  debug.log(`[uncaughtException] ${err && err.stack ? err.stack : err}`);
+});
+process.on('unhandledRejection', (err) => {
+  debug.log(`[unhandledRejection] ${err && err.stack ? err.stack : err}`);
+});
 
 async function fetchSteamCommunityAchievements(url) {
   // The steamcommunity achievements page is server-rendered HTML, so a plain HTTP fetch + parse
@@ -1230,6 +1238,7 @@ function createMainWindow() {
   try {
     if (MainWin) {
       if (MainWin.isMinimized()) MainWin.restore();
+      if (!MainWin.isVisible()) MainWin.show();
       MainWin.focus();
       return;
     }
@@ -1381,6 +1390,22 @@ function createMainWindow() {
     });
     // Absolute last resort: show regardless of paint/IPC events so the app is never invisible.
     setTimeout(() => showMainWindow('absolute-timeout'), 15000);
+
+    MainWin.on('close', (event) => {
+      if (app.isQuiting) return;
+      if (configJS?.general?.closeToTray === false) {
+        debug.log('[MainWindow] close requested -> quitting app (closeToTray disabled)');
+        app.isQuiting = true;
+        setImmediate(() => app.quit());
+        return;
+      }
+      event.preventDefault();
+      debug.log('[MainWindow] close intercepted -> hiding to tray');
+      clearInterval(watchdogStatusInterval);
+      watchdogStatusInterval = null;
+      closePuppeteer().catch(() => {});
+      MainWin.hide();
+    });
 
     MainWin.on('closed', () => {
       MainWin = null;
@@ -2290,8 +2315,12 @@ try {
         }
       }
       createTray();
-      launchWatchdog();
-      scheduleBackgroundAutoFix(); // headless emulator auto-fix while the window stays closed
+      if (safeMode) {
+        debug.log('[safe-mode] startup monitor/background scans skipped');
+      } else {
+        launchWatchdog();
+        scheduleBackgroundAutoFix(); // headless emulator auto-fix while the window stays closed
+      }
       // Cap the per-appid icon cache off the startup critical path (LRU by access time, ~1 GiB
       // default; no-op when under cap).
       setTimeout(() => {
@@ -2304,8 +2333,8 @@ try {
           debug.log('[iconCache] prune skipped: ' + (err.message || err));
         }
       }, 15000);
-      const args = minimist(process.argv.slice(1));
-      parseArgs(args); // opens the window unless launched with --hidden
+      if (safeMode) startupArgs.hidden = false;
+      parseArgs(startupArgs); // opens the window unless launched with --hidden
     })
     .on('window-all-closed', function () {
       // Resident tray daemon: do NOT quit when the window closes — the tray + background monitor stay

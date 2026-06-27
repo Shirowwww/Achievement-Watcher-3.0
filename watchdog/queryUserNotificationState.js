@@ -1,5 +1,6 @@
 const { execFile } = require('child_process');
 const { promisify } = require('util');
+const { resolvePowerShell } = require('./util/powershell.js');
 const execFileAsync = promisify(execFile);
 
 const QUERY_USER_NOTIFICATION_STATE = {
@@ -14,7 +15,7 @@ const QUERY_USER_NOTIFICATION_STATE = {
 
 async function queryUserNotificationState() {
   try {
-    const { stdout } = await execFileAsync('powershell.exe', [
+    const { stdout } = await execFileAsync(resolvePowerShell(), [
       '-NoProfile',
       '-Command',
       `
