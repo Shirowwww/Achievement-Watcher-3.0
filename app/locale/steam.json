@@ -21,6 +21,7 @@
   { "iso": "pt-BR", "displayName": "Portuguese - Brazil", "api": "brazilian", "webapi": "pt-BR", "native": "Português-Brasil" },
   { "iso": "ro-RO", "displayName": "Romanian", "api": "romanian", "webapi": "ro", "native": "Română" },
   { "iso": "ru-RU", "displayName": "Russian", "api": "russian", "webapi": "ru", "native": "Русский" },
+  { "iso": "sk-SK", "displayName": "Slovak", "api": "slovak", "webapi": "sk", "native": "Slovenčina" },
   { "iso": "es-ES", "displayName": "Spanish - Spain", "api": "spanish", "webapi": "es", "native": "Español-España" },
   { "iso": "es-419", "displayName": "Spanish - Latin America", "api": "latam", "webapi": "es-419", "native": "Español-Latinoamérica" },
   { "iso": "sv-SE", "displayName": "Swedish", "api": "swedish", "webapi": "sv", "native": "Svenska" },

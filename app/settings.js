@@ -6,7 +6,7 @@ const ini = require('@xan105/ini');
 const fs = require('fs');
 const os = require('os');
 const aes = require(path.join(appPath, 'util/aes.js'));
-const steamLanguages = require(path.join(appPath, 'locale/steam.json'));
+const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
 
 let filename;
 module.exports.setUserDataPath = (p) => {
@@ -19,10 +19,10 @@ module.exports.load = () => {
   try {
     options = ini.parse(fs.readFileSync(filename, 'utf8'));
 
-    if (!steamLanguages.some((lang) => lang.api == options.achievement.lang)) {
+    if (!uiLanguages.has(options.achievement.lang)) {
       try {
         let locale = navigator.language || navigator.userLanguage || 'en';
-        options.achievement.lang = steamLanguages.find((lang) => lang.webapi == locale).api;
+        options.achievement.lang = uiLanguages.bestForLocale(locale).api;
       } catch (err) {
         options.achievement.lang = 'english';
       }
@@ -403,7 +403,7 @@ module.exports.load = () => {
 
     try {
       let locale = navigator.language || navigator.userLanguage || 'en';
-      options.achievement.lang = steamLanguages.find((lang) => lang.webapi == locale).api;
+      options.achievement.lang = uiLanguages.bestForLocale(locale).api;
     } catch (err) {
       options.achievement.lang = 'english';
     }

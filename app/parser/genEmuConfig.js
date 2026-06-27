@@ -217,6 +217,13 @@ async function generate({ tool, appid, login = null, onPrompt, timeout = 300000,
 
   const output = await new Promise((resolve, reject) => {
     const child = spawn(tool.exe, args, { cwd: workDir, env, windowsHide: true, shell: /\.(cmd|bat)$/i.test(tool.exe) });
+    // Unattended runs (no onPrompt — the automatic/bulk emulator fix) must never block on interactive
+    // input. Close stdin right away so a tool that prompts (a login question it can't ask here, a
+    // "press enter", an unexpected Steam Guard) gets EOF and fails fast instead of hanging the full
+    // timeout. Interactive callers pass onPrompt and keep stdin open to answer.
+    if (!onPrompt) {
+      try { child.stdin.end(); } catch { /* stdin may already be closed */ }
+    }
     let buf = '';
     let out = '';
     let lastPrompt = '';

@@ -6,6 +6,13 @@ const fs = require('fs');
 
 let debug;
 let exclusionFile;
+const builtinExclude = [
+  480, //Space War
+  753, //Steam Config
+  250820, //SteamVR
+  228980, //Steamworks Common Redistributables
+  431960, //Wallpaper Engine (background utility; subprocesses should never count as game time)
+];
 module.exports.initDebug = ({ isDev, userDataPath }) => {
   exclusionFile = path.join(userDataPath, 'cfg/exclusion.db');
   debug = new (require('@xan105/log'))({
@@ -19,10 +26,7 @@ module.exports.get = async () => {
   //TODO: replace this url with the full apilist of dlc/music/demo/etc
 
   let exclude = [
-    480, //Space War
-    753, //Steam Config
-    250820, //SteamVR
-    228980, //Steamworks Common Redistributables
+    ...builtinExclude,
   ];
 
   try {
@@ -69,7 +73,16 @@ module.exports.add = async (appid) => {
     } else {
       debug.log('Already blacklisted.');
     }
+    try {
+      const gameIndex = require(path.join(__dirname, 'gameIndex.js'));
+      const removed = gameIndex.remove(appid);
+      if (removed > 0) debug.log(`Removed ${removed} tracking entr${removed === 1 ? 'y' : 'ies'} from gameIndex.`);
+    } catch (err) {
+      debug.log(err);
+    }
   } catch (err) {
     throw err;
   }
 };
+
+module.exports.builtin = builtinExclude.slice();

@@ -9,6 +9,13 @@ const fs = require('fs');
 const path = require('path');
 
 let storeFile = null;
+let cachePath = null;
+let cacheStamp = null;
+let cacheMap = null;
+
+function stamp(stat) {
+  return stat ? `${stat.mtimeNs || BigInt(Math.round(stat.mtimeMs * 1000000))}:${stat.size}` : null;
+}
 
 function defaultFile() {
   return path.join(process.env['APPDATA'] || '', 'Achievement Watcher', 'cfg', 'covers.db');
@@ -16,6 +23,9 @@ function defaultFile() {
 
 function setStoreFile(p) {
   storeFile = p || null;
+  cachePath = null;
+  cacheStamp = null;
+  cacheMap = null;
 }
 
 function file() {
@@ -23,10 +33,20 @@ function file() {
 }
 
 function readAll() {
+  const f = file();
   try {
-    const data = JSON.parse(fs.readFileSync(file(), 'utf8'));
-    return data && typeof data === 'object' ? data : {};
+    const stat = fs.statSync(f, { bigint: true });
+    const nextStamp = stamp(stat);
+    if (cacheMap && cachePath === f && cacheStamp === nextStamp) return { ...cacheMap };
+    const data = JSON.parse(fs.readFileSync(f, 'utf8'));
+    cachePath = f;
+    cacheStamp = nextStamp;
+    cacheMap = data && typeof data === 'object' ? data : {};
+    return { ...cacheMap };
   } catch {
+    cachePath = f;
+    cacheStamp = null;
+    cacheMap = {};
     return {};
   }
 }
@@ -34,7 +54,15 @@ function readAll() {
 function writeAll(map) {
   const f = file();
   fs.mkdirSync(path.dirname(f), { recursive: true });
-  fs.writeFileSync(f, JSON.stringify(map || {}, null, 2), 'utf8');
+  const next = map && typeof map === 'object' ? map : {};
+  fs.writeFileSync(f, JSON.stringify(next, null, 2), 'utf8');
+  cachePath = f;
+  try {
+    cacheStamp = stamp(fs.statSync(f, { bigint: true }));
+  } catch {
+    cacheStamp = null;
+  }
+  cacheMap = { ...next };
 }
 
 function get(appid) {

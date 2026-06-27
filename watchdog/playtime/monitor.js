@@ -33,8 +33,19 @@ if (!Array.isArray(blacklist.ignore)) blacklist.ignore = [];
 if (!Array.isArray(blacklist.mute)) blacklist.mute = [];
 let gameIndex;
 let savedConfigs;
+let appidByDirCache;
+let ignoredAppidsCache = { mtimeMs: null, set: new Set() };
 
 const systemTempDir = os.tmpdir() || process.env['TEMP'] || process.env['TMP'];
+const userExclusionFile = path.join(appdataPath, 'Achievement Watcher/cfg/exclusion.db');
+const builtinIgnoredAppids = new Set([
+  '480', // Space War
+  '753', // Steam Config
+  '250820', // SteamVR
+  '228980', // Steamworks Common Redistributables
+  '431960', // Wallpaper Engine
+]);
+const wallpaperProcessNames = new Set(['wallpaperui.exe', 'wallpaper32.exe', 'wallpaper64.exe', 'wallpaperservice32.exe', 'winrtutil32.exe', 'winrtutil64.exe']);
 
 const filter = {
   ignore: blacklist.ignore, //WMI WQL FILTER
@@ -68,6 +79,43 @@ function binaryMatchesProcess(binary, process) {
   return b === p || b.replace('.exe', '-win64-shipping.exe') === p;
 }
 
+function normalizeAppid(appid) {
+  return String(appid || '').trim();
+}
+
+function getIgnoredAppids() {
+  let mtimeMs = -1;
+  try {
+    mtimeMs = fs.statSync(userExclusionFile).mtimeMs;
+  } catch {
+    mtimeMs = -1;
+  }
+  if (ignoredAppidsCache.mtimeMs === mtimeMs) return ignoredAppidsCache.set;
+
+  const ignored = new Set(builtinIgnoredAppids);
+  try {
+    const user = JSON.parse(fs.readFileSync(userExclusionFile, 'utf8'));
+    if (Array.isArray(user)) {
+      for (const appid of user) ignored.add(normalizeAppid(appid));
+    }
+  } catch {
+    // Optional user file; built-ins still apply.
+  }
+  ignoredAppidsCache = { mtimeMs, set: ignored };
+  return ignored;
+}
+
+function isIgnoredAppid(appid) {
+  const key = normalizeAppid(appid);
+  return key !== '' && getIgnoredAppids().has(key);
+}
+
+function isWallpaperEngineProcess(process, filepath) {
+  const proc = String(process || '').toLowerCase();
+  const file = String(filepath || '').toLowerCase();
+  return wallpaperProcessNames.has(proc) || file.includes('\\wallpaper_engine\\') || file.includes('/wallpaper_engine/');
+}
+
 async function init() {
   const emitter = new EventEmitter();
 
@@ -75,6 +123,7 @@ async function init() {
   const WQL = await import('wql-process-monitor');
 
   let nowPlaying = [];
+  appidByDirCache = new Map();
   gameIndex = await getGameIndex();
   await getSavedConfigs();
 
@@ -91,11 +140,12 @@ async function init() {
   processMonitor.on('creation', async ([process, pid, filepath]) => {
     //Mute event
     if (!filepath) return;
+    if (isWallpaperEngineProcess(process, filepath)) return;
     if (filter.mute.dir.some((dirpath) => path.parse(filepath).dir.toLowerCase().startsWith(dirpath.toLowerCase()))) return;
     if (filter.mute.file.some((bin) => bin.toLowerCase() === process.toLowerCase())) return;
 
     const games = gameIndex.filter(
-      (game) => binaryMatchesProcess(game.binary, process) && !String(game.name || '').toLowerCase().includes('demo')
+      (game) => binaryMatchesProcess(game.binary, process) && !isIgnoredAppid(game.appid) && !String(game.name || '').toLowerCase().includes('demo')
     );
 
     let game;
@@ -109,8 +159,19 @@ async function init() {
       const gameDir = path.parse(filepath).dir;
       debug.log(`Try to find appid from a cfg file in "${gameDir}"`);
       try {
-        const appid = await findByReadingContentOfKnownConfigfilesIn(gameDir);
+        const dirKey = gameDir.toLowerCase();
+        let appid;
+        if (appidByDirCache.has(dirKey)) {
+          appid = appidByDirCache.get(dirKey);
+        } else {
+          appid = await findByReadingContentOfKnownConfigfilesIn(gameDir);
+          appidByDirCache.set(dirKey, appid);
+        }
         debug.log(`Found appid: ${appid}`);
+        if (isIgnoredAppid(appid)) {
+          debug.log(`Ignoring blacklisted appid ${appid} for "${process}"`);
+          return;
+        }
         //double check that the appid is not on gameIndex:
         game = gameIndex.find((g) => g.appid === appid);
         if (!game) {
@@ -128,6 +189,10 @@ async function init() {
     }
 
     if (!game) return;
+    if (isIgnoredAppid(game.appid)) {
+      debug.log(`Ignoring blacklisted appid ${game.appid} for "${process}"`);
+      return;
+    }
     debug.log(`DB Hit for ${game.name}(${game.appid}) ["${filepath}"]`);
     //TODO: get launched game and add it to exeList
     //TODO: check for game updates?
@@ -200,6 +265,7 @@ async function init() {
 }
 
 async function addToGameIndex(game) {
+  if (isIgnoredAppid(game.appid)) return;
   let userOverride;
   try {
     userOverride = JSON.parse(fs.readFileSync(path.join(appdataPath, 'Achievement Watcher/cfg', 'gameIndex.json'), 'utf8'));
@@ -247,7 +313,7 @@ async function getGameIndex() {
 
   //Merge (assign) arrB in arrA using prop as unique key
   const mergeArrayOfObj = (arrA, arrB, prop) => arrA.filter((a) => !arrB.find((b) => a[prop] === b[prop])).concat(arrB);
-  return mergeArrayOfObj(gameIndex, userOverride, 'appid');
+  return mergeArrayOfObj(gameIndex, userOverride, 'appid').filter((game) => !isIgnoredAppid(game.appid));
 }
 
 async function getSavedConfigs() {

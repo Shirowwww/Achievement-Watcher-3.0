@@ -14,11 +14,26 @@
       "played": "Last played"
     },
     "label": {
-      "alpha": { "asc": "Name: A → Z", "desc": "Name: Z → A" },
-      "percent": { "asc": "Progress: low → high", "desc": "Progress: high → low" },
-      "time": { "asc": "Achievement: oldest → newest", "desc": "Achievement: newest → oldest" },
-      "played": { "asc": "Played: oldest → newest", "desc": "Played: newest → oldest" },
-      "rarity": { "asc": "Rarity: rarest → most common", "desc": "Rarity: most common → rarest" }
+      "alpha": {
+        "asc": "Name: A → Z",
+        "desc": "Name: Z → A"
+      },
+      "percent": {
+        "asc": "Progress: low → high",
+        "desc": "Progress: high → low"
+      },
+      "time": {
+        "asc": "Achievement: oldest → newest",
+        "desc": "Achievement: newest → oldest"
+      },
+      "played": {
+        "asc": "Played: oldest → newest",
+        "desc": "Played: newest → oldest"
+      },
+      "rarity": {
+        "asc": "Rarity: rarest → most common",
+        "desc": "Rarity: most common → rarest"
+      }
     },
     "action": {
       "reverse": "click to reverse",
@@ -84,14 +99,23 @@
       "edit": "Edit"
     },
     "watchdog": {
-      "startup": { "name": "Run at login", "description": "Watchdog starts automatically when your system boots." },
-      "kill": { "name": "Keep running", "description": "Keep watchdog running even if the main app closes." }
+      "startup": {
+        "name": "Run at login",
+        "description": "Watchdog starts automatically when your system boots."
+      },
+      "kill": {
+        "name": "Keep running",
+        "description": "Keep watchdog running even if the main app closes."
+      }
     },
     "overlay": {
       "position": "Achievement Position",
       "progressPosition": "Progress Position",
       "playtimePosition": "Playtime Position",
-      "preset": { "name": "Notification Preset", "description": "Legacy uses the 'old' notification system" },
+      "preset": {
+        "name": "Notification Preset",
+        "description": "Legacy uses the 'old' notification system"
+      },
       "hotkey": {
         "name": "Overlay Hotkey",
         "description": "Press this hotkey to show the achievements overlay while ingame."
@@ -146,7 +170,10 @@
         "name": "Disable hardware acceleration",
         "description": "Turn off GPU acceleration if the overlay or window misbehaves. Requires a restart."
       },
-      "tray": { "name": "Close to System Tray", "description": "Keep the app running in the background for faster notifications startup." }
+      "tray": {
+        "name": "Close to System Tray",
+        "description": "Keep the app running in the background for faster notifications startup."
+      }
     },
     "emulator": {
       "nav": "Emulator",
@@ -168,52 +195,82 @@
       "autoApply": {
         "name": "Automatically fix newly detected games",
         "description": "Runs the full Apply emulator fix chain once for a newly detected, unconfigured emulated game: SteamStub handling, GBE Fork, achievements, DLCs, identity/language, and Advanced data when enabled. Enabled by default.",
-        "value": { "false": "Disabled", "true": "Enabled" }
+        "value": {
+          "false": "Disabled",
+          "true": "Enabled"
+        }
       },
       "mode": {
         "name": "Emulator mode",
         "description": "Regular swaps the game's steam_api(64).dll. ColdClient keeps it and loads GBE Fork's emulated steamclient via a loader — broader coverage for stubborn games.",
-        "value": { "regular": "Regular (replace DLL)", "coldclient": "ColdClient (GBE Fork)" }
+        "value": {
+          "regular": "Regular (replace DLL)",
+          "coldclient": "ColdClient (GBE Fork)"
+        }
       },
       "steamSettings": {
         "name": "steam_settings data",
         "description": "Simple uses Achievement Watcher's own fetch (anonymous). Advanced runs generate_emu_config for depot/language coverage.",
-        "value": { "simple": "Simple (fast)", "advanced": "Advanced (complete)" }
+        "value": {
+          "simple": "Simple (fast)",
+          "advanced": "Advanced (complete)"
+        }
       },
       "login": {
         "name": "Data source (Advanced)",
         "description": "Steam login lets generate_emu_config pull complete DLC/depot data. Use a THROWAWAY account only — never your main.",
-        "value": { "anonymous": "Anonymous", "steam": "Steam login" }
+        "value": {
+          "anonymous": "Anonymous",
+          "steam": "Steam login"
+        }
       },
       "steamless": {
         "name": "Auto-unpack SteamStub DRM",
         "description": "Runs Steamless on the game exe before patching to strip Valve's SteamStub DRM (original kept as .steamstub.bak). No-op when there's no stub.",
-        "value": { "false": "Disabled", "true": "Enabled" }
+        "value": {
+          "false": "Disabled",
+          "true": "Enabled"
+        }
       },
       "steamlessExp": {
         "name": "Steamless experimental",
         "description": "Realigns sections during unpack for better compatibility with heavily-protected EXEs. Only matters when auto-unpack is on.",
-        "value": { "false": "Disabled", "true": "Enabled" }
+        "value": {
+          "false": "Disabled",
+          "true": "Enabled"
+        }
       },
       "crackFix": {
         "name": "Auto-apply community fix (CrakFiles)",
         "description": "On every fix, automatically downloads and applies a confident-match community fix from the CrakFiles list (exact name match + pixeldrain link only; overwritten files are backed up). On by default — disable it if you don't want AW downloading/overwriting game files from a community source.",
-        "value": { "false": "Disabled", "true": "Enabled" }
+        "value": {
+          "false": "Disabled",
+          "true": "Enabled"
+        }
       },
       "apiCheckBypass": {
         "name": "Steam API ownership-check bypass",
         "description": "Off by default. Drops SteamAutoCrack's bypass proxy (winmm.dll) + a redirect config so games that re-check the original steam_api/exe after the swap still launch and unlock. Downloads the proxy from its official release.",
-        "value": { "false": "Disabled", "true": "Enabled" }
+        "value": {
+          "false": "Disabled",
+          "true": "Enabled"
+        }
       },
       "launchBat": {
         "name": "Create Launch.bat for fallback",
         "description": "When Steamless cannot strip a SteamStub exe and AW falls back to ColdClient, also writes a Launch.bat for the matching loader.",
-        "value": { "true": "Enabled", "false": "Disabled" }
+        "value": {
+          "true": "Enabled",
+          "false": "Disabled"
+        }
       },
       "checkUpdates": {
         "name": "Check for GBE Fork updates",
         "description": "Re-checks GitHub for the latest GBE Fork build before applying (downloads only if newer). Disable to always use the cached build.",
-        "value": { "true": "Enabled", "false": "Disabled" }
+        "value": {
+          "true": "Enabled",
+          "false": "Disabled"
+        }
       },
       "goldbergIcons": {
         "name": "GBE/Goldberg — download icons",
@@ -510,5 +567,89 @@
         "description": "Show Steam achievements of only the selected account"
       }
     }
+  },
+  "onboarding": {
+    "settingsLabel": "First-run guide",
+    "settingsButton": "Open guide",
+    "settingsHelp": "Reopen the setup guide for API key, profile, folders, sources, and notifications.",
+    "eyebrow": "First setup",
+    "close": "Close",
+    "steps": [
+      "Language",
+      "How it works",
+      "Account",
+      "API key",
+      "Games",
+      "Settings"
+    ],
+    "languageTitle": "Choose language",
+    "languageCopy": "Choose the language before the first scan. Games, metadata, achievements, and Steam caches will load in this language from the start.",
+    "language": "Game and interface language",
+    "languagePlaceholder": "Choose a language...",
+    "languageHint": "The first library load starts only after this choice.",
+    "introTitle": "How it works",
+    "introCopy": "Achievement Watcher scans known save folders and your game libraries, then the Watchdog keeps running in the tray for unlock notifications and the in-game overlay.",
+    "scanTitle": "Scan",
+    "scanCopy": "Steam, GOG, Epic, emulators and Goldberg/GBE folders are detected from saved achievement files.",
+    "watchTitle": "Watch",
+    "watchCopy": "The background Watchdog watches files and game launches so unlocks appear while you play.",
+    "fixTitle": "Repair",
+    "fixCopy": "For emulated Steam games, the right-click fix can add GBE Fork, schemas, DLC data, and launch helpers.",
+    "profileTitle": "Profile",
+    "profileCopy": "Pick the name shown in the header and optionally set a local avatar.",
+    "username": "Display name",
+    "mainSteam": "Main Steam account",
+    "avatarPick": "Choose photo",
+    "avatarDefault": "Default",
+    "avatarHint": "Optional. Stored locally on this PC.",
+    "apiTitle": "Steam Web API key",
+    "apiCopy": "A key improves Steam metadata retrieval. You can leave it empty and add it later.",
+    "apiWarning": "IMPORTANT: without an API key, the very first library load will be VERY SLOW: each game is fetched by scraping the Steam pages (several seconds per game). With a key it is near-instant and more accurate. The window stays usable while it loads, but adding one is strongly recommended.",
+    "apiLabel": "Steam Web API key",
+    "apiLink": "Get a Steam Web API key",
+    "apiNote": "Use the official Steam page. The key is encrypted before saving.",
+    "foldersTitle": "Add games on disk",
+    "foldersCopy": "Add save/config folders for specific emulators, and library roots that contain many installed games.",
+    "addSave": "Add save folder",
+    "smartFind": "Smart find",
+    "addLibrary": "Add library folder",
+    "saveList": "Save/config folders",
+    "libraryList": "Library folders",
+    "emptyList": "Nothing added this session.",
+    "settingsTitle": "Recommended settings",
+    "settingsCopy": "These are the main switches most users need first. Everything remains editable later in Settings.",
+    "source": "Display Steam games",
+    "notifications": "Notifications",
+    "playtime": "Playtime tracking",
+    "autoFix": "Auto-fix emulated games",
+    "hidden": "Hidden achievements",
+    "merge": "Merge duplicates",
+    "show": "Show",
+    "hide": "Hide",
+    "sourceHint": "Also lists your legitimate Steam games (public profile required).",
+    "notificationsHint": "Where unlocks appear: Windows toast, in-game overlay, or both.",
+    "playtimeHint": "Automatically tracks playtime for detected games.",
+    "autoFixHint": "Applies the emulator fix (GBE Fork, achievements, DLC) to new emulated games.",
+    "hiddenHint": "Reveals hidden achievement names and descriptions before you unlock them.",
+    "mergeHint": "Combines the same game found in several sources into a single tile.",
+    "none": "None",
+    "installed": "Installed",
+    "owned": "Owned",
+    "toast": "Toast",
+    "overlay": "Overlay",
+    "both": "Both",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish",
+    "skip": "Skip",
+    "saving": "Saving...",
+    "saved": "Setup saved.",
+    "languageRequired": "Choose a language to continue.",
+    "invalidFolder": "That folder does not look like a supported achievement folder.",
+    "smartRunning": "Searching...",
+    "smartDone": "Search complete.",
+    "saveError": "Could not save setup."
   }
 }

@@ -3,6 +3,16 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 3.0.2 - 2026-06-27
+
+### Fixed
+
+- Improved installed-game detection for emulated Steam games, including installs where the main executable is in the game root but `steam_api(64).dll` or Steam app-id files are nested in subfolders.
+- Reduced duplicate game tiles by merging matching save metadata, installed-folder metadata and cover/cache results more consistently.
+- Ignored and removed games no longer keep accumulating playtime, and Wallpaper Engine helper processes are excluded from game tracking.
+- The first-run guide now requires choosing a language before the initial scan, and all supported UI languages include the new onboarding text.
+- The language selector now only offers languages with complete UI translation files, while Steam metadata languages remain available internally for data fetching.
+
 ## 3.0.1 - 2026-06-26
 
 ### Fixed

@@ -76,7 +76,7 @@ module.exports.add = async (app) => {
     - resolve collisions: when one exe is shared by several appids, keep it on the game whose name
       best matches the binary and clear it from the others;
     - re-detect a now-empty exe when we know the game's install folder (gameDir), respecting the
-      anti-collision rule (never reuse an exe already taken by another appid).
+      anti-collision rule (never reuse an exe or game folder already taken by another appid).
 
   games: [{ appid, name, gameDir }] — best-effort; entries without a gameDir are left for the user
   to configure manually. Returns the number of entries changed.
@@ -145,17 +145,63 @@ module.exports.reconcile = async (games) => {
       }
     }
 
+    // 2b) Resolve folder collisions too: one install folder must not keep several auto-assigned
+    // executables across different appids. Keep the entry whose game name best matches its exe.
+    const folderGroups = new Map();
+    for (const e of list) {
+      if (!e.exe) continue;
+      const g = byAppid.get(String(e.appid));
+      if (!g || !g.gameDir) continue;
+      const dirKey = path.resolve(g.gameDir).toLowerCase();
+      const exeLower = path.resolve(e.exe).toLowerCase();
+      if (exeLower !== dirKey && !exeLower.startsWith(dirKey + path.sep)) continue;
+      if (!folderGroups.has(dirKey)) folderGroups.set(dirKey, []);
+      folderGroups.get(dirKey).push(e);
+    }
+    for (const [, entries] of folderGroups) {
+      if (entries.length < 2) continue;
+      let best = entries[0];
+      let bestScore = -1;
+      for (const e of entries) {
+        const g = byAppid.get(String(e.appid));
+        const base = path.basename(e.exe).replace(/\.exe$/i, '');
+        const score = g ? exeDetect.nameSimilarity(g.name, base) : 0;
+        if (score > bestScore) {
+          bestScore = score;
+          best = e;
+        }
+      }
+      for (const e of entries) {
+        if (e !== best) {
+          e.exe = '';
+          changed++;
+        }
+      }
+    }
+
     // 3) Re-detect empty entries when we know the install folder.
     const taken = new Set(list.filter((e) => e.exe).map((e) => e.exe.toLowerCase()));
+    const takenGameDirs = new Set();
+    for (const e of list) {
+      if (!e.exe) continue;
+      const g = byAppid.get(String(e.appid));
+      if (!g || !g.gameDir) continue;
+      const dirKey = path.resolve(g.gameDir).toLowerCase();
+      const exeLower = path.resolve(e.exe).toLowerCase();
+      if (exeLower === dirKey || exeLower.startsWith(dirKey + path.sep)) takenGameDirs.add(dirKey);
+    }
     for (const e of list) {
       if (e.exe) continue;
       const g = byAppid.get(String(e.appid));
       if (!g || !g.gameDir) continue;
+      const gameDirKey = path.resolve(g.gameDir).toLowerCase();
+      if (takenGameDirs.has(gameDirKey)) continue;
       const emu = goldberg.detectEmulator(g.gameDir);
-      const res = exeDetect.detect(g.gameDir, g.name, { dllPaths: emu.dll, taken });
+      const res = exeDetect.detect(g.gameDir, g.name, { dllPaths: emu.dll, taken, takenGameDirs });
       if (res && !taken.has(res.full.toLowerCase())) {
         e.exe = res.full;
         taken.add(res.full.toLowerCase());
+        takenGameDirs.add(gameDirKey);
         changed++;
       }
     }

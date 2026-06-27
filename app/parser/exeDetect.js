@@ -7,7 +7,7 @@
     - app/parser/achievements.js  -> seeds the watchdog gameIndex (playtime tracking)
     - app/app.js                  -> resolves the launch target for the Play/Config buttons
 
-  detect(gameDir, gameName, { dllPaths, taken }) -> { name, full, size, score } | null
+  detect(gameDir, gameName, { dllPaths, taken, takenGameDirs }) -> { name, full, size, score } | null
 
   Strategy: recursively collect every plausible .exe (bounded depth, skipping redist/meta folders and
   hard-excluded utilities), score each by how well its filename matches the game name + its size + a
@@ -64,6 +64,8 @@ const MAX_DEPTH = 5;
 const W_NAME = 100;
 const W_SIZE = 10;
 const BONUS_DLL_DIR = 15; // exe sits next to the steam_api dll -> strong signal
+const BONUS_ROOT_DLL_DIR = 20; // root exe + root steam_api wins over nested helper dlls
+const BONUS_ROOT_EXE_WITH_NESTED_DLL = 18; // root exe + nested steam_api belongs to the same install
 const PENALTY_SOFT = 30;
 const PENALTY_DEPTH = 2;
 
@@ -134,16 +136,21 @@ function collectCandidates(gameDir) {
   opts.dllPaths : full paths to the detected steam_api dll(s) — candidates in the same folder get a bonus.
   opts.taken    : iterable/Set of full exe paths already assigned to OTHER games — never returned (no
                   duplicate auto-association). If every candidate is taken, returns null.
+  opts.takenGameDirs : iterable/Set of install folders already assigned to OTHER games — never returns
+                  a second exe from the same game folder.
 */
 function detect(gameDir, gameName, opts = {}) {
   if (!gameDir || !fs.existsSync(gameDir)) return null;
 
   // Lowercased for case-insensitive (Windows) collision checks.
   const taken = new Set([...(opts.taken || [])].map((p) => String(p).toLowerCase()));
+  const rootDir = path.resolve(gameDir).toLowerCase();
+  const takenGameDirs = new Set([...(opts.takenGameDirs || [])].map((p) => path.resolve(String(p)).toLowerCase()));
+  if (takenGameDirs.has(rootDir)) return null;
   const dllDirs = new Set();
   for (const dll of opts.dllPaths || []) {
     try {
-      dllDirs.add(path.dirname(dll).toLowerCase());
+      dllDirs.add(path.resolve(path.dirname(dll)).toLowerCase());
     } catch {
       /* ignore */
     }
@@ -152,16 +159,33 @@ function detect(gameDir, gameName, opts = {}) {
   const candidates = collectCandidates(gameDir);
   if (candidates.length === 0) return null;
 
+  // Some repacks keep the real game's exe and steam_api64.dll at the install root, while helper
+  // tools/sub-builds below it also carry their own steam_api.dll. In that layout the nested dlls are
+  // weaker evidence than the root pair; otherwise a larger helper exe can outscore the real game.
+  const hasRootDll = dllDirs.has(rootDir);
+  const hasRootExe = candidates.some((c) => path.resolve(c.dir).toLowerCase() === rootDir);
+  const preferRootDll = hasRootDll && hasRootExe;
+  const hasNestedDll = [...dllDirs].some((dir) => dir !== rootDir && dir.startsWith(rootDir + path.sep));
+
   const maxSize = Math.max(...candidates.map((c) => c.size), 1);
   for (const c of candidates) {
     const base = c.name.replace(/\.exe$/i, '');
     const sim = nameSimilarity(gameName, base);
     const sizeFactor = c.size / maxSize;
     const soft = SOFT_PENALTY.some((r) => r.test(c.name)) ? PENALTY_SOFT : 0;
-    const dllBonus = dllDirs.has(c.dir.toLowerCase()) ? BONUS_DLL_DIR : 0;
+    const candidateDir = path.resolve(c.dir).toLowerCase();
+    let dllBonus = 0;
+    if (dllDirs.has(candidateDir)) {
+      dllBonus = preferRootDll
+        ? (candidateDir === rootDir ? BONUS_DLL_DIR + BONUS_ROOT_DLL_DIR : 0)
+        : BONUS_DLL_DIR;
+    }
+    if (!hasRootDll && hasNestedDll && candidateDir === rootDir) {
+      dllBonus = Math.max(dllBonus, BONUS_ROOT_EXE_WITH_NESTED_DLL);
+    }
     c.score = sim * W_NAME + sizeFactor * W_SIZE + dllBonus - soft - c.depth * PENALTY_DEPTH;
   }
-  candidates.sort((a, b) => b.score - a.score);
+  candidates.sort((a, b) => b.score - a.score || a.depth - b.depth || b.size - a.size);
 
   for (const c of candidates) {
     if (!taken.has(c.full.toLowerCase())) {

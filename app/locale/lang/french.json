@@ -14,11 +14,26 @@
       "played": "Dernière partie"
     },
     "label": {
-      "alpha": { "asc": "Nom : A → Z", "desc": "Nom : Z → A" },
-      "percent": { "asc": "Progression : faible → élevée", "desc": "Progression : élevée → faible" },
-      "time": { "asc": "Succès : ancien → récent", "desc": "Succès : récent → ancien" },
-      "played": { "asc": "Partie : ancienne → récente", "desc": "Partie : récente → ancienne" },
-      "rarity": { "asc": "Rareté : plus rare → plus commun", "desc": "Rareté : plus commun → plus rare" }
+      "alpha": {
+        "asc": "Nom : A → Z",
+        "desc": "Nom : Z → A"
+      },
+      "percent": {
+        "asc": "Progression : faible → élevée",
+        "desc": "Progression : élevée → faible"
+      },
+      "time": {
+        "asc": "Succès : ancien → récent",
+        "desc": "Succès : récent → ancien"
+      },
+      "played": {
+        "asc": "Partie : ancienne → récente",
+        "desc": "Partie : récente → ancienne"
+      },
+      "rarity": {
+        "asc": "Rareté : plus rare → plus commun",
+        "desc": "Rareté : plus commun → plus rare"
+      }
     },
     "action": {
       "reverse": "cliquer pour inverser",
@@ -84,8 +99,14 @@
       "edit": "Changer"
     },
     "watchdog": {
-      "startup": { "name": "Lancer au démarrage de session", "description": "Watchdog démarre automatiquement au démarrage du système." },
-      "kill": { "name": "Continuer de tourner", "description": "Garder Watchdog actif même si l'application principale se ferme." }
+      "startup": {
+        "name": "Lancer au démarrage de session",
+        "description": "Watchdog démarre automatiquement au démarrage du système."
+      },
+      "kill": {
+        "name": "Continuer de tourner",
+        "description": "Garder Watchdog actif même si l'application principale se ferme."
+      }
     },
     "general": {
       "sectionTitle": "Interface et comportement",
@@ -134,7 +155,10 @@
         "name": "Désactiver l'accélération matérielle",
         "description": "Désactive l'accélération GPU si l'overlay ou la fenêtre se comporte mal. Nécessite un redémarrage."
       },
-      "tray": { "name": "Réduire dans la zone de notification", "description": "Garde l'application en arrière-plan pour un démarrage plus rapide des notifications." }
+      "tray": {
+        "name": "Réduire dans la zone de notification",
+        "description": "Garde l'application en arrière-plan pour un démarrage plus rapide des notifications."
+      }
     },
     "emulator": {
       "nav": "Émulateur",
@@ -156,52 +180,82 @@
       "autoApply": {
         "name": "Corriger automatiquement les nouveaux jeux détectés",
         "description": "Exécute une fois toute la chaîne Appliquer le fix émulateur pour chaque nouveau jeu émulé non configuré : SteamStub, GBE Fork, succès, DLC, pseudo/langue et données avancées si activées. Activé par défaut.",
-        "value": { "false": "Désactivé", "true": "Activé" }
+        "value": {
+          "false": "Désactivé",
+          "true": "Activé"
+        }
       },
       "mode": {
         "name": "Mode émulateur",
         "description": "Regular remplace la steam_api(64).dll du jeu. ColdClient la garde et charge le steamclient émulé de GBE Fork via un loader — meilleure couverture pour les jeux récalcitrants.",
-        "value": { "regular": "Regular (remplacer DLL)", "coldclient": "ColdClient (GBE Fork)" }
+        "value": {
+          "regular": "Regular (remplacer DLL)",
+          "coldclient": "ColdClient (GBE Fork)"
+        }
       },
       "steamSettings": {
         "name": "Données steam_settings",
         "description": "Simple utilise la récupération d'Achievement Watcher (anonyme). Advanced lance generate_emu_config pour la couverture depots/langues.",
-        "value": { "simple": "Simple (rapide)", "advanced": "Advanced (complet)" }
+        "value": {
+          "simple": "Simple (rapide)",
+          "advanced": "Advanced (complet)"
+        }
       },
       "login": {
         "name": "Source des données (Advanced)",
         "description": "Le login Steam permet à generate_emu_config de récupérer les DLC/depots complets. Utilise un compte JETABLE uniquement — jamais ton compte principal.",
-        "value": { "anonymous": "Anonyme", "steam": "Login Steam" }
+        "value": {
+          "anonymous": "Anonyme",
+          "steam": "Login Steam"
+        }
       },
       "steamless": {
         "name": "Retirer auto le DRM SteamStub",
         "description": "Lance Steamless sur l'exe avant le patch pour retirer le DRM SteamStub de Valve (original conservé en .steamstub.bak). Sans effet si pas de stub.",
-        "value": { "false": "Désactivé", "true": "Activé" }
+        "value": {
+          "false": "Désactivé",
+          "true": "Activé"
+        }
       },
       "steamlessExp": {
         "name": "Steamless expérimental",
         "description": "Réaligne les sections pendant l'unpack pour une meilleure compatibilité avec les EXE très protégés. N'a d'effet que si le retrait auto est activé.",
-        "value": { "false": "Désactivé", "true": "Activé" }
+        "value": {
+          "false": "Désactivé",
+          "true": "Activé"
+        }
       },
       "crackFix": {
         "name": "Appliquer auto un fix communautaire (CrakFiles)",
         "description": "À chaque fix, télécharge et applique automatiquement un fix communautaire de la liste CrakFiles (correspondance de nom exacte + lien pixeldrain uniquement ; fichiers écrasés sauvegardés). Activé par défaut — désactive-le si tu ne veux pas qu'AW télécharge/écrase des fichiers du jeu depuis une source communautaire.",
-        "value": { "false": "Désactivé", "true": "Activé" }
+        "value": {
+          "false": "Désactivé",
+          "true": "Activé"
+        }
       },
       "apiCheckBypass": {
         "name": "Contournement du contrôle de propriété Steam",
         "description": "Désactivé par défaut. Dépose le proxy de contournement de SteamAutoCrack (winmm.dll) + une config de redirection, pour que les jeux qui re-vérifient le steam_api/exe original après le swap se lancent et débloquent quand même. Télécharge le proxy depuis sa release officielle.",
-        "value": { "false": "Désactivé", "true": "Activé" }
+        "value": {
+          "false": "Désactivé",
+          "true": "Activé"
+        }
       },
       "launchBat": {
         "name": "Créer Launch.bat pour le fallback",
         "description": "Quand Steamless ne peut pas retirer SteamStub et qu'AW bascule en fallback ColdClient, écrit aussi un Launch.bat pour le loader correspondant.",
-        "value": { "true": "Activé", "false": "Désactivé" }
+        "value": {
+          "true": "Activé",
+          "false": "Désactivé"
+        }
       },
       "checkUpdates": {
         "name": "Vérifier les mises à jour de GBE Fork",
         "description": "Re-vérifie GitHub pour la dernière version de GBE Fork avant d'appliquer (télécharge seulement si plus récent). Désactive pour toujours utiliser la version en cache.",
-        "value": { "true": "Activé", "false": "Désactivé" }
+        "value": {
+          "true": "Activé",
+          "false": "Désactivé"
+        }
       },
       "goldbergIcons": {
         "name": "GBE/Goldberg — télécharger les icônes",
@@ -216,7 +270,10 @@
       "position": "Position des succès",
       "progressPosition": "Position de la progression",
       "playtimePosition": "Position du temps de jeu",
-      "preset": { "name": "Preset de notification", "description": "Legacy utilise l'« ancien » système de notifications" },
+      "preset": {
+        "name": "Preset de notification",
+        "description": "Legacy utilise l'« ancien » système de notifications"
+      },
       "scale": "Taille de la notification",
       "duration": "Durée de l'animation",
       "hotkey": {
@@ -510,5 +567,89 @@
         "description": "Afficher uniquement les succès Steam du compte sélectionné"
       }
     }
+  },
+  "onboarding": {
+    "settingsLabel": "Guide de première utilisation",
+    "settingsButton": "Ouvrir le guide",
+    "settingsHelp": "Rouvrez le guide de configuration pour la clé API, le profil, les dossiers, les sources et les notifications.",
+    "eyebrow": "Première configuration",
+    "close": "Fermer",
+    "steps": [
+      "Langue",
+      "Comment ça marche",
+      "Compte",
+      "Clé API",
+      "Jeux",
+      "Paramètres"
+    ],
+    "languageTitle": "Choisir la langue",
+    "languageCopy": "Choisissez la langue avant la première numérisation. Les jeux, les métadonnées, les succès et les caches Steam se chargeront dès le départ dans cette langue.",
+    "language": "Langage du jeu et de l'interface",
+    "languagePlaceholder": "Choisissez une langue...",
+    "languageHint": "Le premier chargement de la bibliothèque ne démarre qu'après ce choix.",
+    "introTitle": "Comment ça marche",
+    "introCopy": "Achievement Watcher analyse les dossiers de sauvegarde connus et vos bibliothèques de jeux, puis Watchdog continue de fonctionner dans la barre d'état pour les notifications de déverrouillage et la superposition du jeu.",
+    "scanTitle": "Numériser",
+    "scanCopy": "Les dossiers Steam, GOG, Epic, les émulateurs et Goldberg/GBE sont détectés à partir des fichiers de réussite enregistrés.",
+    "watchTitle": "Regarder",
+    "watchCopy": "Le chien de garde en arrière-plan surveille les fichiers et le lancement du jeu afin que les déverrouillages apparaissent pendant que vous jouez.",
+    "fixTitle": "Réparation",
+    "fixCopy": "Pour les jeux Steam émulés, le correctif du clic droit peut ajouter GBE Fork, des schémas, des données DLC et des aides au lancement.",
+    "profileTitle": "Profil",
+    "profileCopy": "Choisissez le nom affiché dans l’en-tête et définissez éventuellement un avatar local.",
+    "username": "Nom d'affichage",
+    "mainSteam": "Compte Steam principal",
+    "avatarPick": "Choisir une photo",
+    "avatarDefault": "Par défaut",
+    "avatarHint": "Facultatif. Stocké localement sur ce PC.",
+    "apiTitle": "Clé API Web Steam",
+    "apiCopy": "Une clé améliore la récupération des métadonnées Steam. Vous pouvez le laisser vide et l'ajouter plus tard.",
+    "apiWarning": "IMPORTANT : sans clé API, le tout premier chargement de la bibliothèque sera TRÈS LENT : chaque jeu est récupéré en grattant les pages Steam (plusieurs secondes par jeu). Avec une clé, c'est quasi instantané et plus précis. La fenêtre reste utilisable pendant son chargement, mais en ajouter une est fortement recommandé.",
+    "apiLabel": "Clé API Web Steam",
+    "apiLink": "Obtenez une clé API Web Steam",
+    "apiNote": "Utilisez la page officielle Steam. La clé est cryptée avant d'être enregistrée.",
+    "foldersTitle": "Ajouter des jeux sur le disque",
+    "foldersCopy": "Ajoutez des dossiers de sauvegarde/configuration pour des émulateurs spécifiques et des racines de bibliothèque contenant de nombreux jeux installés.",
+    "addSave": "Ajouter un dossier de sauvegarde",
+    "smartFind": "Recherche intelligente",
+    "addLibrary": "Ajouter un dossier de bibliothèque",
+    "saveList": "Dossiers de sauvegarde/configuration",
+    "libraryList": "Dossiers de bibliothèque",
+    "emptyList": "Rien n'a été ajouté à cette session.",
+    "settingsTitle": "Paramètres recommandés",
+    "settingsCopy": "Ce sont les principaux commutateurs dont la plupart des utilisateurs ont besoin en premier. Tout reste modifiable ultérieurement dans Paramètres.",
+    "source": "Afficher les jeux Steam",
+    "notifications": "Notifications",
+    "playtime": "Suivi du temps de jeu",
+    "autoFix": "Correction automatique des jeux émulés",
+    "hidden": "Réalisations cachées",
+    "merge": "Fusionner les doublons",
+    "show": "Afficher",
+    "hide": "Masquer",
+    "sourceHint": "Répertorie également vos jeux Steam légitimes (profil public requis).",
+    "notificationsHint": "Où les déverrouillages apparaissent : toast Windows, superposition dans le jeu ou les deux.",
+    "playtimeHint": "Suit automatiquement le temps de jeu pour les jeux détectés.",
+    "autoFixHint": "Applique le correctif de l'émulateur (GBE Fork, réalisations, DLC) aux nouveaux jeux émulés.",
+    "hiddenHint": "Révèle les noms et descriptions cachés des réalisations avant de les débloquer.",
+    "mergeHint": "Combine le même jeu trouvé dans plusieurs sources en une seule tuile.",
+    "none": "Aucun",
+    "installed": "Installé",
+    "owned": "Possédé",
+    "toast": "Toast",
+    "overlay": "Superposition",
+    "both": "Les deux",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "back": "Retour",
+    "next": "Suivant",
+    "finish": "Terminer",
+    "skip": "Sauter",
+    "saving": "Sauvegarde...",
+    "saved": "Configuration enregistrée.",
+    "languageRequired": "Choisissez une langue pour continuer.",
+    "invalidFolder": "Ce dossier ne ressemble pas à un dossier de réalisations pris en charge.",
+    "smartRunning": "Recherche...",
+    "smartDone": "Recherche terminée.",
+    "saveError": "Impossible d'enregistrer la configuration."
   }
 }

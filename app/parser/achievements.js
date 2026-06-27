@@ -75,6 +75,97 @@ function normalizeGameName(name, appid) {
   return String(appid);
 }
 
+function cloneDiscoveryRecord(record) {
+  if (!record || record.appid == null) return null;
+  const copy = { ...record };
+  if (record.data && typeof record.data === 'object') copy.data = { ...record.data };
+  delete copy._sources;
+  return copy;
+}
+
+function sourceKey(record) {
+  const data = (record && record.data) || {};
+  return [
+    String(record && record.appid),
+    String(record && record.source),
+    String(data.type || ''),
+    String(data.path || ''),
+    String(data.root || ''),
+    String(data.gameDir || ''),
+    String(data.steamSettings || ''),
+  ].join('\n');
+}
+
+function mergeDiscoveryData(target, incoming) {
+  if (!incoming || typeof incoming !== 'object') return target || incoming;
+  const data = target && typeof target === 'object' ? target : {};
+  for (const [key, value] of Object.entries(incoming)) {
+    if (value == null || value === '') continue;
+    if (key === 'needsSchema' || key === 'trustedInstalled' || key === 'hasSteamApiDll') {
+      data[key] = !!data[key] || !!value;
+    } else if (data[key] == null || data[key] === '') {
+      data[key] = value;
+    }
+  }
+  return data;
+}
+
+function mergeDiscoveryRecord(target, incoming) {
+  if (!target || !incoming) return target || incoming;
+
+  if (!Array.isArray(target._sources)) target._sources = [cloneDiscoveryRecord(target)];
+  const seen = new Set(target._sources.map(sourceKey));
+  const incomingSources = Array.isArray(incoming._sources) && incoming._sources.length > 0 ? incoming._sources : [incoming];
+  for (const rawSource of incomingSources) {
+    const source = cloneDiscoveryRecord(rawSource);
+    if (!source) continue;
+    const key = sourceKey(source);
+    if (!seen.has(key)) {
+      target._sources.push(source);
+      seen.add(key);
+    }
+  }
+
+  if (!target.name && incoming.name) target.name = incoming.name;
+  if (!target.source && incoming.source) target.source = incoming.source;
+  if (!target.steamappid && incoming.steamappid) target.steamappid = incoming.steamappid;
+  target.data = mergeDiscoveryData(target.data || {}, incoming.data || {});
+  if (incoming.name && incoming.data && incoming.data.gameDir && !target.name) target.name = incoming.name;
+  return target;
+}
+
+function consolidateDiscoveryList(list) {
+  const byAppid = new Map();
+  const order = [];
+  for (const raw of list || []) {
+    const record = cloneDiscoveryRecord(raw);
+    if (!record || record.appid == null) continue;
+    const key = String(record.appid);
+    if (!byAppid.has(key)) {
+      record._sources = [cloneDiscoveryRecord(record)];
+      byAppid.set(key, record);
+      order.push(key);
+      continue;
+    }
+    byAppid.set(key, mergeDiscoveryRecord(byAppid.get(key), record));
+  }
+  const result = order.map((key) => byAppid.get(key)).filter(Boolean);
+  const before = (list || []).length;
+  if (debug && before !== result.length) debug.log(`[discover] consolidated ${before} source entr${before === 1 ? 'y' : 'ies'} into ${result.length} game(s)`);
+  return result;
+}
+
+function getDiscoverySources(record, cachedList) {
+  if (record && Array.isArray(record._sources) && record._sources.length > 0) return record._sources.map(cloneDiscoveryRecord).filter(Boolean);
+  if (record && !record.data && cachedList) {
+    const matches = cachedList.filter((a) => String(a.appid) === String(record.appid));
+    if (matches.length > 0) {
+      return matches.flatMap((match) => (Array.isArray(match._sources) ? match._sources : [match])).map(cloneDiscoveryRecord).filter(Boolean);
+    }
+  }
+  return [cloneDiscoveryRecord(record)].filter(Boolean);
+}
+
 // Build the list of library roots to auto-scan for installed-but-never-launched Goldberg/GBE games:
 // the user's configured library roots (Settings > Folder > Library Folders, default C:\Jeux), the
 // Folder-tab save-dirs (kept for backward compat — those often already point inside a game install),
@@ -134,6 +225,7 @@ let _emuFixInFlight = new Set();
 // doesn't change mid-scan, and repair() only writes achievements.json (never dlls/configs), so a
 // cached {type,dll,steamSettings} stays valid. Cleared at the top of makeList.
 let _emuCache = new Map();
+let _seededGameDirs = new Set();
 
 function withTimeout(promise, ms, message) {
   let timer;
@@ -334,7 +426,11 @@ async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, o
         preferredTag: dlls.tag || null,
         log: debug,
       });
-      const generated = await genEmuConfig.generate({ tool, appid, login: null, log: debug });
+      // Unattended here (login: null, no onPrompt), so cap the run well below the 5-minute interactive
+      // default: a hung anonymous generation must not stall the per-scan auto-apply — nor the bulk
+      // "Fix all games" batch — for minutes per game. Best-effort: the Simple schema/DLC repair below
+      // already makes achievements work when this is skipped.
+      const generated = await genEmuConfig.generate({ tool, appid, login: null, timeout: 90000, log: debug });
       try {
         for (const dir of new Set(steamSettingsDirs)) genEmuConfig.mergeIntoGame(generated.steamSettings, dir);
       } finally {
@@ -440,10 +536,10 @@ async function scanInstalledGoldbergGames(data) {
       if (existing) {
         // Already discovered (save folder / other source). Always attach the install steam_settings so
         // the offline description backfill can read its local schema; flag for repair only if broken.
-        if (existing.data && !existing.data.steamSettings) {
-          existing.data.steamSettings = g.steamSettings;
-          existing.data.gameDir = g.gameDir;
-          if (!g.hasSchema) {
+        if (existing.data) {
+          if (!existing.data.steamSettings && g.steamSettings) existing.data.steamSettings = g.steamSettings;
+          if (!existing.data.gameDir && g.gameDir) existing.data.gameDir = g.gameDir;
+          if (!g.hasSchema && !existing.data.needsSchema) {
             existing.data.needsSchema = true;
             attached++;
           }
@@ -557,6 +653,33 @@ async function scanUnconfiguredInstalls(linkedExes = []) {
     }
   }
   return out;
+}
+
+function unconfiguredNameCandidates(u) {
+  const values = [];
+  const add = (v) => {
+    const s = String(v || '').trim();
+    if (!s || values.some((x) => x.toLowerCase() === s.toLowerCase())) return;
+    values.push(s);
+  };
+  add(u && u.name);
+  if (u && u.data) {
+    add(path.basename(u.data.gameDir || ''));
+    add(path.basename(u.data.exe || '').replace(/\.exe$/i, ''));
+  }
+  return values.filter((name) => !/^[0-9]+$/.test(name) && name.length >= 3);
+}
+
+async function resolveUnconfiguredSteamAppid(u) {
+  for (const name of unconfiguredNameCandidates(u)) {
+    try {
+      const sid = await steam.findAppidByName(name);
+      if (sid) return { appid: String(sid), matchedName: name };
+    } catch {
+      /* try next candidate */
+    }
+  }
+  return null;
 }
 
 async function discover(source, steamAccFilter) {
@@ -720,32 +843,40 @@ async function discover(source, steamAccFilter) {
         merged = 0;
       for (const u of unconfigured) {
         let real = null;
-        let resolvedSid = null;
+        let resolved = null;
         try {
-          resolvedSid = await steam.findAppidByName(u.name);
-          if (resolvedSid) real = data.find((g) => String(g.appid) === String(resolvedSid));
+          resolved = await resolveUnconfiguredSteamAppid(u);
+          if (resolved) real = data.find((g) => String(g.appid) === String(resolved.appid));
         } catch {
           /* no match — keep as unconfigured */
         }
         if (real) {
-          if (real.data && !real.data.gameDir) real.data.gameDir = u.data.gameDir;
+          if (real.data) {
+            if (!real.data.gameDir) real.data.gameDir = u.data.gameDir;
+            if (!real.data.exe) real.data.exe = u.data.exe;
+            if (u.data.hasSteamApiDll) real.data.hasSteamApiDll = true;
+          }
           merged++;
-        } else if (resolvedSid) {
+          debug.log(`[unconfigured-scan] matched "${u.name}" (${resolved.matchedName}) to existing appid ${resolved.appid}`);
+        } else if (resolved) {
           // findAppidByName only returns confident exact/strong-token matches. Promote that detected
           // game even when steam_api is entirely absent: the full setup must be able to seed the
           // architecture-matching GSE DLL, not require the file it is responsible for creating.
           data.push({
-            appid: String(resolvedSid),
+            appid: String(resolved.appid),
             source: 'GBE Fork',
             data: {
               type: 'file',
-              path: goldbergSaveFolder('gbe', resolvedSid),
+              path: goldbergSaveFolder('gbe', resolved.appid),
               steamSettings: path.join(u.data.gameDir, 'steam_settings'),
               gameDir: u.data.gameDir,
+              exe: u.data.exe,
+              hasSteamApiDll: !!u.data.hasSteamApiDll,
               needsSchema: true,
             },
           });
           merged++;
+          debug.log(`[unconfigured-scan] promoted "${u.name}" (${resolved.matchedName}) to appid ${resolved.appid}`);
         } else {
           data.push(u);
           added++;
@@ -758,6 +889,8 @@ async function discover(source, steamAccFilter) {
       debug.error(err);
     }
   }
+
+  data = consolidateDiscoveryList(data);
 
   //AppID Blacklisting
   try {
@@ -819,12 +952,14 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
   let isDuplicate = false;
 
   try {
-    let appids = [requestedAppid];
-    if (!requestedAppid.data) {
-      let appidList = cachedList || (await discover(option.achievement_source, option.steam.main));
-      appids = appidList.filter((a) => a.appid == requestedAppid.appid);
-    }
-    let appid = appids[0];
+    const appidList = cachedList || (await discover(option.achievement_source, option.steam.main));
+    let appids = getDiscoverySources(requestedAppid, appidList);
+    let appid =
+      cloneDiscoveryRecord(appidList.find((a) => String(a.appid) === String(requestedAppid.appid))) ||
+      cloneDiscoveryRecord(requestedAppid) ||
+      appids[0];
+    for (const sourceRecord of appids) appid = mergeDiscoveryRecord(appid, sourceRecord);
+    if (!appid) return;
 
     // Unconfigured install (no appid): there is no Steam schema to fetch — return a minimal game so it
     // shows in the list (achievement-less) and can be right-clicked. Empty img fields are tolerated by
@@ -927,6 +1062,20 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     if (appid.data && appid.data.steamSettings) game.steamSettings = appid.data.steamSettings;
     let resolvedEmu = null;
     let resolvedExe = null;
+    if (appid.data && appid.data.exe) {
+      try {
+        if (fs.existsSync(appid.data.exe)) {
+          resolvedExe = {
+            name: path.basename(appid.data.exe),
+            full: appid.data.exe,
+            size: fs.statSync(appid.data.exe).size,
+            score: 0,
+          };
+        }
+      } catch {
+        resolvedExe = null;
+      }
+    }
 
     // Auto-detect the emulator for games whose install dir we resolved but that didn't go through the
     // strict Goldberg-scan appid match (e.g. a save found under Public Documents/OnlineFix/Codex/etc.,
@@ -1181,15 +1330,21 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     let hasResolvedExe = false;
     if (resolvedGameDir && game.name) {
       try {
-        const emu = resolvedEmu || detectEmulatorCached(resolvedGameDir);
-        const exeInfo = resolvedExe || exeDetect.detect(resolvedGameDir, game.name, { dllPaths: emu.dll });
-        resolvedExe = exeInfo || resolvedExe;
-        hasResolvedExe = !!exeInfo;
-        if (exeInfo) {
-          const iconHash =
-            game.img && game.img.icon ? String(game.img.icon).split('/').pop().split('.')[0] : '';
-          gameIndex.upsert({ appid: appid.appid, name: game.name, binary: exeInfo.name, icon: iconHash });
-          debug.log(`[${appid.appid}] auto-seeded playtime tracking: binary="${exeInfo.name}"`);
+        const gameDirKey = path.resolve(resolvedGameDir).toLowerCase();
+        if (_seededGameDirs.has(gameDirKey)) {
+          debug.log(`[${appid.appid}] playtime auto-seed skipped: install folder already has a detected executable`);
+        } else {
+          const emu = resolvedEmu || detectEmulatorCached(resolvedGameDir);
+          const exeInfo = resolvedExe || exeDetect.detect(resolvedGameDir, game.name, { dllPaths: emu.dll });
+          resolvedExe = exeInfo || resolvedExe;
+          hasResolvedExe = !!exeInfo;
+          if (exeInfo) {
+            _seededGameDirs.add(gameDirKey);
+            const iconHash =
+              game.img && game.img.icon ? String(game.img.icon).split('/').pop().split('.')[0] : '';
+            gameIndex.upsert({ appid: appid.appid, name: game.name, binary: exeInfo.name, icon: iconHash });
+            debug.log(`[${appid.appid}] auto-seeded playtime tracking: binary="${exeInfo.name}"`);
+          }
         }
       } catch (err) {
         debug.log(`[${appid.appid}] playtime auto-seed failed: ${err}`);
@@ -1396,6 +1551,7 @@ module.exports.makeList = async (option, callbackProgress, onGame = () => {}) =>
   try {
     debug.log('Scanning for games ...');
     _emuCache = new Map();
+    _seededGameDirs = new Set();
     const scanStart = Date.now();
 
     let result = [];

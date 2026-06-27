@@ -450,6 +450,7 @@ var app = {
     $('#search-bar').fadeTo('fast', 1).css('pointer-events', 'initial');
     $('title-bar')[0].inSettings = false;
     gameList = [];
+    const renderedAppids = new Set();
     // Make onStart() idempotent: re-running it (e.g. after right-click → remove from list) must not
     // append to the existing DOM or stack duplicate delegated handlers, which previously duplicated the
     // whole list until a full page refresh.
@@ -469,6 +470,12 @@ var app = {
         (game) => {
           let elem = $('#game-list ul');
           if (game.achievement.unlocked > 0 || self.config.achievement.hideZero == false) {
+            const appidKey = String(game.appid);
+            if (renderedAppids.has(appidKey)) {
+              debug.log(`[${game.appid}] duplicate streamed tile ignored`);
+              return;
+            }
+            renderedAppids.add(appidKey);
             let progress = game.achievement.total > 0 ? Math.round((100 * game.achievement.unlocked) / game.achievement.total) : 0;
 
             statSumProgress += progress;
@@ -521,7 +528,7 @@ var app = {
                   <div class="config-button">
                     <i class="fas fa-tools"></i>
                   </div>
-                  
+
                   <div class="info">
                     <div class="info-head">
                       <div class="title" title="${escapeHtml(game.name)}"><span>${escapeHtml(game.name)}</span></div>
@@ -543,7 +550,9 @@ var app = {
             </li>
             `;
 
-            elem.append(template);
+            const item = $(template);
+            elem.append(item);
+            const headerEl = item.find('.header').first();
             gameList.push(game);
 
             // "completed / total" — a game counts as completed only when it actually has achievements
@@ -555,24 +564,23 @@ var app = {
             $('#user-info .info .stats li:eq(0) span.data').text(statTotalUnlocked);
 
             setTimeout(() => {
-              const el = $(`#game-header-${game.appid}`);
               const coverOverride = coverOverrideFor(game.appid);
               if (coverOverride) {
                 // User-set cover (local image / alternate AppID) wins over every default source.
-                el.css('background', `url('${coverOverride}')`);
+                headerEl.css('background', `url('${coverOverride}')`);
                 return;
               }
               if (EMU_LOCAL_ICON_SOURCES.has(game.source)) {
-                if (game.img && game.img.header) el.css('background', `url('${game.img.header}')`);
-                else el.css('background', 'none');
+                if (game.img && game.img.header) headerEl.css('background', `url('${game.img.header}')`);
+                else headerEl.css('background', 'none');
                 return;
               }
-              if (!imgName) { el.css('background', 'none'); return; } // no art: clear the loading.gif so the spinner doesn't run forever
+              if (!imgName) { headerEl.css('background', 'none'); return; } // no art: clear the loading.gif so the spinner doesn't run forever
               ipcRenderer
                 .invoke('fetch-icon', imgName, game.steamappid || game.appid)
                 .then((localPath) => {
                   if (localPath) {
-                    el.css('background', `url('${localPath}')`);
+                    headerEl.css('background', `url('${localPath}')`);
                   }
                 })
                 .catch((err) => debug.warn(`[${game.appid}] header icon fetch failed => ${err}`));
@@ -2121,7 +2129,7 @@ var app = {
 
         let template = `
                 <li>
-                      
+
                          <div class="achievement" data-name="${escapeHtml(achievement.name)}" data-index="${i}">
                             <div class="box">
                               <div class="glow mask contain">
@@ -2148,7 +2156,7 @@ var app = {
                                 <span class="meter" style="width:${percent}%"></span></div>
                             </div>
                             <div class="stats">
-                              <div class="time" data-time="${achievement.UnlockTime}"><i class="fas fa-clock"></i> 
+                              <div class="time" data-time="${achievement.UnlockTime}"><i class="fas fa-clock"></i>
                                 <span>${moment.unix(achievement.UnlockTime).format('L LT')}</span>
                                 <span>${moment.unix(achievement.UnlockTime).fromNow()}</span>
                               </div>
@@ -2156,8 +2164,8 @@ var app = {
                                 '#achievement .achievements'
                               ).data('lang-globalStat')}</div>
                             </div>
-                        </div> 
-                      
+                        </div>
+
                 </li>
                 `;
 

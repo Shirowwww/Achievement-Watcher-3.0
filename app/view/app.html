@@ -1220,7 +1220,7 @@
                 <span></span> <span></span>
                 <a>maintained by</a>
                 <i class="fab fa-github"></i>
-                <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0" target="_blank">Shirowwww/Achievement-Watcher-3.0</a>
+                <a href="https://github.com/Shirowwww/Achievement-Watcher" target="_blank">Shirowwww/achievement-watcher</a>
               </p>
               <p>
                 <a>Fork</a>
@@ -1291,15 +1291,33 @@
 
           <div class="onboarding-body">
             <nav class="onboarding-steps" aria-label="Setup steps">
-              <button type="button" class="active" data-step="0"><i class="fas fa-info-circle"></i> <span>How it works</span></button>
-              <button type="button" data-step="1"><i class="fas fa-user-circle"></i> <span>Account</span></button>
-              <button type="button" data-step="2"><i class="fas fa-key"></i> <span>API key</span></button>
-              <button type="button" data-step="3"><i class="fas fa-folder-open"></i> <span>Games</span></button>
-              <button type="button" data-step="4"><i class="fas fa-sliders-h"></i> <span>Settings</span></button>
+              <button type="button" class="active" data-step="0"><i class="fas fa-language"></i> <span>Language</span></button>
+              <button type="button" data-step="1"><i class="fas fa-info-circle"></i> <span>How it works</span></button>
+              <button type="button" data-step="2"><i class="fas fa-user-circle"></i> <span>Account</span></button>
+              <button type="button" data-step="3"><i class="fas fa-key"></i> <span>API key</span></button>
+              <button type="button" data-step="4"><i class="fas fa-folder-open"></i> <span>Games</span></button>
+              <button type="button" data-step="5"><i class="fas fa-sliders-h"></i> <span>Settings</span></button>
             </nav>
 
             <div class="onboarding-panel">
               <section class="onboarding-step active" data-step="0">
+                <div class="step-heading">
+                  <i class="fas fa-language"></i>
+                  <div>
+                    <h2 id="onboard-language-title">Choose language</h2>
+                    <p id="onboard-language-copy">Choose the language before the first scan.</p>
+                  </div>
+                </div>
+                <div class="onboarding-form-grid">
+                  <label class="full">
+                    <span id="onboard-language-label">Game and interface language</span>
+                    <select id="onboard-language"></select>
+                    <small class="onboard-field-hint" id="onboard-language-hint"></small>
+                  </label>
+                </div>
+              </section>
+
+              <section class="onboarding-step" data-step="1">
                 <div class="step-heading">
                   <i class="fas fa-info-circle"></i>
                   <div>
@@ -1326,7 +1344,7 @@
                 </div>
               </section>
 
-              <section class="onboarding-step" data-step="1">
+              <section class="onboarding-step" data-step="2">
                 <div class="step-heading">
                   <i class="fas fa-user-circle"></i>
                   <div>
@@ -1354,7 +1372,7 @@
                 </div>
               </section>
 
-              <section class="onboarding-step" data-step="2">
+              <section class="onboarding-step" data-step="3">
                 <div class="step-heading">
                   <i class="fas fa-key"></i>
                   <div>
@@ -1376,7 +1394,7 @@
                 </div>
               </section>
 
-              <section class="onboarding-step" data-step="3">
+              <section class="onboarding-step" data-step="4">
                 <div class="step-heading">
                   <i class="fas fa-folder-open"></i>
                   <div>
@@ -1401,7 +1419,7 @@
                 </div>
               </section>
 
-              <section class="onboarding-step" data-step="4">
+              <section class="onboarding-step" data-step="5">
                 <div class="step-heading">
                   <i class="fas fa-sliders-h"></i>
                   <div>

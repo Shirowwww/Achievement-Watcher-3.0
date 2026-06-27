@@ -24,6 +24,9 @@ let steamUsersList;
 let appidListMap = new Map();
 let debug;
 let cacheRoot;
+const storeDataInFlight = new Map();
+const iconFetchInFlight = new Map();
+const workingLinkCache = new Map();
 module.exports.setUserDataPath = (p) => {
   cacheRoot = p;
 };
@@ -421,7 +424,7 @@ module.exports.getAchievementsFromAPI = async (cfg) => {
 const getSteamPath = (module.exports.getSteamPath = async () => {
   /*
        Some SteamEmu change HKCU/Software/Valve/Steam/SteamPath to the game's dir
-       Fallback to Software/WOW6432Node/Valve/Steam/InstallPath in this case 
+       Fallback to Software/WOW6432Node/Valve/Steam/InstallPath in this case
        NB: Steam client correct the key on startup
      */
 
@@ -635,9 +638,23 @@ async function getSchemaAchievements(cfg) {
 async function getDataFromSteamStore(appID) {
   if (!appID || !(Number.isInteger(appID) && appID > 0)) throw 'ERR_INVALID_APPID';
 
+  const root = cacheRoot || path.join(process.env['APPDATA'] || '', 'Achievement Watcher');
+  const cacheFile = path.join(root, 'steam_cache/store', `${appID}.json`);
+  const TTL = 7 * 24 * 60 * 60 * 1000;
+  try {
+    if (fs.existsSync(cacheFile) && Date.now() - fs.statSync(cacheFile).mtimeMs < TTL) {
+      const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+      if (cached && typeof cached === 'object') return cached;
+    }
+  } catch {
+    /* stale/corrupt cache -> refetch */
+  }
+  if (storeDataInFlight.has(appID)) return storeDataInFlight.get(appID);
+
   const url = `https://store.steampowered.com/app/${appID}`;
 
-  try {
+  const pending = (async () => {
+    try {
     const { body } = await request(url, {
       headers: {
         Cookie: 'birthtime=662716801; wants_mature_content=1; path=/; domain=store.steampowered.com', //Bypass age check and mature filter
@@ -674,8 +691,24 @@ async function getDataFromSteamStore(appID) {
     };
 
     return result;
-  } catch {
-    return {};
+    } catch {
+      return {};
+    }
+  })();
+  storeDataInFlight.set(appID, pending);
+  try {
+    const result = await pending;
+    if (result && Object.keys(result).length > 0) {
+      try {
+        fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
+        fs.writeFileSync(cacheFile, JSON.stringify(result, null, 2));
+      } catch {
+        /* cache write failure is non-fatal */
+      }
+    }
+    return result;
+  } finally {
+    storeDataInFlight.delete(appID);
   }
 }
 
@@ -854,6 +887,8 @@ const cdnProviders = [
   'https://media.steampowered.com/steam/apps/',
 ];
 async function findWorkingLink(appid, basename) {
+  const key = `${appid}:${basename}`;
+  if (workingLinkCache.has(key)) return workingLinkCache.get(key);
   for (const ext of ['.jpg', '.png']) {
     for (const cdn of cdnProviders) {
       const url = `${cdn}${appid}/${basename}${ext}`;
@@ -861,11 +896,15 @@ async function findWorkingLink(appid, basename) {
         const res = await request(url, { method: 'HEAD' });
         if (res.code === 200) {
           const contentType = res.headers['content-type'];
-          if (contentType) return url;
+          if (contentType) {
+            workingLinkCache.set(key, url);
+            return url;
+          }
         }
       } catch (e) {}
     }
   }
+  workingLinkCache.set(key, null);
   return null;
 }
 
@@ -938,6 +977,9 @@ const fetchIcon = (module.exports.fetchIcon = async (url, appID) => {
   // attempts an HTTP HEAD that stalls via the request-zero req.destroy()-without-error bug,
   // leaving every achievement icon promise permanently pending. Short-circuit here instead.
   if (!url.startsWith('http') && fs.existsSync(url)) return url;
+  const inFlightKey = `${appID}:${url}`;
+  if (iconFetchInFlight.has(inFlightKey)) return iconFetchInFlight.get(inFlightKey);
+  const pending = (async () => {
   let validUrl;
   let filePath;
   try {
@@ -998,5 +1040,12 @@ const fetchIcon = (module.exports.fetchIcon = async (url, appID) => {
       }
     }
     return url;
+  }
+  })();
+  iconFetchInFlight.set(inFlightKey, pending);
+  try {
+    return await pending;
+  } finally {
+    iconFetchInFlight.delete(inFlightKey);
   }
 });

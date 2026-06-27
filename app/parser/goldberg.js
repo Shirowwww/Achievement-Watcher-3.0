@@ -14,6 +14,44 @@ const fs = require('fs');
 const path = require('path');
 const exeDetect = require(path.join(__dirname, 'exeDetect.js'));
 
+const APPID_CONFIG_FILES = new Set([
+  'steam_appid.txt',
+  'steam_emu.ini',
+  'ali213.ini',
+  'valve.ini',
+  'steamconfig.ini',
+  'hlm.ini',
+  'ds.ini',
+  'steam_api.ini',
+  'cpy.ini',
+  'coldclientloader.ini',
+  'smartsteamemu.ini',
+  'coldapi.ini',
+]);
+
+function parseAppidFromConfig(file) {
+  try {
+    const content = fs.readFileSync(file, 'utf8');
+    if (path.basename(file).toLowerCase() === 'steam_appid.txt') {
+      const txt = content.trim();
+      return txt || null;
+    }
+    const patterns = [
+      /^\s*app(?:id|ID)\s*=\s*([0-9]+)/im,
+      /^\s*AppId\s*=\s*([0-9]+)/im,
+      /^\s*AppID\s*=\s*([0-9]+)/im,
+      /^\s*appid\s*=\s*([0-9]+)/im,
+    ];
+    for (const pattern of patterns) {
+      const match = content.match(pattern);
+      if (match) return match[1];
+    }
+  } catch {
+    /* ignore unreadable config */
+  }
+  return null;
+}
+
 // Locate the steam_settings folder for a game. GBE Fork keeps it next to the emu .dll, which may be
 // at the game root or nested under engine subfolders (e.g. Unreal's <Name>/Binaries/Win64). Returns
 // the first match (shallowest), or null.
@@ -760,7 +798,7 @@ function findCompatibleGames(roots, { maxDepth = 5 } = {}) {
     for (const p of candidates) {
       if (!p || !fs.existsSync(p)) continue;
       try {
-        const v = fs.readFileSync(p, 'utf8').trim();
+        const v = parseAppidFromConfig(p);
         if (v) return v;
       } catch {
         /* ignore */
@@ -769,17 +807,64 @@ function findCompatibleGames(roots, { maxDepth = 5 } = {}) {
     return null;
   };
 
-  const consider = (gameDir) => {
-    const key = gameDir.toLowerCase();
+  const findNestedAppid = (gameDir, maxSearchDepth = 4) => {
+    let best = null;
+    const walk = (dir, depth) => {
+      if (best || depth > maxSearchDepth) return;
+      let entries;
+      try {
+        entries = fs.readdirSync(dir, { withFileTypes: true });
+      } catch {
+        return;
+      }
+      for (const e of entries) {
+        const full = path.join(dir, e.name);
+        const lower = e.name.toLowerCase();
+        if (e.isFile() && APPID_CONFIG_FILES.has(lower)) {
+          const appid = parseAppidFromConfig(full);
+          if (appid) {
+            best = { appid, file: full };
+            return;
+          }
+        }
+      }
+      for (const e of entries) {
+        if (e.isDirectory() && e.name.toLowerCase() !== 'steam_settings') walk(path.join(dir, e.name), depth + 1);
+        if (best) return;
+      }
+    };
+    walk(gameDir, 0);
+    return best;
+  };
+
+  const parentGameRootFor = (markerDir) => {
+    let current = markerDir;
+    for (let i = 0; i < 3; i++) {
+      const parent = path.dirname(current);
+      if (!parent || parent === current) break;
+      try {
+        if (exeDetect.detect(parent, path.basename(parent), {})) return parent;
+      } catch {
+        /* keep walking */
+      }
+      current = parent;
+    }
+    return markerDir;
+  };
+
+  const consider = (gameDir, marker = {}) => {
+    const resolvedGameDir = marker.gameDir || gameDir;
+    const key = resolvedGameDir.toLowerCase();
     if (seen.has(key)) return;
     seen.add(key);
-    const emu = detectEmulator(gameDir);
-    const ssDir = path.join(gameDir, 'steam_settings');
+    const emu = detectEmulator(resolvedGameDir);
+    const ssDir = path.join(resolvedGameDir, 'steam_settings');
     const steamSettings = fs.existsSync(ssDir) ? ssDir : emu.steamSettings || null;
     const appid = readAppid(
-      path.join(gameDir, 'steam_appid.txt'),
+      marker.appidFile,
+      path.join(resolvedGameDir, 'steam_appid.txt'),
       steamSettings && path.join(steamSettings, 'steam_appid.txt')
-    );
+    ) || marker.appid || (findNestedAppid(resolvedGameDir) || {}).appid;
     let hasSchema = false;
     let schemaCount = 0;
     if (steamSettings) {
@@ -796,7 +881,7 @@ function findCompatibleGames(roots, { maxDepth = 5 } = {}) {
         }
       }
     }
-    found.push({ gameDir, steamSettings, appid, emulator: emu.type, hasSchema, schemaCount });
+    found.push({ gameDir: resolvedGameDir, steamSettings, appid, emulator: emu.type, hasSchema, schemaCount });
   };
 
   // A game's install root is where its identity files live: a steam_settings folder or a
@@ -804,12 +889,27 @@ function findCompatibleGames(roots, { maxDepth = 5 } = {}) {
   // as the anchor — it frequently lives in a nested engine folder (bin/, Binaries/, x86_64/), which
   // would mis-anchor gameDir and miss the root-level appid. A dll with no nearby appid file can't be
   // identified anyway.
-  const isGameRoot = (entries) =>
-    entries.some(
-      (e) =>
-        (e.isFile() && e.name.toLowerCase() === 'steam_appid.txt') ||
-        (e.isDirectory() && e.name.toLowerCase() === 'steam_settings')
-    );
+  const gameRootMarker = (dir, entries) => {
+    for (const e of entries) {
+      if (e.isFile() && e.name.toLowerCase() === 'steam_appid.txt') return { gameDir: dir, appidFile: path.join(dir, e.name) };
+      if (e.isDirectory() && e.name.toLowerCase() === 'steam_settings') return { gameDir: dir };
+    }
+    const hasSteamApi = entries.some((e) => e.isFile() && EMU_DLL_NAMES.includes(e.name.toLowerCase()));
+    const appidConfig = entries.find((e) => e.isFile() && APPID_CONFIG_FILES.has(e.name.toLowerCase()));
+    if (hasSteamApi && appidConfig) {
+      const appidFile = path.join(dir, appidConfig.name);
+      const appid = parseAppidFromConfig(appidFile);
+      if (appid) return { gameDir: parentGameRootFor(dir), appid, appidFile };
+    }
+    if (exeDetect.shallowGameExe(dir)) {
+      const nestedAppid = findNestedAppid(dir);
+      if (nestedAppid) {
+        const emu = detectEmulator(dir);
+        if (emu.dll.length > 0) return { gameDir: dir, appid: nestedAppid.appid, appidFile: nestedAppid.file };
+      }
+    }
+    return null;
+  };
 
   const walk = (dir, depth) => {
     if (depth > maxDepth) return;
@@ -819,8 +919,9 @@ function findCompatibleGames(roots, { maxDepth = 5 } = {}) {
     } catch {
       return;
     }
-    if (isGameRoot(entries)) {
-      consider(dir); // this folder is the game install; don't descend into it
+    const marker = gameRootMarker(dir, entries);
+    if (marker) {
+      consider(marker.gameDir, marker); // this folder belongs to one game install; don't split nested dll/config dirs
       return;
     }
     for (const e of entries) {

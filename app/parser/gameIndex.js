@@ -71,6 +71,22 @@ module.exports.upsert = (entry) => {
 // Back-compat alias.
 module.exports.add = module.exports.upsert;
 
+module.exports.remove = (appid) => {
+  try {
+    const key = String(appid);
+    const list = readList();
+    const next = list.filter((g) => String(g.appid) !== key);
+    const removed = list.length - next.length;
+    if (removed === 0) return 0;
+    const file = userFile();
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(next, null, 2), 'utf8');
+    return removed;
+  } catch {
+    return 0;
+  }
+};
+
 // Resolve duplicate binary assignments: when two or more appids map to the SAME binary filename, keep
 // the entry whose game name best matches the binary and drop the rest. Clears stale cross-game seeds
 // (e.g. "Forza Horizon 5" and "Forza Horizon 6" both pointing at forzahorizon6.exe, which would make

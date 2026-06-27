@@ -56,4 +56,15 @@ test('readAll survives a corrupt/missing store file', () => {
   assert.deepStrictEqual(coverStore.readAll(), {});
 });
 
+test('readAll returns a copy and reloads after external file changes', () => {
+  coverStore.writeAll({ 1: 'a' });
+  const first = coverStore.readAll();
+  first[1] = 'mutated';
+  assert.strictEqual(coverStore.get(1), 'a');
+  fs.writeFileSync(tmpFile, JSON.stringify({ 1: 'b' }, null, 2), 'utf8');
+  const future = new Date(Date.now() + 2000);
+  fs.utimesSync(tmpFile, future, future);
+  assert.strictEqual(coverStore.get(1), 'b');
+});
+
 console.log(`\n${passed} passed`);

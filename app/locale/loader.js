@@ -6,11 +6,11 @@ const merge = require('deepmerge');
 const ffs = require('@xan105/fs');
 
 const langDir = path.join(appPath, 'locale/lang');
-const steamLanguages = require(path.join(appPath, 'locale/steam.json'));
+const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
 
 module.exports.load = async (lang = 'english') => {
   try {
-    if (!steamLanguages.some((language) => language.api === lang)) lang = 'english';
+    if (!uiLanguages.has(lang)) lang = 'english';
 
     let english = JSON.parse(await ffs.readFile(path.join(langDir, 'english.json'), 'utf8'));
     let template;
@@ -29,7 +29,7 @@ module.exports.load = async (lang = 'english') => {
       template = english;
     }
 
-    let locale = steamLanguages.find((language) => language.api === lang).webapi;
+    let locale = uiLanguages.get(lang).webapi;
 
     if (template) {
       translateUI(lang, locale, template);
@@ -46,7 +46,7 @@ module.exports.load = async (lang = 'english') => {
 function translateUI(lang, locale, template) {
   let selector = $('#option_lang');
   selector.empty();
-  for (let language of steamLanguages) {
+  for (let language of uiLanguages.all()) {
     selector.append(
       `<option value="${language.api}" data-tooltip="${language.native}" title="${language.displayName}" ${language.api === lang ? 'selected' : ''}>${
         language.native

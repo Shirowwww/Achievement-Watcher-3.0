@@ -1,23 +1,50 @@
 'use strict';
 
+const fs = require('fs');
+const merge = require('deepmerge');
 const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avatar.js'));
+const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
 
 (function ($, window, document) {
   const STEAM_API_KEY_URL = 'https://steamcommunity.com/dev/apikey';
-  const STEP_COUNT = 5;
+  const STEP_COUNT = 6;
+  const onboardingTextCache = new Map();
   let step = 0;
   let addedSaveDirs = [];
   let addedLibraryDirs = [];
+  let languageChosenThisSession = false;
   // Auto-config gate: at first run, proactively detect candidate save folders when the folders step is
   // first shown so the user reviews/trims real candidates instead of starting from an empty list.
   let isFirstRunSession = false;
   let autoDetectedThisSession = false;
+
+  function localizedText() {
+    const lang = uiLanguages.has(app.config?.achievement?.lang) ? app.config.achievement.lang : 'english';
+    if (onboardingTextCache.has(lang)) return onboardingTextCache.get(lang);
+
+    try {
+      const english = JSON.parse(fs.readFileSync(path.join(appPath, 'locale/lang/english.json'), 'utf8')).onboarding || {};
+      const requested =
+        lang === 'english' ? english : JSON.parse(fs.readFileSync(path.join(appPath, `locale/lang/${lang}.json`), 'utf8')).onboarding || {};
+      const localized = merge(english, requested, {
+        arrayMerge: (dest, src) => src,
+        isEmpty: (a) => a === null || a === '',
+      });
+      onboardingTextCache.set(lang, localized);
+      return localized;
+    } catch (err) {
+      debug.log(err);
+      return null;
+    }
+  }
 
   function isFrench() {
     return String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
   }
 
   function text() {
+    const localized = localizedText();
+    if (localized) return localized;
     return isFrench()
       ? {
           settingsLabel: 'Guide de démarrage',
@@ -25,7 +52,13 @@ const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avata
           settingsHelp: 'Rouvre la configuration guidée : clé API, profil, dossiers, sources et notifications.',
           eyebrow: 'Première configuration',
           close: 'Fermer',
-          steps: ['Fonctionnement', 'Compte', 'Clé API', 'Jeux', 'Réglages'],
+          steps: ['Langue', 'Fonctionnement', 'Compte', 'Clé API', 'Jeux', 'Réglages'],
+          languageTitle: 'Choisir la langue',
+          languageCopy:
+            'Choisis la langue avant le premier scan. Les jeux, métadonnées, succès et caches Steam seront chargés dans cette langue dès le départ.',
+          language: 'Langue des jeux et de l’interface',
+          languagePlaceholder: 'Choisir une langue...',
+          languageHint: 'Le premier chargement de la bibliothèque ne commence qu’après ce choix.',
           introTitle: 'Comment ça marche',
           introCopy:
             "Achievement Watcher scanne les dossiers de sauvegarde connus et tes bibliothèques de jeux, puis le Watchdog reste dans la zone de notification pour les notifications et l'overlay en jeu.",
@@ -88,6 +121,7 @@ const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avata
           skip: 'Passer',
           saving: 'Enregistrement...',
           saved: 'Configuration enregistrée.',
+          languageRequired: 'Choisis une langue pour continuer.',
           invalidFolder: 'Ce dossier ne ressemble pas à un dossier de succès pris en charge.',
           smartRunning: 'Recherche en cours...',
           smartDone: 'Recherche terminée.',
@@ -99,7 +133,13 @@ const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avata
           settingsHelp: 'Reopen the setup guide for API key, profile, folders, sources, and notifications.',
           eyebrow: 'First setup',
           close: 'Close',
-          steps: ['How it works', 'Account', 'API key', 'Games', 'Settings'],
+          steps: ['Language', 'How it works', 'Account', 'API key', 'Games', 'Settings'],
+          languageTitle: 'Choose language',
+          languageCopy:
+            'Choose the language before the first scan. Games, metadata, achievements, and Steam caches will load in this language from the start.',
+          language: 'Game and interface language',
+          languagePlaceholder: 'Choose a language...',
+          languageHint: 'The first library load starts only after this choice.',
           introTitle: 'How it works',
           introCopy:
             'Achievement Watcher scans known save folders and your game libraries, then the Watchdog keeps running in the tray for unlock notifications and the in-game overlay.',
@@ -161,6 +201,7 @@ const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avata
           skip: 'Skip',
           saving: 'Saving...',
           saved: 'Setup saved.',
+          languageRequired: 'Choose a language to continue.',
           invalidFolder: 'That folder does not look like a supported achievement folder.',
           smartRunning: 'Searching...',
           smartDone: 'Search complete.',
@@ -190,6 +231,10 @@ const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avata
     $('.onboarding-steps button').each(function (index) {
       $(this).find('span').text(t.steps[index]);
     });
+    $('#onboard-language-title').text(t.languageTitle);
+    $('#onboard-language-copy').text(t.languageCopy);
+    $('#onboard-language-label').text(t.language);
+    $('#onboard-language-hint').text(t.languageHint);
     $('#onboard-intro-title').text(t.introTitle);
     $('#onboard-intro-copy').text(t.introCopy);
     $('#onboard-card-scan-title').text(t.scanTitle);
@@ -248,6 +293,29 @@ const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avata
     renderDirLists();
   }
 
+  function populateLanguageSelect(selected) {
+    const current = selected || app.config.achievement?.lang || 'english';
+    const t = text();
+    const selector = $('#onboard-language');
+    selector.empty();
+    if (isFirstRunSession && !languageChosenThisSession) {
+      selector.append($('<option>').attr('value', '').text(t.languagePlaceholder));
+    }
+    for (const language of uiLanguages.all()) {
+      selector.append(
+        $('<option>')
+          .attr('value', language.api)
+          .attr('title', language.displayName)
+          .text(language.native || language.displayName)
+      );
+    }
+    if (isFirstRunSession && !languageChosenThisSession) {
+      selector.val('');
+      return;
+    }
+    selector.val(uiLanguages.has(current) ? current : 'english');
+  }
+
   function populateMainSteamSelect(selected) {
     const t = text();
     const selector = $('#onboard-main-steam');
@@ -272,6 +340,7 @@ const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avata
   }
 
   function populateValues() {
+    populateLanguageSelect(app.config.achievement?.lang || 'english');
     $('#onboard-username').val(app.config.general?.username || os.userInfo().username || 'User');
     $('#onboard-api-key').val(app.config.steam?.apiKey || '');
     populateMainSteamSelect(app.config.steam?.main || '0');
@@ -376,6 +445,10 @@ const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avata
   }
 
   function showStep(nextStep) {
+    if (isFirstRunSession && step === 0 && nextStep > 0 && !uiLanguages.has($('#onboard-language').val())) {
+      setStatus(text().languageRequired, 'error');
+      return;
+    }
     step = Math.max(0, Math.min(STEP_COUNT - 1, nextStep));
     setStatus('', '');
     $('.onboarding-step').removeClass('active');
@@ -401,6 +474,7 @@ const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avata
     $('#onboarding-prev').prop('disabled', step === 0);
     $('#onboarding-next span').text(step === STEP_COUNT - 1 ? t.finish : t.next);
     $('#onboarding-next i').toggleClass('fa-check', step === STEP_COUNT - 1).toggleClass('fa-chevron-right', step !== STEP_COUNT - 1);
+    $('#onboarding-skip, #onboarding-close').toggle(!isFirstRunSession);
   }
 
   function mergeSaveDirs(existing, additions) {
@@ -452,6 +526,12 @@ const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avata
       if (!app.config.emulator) app.config.emulator = {};
       if (!app.config.achievement) app.config.achievement = {};
 
+      const language = $('#onboard-language').val();
+      if (!uiLanguages.has(language)) {
+        setStatus(t.languageRequired, 'error');
+        return false;
+      }
+      app.config.achievement.lang = language;
       app.config.general.username = $('#onboard-username').val().trim() || app.config.general.username || os.userInfo().username || 'User';
       app.config.general.onboardingCompleted = markComplete;
       app.config.steam.apiKey = $('#onboard-api-key').val().trim();
@@ -487,12 +567,12 @@ const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avata
   }
 
   async function skip() {
+    if (isFirstRunSession) {
+      setStatus(text().languageRequired, 'error');
+      return;
+    }
     if (!(await persist(true))) return;
     hide();
-    // First run defers the initial library scan to onboarding (see app.js boot). Skipping still needs
-    // to kick that first scan; resetUI() runs onStart(). A later, user-invoked onboarding (force=true)
-    // has isFirstRunSession=false — the library was already scanned at boot, so we don't rescan here.
-    if (isFirstRunSession) resetUI();
   }
 
   function hide() {
@@ -504,6 +584,7 @@ const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avata
     if (!force && app.config.general?.onboardingCompleted === true) return;
     isFirstRunSession = !force; // auto-detect candidates only on the genuine first-run guide
     autoDetectedThisSession = false;
+    languageChosenThisSession = false;
     addedSaveDirs = [];
     addedLibraryDirs = [];
     applyText();
@@ -553,6 +634,13 @@ const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avata
       if (avatarEl && typeof avatarEl.update === 'function') avatarEl.update();
     });
     $('#onboard-api-link').attr('href', STEAM_API_KEY_URL);
+    $('#onboard-language').on('change', function () {
+      if (!app.config.achievement) app.config.achievement = {};
+      app.config.achievement.lang = $(this).val() || 'english';
+      languageChosenThisSession = uiLanguages.has(app.config.achievement.lang);
+      applyText();
+      populateLanguageSelect(app.config.achievement.lang);
+    });
 
     setTimeout(() => show(false), 600);
   });
