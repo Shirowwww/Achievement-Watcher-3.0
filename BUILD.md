@@ -8,28 +8,17 @@
 ## Run in dev (no packaging)
 
 ```cmd
-cd main-repo\app
+cd app
 npm install   # first time only
 npm start     # runs `electron .`
 ```
 
 **Gotcha:** if `ELECTRON_RUN_AS_NODE=1` is set in the environment, `electron.exe` runs as plain Node and `app` is `undefined` → `init.js` throws immediately. Remove that env var before launching.
 
-## Install the watchdog deps (only if changed)
-
-```cmd
-cd main-repo\watchdog
-npm install   # Node ≥20.18; koffi ships prebuilt — no node-gyp/Python/MSVS needed
-```
-
-The watchdog runs under Electron's own Node via `ELECTRON_RUN_AS_NODE` (no separate runtime is bundled). Its koffi-based deps (`wql-process-monitor`, `regodit`, `xinput-ffi`) are **ESM-only** and loaded from the CommonJS watchdog via dynamic `import()`. To run the monitor standalone in dev (`node watchdog.js`) use a system Node ≥20.18.
-
-`@nodert-win10-rs4/*` WinRT modules are in `optionalDependencies` — they cannot build from source (need a removed `platform.winmd`); `powertoast` uses PowerShell as a fallback, so a failed optional build doesn't block install.
-
 ## Build the portable app (no installer)
 
 ```cmd
-cd main-repo\app
+cd app
 npx electron-builder --dir
 ```
 
@@ -38,11 +27,11 @@ Output: `app\dist\win-unpacked\Achievement Watcher.exe` (watchdog bundled via `e
 ## Build the full NSIS installer
 
 ```cmd
-cd main-repo\app
+cd app
 npm run build
 ```
 
-This runs `npm run prepare:watchdog` (prunes watchdog devDependencies) then `electron-builder --config electron-builder.yml --publish never`.
+This runs `npm run prepare:watchdog` (prunes watchdog devDependencies with `npm prune --omit=dev`) then `electron-builder --config electron-builder.yml --publish never`.
 
 Output: `app\dist\Achievement.Watcher.Setup.<version>.exe` (NSIS installer, watchdog bundled; portable node.exe and nw.exe removed).
 
@@ -56,16 +45,14 @@ Output: `app\dist\Achievement.Watcher.Setup.<version>.exe` (NSIS installer, watc
 
 Skipping the rebuild is safe here because `registry-js` and `sharp` already ship N-API prebuilt binaries — no compilation needed, and this is validated working in dev (`npm start`).
 
-### `setup/{{app}}` is a literal folder name, not a macro
+### Installer resources
 
-`electron-builder.yml`'s `extraFiles` has:
+The NSIS installer is configured by `app/electron-builder.yml` and `app/build/installer.nsh`.
 
-```yaml
-- from: ../setup/{{app}}
-  to: .
-```
+- `app/build/icon.ico` is the app/installer icon.
+- `app/build/left.bmp` is the NSIS sidebar image.
 
-The folder on disk is literally named `{{app}}` (not resolved to the product name by electron-builder 26.x). Do not rename it — electron-builder copies it as-is.
+Legacy setup payloads are not copied into the installed app. The old `setup/` tree was removed because it only contained unused installer-era files (`curl.exe`, avatar/wizard bitmaps, duplicated icons, `LICENSE` and loopback-audio files).
 
 ### Code signing
 
@@ -73,4 +60,4 @@ electron-builder self-signs the output executables via `signtool.exe` automatica
 
 ## Versioning
 
-Bump `app/package.json` `version` before each build — it drives the installer filename (`Achievement.Watcher.Setup.<version>.exe`) and the in-app updater config (`config.update` in the same file).
+Bump both `app/package.json` and `watchdog/package.json` before each release. The app version drives the installer filename (`Achievement.Watcher.Setup.<version>.exe`) and the in-app updater config (`config.update` in the same file).

@@ -82,7 +82,8 @@
       "notification": "Notification",
       "souvenir": "Souvenir",
       "folder": "Dossiers",
-      "source": "Source",
+      "source": "Sources",
+      "guide": "Guide",
       "advanced": "Avancé"
     },
     "common": {
@@ -521,6 +522,47 @@
         "name": "Importer le cache de notification",
         "description": "Importer le cache de Watchdog comme une autre source de succès"
       }
+    },
+    "guide": {
+      "nav": "Guide",
+      "title": "Guide des plateformes",
+      "intro": "Ce qu'Achievement Watcher scanne, les dossiers importants et quand les configs émulateur générées sont utiles.",
+      "quickTitle": "Premiers pas",
+      "quick": [
+        "Ajoutez les dossiers de sauvegarde/config dans Paramètres > Dossiers, puis activez la source correspondante dans Paramètres > Source.",
+        "Utilisez les dossiers de bibliothèque pour les jeux installés qui n'ont pas encore produit de fichiers de succès.",
+        "Watchdog notifie uniquement les nouveaux changements une fois le dossier connu et la source activée."
+      ],
+      "steamTitle": "Émulateurs Steam",
+      "steam": [
+        "Les sauvegardes GBE / Goldberg sont souvent dans %APPDATA%\\GSE Saves ou %APPDATA%\\Goldberg SteamEmu Saves.",
+        "Les sauvegardes type CODEX / RUNE sont souvent dans Public Documents\\Steam\\CODEX ou Public Documents\\Steam\\RUNE.",
+        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 et Hoodlum sont détectés depuis leurs dossiers de config/sauvegarde."
+      ],
+      "emulatorTitle": "Émulateurs console",
+      "emulators": [
+        "Les succès RPCS3 sont lus depuis dev_hdd0\\home\\...\\trophy près de l'installation RPCS3.",
+        "Les trophées shadPS4 sont lus depuis ses dossiers app data game_data/trophy; des restes de trophées ne prouvent pas que le jeu est installé.",
+        "La progression Xenia est lue depuis les fichiers de profil Xbox comme les .gpd."
+      ],
+      "sourcesTitle": "Launchers et sources",
+      "sources": [
+        "Le mode profil Steam public liste les jeux Steam installés ou possédés, mais les déblocages locaux viennent toujours des fichiers de sauvegarde.",
+        "GOG, Epic, Ubisoft Connect/LumaPlay et EA Desktop peuvent être activés séparément dans Source.",
+        "Les installs EA Desktop crackées sont lues depuis EADesktopVerbose.log et ses logs de sauvegarde."
+      ],
+      "configTitle": "Configs générées",
+      "config": [
+        "Le fix émulateur au clic droit peut ajouter GBE Fork, les schémas de succès, les données DLC et des helpers de lancement.",
+        "Le mode Simple est rapide et utilise les données d'Achievement Watcher; le mode Avancé lance generate_emu_config pour des données Steam plus complètes.",
+        "La génération avancée peut prendre plusieurs minutes, surtout avec les métadonnées DLC/depot."
+      ],
+      "troubleshootTitle": "Dépannage",
+      "troubleshoot": [
+        "Si un jeu manque, relancez un scan après ajout des dossiers, puis vérifiez l'option de source et la liste noire.",
+        "Si les notifications manquent, vérifiez l'Assistant de concentration Windows et lancez le jeu/l'app avec le même niveau admin.",
+        "Avancé > Diagnostics ouvre les dossiers de logs et de données quand il faut inspecter ce qui a été scanné."
+      ]
     },
     "advanced": {
       "maintenanceTitle": "Configuration et maintenance",

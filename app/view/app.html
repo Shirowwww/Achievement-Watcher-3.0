@@ -142,10 +142,11 @@
               <ul>
                 <li class="active" data-view="general"><i class="fas fa-tools"></i> <span></span></li>
                 <li data-view="notification"><i class="fas fa-bell"></i> <span></span></li>
-                <li data-view="folder"><i class="far fa-folder"></i> <span></span></li>
                 <li data-view="source"><i class="fas fa-file-import"></i> <span></span></li>
-                <li data-view="advanced"><i class="fas fa-flask"></i> <span></span></li>
+                <li data-view="folder"><i class="far fa-folder"></i> <span></span></li>
                 <li data-view="emulator"><i class="fas fa-microchip"></i> <span id="emulator-nav-label">Emulator</span></li>
+                <li data-view="guide"><i class="fas fa-map-signs"></i> <span id="guide-nav-label">Guide</span></li>
+                <li data-view="advanced"><i class="fas fa-flask"></i> <span></span></li>
               </ul>
             </nav>
 
@@ -613,6 +614,74 @@
               </div>
             </section>
 
+            <section class="content platform-guide-settings" data-view="guide">
+              <div class="platform-guide-head">
+                <div class="platform-guide-icon"><i class="fas fa-map-signs"></i></div>
+                <div>
+                  <div class="title" id="guide-title">Platform guide</div>
+                  <p id="guide-intro">
+                    What Achievement Watcher scans, which folders matter, and when generated emulator configs are useful.
+                  </p>
+                </div>
+              </div>
+
+              <div class="platform-guide-grid">
+                <details class="guide-panel" open>
+                  <summary><i class="fas fa-bolt"></i> <span id="guide-quick-title">First steps</span></summary>
+                  <ul id="guide-quick-list">
+                    <li>Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.</li>
+                    <li>Use library folders for installed games that have not produced achievement files yet.</li>
+                    <li>Watchdog only notifies new changes after the folder is known and the source is enabled.</li>
+                  </ul>
+                </details>
+
+                <details class="guide-panel" open>
+                  <summary><i class="fab fa-steam"></i> <span id="guide-steam-title">Steam emulators</span></summary>
+                  <ul id="guide-steam-list">
+                    <li>GBE / Goldberg saves are usually under %APPDATA%\GSE Saves or %APPDATA%\Goldberg SteamEmu Saves.</li>
+                    <li>CODEX / RUNE style saves often live under Public Documents\Steam\CODEX or Public Documents\Steam\RUNE.</li>
+                    <li>TENOKE, UniverseLAN, SmartSteamEmu, ALI213 and Hoodlum are detected from their config/save folders.</li>
+                  </ul>
+                </details>
+
+                <details class="guide-panel" open>
+                  <summary><i class="fas fa-microchip"></i> <span id="guide-emulator-title">Console emulators</span></summary>
+                  <ul id="guide-emulator-list">
+                    <li>RPCS3 achievements are read from dev_hdd0\home\...\trophy near the RPCS3 install.</li>
+                    <li>shadPS4 trophies are read from its app data game_data/trophy folders; leftover trophy data is not install proof.</li>
+                    <li>Xenia progress is read from Xbox profile files such as .gpd.</li>
+                  </ul>
+                </details>
+
+                <details class="guide-panel" open>
+                  <summary><i class="fas fa-store"></i> <span id="guide-sources-title">Launchers and sources</span></summary>
+                  <ul id="guide-sources-list">
+                    <li>Steam public profile mode lists installed or owned Steam games, but local unlocks still come from save files.</li>
+                    <li>GOG, Epic, Ubisoft Connect/LumaPlay and EA Desktop can be enabled separately in Sources.</li>
+                    <li>EA Desktop cracked installs are read from EADesktopVerbose.log and its backup logs.</li>
+                  </ul>
+                </details>
+
+                <details class="guide-panel" open>
+                  <summary><i class="fas fa-magic"></i> <span id="guide-config-title">Generated configs</span></summary>
+                  <ul id="guide-config-list">
+                    <li>The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.</li>
+                    <li>Simple mode is fast and uses Achievement Watcher's data; Advanced runs generate_emu_config for deeper Steam data.</li>
+                    <li>Advanced generation can take several minutes, especially with DLC/depot metadata.</li>
+                  </ul>
+                </details>
+
+                <details class="guide-panel" open>
+                  <summary><i class="fas fa-wrench"></i> <span id="guide-troubleshoot-title">Troubleshooting</span></summary>
+                  <ul id="guide-troubleshoot-list">
+                    <li>If a game is missing, rescan after adding folders, then check the source toggle and blacklist.</li>
+                    <li>If notifications are missing, check Windows Focus Assist and run the game/app with matching admin rights.</li>
+                    <li>Advanced > Diagnostics opens logs and data folders when you need to inspect what was scanned.</li>
+                  </ul>
+                </details>
+              </div>
+            </section>
+
             <section class="content" data-view="folder">
               <div class="disclaimer"><i class="fas fa-info-circle"></i> <span></span></div>
 
@@ -652,6 +721,14 @@
                 </li>
                 <li>
                   <div class="path"><span class="constant">%appdata%</span>\GSE Saves</div>
+                  <div class="controls">
+                    <ul>
+                      <li><i class="fas fa-bell"></i></li>
+                    </ul>
+                  </div>
+                </li>
+                <li>
+                  <div class="path"><span class="constant">%appdata%</span>\Goldberg UplayEmu Saves</div>
                   <div class="controls">
                     <ul>
                       <li><i class="fas fa-bell"></i></li>
@@ -708,6 +785,14 @@
                 </li>
                 <li>
                   <div class="path"><span class="constant">%appdata%</span>\SmartSteamEmu</div>
+                  <div class="controls">
+                    <ul>
+                      <li><i class="fas fa-bell"></i></li>
+                    </ul>
+                  </div>
+                </li>
+                <li>
+                  <div class="path"><span class="constant">%localappdata%</span>\anadius\LSX emu\achievement_watcher</div>
                   <div class="controls">
                     <ul>
                       <li><i class="fas fa-bell"></i></li>

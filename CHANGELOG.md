@@ -3,6 +3,20 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 3.0.3 - 2026-06-27
+
+### Changed
+
+- Improved automatic discovery for Steam emulator save folders and common game library locations.
+- Reorganized settings into clearer General, Notification, Sources, Folders, Emulator, Guide and Advanced sections.
+- Expanded the platform guide in settings and left all guide panels open by default.
+
+### Fixed
+
+- Smart Find and first-run scanning now include additional concrete emulator save roots and library roots.
+- App-id folder recognition is more reliable for common emulator layouts while avoiding obvious profile-id folders.
+- Small build, installer and configuration cleanups.
+
 ## 3.0.2 - 2026-06-27
 
 ### Fixed

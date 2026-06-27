@@ -8,6 +8,7 @@ const glob = require('fast-glob');
 const fs = require('fs');
 const listDrive = require(path.join(appPath, 'util/listDrive.js'));
 const { readRegistryStringAndExpand } = require('../util/reg');
+const saveRoots = require(path.join(appPath, 'parser/saveRoots.js'));
 
 let file;
 
@@ -25,6 +26,22 @@ const steam_emu_cfg_file_supported = [
   'tenoke.ini',
   'UniverseLAN.ini',
 ];
+
+function addUnique(out, dir) {
+  if (!dir) return;
+  const key = path.normalize(String(dir)).toLowerCase();
+  if (out.some((item) => path.normalize(String(item)).toLowerCase() === key)) return;
+  out.push(dir);
+}
+
+function isProbableAppIdFolderName(name) {
+  const value = String(name || '').trim();
+  if (!/^[0-9a-fA-F]+$/.test(value)) return false;
+  if (/^7656\d{13}$/.test(value)) return false; // SteamID64 user folder, not a game appid.
+  if (/^\d{12,}$/.test(value)) return false;
+  if (value.length < 6 && /[a-f]/i.test(value)) return false;
+  return true;
+}
 
 // Quarantine a corrupted config file (rename to <file>.corrupt-<timestamp>) so its raw bytes are
 // preserved for manual recovery while a clean default is written in its place.
@@ -76,6 +93,11 @@ module.exports.find = async () => {
   const ignore = ['System Volume Information', '$Recycle.Bin', '$RECYCLE.BIN', 'Recovery', 'MSOCache'];
 
   try {
+    let result = [];
+    for (const dir of saveRoots.defaultSteamEmuSaveRoots({ existingOnly: true, expandProgramDataSteam: true })) {
+      addUnique(result, dir);
+    }
+
     const search = steam_emu_cfg_file_supported
       .filter((el) => el !== 'steam_api.ini') //cause a lot of false positive
       .concat(['rpcs3.exe', 'shadPS4.exe', 'shadps4.exe', 'xenia.exe', 'xenia_canary.exe']) //emulator binaries
@@ -84,11 +106,9 @@ module.exports.find = async () => {
       }); //glob pattern
     const drives = await listDrive();
 
-    let result = [];
-
     for (let drive of drives) {
       for (let filepath of await glob(search, { cwd: drive, ignore: ignore, onlyFiles: true, absolute: true, suppressErrors: true })) {
-        result.push(path.parse(filepath).dir);
+        addUnique(result, path.parse(filepath).dir);
       }
     }
 
@@ -104,9 +124,9 @@ module.exports.check = async (dirpath) => {
 
     const accepted_files = steam_emu_cfg_file_supported.concat(['rpcs3.exe', 'shadPS4.exe', 'shadps4.exe', 'xenia.exe', 'xenia_canary.exe']);
 
-    //check for appID folder(s)
-    let scan = await glob('([0-9]+)', { cwd: dirpath, onlyDirectories: true });
-    if (scan.length > 0) return (result = true);
+    //check for appID folder(s). Some emulators use hex ids; reject obvious user-id/noise folders.
+    let scan = await glob('*', { cwd: dirpath, onlyDirectories: true, deep: 1, suppressErrors: true });
+    if (scan.some(isProbableAppIdFolderName)) return (result = true);
 
     //check for accepted_files
     scan = await glob('*.{ini,exe}', { cwd: dirpath, onlyFiles: true });

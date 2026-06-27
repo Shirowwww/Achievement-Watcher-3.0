@@ -18,6 +18,7 @@ const steamLanguages = require(path.join(appPath, 'locale/steam.json'));
 const sse = require(path.join(appPath, 'parser/sse.js'));
 const htmlParser = require('node-html-parser');
 const fs = require('fs');
+const saveRoots = require(path.join(appPath, 'parser/saveRoots.js'));
 
 let listReady = true;
 let steamUsersList;
@@ -41,28 +42,7 @@ module.exports.initDebug = ({ isDev, userDataPath }) => {
 
 module.exports.scan = async (additionalSearch = []) => {
   try {
-    let search = [
-      path.join(process.env['Public'], 'Documents/Steam/CODEX'),
-      path.join(process.env['Public'], 'Documents/Steam/RUNE'),
-      path.join(process.env['Public'], 'Documents/OnlineFix'),
-      path.join(process.env['Public'], 'Documents/EMPRESS'),
-      path.join(process.env['APPDATA'], 'Goldberg SteamEmu Saves'),
-      path.join(process.env['APPDATA'], 'GSE Saves'),
-      path.join(process.env['APPDATA'], 'EMPRESS'),
-      path.join(process.env['APPDATA'], 'Steam/CODEX'),
-      path.join(process.env['APPDATA'], 'SmartSteamEmu'),
-      path.join(process.env['APPDATA'], 'CreamAPI'),
-      path.join(process.env['PROGRAMDATA'], 'Steam') + '/*',
-      path.join(process.env['LOCALAPPDATA'], 'SKIDROW'),
-      path.join(process.env['LOCALAPPDATA'], 'anadius/LSX emu/achievement_watcher'),
-    ];
-
-    const mydocs = readRegistryStringAndExpand('HKCU', 'Software/Microsoft/Windows/CurrentVersion/Explorer/User Shell Folders', 'Personal');
-    if (mydocs) {
-      search = search.concat([path.join(mydocs, 'SkidRow')]);
-    }
-
-    if (additionalSearch.length > 0) search = search.concat(additionalSearch);
+    let search = saveRoots.defaultSteamScanRoots(additionalSearch);
 
     search = search.map((dir) => {
       return normalize(dir) + '/([0-9]+)';
@@ -78,26 +58,30 @@ module.exports.scan = async (additionalSearch = []) => {
         },
       };
 
-      if (dir.includes('CODEX')) {
+      const dirKey = String(dir).replace(/\\/g, '/');
+      const dirKeyLower = dirKey.toLowerCase();
+      if (dirKeyLower.includes('codex')) {
         game.source = 'Codex';
-      } else if (dir.includes('RUNE')) {
+      } else if (dirKeyLower.includes('rune')) {
         game.source = 'Rune';
-      } else if (dir.includes('OnlineFix')) {
+      } else if (dirKeyLower.includes('onlinefix')) {
         game.source = 'OnlineFix';
-      } else if (dir.includes('Goldberg') || dir.includes('GSE')) {
+      } else if (dirKeyLower.includes('goldberg uplayemu')) {
+        game.source = 'Goldberg Uplay';
+      } else if (dirKeyLower.includes('goldberg') || dirKeyLower.includes('gse')) {
         game.source = 'Goldberg';
-      } else if (dir.includes('EMPRESS')) {
+      } else if (dirKeyLower.includes('empress')) {
         game.source = 'Goldberg (EMPRESS)';
         game.data.path = path.join(game.data.path, 'remote', game.appid);
-      } else if (dir.includes('SKIDROW')) {
+      } else if (dirKeyLower.includes('skidrow')) {
         game.source = 'Skidrow';
-      } else if (dir.includes('SmartSteamEmu')) {
+      } else if (dirKeyLower.includes('smartsteamemu')) {
         game.source = 'SmartSteamEmu';
-      } else if (dir.includes('ProgramData/Steam')) {
+      } else if (dirKeyLower.includes('programdata/steam')) {
         game.source = 'Reloaded - 3DM';
-      } else if (dir.includes('CreamAPI')) {
+      } else if (dirKeyLower.includes('creamapi')) {
         game.source = 'CreamAPI';
-      } else if (dir.includes('Steam')) {
+      } else if (dirKeyLower.includes('steam')) {
         game.source = 'Steam';
       }
 

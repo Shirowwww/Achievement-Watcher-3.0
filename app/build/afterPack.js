@@ -61,7 +61,7 @@ exports.default = async function afterPack(context) {
   const { appOutDir, packager, electronPlatformName } = context;
 
   // --- (1) copy watchdog/node_modules into the packed output (load-bearing) ----
-  // projectDir is main-repo/app; the watchdog lives at main-repo/watchdog.
+  // projectDir is app; the watchdog lives next to it at ../watchdog.
   const src = path.join(packager.projectDir, '..', 'watchdog', 'node_modules');
   const dest = path.join(appOutDir, 'watchdog', 'node_modules');
 

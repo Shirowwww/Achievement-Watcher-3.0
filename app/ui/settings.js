@@ -745,6 +745,12 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
             debug.log('-> Invalid folder');
           }
         }
+        if (libraryDirs.find) {
+          for (let dir of await libraryDirs.find()) {
+            debug.log(`Found library folder: ${dir}`);
+            populateLibraryDirList({ dir });
+          }
+        }
       } catch (err) {
         remote.dialog.showMessageBoxSync({
           type: 'error',

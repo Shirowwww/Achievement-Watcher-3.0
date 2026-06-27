@@ -82,7 +82,8 @@
       "notification": "Notification",
       "souvenir": "Souvenir",
       "folder": "Folders",
-      "source": "Source",
+      "source": "Sources",
+      "guide": "Guide",
       "advanced": "Advanced"
     },
     "common": {
@@ -521,6 +522,47 @@
         "name": "Import notification cache",
         "description": "Import Watchdog's cache as another source of achievement"
       }
+    },
+    "guide": {
+      "nav": "Guide",
+      "title": "Platform guide",
+      "intro": "What Achievement Watcher scans, which folders matter, and when generated emulator configs are useful.",
+      "quickTitle": "First steps",
+      "quick": [
+        "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
+        "Use library folders for installed games that have not produced achievement files yet.",
+        "Watchdog only notifies new changes after the folder is known and the source is enabled."
+      ],
+      "steamTitle": "Steam emulators",
+      "steam": [
+        "GBE / Goldberg saves are usually under %APPDATA%\\GSE Saves or %APPDATA%\\Goldberg SteamEmu Saves.",
+        "CODEX / RUNE style saves often live under Public Documents\\Steam\\CODEX or Public Documents\\Steam\\RUNE.",
+        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 and Hoodlum are detected from their config/save folders."
+      ],
+      "emulatorTitle": "Console emulators",
+      "emulators": [
+        "RPCS3 achievements are read from dev_hdd0\\home\\...\\trophy near the RPCS3 install.",
+        "shadPS4 trophies are read from its app data game_data/trophy folders; leftover trophy data is not install proof.",
+        "Xenia progress is read from Xbox profile files such as .gpd."
+      ],
+      "sourcesTitle": "Launchers and sources",
+      "sources": [
+        "Steam public profile mode lists installed or owned Steam games, but local unlocks still come from save files.",
+        "GOG, Epic, Ubisoft Connect/LumaPlay and EA Desktop can be enabled separately in Sources.",
+        "EA Desktop cracked installs are read from EADesktopVerbose.log and its backup logs."
+      ],
+      "configTitle": "Generated configs",
+      "config": [
+        "The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.",
+        "Simple mode is fast and uses Achievement Watcher's data; Advanced runs generate_emu_config for deeper Steam data.",
+        "Advanced generation can take several minutes, especially with DLC/depot metadata."
+      ],
+      "troubleshootTitle": "Troubleshooting",
+      "troubleshoot": [
+        "If a game is missing, rescan after adding folders, then check the source toggle and blacklist.",
+        "If notifications are missing, check Windows Focus Assist and run the game/app with matching admin rights.",
+        "Advanced > Diagnostics opens logs and data folders when you need to inspect what was scanned."
+      ]
     },
     "advanced": {
       "maintenanceTitle": "Setup & maintenance",

@@ -199,6 +199,36 @@ function translateUI(lang, locale, template) {
     bindEmuRow('option_goldbergDownloadIcons', emu.goldbergIcons || template.settings.general.goldbergIcons);
   }
 
+  // Platform guide section: static help, bound by stable ids so settings rows can move safely.
+  if (template.settings.guide) {
+    const guide = template.settings.guide;
+    const bindGuideText = (id, value) => {
+      if (value) $('#' + id).text(clear(value));
+    };
+    const bindGuideList = (id, items) => {
+      if (!Array.isArray(items)) return;
+      const list = $('#' + id);
+      if (!list.length) return;
+      list.empty();
+      items.forEach((item) => $('<li>').text(clear(item) || '').appendTo(list));
+    };
+    bindGuideText('guide-nav-label', guide.nav);
+    bindGuideText('guide-title', guide.title);
+    bindGuideText('guide-intro', guide.intro);
+    bindGuideText('guide-quick-title', guide.quickTitle);
+    bindGuideText('guide-steam-title', guide.steamTitle);
+    bindGuideText('guide-emulator-title', guide.emulatorTitle);
+    bindGuideText('guide-sources-title', guide.sourcesTitle);
+    bindGuideText('guide-config-title', guide.configTitle);
+    bindGuideText('guide-troubleshoot-title', guide.troubleshootTitle);
+    bindGuideList('guide-quick-list', guide.quick);
+    bindGuideList('guide-steam-list', guide.steam);
+    bindGuideList('guide-emulator-list', guide.emulators);
+    bindGuideList('guide-sources-list', guide.sources);
+    bindGuideList('guide-config-list', guide.config);
+    bindGuideList('guide-troubleshoot-list', guide.troubleshoot);
+  }
+
   $('#options-notify .autosave-hint span').text(clear(template.settings.notification.info.autoSave));
   selector = $('#options-notify-common');
   selector.prev('.title').find('span').text(clear(template.settings.notification.title.common));
@@ -394,6 +424,8 @@ function translateUI(lang, locale, template) {
   $("#settingNav li[data-view='notification'] span").text(clear(template.settings.sideMenu.notification));
   $("#settingNav li[data-view='folder'] span").text(clear(template.settings.sideMenu.folder));
   $("#settingNav li[data-view='source'] span").text(clear(template.settings.sideMenu.source));
+  const guideNav = (template.settings.guide && template.settings.guide.nav) || template.settings.sideMenu.guide || 'Guide';
+  $("#settingNav li[data-view='guide'] span").text(clear(guideNav));
   $("#settingNav li[data-view='advanced'] span").text(clear(template.settings.sideMenu.advanced));
   $('#btn-settings-cancel').text(clear(template.settings.common.cancel));
   $('#btn-settings-save').text(clear(template.settings.common.save));
