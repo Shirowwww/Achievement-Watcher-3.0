@@ -83,6 +83,7 @@
       "souvenir": "Souvenir",
       "folder": "Carpetas",
       "source": "Fuente",
+      "guide": "Guía",
       "advanced": "Avanzado"
     },
     "common": {
@@ -481,13 +482,16 @@
         "archivo ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini o RPCS3.exe."
       ],
       "add": "Agregar una carpeta",
+      "smartFind": "Búsqueda inteligente",
+      "smartFindHelp": "encuentra saves/configs + bibliotecas",
       "library": "Carpetas de biblioteca",
       "libraryInfo": [
         "Selecciona una carpeta que contenga muchas carpetas de instalación de juegos (p. ej. D:\\Games, E:\\SteamLibrary).",
         "Todos los juegos que contenga se analizarán en busca de logros Goldberg/GBE, aunque nunca se hayan iniciado."
       ],
       "addLibrary": "Agregar una carpeta de biblioteca",
-      "generateConfigs": "Generar configuraciones"
+      "generateConfigs": "Generar configuraciones",
+      "generateConfigsHelp": "escaneo completo + auto-fix si está activo"
     },
     "source": {
       "title": "Fuentes de juegos",
@@ -521,6 +525,47 @@
         "name": "Importar caché de notificaciones",
         "description": "Importa la caché de Watchdog como otra fuente de logros"
       }
+    },
+    "guide": {
+      "nav": "Guía",
+      "title": "Guía de plataformas",
+      "intro": "Qué escanea Achievement Watcher, qué carpetas importan y cuándo sirven las configs de emulador generadas.",
+      "quickTitle": "Primeros pasos",
+      "quick": [
+        "Agrega carpetas de guardado/config en Configuración > Carpetas y luego activa la fuente correspondiente en Configuración > Fuentes.",
+        "Usa carpetas de biblioteca para juegos instalados que todavía no generaron archivos de logros.",
+        "Watchdog solo notifica cambios nuevos después de conocer la carpeta y cuando la fuente está activa."
+      ],
+      "steamTitle": "Emuladores de Steam",
+      "steam": [
+        "Los saves de GBE / Goldberg suelen estar en %APPDATA%\\GSE Saves o %APPDATA%\\Goldberg SteamEmu Saves.",
+        "Los saves estilo CODEX / RUNE suelen estar en Public Documents\\Steam\\CODEX o Public Documents\\Steam\\RUNE.",
+        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 y Hoodlum se detectan desde sus carpetas de config/save."
+      ],
+      "emulatorTitle": "Emuladores de consola",
+      "emulators": [
+        "Los logros de RPCS3 se leen desde dev_hdd0\\home\\...\\trophy cerca de la instalación de RPCS3.",
+        "Los trofeos de shadPS4 se leen desde sus carpetas app data game_data/trophy; datos de trofeos sobrantes no prueban que el juego esté instalado.",
+        "El progreso de Xenia se lee desde archivos de perfil Xbox como .gpd."
+      ],
+      "sourcesTitle": "Launchers y fuentes",
+      "sources": [
+        "El modo de perfil público de Steam lista juegos de Steam instalados o propios, pero los desbloqueos locales siguen viniendo de archivos de guardado.",
+        "GOG, Epic, Ubisoft Connect/LumaPlay y EA Desktop se pueden activar por separado en Fuentes.",
+        "Las instalaciones crackeadas de EA Desktop se leen desde EADesktopVerbose.log y sus logs de respaldo."
+      ],
+      "configTitle": "Configs generadas",
+      "config": [
+        "El fix de emulador con clic derecho puede agregar archivos GBE Fork, esquemas de logros, datos DLC y helpers de inicio.",
+        "El modo Simple es rápido y usa datos de Achievement Watcher; Avanzado ejecuta generate_emu_config para datos de Steam más profundos.",
+        "La generación avanzada puede tardar varios minutos, especialmente con metadatos DLC/depot."
+      ],
+      "troubleshootTitle": "Solución de problemas",
+      "troubleshoot": [
+        "Si falta un juego, vuelve a escanear después de agregar carpetas y revisa el switch de la fuente y la blacklist.",
+        "Si faltan notificaciones, revisa Asistente de concentración de Windows y ejecuta el juego/app con los mismos permisos de administrador.",
+        "Avanzado > Diagnóstico abre logs y carpetas de datos cuando necesitas inspeccionar qué se escaneó."
+      ]
     },
     "advanced": {
       "maintenanceTitle": "Configuración y mantenimiento",
@@ -613,6 +658,9 @@
     "addSave": "Agregar carpeta para guardar",
     "smartFind": "hallazgo inteligente",
     "addLibrary": "Agregar carpeta de biblioteca",
+    "smartFindHint": "saves + bibliotecas",
+    "addSaveHint": "un emulador/fuente",
+    "addLibraryHint": "muchos juegos instalados",
     "saveList": "Guardar/configurar carpetas",
     "libraryList": "Carpetas de la biblioteca",
     "emptyList": "No se agregó nada en esta sesión.",

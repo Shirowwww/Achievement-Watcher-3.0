@@ -28,13 +28,29 @@ const APPID_CONFIG_FILES = new Set([
   'smartsteamemu.ini',
   'coldapi.ini',
 ]);
+const AUXILIARY_SETTINGS_DIRS = new Set([
+  '__overlay',
+  'overlay',
+  '__installer',
+  '_commonredist',
+  'commonredist',
+  'redist',
+  'directx',
+  'dotnet',
+  'vc',
+  'vcredist',
+  'prerequisites',
+  'prereq',
+  'support',
+  'tools',
+]);
 
 function parseAppidFromConfig(file) {
   try {
     const content = fs.readFileSync(file, 'utf8');
     if (path.basename(file).toLowerCase() === 'steam_appid.txt') {
-      const txt = content.trim();
-      return txt || null;
+      const match = content.match(/^\s*([0-9]+)/);
+      return match ? match[1] : null;
     }
     const patterns = [
       /^\s*app(?:id|ID)\s*=\s*([0-9]+)/im,
@@ -61,7 +77,27 @@ function findSteamSettings(gameDir, maxDepth = 6) {
   if (fs.existsSync(direct) && fs.statSync(direct).isDirectory()) return direct;
 
   let best = null;
+  let bestScore = -Infinity;
   let bestDepth = Infinity;
+  const scoreSteamSettings = (dir, depth) => {
+    let score = -depth;
+    try {
+      const entries = fs.readdirSync(dir).map((e) => e.toLowerCase());
+      if (entries.includes('achievements.json')) score += 100;
+      if (entries.some((e) => GBE_CONFIG_FILES.includes(e) || CLASSIC_CONFIG_FILES.includes(e))) score += 50;
+      if (entries.includes('steam_appid.txt')) score += 20;
+      if (entries.includes('steam_interfaces.txt')) score += 5;
+      const relativeParts = path
+        .relative(gameDir, dir)
+        .split(/[\\/]+/)
+        .map((p) => p.toLowerCase())
+        .filter(Boolean);
+      if (relativeParts.some((p) => AUXILIARY_SETTINGS_DIRS.has(p))) score -= 200;
+    } catch {
+      /* unreadable steam_settings remains a weak candidate */
+    }
+    return score;
+  };
   const walk = (dir, depth) => {
     if (depth > maxDepth) return;
     let entries;
@@ -73,8 +109,11 @@ function findSteamSettings(gameDir, maxDepth = 6) {
     for (const e of entries) {
       if (!e.isDirectory()) continue;
       if (e.name.toLowerCase() === 'steam_settings') {
-        if (depth < bestDepth) {
-          best = path.join(dir, e.name);
+        const candidate = path.join(dir, e.name);
+        const score = scoreSteamSettings(candidate, depth);
+        if (score > bestScore || (score === bestScore && depth < bestDepth)) {
+          best = candidate;
+          bestScore = score;
           bestDepth = depth;
         }
         continue; // no need to descend into a steam_settings folder
@@ -365,6 +404,18 @@ function diagnose({ gameDir, appid, schema, savesRoots }) {
       add('warning', 'BAD_DLC_CONFIG', 'configs.app.ini does not enable [app::dlcs] unlock_all=1.');
     }
   }
+  const mainConfigFile = path.join(steamSettings, 'configs.main.ini');
+  if (!fs.existsSync(mainConfigFile)) {
+    add('warning', 'NO_MAIN_CONFIG', 'configs.main.ini is missing — modern Steam ticket/token compatibility is not configured.');
+  } else {
+    const mainConfig = fs.readFileSync(mainConfigFile, 'utf8');
+    if (!/^\s*\[main::general\][\s\S]*?^\s*new_app_ticket\s*=\s*1\s*$/im.test(mainConfig)) {
+      add('warning', 'NO_NEW_APP_TICKET', 'configs.main.ini does not enable [main::general] new_app_ticket=1.');
+    }
+    if (!/^\s*\[main::general\][\s\S]*?^\s*gc_token\s*=\s*1\s*$/im.test(mainConfig)) {
+      add('warning', 'NO_GC_TOKEN', 'configs.main.ini does not enable [main::general] gc_token=1.');
+    }
+  }
   const userConfigFile = path.join(steamSettings, 'configs.user.ini');
   if (!fs.existsSync(userConfigFile)) {
     add('warning', 'NO_USER_CONFIG', 'configs.user.ini is missing — account name and language are not configured.');
@@ -571,6 +622,39 @@ function writeDlcConfig({ steamSettings, dlcs = [], unlockAll = true } = {}) {
   return { file, count: map.size, unlockAll: !!unlockAll };
 }
 
+/*
+  Write/merge steam_settings/configs.main.ini with the modern GBE switches needed by newer
+  Steamworks/PSPC titles. The values mirror the community-tested generate_emu_config `-token` setup:
+  use the newer auth ticket and embed a Game Coordinator token. Existing unrelated keys/comments are
+  preserved, and we deliberately leave achievements_bypass at the user's existing value because
+  forcing SetAchievement() true is a compatibility workaround, not the default.
+*/
+function writeMainConfig({ steamSettings } = {}) {
+  if (!steamSettings) throw new Error('writeMainConfig: steamSettings path is required');
+  const file = path.join(steamSettings, 'configs.main.ini');
+  const previous = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  const doc = parseIni(previous);
+  let general = getIniSection(doc, 'main::general');
+  if (!general) {
+    general = { key: 'main::general', header: '[main::general]', body: [] };
+    doc.sections.push(general);
+  }
+  general.body = upsertIniKeys(general.body, { new_app_ticket: '1', gc_token: '1' });
+
+  let stats = getIniSection(doc, 'main::stats');
+  if (!stats) {
+    stats = { key: 'main::stats', header: '[main::stats]', body: [] };
+    doc.sections.push(stats);
+  }
+  stats.body = upsertIniKeys(stats.body, { stat_achievement_progress_functionality: '1', save_only_higher_stat_achievement_progress: '1' });
+
+  fs.mkdirSync(steamSettings, { recursive: true });
+  const next = stringifyIni(doc);
+  const changed = previous !== next;
+  if (changed) fs.writeFileSync(file, next);
+  return { file, changed, newAppTicket: true, gcToken: true };
+}
+
 // Append a language to supported_languages.txt only when the file already exists and lacks it. GBE
 // ignores a configured language that isn't listed there — but if the file is ABSENT there's nothing
 // to restrict, so we deliberately don't create one (creating a single-line file would hide every
@@ -668,7 +752,7 @@ function writeUserConfig({ steamSettings, accountName, language } = {}) {
     accountName    written to configs.user.ini [user::general] account_name (optional)
     language       written to configs.user.ini [user::general] language — a Steam API code (optional)
 
-  Returns { steamSettings, achievementsJson, wroteAppId, icons, dlc, user }.
+  Returns { steamSettings, achievementsJson, wroteAppId, icons, dlc, main, user }.
 */
 async function repair({
   steamSettings,
@@ -678,6 +762,7 @@ async function repair({
   downloadIcon,
   writeAppId = true,
   writeDlc = true,
+  writeMain = true,
   dlcs,
   fetchDlc,
   unlockAllDlc = true,
@@ -688,7 +773,7 @@ async function repair({
   fs.mkdirSync(steamSettings, { recursive: true });
 
   const achievementsJson = buildAchievementsJson(schema, imagePrefix);
-  const summary = { steamSettings, achievementsJson, wroteAppId: false, backupDir: null, icons: { downloaded: 0, failed: 0, skipped: 0 }, dlc: null, user: null };
+  const summary = { steamSettings, achievementsJson, wroteAppId: false, backupDir: null, icons: { downloaded: 0, failed: 0, skipped: 0 }, dlc: null, main: null, user: null };
 
   // A manual repair can replace a malformed or incomplete schema. Keep the previous files beside
   // steam_settings before changing them; missing files need no backup and the normal auto-repair
@@ -696,6 +781,7 @@ async function repair({
   const filesToReplace = [path.join(steamSettings, 'achievements.json')];
   if (writeAppId && appid != null) filesToReplace.push(path.join(steamSettings, 'steam_appid.txt'));
   if (writeDlc) filesToReplace.push(path.join(steamSettings, 'configs.app.ini'));
+  if (writeMain) filesToReplace.push(path.join(steamSettings, 'configs.main.ini'));
   if ((accountName && String(accountName).trim()) || (language && String(language).trim())) {
     filesToReplace.push(path.join(steamSettings, 'configs.user.ini'));
   }
@@ -755,6 +841,14 @@ async function repair({
       summary.dlc = writeDlcConfig({ steamSettings, dlcs: dlcList, unlockAll: unlockAllDlc });
     } catch {
       summary.dlc = null;
+    }
+  }
+
+  if (writeMain) {
+    try {
+      summary.main = writeMainConfig({ steamSettings });
+    } catch {
+      summary.main = null;
     }
   }
 
@@ -958,6 +1052,7 @@ module.exports = {
   restoreSetup,
   repair,
   writeDlcConfig,
+  writeMainConfig,
   writeUserConfig,
   diagnose,
   inspectSaveState,

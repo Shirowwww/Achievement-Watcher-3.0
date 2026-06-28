@@ -83,6 +83,7 @@
       "souvenir": "Recordação",
       "folder": "Pastas",
       "source": "Fonte",
+      "guide": "Guia",
       "advanced": "Avançado"
     },
     "common": {
@@ -481,13 +482,16 @@
         "ficheiro ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini ou RPCS3.exe."
       ],
       "add": "Adicionar uma pasta",
+      "smartFind": "Pesquisa inteligente",
+      "smartFindHelp": "encontra gravações/configs + bibliotecas",
       "library": "Pastas de biblioteca",
       "libraryInfo": [
         "Selecione uma pasta que contenha muitas pastas de instalação de jogos (ex.: D:\\Games, E:\\SteamLibrary).",
         "Todos os jogos no seu interior serão analisados para proezas Goldberg/GBE, mesmo que nunca tenham sido iniciados."
       ],
       "addLibrary": "Adicionar uma pasta de biblioteca",
-      "generateConfigs": "Gerar configurações"
+      "generateConfigs": "Gerar configurações",
+      "generateConfigsHelp": "análise completa + correção automática se ativa"
     },
     "source": {
       "title": "Fontes de jogos",
@@ -521,6 +525,47 @@
         "name": "Importar cache de notificações",
         "description": "Importar a cache do Watchdog como outra fonte de proezas"
       }
+    },
+    "guide": {
+      "nav": "Guia",
+      "title": "Guia de plataformas",
+      "intro": "O que o Achievement Watcher analisa, que pastas importam e quando são úteis as configs de emulador geradas.",
+      "quickTitle": "Primeiros passos",
+      "quick": [
+        "Adiciona pastas de gravações/config em Definições > Pastas e depois ativa a fonte correspondente em Definições > Fontes.",
+        "Usa pastas de biblioteca para jogos instalados que ainda não produziram ficheiros de conquistas.",
+        "O Watchdog só notifica novas alterações depois de a pasta ser conhecida e a fonte estar ativa."
+      ],
+      "steamTitle": "Emuladores Steam",
+      "steam": [
+        "As gravações GBE / Goldberg estão normalmente em %APPDATA%\\GSE Saves ou %APPDATA%\\Goldberg SteamEmu Saves.",
+        "As gravações do estilo CODEX / RUNE costumam estar em Public Documents\\Steam\\CODEX ou Public Documents\\Steam\\RUNE.",
+        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 e Hoodlum são detetados pelas suas pastas de config/gravações."
+      ],
+      "emulatorTitle": "Emuladores de consola",
+      "emulators": [
+        "As conquistas RPCS3 são lidas em dev_hdd0\\home\\...\\trophy perto da instalação do RPCS3.",
+        "Os troféus shadPS4 são lidos nas pastas game_data/trophy dos dados da app; restos de troféus não provam que o jogo esteja instalado.",
+        "O progresso Xenia é lido de ficheiros de perfil Xbox, como .gpd."
+      ],
+      "sourcesTitle": "Launchers e fontes",
+      "sources": [
+        "O modo de perfil público Steam lista jogos Steam instalados ou possuídos, mas desbloqueios locais continuam a vir dos ficheiros de gravação.",
+        "GOG, Epic, Ubisoft Connect/LumaPlay e EA Desktop podem ser ativados separadamente em Fontes.",
+        "Instalações EA Desktop crackadas são lidas a partir de EADesktopVerbose.log e dos seus logs de cópia de segurança."
+      ],
+      "configTitle": "Configs geradas",
+      "config": [
+        "A correção de emulador com clique direito pode adicionar ficheiros GBE Fork, esquemas de conquistas, dados DLC e auxiliares de arranque.",
+        "O modo Simples é rápido e usa os dados do Achievement Watcher; Avançado executa generate_emu_config para dados Steam mais completos.",
+        "A geração avançada pode demorar vários minutos, especialmente com metadados DLC/depot."
+      ],
+      "troubleshootTitle": "Resolução de problemas",
+      "troubleshoot": [
+        "Se faltar um jogo, volta a analisar depois de adicionar pastas e confirma o seletor da fonte e a lista negra.",
+        "Se faltarem notificações, verifica o Assistente de concentração do Windows e executa o jogo/app com os mesmos direitos de administrador.",
+        "Avançado > Diagnóstico abre logs e pastas de dados quando precisas de inspecionar o que foi analisado."
+      ]
     },
     "advanced": {
       "maintenanceTitle": "Configuração e manutenção",
@@ -613,6 +658,9 @@
     "addSave": "Adicionar pasta salva",
     "smartFind": "Descoberta inteligente",
     "addLibrary": "Adicionar pasta da biblioteca",
+    "smartFindHint": "gravações + bibliotecas",
+    "addSaveHint": "um emulador/fonte",
+    "addLibraryHint": "muitos jogos instalados",
     "saveList": "Salvar/configurar pastas",
     "libraryList": "Pastas da biblioteca",
     "emptyList": "Nada adicionou esta sessão.",

@@ -61,3 +61,15 @@ test('userDir.check accepts real appid save roots and rejects SteamID64-only roo
   assert.equal(await userDir.check(valid), true);
   assert.equal(await userDir.check(invalid), false);
 });
+
+test('Public Documents Steam parent expands to concrete RUNE/CODEX save roots', async () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-rune-parent-'));
+  const steamParent = path.join(tmp, 'Public', 'Documents', 'Steam');
+  const runeRoot = path.join(steamParent, 'RUNE');
+  fs.mkdirSync(path.join(runeRoot, '2531310'), { recursive: true });
+
+  const roots = saveRoots.defaultSteamScanRoots([steamParent]);
+  assert.ok(roots.includes(steamParent));
+  assert.ok(roots.includes(runeRoot));
+  assert.equal(await userDir.check(steamParent), true);
+});

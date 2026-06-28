@@ -482,13 +482,16 @@
         "Le fichier ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini ou RPCS3.exe est situé."
       ],
       "add": "Ajouter un dossier",
+      "smartFind": "Recherche auto",
+      "smartFindHelp": "trouve saves/configs + bibliothèques",
       "library": "Dossiers de bibliothèque",
       "libraryInfo": [
         "Sélectionnez un dossier qui contient plusieurs dossiers de jeux installés (ex: D:\\Games, E:\\SteamLibrary).",
         "Tous les jeux qu'il contient seront scannés pour les succès Goldberg/GBE, même s'ils n'ont jamais été lancés."
       ],
       "addLibrary": "Ajouter un dossier de bibliothèque",
-      "generateConfigs": "Générer les configs"
+      "generateConfigs": "Générer les configs",
+      "generateConfigsHelp": "scan complet + auto-fix si activé"
     },
     "source": {
       "title": "Sources de jeux",
@@ -651,12 +654,15 @@
     "apiLink": "Obtenez une clé API Web Steam",
     "apiNote": "Utilisez la page officielle Steam. La clé est cryptée avant d'être enregistrée.",
     "foldersTitle": "Ajouter des jeux sur le disque",
-    "foldersCopy": "Ajoutez des dossiers de sauvegarde/configuration pour des émulateurs spécifiques et des racines de bibliothèque contenant de nombreux jeux installés.",
-    "addSave": "Ajouter un dossier de sauvegarde",
+    "foldersCopy": "Utilisez Recherche intelligente pour détecter automatiquement les dossiers de sauvegarde/configuration et les bibliothèques de jeux. Sinon ajoutez-les manuellement selon le type de dossier.",
+    "addSave": "Dossier sauvegarde/config",
     "smartFind": "Recherche intelligente",
-    "addLibrary": "Ajouter un dossier de bibliothèque",
-    "saveList": "Dossiers de sauvegarde/configuration",
-    "libraryList": "Dossiers de bibliothèque",
+    "addLibrary": "Dossier de bibliothèque",
+    "smartFindHint": "saves + bibliothèques",
+    "addSaveHint": "un émulateur/source",
+    "addLibraryHint": "plusieurs jeux installés",
+    "saveList": "Sauvegardes / configs",
+    "libraryList": "Bibliothèques de jeux",
     "emptyList": "Rien n'a été ajouté à cette session.",
     "settingsTitle": "Paramètres recommandés",
     "settingsCopy": "Ce sont les principaux commutateurs dont la plupart des utilisateurs ont besoin en premier. Tout reste modifiable ultérieurement dans Paramètres.",

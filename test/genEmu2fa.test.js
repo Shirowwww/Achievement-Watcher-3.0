@@ -36,7 +36,13 @@ const gen = require(path.join(__dirname, '..', 'app', 'parser', 'genEmuConfig.js
     assert.strictEqual(prompts.length, 1, 'Steam Guard prompt must be forwarded exactly once');
     assert.match(prompts[0], /Steam Guard code/i);
     assert.match(result.steamSettings, /_OUTPUT[\\/]480[\\/]steam_settings$/, 'current GSE _OUTPUT layout must be detected');
-    assert.match(fs.readFileSync(path.join(result.steamSettings, 'args.txt'), 'utf8'), /-tok/, 'login must persist its refresh token');
+    const args = fs.readFileSync(path.join(result.steamSettings, 'args.txt'), 'utf8');
+    assert.match(args, /-tok/, 'login must persist its refresh token');
+    assert.match(args, /-name\b/, 'modern profile should request named output');
+    assert.match(args, /-clean\b/, 'modern profile should clean generated output');
+    assert.match(args, /-cve\b/, 'modern profile should include modern config coverage');
+    assert.match(args, /-reldir\b/, 'modern profile should use relative directories');
+    assert.match(args, /-token\b/, 'modern profile should generate token-compatible config');
     console.log('PASS: generate_emu_config forwards 2FA and enables refresh-token persistence');
   } finally {
     if (result && result.workDir) fs.rmSync(result.workDir, { recursive: true, force: true });

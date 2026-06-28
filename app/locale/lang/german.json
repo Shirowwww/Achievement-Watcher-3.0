@@ -83,6 +83,7 @@
       "souvenir": "Souvenir",
       "folder": "Ordner",
       "source": "Quelle",
+      "guide": "Anleitung",
       "advanced": "Erweitert"
     },
     "common": {
@@ -481,13 +482,16 @@
         "Datei ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini oder RPCS3.exe befindet."
       ],
       "add": "Ordner hinzufügen",
+      "smartFind": "Intelligente Suche",
+      "smartFindHelp": "findet Saves/Konfigs + Bibliotheken",
       "library": "Bibliotheksordner",
       "libraryInfo": [
         "Wähle einen Ordner, der viele Spielinstallationsordner enthält (z. B. D:\\Games, E:\\SteamLibrary).",
         "Alle darin enthaltenen Spiele werden auf Goldberg/GBE-Erfolge gescannt, auch wenn sie nie gestartet wurden."
       ],
       "addLibrary": "Bibliotheksordner hinzufügen",
-      "generateConfigs": "Konfigurationen generieren"
+      "generateConfigs": "Konfigurationen generieren",
+      "generateConfigsHelp": "voller Scan + Auto-Fix falls aktiviert"
     },
     "source": {
       "title": "Spielquellen",
@@ -521,6 +525,47 @@
         "name": "Benachrichtigungs-Cache importieren",
         "description": "Den Cache von Watchdog als weitere Erfolgsquelle importieren"
       }
+    },
+    "guide": {
+      "nav": "Anleitung",
+      "title": "Plattform-Anleitung",
+      "intro": "Was Achievement Watcher scannt, welche Ordner wichtig sind und wann generierte Emulator-Konfigurationen nützlich sind.",
+      "quickTitle": "Erste Schritte",
+      "quick": [
+        "Füge Save-/Konfig-Ordner unter Einstellungen > Ordner hinzu und aktiviere danach die passende Quelle unter Einstellungen > Quellen.",
+        "Nutze Bibliotheksordner für installierte Spiele, die noch keine Achievement-Dateien erzeugt haben.",
+        "Watchdog meldet neue Änderungen erst, nachdem der Ordner bekannt und die Quelle aktiviert ist."
+      ],
+      "steamTitle": "Steam-Emulatoren",
+      "steam": [
+        "GBE-/Goldberg-Saves liegen meist unter %APPDATA%\\GSE Saves oder %APPDATA%\\Goldberg SteamEmu Saves.",
+        "Saves im CODEX-/RUNE-Stil liegen oft unter Public Documents\\Steam\\CODEX oder Public Documents\\Steam\\RUNE.",
+        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 und Hoodlum werden über ihre Konfig-/Save-Ordner erkannt."
+      ],
+      "emulatorTitle": "Konsolen-Emulatoren",
+      "emulators": [
+        "RPCS3-Achievements werden aus dev_hdd0\\home\\...\\trophy nahe der RPCS3-Installation gelesen.",
+        "shadPS4-Trophäen werden aus den game_data/trophy-Ordnern der App-Daten gelesen; übrig gebliebene Trophäendaten beweisen keine Installation.",
+        "Xenia-Fortschritt wird aus Xbox-Profil-Dateien wie .gpd gelesen."
+      ],
+      "sourcesTitle": "Launcher und Quellen",
+      "sources": [
+        "Der öffentliche Steam-Profilmodus listet installierte oder besessene Steam-Spiele, lokale Freischaltungen kommen aber weiterhin aus Save-Dateien.",
+        "GOG, Epic, Ubisoft Connect/LumaPlay und EA Desktop können in Quellen separat aktiviert werden.",
+        "Gecrackte EA-Desktop-Installationen werden aus EADesktopVerbose.log und dessen Backup-Logs gelesen."
+      ],
+      "configTitle": "Generierte Konfigurationen",
+      "config": [
+        "Der Emulator-Fix per Rechtsklick kann GBE-Fork-Dateien, Achievement-Schemas, DLC-Daten und Starthelfer hinzufügen.",
+        "Der einfache Modus ist schnell und nutzt Achievement-Watcher-Daten; Erweitert startet generate_emu_config für tiefere Steam-Daten.",
+        "Die erweiterte Generierung kann mehrere Minuten dauern, besonders mit DLC-/Depot-Metadaten."
+      ],
+      "troubleshootTitle": "Fehlerbehebung",
+      "troubleshoot": [
+        "Wenn ein Spiel fehlt, scanne nach dem Hinzufügen von Ordnern erneut und prüfe den Quellen-Schalter sowie die Blacklist.",
+        "Wenn Benachrichtigungen fehlen, prüfe den Windows-Fokusassistenten und starte Spiel/App mit passenden Administratorrechten.",
+        "Erweitert > Diagnose öffnet Logs und Datenordner, wenn du prüfen musst, was gescannt wurde."
+      ]
     },
     "advanced": {
       "maintenanceTitle": "Einrichtung & Wartung",
@@ -613,6 +658,9 @@
     "addSave": "Speicherordner hinzufügen",
     "smartFind": "Kluger Fund",
     "addLibrary": "Bibliotheksordner hinzufügen",
+    "smartFindHint": "Saves + Bibliotheken",
+    "addSaveHint": "ein Emulator/eine Quelle",
+    "addLibraryHint": "viele installierte Spiele",
     "saveList": "Save/config-Ordner",
     "libraryList": "Bibliotheksordner",
     "emptyList": "In dieser Sitzung wurde nichts hinzugefügt.",

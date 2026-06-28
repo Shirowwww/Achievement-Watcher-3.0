@@ -355,7 +355,7 @@
                   <li class="hasHelper onboarding-settings-row">
                     <div class="left"><i class="fas fa-route"></i> <span id="onboarding-settings-label">First-run guide</span></div>
                     <div class="right action-right">
-                      <button type="button" id="btn-onboarding-open" class="inline-action-btn"><i class="fas fa-play-circle"></i> <span>Open guide</span></button>
+                      <button type="button" id="btn-onboarding-open" class="inline-action-btn" onclick="if (window.openAchievementWatcherOnboarding) { window.openAchievementWatcherOnboarding(true); return false; }"><i class="fas fa-play-circle"></i> <span>Open guide</span></button>
                     </div>
                     <div class="help" id="onboarding-settings-help">Reopen the setup guide for API key, profile, folders, sources, and notifications.</div>
                   </li>
@@ -815,7 +815,7 @@
                     <div id="addCustomDir" class="btn"><i class="fas fa-folder-plus"></i> <span></span></div>
                   </li>
                   <li>
-                    <div id="smartFind" class="btn"><i class="fas fa-search-plus fa-flip-horizontal"></i> <span>Smart Find</span></div>
+                    <div id="smartFind" class="btn"><i class="fas fa-search-plus fa-flip-horizontal"></i> <span id="smartFind-label">Smart Find</span><small id="smartFind-help">finds saves/configs + libraries</small></div>
                   </li>
                 </ul>
               </div>
@@ -838,12 +838,13 @@
                     <div id="addLibraryDir" class="btn"><i class="fas fa-folder-plus"></i> <span></span></div>
                   </li>
                   <li>
-                    <div id="generate-configs" class="btn"><i class="fas fa-magic"></i> <span id="generate-configs-label">Generate configs</span></div>
+                    <div id="generate-configs" class="btn"><i class="fas fa-magic"></i> <span id="generate-configs-label">Generate configs</span><small id="generate-configs-help">full scan + auto-fix if enabled</small></div>
                   </li>
                 </ul>
               </div>
 
               <ul id="libdirlist"></ul>
+              <div id="generate-configs-result" class="diag-line"></div>
             </section>
 
             <section class="content" data-view="notification">
@@ -1505,9 +1506,9 @@
                   </div>
                 </div>
                 <div class="onboarding-folder-actions">
-                  <button type="button" id="onboard-add-save-dir" class="inline-action-btn"><i class="fas fa-folder-plus"></i> <span>Add save folder</span></button>
-                  <button type="button" id="onboard-smart-find" class="inline-action-btn"><i class="fas fa-search-plus"></i> <span>Smart find</span></button>
-                  <button type="button" id="onboard-add-library-dir" class="inline-action-btn"><i class="fas fa-folder-open"></i> <span>Add library folder</span></button>
+                  <button type="button" id="onboard-smart-find" class="inline-action-btn primary"><i class="fas fa-search-plus"></i> <span>Smart find folders</span><small id="onboard-smart-find-hint">saves + libraries</small></button>
+                  <button type="button" id="onboard-add-save-dir" class="inline-action-btn"><i class="fas fa-folder-plus"></i> <span>Save/config folder</span><small id="onboard-add-save-dir-hint">one emulator/source</small></button>
+                  <button type="button" id="onboard-add-library-dir" class="inline-action-btn"><i class="fas fa-folder-open"></i> <span>Game library folder</span><small id="onboard-add-library-dir-hint">many installed games</small></button>
                 </div>
                 <div class="onboarding-lists">
                   <div>

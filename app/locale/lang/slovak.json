@@ -83,6 +83,7 @@
       "souvenir": "Spomienka",
       "folder": "Priečinky",
       "source": "Zdroj",
+      "guide": "Sprievodca",
       "advanced": "Pokročilé"
     },
     "common": {
@@ -481,13 +482,16 @@
         "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini alebo RPCS3.exe."
       ],
       "add": "Pridať priečinok",
+      "smartFind": "Inteligentné hľadanie",
+      "smartFindHelp": "nájde savy/konfigy + knižnice",
       "library": "Priečinky knižnice",
       "libraryInfo": [
         "Vyberte priečinok obsahujúci veľa inštalačných priečinkov hier (napr. D:\\Games, E:\\SteamLibrary).",
         "Všetky hry vnútri budú prehľadané na achievementy Goldberg/GBE, aj keď nikdy neboli spustené."
       ],
       "addLibrary": "Pridať priečinok knižnice",
-      "generateConfigs": "Generovať konfigurácie"
+      "generateConfigs": "Generovať konfigurácie",
+      "generateConfigsHelp": "úplné skenovanie + auto oprava, ak je zapnutá"
     },
     "source": {
       "title": "Zdroje hier",
@@ -521,6 +525,47 @@
         "name": "Importovať vyrovnávaciu pamäť upozornení",
         "description": "Importovať vyrovnávaciu pamäť Watchdogu ako ďalší zdroj achievementov"
       }
+    },
+    "guide": {
+      "nav": "Sprievodca",
+      "title": "Sprievodca platformami",
+      "intro": "Čo Achievement Watcher skenuje, ktoré priečinky sú dôležité a kedy sú užitočné generované konfigurácie emulátorov.",
+      "quickTitle": "Prvé kroky",
+      "quick": [
+        "Pridajte priečinky savov/konfigurácií v Nastavenia > Priečinky a potom zapnite zodpovedajúci zdroj v Nastavenia > Zdroje.",
+        "Priečinky knižníc použite pre nainštalované hry, ktoré ešte nevytvorili súbory achievementov.",
+        "Watchdog upozorňuje na nové zmeny až po tom, čo pozná priečinok a zdroj je zapnutý."
+      ],
+      "steamTitle": "Emulátory Steamu",
+      "steam": [
+        "Savy GBE / Goldberg bývajú v %APPDATA%\\GSE Saves alebo %APPDATA%\\Goldberg SteamEmu Saves.",
+        "Savy štýlu CODEX / RUNE sú často v Public Documents\\Steam\\CODEX alebo Public Documents\\Steam\\RUNE.",
+        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 a Hoodlum sa detegujú z ich priečinkov konfigurácií/savov."
+      ],
+      "emulatorTitle": "Konzolové emulátory",
+      "emulators": [
+        "Achievementy RPCS3 sa čítajú z dev_hdd0\\home\\...\\trophy pri inštalácii RPCS3.",
+        "Trofeje shadPS4 sa čítajú z priečinkov game_data/trophy v dátach aplikácie; zvyšky trofejí nie sú dôkazom inštalácie hry.",
+        "Postup Xenia sa číta zo súborov profilu Xbox, napríklad .gpd."
+      ],
+      "sourcesTitle": "Launchery a zdroje",
+      "sources": [
+        "Režim verejného profilu Steamu vypíše nainštalované alebo vlastnené Steam hry, ale lokálne odomknutia stále pochádzajú zo súborov savov.",
+        "GOG, Epic, Ubisoft Connect/LumaPlay a EA Desktop možno zapnúť samostatne v Zdrojoch.",
+        "Cracknuté inštalácie EA Desktop sa čítajú z EADesktopVerbose.log a jeho záložných logov."
+      ],
+      "configTitle": "Generované konfigurácie",
+      "config": [
+        "Oprava emulátora cez pravé kliknutie môže pridať súbory GBE Fork, schémy achievementov, DLC dáta a pomocníkov spustenia.",
+        "Jednoduchý režim je rýchly a používa dáta Achievement Watcheru; Pokročilý spúšťa generate_emu_config pre hlbšie Steam dáta.",
+        "Pokročilé generovanie môže trvať niekoľko minút, hlavne s metadátami DLC/depotov."
+      ],
+      "troubleshootTitle": "Riešenie problémov",
+      "troubleshoot": [
+        "Ak hra chýba, po pridaní priečinkov spustite sken znova a skontrolujte prepínač zdroja a blacklist.",
+        "Ak chýbajú notifikácie, skontrolujte Pomocníka na sústredenie Windows a spustite hru/app s rovnakými právami správcu.",
+        "Pokročilé > Diagnostika otvorí logy a dátové priečinky, keď potrebujete skontrolovať, čo sa skenovalo."
+      ]
     },
     "advanced": {
       "maintenanceTitle": "Nastavenie a údržba",
@@ -613,6 +658,9 @@
     "addSave": "Pridať priečinok na uloženie",
     "smartFind": "Inteligentný nález",
     "addLibrary": "Pridať priečinok knižnice",
+    "smartFindHint": "savy + knižnice",
+    "addSaveHint": "jeden emulátor/zdroj",
+    "addLibraryHint": "veľa nainštalovaných hier",
     "saveList": "Uložiť/konfigurovať priečinky",
     "libraryList": "Priečinky knižnice",
     "emptyList": "Do tejto relácie nebolo pridané nič.",

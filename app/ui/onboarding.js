@@ -84,12 +84,15 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
           apiNote: 'Utilise la page officielle Steam. La clé est chiffrée avant enregistrement.',
           foldersTitle: 'Ajouter les jeux sur disque',
           foldersCopy:
-            'Ajoute des dossiers de sauvegarde/configuration pour certains émulateurs, et des racines de bibliothèques qui contiennent plusieurs jeux installés.',
-          addSave: 'Ajouter un dossier de sauvegarde',
-          smartFind: 'Recherche auto',
-          addLibrary: 'Ajouter une bibliothèque',
-          saveList: 'Dossiers sauvegarde/config',
-          libraryList: 'Bibliothèques',
+            'Utilise Recherche intelligente pour remplir automatiquement les dossiers connus. Sinon ajoute un dossier de sauvegarde/configuration pour les émulateurs, ou un dossier de bibliothèque qui contient plusieurs jeux installés.',
+          addSave: 'Dossier sauvegarde/config',
+          smartFind: 'Recherche intelligente',
+          addLibrary: 'Dossier de bibliothèque',
+          smartFindHint: 'recommandé',
+          addSaveHint: 'un émulateur/source',
+          addLibraryHint: 'plusieurs jeux installés',
+          saveList: 'Sauvegardes / configs',
+          libraryList: 'Bibliothèques de jeux',
           emptyList: 'Rien ajouté pour cette session.',
           settingsTitle: 'Réglages recommandés',
           settingsCopy: 'Les interrupteurs les plus utiles au départ. Tout reste modifiable ensuite dans Paramètres.',
@@ -164,12 +167,16 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
           apiLink: 'Get a Steam Web API key',
           apiNote: 'Use the official Steam page. The key is encrypted before saving.',
           foldersTitle: 'Add games on disk',
-          foldersCopy: 'Add save/config folders for specific emulators, and library roots that contain many installed games.',
-          addSave: 'Add save folder',
-          smartFind: 'Smart find',
-          addLibrary: 'Add library folder',
-          saveList: 'Save/config folders',
-          libraryList: 'Library folders',
+          foldersCopy:
+            'Use Smart find to add known folders automatically. Or add a save/config folder for emulator data, and a library folder when one folder contains several installed games.',
+          addSave: 'Save/config folder',
+          smartFind: 'Smart find folders',
+          addLibrary: 'Game library folder',
+          smartFindHint: 'recommended',
+          addSaveHint: 'one emulator/source',
+          addLibraryHint: 'many installed games',
+          saveList: 'Save / config folders',
+          libraryList: 'Game libraries',
           emptyList: 'Nothing added this session.',
           settingsTitle: 'Recommended settings',
           settingsCopy: 'These are the main switches most users need first. Everything remains editable later in Settings.',
@@ -261,6 +268,9 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     $('#onboard-add-save-dir span').text(t.addSave);
     $('#onboard-smart-find span').text(t.smartFind);
     $('#onboard-add-library-dir span').text(t.addLibrary);
+    $('#onboard-smart-find-hint').text(t.smartFindHint);
+    $('#onboard-add-save-dir-hint').text(t.addSaveHint);
+    $('#onboard-add-library-dir-hint').text(t.addLibraryHint);
     $('#onboard-save-list-title').text(t.saveList);
     $('#onboard-library-list-title').text(t.libraryList);
     $('#onboard-settings-title').text(t.settingsTitle);
@@ -596,6 +606,9 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     populateValues();
     renderDirLists();
     showStep(0);
+    $('#settings .box').hide();
+    $('#settings').hide();
+    if ($('title-bar')[0]) $('title-bar')[0].inSettings = false;
     $('#onboarding').attr('aria-hidden', 'false').show();
   }
 
@@ -612,7 +625,11 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     $('.onboarding-steps button').on('click', function () {
       showStep(parseInt($(this).data('step'), 10));
     });
-    $('#btn-onboarding-open').on('click', () => show(true));
+    $(document).on('click', '#btn-onboarding-open', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      show(true);
+    });
     $('#onboard-add-save-dir').on('click', pickSaveDir);
     $('#onboard-smart-find').on('click', smartFindDirs);
     $('#onboard-add-library-dir').on('click', pickLibraryDir);

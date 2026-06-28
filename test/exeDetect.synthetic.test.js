@@ -83,6 +83,38 @@ test('nested steam_api and nested appid config are anchored to the root game fol
   assert.strictEqual(found[0].appid, '123456');
 });
 
+test('steam_appid.txt tolerates trailing NUL bytes from repacks', () => {
+  const root = tmpGame('goldberg-appid-nul');
+  const gameDir = path.join(root, 'It Takes Two');
+  const gameExe = path.join(gameDir, 'Nuts', 'Binaries', 'Win64', 'ItTakesTwo.exe');
+  const nestedDll = path.join(gameDir, 'Nuts', 'Binaries', 'Win64', 'steam_api64.dll');
+
+  writeBytes(gameExe, 200);
+  writeBytes(nestedDll, 1);
+  fs.writeFileSync(path.join(gameDir, 'steam_appid.txt'), '1426210\n\0');
+
+  const found = goldberg.findCompatibleGames([root]);
+  assert.strictEqual(found.length, 1);
+  assert.strictEqual(found[0].gameDir, gameDir);
+  assert.strictEqual(found[0].appid, '1426210');
+});
+
+test('real steam_settings schema wins over shallow overlay interfaces folder', () => {
+  const gameDir = tmpGame('goldberg-settings-score');
+  const overlaySettings = path.join(gameDir, '__overlay', 'steam_settings');
+  const gameSettings = path.join(gameDir, 'Nuts', 'Binaries', 'Win64', 'steam_settings');
+
+  fs.mkdirSync(overlaySettings, { recursive: true });
+  fs.mkdirSync(gameSettings, { recursive: true });
+  fs.writeFileSync(path.join(overlaySettings, 'steam_interfaces.txt'), 'SteamClient=SteamClient020\n');
+  fs.writeFileSync(path.join(overlaySettings, 'achievements.json'), '[{"name":"A"}]');
+  fs.writeFileSync(path.join(overlaySettings, 'configs.user.ini'), '[user::general]\n');
+  fs.writeFileSync(path.join(gameSettings, 'achievements.json'), '[{"name":"A"}]');
+  fs.writeFileSync(path.join(gameSettings, 'configs.user.ini'), '[user::general]\n');
+
+  assert.strictEqual(goldberg.findSteamSettings(gameDir), gameSettings);
+});
+
 test('takenGameDirs prevents a second exe from the same install folder', () => {
   const gameDir = tmpGame('exe-one-per-dir');
   const gameExe = path.join(gameDir, 'RealGame.exe');

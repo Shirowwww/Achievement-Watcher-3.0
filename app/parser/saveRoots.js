@@ -20,6 +20,25 @@ function envPath(envName, ...segments) {
   return path.join(base, ...segments);
 }
 
+const steamSourceFolderNames = ['RUNE', 'CODEX'];
+
+function expandKnownSteamSourceRoots(root) {
+  const roots = [];
+  if (!root) return roots;
+  addUnique(roots, root);
+
+  for (const name of steamSourceFolderNames) {
+    const child = path.join(root, name);
+    try {
+      if (fs.existsSync(child) && fs.statSync(child).isDirectory()) addUnique(roots, child);
+    } catch {
+      /* Optional community save folders may be unreadable or missing. */
+    }
+  }
+
+  return roots;
+}
+
 function documentsPath() {
   return readRegistryStringAndExpand('HKCU', 'Software/Microsoft/Windows/CurrentVersion/Explorer/User Shell Folders', 'Personal');
 }
@@ -65,7 +84,9 @@ function defaultSteamEmuSaveRoots({ existingOnly = false, expandProgramDataSteam
 
 function defaultSteamScanRoots(additionalSearch = []) {
   const roots = defaultSteamEmuSaveRoots({ expandProgramDataSteam: true });
-  for (const dir of additionalSearch || []) addUnique(roots, dir);
+  for (const dir of additionalSearch || []) {
+    for (const root of expandKnownSteamSourceRoots(dir)) addUnique(roots, root);
+  }
   return roots;
 }
 
@@ -132,4 +153,5 @@ module.exports = {
   defaultSteamEmuSaveRoots,
   defaultSteamScanRoots,
   discoverLibraryRoots,
+  expandKnownSteamSourceRoots,
 };

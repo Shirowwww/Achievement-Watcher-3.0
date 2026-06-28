@@ -83,6 +83,7 @@
       "souvenir": "Souvenir",
       "folder": "Cartelle",
       "source": "Sorgente",
+      "guide": "Guida",
       "advanced": "Avanzate"
     },
     "common": {
@@ -481,13 +482,16 @@
         "file ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini o RPCS3.exe."
       ],
       "add": "Aggiungi una cartella",
+      "smartFind": "Ricerca smart",
+      "smartFindHelp": "trova salvataggi/config + librerie",
       "library": "Cartelle libreria",
       "libraryInfo": [
         "Seleziona una cartella che contiene molte cartelle di installazione di giochi (es. D:\\Games, E:\\SteamLibrary).",
         "Tutti i giochi al suo interno verranno analizzati per gli obiettivi Goldberg/GBE, anche se mai avviati."
       ],
       "addLibrary": "Aggiungi una cartella libreria",
-      "generateConfigs": "Genera configurazioni"
+      "generateConfigs": "Genera configurazioni",
+      "generateConfigsHelp": "scansione completa + auto-fix se attivo"
     },
     "source": {
       "title": "Sorgenti di gioco",
@@ -521,6 +525,47 @@
         "name": "Importa cache notifiche",
         "description": "Importa la cache di Watchdog come ulteriore sorgente di obiettivi"
       }
+    },
+    "guide": {
+      "nav": "Guida",
+      "title": "Guida alle piattaforme",
+      "intro": "Cosa scansiona Achievement Watcher, quali cartelle contano e quando le configurazioni emulatore generate sono utili.",
+      "quickTitle": "Primi passi",
+      "quick": [
+        "Aggiungi le cartelle salvataggi/config in Impostazioni > Cartelle, poi abilita la fonte corrispondente in Impostazioni > Fonti.",
+        "Usa le cartelle libreria per i giochi installati che non hanno ancora prodotto file degli achievement.",
+        "Watchdog invia notifiche solo per nuove modifiche dopo che la cartella è nota e la fonte è abilitata."
+      ],
+      "steamTitle": "Emulatori Steam",
+      "steam": [
+        "I salvataggi GBE / Goldberg sono di solito in %APPDATA%\\GSE Saves o %APPDATA%\\Goldberg SteamEmu Saves.",
+        "I salvataggi stile CODEX / RUNE spesso sono in Public Documents\\Steam\\CODEX o Public Documents\\Steam\\RUNE.",
+        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 e Hoodlum vengono rilevati dalle loro cartelle config/salvataggi."
+      ],
+      "emulatorTitle": "Emulatori console",
+      "emulators": [
+        "Gli achievement RPCS3 vengono letti da dev_hdd0\\home\\...\\trophy vicino all’installazione di RPCS3.",
+        "I trofei shadPS4 vengono letti dalle cartelle game_data/trophy dei dati app; dati trofeo rimasti non provano che il gioco sia installato.",
+        "I progressi Xenia vengono letti da file profilo Xbox come .gpd."
+      ],
+      "sourcesTitle": "Launcher e fonti",
+      "sources": [
+        "La modalità profilo pubblico Steam elenca giochi Steam installati o posseduti, ma gli sblocchi locali arrivano comunque dai file di salvataggio.",
+        "GOG, Epic, Ubisoft Connect/LumaPlay ed EA Desktop possono essere abilitati separatamente in Fonti.",
+        "Le installazioni EA Desktop crackate vengono lette da EADesktopVerbose.log e dai suoi log di backup."
+      ],
+      "configTitle": "Configurazioni generate",
+      "config": [
+        "Il fix emulatore con clic destro può aggiungere file GBE Fork, schemi achievement, dati DLC e helper di avvio.",
+        "La modalità Semplice è rapida e usa i dati di Achievement Watcher; Avanzata esegue generate_emu_config per dati Steam più profondi.",
+        "La generazione avanzata può richiedere diversi minuti, soprattutto con metadati DLC/depot."
+      ],
+      "troubleshootTitle": "Risoluzione problemi",
+      "troubleshoot": [
+        "Se manca un gioco, rifai la scansione dopo aver aggiunto le cartelle, poi controlla il toggle della fonte e la blacklist.",
+        "Se mancano le notifiche, controlla Assistente notifiche di Windows ed esegui gioco/app con gli stessi diritti admin.",
+        "Avanzate > Diagnostica apre log e cartelle dati quando devi ispezionare cosa è stato scansionato."
+      ]
     },
     "advanced": {
       "maintenanceTitle": "Configurazione e manutenzione",
@@ -613,6 +658,9 @@
     "addSave": "Aggiungi cartella di salvataggio",
     "smartFind": "Trovata intelligente",
     "addLibrary": "Aggiungi la cartella della libreria",
+    "smartFindHint": "salvataggi + librerie",
+    "addSaveHint": "un emulatore/fonte",
+    "addLibraryHint": "molti giochi installati",
     "saveList": "Cartelle di salvataggio/configurazione",
     "libraryList": "Cartelle della biblioteca",
     "emptyList": "Niente ha aggiunto questa sessione.",

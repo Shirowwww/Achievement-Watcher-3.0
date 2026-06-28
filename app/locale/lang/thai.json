@@ -83,6 +83,7 @@
       "souvenir": "ของที่ระลึก",
       "folder": "โฟลเดอร์",
       "source": "แหล่งที่มา",
+      "guide": "คู่มือ",
       "advanced": "ขั้นสูง"
     },
     "common": {
@@ -481,13 +482,16 @@
         "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini หรือ RPCS3.exe อยู่"
       ],
       "add": "เพิ่มโฟลเดอร์",
+      "smartFind": "ค้นหาอัจฉริยะ",
+      "smartFindHelp": "ค้นหาเซฟ/คอนฟิก + ไลบรารี",
       "library": "โฟลเดอร์คลัง",
       "libraryInfo": [
         "เลือกโฟลเดอร์ที่มีโฟลเดอร์ติดตั้งเกมจำนวนมาก (เช่น D:\\Games, E:\\SteamLibrary)",
         "เกมทั้งหมดภายในจะถูกสแกนหาความสำเร็จ Goldberg/GBE แม้ว่าจะไม่เคยเปิดเล่นก็ตาม"
       ],
       "addLibrary": "เพิ่มโฟลเดอร์คลัง",
-      "generateConfigs": "สร้างการตั้งค่า"
+      "generateConfigs": "สร้างการตั้งค่า",
+      "generateConfigsHelp": "สแกนเต็มรูปแบบ + แก้อัตโนมัติถ้าเปิดไว้"
     },
     "source": {
       "title": "แหล่งที่มาของเกม",
@@ -521,6 +525,47 @@
         "name": "นำเข้าแคชการแจ้งเตือน",
         "description": "นำเข้าแคชของ Watchdog เป็นอีกแหล่งของความสำเร็จ"
       }
+    },
+    "guide": {
+      "nav": "คู่มือ",
+      "title": "คู่มือแพลตฟอร์ม",
+      "intro": "สิ่งที่ Achievement Watcher สแกน โฟลเดอร์ที่สำคัญ และเวลาที่คอนฟิกอีมูเลเตอร์ที่สร้างขึ้นมีประโยชน์",
+      "quickTitle": "ขั้นตอนแรก",
+      "quick": [
+        "เพิ่มโฟลเดอร์เซฟ/คอนฟิกใน ตั้งค่า > โฟลเดอร์ แล้วเปิดแหล่งที่ตรงกันใน ตั้งค่า > แหล่งที่มา",
+        "ใช้โฟลเดอร์ไลบรารีสำหรับเกมที่ติดตั้งแล้วแต่ยังไม่ได้สร้างไฟล์ความสำเร็จ",
+        "Watchdog จะแจ้งเตือนการเปลี่ยนแปลงใหม่หลังจากรู้จักโฟลเดอร์และเปิดแหล่งที่มาแล้วเท่านั้น"
+      ],
+      "steamTitle": "อีมูเลเตอร์ Steam",
+      "steam": [
+        "เซฟ GBE / Goldberg มักอยู่ที่ %APPDATA%\\GSE Saves หรือ %APPDATA%\\Goldberg SteamEmu Saves",
+        "เซฟแบบ CODEX / RUNE มักอยู่ที่ Public Documents\\Steam\\CODEX หรือ Public Documents\\Steam\\RUNE",
+        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 และ Hoodlum จะถูกตรวจจากโฟลเดอร์คอนฟิก/เซฟของตัวเอง"
+      ],
+      "emulatorTitle": "อีมูเลเตอร์คอนโซล",
+      "emulators": [
+        "ความสำเร็จ RPCS3 อ่านจาก dev_hdd0\\home\\...\\trophy ใกล้กับที่ติดตั้ง RPCS3",
+        "ถ้วยรางวัล shadPS4 อ่านจากโฟลเดอร์ app data game_data/trophy; ข้อมูลถ้วยรางวัลที่เหลือไม่ใช่หลักฐานว่าเกมติดตั้งอยู่",
+        "ความคืบหน้า Xenia อ่านจากไฟล์โปรไฟล์ Xbox เช่น .gpd"
+      ],
+      "sourcesTitle": "ลอนเชอร์และแหล่งที่มา",
+      "sources": [
+        "โหมดโปรไฟล์ Steam สาธารณะจะแสดงเกม Steam ที่ติดตั้งหรือเป็นเจ้าของ แต่การปลดล็อกในเครื่องยังมาจากไฟล์เซฟ",
+        "GOG, Epic, Ubisoft Connect/LumaPlay และ EA Desktop เปิดแยกกันได้ใน แหล่งที่มา",
+        "การติดตั้ง EA Desktop แบบ crack อ่านจาก EADesktopVerbose.log และ log สำรองของมัน"
+      ],
+      "configTitle": "คอนฟิกที่สร้างขึ้น",
+      "config": [
+        "การแก้อีมูเลเตอร์ด้วยคลิกขวาสามารถเพิ่มไฟล์ GBE Fork, schema ความสำเร็จ, ข้อมูล DLC และตัวช่วยเปิดเกม",
+        "โหมด Simple รวดเร็วและใช้ข้อมูลของ Achievement Watcher; Advanced จะรัน generate_emu_config เพื่อข้อมูล Steam ที่ลึกกว่า",
+        "การสร้างขั้นสูงอาจใช้เวลาหลายนาที โดยเฉพาะเมื่อมี metadata DLC/depot"
+      ],
+      "troubleshootTitle": "แก้ไขปัญหา",
+      "troubleshoot": [
+        "ถ้าเกมหายไป ให้สแกนใหม่หลังเพิ่มโฟลเดอร์ แล้วตรวจสวิตช์แหล่งที่มาและ blacklist",
+        "ถ้าไม่มีการแจ้งเตือน ให้ตรวจ Windows Focus Assist และรันเกม/app ด้วยสิทธิ์แอดมินที่ตรงกัน",
+        "ขั้นสูง > วินิจฉัย จะเปิด log และโฟลเดอร์ข้อมูลเมื่อคุณต้องตรวจว่าสแกนอะไรไปแล้ว"
+      ]
     },
     "advanced": {
       "maintenanceTitle": "การตั้งค่าและการบำรุงรักษา",
@@ -613,6 +658,9 @@
     "addSave": "เพิ่มโฟลเดอร์บันทึก",
     "smartFind": "ค้นหาอย่างชาญฉลาด",
     "addLibrary": "เพิ่มโฟลเดอร์ไลบรารี",
+    "smartFindHint": "เซฟ + ไลบรารี",
+    "addSaveHint": "หนึ่งอีมูเลเตอร์/แหล่ง",
+    "addLibraryHint": "หลายเกมที่ติดตั้งแล้ว",
     "saveList": "บันทึก/กำหนดค่าโฟลเดอร์",
     "libraryList": "โฟลเดอร์ไลบรารี",
     "emptyList": "ไม่มีอะไรเพิ่มเซสชั่นนี้",

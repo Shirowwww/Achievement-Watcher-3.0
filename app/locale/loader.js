@@ -336,12 +336,15 @@ function translateUI(lang, locale, template) {
   selector.find('.title:eq(0) span').text(clear(template.settings.folder.default));
   selector.find('.title:eq(1) span').text(clear(template.settings.folder.custom));
   $('#addCustomDir span').text(clear(template.settings.folder.add));
+  if (template.settings.folder.smartFind) $('#smartFind-label').text(clear(template.settings.folder.smartFind));
+  if (template.settings.folder.smartFindHelp) $('#smartFind-help').text(clear(template.settings.folder.smartFindHelp));
   $("#settings .content[data-view='folder'] > .controls .info p")
     .eq(0)
     .html(clear(template.settings.folder.addInfo.join('\n')).replace(/\n/g, '<br>'));
   selector.find('.title:eq(2) span').text(clear(template.settings.folder.library));
   $('#addLibraryDir span').text(clear(template.settings.folder.addLibrary));
   if (template.settings.folder.generateConfigs) $('#generate-configs-label').text(clear(template.settings.folder.generateConfigs));
+  if (template.settings.folder.generateConfigsHelp) $('#generate-configs-help').text(clear(template.settings.folder.generateConfigsHelp));
   $("#settings .content[data-view='folder'] > .controls .info p")
     .eq(1)
     .html(clear(template.settings.folder.libraryInfo.join('\n')).replace(/\n/g, '<br>'));

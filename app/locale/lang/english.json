@@ -482,13 +482,16 @@
         "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini or RPCS3.exe file is located."
       ],
       "add": "Add a Folder",
+      "smartFind": "Smart Find",
+      "smartFindHelp": "finds saves/configs + libraries",
       "library": "Library Folders",
       "libraryInfo": [
         "Select a folder that holds many game install folders (e.g. D:\\Games, E:\\SteamLibrary).",
         "All games inside will be scanned for Goldberg/GBE achievements, even if never launched."
       ],
       "addLibrary": "Add a Library Folder",
-      "generateConfigs": "Generate configs"
+      "generateConfigs": "Generate configs",
+      "generateConfigsHelp": "full scan + auto-fix if enabled"
     },
     "source": {
       "title": "Game sources",
@@ -651,12 +654,15 @@
     "apiLink": "Get a Steam Web API key",
     "apiNote": "Use the official Steam page. The key is encrypted before saving.",
     "foldersTitle": "Add games on disk",
-    "foldersCopy": "Add save/config folders for specific emulators, and library roots that contain many installed games.",
-    "addSave": "Add save folder",
-    "smartFind": "Smart find",
-    "addLibrary": "Add library folder",
-    "saveList": "Save/config folders",
-    "libraryList": "Library folders",
+    "foldersCopy": "Use Smart find to automatically detect save/config folders and game libraries. Or add them manually by folder type.",
+    "addSave": "Save/config folder",
+    "smartFind": "Smart find folders",
+    "addLibrary": "Game library folder",
+    "smartFindHint": "saves + libraries",
+    "addSaveHint": "one emulator/source",
+    "addLibraryHint": "many installed games",
+    "saveList": "Save / config folders",
+    "libraryList": "Game libraries",
     "emptyList": "Nothing added this session.",
     "settingsTitle": "Recommended settings",
     "settingsCopy": "These are the main switches most users need first. Everything remains editable later in Settings.",

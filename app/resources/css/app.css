@@ -4307,6 +4307,576 @@ body {
   background: linear-gradient(135deg, #5279e3, #4165c8);
 }
 
+/* Settings visual system: one model for every tab. */
+#settings,
+#settings button,
+#settings input,
+#settings select,
+#settings p,
+#settings li,
+#settings .disclaimer,
+#settings .diag-line {
+  font-family: 'Open-Sans', sans-serif;
+  font-size: 14px;
+}
+
+#settings .box .content {
+  padding: 22px;
+}
+
+#settings .content .title,
+#settings .emulator-group-title,
+#settings .emulator-login-heading > .title,
+#settings .platform-guide-settings .platform-guide-head .title {
+  display: block;
+  margin: 26px 0 14px;
+  padding: 0 0 12px;
+  border: 0;
+  border-bottom: 1px solid rgba(157, 185, 219, 0.13);
+  background: transparent;
+  color: #f4f7fc;
+  font-family: 'Open-Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+#settings .content > .arrow-list > .title:first-child,
+#settings .emulator-hero:first-child,
+#settings .platform-guide-head:first-child,
+#settings .content[data-view='folder'] > .disclaimer:first-child + .title,
+#settings .content[data-view='advanced'] > *:first-child .title:first-child {
+  margin-top: 0;
+}
+
+#settings .arrow-list > ul,
+#settings .emulator-list,
+#settings #defaultdir,
+#settings #dirlist,
+#settings #libdirlist,
+#settings #options-mainSteam,
+#settings .content[data-view='advanced'] > ul,
+#settings .guide-panel {
+  overflow: hidden;
+  border: 1px solid rgba(145, 177, 215, 0.1);
+  border-radius: 11px;
+  background: rgba(39, 60, 84, 0.38);
+  box-shadow: none;
+}
+
+#settings #defaultdir,
+#settings #dirlist,
+#settings #libdirlist {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#settings .arrow-list > ul > li,
+#settings .emulator-list > li,
+#settings #defaultdir > li,
+#settings #dirlist > li,
+#settings #libdirlist > li {
+  min-height: 54px;
+  box-sizing: border-box;
+  padding: 12px 15px;
+  border-bottom: 1px solid rgba(145, 177, 215, 0.075);
+  border-radius: 0;
+  background: transparent;
+}
+
+#settings .arrow-list > ul > li:last-child,
+#settings .emulator-list > li:last-child,
+#settings #defaultdir > li:last-child,
+#settings #dirlist > li:last-child,
+#settings #libdirlist > li:last-child {
+  border-bottom: 0;
+}
+
+#settings .arrow-list > ul > li:hover,
+#settings .emulator-list > li:hover,
+#settings #defaultdir > li:hover,
+#settings #dirlist > li:hover,
+#settings #libdirlist > li:hover {
+  background: rgba(102, 137, 190, 0.065);
+}
+
+#settings .arrow-list li .left,
+#settings .emulator-list li .left,
+#settings #defaultdir > li .path,
+#settings #dirlist > li .path,
+#settings #libdirlist > li .path,
+#settings .guide-panel summary {
+  color: #e2e8f1;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+#settings .arrow-list li .left > i,
+#settings .emulator-list li .left > i,
+#settings .content .title > i:first-child,
+#settings .emulator-group-title > i:first-child,
+#settings #defaultdir > li .controls i,
+#settings #dirlist > li .controls i,
+#settings #libdirlist > li .controls i,
+#settings .guide-panel summary i {
+  width: 20px;
+  min-width: 20px;
+  color: #9db9dd;
+  text-align: center;
+}
+
+#settings .arrow-list li .help,
+#settings .emulator-list li .help,
+#settings .content[data-view='folder'] .disclaimer,
+#settings .content[data-view='folder'] > .controls .info p,
+#settings .platform-guide-head p,
+#settings .guide-panel li,
+#settings .emulator-hero p,
+#settings .emulator-login p {
+  color: #94a5ba;
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+#settings .arrow-list li .right,
+#settings .emulator-settings .emulator-list li .right {
+  width: 265px;
+  height: 38px;
+  padding: 1px 4px;
+  border: 1px solid rgba(148, 179, 217, 0.12);
+  border-radius: 9px;
+  background: rgba(17, 31, 48, 0.48);
+}
+
+#settings .arrow-list li .right select,
+#settings .emulator-settings .emulator-list li .right select {
+  width: 195px;
+  height: 34px;
+  color: #edf3fb;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+#settings .arrow-list li .right .previous,
+#settings .arrow-list li .right .next {
+  width: 32px;
+  height: 32px;
+  color: #8296af;
+}
+
+#settings .arrow-list li .right .previous:hover,
+#settings .arrow-list li .right .next:hover {
+  color: #fff;
+  background: var(--accent-soft);
+}
+
+#settings .inline-action-btn,
+#settings #options-notify-test .btn,
+#settings .content[data-view='folder'] > .controls .btn,
+#settings .content[data-view='advanced'] .btn,
+#settings .content[data-view='debug'] .btn,
+#settings .emulator-login-actions .btn {
+  min-height: 38px;
+  box-sizing: border-box;
+  padding: 8px 13px;
+  border: 1px solid rgba(141, 174, 216, 0.14);
+  border-radius: 9px;
+  background: linear-gradient(180deg, rgba(50, 74, 103, 0.86), rgba(38, 58, 83, 0.86));
+  box-shadow: none;
+  color: #edf3fb;
+  font-family: 'Open-Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+#settings .inline-action-btn:hover,
+#settings #options-notify-test .btn:hover,
+#settings .content[data-view='folder'] > .controls .btn:hover,
+#settings .content[data-view='advanced'] .btn:hover,
+#settings .content[data-view='debug'] .btn:hover,
+#settings .emulator-login-actions .btn:hover {
+  background: linear-gradient(180deg, rgba(66, 94, 130, 0.96), rgba(46, 70, 99, 0.96));
+  transform: none;
+}
+
+#settings .emulator-settings {
+  padding-top: 22px;
+}
+
+#settings .emulator-hero,
+#settings .emulator-group,
+#settings .emulator-login,
+#settings .platform-guide-head {
+  margin: 0 0 20px;
+  border: 1px solid rgba(145, 177, 215, 0.12);
+  border-radius: 11px;
+  background: rgba(39, 60, 84, 0.38);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+#settings .emulator-hero {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 17px 18px;
+  border-color: rgba(130, 169, 244, 0.18);
+  background: linear-gradient(135deg, rgba(65, 96, 145, 0.34), rgba(30, 48, 70, 0.62));
+}
+
+#settings .emulator-hero-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  border: 1px solid rgba(139, 176, 239, 0.26);
+  border-radius: 10px;
+  color: #a9c5ff;
+  background: rgba(71, 109, 178, 0.24);
+  font-size: 19px;
+}
+
+#settings .emulator-hero .title,
+#settings .platform-guide-settings .platform-guide-head .title {
+  margin: 0 0 7px;
+  padding: 0;
+  border: 0;
+}
+
+#settings .emulator-hero p,
+#settings .platform-guide-head p {
+  margin: 0;
+  padding: 0;
+}
+
+#settings .emulator-group {
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+#settings .emulator-group-title {
+  margin: 0;
+  padding: 12px 15px;
+  border: 0;
+  border-bottom: 1px solid rgba(145, 177, 215, 0.09);
+  background: rgba(13, 28, 45, 0.34);
+}
+
+#settings .emulator-login {
+  display: none;
+  padding: 17px 18px 18px;
+  border-color: rgba(229, 178, 99, 0.2);
+  background: linear-gradient(135deg, rgba(92, 65, 35, 0.22), rgba(31, 49, 70, 0.64));
+  margin-bottom: 18px;
+}
+
+#settings .emulator-login.is-visible {
+  display: block;
+}
+
+#settings .emulator-login-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+
+#settings .emulator-login-heading > .title {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+#settings .emulator-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 4px 9px;
+  border: 1px solid rgba(241, 185, 94, 0.25);
+  border-radius: 999px;
+  color: #efc57f;
+  background: rgba(133, 85, 24, 0.16);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+#settings .emulator-login-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+#settings .emulator-login-fields input,
+#settings #steamwebapikey,
+#settings .cust-field input[type='text'],
+#settings .cust-field input[type='range'] {
+  box-sizing: border-box;
+  min-height: 38px;
+  border: 1px solid rgba(144, 177, 218, 0.2);
+  border-radius: 9px;
+  background: rgba(5, 12, 21, 0.52);
+  color: #eef4fc;
+  font-size: 13px;
+}
+
+#settings .content[data-view='folder'] .disclaimer,
+#options-notify .autosave-hint {
+  min-height: 38px;
+  box-sizing: border-box;
+  margin: 0 0 24px;
+  padding: 9px 12px;
+  border: 1px solid rgba(145, 177, 215, 0.1);
+  border-radius: 9px;
+  background: rgba(39, 60, 84, 0.38);
+}
+
+#settings .content[data-view='folder'] > .controls {
+  display: block;
+  margin: 0 0 14px;
+}
+
+#settings .content[data-view='folder'] > .controls .info {
+  margin: 0 0 12px;
+}
+
+#settings .content[data-view='folder'] > .controls ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+}
+
+#settings .content[data-view='folder'] > .controls li {
+  width: auto;
+  margin: 0;
+}
+
+#settings .content[data-view='folder'] > .controls .btn {
+  width: 248px;
+  min-height: 58px;
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+  margin: 0;
+  text-align: left;
+  line-height: 1.15;
+}
+
+#settings .content[data-view='folder'] > .controls .btn i {
+  position: absolute;
+  top: 19px;
+  left: 14px;
+  margin: 0;
+}
+
+#settings .content[data-view='folder'] > .controls .btn span,
+#settings .content[data-view='folder'] > .controls .btn small {
+  display: block;
+  margin-left: 26px;
+}
+
+#settings .content[data-view='folder'] > .controls .btn small {
+  color: #a4b5ca;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+#settings #defaultdir,
+#settings #dirlist,
+#settings #libdirlist {
+  padding: 0;
+  scrollbar-color: rgba(136, 166, 204, 0.55) rgba(14, 27, 43, 0.55);
+  scrollbar-width: thin;
+}
+
+#settings #defaultdir {
+  height: 150px;
+  max-height: 150px;
+}
+
+#settings #dirlist,
+#settings #libdirlist {
+  max-height: 164px;
+}
+
+#settings #dirlist > li,
+#settings #libdirlist > li,
+#settings #defaultdir > li {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+#settings #defaultdir > li {
+  min-height: 48px;
+}
+
+#settings #dirlist:empty,
+#settings #libdirlist:empty {
+  min-height: 76px;
+}
+
+#settings #defaultdir > li .path,
+#settings #dirlist > li .path,
+#settings #libdirlist > li .path {
+  flex: 1 1 0;
+  display: block;
+  width: auto;
+  max-width: none;
+  height: auto;
+  min-width: 0;
+  margin: auto 12px auto 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+#settings #defaultdir > li .path {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#settings #defaultdir > li .path span,
+#settings #dirlist > li .path span,
+#settings #libdirlist > li .path span {
+  position: static;
+  display: block;
+  width: 100%;
+  max-width: none;
+  color: #e2e8f1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: ltr;
+  transform: none;
+}
+
+#settings #defaultdir > li .path .constant {
+  display: inline;
+  width: auto;
+  color: #a9b4c4;
+}
+
+#settings #defaultdir > li .path.overflow:hover span,
+#settings #dirlist > li .path.overflow:hover span,
+#settings #libdirlist > li .path.overflow:hover span {
+  max-width: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transform: none;
+}
+
+#settings #defaultdir > li .controls,
+#settings #dirlist > li .controls,
+#settings #libdirlist > li .controls {
+  flex: 0 0 auto;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+#settings #defaultdir > li .controls {
+  display: none;
+}
+
+#settings #defaultdir > li .controls ul,
+#settings #dirlist > li .controls ul,
+#settings #libdirlist > li .controls ul {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#settings #defaultdir > li .controls ul > li,
+#settings #dirlist > li .controls ul > li,
+#settings #libdirlist > li .controls ul > li {
+  width: 32px;
+  height: 32px;
+  box-sizing: border-box;
+  padding: 6px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#settings #options-notify-customiser > li {
+  padding: 18px 20px 20px;
+}
+
+#settings #options-notify-customiser .cust-field {
+  gap: 7px !important;
+}
+
+#settings #cust-name {
+  width: 220px;
+  padding-left: 14px;
+}
+
+#settings #cust-name::placeholder {
+  color: #8f9aaa;
+}
+
+#settings .platform-guide-grid {
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+#settings .guide-panel summary {
+  min-height: 54px;
+  padding: 14px 15px;
+}
+
+#settings .guide-panel[open] summary {
+  background: transparent;
+}
+
+.onboarding-folder-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.onboarding-folder-actions .inline-action-btn {
+  min-height: 64px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px 14px;
+  text-align: left;
+  line-height: 1.2;
+}
+
+.onboarding-folder-actions .inline-action-btn i {
+  margin-bottom: 3px;
+}
+
+.onboarding-folder-actions .inline-action-btn span {
+  font-size: 13px;
+}
+
+.onboarding-folder-actions .inline-action-btn small {
+  color: #a4b5ca;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.onboarding-lists .list-title,
+.onboarding-lists li,
+.onboarding-step label,
+.onboard-field-hint,
+#onboarding-status {
+  font-family: 'Open-Sans', sans-serif;
+}
+
 /* Keep every view usable at the application's minimum window size. */
 @media (max-width: 1050px) {
   #settings .box {

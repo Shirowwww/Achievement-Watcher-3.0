@@ -22,6 +22,8 @@ const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-gbe-backup-'));
     const incomplete = goldberg.diagnose({ gameDir, appid: '480', schema: { achievement: { list: [{ name: 'OLD' }] } } });
     assert.ok(incomplete.issues.some((i) => i.code === 'NO_DLC_CONFIG'), 'diagnosis should flag missing configs.app.ini');
     assert.ok(incomplete.issues.some((i) => i.code === 'NO_USER_CONFIG'), 'diagnosis should flag missing configs.user.ini');
+    assert.ok(incomplete.issues.some((i) => i.code === 'NO_NEW_APP_TICKET'), 'diagnosis should flag missing modern app ticket config');
+    assert.ok(incomplete.issues.some((i) => i.code === 'NO_GC_TOKEN'), 'diagnosis should flag missing GC token config');
 
     const backup = goldberg.backupSetup({ gameDir, destinationRoot });
     assert.strictEqual(fs.readFileSync(path.join(backup.backupDir, 'Binaries', 'Win64', 'steam_api64.dll'), 'utf8'), 'original dll');
@@ -72,6 +74,14 @@ const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-gbe-backup-'));
     assert.ok(/\bip_country=US\b/.test(userIni), 'configs.user.ini must preserve ip_country');
     assert.strictEqual(repair2.user.language, 'french');
     assert.strictEqual(repair2.user.changed, true);
+    const mainIni = fs.readFileSync(path.join(steamSettings, 'configs.main.ini'), 'utf8');
+    assert.ok(/\[main::general\]/.test(mainIni), 'configs.main.ini should have [main::general]');
+    assert.ok(/\bnew_app_ticket=1\b/.test(mainIni), 'configs.main.ini should enable new_app_ticket');
+    assert.ok(/\bgc_token=1\b/.test(mainIni), 'configs.main.ini should enable gc_token');
+    assert.ok(/\[main::stats\]/.test(mainIni), 'configs.main.ini should have [main::stats]');
+    assert.ok(/\bstat_achievement_progress_functionality=1\b/.test(mainIni), 'configs.main.ini should enable stat achievement progress');
+    assert.strictEqual(repair2.main.newAppTicket, true);
+    assert.strictEqual(repair2.main.gcToken, true);
     const unchangedUser = goldberg.writeUserConfig({ steamSettings, accountName: 'Shiro', language: 'french' });
     assert.strictEqual(unchangedUser.changed, false, 'an unchanged identity should not rewrite configs.user.ini every scan');
 
@@ -95,7 +105,7 @@ const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-gbe-backup-'));
     fs.writeFileSync(path.join(steamSettings, 'configs.user.ini'), '[user::general]\naccount_name=Shiro\nlanguage=french\naccount_steamid=76561197960287930\nip_country=US\n');
 
     const complete = goldberg.diagnose({ gameDir, appid: '480', schema: { achievement: { list: [{ name: 'A' }] } } });
-    assert.ok(!complete.issues.some((i) => i.code === 'NO_DLC_CONFIG' || i.code === 'NO_USER_CONFIG'));
+    assert.ok(!complete.issues.some((i) => i.code === 'NO_DLC_CONFIG' || i.code === 'NO_USER_CONFIG' || i.code === 'NO_NEW_APP_TICKET' || i.code === 'NO_GC_TOKEN'));
 
     // Merge, don't clobber: a second pass with a curated DLC entry keeps the earlier ones.
     await goldberg.writeDlcConfig({ steamSettings, dlcs: [{ appid: 333, name: 'DLC Three' }] });

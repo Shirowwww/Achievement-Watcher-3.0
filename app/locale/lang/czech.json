@@ -83,6 +83,7 @@
       "souvenir": "Vzpomínka",
       "folder": "Složky",
       "source": "Zdroj",
+      "guide": "Průvodce",
       "advanced": "Pokročilé"
     },
     "common": {
@@ -481,13 +482,16 @@
         "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini nebo RPCS3.exe."
       ],
       "add": "Přidat složku",
+      "smartFind": "Chytré hledání",
+      "smartFindHelp": "najde savy/konfigy + knihovny",
       "library": "Složky knihovny",
       "libraryInfo": [
         "Vyberte složku obsahující mnoho instalačních složek her (např. D:\\Games, E:\\SteamLibrary).",
         "Všechny hry uvnitř budou prohledány na achievementy Goldberg/GBE, i když nikdy nebyly spuštěny."
       ],
       "addLibrary": "Přidat složku knihovny",
-      "generateConfigs": "Generovat konfigurace"
+      "generateConfigs": "Generovat konfigurace",
+      "generateConfigsHelp": "úplné skenování + auto oprava, pokud je zapnutá"
     },
     "source": {
       "title": "Zdroje her",
@@ -521,6 +525,47 @@
         "name": "Importovat mezipaměť oznámení",
         "description": "Importovat mezipaměť Watchdogu jako další zdroj achievementů"
       }
+    },
+    "guide": {
+      "nav": "Průvodce",
+      "title": "Průvodce platformami",
+      "intro": "Co Achievement Watcher skenuje, které složky jsou důležité a kdy se hodí generované konfigurace emulátorů.",
+      "quickTitle": "První kroky",
+      "quick": [
+        "Přidejte složky savů/konfigurací v Nastavení > Složky a potom zapněte odpovídající zdroj v Nastavení > Zdroje.",
+        "Složky knihoven použijte pro nainstalované hry, které zatím nevytvořily soubory achievementů.",
+        "Watchdog upozorňuje na nové změny až poté, co zná složku a zdroj je zapnutý."
+      ],
+      "steamTitle": "Emulátory Steamu",
+      "steam": [
+        "Savy GBE / Goldberg bývají v %APPDATA%\\GSE Saves nebo %APPDATA%\\Goldberg SteamEmu Saves.",
+        "Savy stylu CODEX / RUNE často leží v Public Documents\\Steam\\CODEX nebo Public Documents\\Steam\\RUNE.",
+        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 a Hoodlum se detekují z jejich složek konfigurací/savů."
+      ],
+      "emulatorTitle": "Konzolové emulátory",
+      "emulators": [
+        "Achievementy RPCS3 se čtou z dev_hdd0\\home\\...\\trophy poblíž instalace RPCS3.",
+        "Trofeje shadPS4 se čtou ze složek game_data/trophy v datech aplikace; zbytky trofejí nejsou důkaz instalace hry.",
+        "Postup Xenia se čte ze souborů profilu Xbox, například .gpd."
+      ],
+      "sourcesTitle": "Launchery a zdroje",
+      "sources": [
+        "Režim veřejného profilu Steamu vypíše nainstalované nebo vlastněné hry na Steamu, ale lokální odemčení stále pochází ze souborů savů.",
+        "GOG, Epic, Ubisoft Connect/LumaPlay a EA Desktop lze zapnout samostatně ve Zdroje.",
+        "Cracknuté instalace EA Desktop se čtou z EADesktopVerbose.log a jeho záložních logů."
+      ],
+      "configTitle": "Generované konfigurace",
+      "config": [
+        "Oprava emulátoru přes pravé tlačítko může přidat soubory GBE Fork, schémata achievementů, DLC data a pomocníky pro spuštění.",
+        "Jednoduchý režim je rychlý a používá data Achievement Watcheru; Pokročilý spouští generate_emu_config pro hlubší Steam data.",
+        "Pokročilé generování může trvat několik minut, hlavně s metadaty DLC/depotů."
+      ],
+      "troubleshootTitle": "Řešení problémů",
+      "troubleshoot": [
+        "Pokud hra chybí, po přidání složek spusťte sken znovu a zkontrolujte přepínač zdroje a blacklist.",
+        "Pokud chybí notifikace, zkontrolujte Pomocníka pro soustředění Windows a spusťte hru/app se stejnými právy správce.",
+        "Pokročilé > Diagnostika otevře logy a datové složky, když potřebujete zkontrolovat, co bylo skenováno."
+      ]
     },
     "advanced": {
       "maintenanceTitle": "Nastavení a údržba",
@@ -613,6 +658,9 @@
     "addSave": "Přidat složku pro uložení",
     "smartFind": "Chytré hledání",
     "addLibrary": "Přidat složku knihovny",
+    "smartFindHint": "savy + knihovny",
+    "addSaveHint": "jeden emulátor/zdroj",
+    "addLibraryHint": "mnoho nainstalovaných her",
     "saveList": "Uložit/konfigurovat složky",
     "libraryList": "Složky knihovny",
     "emptyList": "K této relaci nic nepřidalo.",

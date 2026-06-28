@@ -64,7 +64,11 @@ module.exports.get = async () => {
     }
     const raw = fs.readFileSync(file, 'utf8');
     try {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .map((entry) => (typeof entry === 'string' ? { path: entry, notify: true } : { ...entry, notify: true }))
+        .filter((entry) => entry.path);
     } catch (parseErr) {
       // Genuine corruption (e.g. a write interrupted by a crash/power loss). A transient I/O lock
       // throws before JSON.parse and is handled by the outer catch — so we never quarantine a good
@@ -127,6 +131,14 @@ module.exports.check = async (dirpath) => {
     //check for appID folder(s). Some emulators use hex ids; reject obvious user-id/noise folders.
     let scan = await glob('*', { cwd: dirpath, onlyDirectories: true, deep: 1, suppressErrors: true });
     if (scan.some(isProbableAppIdFolderName)) return (result = true);
+
+    // Accept parent community roots like Public\Documents\Steam when the real appid folders are inside
+    // RUNE/CODEX. Users commonly add the parent from guides, while AW scans the concrete child source.
+    const expandedRoots = saveRoots.expandKnownSteamSourceRoots(dirpath).filter((root) => path.resolve(root) !== path.resolve(dirpath));
+    for (const root of expandedRoots) {
+      const nested = await glob('*', { cwd: root, onlyDirectories: true, deep: 1, suppressErrors: true });
+      if (nested.some(isProbableAppIdFolderName)) return (result = true);
+    }
 
     //check for accepted_files
     scan = await glob('*.{ini,exe}', { cwd: dirpath, onlyFiles: true });

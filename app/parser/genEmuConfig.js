@@ -15,8 +15,9 @@
   tool writes beside its exe means 2FA is only needed once.
 
   Renderer-side (request-zero / node-7z / child_process). Windows-only. Verified against the
-  generate_emu_config.py CLI: `[-anon] [-skip_con -skip_inv -skip_cld] <appid>`, output under
-  <cwd>/output/<name>-<appid>/steam_settings/.
+  Modern builds work best for PSPC/newer Steamworks titles with:
+  `-name -clean -cve -reldir -token <appid>`, output under <tool>/_OUTPUT/<appid>/steam_settings/.
+  Older cached builds are still tolerated through a legacy fallback.
 */
 
 const fs = require('fs');
@@ -164,19 +165,48 @@ async function ensureGenerateEmuConfig({ cacheDir, force = false, preferredTag =
 // Older builds wrote to <cwd>/output/<name-appid>; current GSE tools deliberately write beside the
 // executable under <tool>/_OUTPUT/<appid>. Support both layouts instead of reporting a successful
 // login/generation as a failure merely because the tool changed its output root.
-function findGeneratedSteamSettings(...baseDirs) {
-  for (const baseDir of baseDirs.filter(Boolean)) {
-    for (const folder of ['output', '_OUTPUT']) {
-      const outRoot = path.join(baseDir, folder);
-      if (!fs.existsSync(outRoot)) continue;
-      for (const entry of fs.readdirSync(outRoot, { withFileTypes: true })) {
-        if (!entry.isDirectory()) continue;
-        const ss = path.join(outRoot, entry.name, 'steam_settings');
-        if (fs.existsSync(ss)) return ss;
-      }
+function collectGeneratedSteamSettings(baseDir) {
+  const hits = [];
+  if (!baseDir) return hits;
+  for (const folder of ['output', '_OUTPUT']) {
+    const outRoot = path.join(baseDir, folder);
+    if (!fs.existsSync(outRoot)) continue;
+    for (const entry of fs.readdirSync(outRoot, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const ss = path.join(outRoot, entry.name, 'steam_settings');
+      if (fs.existsSync(ss)) hits.push(ss);
     }
   }
+  return hits;
+}
+
+function findGeneratedSteamSettings(...baseDirs) {
+  for (const baseDir of baseDirs.filter(Boolean)) {
+    const hit = collectGeneratedSteamSettings(baseDir)[0];
+    if (hit) return hit;
+  }
   return null;
+}
+
+function findGeneratedSteamSettingsForAppid(appid, ...baseDirs) {
+  const id = String(appid || '');
+  const hits = baseDirs.filter(Boolean).flatMap((baseDir) => collectGeneratedSteamSettings(baseDir));
+  return hits.find((ss) => path.basename(path.dirname(ss)) === id) || hits.find((ss) => path.basename(path.dirname(ss)).includes(id)) || hits[0] || null;
+}
+
+function modernArgs(id, login) {
+  const args = [];
+  if (login) args.push('-tok');
+  args.push('-name', '-clean', '-cve', '-reldir', '-token', String(id));
+  return args;
+}
+
+function legacyArgs(id, login) {
+  const args = [];
+  if (!login) args.push('-anon');
+  else args.push('-tok');
+  args.push('-skip_con', '-skip_inv', '-skip_cld', String(id));
+  return args;
 }
 
 /*
@@ -191,31 +221,33 @@ function findGeneratedSteamSettings(...baseDirs) {
 
   Returns { steamSettings, workDir, output }.
 */
-async function generate({ tool, appid, login = null, onPrompt, timeout = 300000, log = noopLog } = {}) {
+async function generate({ tool, appid, login = null, onPrompt, timeout = 300000, log = noopLog, profile = 'modern', allowLegacyFallback = true } = {}) {
   if (!tool || !tool.exe) throw new Error('generate_emu_config is not available');
   const id = parseInt(appid, 10);
   if (!Number.isInteger(id) || id <= 0) throw new Error('generate: a valid numeric appid is required');
 
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-emucfg-run-'));
   const toolDir = tool.dir || path.dirname(tool.exe);
-  // Current GSE builds reuse _OUTPUT/<appid>. Remove the previous result so success can only be
-  // attributed to this invocation, never to stale cached files from an earlier run.
-  try {
-    fs.rmSync(path.join(toolDir, '_OUTPUT', String(id)), { recursive: true, force: true });
-  } catch {
-    /* best-effort cache cleanup */
-  }
-  const args = [];
-  if (!login) args.push('-anon');
-  else args.push('-tok'); // persist the refresh token beside the tool after Steam Guard succeeds
-  // Skip the parts AW doesn't consume — faster and avoids extra Steam calls.
-  args.push('-skip_con', '-skip_inv', '-skip_cld', String(id));
+  const cleanOutputs = () => {
+    // Current GSE builds reuse _OUTPUT/<appid>. Remove the previous result so success can only be
+    // attributed to this invocation, never to stale cached files from an earlier run.
+    for (const base of [toolDir, workDir]) {
+      for (const folder of ['_OUTPUT', 'output']) {
+        try {
+          fs.rmSync(path.join(base, folder, String(id)), { recursive: true, force: true });
+        } catch {
+          /* best-effort cache cleanup */
+        }
+      }
+    }
+  };
 
   const env = { ...process.env };
   if (login && login.username) env.GSE_CFG_USERNAME = login.username;
   if (login && login.password) env.GSE_CFG_PASSWORD = login.password;
 
-  const output = await new Promise((resolve, reject) => {
+  const run = (args) => new Promise((resolve, reject) => {
+    cleanOutputs();
     const child = spawn(tool.exe, args, { cwd: workDir, env, windowsHide: true, shell: /\.(cmd|bat)$/i.test(tool.exe) });
     // Unattended runs (no onPrompt — the automatic/bulk emulator fix) must never block on interactive
     // input. Close stdin right away so a tool that prompts (a login question it can't ask here, a
@@ -279,7 +311,20 @@ async function generate({ tool, appid, login = null, onPrompt, timeout = 300000,
     });
   });
 
-  const steamSettings = findGeneratedSteamSettings(workDir, toolDir);
+  const useLegacy = profile === 'legacy';
+  const args = useLegacy ? legacyArgs(id, login) : modernArgs(id, login);
+  let output;
+  let usedProfile = useLegacy ? 'legacy' : 'modern';
+  try {
+    output = await run(args);
+  } catch (e) {
+    if (useLegacy || allowLegacyFallback === false) throw e;
+    log.log(`[emucfg] modern token generation failed (${e.message || e}); retrying legacy arguments`);
+    output = await run(legacyArgs(id, login));
+    usedProfile = 'legacy';
+  }
+
+  const steamSettings = findGeneratedSteamSettingsForAppid(id, toolDir, workDir);
   if (!steamSettings) {
     try {
       fs.rmSync(workDir, { recursive: true, force: true });
@@ -288,7 +333,7 @@ async function generate({ tool, appid, login = null, onPrompt, timeout = 300000,
     }
     throw new Error('generate_emu_config produced no steam_settings (login/2FA failed or appid invalid)');
   }
-  return { steamSettings, workDir, output };
+  return { steamSettings, workDir, output, profile: usedProfile };
 }
 
 // Copy a generated steam_settings into a game's steam_settings, without clobbering files AW already

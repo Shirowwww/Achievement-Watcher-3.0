@@ -227,20 +227,28 @@ async function generateInterfaces({ dllPath, steamSettings, dlls, log = noopLog 
   try {
     const localDll = path.join(workDir, ARCH[arch].file);
     fs.copyFileSync(original, localDll);
-    await new Promise((resolve, reject) => {
+    const run = await new Promise((resolve, reject) => {
       const child = spawn(tool, [localDll], { cwd: workDir, windowsHide: true, shell: /\.(cmd|bat)$/i.test(tool) });
       let output = '';
       child.stdout.on('data', (d) => { output += d.toString(); });
       child.stderr.on('data', (d) => { output += d.toString(); });
       child.on('error', reject);
       child.on('close', (code) => {
-        if (code === 0) resolve();
-        else reject(new Error(`generate_interfaces exited with code ${code}${output.trim() ? `: ${output.trim()}` : ''}`));
+        resolve({ code, output });
       });
     });
+    if (run.code !== 0) {
+      const output = String(run.output || '').trim();
+      if (/no interfaces were found/i.test(output)) {
+        log.log(`[gbe] steam_interfaces.txt skipped: no interfaces found in ${path.basename(original)} (${arch})`);
+        return { generated: false, reason: 'no-interfaces', original, arch };
+      }
+      throw new Error(`generate_interfaces exited with code ${run.code}${output ? `: ${output}` : ''}`);
+    }
     const generated = path.join(workDir, 'steam_interfaces.txt');
     if (!fs.existsSync(generated) || fs.statSync(generated).size === 0) {
-      throw new Error('generate_interfaces produced no steam_interfaces.txt');
+      log.log(`[gbe] steam_interfaces.txt skipped: generator produced no output for ${path.basename(original)} (${arch})`);
+      return { generated: false, reason: 'no-output', original, arch };
     }
     fs.mkdirSync(steamSettings, { recursive: true });
     const dest = path.join(steamSettings, 'steam_interfaces.txt');
@@ -250,6 +258,89 @@ async function generateInterfaces({ dllPath, steamSettings, dlls, log = noopLog 
   } finally {
     try { fs.rmSync(workDir, { recursive: true, force: true }); } catch {}
   }
+}
+
+function matchesCachedDll(file, cacheDir, archKey) {
+  if (!file || !cacheDir || !archKey || !ARCH[archKey] || !fs.existsSync(file)) return false;
+  const tag = readText(path.join(cacheDir, 'latest.txt'));
+  if (!tag) return false;
+  const cached = path.join(cacheDir, tag, ARCH[archKey].file);
+  if (!fs.existsSync(cached)) return false;
+  try {
+    const live = fs.readFileSync(file);
+    const expected = fs.readFileSync(cached);
+    return live.length === expected.length && live.equals(expected);
+  } catch {
+    return false;
+  }
+}
+
+const AUXILIARY_DLL_DIRS = new Set([
+  '__overlay',
+  'overlay',
+  '__installer',
+  '_commonredist',
+  'commonredist',
+  'redist',
+  'directx',
+  'dotnet',
+  'vc',
+  'vcredist',
+  'prerequisites',
+  'prereq',
+  'support',
+  'tools',
+]);
+
+function sameDir(a, b) {
+  if (!a || !b) return false;
+  try {
+    return path.resolve(a).toLowerCase() === path.resolve(b).toLowerCase();
+  } catch {
+    return false;
+  }
+}
+
+function isAuxiliaryDllDir(dir, gameDir) {
+  if (!dir) return false;
+  let relative;
+  try {
+    relative = gameDir ? path.relative(gameDir, dir) : dir;
+  } catch {
+    relative = dir;
+  }
+  const parts = String(relative || dir)
+    .split(/[\\/]+/)
+    .map((p) => p.toLowerCase())
+    .filter(Boolean);
+  return parts.some((p) => AUXILIARY_DLL_DIRS.has(p));
+}
+
+function runtimeDllDirs({ gameDir, dllPaths = [], exePath = null, steamSettings = null, fallbackDir = null } = {}) {
+  const exeDir = exePath ? path.dirname(exePath) : null;
+  const settingsDir = steamSettings && path.basename(steamSettings).toLowerCase() === 'steam_settings' ? path.dirname(steamSettings) : null;
+  const preferred = [exeDir, settingsDir].filter(Boolean);
+  const out = [];
+  const add = (dir) => {
+    if (!dir) return;
+    const key = path.resolve(dir).toLowerCase();
+    if (!out.some((d) => path.resolve(d).toLowerCase() === key)) out.push(dir);
+  };
+
+  for (const dllPath of dllPaths || []) {
+    if (!dllPath || !/^steam_api(64)?\.dll$/i.test(path.basename(dllPath))) continue;
+    const dir = path.dirname(dllPath);
+    const preferredDir = preferred.some((p) => sameDir(p, dir));
+    if (!preferredDir && isAuxiliaryDllDir(dir, gameDir)) continue;
+    add(dir);
+  }
+
+  if (out.length === 0) {
+    add(exeDir);
+    add(settingsDir);
+    add(fallbackDir || gameDir);
+  }
+  return out;
 }
 
 /*
@@ -388,4 +479,4 @@ function installDlls({ dllDirs, dlls, writeIfMissing = null, ensureArch = null, 
   return summary;
 }
 
-module.exports = { ensureEmulatorDlls, installDlls, generateInterfaces, ARCH, INTERFACE_TOOLS };
+module.exports = { ensureEmulatorDlls, installDlls, generateInterfaces, matchesCachedDll, runtimeDllDirs, ARCH, INTERFACE_TOOLS };

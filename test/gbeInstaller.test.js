@@ -64,6 +64,19 @@ try {
   assert.ok(!fs.existsSync(path.join(dirWrongArch, 'steam_api64.dll.bak')), 'newly seeded required arch needs no backup');
   assert.strictEqual(archRes.installed, 2, 'ensureArch should replace present arch and seed the required arch');
 
+  const gameDir = path.join(temp, 'It Takes Two');
+  const exeDir = path.join(gameDir, 'Nuts', 'Binaries', 'Win64');
+  const overlayDir = path.join(gameDir, '__overlay');
+  fs.mkdirSync(exeDir, { recursive: true });
+  fs.mkdirSync(overlayDir, { recursive: true });
+  const runtimeDirs = gbe.runtimeDllDirs({
+    gameDir,
+    dllPaths: [path.join(exeDir, 'steam_api64.dll'), path.join(overlayDir, 'steam_api.dll')],
+    exePath: path.join(exeDir, 'ItTakesTwo.exe'),
+    fallbackDir: gameDir,
+  });
+  assert.deepStrictEqual(runtimeDirs, [exeDir], 'runtime selection should ignore auxiliary overlay DLL folders');
+
   console.log('PASS: GBE installer replaces both arches, preserves one-time .bak, and seeds missing exe arch');
 } finally {
   fs.rmSync(temp, { recursive: true, force: true });

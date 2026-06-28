@@ -163,8 +163,11 @@ function coverOverrideFor(appid) {
 }
 function applyCoverBackground(appid, value) {
   const el = $(`#game-header-${appid}`);
-  if (!value || value === 'none') el.css('background', 'none');
-  else el.css('background', `url('${value}')`);
+  if (!value || value === 'none') {
+    el.css({ background: 'none', backgroundSize: '', backgroundPosition: '', backgroundRepeat: '' });
+  } else {
+    el.css({ backgroundImage: `url('${value}')`, backgroundSize: 'cover', backgroundPosition: 'center center', backgroundRepeat: 'no-repeat' });
+  }
 }
 
 // Styled in-app text prompt (Electron disables window.prompt). Resolves to the trimmed value or null.
@@ -791,6 +794,9 @@ var app = {
             'NO_APPID_TXT',
             'MISSING_ICONS',
             'NO_DLC_CONFIG',
+            'NO_MAIN_CONFIG',
+            'NO_NEW_APP_TICKET',
+            'NO_GC_TOKEN',
             'NO_USER_CONFIG',
             'BAD_DLC_CONFIG',
             'BAD_USER_CONFIG',
@@ -854,6 +860,9 @@ var app = {
                 lines.push(`Auto-repair wrote ${repaired.achievementsJson.length} achievements to ${repaired.steamSettings}`);
                 lines.push(`icons: ${repaired.icons.downloaded} downloaded, ${repaired.icons.failed} failed, ${repaired.icons.skipped} skipped`);
                 if (repaired.wroteAppId) lines.push('steam_appid.txt created');
+                if (repaired.main && repaired.main.changed) lines.push('configs.main.ini updated (new_app_ticket + gc_token)');
+                if (repaired.dlc) lines.push(`configs.app.ini updated (${repaired.dlc.count} DLC entries, unlock_all=${repaired.dlc.unlockAll ? '1' : '0'})`);
+                if (repaired.user && repaired.user.changed) lines.push('configs.user.ini updated');
               }
               if (repairError) {
                 lines.push('');
@@ -878,9 +887,12 @@ var app = {
                     type: 'info',
                     title: 'Repair complete',
                     message: `Wrote ${summary.achievementsJson.length} achievements to ${summary.steamSettings}`,
-                    detail: `icons: ${summary.icons.downloaded} downloaded, ${summary.icons.failed} failed, ${summary.icons.skipped} skipped${
-                      summary.wroteAppId ? '\nsteam_appid.txt created' : ''
-                    }`,
+                    detail:
+                      `icons: ${summary.icons.downloaded} downloaded, ${summary.icons.failed} failed, ${summary.icons.skipped} skipped` +
+                      (summary.wroteAppId ? '\nsteam_appid.txt created' : '') +
+                      (summary.main && summary.main.changed ? '\nconfigs.main.ini updated (new_app_ticket + gc_token)' : '') +
+                      (summary.dlc ? `\nconfigs.app.ini updated (${summary.dlc.count} DLC entries, unlock_all=${summary.dlc.unlockAll ? '1' : '0'})` : '') +
+                      (summary.user && summary.user.changed ? '\nconfigs.user.ini updated' : ''),
                     noLink: true,
                   });
                 } catch (err) {
@@ -1275,9 +1287,14 @@ var app = {
                       // neither (fresh manual install) gets a 64-bit dll by default.
                       setGameBoxBusy(self, fr ? 'Préparation…' : 'Preparing…');
                       const emu = goldberg.detectEmulator(gameDir);
-                      const dllDirs = emu.dll.length > 0
-                        ? [...new Set(emu.dll.map((d) => path.dirname(d)))]
-                        : [gameDir];
+                      const detectedRuntimeExe = exeDetect.detect(gameDir, game?.name || '', { dllPaths: emu.dll });
+                      const dllDirs = gbeInstaller.runtimeDllDirs({
+                        gameDir,
+                        dllPaths: emu.dll,
+                        exePath: detectedRuntimeExe && detectedRuntimeExe.full,
+                        steamSettings: emu.steamSettings,
+                        fallbackDir: gameDir,
+                      });
 
                       // Emulator setup is driven by the Settings → Emulator section: Regular DLL setup,
                       // optional Steamless pre-unpack, and whether to re-check GitHub for a newer GBE build.
@@ -1335,11 +1352,10 @@ var app = {
                       // the plain DLL is still installed and the game may fail to launch.
                       try {
                         const pe = require(path.join(appPath, 'util/pe.js'));
-                        const detected = exeDetect.detect(gameDir, game?.name || '', { dllPaths: emu.dll });
                         // Skip DRM stripping when the community crack already replaced the runtime — a
                         // cracked exe is DRM-free, same call the auto flow makes.
-                        const hasSteamStub = !crackApplied && !!(detected && detected.full && pe.detectSteamStub(detected.full));
-                        const shouldRunSteamless = !crackApplied && !!(detected && detected.full && (emuCfg.steamlessAutoUnpack || hasSteamStub));
+                        const hasSteamStub = !crackApplied && !!(detectedRuntimeExe && detectedRuntimeExe.full && pe.detectSteamStub(detectedRuntimeExe.full));
+                        const shouldRunSteamless = !crackApplied && !!(detectedRuntimeExe && detectedRuntimeExe.full && (emuCfg.steamlessAutoUnpack || hasSteamStub));
                         if (shouldRunSteamless) {
                           setGameBoxBusy(self, fr ? 'Téléchargement de Steamless…' : 'Downloading Steamless…');
                           const steamlessMod = require(path.join(appPath, 'parser/steamless.js'));
@@ -1348,7 +1364,7 @@ var app = {
                           try {
                             const cli = await steamlessMod.ensureSteamless({ cacheDir: path.join(getUserDataPath(), 'cache/steamless'), log: debug });
                             setGameBoxBusy(self, fr ? 'Retrait du DRM…' : 'Removing DRM…');
-                            const r = await steamlessMod.stripDrm({ steamless: cli, exePath: detected.full, experimental: !!emuCfg.steamlessExperimental, log: debug });
+                            const r = await steamlessMod.stripDrm({ steamless: cli, exePath: detectedRuntimeExe.full, experimental: !!emuCfg.steamlessExperimental, log: debug });
                             stripped = !!(r && r.stripped);
                             reason = (r && r.reason) || '';
                           } catch (e) {
@@ -1356,7 +1372,7 @@ var app = {
                             debug.log(`[${appid}] Steamless failed => ${e}`);
                           }
                           if (stripped) {
-                            drmNote = fr ? `\nDRM : SteamStub retiré (${path.basename(detected.full)})` : `\nDRM: SteamStub removed (${path.basename(detected.full)})`;
+                            drmNote = fr ? `\nDRM : SteamStub retiré (${path.basename(detectedRuntimeExe.full)})` : `\nDRM: SteamStub removed (${path.basename(detectedRuntimeExe.full)})`;
                           } else if (hasSteamStub) {
                             drmNote = fr ? `\nDRM : SteamStub présent, Steamless a échoué (${reason}) ; la DLL seule risque de ne pas charger` : `\nDRM: SteamStub present, Steamless failed (${reason}); the plain DLL may not load`;
                           } else if (emuCfg.steamlessAutoUnpack) {
@@ -1375,7 +1391,10 @@ var app = {
                       // GBE/GSE setup requires steam_interfaces.txt generated from the
                       // original game steam_api DLL. Run the matching bundled tool before replacing
                       // anything; on a repeated repair generateInterfaces prefers the original .bak.
-                      const interfaceDlls = emu.dll.filter((file) => /^steam_api(64)?\.dll$/i.test(path.basename(file)));
+                      const runtimeDirKeys = new Set(dllDirs.map((dir) => path.resolve(dir).toLowerCase()));
+                      const interfaceDlls = emu.dll.filter(
+                        (file) => /^steam_api(64)?\.dll$/i.test(path.basename(file)) && runtimeDirKeys.has(path.resolve(path.dirname(file)).toLowerCase())
+                      );
                       for (const dllPath of interfaceDlls) {
                         const dest = path.join(path.dirname(dllPath), 'steam_settings');
                         const interfaces = await gbeInstaller.generateInterfaces({ dllPath, steamSettings: dest, dlls, log: debug });
@@ -1385,29 +1404,31 @@ var app = {
                       {
                         // ── Standalone (replace steam_api dll) — the only emulator-apply path ──
                         setGameBoxBusy(self, fr ? 'Installation de la DLL…' : 'Installing the DLL…');
-                        const detected = exeDetect.detect(gameDir, game?.name || '', { dllPaths: emu.dll });
                         const pe = require(path.join(appPath, 'util/pe.js'));
-                        const missingArch = detected && detected.full ? pe.exeArch(detected.full) : 'x64';
+                        const missingArch = detectedRuntimeExe && detectedRuntimeExe.full ? pe.exeArch(detectedRuntimeExe.full) : 'x64';
                         const installResult = gbeInstaller.installDlls({
                           dllDirs,
                           dlls,
                           writeIfMissing: missingArch || 'x64',
                           log: debug,
                         });
-                        // Pre-create %APPDATA%\GSE Saves\<appid> (the standard community step) so the game
-                        // appears in AW at 0% right away and the watchdog has a folder to watch from launch.
+                        // Pre-create both GBE Fork and classic Goldberg runtime folders. PSPC/repack
+                        // guides mention both, and discovery dedupes them by appid once real state exists.
                         try {
-                          if (process.env.APPDATA) fs.mkdirSync(path.join(process.env.APPDATA, 'GSE Saves', String(writableAppid)), { recursive: true });
+                          if (process.env.APPDATA) {
+                            fs.mkdirSync(path.join(process.env.APPDATA, 'GSE Saves', String(writableAppid)), { recursive: true });
+                            fs.mkdirSync(path.join(process.env.APPDATA, 'Goldberg SteamEmu Saves', String(writableAppid)), { recursive: true });
+                          }
                         } catch (e) {
-                          debug.log(`[${writableAppid}] could not pre-create GSE Saves folder => ${e}`);
+                          debug.log(`[${writableAppid}] could not pre-create Goldberg/GBE save folder => ${e}`);
                         }
                         // Optional, opt-in: SteamAutoCrack's Steam API ownership-check bypass (proxy DLL).
-                        if (emuCfg.apiCheckBypass && detected && detected.full) {
+                        if (emuCfg.apiCheckBypass && detectedRuntimeExe && detectedRuntimeExe.full) {
                           try {
                             const apiCheckBypass = require(path.join(appPath, 'parser/apiCheckBypass.js'));
                             setGameBoxBusy(self, fr ? 'Contournement du contrôle API Steam…' : 'Steam API check bypass…');
                             const bypassDlls = await apiCheckBypass.ensureBypassDlls({ cacheDir: path.join(getUserDataPath(), 'cache/api_check_bypass'), log: debug });
-                            const rb = apiCheckBypass.applyBypass({ gameDir, exePath: detected.full, dlls: bypassDlls, log: debug });
+                            const rb = apiCheckBypass.applyBypass({ gameDir, exePath: detectedRuntimeExe.full, dlls: bypassDlls, log: debug });
                             debug.log(`[${writableAppid}] Steam API check bypass: ${rb.applied ? `applied (${rb.dll})` : `skipped (${rb.reason})`}`);
                           } catch (e) {
                             debug.log(`[${writableAppid}] Steam API check bypass failed => ${e}`);
@@ -1874,14 +1895,15 @@ var app = {
           // ---- Cover art management (re-download / alternate AppID / local image) ----
           const coverGame = list.find((g) => g.appid == appid);
           if (coverGame) {
-            const defaultCoverUrl = () => (coverGame.img && (coverGame.img.portrait || coverGame.img.header)) || null;
+            const coverCacheAppid = String(coverGame.steamappid || appid);
+            const defaultCoverUrl = () => (coverGame.img && (coverGame.img.header || coverGame.img.landscape || coverGame.img.portrait)) || null;
             const refetchDefaultCover = async () => {
               if (EMU_LOCAL_ICON_SOURCES.has(coverGame.source)) {
                 applyCoverBackground(appid, (coverGame.img && coverGame.img.header) || 'none');
                 return;
               }
               const url = defaultCoverUrl();
-              const local = url ? await ipcRenderer.invoke('fetch-icon', url, coverGame.steamappid || appid) : null;
+              const local = url ? await ipcRenderer.invoke('fetch-icon', url, coverCacheAppid) : null;
               applyCoverBackground(appid, local || 'none');
             };
 
@@ -1895,7 +1917,9 @@ var app = {
                     reloadCoverOverrides();
                     // Purge the cached art so fetch-icon actually re-downloads instead of returning the stale file.
                     try {
-                      fs.rmSync(path.join(getUserDataPath(), 'steam_cache', 'icon', String(appid)), { recursive: true, force: true });
+                      for (const id of new Set([String(appid), coverCacheAppid])) {
+                        fs.rmSync(path.join(getUserDataPath(), 'steam_cache', 'icon', id), { recursive: true, force: true });
+                      }
                     } catch {}
                     await refetchDefaultCover();
                   } catch (err) {
@@ -1910,13 +1934,9 @@ var app = {
                 async click() {
                   const alt = await promptText('Steam AppID to pull cover art from:', /^[0-9]+$/.test(String(appid)) ? String(appid) : '');
                   if (!alt || !/^[0-9]+$/.test(alt)) return;
-                  let local = await ipcRenderer.invoke(
-                    'fetch-icon',
-                    `https://cdn.cloudflare.steamstatic.com/steam/apps/${alt}/library_600x900.jpg`,
-                    appid
-                  );
+                  let local = await ipcRenderer.invoke('fetch-icon', `https://cdn.cloudflare.steamstatic.com/steam/apps/${alt}/header.jpg`, appid);
                   if (!local)
-                    local = await ipcRenderer.invoke('fetch-icon', `https://cdn.cloudflare.steamstatic.com/steam/apps/${alt}/header.jpg`, appid);
+                    local = await ipcRenderer.invoke('fetch-icon', `https://cdn.cloudflare.steamstatic.com/steam/apps/${alt}/library_600x900.jpg`, appid);
                   if (!local) {
                     remote.dialog.showMessageBox({ type: 'warning', message: `No Steam cover art found for AppID ${alt}.` });
                     return;
@@ -2401,9 +2421,19 @@ var app = {
         if (fixAllRunning) return;
         const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
         const result = $('#fix-all-result');
-        // Only games that went through emulator detection (hasSteamApiDll flag) with a live install dir —
-        // never touch legit Steam installs.
-        const targets = gameList.filter((g) => g && g.gameDir && typeof g.hasSteamApiDll === 'boolean' && fs.existsSync(g.gameDir));
+        // Only games with a live install dir, a usable appid/schema and an emulator signal —
+        // never touch plain legit Steam installs.
+        const targets = gameList.filter(
+          (g) =>
+            g &&
+            g.gameDir &&
+            /^[0-9]+$/.test(String(g.appid)) &&
+            g.achievement &&
+            Array.isArray(g.achievement.list) &&
+            g.achievement.list.length > 0 &&
+            (g.hasSteamApiDll === true || !!g.steamSettings || g.source === 'GBE Fork' || g.source === 'Goldberg') &&
+            fs.existsSync(g.gameDir)
+        );
         if (targets.length === 0) {
           result.text(fr ? 'Aucun jeu détecté avec un dossier d’installation connu à réparer.' : 'No detected game with a known install folder to fix.');
           return;
@@ -2429,13 +2459,50 @@ var app = {
           const game = targets[i];
           result.text((fr ? 'Réparation' : 'Fixing') + ` ${i + 1} / ${targets.length} — ${game.name}`);
           try {
-            await achievements.autoApplyEmulatorFix({
+            const detectedEmu = goldberg.detectEmulator(game.gameDir);
+            const detectedExe = exeDetect.detect(game.gameDir, game.name || '', { dllPaths: detectedEmu.dll });
+            const setup = await achievements.autoApplyEmulatorFix({
               gameDir: game.gameDir,
               gameName: game.name,
               appid: game.appid,
-              steamSettings: game.steamSettings,
+              steamSettings: game.steamSettings || detectedEmu.steamSettings,
               option: app.config,
+              detectedEmu,
+              detectedExe,
+              skipAdvanced: true,
             });
+            const schema = {
+              name: game.name,
+              achievement: {
+                total: game.achievement && game.achievement.total,
+                list: game.achievement && Array.isArray(game.achievement.list) ? game.achievement.list.map((a) => ({ ...a })) : [],
+              },
+            };
+            const repairDirs = new Set(setup.steamSettingsDirs || []);
+            if (game.steamSettings) repairDirs.add(game.steamSettings);
+            if (detectedEmu.steamSettings) repairDirs.add(detectedEmu.steamSettings);
+            const downloadIcon =
+              app.config.achievement && app.config.achievement.goldbergDownloadIcons
+                ? (() => {
+                    const request = require('request-zero');
+                    return async (url, dir) => {
+                      const r = await request.download(url, dir);
+                      return r && r.path;
+                    };
+                  })()
+                : undefined;
+            for (const steamSettingsDir of repairDirs) {
+              if (!steamSettingsDir) continue;
+              await goldberg.repair({
+                steamSettings: steamSettingsDir,
+                appid: game.appid,
+                schema,
+                downloadIcon,
+                fetchDlc: (id) => steam.getDLCList(id),
+                accountName: app.config.general && app.config.general.username,
+                language: app.config.achievement && app.config.achievement.lang,
+              });
+            }
             fixed++;
           } catch (err) {
             failed++;

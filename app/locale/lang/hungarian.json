@@ -83,6 +83,7 @@
       "souvenir": "Emlék",
       "folder": "Mappák",
       "source": "Forrás",
+      "guide": "Útmutató",
       "advanced": "Speciális"
     },
     "common": {
@@ -481,13 +482,16 @@
         "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini vagy RPCS3.exe fájl található."
       ],
       "add": "Mappa hozzáadása",
+      "smartFind": "Okos keresés",
+      "smartFindHelp": "mentéseket/konfigokat + könyvtárakat talál",
       "library": "Könyvtármappák",
       "libraryInfo": [
         "Válassz egy mappát, amely sok játéktelepítési mappát tartalmaz (pl. D:\\Games, E:\\SteamLibrary).",
         "Az összes benne lévő játékot beolvassa Goldberg/GBE teljesítményekre, még ha soha nem is indították el."
       ],
       "addLibrary": "Könyvtármappa hozzáadása",
-      "generateConfigs": "Konfigurációk generálása"
+      "generateConfigs": "Konfigurációk generálása",
+      "generateConfigsHelp": "teljes vizsgálat + auto javítás, ha engedélyezett"
     },
     "source": {
       "title": "Játékforrások",
@@ -521,6 +525,47 @@
         "name": "Értesítési gyorsítótár importálása",
         "description": "A Watchdog gyorsítótárának importálása újabb teljesítményforrásként"
       }
+    },
+    "guide": {
+      "nav": "Útmutató",
+      "title": "Platform útmutató",
+      "intro": "Mit vizsgál az Achievement Watcher, mely mappák fontosak, és mikor hasznosak a generált emulátor-konfigok.",
+      "quickTitle": "Első lépések",
+      "quick": [
+        "Add hozzá a mentés/konfig mappákat a Beállítások > Mappák alatt, majd kapcsold be a megfelelő forrást a Beállítások > Források alatt.",
+        "Könyvtármappákat használj azokhoz a telepített játékokhoz, amelyek még nem hoztak létre achievement fájlokat.",
+        "A Watchdog csak akkor jelez új változásokat, ha a mappa ismert és a forrás engedélyezve van."
+      ],
+      "steamTitle": "Steam emulátorok",
+      "steam": [
+        "A GBE / Goldberg mentések általában itt vannak: %APPDATA%\\GSE Saves vagy %APPDATA%\\Goldberg SteamEmu Saves.",
+        "A CODEX / RUNE jellegű mentések gyakran itt találhatók: Public Documents\\Steam\\CODEX vagy Public Documents\\Steam\\RUNE.",
+        "A TENOKE, UniverseLAN, SmartSteamEmu, ALI213 és Hoodlum a saját konfig/mentés mappáikból kerül felismerésre."
+      ],
+      "emulatorTitle": "Konzol emulátorok",
+      "emulators": [
+        "Az RPCS3 achievementek a dev_hdd0\\home\\...\\trophy mappából olvashatók az RPCS3 telepítése közelében.",
+        "A shadPS4 trófeák az appadatok game_data/trophy mappáiból olvashatók; megmaradt trófeaadat nem bizonyítja a játék telepítését.",
+        "A Xenia előrehaladás Xbox profilfájlokból, például .gpd fájlokból olvasható."
+      ],
+      "sourcesTitle": "Indítók és források",
+      "sources": [
+        "A Steam nyilvános profil mód listázza a telepített vagy birtokolt Steam játékokat, de a helyi feloldások továbbra is mentésfájlokból jönnek.",
+        "A GOG, Epic, Ubisoft Connect/LumaPlay és EA Desktop külön engedélyezhető a Források alatt.",
+        "A tört EA Desktop telepítések az EADesktopVerbose.log és a tartalék logjai alapján olvashatók."
+      ],
+      "configTitle": "Generált konfigok",
+      "config": [
+        "A jobb kattintásos emulátor-javítás GBE Fork fájlokat, achievement sémákat, DLC-adatokat és indítási segédeket adhat hozzá.",
+        "Az Egyszerű mód gyors és az Achievement Watcher adatait használja; a Haladó generate_emu_config-ot futtat mélyebb Steam adatokhoz.",
+        "A haladó generálás több percig is tarthat, főleg DLC/depot metaadatokkal."
+      ],
+      "troubleshootTitle": "Hibaelhárítás",
+      "troubleshoot": [
+        "Ha hiányzik egy játék, a mappák hozzáadása után vizsgáld újra, majd ellenőrizd a forrás kapcsolóját és a feketelistát.",
+        "Ha hiányoznak az értesítések, ellenőrizd a Windows Fókuszsegédet, és azonos rendszergazdai jogokkal indítsd a játékot/appot.",
+        "A Haladó > Diagnosztika logokat és adatmappákat nyit meg, ha meg kell nézned, mi lett vizsgálva."
+      ]
     },
     "advanced": {
       "maintenanceTitle": "Beállítás és karbantartás",
@@ -613,6 +658,9 @@
     "addSave": "Mentésmappa hozzáadása",
     "smartFind": "Okos lelet",
     "addLibrary": "Könyvtári mappa hozzáadása",
+    "smartFindHint": "mentések + könyvtárak",
+    "addSaveHint": "egy emulátor/forrás",
+    "addLibraryHint": "sok telepített játék",
     "saveList": "Mentés/beállítás mappák",
     "libraryList": "Könyvtári mappák",
     "emptyList": "Semmi sem lett hozzáadva ehhez a munkamenethez.",

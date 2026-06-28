@@ -299,7 +299,7 @@ module.exports.setEmulatorFixedHandler = (fn) => {
 // Exposed so the Settings → Advanced "Fix all games" action can run the same fix chain the
 // per-scan auto-apply uses, over every detected game with a known install folder.
 module.exports.autoApplyEmulatorFix = autoApplyEmulatorFix;
-async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, option, detectedEmu = null, detectedExe = null }) {
+async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, option, detectedEmu = null, detectedExe = null, skipAdvanced = false } = {}) {
   if (!gameDir || !_userDataPath) throw new Error('game folder/user data path unavailable');
   const cfg = option.emulator || {};
   detectedEmu = detectedEmu || goldberg.detectEmulator(gameDir);
@@ -359,10 +359,21 @@ async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, o
   // right-click action. Forcing here could leave the final worker stuck at 98% on a large .7z.
   const dlls = await gbeInstaller.ensureEmulatorDlls({ cacheDir, force: false, log: debug });
   const steamSettingsDirs = [];
+  const wantedArch = (detectedExe && detectedExe.full ? pe.exeArch(detectedExe.full) : 'x64') || 'x64';
+  const runtimeDllDirs = gbeInstaller.runtimeDllDirs({
+    gameDir,
+    dllPaths: detectedEmu.dll,
+    exePath: detectedExe && detectedExe.full,
+    steamSettings,
+    fallbackDir: gameDir,
+  });
+  const runtimeDirKeys = new Set(runtimeDllDirs.map((dir) => path.resolve(dir).toLowerCase()));
 
   // Official GSE setup requires steam_interfaces.txt generated from the ORIGINAL game DLL. Do this
   // before replacement; generateInterfaces also prefers AW's one-time .bak on repeat/manual repairs.
-  const interfaceDlls = detectedEmu.dll.filter((file) => /^steam_api(64)?\.dll$/i.test(path.basename(file)));
+  const interfaceDlls = detectedEmu.dll.filter(
+    (file) => /^steam_api(64)?\.dll$/i.test(path.basename(file)) && runtimeDirKeys.has(path.resolve(path.dirname(file)).toLowerCase())
+  );
   for (const dllPath of interfaceDlls) {
     const dest = path.join(path.dirname(dllPath), 'steam_settings');
     const interfaces = await gbeInstaller.generateInterfaces({ dllPath, steamSettings: dest, dlls, log: debug });
@@ -374,12 +385,13 @@ async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, o
     steamSettings && path.basename(steamSettings).toLowerCase() === 'steam_settings'
       ? path.dirname(steamSettings)
       : gameDir;
-  const dllDirs = detectedEmu.dll.length > 0
-    ? [...new Set(detectedEmu.dll.map((file) => path.dirname(file)))]
-    : [fallbackDllDir];
-  const wantedArch = (detectedExe && detectedExe.full ? pe.exeArch(detectedExe.full) : 'x64') || 'x64';
+  const dllDirs = runtimeDllDirs.length > 0 ? runtimeDllDirs : [fallbackDllDir];
   const wantedFile = gbeInstaller.ARCH[wantedArch] && gbeInstaller.ARCH[wantedArch].file;
-  const hasWantedDll = wantedFile && detectedEmu.dll.some((file) => path.basename(file).toLowerCase() === wantedFile);
+  const hasWantedDll =
+    wantedFile &&
+    detectedEmu.dll.some(
+      (file) => path.basename(file).toLowerCase() === wantedFile && runtimeDirKeys.has(path.resolve(path.dirname(file)).toLowerCase())
+    );
   gbeInstaller.installDlls({ dllDirs, dlls, writeIfMissing: wantedArch, log: debug });
   if (wantedArch && wantedFile && detectedEmu.dll.length > 0 && !hasWantedDll) {
     const exeDir = detectedExe && detectedExe.full ? path.dirname(detectedExe.full) : fallbackDllDir;
@@ -390,15 +402,14 @@ async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, o
   steamSettingsDirs.push(...dllDirs.map((dir) => path.join(dir, 'steam_settings')));
   if (steamSettings) steamSettingsDirs.push(steamSettings);
 
-  // Pre-create the GBE runtime save folder (%APPDATA%\GSE Saves\<appid>) — the standard community step
-  // ("make a folder named after the appid in the emu saves dir"). It makes the game show in AW at 0%
-  // right away (even before its first unlock, and even when the install lives outside AW's scan roots)
-  // and gives the watchdog a folder to watch from the first launch. The emulator fills it on play.
+  // Pre-create the runtime save folders (%APPDATA%\GSE Saves\<appid> for GBE Fork, and
+  // %APPDATA%\Goldberg SteamEmu Saves\<appid> for classic Goldberg). PlayStation ports/repack cracks
+  // are inconsistent about which family they ship, and community guides mention both. Creating both is
+  // harmless after discovery dedupes by appid, and gives the watchdog a folder to watch from launch.
   try {
-    const saveFolder = goldbergSaveFolder('gbe', appid);
-    if (saveFolder) fs.mkdirSync(saveFolder, { recursive: true });
+    for (const saveFolder of goldbergSaveFolders(appid)) fs.mkdirSync(saveFolder, { recursive: true });
   } catch (e) {
-    debug.log(`[${appid}] could not pre-create GSE Saves folder => ${e}`);
+    debug.log(`[${appid}] could not pre-create Goldberg/GBE save folder => ${e}`);
   }
 
   // Optional, opt-in (off by default): SteamAutoCrack's Steam API ownership-check bypass. Drops the
@@ -419,7 +430,7 @@ async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, o
   // would stall discovery. Also do not fail the whole emulator fix if the optional advanced
   // generator times out: the regular GSE install + AW schema/config repair below are enough to make
   // achievements work.
-  if (cfg.steamSettingsMode === 'advanced') {
+  if (cfg.steamSettingsMode === 'advanced' && !skipAdvanced) {
     try {
       const tool = await genEmuConfig.ensureGenerateEmuConfig({
         cacheDir: path.join(_userDataPath, 'cache/gse_emu_config'),
@@ -439,6 +450,8 @@ async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, o
     } catch (err) {
       debug.log(`[${appid}] advanced steam_settings skipped => ${err}`);
     }
+  } else if (cfg.steamSettingsMode === 'advanced' && skipAdvanced) {
+    debug.log(`[${appid}] advanced steam_settings skipped in bulk repair; regular GBE setup + AW schema repair will be applied`);
   }
 
   const refreshedEmu = refreshEmulatorCache(gameDir);
@@ -508,6 +521,10 @@ function goldbergSaveFolder(emulator, appid) {
   if (!appdata) return null;
   const dirName = emulator === 'goldberg' ? 'Goldberg SteamEmu Saves' : 'GSE Saves';
   return path.join(appdata, dirName, String(appid));
+}
+
+function goldbergSaveFolders(appid) {
+  return [goldbergSaveFolder('gbe', appid), goldbergSaveFolder('goldberg', appid)].filter(Boolean);
 }
 
 // Discover Goldberg/GBE games sitting in install folders (Objective 3) and returns brand-new
@@ -1168,6 +1185,8 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
           const dlc = goldberg.writeDlcConfig({ steamSettings, dlcs, unlockAll: true });
           debug.log(`[${appid.appid}] created configs.app.ini (unlock_all=1, ${dlc.count} DLC(s))`);
         }
+        const main = goldberg.writeMainConfig({ steamSettings });
+        if (main && main.changed) debug.log(`[${appid.appid}] updated configs.main.ini (new_app_ticket=1, gc_token=1)`);
         const user = goldberg.writeUserConfig({
           steamSettings,
           accountName: option.general && option.general.username,
@@ -1196,9 +1215,23 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
         resolvedExe = resolvedExe || exeDetect.detect(resolvedGameDir, game.name || '', { dllPaths: resolvedEmu.dll });
         const arch = (resolvedExe && resolvedExe.full && pe.exeArch(resolvedExe.full)) || 'x64';
         const wanted = gbeInstaller.ARCH[arch] && gbeInstaller.ARCH[arch].file;
-        const hasWantedDll = wanted && resolvedEmu.dll.some((file) => path.basename(file).toLowerCase() === wanted);
-        needsRuntimeFix = !!wanted && !hasWantedDll && !!appid.data.steamSettings;
-        runtimeFixReason = needsRuntimeFix ? `missing-${wanted}` : '';
+        const runtimeDirs = gbeInstaller.runtimeDllDirs({
+          gameDir: resolvedGameDir,
+          dllPaths: resolvedEmu.dll,
+          exePath: resolvedExe && resolvedExe.full,
+          steamSettings: appid.data.steamSettings,
+          fallbackDir: resolvedGameDir,
+        });
+        const runtimeDirKeys = new Set(runtimeDirs.map((dir) => path.resolve(dir).toLowerCase()));
+        const wantedDll =
+          wanted &&
+          resolvedEmu.dll.find(
+            (file) => path.basename(file).toLowerCase() === wanted && runtimeDirKeys.has(path.resolve(path.dirname(file)).toLowerCase())
+          );
+        const cacheDir = _userDataPath ? path.join(_userDataPath, 'cache/gse_fork') : null;
+        const hasWantedGbeDll = wantedDll && gbeInstaller.matchesCachedDll(wantedDll, cacheDir, arch);
+        needsRuntimeFix = !!wanted && !!appid.data.steamSettings && !hasWantedGbeDll;
+        runtimeFixReason = needsRuntimeFix ? (wantedDll ? `refresh-${wanted}` : `missing-${wanted}`) : '';
       } catch (err) {
         debug.log(`[${appid.appid}] runtime emulator fix check failed => ${err}`);
       }

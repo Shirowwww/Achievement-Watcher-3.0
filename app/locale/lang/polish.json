@@ -83,6 +83,7 @@
       "souvenir": "Pamiątka",
       "folder": "Foldery",
       "source": "Źródło",
+      "guide": "Przewodnik",
       "advanced": "Zaawansowane"
     },
     "common": {
@@ -481,13 +482,16 @@
         "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini lub RPCS3.exe."
       ],
       "add": "Dodaj folder",
+      "smartFind": "Inteligentne wyszukiwanie",
+      "smartFindHelp": "znajduje zapisy/konfigi + biblioteki",
       "library": "Foldery biblioteki",
       "libraryInfo": [
         "Wybierz folder zawierający wiele folderów instalacyjnych gier (np. D:\\Games, E:\\SteamLibrary).",
         "Wszystkie znajdujące się w nim gry zostaną przeskanowane pod kątem osiągnięć Goldberg/GBE, nawet jeśli nigdy nie zostały uruchomione."
       ],
       "addLibrary": "Dodaj folder biblioteki",
-      "generateConfigs": "Generuj konfiguracje"
+      "generateConfigs": "Generuj konfiguracje",
+      "generateConfigsHelp": "pełne skanowanie + auto-naprawa, jeśli włączona"
     },
     "source": {
       "title": "Źródła gier",
@@ -521,6 +525,47 @@
         "name": "Importuj pamięć podręczną powiadomień",
         "description": "Importuj pamięć podręczną Watchdoga jako kolejne źródło osiągnięć"
       }
+    },
+    "guide": {
+      "nav": "Przewodnik",
+      "title": "Przewodnik po platformach",
+      "intro": "Co skanuje Achievement Watcher, które foldery są ważne i kiedy przydają się wygenerowane konfiguracje emulatorów.",
+      "quickTitle": "Pierwsze kroki",
+      "quick": [
+        "Dodaj foldery zapisów/konfiguracji w Ustawienia > Foldery, potem włącz odpowiednie źródło w Ustawienia > Źródła.",
+        "Użyj folderów bibliotek dla zainstalowanych gier, które nie utworzyły jeszcze plików osiągnięć.",
+        "Watchdog powiadamia o nowych zmianach dopiero wtedy, gdy folder jest znany, a źródło włączone."
+      ],
+      "steamTitle": "Emulatory Steam",
+      "steam": [
+        "Zapisy GBE / Goldberg zwykle są w %APPDATA%\\GSE Saves lub %APPDATA%\\Goldberg SteamEmu Saves.",
+        "Zapisy w stylu CODEX / RUNE często znajdują się w Public Documents\\Steam\\CODEX lub Public Documents\\Steam\\RUNE.",
+        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 i Hoodlum są wykrywane z ich folderów konfiguracji/zapisów."
+      ],
+      "emulatorTitle": "Emulatory konsol",
+      "emulators": [
+        "Osiągnięcia RPCS3 są czytane z dev_hdd0\\home\\...\\trophy obok instalacji RPCS3.",
+        "Trofea shadPS4 są czytane z folderów app data game_data/trophy; pozostałości trofeów nie dowodzą instalacji gry.",
+        "Postęp Xenia jest czytany z plików profilu Xbox, takich jak .gpd."
+      ],
+      "sourcesTitle": "Launchery i źródła",
+      "sources": [
+        "Tryb publicznego profilu Steam wypisuje zainstalowane lub posiadane gry Steam, ale lokalne odblokowania nadal pochodzą z plików zapisów.",
+        "GOG, Epic, Ubisoft Connect/LumaPlay i EA Desktop można włączyć osobno w Źródłach.",
+        "Crackowane instalacje EA Desktop są czytane z EADesktopVerbose.log i jego logów kopii zapasowych."
+      ],
+      "configTitle": "Wygenerowane konfiguracje",
+      "config": [
+        "Naprawa emulatora z menu prawego kliknięcia może dodać pliki GBE Fork, schematy osiągnięć, dane DLC i pomocniki uruchamiania.",
+        "Tryb Prosty jest szybki i używa danych Achievement Watchera; Zaawansowany uruchamia generate_emu_config dla głębszych danych Steam.",
+        "Generowanie zaawansowane może potrwać kilka minut, szczególnie z metadanymi DLC/depot."
+      ],
+      "troubleshootTitle": "Rozwiązywanie problemów",
+      "troubleshoot": [
+        "Jeśli brakuje gry, przeskanuj ponownie po dodaniu folderów, a potem sprawdź przełącznik źródła i czarną listę.",
+        "Jeśli brakuje powiadomień, sprawdź Asystenta skupienia Windows i uruchom grę/app z tymi samymi uprawnieniami administratora.",
+        "Zaawansowane > Diagnostyka otwiera logi i foldery danych, gdy trzeba sprawdzić, co zostało przeskanowane."
+      ]
     },
     "advanced": {
       "maintenanceTitle": "Konfiguracja i konserwacja",
@@ -613,6 +658,9 @@
     "addSave": "Dodaj folder zapisu",
     "smartFind": "Inteligentne znalezisko",
     "addLibrary": "Dodaj folder biblioteki",
+    "smartFindHint": "zapisy + biblioteki",
+    "addSaveHint": "jeden emulator/źródło",
+    "addLibraryHint": "wiele zainstalowanych gier",
     "saveList": "Zapisz/konfiguruj foldery",
     "libraryList": "Foldery biblioteczne",
     "emptyList": "Nic nie dodało tej sesji.",

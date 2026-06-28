@@ -83,6 +83,7 @@
       "souvenir": "記念",
       "folder": "フォルダー",
       "source": "ソース",
+      "guide": "ガイド",
       "advanced": "詳細"
     },
     "common": {
@@ -481,13 +482,16 @@
         "ALI213.ini、valve.ini、hlm.ini、ds.ini、steam_api.ini、SteamConfig.ini、tenoke.ini、UniverseLAN.ini または RPCS3.exe。"
       ],
       "add": "フォルダーを追加",
+      "smartFind": "スマート検索",
+      "smartFindHelp": "セーブ/設定 + ライブラリを検索",
       "library": "ライブラリフォルダー",
       "libraryInfo": [
         "多数のゲームインストールフォルダーを含むフォルダーを選択してください（例：D:\\Games、E:\\SteamLibrary）。",
         "中のすべてのゲームは、一度も起動していなくても Goldberg/GBE 実績がスキャンされます。"
       ],
       "addLibrary": "ライブラリフォルダーを追加",
-      "generateConfigs": "設定を生成"
+      "generateConfigs": "設定を生成",
+      "generateConfigsHelp": "フルスキャン + 有効なら自動修正"
     },
     "source": {
       "title": "ゲームソース",
@@ -521,6 +525,47 @@
         "name": "通知キャッシュをインポート",
         "description": "Watchdog のキャッシュを別の実績ソースとしてインポートします"
       }
+    },
+    "guide": {
+      "nav": "ガイド",
+      "title": "プラットフォームガイド",
+      "intro": "Achievement Watcher がスキャンするもの、重要なフォルダー、生成されたエミュレーター設定が役立つ場面。",
+      "quickTitle": "最初の手順",
+      "quick": [
+        "設定 > フォルダーでセーブ/設定フォルダーを追加し、設定 > ソースで対応するソースを有効にします。",
+        "まだ実績ファイルを作成していないインストール済みゲームには、ライブラリフォルダーを使います。",
+        "Watchdog はフォルダーが認識され、ソースが有効になってから新しい変更だけを通知します。"
+      ],
+      "steamTitle": "Steam エミュレーター",
+      "steam": [
+        "GBE / Goldberg のセーブは通常 %APPDATA%\\GSE Saves または %APPDATA%\\Goldberg SteamEmu Saves にあります。",
+        "CODEX / RUNE 形式のセーブは Public Documents\\Steam\\CODEX または Public Documents\\Steam\\RUNE にあることが多いです。",
+        "TENOKE、UniverseLAN、SmartSteamEmu、ALI213、Hoodlum はそれぞれの設定/セーブフォルダーから検出されます。"
+      ],
+      "emulatorTitle": "コンソールエミュレーター",
+      "emulators": [
+        "RPCS3 の実績は RPCS3 インストール付近の dev_hdd0\\home\\...\\trophy から読み取られます。",
+        "shadPS4 のトロフィーは app data の game_data/trophy フォルダーから読み取られます。残ったトロフィーデータだけではゲームのインストール証明にはなりません。",
+        "Xenia の進行状況は .gpd などの Xbox プロファイルファイルから読み取られます。"
+      ],
+      "sourcesTitle": "ランチャーとソース",
+      "sources": [
+        "Steam 公開プロフィールモードはインストール済みまたは所有済みの Steam ゲームを一覧しますが、ローカル解除は引き続きセーブファイルから取得されます。",
+        "GOG、Epic、Ubisoft Connect/LumaPlay、EA Desktop はソースで個別に有効化できます。",
+        "クラック版 EA Desktop インストールは EADesktopVerbose.log とそのバックアップログから読み取られます。"
+      ],
+      "configTitle": "生成された設定",
+      "config": [
+        "右クリックのエミュレーター修正は GBE Fork ファイル、実績スキーマ、DLC データ、起動ヘルパーを追加できます。",
+        "シンプルモードは高速で Achievement Watcher のデータを使います。詳細モードはより深い Steam データのため generate_emu_config を実行します。",
+        "詳細生成は、特に DLC/depot メタデータがある場合、数分かかることがあります。"
+      ],
+      "troubleshootTitle": "トラブルシューティング",
+      "troubleshoot": [
+        "ゲームが見つからない場合は、フォルダー追加後に再スキャンし、ソースの切り替えとブラックリストを確認します。",
+        "通知が出ない場合は、Windows 集中モードを確認し、ゲーム/app を同じ管理者権限で実行します。",
+        "詳細 > 診断では、何がスキャンされたか確認するためのログとデータフォルダーを開けます。"
+      ]
     },
     "advanced": {
       "maintenanceTitle": "セットアップとメンテナンス",
@@ -613,6 +658,9 @@
     "addSave": "保存フォルダーを追加",
     "smartFind": "スマートな検索",
     "addLibrary": "ライブラリフォルダーを追加",
+    "smartFindHint": "セーブ + ライブラリ",
+    "addSaveHint": "1つのエミュレーター/ソース",
+    "addLibraryHint": "多数のインストール済みゲーム",
     "saveList": "保存/設定フォルダー",
     "libraryList": "ライブラリフォルダー",
     "emptyList": "このセッションには何も追加されませんでした。",

@@ -421,9 +421,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       let userDirList = [];
       $('#settings #dirlist > li').each(function () {
         let dir = $(this).find('.path span').text();
-        let notify = $(this).find('.controls .notify').attr('data-notify') === 'true' ? true : false;
-
-        userDirList.push({ path: dir, notify: notify });
+        userDirList.push({ path: dir, notify: true });
       });
 
       let libraryDirList = [];
@@ -673,13 +671,14 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     // waiting for the 15-min background scan or opening each game manually.
     $('#generate-configs').click(async function () {
       const self = $(this);
+      const result = $('#generate-configs-result');
       self.css('pointer-events', 'none');
       const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
       try {
         // 1) persist the folders currently listed in the UI so the scan uses them
         let userDirList = [];
         $('#settings #dirlist > li').each(function () {
-          userDirList.push({ path: $(this).find('.path span').text(), notify: $(this).find('.controls .notify').attr('data-notify') === 'true' });
+          userDirList.push({ path: $(this).find('.path span').text(), notify: true });
         });
         let libraryDirList = [];
         $('#settings #libdirlist > li').each(function () {
@@ -704,22 +703,41 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           debug.log(e);
         }
         const unconfigured = found.filter((g) => !g.hasSchema).length;
-        remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
-          type: 'info',
+        const autoFixEnabled = app.config?.emulator?.autoApplyNewGames !== false;
+        const detail = fr
+          ? autoFixEnabled
+            ? "Le bouton lance un scan complet maintenant. Pendant ce scan, Achievement Watcher applique l'auto-fix GBE/Goldberg aux jeux détectés qui ont un dossier d'installation connu. Les réparations se font en arrière-plan : relance un scan si un jeu vient juste d'être corrigé et n'apparaît pas encore comme prêt."
+            : "Le bouton lance seulement un scan complet pour détecter les jeux. La réparation automatique est désactivée dans Configuration émulateur > Corriger automatiquement les nouveaux jeux détectés."
+          : autoFixEnabled
+            ? 'This starts a full scan now. During that scan, Achievement Watcher applies the GBE/Goldberg auto-fix to detected games with a known install folder. Repairs run in the background: scan again if a freshly fixed game does not show as ready yet.'
+            : 'This only starts a full detection scan. Automatic repair is disabled in Emulator configuration > Automatically fix newly detected games.';
+        const choice = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+          type: autoFixEnabled ? 'info' : 'warning',
           title: fr ? 'Génération des configs' : 'Generate configs',
           message: fr
-            ? `${found.length} jeu(x) émulé(s) détecté(s) dans tes dossiers — ${unconfigured} à configurer.`
-            : `${found.length} emulated game(s) found in your folders — ${unconfigured} to configure.`,
-          detail: fr
-            ? 'Un scan complet démarre : les configs et succès manquants sont générés automatiquement.'
-            : 'A full scan is starting: missing configs and achievements are generated automatically.',
-          buttons: ['OK'],
+            ? `${found.length} jeu(x) émulé(s) détecté(s) dans tes bibliothèques — ${unconfigured} sans achievements.json.`
+            : `${found.length} emulated game(s) found in your libraries — ${unconfigured} without achievements.json.`,
+          detail,
+          buttons: [fr ? 'Lancer le scan' : 'Start scan', fr ? 'Annuler' : 'Cancel'],
+          defaultId: 0,
+          cancelId: 1,
           noLink: true,
         });
+        if (choice !== 0) return;
 
         // 3) full rescan — discovers the folders and applies the one-shot emulator fix to unconfigured games
+        result.text(
+          fr
+            ? autoFixEnabled
+              ? `Scan lancé — ${unconfigured} jeu(x) sans schema seront réparés si leur dossier d'installation est reconnu.`
+              : "Scan lancé — réparation automatique désactivée, aucun fichier ne sera modifié."
+            : autoFixEnabled
+              ? `Scan started — ${unconfigured} game(s) without schema will be repaired if their install folder is recognized.`
+              : 'Scan started — automatic repair is disabled, no files will be changed.'
+        );
         resetUI();
       } catch (err) {
+        result.text(fr ? `Génération impossible : ${err}` : `Generate configs failed: ${err}`);
         remote.dialog.showMessageBoxSync({ type: 'error', title: 'Unexpected Error', message: 'Error generating configs', detail: `${err}` });
       } finally {
         self.css('pointer-events', 'initial');
@@ -1136,9 +1154,12 @@ function autosaveNotifications() {
 }
 
 function populateUserDirList(option) {
+  let dir = option.dir || option.path || '';
+  if (!dir) return;
+
   let options = {
-    dir: option.dir,
-    notify: option.notify || false,
+    dir,
+    notify: true,
     reverse: option.reverse || false,
   };
 
@@ -1157,16 +1178,11 @@ function populateUserDirList(option) {
   }
 
   let template = `<li>
-                <div class="path"><span>${escapeHtml(options.dir)}</span></div>
+                <div class="path" title="${escapeHtml(options.dir)}"><span>${escapeHtml(options.dir)}</span></div>
                 <div class="controls">
                   <ul>
                     <li class="edit"><i class="fas fa-pen"></i></li>
                     <li class="trash"><i class="fas fa-trash-alt"></i></li>
-                    ${
-                      options.notify
-                        ? '<li class="notify" data-notify="true"><i class="fas fa-bell"></i></li>'
-                        : '<li class="notify" data-notify="false"><i class="fas fa-bell-slash"></i></li>'
-                    }
                   </ul>
                 </div>
               </li>`;
@@ -1186,13 +1202,6 @@ function populateUserDirList(option) {
   elem.find('.controls .trash').click(function () {
     elem.remove();
   });
-  elem.find('.controls .notify').click(function () {
-    if ($(this).attr('data-notify') === 'false') {
-      $(this).attr('data-notify', 'true').html('<i class="fas fa-bell"></i>');
-    } else {
-      $(this).attr('data-notify', 'false').html('<i class="fas fa-bell-slash"></i>');
-    }
-  });
   elem.find('.controls .edit').click(async function () {
     let path = elem.find('.path span').text();
 
@@ -1205,6 +1214,7 @@ function populateUserDirList(option) {
         debug.log(`Editing folder to: ${filePaths}`);
 
         if (await userDir.check(filePaths[0])) {
+          elem.find('.path').attr('title', filePaths[0]);
           elem.find('.path span').text(filePaths[0]);
           elem.find('.path').removeClass('overflow');
           if (elem.find('.path span').width() >= 350) {
@@ -1237,8 +1247,11 @@ function populateUserDirList(option) {
 }
 
 function populateLibraryDirList(option) {
+  let dir = option.dir || option.path || '';
+  if (!dir) return;
+
   let options = {
-    dir: option.dir,
+    dir,
     reverse: option.reverse || false,
   };
 
@@ -1257,7 +1270,7 @@ function populateLibraryDirList(option) {
   }
 
   let template = `<li>
-                <div class="path"><span>${escapeHtml(options.dir)}</span></div>
+                <div class="path" title="${escapeHtml(options.dir)}"><span>${escapeHtml(options.dir)}</span></div>
                 <div class="controls">
                   <ul>
                     <li class="edit"><i class="fas fa-pen"></i></li>
@@ -1291,6 +1304,7 @@ function populateLibraryDirList(option) {
     try {
       if (filePaths) {
         debug.log(`Editing library folder to: ${filePaths}`);
+        elem.find('.path').attr('title', filePaths[0]);
         elem.find('.path span').text(filePaths[0]);
         elem.find('.path').removeClass('overflow');
         if (elem.find('.path span').width() >= 350) {

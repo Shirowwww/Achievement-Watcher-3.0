@@ -83,6 +83,7 @@
       "souvenir": "Anı",
       "folder": "Klasörler",
       "source": "Kaynak",
+      "guide": "Kılavuz",
       "advanced": "Gelişmiş"
     },
     "common": {
@@ -481,13 +482,16 @@
         "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini veya RPCS3.exe."
       ],
       "add": "Klasör ekle",
+      "smartFind": "Akıllı Bul",
+      "smartFindHelp": "kayıtları/configleri + kütüphaneleri bulur",
       "library": "Kütüphane klasörleri",
       "libraryInfo": [
         "Birçok oyun kurulum klasörü içeren bir klasör seç (örn. D:\\Games, E:\\SteamLibrary).",
         "İçindeki tüm oyunlar, hiç başlatılmamış olsalar bile Goldberg/GBE başarımları için taranacak."
       ],
       "addLibrary": "Kütüphane klasörü ekle",
-      "generateConfigs": "Yapılandırmaları oluştur"
+      "generateConfigs": "Yapılandırmaları oluştur",
+      "generateConfigsHelp": "tam tarama + etkinse otomatik düzeltme"
     },
     "source": {
       "title": "Oyun kaynakları",
@@ -521,6 +525,47 @@
         "name": "Bildirim önbelleğini içe aktar",
         "description": "Watchdog'un önbelleğini başka bir başarım kaynağı olarak içe aktar"
       }
+    },
+    "guide": {
+      "nav": "Kılavuz",
+      "title": "Platform kılavuzu",
+      "intro": "Achievement Watcher’ın neleri taradığı, hangi klasörlerin önemli olduğu ve üretilen emülatör configlerinin ne zaman işe yaradığı.",
+      "quickTitle": "İlk adımlar",
+      "quick": [
+        "Ayarlar > Klasörler içinde kayıt/config klasörlerini ekleyin, sonra Ayarlar > Kaynaklar içinde eşleşen kaynağı etkinleştirin.",
+        "Henüz achievement dosyası oluşturmamış kurulu oyunlar için kütüphane klasörlerini kullanın.",
+        "Watchdog yalnızca klasör bilindikten ve kaynak etkinleştikten sonra yeni değişiklikleri bildirir."
+      ],
+      "steamTitle": "Steam emülatörleri",
+      "steam": [
+        "GBE / Goldberg kayıtları genelde %APPDATA%\\GSE Saves veya %APPDATA%\\Goldberg SteamEmu Saves altındadır.",
+        "CODEX / RUNE tarzı kayıtlar çoğu zaman Public Documents\\Steam\\CODEX veya Public Documents\\Steam\\RUNE altındadır.",
+        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 ve Hoodlum kendi config/kayıt klasörlerinden algılanır."
+      ],
+      "emulatorTitle": "Konsol emülatörleri",
+      "emulators": [
+        "RPCS3 achievementleri RPCS3 kurulumunun yakınındaki dev_hdd0\\home\\...\\trophy konumundan okunur.",
+        "shadPS4 kupaları app data game_data/trophy klasörlerinden okunur; kalan kupa verisi oyunun kurulu olduğunu kanıtlamaz.",
+        "Xenia ilerlemesi .gpd gibi Xbox profil dosyalarından okunur."
+      ],
+      "sourcesTitle": "Başlatıcılar ve kaynaklar",
+      "sources": [
+        "Steam herkese açık profil modu kurulu veya sahip olunan Steam oyunlarını listeler, ama yerel açılımlar yine kayıt dosyalarından gelir.",
+        "GOG, Epic, Ubisoft Connect/LumaPlay ve EA Desktop Kaynaklar içinde ayrı ayrı etkinleştirilebilir.",
+        "Crackli EA Desktop kurulumları EADesktopVerbose.log ve yedek loglarından okunur."
+      ],
+      "configTitle": "Üretilen configler",
+      "config": [
+        "Sağ tık emülatör düzeltmesi GBE Fork dosyaları, achievement şemaları, DLC verileri ve başlatma yardımcıları ekleyebilir.",
+        "Basit mod hızlıdır ve Achievement Watcher verilerini kullanır; Gelişmiş mod daha derin Steam verisi için generate_emu_config çalıştırır.",
+        "Gelişmiş üretim, özellikle DLC/depot metadatası varsa birkaç dakika sürebilir."
+      ],
+      "troubleshootTitle": "Sorun giderme",
+      "troubleshoot": [
+        "Bir oyun eksikse klasörleri ekledikten sonra yeniden tarayın, ardından kaynak anahtarını ve kara listeyi kontrol edin.",
+        "Bildirimler eksikse Windows Odak Yardımı’nı kontrol edin ve oyunu/appi eşleşen yönetici haklarıyla çalıştırın.",
+        "Gelişmiş > Tanılama, neyin tarandığını incelemeniz gerektiğinde logları ve veri klasörlerini açar."
+      ]
     },
     "advanced": {
       "maintenanceTitle": "Kurulum ve bakım",
@@ -613,6 +658,9 @@
     "addSave": "Kaydetme klasörü ekle",
     "smartFind": "Akıllı bulma",
     "addLibrary": "Kitaplık klasörü ekle",
+    "smartFindHint": "kayıtlar + kütüphaneler",
+    "addSaveHint": "bir emülatör/kaynak",
+    "addLibraryHint": "çok sayıda kurulu oyun",
     "saveList": "Klasörleri kaydet/yapılandır",
     "libraryList": "Kütüphane klasörleri",
     "emptyList": "Bu oturuma hiçbir şey eklenmedi.",
