@@ -65,6 +65,21 @@ test('root exe wins when steam_api lives in a nested helper folder', () => {
   assert.strictEqual(detected.full, gameExe);
 });
 
+test('base exe wins over shadow -l variant in the same folder', () => {
+  const gameDir = tmpGame('exe-shadow-l');
+  const baseExe = path.join(gameDir, 'tlou-ii.exe');
+  const launchVariant = path.join(gameDir, 'tlou-ii-l.exe');
+  const rootDll = path.join(gameDir, 'steam_api64.dll');
+
+  writeBytes(baseExe, 900);
+  writeBytes(launchVariant, 1000);
+  writeBytes(rootDll, 1);
+
+  const detected = exeDetect.detect(gameDir, 'The Last of Us Part II Remastered', { dllPaths: [rootDll] });
+  assert.ok(detected, 'an executable should be detected');
+  assert.strictEqual(detected.full, baseExe);
+});
+
 test('nested steam_api and nested appid config are anchored to the root game folder', () => {
   const root = tmpGame('goldberg-root-anchor');
   const gameDir = path.join(root, 'Real Game');

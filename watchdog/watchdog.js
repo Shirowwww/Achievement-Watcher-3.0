@@ -31,6 +31,7 @@ const progressMute = require('./util/progressMute.js');
 const rarity = require('./util/rarity.js');
 const steam = require('./steam.js');
 const track = require('./track.js');
+const { mapStatProgressEntries } = require('./util/statProgress.js');
 const playtimeMonitor = require('./playtime/monitor.js');
 const notify = require('./notification/toaster.js');
 const shadps4Watch = require('./console/shadps4Watch.js');
@@ -55,6 +56,83 @@ let runningAppid;
 let overlayOpened = false;
 const overlayHotkey = new GlobalHotkey({ debug });
 let runningGames = [];
+const localProgressSchemaCache = new Map();
+
+function readProgressSchemaFile(file) {
+  try {
+    if (!file || !fs.existsSync(file)) return [];
+    const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+    if (!Array.isArray(parsed)) return [];
+    return parsed.some((item) => item && item.progress && item.progress.value && item.progress.value.operand1) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function findGeneratedProgressSchema(appID) {
+  const root = path.join(process.env['APPDATA'] || '', 'Achievement Watcher', 'Cache', 'gse_emu_config');
+  try {
+    for (const tag of fs.readdirSync(root, { withFileTypes: true })) {
+      if (!tag.isDirectory()) continue;
+      const file = path.join(root, tag.name, 'generate_emu_config', '_OUTPUT', String(appID), 'steam_settings', 'achievements.json');
+      const schema = readProgressSchemaFile(file);
+      if (schema.length > 0) return schema;
+    }
+  } catch {
+    /* cache folder is optional */
+  }
+  return [];
+}
+
+function findLocalProgressSchema(appID, game) {
+  const key = `${appID}:${game && game.gameDir ? game.gameDir : ''}`;
+  if (localProgressSchemaCache.has(key)) return localProgressSchemaCache.get(key);
+
+  const candidates = [];
+  if (game && game.steamSettings) candidates.push(path.join(game.steamSettings, 'achievements.json'));
+  if (game && game.gameDir) candidates.push(path.join(game.gameDir, 'steam_settings', 'achievements.json'));
+  candidates.push(path.join(process.env['APPDATA'] || '', 'Achievement Watcher', 'Cache', 'gse_emu_config', 'latest', 'generate_emu_config', '_OUTPUT', String(appID), 'steam_settings', 'achievements.json'));
+
+  for (const file of candidates) {
+    const schema = readProgressSchemaFile(file);
+    if (schema.length > 0) {
+      localProgressSchemaCache.set(key, schema);
+      return schema;
+    }
+  }
+
+  const generated = findGeneratedProgressSchema(appID);
+  localProgressSchemaCache.set(key, generated);
+  return generated;
+}
+
+function findIndexedGame(appID) {
+  const files = [
+    path.join(process.env['APPDATA'] || '', 'Achievement Watcher', 'steam_cache', 'schema', 'gameIndex.json'),
+    path.join(process.env['APPDATA'] || '', 'Achievement Watcher', 'cfg', 'gameIndex.json'),
+  ];
+  let indexed;
+  for (const file of files) {
+    try {
+      const list = JSON.parse(fs.readFileSync(file, 'utf8'));
+      if (!Array.isArray(list)) continue;
+      const found = list.find((game) => String(game && game.appid) === String(appID));
+      if (found) indexed = found;
+    } catch {
+      /* game index files are optional */
+    }
+  }
+  return indexed;
+}
+
+function mergeIndexedGameMetadata(game, appID) {
+  const indexed = findIndexedGame(appID);
+  if (!indexed || !game) return game;
+  if (!game.binary && indexed.binary) game.binary = indexed.binary;
+  if (!game.icon && indexed.icon) game.icon = indexed.icon;
+  if (!game.name && indexed.name) game.name = indexed.name;
+  return game;
+}
 
 function RegisterOverlayHotkey(hotkey) {
   overlayHotkey.register(hotkey, () => {
@@ -323,6 +401,9 @@ var app = {
               debug.warn(`Achievement parse attempt ${attempt + 1} failed for "${name}": ${err.message || err}`);
             },
           });
+          const progressSchema = findLocalProgressSchema(appID, game);
+          const mappedStats = mapStatProgressEntries(achievements, progressSchema);
+          if (mappedStats > 0) debug.log(`Mapped ${mappedStats} stat progress entr${mappedStats === 1 ? 'y' : 'ies'} through local GBE schema`);
 
           if (achievements.length > 0) {
             let cache = await track.load(appID);
@@ -336,13 +417,25 @@ var app = {
             const rarityMap = game.__rarityMap;
 
             // Boot-seed / anti-avalanche. The first time we ever observe a game there is no persisted
-            // baseline, so a pre-existing save full of already-unlocked achievements would otherwise
-            // fire as a notification storm — emulators that omit unlock timestamps get stamped "now"
-            // (further down), and disableCheckTimestamp folders bypass the time gate entirely. On that
-            // first observation, record the current state as the baseline silently and notify nothing;
-            // every later unlock is diffed against this baseline and notifies normally.
-            const seedOnly = (!Array.isArray(cache) || cache.length === 0) && achievements.filter((a) => a.Achieved).length > 1;
-            if (seedOnly) debug.log(`Boot-seed: first observation of ${appID} (${achievements.filter((a) => a.Achieved).length} pre-unlocked) > seeding baseline silently`);
+            // baseline, so a pre-existing save full of already-unlocked achievements can avalanche.
+            // Surface the latest few unlocks, then record the full current state as the baseline; every
+            // later unlock is diffed against this baseline and notifies normally.
+            const preUnlocked = achievements.filter((a) => a.Achieved);
+            const seedOnly = (!Array.isArray(cache) || cache.length === 0) && preUnlocked.length > 1;
+            const seedNotifyLimit = 3;
+            const seedNotifyNames = new Set(
+              seedOnly
+                ? preUnlocked
+                    .slice()
+                    .sort((a, b) => Number(b.UnlockTime || 0) - Number(a.UnlockTime || 0))
+                    .slice(0, seedNotifyLimit)
+                    .map((a) => String(a.name || '').toUpperCase())
+                : []
+            );
+            if (seedOnly)
+              debug.log(
+                `Boot-seed: first observation of ${appID} (${preUnlocked.length} pre-unlocked) > notifying latest ${seedNotifyNames.size}, then seeding baseline`
+              );
 
             // Platinum (100% completion) detection. Snapshot the prior unlock count so we only fire
             // when *this* scan flips the game from incomplete to fully unlocked, and only when a real
@@ -379,9 +472,14 @@ var app = {
 
                   if (!previous.Achieved && achievements[i].Achieved) {
                     if (!achievements[i].UnlockTime || achievements[i].UnlockTime == 0) achievements[i].UnlockTime = moment().unix();
-                    if (seedOnly) continue; // baseline seeding: record the unlock, suppress the toast
+                    const seedPreview = seedOnly && seedNotifyNames.has(String(achievements[i].name || '').toUpperCase());
+                    if (seedOnly && !seedPreview) continue; // baseline seeding: record the unlock, suppress older toasts
                     let elapsedTime = moment().diff(moment.unix(achievements[i].UnlockTime), 'seconds');
-                    if (options.disableCheckTimestamp || (elapsedTime >= 0 && elapsedTime <= self.options.notification_advanced.timeTreshold)) {
+                    if (
+                      seedPreview ||
+                      options.disableCheckTimestamp ||
+                      (elapsedTime >= 0 && elapsedTime <= self.options.notification_advanced.timeTreshold)
+                    ) {
                       debug.log('Unlocked:' + ach.displayName);
 
                       // Belt-and-suspenders against duplicate toasts: a node-watch double-fire or an
@@ -606,7 +704,7 @@ var app = {
         debug.log('from file cache or remote');
       }
 
-      return game;
+      return mergeIndexedGameMetadata(game, appID);
     } catch (err) {
       throw err;
     }

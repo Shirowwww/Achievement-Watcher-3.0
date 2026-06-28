@@ -27,6 +27,7 @@ const genEmuConfig = require(path.join(appPath, 'genEmuConfig.js'));
 const gameIndex = require(path.join(appPath, 'gameIndex.js'));
 const exeDetect = require(path.join(appPath, 'exeDetect.js'));
 const installState = require(path.join(appPath, 'installState.js'));
+const { applyLocalStatProgress } = require(path.join(appPath, 'statProgress.js'));
 let debug;
 let _userDataPath = null; // cache root for automatic emulator setup and downloaded tools
 
@@ -299,7 +300,7 @@ module.exports.setEmulatorFixedHandler = (fn) => {
 // Exposed so the Settings → Advanced "Fix all games" action can run the same fix chain the
 // per-scan auto-apply uses, over every detected game with a known install folder.
 module.exports.autoApplyEmulatorFix = autoApplyEmulatorFix;
-async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, option, detectedEmu = null, detectedExe = null, skipAdvanced = false } = {}) {
+async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, option, detectedEmu = null, detectedExe = null, skipAdvanced = false, schema = null } = {}) {
   if (!gameDir || !_userDataPath) throw new Error('game folder/user data path unavailable');
   const cfg = option.emulator || {};
   detectedEmu = detectedEmu || goldberg.detectEmulator(gameDir);
@@ -452,6 +453,29 @@ async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, o
     }
   } else if (cfg.steamSettingsMode === 'advanced' && skipAdvanced) {
     debug.log(`[${appid}] advanced steam_settings skipped in bulk repair; regular GBE setup + AW schema repair will be applied`);
+  }
+
+  try {
+    const seedDir =
+      steamSettingsDirs.find((dir) => goldberg.readLocalSchema(dir).length > 0) ||
+      steamSettings ||
+      steamSettingsDirs[0] ||
+      null;
+    const runtime = goldberg.seedRuntimeSave({
+      appid,
+      schema,
+      steamSettings: seedDir,
+      types: ['gbe'],
+    });
+    if (runtime.created.length > 0) {
+      debug.log(`[${appid}] seeded GBE runtime achievements (${runtime.entries} locked entries) at ${runtime.created.map((r) => r.file).join(', ')}`);
+    } else if (runtime.skipped.length > 0) {
+      debug.log(`[${appid}] GBE runtime achievements already present at ${runtime.skipped.map((r) => r.file).join(', ')}`);
+    } else if (runtime.entries === 0) {
+      debug.log(`[${appid}] GBE runtime achievements seed skipped (no schema entries available yet)`);
+    }
+  } catch (e) {
+    debug.log(`[${appid}] could not seed GBE runtime achievements => ${e}`);
   }
 
   const refreshedEmu = refreshEmulatorCache(gameDir);
@@ -1289,6 +1313,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
                 option,
                 detectedEmu: bgEmu,
                 detectedExe: bgExe,
+                schema: bgSchema,
               });
               fixedSteamSettingsDirs = setup.steamSettingsDirs || [];
               fixApplied = true;
@@ -1301,9 +1326,9 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
           }
 
           const schemaRepairDirs = new Set();
-          if (bgNeedsSchema) schemaRepairDirs.add(bgSteamSettings);
+          if (bgNeedsSchema && goldberg.readLocalSchema(bgSteamSettings).length === 0) schemaRepairDirs.add(bgSteamSettings);
           for (const dir of fixedSteamSettingsDirs) {
-            if (dir && (bgNeedsSchema || goldberg.readLocalSchema(dir).length === 0)) schemaRepairDirs.add(dir);
+            if (dir && goldberg.readLocalSchema(dir).length === 0) schemaRepairDirs.add(dir);
           }
 
           if (schemaRepairDirs.size > 0) {
@@ -1334,6 +1359,19 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
                     (summary.dlc ? ` + ${summary.dlc.count} DLC(s)` : '') +
                     (summary.user && summary.user.language ? ` + lang ${summary.user.language}` : '')
                 );
+                try {
+                  const runtime = goldberg.seedRuntimeSave({
+                    appid: bgAppid,
+                    schema: bgSchema,
+                    steamSettings: steamSettingsDir,
+                    types: ['gbe'],
+                  });
+                  if (runtime.created.length > 0) {
+                    debug.log(`[${bgAppid}] seeded GBE runtime achievements (${runtime.entries} locked entries) at ${runtime.created.map((r) => r.file).join(', ')}`);
+                  }
+                } catch (seedErr) {
+                  debug.log(`[${bgAppid}] could not seed GBE runtime achievements after schema repair => ${seedErr}`);
+                }
               } catch (err) {
                 debug.log(`[${bgAppid}] could not auto-write achievements.json schema to ${steamSettingsDir} => ${err}`);
               }
@@ -1431,6 +1469,15 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
           debug.log(`[${appid.appid}] No unlocked achievements yet (0%) in '${appid.data.path}'`);
         } else {
           debug.error(`[${appid.appid}] Error parsing local achievements data => ${err}`);
+        }
+      }
+
+      if (appid.data && appid.data.steamSettings && root && typeof root === 'object') {
+        try {
+          const applied = applyLocalStatProgress(root, goldberg.readLocalSchema(appid.data.steamSettings));
+          if (applied > 0) debug.log(`[${appid.appid}] mapped ${applied} stat progress entr${applied === 1 ? 'y' : 'ies'} through local GBE schema`);
+        } catch (err) {
+          debug.log(`[${appid.appid}] local stat progress mapping failed => ${err}`);
         }
       }
 

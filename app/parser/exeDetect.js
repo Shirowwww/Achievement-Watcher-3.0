@@ -68,6 +68,7 @@ const BONUS_ROOT_DLL_DIR = 20; // root exe + root steam_api wins over nested hel
 const BONUS_ROOT_EXE_WITH_NESTED_DLL = 18; // root exe + nested steam_api belongs to the same install
 const PENALTY_SOFT = 30;
 const PENALTY_DEPTH = 2;
+const PENALTY_SHADOWED_L_SUFFIX = 5; // foo-l.exe next to foo.exe is usually a launcher/helper variant
 
 function normalize(s) {
   return String(s || '')
@@ -168,12 +169,16 @@ function detect(gameDir, gameName, opts = {}) {
   const hasNestedDll = [...dllDirs].some((dir) => dir !== rootDir && dir.startsWith(rootDir + path.sep));
 
   const maxSize = Math.max(...candidates.map((c) => c.size), 1);
+  const basesInSameDir = new Set(candidates.map((c) => `${path.resolve(c.dir).toLowerCase()}|${c.name.replace(/\.exe$/i, '').toLowerCase()}`));
   for (const c of candidates) {
     const base = c.name.replace(/\.exe$/i, '');
     const sim = nameSimilarity(gameName, base);
     const sizeFactor = c.size / maxSize;
-    const soft = SOFT_PENALTY.some((r) => r.test(c.name)) ? PENALTY_SOFT : 0;
     const candidateDir = path.resolve(c.dir).toLowerCase();
+    let soft = SOFT_PENALTY.some((r) => r.test(c.name)) ? PENALTY_SOFT : 0;
+    if (/-l$/i.test(base) && basesInSameDir.has(`${candidateDir}|${base.replace(/-l$/i, '')}`)) {
+      soft += PENALTY_SHADOWED_L_SUFFIX;
+    }
     let dllBonus = 0;
     if (dllDirs.has(candidateDir)) {
       dllBonus = preferRootDll

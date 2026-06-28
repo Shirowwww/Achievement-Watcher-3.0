@@ -3,6 +3,25 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 3.0.5 - 2026-06-29
+
+### Added
+
+- Support for `stats.json` and rich progress-to-stat mappings used by newer GBE Fork / Steamworks games.
+- Automatic seeding of missing GBE runtime achievement state after repair or bulk auto-fix, without overwriting existing runtime progress.
+
+### Changed
+
+- Generated emulator configs can now replace placeholder schemas when they contain richer Steam progress metadata.
+- Goldberg/GBE repair preserves existing rich generated achievement schemas.
+- First watchdog observation of already-unlocked emulator saves now shows only the latest few unlocks before recording the baseline.
+
+### Fixed
+
+- Stat-backed achievements can now map local progress to the real achievement ids in both the app parser and live watchdog.
+- Executable detection now prefers the base executable over same-folder `-l` launcher/helper variants.
+- The settings shortcut for reopening the first-run guide now works even if the onboarding module was not ready yet.
+
 ## 3.0.3 - 2026-06-27
 
 ### Changed

@@ -2461,6 +2461,13 @@ var app = {
           try {
             const detectedEmu = goldberg.detectEmulator(game.gameDir);
             const detectedExe = exeDetect.detect(game.gameDir, game.name || '', { dllPaths: detectedEmu.dll });
+            const schema = {
+              name: game.name,
+              achievement: {
+                total: game.achievement && game.achievement.total,
+                list: game.achievement && Array.isArray(game.achievement.list) ? game.achievement.list.map((a) => ({ ...a })) : [],
+              },
+            };
             const setup = await achievements.autoApplyEmulatorFix({
               gameDir: game.gameDir,
               gameName: game.name,
@@ -2470,14 +2477,8 @@ var app = {
               detectedEmu,
               detectedExe,
               skipAdvanced: true,
+              schema,
             });
-            const schema = {
-              name: game.name,
-              achievement: {
-                total: game.achievement && game.achievement.total,
-                list: game.achievement && Array.isArray(game.achievement.list) ? game.achievement.list.map((a) => ({ ...a })) : [],
-              },
-            };
             const repairDirs = new Set(setup.steamSettingsDirs || []);
             if (game.steamSettings) repairDirs.add(game.steamSettings);
             if (detectedEmu.steamSettings) repairDirs.add(detectedEmu.steamSettings);
@@ -2502,6 +2503,16 @@ var app = {
                 accountName: app.config.general && app.config.general.username,
                 language: app.config.achievement && app.config.achievement.lang,
               });
+              try {
+                goldberg.seedRuntimeSave({
+                  appid: game.appid,
+                  schema,
+                  steamSettings: steamSettingsDir,
+                  types: ['gbe'],
+                });
+              } catch (seedErr) {
+                debug.log(`[fix-all] ${game.appid} (${game.name}) runtime seed failed => ${seedErr}`);
+              }
             }
             fixed++;
           } catch (err) {

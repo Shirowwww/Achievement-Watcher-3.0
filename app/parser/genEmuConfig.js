@@ -336,13 +336,58 @@ async function generate({ tool, appid, login = null, onPrompt, timeout = 300000,
   return { steamSettings, workDir, output, profile: usedProfile };
 }
 
-// Copy a generated steam_settings into a game's steam_settings, without clobbering files AW already
-// wrote well (achievements.json, configs.app/user.ini). Brings in the extra coverage files (depots.txt,
-// supported_languages.txt, branches.json, stats.json, …). Returns the list of files added.
+function readJsonSafe(file) {
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+function hasGeneratedProgressSchema(file) {
+  const data = readJsonSafe(file);
+  return Array.isArray(data) && data.some((item) => item && item.progress && item.progress.value && item.progress.value.operand1);
+}
+
+function progressStatNames(file) {
+  const data = readJsonSafe(file);
+  const names = new Set();
+  if (!Array.isArray(data)) return names;
+  for (const item of data) {
+    const operand = item && item.progress && item.progress.value && item.progress.value.operand1;
+    if (operand) names.add(String(operand));
+  }
+  return names;
+}
+
+function statNames(file) {
+  const data = readJsonSafe(file);
+  const names = new Set();
+  if (!Array.isArray(data)) return names;
+  for (const item of data) if (item && item.name) names.add(String(item.name));
+  return names;
+}
+
+function shouldOverwriteGeneratedFile(src, dest) {
+  const name = path.basename(src).toLowerCase();
+  if (!fs.existsSync(dest)) return true;
+  if (name === 'achievements.json') return hasGeneratedProgressSchema(src) && !hasGeneratedProgressSchema(dest);
+  if (name === 'stats.json') {
+    const required = progressStatNames(path.join(path.dirname(src), 'achievements.json'));
+    if (required.size === 0) return false;
+    const current = statNames(dest);
+    for (const stat of required) if (!current.has(stat)) return true;
+  }
+  return false;
+}
+
+// Copy a generated steam_settings into a game's steam_settings. Keep user identity/config files by
+// default, but prefer generate_emu_config's richer achievements/stats schema when it contains Steam's
+// real progress-to-stat mapping (critical for newer PSPC/Steamworks games such as TLOU2).
 function mergeIntoGame(srcSteamSettings, destSteamSettings, { overwrite = false } = {}) {
   if (!fs.existsSync(srcSteamSettings)) return [];
   fs.mkdirSync(destSteamSettings, { recursive: true });
-  const keep = new Set(['achievements.json', 'configs.app.ini', 'configs.user.ini', 'configs.main.ini', 'configs.overlay.ini']);
+  const keep = new Set(['configs.user.ini', 'configs.main.ini', 'configs.overlay.ini']);
   const added = [];
   const walk = (relDir) => {
     const from = path.join(srcSteamSettings, relDir);
@@ -352,9 +397,11 @@ function mergeIntoGame(srcSteamSettings, destSteamSettings, { overwrite = false 
         walk(rel);
       } else {
         const dest = path.join(destSteamSettings, rel);
-        if (!overwrite && (fs.existsSync(dest) || keep.has(entry.name.toLowerCase()))) continue;
+        const src = path.join(srcSteamSettings, rel);
+        if (!overwrite && keep.has(entry.name.toLowerCase())) continue;
+        if (!overwrite && fs.existsSync(dest) && !shouldOverwriteGeneratedFile(src, dest)) continue;
         fs.mkdirSync(path.dirname(dest), { recursive: true });
-        fs.copyFileSync(path.join(srcSteamSettings, rel), dest);
+        fs.copyFileSync(src, dest);
         added.push(rel);
       }
     }

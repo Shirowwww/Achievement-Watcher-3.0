@@ -48,6 +48,17 @@ const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-gbe-backup-'));
     assert.ok(repair.backupDir, 'repair should preserve the schema it replaces');
     assert.strictEqual(fs.readFileSync(path.join(repair.backupDir, 'achievements.json'), 'utf8'), '[{"name":"OLD"}]');
     assert.strictEqual(JSON.parse(fs.readFileSync(path.join(steamSettings, 'achievements.json'), 'utf8'))[0].name, 'NEW');
+    fs.writeFileSync(
+      path.join(steamSettings, 'achievements.json'),
+      JSON.stringify([{ name: 'RICH', progress: { max_val: 1, value: { operation: 'statvalue', operand1: 'real_stat' } } }])
+    );
+    const richRepair = await goldberg.repair({
+      steamSettings,
+      appid: '480',
+      schema: { achievement: { list: [{ name: 'RICH', displayName: 'Rich', description: '', hidden: 0 }] } },
+    });
+    assert.strictEqual(richRepair.preservedRichSchema, true, 'repair should preserve a generated progress-aware schema');
+    assert.ok(JSON.parse(fs.readFileSync(path.join(steamSettings, 'achievements.json'), 'utf8'))[0].progress, 'rich schema should not be overwritten');
     console.log('PASS: portable GBE backup and non-destructive repair');
 
     // DLC + user config: repair writes configs.app.ini (unlock_all + the fetched id=name list) and
@@ -106,6 +117,38 @@ const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-gbe-backup-'));
 
     const complete = goldberg.diagnose({ gameDir, appid: '480', schema: { achievement: { list: [{ name: 'A' }] } } });
     assert.ok(!complete.issues.some((i) => i.code === 'NO_DLC_CONFIG' || i.code === 'NO_USER_CONFIG' || i.code === 'NO_NEW_APP_TICKET' || i.code === 'NO_GC_TOKEN'));
+
+    fs.writeFileSync(
+      path.join(steamSettings, 'achievements.json'),
+      JSON.stringify([
+        { name: 'ACH_PROGRESS', progress: { max_val: 5, value: { operation: 'statvalue', operand1: 'stat_progress' } } },
+        { name: 'ACH_SIMPLE' },
+      ])
+    );
+    const savesRoot = path.join(temp, 'GSE Saves');
+    const runtimeSeed = goldberg.seedRuntimeSave({
+      appid: '480',
+      steamSettings,
+      savesRoots: [{ type: 'gbe', root: savesRoot }],
+    });
+    const runtimeFile = path.join(savesRoot, '480', 'achievements.json');
+    assert.strictEqual(runtimeSeed.entries, 2, 'runtime seed should use the local steam_settings schema');
+    assert.strictEqual(runtimeSeed.created.length, 1, 'runtime seed should create a missing GBE achievements runtime');
+    assert.ok(fs.existsSync(path.join(savesRoot, '480', 'stats')), 'runtime seed should pre-create GBE stats dir');
+    const runtime = JSON.parse(fs.readFileSync(runtimeFile, 'utf8'));
+    assert.deepStrictEqual(runtime.ACH_PROGRESS, { earned: false, earned_time: 0, max_progress: 5, progress: 0 });
+    assert.deepStrictEqual(runtime.ACH_SIMPLE, { earned: false, earned_time: 0, max_progress: 1, progress: 0 });
+    runtime.ACH_SIMPLE.earned = true;
+    runtime.ACH_SIMPLE.earned_time = 123;
+    fs.writeFileSync(runtimeFile, JSON.stringify(runtime, null, 2));
+    const runtimeSeedAgain = goldberg.seedRuntimeSave({
+      appid: '480',
+      steamSettings,
+      savesRoots: [{ type: 'gbe', root: savesRoot }],
+    });
+    assert.strictEqual(runtimeSeedAgain.created.length, 0, 'runtime seed must not overwrite an existing runtime file');
+    assert.strictEqual(JSON.parse(fs.readFileSync(runtimeFile, 'utf8')).ACH_SIMPLE.earned_time, 123, 'existing runtime progress must survive');
+    console.log('PASS: GBE runtime seed creates missing achievements state without clobbering progress');
 
     // Merge, don't clobber: a second pass with a curated DLC entry keeps the earlier ones.
     await goldberg.writeDlcConfig({ steamSettings, dlcs: [{ appid: 333, name: 'DLC Three' }] });

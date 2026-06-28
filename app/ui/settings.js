@@ -30,6 +30,58 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
 (function ($, window, document) {
   $(function () {
+    function forceShowOnboardingDom() {
+      $('#settings .box').hide();
+      $('#settings').hide();
+      if ($('title-bar')[0]) $('title-bar')[0].inSettings = false;
+      try {
+        const langs = require(path.join(appPath, 'locale/uiLanguages.js'));
+        const current = app.config?.achievement?.lang || 'english';
+        const selector = $('#onboard-language');
+        if (selector.length && selector.children().length === 0) {
+          for (const language of langs.all()) {
+            selector.append(
+              $('<option>')
+                .attr('value', language.api)
+                .attr('title', language.displayName)
+                .text(language.native || language.displayName)
+            );
+          }
+        }
+        if (selector.length) selector.val(langs.has(current) ? current : 'english');
+      } catch (err) {
+        debug.log(`fallback onboarding language fill failed: ${err}`);
+      }
+      $('#onboarding').attr('aria-hidden', 'false').show();
+      $('.onboarding-step').removeClass('active');
+      $(".onboarding-step[data-step='0']").addClass('active');
+      $('.onboarding-steps button').removeClass('active');
+      $(".onboarding-steps button[data-step='0']").addClass('active');
+      $('#onboarding-prev').prop('disabled', true);
+    }
+
+    function requestOnboardingOpen() {
+      window.__awPendingOnboardingOpen = true;
+      if (typeof window.openAchievementWatcherOnboarding === 'function') {
+        window.__awPendingOnboardingOpen = false;
+        window.openAchievementWatcherOnboarding(true);
+        setTimeout(() => {
+          if (!$('#onboarding').is(':visible')) forceShowOnboardingDom();
+        }, 0);
+        return;
+      }
+      window.dispatchEvent(new CustomEvent('aw-open-onboarding', { detail: { force: true } }));
+      setTimeout(() => {
+        if (typeof window.openAchievementWatcherOnboarding === 'function') {
+          window.__awPendingOnboardingOpen = false;
+          window.openAchievementWatcherOnboarding(true);
+        } else {
+          debug.log('onboarding open requested before onboarding module was ready');
+        }
+        if (!$('#onboarding').is(':visible')) forceShowOnboardingDom();
+      }, 80);
+    }
+
     function normalizeKey(e) {
       const key = e.key;
       if (key === ' ') return 'Space';
@@ -51,6 +103,24 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         $(this).closest('li').toggleClass('is-on', $(this).val() === 'true').toggleClass('is-off', $(this).val() === 'false');
       });
     }
+
+    $('#btn-onboarding-open')
+      .off('click.awOnboardingOpen')
+      .on('click.awOnboardingOpen', function (event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        requestOnboardingOpen();
+      });
+
+    const captureOnboardingOpen = (event) => {
+        const target = event.target && event.target.closest ? event.target.closest('#btn-onboarding-open, .onboarding-settings-row .action-right') : null;
+        if (!target) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        requestOnboardingOpen();
+    };
+    document.addEventListener('pointerdown', captureOnboardingOpen, true);
+    document.addEventListener('mousedown', captureOnboardingOpen, true);
 
     $('title-bar').on('open-settings', function () {
       this.inSettings = true;

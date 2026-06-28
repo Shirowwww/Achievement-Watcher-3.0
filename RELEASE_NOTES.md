@@ -1,15 +1,16 @@
-# 3.0.3
+# 3.0.5
 
-Small stability release focused on startup reliability, folder detection and settings cleanup.
+Stability and emulator compatibility release focused on GBE Fork progress tracking, safer repairs and smoother first-run recovery.
 
 ## Changes
 
-- Improved automatic detection of Steam emulator save folders and common library locations.
-- Better first-run and Smart Find scanning for save folders and game libraries.
-- More reliable recognition of app-id folders used by common emulators.
-- Reorganized settings into clearer sections with an expanded platform guide.
-- Small build, installer and configuration cleanups.
+- Added support for `stats.json` progress mappings used by newer GBE Fork / Steamworks games.
+- Preserved rich generated `achievements.json` schemas during repairs instead of replacing them with simpler schemas.
+- Seeded missing GBE runtime achievement state so repaired games can start tracking from a clean 0% baseline without overwriting existing progress.
+- Improved live watchdog mapping for stat-backed achievements and limited first-observation notification bursts to the newest unlocks.
+- Improved executable detection when launcher/helper variants sit beside the real game executable.
+- Made the settings button for reopening the first-run guide more reliable.
 
 ## Download
 
-Download `Achievement.Watcher.Setup.3.0.3.exe` from this release.
+Download `Achievement.Watcher.Setup.3.0.5.exe` from this release.

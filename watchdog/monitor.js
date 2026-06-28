@@ -15,15 +15,16 @@ const loadRegedit = () => regeditPromise || (regeditPromise = import('regodit/pr
 
 const files = {
   achievement: [
-    'achievements.ini',
-    'achievements.json',
-    'achiev.ini',
-    'stats.ini',
-    'Achievements.Bin',
-    'achieve.dat',
-    'Achievements.ini',
-    'stats.bin',
-    'user_stats.ini',
+      'achievements.ini',
+      'achievements.json',
+      'achiev.ini',
+      'stats.ini',
+      'Achievements.Bin',
+      'achieve.dat',
+      'Achievements.ini',
+      'stats.bin',
+      'user_stats.ini',
+      'stats.json',
   ],
   steamEmu: ['ALI213.ini', 'valve.ini', 'hlm.ini', 'ds.ini', 'steam_api.ini', 'SteamConfig.ini', 'tenoke.ini', 'UniverseLAN.ini'],
 };
@@ -48,11 +49,11 @@ module.exports.getFolders = async (userDir_file) => {
     },
     {
       dir: path.join(process.env['APPDATA'], 'Goldberg SteamEmu Saves'),
-      options: { recursive: true, filter: /([0-9]+)/, file: [files.achievement[1], files.achievement[0]] }, //keeping "achievements.ini" [0] for backward compatibility with custom goldberg emu build
+      options: { recursive: true, filter: /([0-9]+)/, file: [files.achievement[1], files.achievement[9], files.achievement[0]] }, //keeping "achievements.ini" [0] for backward compatibility with custom goldberg emu build
     },
     {
       dir: path.join(process.env['APPDATA'], 'GSE Saves'),
-      options: { recursive: true, filter: /([0-9]+)/, file: [files.achievement[1], files.achievement[0]] }, //keeping "achievements.ini" [0] for backward compatibility with custom goldberg emu build
+      options: { recursive: true, filter: /([0-9]+)/, file: [files.achievement[1], files.achievement[9], files.achievement[0]] }, //keeping "achievements.ini" [0] for backward compatibility with custom goldberg emu build
     },
     {
       dir: path.join(process.env['APPDATA'], 'EMPRESS'),
@@ -382,7 +383,7 @@ module.exports.parse = async (filePath) => {
               local[achievement] === '1'
                 ? true
                 : false,
-            CurProgress: local[achievement].CurProgress || local[achievement].progress || 0,
+            CurProgress: local[achievement].CurProgress || local[achievement].progress || local[achievement].value || local[achievement].Value || 0,
             MaxProgress: local[achievement].MaxProgress || local[achievement].max_progress || 0,
             UnlockTime:
               local[achievement].UnlockTime ||

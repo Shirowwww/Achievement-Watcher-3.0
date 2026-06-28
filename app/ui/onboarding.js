@@ -1,6 +1,6 @@
 'use strict';
 
-const fs = require('fs');
+const onboardingFs = require('fs');
 const merge = require('deepmerge');
 const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avatar.js'));
 const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
@@ -23,9 +23,9 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     if (onboardingTextCache.has(lang)) return onboardingTextCache.get(lang);
 
     try {
-      const english = JSON.parse(fs.readFileSync(path.join(appPath, 'locale/lang/english.json'), 'utf8')).onboarding || {};
+      const english = JSON.parse(onboardingFs.readFileSync(path.join(appPath, 'locale/lang/english.json'), 'utf8')).onboarding || {};
       const requested =
-        lang === 'english' ? english : JSON.parse(fs.readFileSync(path.join(appPath, `locale/lang/${lang}.json`), 'utf8')).onboarding || {};
+        lang === 'english' ? english : JSON.parse(onboardingFs.readFileSync(path.join(appPath, `locale/lang/${lang}.json`), 'utf8')).onboarding || {};
       const localized = merge(english, requested, {
         arrayMerge: (dest, src) => src,
         isEmpty: (a) => a === null || a === '',
@@ -613,9 +613,17 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
   }
 
   window.openAchievementWatcherOnboarding = show;
+  window.addEventListener('aw-open-onboarding', (event) => {
+    window.__awPendingOnboardingOpen = false;
+    show(event.detail && event.detail.force !== false);
+  });
 
   $(function () {
     applyText();
+    if (window.__awPendingOnboardingOpen) {
+      window.__awPendingOnboardingOpen = false;
+      setTimeout(() => show(true), 0);
+    }
     $('#onboarding-prev').on('click', () => showStep(step - 1));
     $('#onboarding-next').on('click', () => {
       if (step === STEP_COUNT - 1) finish();

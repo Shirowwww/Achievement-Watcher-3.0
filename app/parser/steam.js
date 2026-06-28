@@ -261,6 +261,7 @@ module.exports.getAchievementsFromFile = async (filePath) => {
     const files = [
       'achievements.ini',
       'achievements.json',
+      'stats.json',
       'achiev.ini',
       'stats.ini',
       'Achievements.Bin',

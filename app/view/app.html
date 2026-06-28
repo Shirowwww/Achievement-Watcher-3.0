@@ -355,7 +355,7 @@
                   <li class="hasHelper onboarding-settings-row">
                     <div class="left"><i class="fas fa-route"></i> <span id="onboarding-settings-label">First-run guide</span></div>
                     <div class="right action-right">
-                      <button type="button" id="btn-onboarding-open" class="inline-action-btn" onclick="if (window.openAchievementWatcherOnboarding) { window.openAchievementWatcherOnboarding(true); return false; }"><i class="fas fa-play-circle"></i> <span>Open guide</span></button>
+                      <button type="button" id="btn-onboarding-open" class="inline-action-btn" onclick="if (window.openAchievementWatcherOnboarding) { window.openAchievementWatcherOnboarding(true); } else { var s = document.getElementById('settings'); var o = document.getElementById('onboarding'); if (s) s.style.display = 'none'; if (o) { o.style.display = 'block'; o.setAttribute('aria-hidden', 'false'); } } return false;"><i class="fas fa-play-circle"></i> <span>Open guide</span></button>
                     </div>
                     <div class="help" id="onboarding-settings-help">Reopen the setup guide for API key, profile, folders, sources, and notifications.</div>
                   </li>

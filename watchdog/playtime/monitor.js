@@ -220,6 +220,8 @@ async function init() {
       const playing = Object.assign(game, {
         pids: new Set([pid]),
         timer: new Timer(),
+        exePath: filepath,
+        gameDir: path.parse(filepath).dir,
       });
       debug.log(playing);
 

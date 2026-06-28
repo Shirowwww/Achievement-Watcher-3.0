@@ -300,6 +300,20 @@ function buildAchievementsJson(schema, imagePrefix = 'images') {
   }));
 }
 
+function hasRichProgressSchema(steamSettings, schema) {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(path.join(steamSettings, 'achievements.json'), 'utf8'));
+    if (!Array.isArray(parsed)) return false;
+    if (!parsed.some((item) => item && item.progress && item.progress.value && item.progress.value.operand1)) return false;
+    const expected = (schema && schema.achievement && Array.isArray(schema.achievement.list) && schema.achievement.list) || [];
+    if (expected.length === 0) return true;
+    const names = new Set(parsed.filter((item) => item && item.name != null).map((item) => String(item.name).toUpperCase()));
+    return expected.every((item) => item && item.name != null && names.has(String(item.name).toUpperCase()));
+  } catch {
+    return false;
+  }
+}
+
 // Default runtime save roots, newest emulator first. GBE Fork writes to GSE Saves; classic Goldberg
 // to "Goldberg SteamEmu Saves". Both keep one <appid>/ subfolder with an achievements.json holding
 // only the unlock STATE ({ "<apiname>": { "earned": true, "earned_time": ... } }) — this is separate
@@ -339,6 +353,69 @@ function inspectSaveState(appid, savesRoots = defaultSavesRoots()) {
     break;
   }
   return state;
+}
+
+function schemaAchievementsForRuntime({ schema, steamSettings } = {}) {
+  const local = readLocalSchema(steamSettings);
+  if (local.length > 0) return local;
+  return (schema && schema.achievement && Array.isArray(schema.achievement.list) && schema.achievement.list) || [];
+}
+
+function runtimeMaxProgress(achievement) {
+  const raw =
+    achievement &&
+    (achievement.max_progress ??
+      achievement.maxProgress ??
+      (achievement.progress && (achievement.progress.max_val ?? achievement.progress.max ?? achievement.progress.maxValue)));
+  const value = Number(raw);
+  return Number.isFinite(value) && value > 0 ? value : 1;
+}
+
+function buildRuntimeAchievementsState({ schema, steamSettings } = {}) {
+  const state = {};
+  for (const achievement of schemaAchievementsForRuntime({ schema, steamSettings })) {
+    if (!achievement || achievement.name == null) continue;
+    const name = String(achievement.name);
+    if (!name) continue;
+    state[name] = {
+      earned: false,
+      earned_time: 0,
+      max_progress: runtimeMaxProgress(achievement),
+      progress: 0,
+    };
+  }
+  return state;
+}
+
+function seedRuntimeSave({ appid, schema, steamSettings, savesRoots = defaultSavesRoots(), types = ['gbe'] } = {}) {
+  const summary = { appid: appid != null ? String(appid) : null, entries: 0, roots: [], created: [], skipped: [] };
+  if (summary.appid == null) return summary;
+
+  const state = buildRuntimeAchievementsState({ schema, steamSettings });
+  summary.entries = Object.keys(state).length;
+  if (summary.entries === 0) return summary;
+
+  const wantedTypes = new Set((Array.isArray(types) ? types : [types]).filter(Boolean));
+  for (const rootInfo of savesRoots || []) {
+    if (!rootInfo || !rootInfo.root) continue;
+    const type = rootInfo.type || 'gbe';
+    if (wantedTypes.size > 0 && !wantedTypes.has(type)) continue;
+
+    const folder = path.join(rootInfo.root, summary.appid);
+    const file = path.join(folder, 'achievements.json');
+    summary.roots.push({ type, folder, file });
+    fs.mkdirSync(folder, { recursive: true });
+    if (type === 'gbe') fs.mkdirSync(path.join(folder, 'stats'), { recursive: true });
+
+    if (fs.existsSync(file)) {
+      summary.skipped.push({ type, file, reason: 'exists' });
+      continue;
+    }
+
+    fs.writeFileSync(file, JSON.stringify(state, null, 2));
+    summary.created.push({ type, file });
+  }
+  return summary;
 }
 
 /*
@@ -773,12 +850,13 @@ async function repair({
   fs.mkdirSync(steamSettings, { recursive: true });
 
   const achievementsJson = buildAchievementsJson(schema, imagePrefix);
-  const summary = { steamSettings, achievementsJson, wroteAppId: false, backupDir: null, icons: { downloaded: 0, failed: 0, skipped: 0 }, dlc: null, main: null, user: null };
+  const preserveRichSchema = hasRichProgressSchema(steamSettings, schema);
+  const summary = { steamSettings, achievementsJson, preservedRichSchema: preserveRichSchema, wroteAppId: false, backupDir: null, icons: { downloaded: 0, failed: 0, skipped: 0 }, dlc: null, main: null, user: null };
 
   // A manual repair can replace a malformed or incomplete schema. Keep the previous files beside
   // steam_settings before changing them; missing files need no backup and the normal auto-repair
   // therefore stays quiet for newly detected games.
-  const filesToReplace = [path.join(steamSettings, 'achievements.json')];
+  const filesToReplace = preserveRichSchema ? [] : [path.join(steamSettings, 'achievements.json')];
   if (writeAppId && appid != null) filesToReplace.push(path.join(steamSettings, 'steam_appid.txt'));
   if (writeDlc) filesToReplace.push(path.join(steamSettings, 'configs.app.ini'));
   if (writeMain) filesToReplace.push(path.join(steamSettings, 'configs.main.ini'));
@@ -814,7 +892,9 @@ async function repair({
     }
   }
 
-  fs.writeFileSync(path.join(steamSettings, 'achievements.json'), JSON.stringify(achievementsJson, null, 2));
+  if (!preserveRichSchema) {
+    fs.writeFileSync(path.join(steamSettings, 'achievements.json'), JSON.stringify(achievementsJson, null, 2));
+  }
 
   if (writeAppId && appid != null) {
     const appidTxt = path.join(steamSettings, 'steam_appid.txt');
@@ -1056,6 +1136,8 @@ module.exports = {
   writeUserConfig,
   diagnose,
   inspectSaveState,
+  buildRuntimeAchievementsState,
+  seedRuntimeSave,
   findCompatibleGames,
   readLocalSchema,
   findGameExe,
