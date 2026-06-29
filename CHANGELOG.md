@@ -3,6 +3,12 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 3.0.7 - 2026-06-29
+
+### Fixed
+
+- Notifications now show the right primary image: the achievement's own icon for unlock and progress notifications, and the game's icon for playtime. Overlay and toast transports, the Shirow preset, and the in-app test notifications all follow the same rule.
+
 ## 3.0.6 - 2026-06-29
 
 ### Added

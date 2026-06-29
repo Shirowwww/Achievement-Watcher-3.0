@@ -991,14 +991,20 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const volRaw = parseInt($('#option_overlayVolume').val(), 10);
       const durRaw = $('#option_overlayDuration').val();
       const durSec = durRaw === 'auto' || !durRaw ? 0 : parseInt(durRaw, 10) || 0;
+      const achievementIcon = path.join(appPath, 'resources/img/achievement.svg');
+      const gameIcon = path.join(appPath, 'resources/icon/icon.png');
       return Object.assign(
         {
           preset,
+          notificationType: kind === 'toast' ? 'achievement' : kind,
           position: $('#option_overlayPosition').val() || 'center-bottom',
           scale: parseFloat($('#option_overlayScale').val()) || 1,
           volume: Number.isFinite(volRaw) ? volRaw : 100,
           durationMs: durSec > 0 ? durSec * 1000 : undefined,
-          iconPath: path.join(appPath, 'resources/img/achievement.svg'),
+          iconPath: kind === 'playtime' ? gameIcon : achievementIcon,
+          achievementIconPath: achievementIcon,
+          gameIconPath: gameIcon,
+          progress: kind === 'progress' ? { current: 3, max: 10, percent: 30 } : null,
           // Playtime notifications never play a sound, so its test mirrors that behaviour.
           soundPath: kind === 'playtime' ? '' : resolveSoundFile(sound),
         },

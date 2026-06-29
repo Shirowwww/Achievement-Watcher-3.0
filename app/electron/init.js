@@ -1950,6 +1950,13 @@ function normalizeNotificationProgress(args) {
   return { current, max, percent };
 }
 
+function resolvePrimaryNotificationIcon({ notificationType, iconPath, gameIconPath, imagePath, progress }) {
+  const type = String(notificationType || '').toLowerCase();
+  if (type === 'playtime') return iconPath || gameIconPath || imagePath || '';
+  if (progress) return iconPath || gameIconPath || imagePath || '';
+  return iconPath || imagePath || gameIconPath || '';
+}
+
 // Build an overlay notification from the CLI args the Watchdog passes to a `--wintype=notification`
 // process. This process never runs startEngines (that's the main-window path), so configJS is null
 // here — load the user's overlay settings (preset/position/scale/sound) directly from options.ini so
@@ -2001,6 +2008,10 @@ async function enqueueNotificationFromArgs(args) {
     }
   }
 
+  const progress = normalizeNotificationProgress(args);
+  const notificationType = String(args.notificationType || (progress ? 'progress' : '') || '').toLowerCase();
+  const primaryIconPath = resolvePrimaryNotificationIcon({ notificationType, iconPath, gameIconPath, imagePath, progress });
+
   // Playtime (and any caller passing --silent) must never play the overlay sound.
   const silent = !!args.silent;
   const langFr = String((cfg && cfg.achievement && cfg.achievement.lang) || '')
@@ -2023,10 +2034,12 @@ async function enqueueNotificationFromArgs(args) {
     displayName,
     description: args.description != null ? String(args.description) : '',
     rarityPercent: Number.isFinite(Number(args.rarityPercent)) ? Number(args.rarityPercent) : null,
-    iconPath,
+    notificationType,
+    iconPath: primaryIconPath,
+    achievementIconPath: iconPath,
     gameIconPath,
     imagePath,
-    progress: normalizeNotificationProgress(args),
+    progress,
     soundPath: silent ? '' : resolveNotificationSound(ov.notificationSound),
   });
 }

@@ -97,9 +97,11 @@ module.exports = async (message, option = {}) => {
         try {
           const watchdog = require('../watchdog.js');
           const progress = normalizeProgress(message.progress);
+          const notificationType = message.notificationType || (progress ? 'progress' : 'achievement');
           const overlayArgs = [
             '--wintype=notification',
             `--appid=${message.appid || ''}`,
+            `--notificationType=${notificationType}`,
             `--gameDisplayName=${message.gameDisplayName || ''}`,
             `--displayName=${message.achievementDisplayName || ''}`,
             `--description=${message.achievementDescription || ''}`,

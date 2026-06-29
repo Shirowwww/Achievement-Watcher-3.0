@@ -206,12 +206,12 @@
           detail.textContent = data?.description || "";
           applyProgress(data);
           const imageSource =
-            data?.gameIconPath ||
-            data?.gameIcon ||
+            data?.iconPath ||
+            data?.icon ||
             data?.imagePath ||
             data?.image ||
-            data?.iconPath ||
-            data?.icon;
+            data?.gameIconPath ||
+            data?.gameIcon;
           if (imageSource) {
             icon.src = toImageUrl(imageSource);
           }
