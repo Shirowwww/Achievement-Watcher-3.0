@@ -208,7 +208,36 @@ let _claimedDirs = new Set();
 // a fresh scan. Per-game unlock state is always read fresh, so a cache hit never hides a new unlock.
 let _discoverCache = null; // { key, time, appidList, folderIndex, claimedDirs }
 const DISCOVER_TTL_MS = 60000;
-const GAME_LOAD_TIMEOUT_MS = 45000;
+const GAME_LOAD_TIMEOUT_MS = 30000;
+
+async function buildDiscoverCacheKey(option) {
+  try {
+    return JSON.stringify({
+      src: option.achievement_source,
+      main: option.steam.main,
+      udirs: (await userDir.get()).map((d) => d.path),
+      ldirs: await libraryDirs.get(),
+      bl: await blacklist.get(),
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function discoverWithCache(option, steamAccFilter) {
+  const cacheKey = await buildDiscoverCacheKey(option);
+  if (cacheKey && _discoverCache && _discoverCache.key === cacheKey && Date.now() - _discoverCache.time < DISCOVER_TTL_MS) {
+    _folderIndex = _discoverCache.folderIndex;
+    _claimedDirs = _discoverCache.claimedDirs;
+    debug.log(`[discover] reusing cached scan (${((Date.now() - _discoverCache.time) / 1000).toFixed(1)}s old)`);
+    return _discoverCache.appidList;
+  }
+  _folderIndex = null;
+  _claimedDirs = new Set();
+  const appidList = await discover(option.achievement_source, steamAccFilter);
+  if (cacheKey) _discoverCache = { key: cacheKey, time: Date.now(), appidList, folderIndex: _folderIndex, claimedDirs: _claimedDirs };
+  return appidList;
+}
 
 // Install folders whose first-run emulator setup (download/run generate_emu_config + Steamless +
 // install the GBE DLL + write achievements.json) is currently running in the BACKGROUND, keyed by
@@ -263,12 +292,27 @@ function isPspcGame(gameDir) {
   return false;
 }
 
+function crackFixNameCandidates({ gameDir, gameName, detectedExe } = {}) {
+  const names = [];
+  const add = (value) => {
+    const name = String(value || '').trim();
+    if (!name || name.length < 3 || names.some((existing) => existing.toLowerCase() === name.toLowerCase())) return;
+    names.push(name);
+  };
+  add(gameName);
+  add(path.basename(gameDir || ''));
+  add(path.basename((detectedExe && (detectedExe.full || detectedExe.name)) || '').replace(/\.exe$/i, ''));
+  return names;
+}
+
 async function tryApplyCrackFix({ gameDir, gameName, appid, detectedExe, proxyFallback = true }) {
   try {
     const arch = (detectedExe && detectedExe.full && pe.exeArch(detectedExe.full)) || null;
+    const gameNames = crackFixNameCandidates({ gameDir, gameName, detectedExe });
     const cf = await crackFix.applyBestFix({
       cacheDir: path.join(_userDataPath, 'cache/crackfiles'),
       gameName: gameName || '',
+      gameNames,
       gameDir,
       arch,
       proxyFallback,
@@ -276,8 +320,12 @@ async function tryApplyCrackFix({ gameDir, gameName, appid, detectedExe, proxyFa
     });
     if (cf && cf.applied) {
       debug.log(
-        `[${appid}] CrakFiles: applied "${cf.entry && cf.entry.name}" (${cf.fix && cf.fix.filename}, ${(cf.files || []).length} file(s)) — installing GBE DLL on top`
+        `[${appid}] CrakFiles: applied "${cf.entry && cf.entry.name}" via "${cf.matchedName || gameName}" (${cf.fix && cf.fix.filename}, ${(cf.files || []).length} file(s)) — installing GBE DLL on top`
       );
+      return true;
+    }
+    if (cf && cf.skipped && cf.reason === 'already-applied') {
+      debug.log(`[${appid}] CrakFiles: "${cf.entry && cf.entry.name}" already applied via "${cf.matchedName || gameName}" — skipping Steamless, installing GBE DLL on top`);
       return true;
     }
     debug.log(`[${appid}] CrakFiles auto-apply did nothing (${cf && cf.reason})`);
@@ -551,6 +599,27 @@ function goldbergSaveFolders(appid) {
   return [goldbergSaveFolder('gbe', appid), goldbergSaveFolder('goldberg', appid)].filter(Boolean);
 }
 
+function isKnownNonGameToolInstall(gameDir) {
+  if (!gameDir) return false;
+  const base = path.basename(gameDir).toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (['dolphin', 'dolphinx64', 'dolphinx86', 'dolphinmpn', 'dolphinemulator'].includes(base)) return true;
+  try {
+    const entries = fs.readdirSync(gameDir, { withFileTypes: true });
+    const names = new Set(entries.map((e) => e.name.toLowerCase()));
+    const dirs = new Set(entries.filter((e) => e.isDirectory()).map((e) => e.name.toLowerCase()));
+    if (names.has('dolphin.exe') && (names.has('dolphintool.exe') || dirs.has('sys') || dirs.has('qtplugins'))) return true;
+  } catch {
+    /* unreadable folder — let the normal scanner decide */
+  }
+  return false;
+}
+
+function isEmuSaveRecord(record) {
+  const data = record && record.data;
+  if (!data || data.type !== 'file' || !data.path) return false;
+  return /[\\/]?(gse saves|goldberg steamemu saves)[\\/]/i.test(String(data.path));
+}
+
 // Discover Goldberg/GBE games sitting in install folders (Objective 3) and returns brand-new
 // discover()-shaped items (games not found by any other source). It ALSO mutates the already-known
 // items in `data`: for every install whose steam_settings/achievements.json schema is missing or
@@ -565,22 +634,90 @@ async function scanInstalledGoldbergGames(data) {
     debug.log(`[goldberg-scan] scanning ${roots.length} root(s): ${roots.join(', ')}`);
 
     const found = goldberg.findCompatibleGames(roots);
-    for (const g of found) if (g.gameDir) _claimedDirs.add(g.gameDir.toLowerCase());
+    for (const g of found) {
+      if (g.gameDir && isKnownNonGameToolInstall(g.gameDir)) {
+        if (g.appid) {
+          for (let i = data.length - 1; i >= 0; i--) {
+            if (String(data[i] && data[i].appid) === String(g.appid) && isEmuSaveRecord(data[i])) data.splice(i, 1);
+          }
+        }
+        continue;
+      }
+      if (g.gameDir) _claimedDirs.add(g.gameDir.toLowerCase());
+    }
     const byAppid = new Map(data.map((g) => [String(g.appid), g]));
     let attached = 0;
 
     for (const g of found) {
-      const appid = g.appid && /^[0-9]+$/.test(String(g.appid)) ? String(g.appid) : null;
-      if (!appid) continue; // no steam_appid.txt -> can't identify the game, skip
+      if (isKnownNonGameToolInstall(g.gameDir)) {
+        debug.log(`[goldberg-scan] skipped non-game tool folder: ${g.gameDir}`);
+        continue;
+      }
+      let appid = g.appid && /^[0-9]+$/.test(String(g.appid)) ? String(g.appid) : null;
+      let detectedExe = null;
+      let detectedEmu = null;
+      if (!appid && g.gameDir) {
+        try {
+          detectedEmu = detectEmulatorCached(g.gameDir);
+          detectedExe = goldberg.findGameExe(g.gameDir, detectedEmu.dll);
+          const resolved = await resolveUnconfiguredSteamAppid({
+            name: path.basename(g.gameDir),
+            data: {
+              gameDir: g.gameDir,
+              exe: detectedExe && detectedExe.full,
+              hasSteamApiDll: detectedEmu.dll.length > 0,
+            },
+          });
+          if (resolved) {
+            appid = String(resolved.appid);
+            debug.log(`[goldberg-scan] resolved "${path.basename(g.gameDir)}" (${resolved.matchedName}) to appid ${appid}`);
+          }
+        } catch {
+          /* no confident name match */
+        }
+      }
+
+      if (!appid) {
+        // A steam_settings folder without steam_appid.txt used to be claimed by this Goldberg scan and
+        // then dropped, so the later unconfigured-name fallback never saw it. Keep it visible as a
+        // local install when we can identify a real exe, so the user can still repair/pick it manually.
+        detectedEmu = detectedEmu || (g.gameDir ? detectEmulatorCached(g.gameDir) : null);
+        detectedExe = detectedExe || (g.gameDir && detectedEmu ? goldberg.findGameExe(g.gameDir, detectedEmu.dll) : null);
+        if (g.gameDir && detectedExe) {
+          const id = 'local-' + (crc32(g.gameDir.toLowerCase()) >>> 0).toString(16);
+          if (!byAppid.has(id)) {
+            byAppid.set(id, true);
+            additions.push({
+              appid: id,
+              name: path.basename(g.gameDir),
+              source: 'Unconfigured',
+              data: {
+                type: 'unconfigured',
+                gameDir: g.gameDir,
+                steamSettings: (detectedEmu && detectedEmu.steamSettings) || g.steamSettings || (g.gameDir ? path.join(g.gameDir, 'steam_settings') : null),
+                exe: detectedExe.full,
+                hasSteamApiDll: !!(detectedEmu && detectedEmu.dll.length > 0),
+              },
+            });
+          }
+        }
+        continue;
+      }
+
+      const emulatorType = g.emulator === 'goldberg' ? 'goldberg' : 'gbe';
+      const steamSettings = g.steamSettings || (g.gameDir ? path.join(g.gameDir, 'steam_settings') : null);
+      const hasSchema = steamSettings ? goldberg.readLocalSchema(steamSettings).length > 0 || g.hasSchema : g.hasSchema;
 
       const existing = byAppid.get(appid);
       if (existing) {
         // Already discovered (save folder / other source). Always attach the install steam_settings so
         // the offline description backfill can read its local schema; flag for repair only if broken.
         if (existing.data) {
-          if (!existing.data.steamSettings && g.steamSettings) existing.data.steamSettings = g.steamSettings;
+          if (!existing.data.steamSettings && steamSettings) existing.data.steamSettings = steamSettings;
           if (!existing.data.gameDir && g.gameDir) existing.data.gameDir = g.gameDir;
-          if (!g.hasSchema && !existing.data.needsSchema) {
+          if (detectedExe && !existing.data.exe) existing.data.exe = detectedExe.full;
+          if (detectedEmu && detectedEmu.dll.length > 0) existing.data.hasSteamApiDll = true;
+          if (!hasSchema && !existing.data.needsSchema) {
             existing.data.needsSchema = true;
             attached++;
           }
@@ -590,13 +727,15 @@ async function scanInstalledGoldbergGames(data) {
 
       const item = {
         appid,
-        source: g.emulator === 'gbe' ? 'GBE Fork' : 'Goldberg',
+        source: emulatorType === 'gbe' ? 'GBE Fork' : 'Goldberg',
         data: {
           type: 'file',
-          path: goldbergSaveFolder(g.emulator, appid),
-          steamSettings: g.steamSettings,
+          path: goldbergSaveFolder(emulatorType, appid),
+          steamSettings,
           gameDir: g.gameDir,
-          needsSchema: !g.hasSchema, // schema achievements.json missing/empty -> repair it lazily
+          exe: detectedExe && detectedExe.full,
+          hasSteamApiDll: !!(detectedEmu && detectedEmu.dll.length > 0),
+          needsSchema: !hasSchema, // schema achievements.json missing/empty -> repair it lazily
         },
       };
       byAppid.set(appid, item);
@@ -652,6 +791,7 @@ async function scanUnconfiguredInstalls(linkedExes = []) {
 
   const emit = (dir, entries) => {
     if (_claimedDirs.has(dir.toLowerCase())) return;
+    if (isKnownNonGameToolInstall(dir)) return;
     if (isLinkedSubtree(dir)) return; // this folder already hosts a real-appid game (avoid duplicate)
     const exe = exeDetect.detect(dir, path.basename(dir), {});
     if (!exe) return;
@@ -669,13 +809,14 @@ async function scanUnconfiguredInstalls(linkedExes = []) {
   const walk = (dir, depth) => {
     if (depth > 4) return;
     if (_claimedDirs.has(dir.toLowerCase())) return;
+    if (isKnownNonGameToolInstall(dir)) return;
     const entries = readEntries(dir);
     if (!entries) return;
     if (hasAppidMarker(entries)) return; // appid path handles this folder
     const subdirs = entries.filter((e) => e.isDirectory() && !UNCONFIG_SKIP_DIR.test(e.name));
     const childGameFolders = subdirs.filter((e) => {
       const cd = path.join(dir, e.name);
-      return !_claimedDirs.has(cd.toLowerCase()) && isGameFolder(cd, readEntries(cd));
+      return !_claimedDirs.has(cd.toLowerCase()) && !isKnownNonGameToolInstall(cd) && isGameFolder(cd, readEntries(cd));
     });
     if (isGameFolder(dir, entries) && childGameFolders.length === 0) {
       emit(dir, entries); // leaf game folder
@@ -689,7 +830,10 @@ async function scanUnconfiguredInstalls(linkedExes = []) {
       const entries = readEntries(root);
       if (!entries) continue;
       for (const e of entries) {
-        if (e.isDirectory() && !UNCONFIG_SKIP_DIR.test(e.name)) walk(path.join(root, e.name), 1);
+        if (e.isDirectory() && !UNCONFIG_SKIP_DIR.test(e.name)) {
+          const dir = path.join(root, e.name);
+          if (!isKnownNonGameToolInstall(dir)) walk(dir, 1);
+        }
       }
     }
   }
@@ -885,8 +1029,9 @@ async function discover(source, steamAccFilter) {
       for (const u of unconfigured) {
         let real = null;
         let resolved = null;
+        const hasLocalSteamEvidence = !!(u.data && (u.data.hasSteamApiDll || u.data.steamSettings));
         try {
-          resolved = await resolveUnconfiguredSteamAppid(u);
+          if (hasLocalSteamEvidence) resolved = await resolveUnconfiguredSteamAppid(u);
           if (resolved) real = data.find((g) => String(g.appid) === String(resolved.appid));
         } catch {
           /* no match — keep as unconfigured */
@@ -1012,7 +1157,8 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       let img = { header: '', icon: '', background: '', portrait: '' };
       let steamappid = null;
       try {
-        const sid = await steam.findAppidByName(uname);
+        const canBorrowSteamArt = !!(appid.data && (appid.data.hasSteamApiDll || appid.data.steamSettings));
+        const sid = canBorrowSteamArt ? await steam.findAppidByName(uname) : null;
         if (sid) {
           steamappid = sid;
           img = {
@@ -1075,6 +1221,21 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       });
     }
     if (!game) return;
+
+    if (
+      game.achievement &&
+      Array.isArray(game.achievement.list) &&
+      game.achievement.list.length === 0 &&
+      appid.data &&
+      appid.data.gameDir
+    ) {
+      const localSchema = steam.getLocalAchievementSchema(appid.data.gameDir, appid.appid, option.achievement.lang);
+      if (localSchema.length > 0) {
+        game.achievement.list = localSchema;
+        game.achievement.total = localSchema.length;
+        debug.log(`[${appid.appid}] loaded ${localSchema.length} achievement(s) from local TENOKE schema`);
+      }
+    }
 
     // Game titles are strings by contract, but some language-specific fetch/cache paths can leave
     // game.name as a non-string (e.g. a localized {english:"…", turkish:"…"} object), which renders
@@ -1619,7 +1780,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
 // decide whether a full refresh (which re-seeds the watchdog gameIndex) is worth running.
 module.exports.detectInstalledAppids = async (option) => {
   try {
-    const list = await discover(option.achievement_source, option.steam.main);
+    const list = await discoverWithCache(option, option.steam.main);
     return list.map((g) => String(g.appid));
   } catch (err) {
     debug.error(`detectInstalledAppids failed => ${err}`);
@@ -1637,33 +1798,8 @@ module.exports.makeList = async (option, callbackProgress, onGame = () => {}) =>
     let result = [];
 
     // Reuse the discovery phase if an identical scan ran within DISCOVER_TTL_MS (e.g. a settings-save
-    // rescan moments after load). The key covers everything that changes the resulting game set, so
-    // any real change forces a fresh scan; _folderIndex / _claimedDirs are restored alongside the list
-    // so the per-game phase below behaves exactly as on a fresh scan.
-    let appidList;
-    let cacheKey = null;
-    try {
-      cacheKey = JSON.stringify({
-        src: option.achievement_source,
-        main: option.steam.main,
-        udirs: (await userDir.get()).map((d) => d.path),
-        ldirs: await libraryDirs.get(),
-        bl: await blacklist.get(),
-      });
-    } catch {
-      cacheKey = null; // can't build a key -> always scan fresh
-    }
-    if (cacheKey && _discoverCache && _discoverCache.key === cacheKey && Date.now() - _discoverCache.time < DISCOVER_TTL_MS) {
-      appidList = _discoverCache.appidList;
-      _folderIndex = _discoverCache.folderIndex;
-      _claimedDirs = _discoverCache.claimedDirs;
-      debug.log(`[discover] reusing cached scan (${((Date.now() - _discoverCache.time) / 1000).toFixed(1)}s old)`);
-    } else {
-      _folderIndex = null; // rebuild the name-match folder index for this scan
-      _claimedDirs = new Set();
-      appidList = await discover(option.achievement_source, option.steam.main);
-      if (cacheKey) _discoverCache = { key: cacheKey, time: Date.now(), appidList, folderIndex: _folderIndex, claimedDirs: _claimedDirs };
-    }
+    // rescan moments after load). Per-game unlock state is still loaded fresh below.
+    const appidList = await discoverWithCache(option, option.steam.main);
     let finalList = appidList;
     if (option.achievement.mergeDuplicate) {
       const seen = new Map();
@@ -1697,7 +1833,7 @@ module.exports.makeList = async (option, callbackProgress, onGame = () => {}) =>
       // reads / sockets / file handles all spike together. A small worker pool caps how many games
       // load in parallel while they still stream into the UI via onGame as each one resolves.
       const hasSteamApiKey = !!(option.steam && option.steam.apiKey);
-      const CONCURRENCY = hasSteamApiKey ? 6 : 3;
+      const CONCURRENCY = hasSteamApiKey ? 8 : 4;
       let cursor = 0;
       const worker = async () => {
         while (cursor < finalList.length) {

@@ -9,6 +9,16 @@ const { broadcast } = require('../websocket.js');
 
 const debug = require('../util/log.js');
 
+function normalizeProgress(progress) {
+  if (!progress) return null;
+  const max = Number(progress.max);
+  if (!Number.isFinite(max) || max <= 1) return null;
+  const currentRaw = Number(progress.current);
+  const current = Math.max(0, Math.min(max, Number.isFinite(currentRaw) ? currentRaw : 0));
+  const percent = Math.max(0, Math.min(100, Math.floor((current / max) * 100)));
+  return { current, max, percent };
+}
+
 // regodit & xinput-ffi are ESM-only (koffi) since their v2+ majors; load them lazily via dynamic
 // import (cached by Node's module registry) so this CommonJS module graph stays intact. regodit's
 // async API moved to the `regodit/promises` subpath and its functions were renamed PascalCase ->
@@ -70,7 +80,8 @@ module.exports = async (message, option = {}) => {
           time: message.time,
         };
 
-        if (message.progress) notification.progress = message.progress;
+        const progress = normalizeProgress(message.progress);
+        if (progress) notification.progress = progress;
 
         broadcast(notification);
       }
@@ -85,17 +96,22 @@ module.exports = async (message, option = {}) => {
         debug.log('Overlay notification (spawn)');
         try {
           const watchdog = require('../watchdog.js');
-          const description = message.progress
-            ? `[ ${message.progress.current}/${message.progress.max} ] ${message.achievementDescription || ''}`
-            : message.achievementDescription || '';
+          const progress = normalizeProgress(message.progress);
           const overlayArgs = [
             '--wintype=notification',
             `--appid=${message.appid || ''}`,
             `--gameDisplayName=${message.gameDisplayName || ''}`,
             `--displayName=${message.achievementDisplayName || ''}`,
-            `--description=${description}`,
+            `--description=${message.achievementDescription || ''}`,
             `--icon=${message.icon || ''}`,
           ];
+          if (message.gameIcon) overlayArgs.push(`--gameIcon=${message.gameIcon}`);
+          if (message.image) overlayArgs.push(`--image=${message.image}`);
+          if (progress) {
+            overlayArgs.push(`--progressCurrent=${progress.current}`);
+            overlayArgs.push(`--progressMax=${progress.max}`);
+            overlayArgs.push(`--progressPercent=${progress.percent}`);
+          }
           if (message.rarityPercent != null && message.rarityPercent !== '' && Number.isFinite(Number(message.rarityPercent))) {
             overlayArgs.push(`--rarityPercent=${Number(message.rarityPercent)}`);
           }
@@ -123,6 +139,10 @@ module.exports = async (message, option = {}) => {
         message.icon = await fetch(message.icon, message.appid);
       }
 
+      if (message.gameIcon) {
+        message.gameIcon = await fetch(message.gameIcon, message.appid);
+      }
+
       if (options.transport.toast && options.toast.imageIntegration != '0' && message.image) {
         message.image = await fetch(message.image, message.appid);
       }
@@ -142,8 +162,8 @@ module.exports = async (message, option = {}) => {
                 ico: path.resolve('./notification/icon/icon.ico'),
               };
 
-              if (message.progress)
-                notification.message = `[ ${message.progress.current}/${message.progress.max} ]\n${message.achievementDescription}`;
+              const progress = normalizeProgress(message.progress);
+              if (progress) notification.message = `[ ${progress.current}/${progress.max} ]\n${message.achievementDescription}`;
 
               await balloon(notification);
             } catch (err) {

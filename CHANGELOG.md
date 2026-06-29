@@ -3,6 +3,28 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 3.0.6 - 2026-06-29
+
+### Added
+
+- TENOKE achievements are now read locally from `tenoke.ini` (names, descriptions, icons and progress), so TENOKE games show full achievement details without an online lookup.
+- Goldberg/GBE installs that have a `steam_settings` folder but no app id are now resolved by name when possible, or kept visible as an "Unconfigured" entry so they can be identified and repaired manually instead of silently disappearing.
+- Achievement progress is shown as a progress bar with its count, both in the game view and in overlay/toast progress notifications.
+
+### Changed
+
+- Notifications now display the game's cover/header art (toast hero image and overlay game art).
+- The GBE/Goldberg backup now snapshots `steam_settings` and `steam_api(64).dll`, and a restore point is created automatically before any emulator fix runs — "Restore latest GBE/Goldberg backup" rolls it back. Backup/restore menu wording is localized in every UI language.
+- Name → Steam app id lookup falls back to Steam's live app search when the cached app list is unreachable or stale, so brand-new releases resolve too.
+- Automatic community-fix (CrakFiles) matching also tries the install-folder and executable names, not just the display name.
+- Faster repeat scans (short-lived discovery cache); background new-game detection now runs every 3 minutes.
+
+### Fixed
+
+- Games that bundle a modding editor, SDK or dedicated server in a subfolder (e.g. Divinity: Original Sin 2, which ships "The Divinity Engine 2") are no longer mislabelled with the tool's app id/name.
+- Standalone emulator/tool folders (e.g. Dolphin) are no longer mistaken for games.
+- Progress values are validated and clamped, so malformed progress no longer produces broken bars or notifications.
+
 ## 3.0.5 - 2026-06-29
 
 ### Added

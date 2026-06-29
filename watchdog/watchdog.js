@@ -134,6 +134,14 @@ function mergeIndexedGameMetadata(game, appID) {
   return game;
 }
 
+function steamHeaderImage(appid) {
+  return appid ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/header.jpg` : undefined;
+}
+
+function steamLibraryImage(appid) {
+  return appid ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/library_600x900.jpg` : undefined;
+}
+
 function RegisterOverlayHotkey(hotkey) {
   overlayHotkey.register(hotkey, () => {
       if (runningAppid) {
@@ -540,6 +548,8 @@ var app = {
                           achievementDescription: ach.description,
                           rarityPercent: isRare ? rounded : null,
                           icon: ach.icon,
+                          gameIcon: steamLibraryImage(game.appid),
+                          image: steamHeaderImage(game.appid),
                           time: achievements[i].UnlockTime,
                           delay: j,
                         },
@@ -556,7 +566,7 @@ var app = {
                             winrt: self.options.notification_transport.winRT,
                             balloonFallback: self.options.notification_transport.balloon,
                             customAudio: self.options.notification_toast.customToastAudio,
-                            imageIntegration: '0',
+                            imageIntegration: '1',
                             group: self.options.notification_toast.groupToast,
                             cropIcon: true,
                             attribution: attribution,
@@ -588,6 +598,8 @@ var app = {
                           achievementDisplayName: ach.displayName,
                           achievementDescription: ach.description,
                           icon: ach.icongray,
+                          gameIcon: steamLibraryImage(game.appid),
+                          image: steamHeaderImage(game.appid),
                           progress: {
                             current: achievements[i].CurProgress,
                             max: achievements[i].MaxProgress,
@@ -606,7 +618,7 @@ var app = {
                             winrt: self.options.notification_transport.winRT,
                             balloonFallback: self.options.notification_transport.balloon,
                             customAudio: '0',
-                            imageIntegration: '0',
+                            imageIntegration: '1',
                             group: self.options.notification_toast.groupToast,
                             cropIcon: true,
                           },
@@ -651,7 +663,8 @@ var app = {
                   achievementDisplayName: game.name,
                   achievementDescription: platinumDesc,
                   icon: platinumIcon || undefined,
-                  image: `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`,
+                  gameIcon: steamLibraryImage(game.appid),
+                  image: steamHeaderImage(game.appid),
                   time: moment().unix(),
                 },
                 {
@@ -808,7 +821,8 @@ var app = {
                 achievementDisplayName: game.name || (fr ? 'Temps de jeu' : 'Playtime'),
                 achievementDescription: description,
                 icon: `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${game.appid}/${game.icon}.jpg`,
-                image: `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`,
+                gameIcon: steamLibraryImage(game.appid),
+                image: steamHeaderImage(game.appid),
                 silent: true, // playtime overlay notifications never play a sound
               },
               {

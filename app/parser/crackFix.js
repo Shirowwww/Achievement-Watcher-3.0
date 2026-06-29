@@ -261,6 +261,27 @@ function findBestMatch(list, gameName) {
   return { entry, score: hit.score, tier: hit.tier };
 }
 
+function uniqueGameNames(names) {
+  const raw = Array.isArray(names) ? names : [names];
+  const out = [];
+  for (const value of raw) {
+    const name = String(value || '').trim();
+    if (!name || out.some((existing) => existing.toLowerCase() === name.toLowerCase())) continue;
+    out.push(name);
+  }
+  return out;
+}
+
+// Automatic CrakFiles lookup can safely try several local names (AW title, install folder, main exe)
+// while keeping findBestMatch's strict confidence gate for each one.
+function findBestMatchForNames(list, gameNames) {
+  for (const name of uniqueGameNames(gameNames)) {
+    const match = findBestMatch(list, name);
+    if (match) return { ...match, matchedName: name };
+  }
+  return null;
+}
+
 const ARCH_HINT = {
   x64: /(x64|win64|64\s*bit|64-bit|amd64)/,
   x86: /(x86|win32|32\s*bit|32-bit|ia32)/,
@@ -542,6 +563,7 @@ async function applyLocalArchive({ archivePath, gameDir, fix = null, entryName =
   list      pre-fetched crackfiles.json (optional; fetched via cacheDir when omitted — lets tests run
             offline)
   gameName  the game's display name (matched against entry names)
+  gameNames optional local name candidates (display name, folder name, exe basename)
   gameDir   the game install folder (also where the idempotency marker lives)
   arch      'x64' | 'x86' | null — biases fix selection toward the matching-arch build
   force     re-apply even if the marker shows this exact fix was already applied
@@ -555,25 +577,26 @@ async function applyLocalArchive({ archivePath, gameDir, fix = null, entryName =
                                                                     that need a browser — caller may
                                                                     surface it to the user)
 */
-async function applyBestFix({ list = null, cacheDir, gameName, gameDir, arch = null, force = false, proxyFallback = true, log = noopLog } = {}) {
-  if (!gameName) return { applied: false, reason: 'no-game-name' };
+async function applyBestFix({ list = null, cacheDir, gameName, gameNames = [], gameDir, arch = null, force = false, proxyFallback = true, log = noopLog } = {}) {
+  const names = uniqueGameNames([...(Array.isArray(gameNames) ? gameNames : [gameNames]), gameName]);
+  if (names.length === 0) return { applied: false, reason: 'no-game-name' };
   if (!gameDir || !fs.existsSync(gameDir)) return { applied: false, reason: 'no-game-dir' };
   const entries = Array.isArray(list) ? list : await fetchList({ cacheDir, log });
-  const match = findBestMatch(entries, gameName);
-  if (!match) return { applied: false, reason: 'no-confident-match' };
+  const match = findBestMatchForNames(entries, names);
+  if (!match) return { applied: false, reason: 'no-confident-match', names };
   const fix = pickBestFix(match.entry, { arch, requireApplicable: true });
-  if (!fix) return { applied: false, reason: 'no-applicable-fix', entry: match.entry, fixes: match.entry.fixes || [] };
+  if (!fix) return { applied: false, reason: 'no-applicable-fix', entry: match.entry, fixes: match.entry.fixes || [], matchedName: match.matchedName };
   if (!force && isAlreadyApplied(gameDir, fix)) {
-    return { applied: false, skipped: true, reason: 'already-applied', entry: match.entry, fix };
+    return { applied: false, skipped: true, reason: 'already-applied', entry: match.entry, fix, matchedName: match.matchedName };
   }
   try {
     const res = await downloadAndApply({ fix, gameDir, cacheDir, entryName: match.entry.name, proxyFallback, log });
-    return { applied: true, entry: match.entry, fix, files: res.applied, backedUp: res.backedUp, backupDir: res.backupDir };
+    return { applied: true, entry: match.entry, fix, files: res.applied, backedUp: res.backedUp, backupDir: res.backupDir, matchedName: match.matchedName };
   } catch (e) {
     // A pixeldrain-rate-limited file can't be auto-downloaded; surface it as a structured reason (with the
     // href to open in a browser) instead of throwing, so the background pass logs it and continues.
     if (e && e.code === 'PIXELDRAIN_UNAVAILABLE') {
-      return { applied: false, reason: 'pixeldrain-unavailable', availability: e.availability, entry: match.entry, fix, href: fix.href };
+      return { applied: false, reason: 'pixeldrain-unavailable', availability: e.availability, entry: match.entry, fix, href: fix.href, matchedName: match.matchedName };
     }
     throw e;
   }
@@ -583,6 +606,7 @@ module.exports = {
   fetchList,
   findFixes,
   findBestMatch,
+  findBestMatchForNames,
   pickBestFix,
   pixeldrainDirectUrl,
   pixeldrainFileId,

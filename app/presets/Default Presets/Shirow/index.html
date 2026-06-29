@@ -26,12 +26,16 @@
     </style>
   </head>
   <body>
-    <meta width="400" height="150" />
+    <meta width="420" height="170" />
     <div class="ach">
       <div class="icon"><img src="" alt="Icon" /></div>
       <div class="text_wrap">
         <p class="title"><span class="scroll"></span></p>
         <span class="detail"><span class="scroll"></span></span>
+        <div class="progress_line" hidden>
+          <span class="progress_track"><span class="progress_meter"></span></span>
+          <span class="progress_label"></span>
+        </div>
       </div>
     </div>
     <script>
@@ -146,6 +150,45 @@
           else ach.classList.add("rarity-bronze");
         }
 
+        function normalizeProgress(data) {
+          const src = data?.progress || data || {};
+          const max = Number(src.max ?? src.progressMax);
+          if (!Number.isFinite(max) || max <= 1) return null;
+          const currentRaw = Number(src.current ?? src.progressCurrent);
+          const current = Math.max(
+            0,
+            Math.min(max, Number.isFinite(currentRaw) ? currentRaw : 0)
+          );
+          const percentRaw = Number(src.percent ?? src.progressPercent);
+          const percent = Number.isFinite(percentRaw)
+            ? Math.max(0, Math.min(100, Math.floor(percentRaw)))
+            : Math.max(0, Math.min(100, Math.floor((current / max) * 100)));
+          return { current, max, percent };
+        }
+
+        function applyProgress(data) {
+          const progress = normalizeProgress(data);
+          const line = document.querySelector(".progress_line");
+          const meter = document.querySelector(".progress_meter");
+          const label = document.querySelector(".progress_label");
+          if (!line || !meter || !label) return;
+          if (!progress) {
+            line.hidden = true;
+            meter.style.width = "0%";
+            label.textContent = "";
+            return;
+          }
+          line.hidden = false;
+          meter.style.width = `${progress.percent}%`;
+          label.textContent = `${progress.current}/${progress.max} - ${progress.percent}%`;
+        }
+
+        function toImageUrl(value) {
+          const p = String(value || "").replace(/\\/g, "/");
+          if (/^(file|https?):\/\//i.test(p)) return p;
+          return `file:///${p}`;
+        }
+
         function pauseMarquees() {
           document.querySelectorAll(".title .scroll, .detail .scroll").forEach((inner) => {
             try {
@@ -161,9 +204,16 @@
           const ach = document.querySelector(".ach");
           title.textContent = data?.displayName || "";
           detail.textContent = data?.description || "";
-          if (data?.iconPath || data?.icon) {
-            const p = String(data.iconPath || data.icon).replace(/\\/g, "/");
-            icon.src = p.startsWith("file://") ? p : `file:///${p}`;
+          applyProgress(data);
+          const imageSource =
+            data?.gameIconPath ||
+            data?.gameIcon ||
+            data?.imagePath ||
+            data?.image ||
+            data?.iconPath ||
+            data?.icon;
+          if (imageSource) {
+            icon.src = toImageUrl(imageSource);
           }
           const scale = Math.max(0.01, parseFloat(data?.scale || 1) || 1);
           ach.style.setProperty("--scale", String(scale));

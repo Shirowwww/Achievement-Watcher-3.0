@@ -415,6 +415,15 @@ ipcMain.on('close-puppeteer', async (event, arg) => {
   event.returnValue = true;
 });
 
+ipcMain.on('emulator-fixed-notify', async (event, game) => {
+  try {
+    await startEngines(); // refresh configJS so the master notification switch/language are respected
+  } catch (err) {
+    debug.log(`[bg-autofix] notify config refresh failed: ${err.message || err}`);
+  }
+  notifyEmulatorFixed(game);
+});
+
 ipcMain.on('get-steam-data', async (event, arg) => {
   const appid = +arg.appid;
   event.returnValue = await getSteamData({ appid, type: arg.type, user: arg.user, lang: arg.lang });
@@ -1784,6 +1793,13 @@ function createNotificationWindow(data = {}) {
       description: data.description != null ? data.description : '',
       rarityPercent: data.rarityPercent,
       iconPath: data.iconPath || data.icon || '',
+      gameIconPath: data.gameIconPath || data.gameIcon || '',
+      imagePath: data.imagePath || data.image || '',
+      progress: data.progress || null,
+      progressCurrent: data.progress && data.progress.current,
+      progressMax: data.progress && data.progress.max,
+      progressPercent: data.progress && data.progress.percent,
+      position: data.position,
       scale,
       // Forwarded so presets that support it can match their animation to the user's duration.
       durationMs: Number.isFinite(Number(data.durationMs)) ? Number(data.durationMs) : undefined,
@@ -1867,7 +1883,8 @@ let notifActive = false;
 const recentNotifKeys = new Map();
 function isDuplicateNotification(data) {
   try {
-    const key = [data.displayName || '', data.description || '', data.iconPath || data.icon || ''].join('');
+    const progress = data.progress ? `${data.progress.current || 0}/${data.progress.max || 0}` : '';
+    const key = [data.displayName || '', data.description || '', data.iconPath || data.icon || '', progress].join('');
     const now = Date.now();
     for (const [k, t] of recentNotifKeys) if (now - t > 5000) recentNotifKeys.delete(k);
     const last = recentNotifKeys.get(key);
@@ -1921,6 +1938,18 @@ ipcMain.on('spawn-overlay-notification', (event, data) => {
   enqueueNotification(data || {});
 });
 
+function normalizeNotificationProgress(args) {
+  const max = Number(args.progressMax);
+  if (!Number.isFinite(max) || max <= 1) return null;
+  const currentRaw = Number(args.progressCurrent);
+  const current = Math.max(0, Math.min(max, Number.isFinite(currentRaw) ? currentRaw : 0));
+  const percentArg = Number(args.progressPercent);
+  const percent = Number.isFinite(percentArg)
+    ? Math.max(0, Math.min(100, Math.floor(percentArg)))
+    : Math.max(0, Math.min(100, Math.floor((current / max) * 100)));
+  return { current, max, percent };
+}
+
 // Build an overlay notification from the CLI args the Watchdog passes to a `--wintype=notification`
 // process. This process never runs startEngines (that's the main-window path), so configJS is null
 // here — load the user's overlay settings (preset/position/scale/sound) directly from options.ini so
@@ -1951,6 +1980,27 @@ async function enqueueNotificationFromArgs(args) {
     }
   }
 
+  let gameIconPath = '';
+  if (args.gameIcon) {
+    try {
+      gameIconPath =
+        (await Promise.race([fetchSteamIcon(String(args.gameIcon), args.appid), new Promise((resolve) => setTimeout(() => resolve(''), 4000))])) ||
+        '';
+    } catch {
+      /* game art is optional */
+    }
+  }
+
+  let imagePath = '';
+  if (args.image) {
+    try {
+      imagePath =
+        (await Promise.race([fetchSteamIcon(String(args.image), args.appid), new Promise((resolve) => setTimeout(() => resolve(''), 4000))])) || '';
+    } catch {
+      /* header art is optional */
+    }
+  }
+
   // Playtime (and any caller passing --silent) must never play the overlay sound.
   const silent = !!args.silent;
   const langFr = String((cfg && cfg.achievement && cfg.achievement.lang) || '')
@@ -1974,6 +2024,9 @@ async function enqueueNotificationFromArgs(args) {
     description: args.description != null ? String(args.description) : '',
     rarityPercent: Number.isFinite(Number(args.rarityPercent)) ? Number(args.rarityPercent) : null,
     iconPath,
+    gameIconPath,
+    imagePath,
+    progress: normalizeNotificationProgress(args),
     soundPath: silent ? '' : resolveNotificationSound(ov.notificationSound),
   });
 }

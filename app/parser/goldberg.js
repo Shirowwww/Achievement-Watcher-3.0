@@ -27,6 +27,7 @@ const APPID_CONFIG_FILES = new Set([
   'coldclientloader.ini',
   'smartsteamemu.ini',
   'coldapi.ini',
+  'tenoke.ini',
 ]);
 const AUXILIARY_SETTINGS_DIRS = new Set([
   '__overlay',
@@ -45,6 +46,30 @@ const AUXILIARY_SETTINGS_DIRS = new Set([
   'tools',
 ]);
 
+// Subfolder name fragments that mark a *companion tool* shipped beside a game (with its own Steam app
+// id) rather than the game itself: modding editors, SDKs, level/world editors, creation/dev kits,
+// authoring & workshop tools, dedicated servers, benchmarks. The nested-appid walk never descends into
+// these, so e.g. "The Divinity Engine 2" (435730, bundled inside Divinity: Original Sin 2 = 435150)
+// can't hijack the game's identity. Each fragment is matched on word boundaries and tolerates
+// space/underscore/hyphen separators. Multi-word fragments are *qualified* (e.g. "creation kit",
+// "dedicated server" — never a bare "kit"/"server"/"tools") so a real game's own folder, or a game
+// whose title merely contains one of these words, is not mistaken for a tool and hidden.
+const TOOL_SUBDIR = new RegExp(
+  [
+    '\\bengine\\b',
+    '\\beditor\\b',
+    '\\bsdks?\\b',
+    '\\btoolkit\\b',
+    '\\bmodkit\\b',
+    '\\bbenchmark\\b',
+    '\\b(?:level|map|world)[\\s_-]?editor\\b', // also catches concatenated "LevelEditor"
+    '\\b(?:mod|dev|creation|construction)[\\s_-]?kit\\b',
+    '\\b(?:mod|dev|authoring|workshop|server)[\\s_-]?tools?\\b',
+    '\\bdedicated[\\s_-]?server\\b',
+  ].join('|'),
+  'i'
+);
+
 function parseAppidFromConfig(file) {
   try {
     const content = fs.readFileSync(file, 'utf8');
@@ -57,6 +82,7 @@ function parseAppidFromConfig(file) {
       /^\s*AppId\s*=\s*([0-9]+)/im,
       /^\s*AppID\s*=\s*([0-9]+)/im,
       /^\s*appid\s*=\s*([0-9]+)/im,
+      /^\s*id\s*=\s*([0-9]+)/im,
     ];
     for (const pattern of patterns) {
       const match = content.match(pattern);
@@ -985,10 +1011,10 @@ function findCompatibleGames(roots, { maxDepth = 5 } = {}) {
     return null;
   };
 
-  const findNestedAppid = (gameDir, maxSearchDepth = 4) => {
-    let best = null;
+  const findNestedAppid = (gameDir, rootName = '', maxSearchDepth = 4) => {
+    const candidates = [];
     const walk = (dir, depth) => {
-      if (best || depth > maxSearchDepth) return;
+      if (depth > maxSearchDepth) return;
       let entries;
       try {
         entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -996,23 +1022,30 @@ function findCompatibleGames(roots, { maxDepth = 5 } = {}) {
         return;
       }
       for (const e of entries) {
-        const full = path.join(dir, e.name);
-        const lower = e.name.toLowerCase();
-        if (e.isFile() && APPID_CONFIG_FILES.has(lower)) {
+        if (e.isFile() && APPID_CONFIG_FILES.has(e.name.toLowerCase())) {
+          const full = path.join(dir, e.name);
           const appid = parseAppidFromConfig(full);
-          if (appid) {
-            best = { appid, file: full };
-            return;
-          }
+          if (appid) candidates.push({ appid, file: full, dir, depth });
         }
       }
       for (const e of entries) {
-        if (e.isDirectory() && e.name.toLowerCase() !== 'steam_settings') walk(path.join(dir, e.name), depth + 1);
-        if (best) return;
+        if (!e.isDirectory()) continue;
+        const lower = e.name.toLowerCase();
+        if (lower === 'steam_settings') continue;
+        if (TOOL_SUBDIR.test(e.name)) continue; // editor/SDK/dedicated-server shipped with the game — not the game
+        walk(path.join(dir, e.name), depth + 1);
       }
     };
     walk(gameDir, 0);
-    return best;
+    if (candidates.length === 0) return null;
+    // Light tiebreak only: prefer an appid whose folder name resembles the game's root folder, else the
+    // shallowest. Folder names are often renamed/scene-tagged, so this never *filters* — it just orders.
+    candidates.sort(
+      (a, b) =>
+        exeDetect.nameSimilarity(rootName, path.basename(b.dir)) - exeDetect.nameSimilarity(rootName, path.basename(a.dir)) ||
+        a.depth - b.depth
+    );
+    return candidates[0];
   };
 
   const parentGameRootFor = (markerDir) => {
@@ -1042,7 +1075,7 @@ function findCompatibleGames(roots, { maxDepth = 5 } = {}) {
       marker.appidFile,
       path.join(resolvedGameDir, 'steam_appid.txt'),
       steamSettings && path.join(steamSettings, 'steam_appid.txt')
-    ) || marker.appid || (findNestedAppid(resolvedGameDir) || {}).appid;
+    ) || marker.appid || (findNestedAppid(resolvedGameDir, path.basename(resolvedGameDir)) || {}).appid;
     let hasSchema = false;
     let schemaCount = 0;
     if (steamSettings) {
@@ -1080,7 +1113,7 @@ function findCompatibleGames(roots, { maxDepth = 5 } = {}) {
       if (appid) return { gameDir: parentGameRootFor(dir), appid, appidFile };
     }
     if (exeDetect.shallowGameExe(dir)) {
-      const nestedAppid = findNestedAppid(dir);
+      const nestedAppid = findNestedAppid(dir, path.basename(dir));
       if (nestedAppid) {
         const emu = detectEmulator(dir);
         if (emu.dll.length > 0) return { gameDir: dir, appid: nestedAppid.appid, appidFile: nestedAppid.file };

@@ -1062,7 +1062,10 @@ main {
 }
 
 .achievement {
-  display: flex;
+  display: grid;
+  grid-template-columns: 66px minmax(360px, 1fr) 230px;
+  align-items: center;
+  column-gap: 20px;
 }
 
 .achievement .box {
@@ -1147,8 +1150,9 @@ main {
 }
 
 .achievement .content {
-  margin: 0 auto 0 20px;
-  max-width: 600px;
+  margin: 0;
+  width: 100%;
+  max-width: none;
   min-width: 0;
 }
 
@@ -1183,14 +1187,20 @@ main {
 }
 
 .achievement .progressBar {
-  height: 6px;
+  height: 18px;
   position: relative;
-  background: rgb(35, 53, 74);
-  padding: 4px 10px;
-  margin-top: 4px;
+  background: linear-gradient(180deg, rgba(6, 14, 24, 0.78), rgba(11, 23, 38, 0.72));
+  padding: 1px;
+  margin-top: 8px;
   font-family: 'Open-sans';
-  width: 150px;
+  width: min(52%, 560px);
+  min-width: 320px;
   display: none;
+  overflow: hidden;
+  border-radius: 999px;
+  border: 1px solid rgba(159, 188, 224, 0.24);
+  box-sizing: border-box;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.42), 0 1px 0 rgba(255, 255, 255, 0.035);
 }
 
 .achievement .progressBar > .meter {
@@ -1199,34 +1209,48 @@ main {
   height: 100%;
   position: relative;
   overflow: hidden;
-  transition: 0.3s all linear;
-  background-image: linear-gradient(to bottom, #4969af, #375db3);
+  transition: width 0.3s ease;
+  border-radius: inherit;
+  background-image: linear-gradient(90deg, #628bf2 0%, #7aa9fb 62%, #99c3ff 100%);
+  box-shadow: 0 0 9px rgba(102, 148, 255, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.42);
+}
+
+.achievement .progressBar > .meter:after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0));
+  pointer-events: none;
 }
 
 .achievement .progressBar:before {
-  content: attr(data-current) ' / ' attr(data-max);
-  font-size: 14px;
+  content: attr(data-label);
+  font-size: 12px;
+  font-family: 'Open-sans-bold';
+  font-variant-numeric: tabular-nums;
   position: absolute;
   top: 50%;
-  transform: translate(-50%, -50%);
-  left: 50%;
-  display: table;
-  color: #dedede;
+  transform: translateY(-50%);
+  left: 10px;
+  display: block;
+  color: #f5f8ff;
   z-index: 1;
-  text-shadow: rgba(0, 0, 0, 0.5) 3px 3px 3px;
+  text-shadow: rgba(0, 0, 0, 0.6) 0 1px 2px;
 }
 
 .achievement .progressBar:after {
   content: attr(data-percent) '%';
-  font-size: 14px;
+  font-size: 12px;
+  font-family: 'Open-sans-bold';
+  font-variant-numeric: tabular-nums;
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  left: 100%;
-  margin-left: 5px;
-  display: table;
-  color: #dedede;
+  right: 10px;
+  display: block;
+  color: #f5f8ff;
   z-index: 1;
+  text-shadow: rgba(0, 0, 0, 0.6) 0 1px 2px;
 }
 
 .achievement .progressBar:not([data-max='0']) {
@@ -1238,8 +1262,9 @@ main {
 }
 
 .achievement .stats {
-  margin: auto 10px auto auto;
-  max-width: 250px;
+  margin: auto 0;
+  width: 230px;
+  max-width: 230px;
   color: #dce7f5;
 }
 
@@ -1396,18 +1421,34 @@ main {
   display: none;
 }
 
-#unlock ul li > .notice {
+#achievement .achievement-list ul li > .notice {
   text-align: center;
-  padding: 10px;
+  padding: 14px 10px;
   font-size: 20px;
 }
 
-#unlock ul li > .notice p {
+#achievement .achievement-list ul li > .notice p {
   padding: 5px 0;
 }
 
-#unlock ul li > .notice p a {
+#achievement .achievement-list ul li > .notice p a {
   color: inherit;
+}
+
+#achievement .achievement-list ul li > .notice.empty-achievement-notice {
+  color: #dce7f5;
+}
+
+#achievement .achievement-list ul li > .notice.empty-achievement-notice p:first-child {
+  font-family: 'Raleway-bold';
+}
+
+#achievement .achievement-list ul li > .notice.empty-achievement-notice p:last-child {
+  max-width: 720px;
+  margin: 0 auto;
+  color: rgba(220, 231, 245, 0.72);
+  font-size: 15px;
+  line-height: 1.35;
 }
 
 #btn-scrollup {
@@ -3573,6 +3614,20 @@ body {
   width: 14px;
   height: 14px;
   object-fit: contain;
+  border-radius: 4px;
+  cursor: help;
+  opacity: 0.95;
+  transition: opacity 0.12s ease, background 0.12s ease, transform 0.12s ease;
+}
+
+#game-list .game-box .info .source-icon:hover {
+  background: rgba(255, 255, 255, 0.08);
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+#game-list .game-box .info .source-icon[data-kind='empty'] {
+  opacity: 0.72;
 }
 
 #game-list .game-box .info .dll-badge {
@@ -3580,8 +3635,16 @@ body {
   width: 8px;
   height: 8px;
   margin: 0;
+  cursor: help;
   border: 2px solid rgba(12, 22, 35, 0.78);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+
+#game-list .game-box .info .dll-badge:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 0 7px rgba(255, 255, 255, 0.12);
 }
 
 #game-list .game-box .info .title > span {
@@ -4914,8 +4977,20 @@ body {
     padding-inline: 14px;
   }
 
-  .achievement .content {
-    max-width: 50vw;
+  .achievement {
+    grid-template-columns: 66px minmax(0, 1fr);
+  }
+
+  .achievement .stats {
+    grid-column: 2;
+    width: 100%;
+    max-width: none;
+    margin-top: 8px;
+  }
+
+  .achievement .progressBar {
+    width: 100%;
+    min-width: 0;
   }
 }
 

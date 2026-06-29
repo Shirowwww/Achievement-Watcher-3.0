@@ -5,6 +5,19 @@ const soundPlayer = require('../../util/soundPlayer.js');
 
 const TOAST_QUEUE_SOUND_DELAY_MS = 5000;
 
+function normalizeProgress(progress) {
+  if (!progress) return null;
+  const max = Number(progress.max);
+  if (!Number.isFinite(max) || max <= 1) return null;
+  const currentRaw = Number(progress.current);
+  const current = Math.max(0, Math.min(max, Number.isFinite(currentRaw) ? currentRaw : 0));
+  return {
+    current,
+    max,
+    percent: Math.max(0, Math.min(100, Math.floor((current / max) * 100))),
+  };
+}
+
 module.exports = async (message, options) => {
   // customAudio: '0' muted | '1' system default toast sound | '2' custom audio file.
   // Only '2' needs a file we play ourselves; '1' is far more reliable as the toast's own native
@@ -51,10 +64,11 @@ module.exports = async (message, options) => {
 
   if (options.toast.winrt === false) notification.disableWinRT = true;
 
-  if (message.progress && message.progress.max > 0) {
+  const progress = normalizeProgress(message.progress);
+  if (progress) {
     notification.progress = {
-      percent: Math.floor((message.progress.current / message.progress.max) * 100),
-      footer: `${message.progress.current}/${message.progress.max}`,
+      percent: progress.percent,
+      footer: `${progress.current}/${progress.max}`,
     };
   }
   await toast(notification);

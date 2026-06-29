@@ -20,6 +20,15 @@ const achievements = require(path.join(appPath, 'parser/achievements.js'));
 const userdatapath = getUserDataPath();
 const isDev = ipcRenderer.sendSync('win-isDev') || false;
 achievements.initDebug({ isDev, userDataPath: userdatapath });
+if (achievements.setEmulatorFixedHandler) {
+  achievements.setEmulatorFixedHandler((game) => {
+    try {
+      ipcRenderer.send('emulator-fixed-notify', game);
+    } catch (err) {
+      debug && debug.log(`[emulator-fixed] notify bridge failed => ${formatErr(err)}`);
+    }
+  });
+}
 const blacklist = require(path.join(appPath, 'parser/blacklist.js'));
 const userDir = require(path.join(appPath, 'parser/userDir.js'));
 const libraryDirs = require(path.join(appPath, 'parser/libraryDirs.js'));
@@ -61,13 +70,39 @@ window.addEventListener('error', (e) => {
 const gameElements = new Map();
 let gameList = [];
 
+function finiteNumber(value, fallback = 0) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function percentFromProgress(current, max) {
+  if (!Number.isFinite(max) || max <= 0) return 0;
+  return Math.max(0, Math.min(100, Math.floor((current / max) * 100)));
+}
+
+function getAchievementProgressState(achievement) {
+  const max = Math.max(0, finiteNumber(achievement.MaxProgress ?? achievement.max_progress, 0));
+  let current = Math.max(0, finiteNumber(achievement.CurProgress ?? achievement.progress, 0));
+  const achieved = achievement.Achieved == 1 || achievement.Achieved === true;
+  if (achieved && max > 0 && current < max) current = max;
+  if (max > 0 && current > max) current = max;
+  const percent = percentFromProgress(current, max);
+  return {
+    current,
+    max,
+    percent,
+    // Binary 0/1 progress is just a normal locked/unlocked achievement, not a useful counter.
+    hasProgress: max > 1,
+  };
+}
+
 // Background new-game detection. Every NEW_GAME_SCAN_INTERVAL_MS we run a cheap discovery-only pass
 // (no per-game achievement/icon loading) and compare the discovered appids against what's currently
 // on screen. When a genuinely new install appears we trigger a full refresh, which re-seeds the
 // watchdog gameIndex so the new game is tracked for playtime/notifications without the user having to
 // reopen the app. Kept idle-friendly: it skips when the user is mid-session (game detail or settings
 // open) and never overlaps an in-flight scan.
-const NEW_GAME_SCAN_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
+const NEW_GAME_SCAN_INTERVAL_MS = 3 * 60 * 1000; // 3 minutes
 let newGameScanTimer = null;
 let scanInFlight = false;
 
@@ -92,7 +127,7 @@ async function runNewGameScan() {
   }
 }
 
-// (Re)arm the 15-minute background detection. onStart can run more than once, so clear any previous
+// (Re)arm the background detection. onStart can run more than once, so clear any previous
 // timer first to keep exactly one interval alive.
 function scheduleNewGameScan() {
   if (newGameScanTimer) clearInterval(newGameScanTimer);
@@ -245,21 +280,243 @@ function promptText(message, defaultValue = '', type = 'text') {
 // email-code and captcha prompts without opening a console window.
 window.awPromptText = promptText;
 
-// Sources that carry their own dedicated logo regardless of detection state. Everything else falls
-// through to the Steam logo — which we treat as a "achievements detected & tracking" health signal.
-const NON_STEAM_SOURCES = new Set(['epic', 'gog', 'RPCS3 Emulator', 'ShadPS4 Emulator', 'Xenia Emulator', 'Unconfigured']);
 // Emulator sources whose achievement/header icons are already resolved local file:/// paths, so they
 // must bypass the Steam `fetch-icon` IPC (which expects a Steam icon hash) and be used verbatim.
 const EMU_LOCAL_ICON_SOURCES = new Set(['RPCS3 Emulator', 'ShadPS4 Emulator', 'Xenia Emulator']);
-function getSourceImgFor(game) {
-  const source = game.source;
-  // For a Steam-source game the Steam logo means "we resolved a real achievement schema and are
-  // tracking it". If nothing was detected (no schema, total 0) show the generic file/exe icon
-  // instead, so a half-working entry doesn't look like a fully-working Steam game.
-  if (!NON_STEAM_SOURCES.has(source) && !(game.achievement && game.achievement.total > 0)) {
-    return getSourceImg('Unconfigured');
+function gameHasAchievements(game) {
+  return !!(game && game.achievement && (Number(game.achievement.total) > 0 || (Array.isArray(game.achievement.list) && game.achievement.list.length > 0)));
+}
+
+function sourcePresentationFor(game) {
+  const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
+  const source = game && game.source;
+  const sourceLower = String(source || '').toLowerCase();
+  const system = String((game && game.system) || '').toLowerCase();
+
+  if (!gameHasAchievements(game)) {
+    return {
+      img: getSourceImg('Unconfigured'),
+      label: fr ? 'Aucun succès trouvé' : 'No achievements found',
+      kind: 'empty',
+    };
   }
-  return getSourceImg(source);
+
+  if (system === 'playstation' || source === 'RPCS3 Emulator' || source === 'ShadPS4 Emulator') {
+    return { img: getSourceImg(source === 'ShadPS4 Emulator' ? source : 'RPCS3 Emulator'), label: fr ? 'Succès PlayStation' : 'PlayStation trophies', kind: 'playstation' };
+  }
+  if (system === 'xbox' || source === 'Xenia Emulator') {
+    return { img: getSourceImg('Xenia Emulator'), label: fr ? 'Succès Xbox' : 'Xbox achievements', kind: 'xbox' };
+  }
+  if (sourceLower === 'epic') {
+    return { img: getSourceImg('epic'), label: fr ? 'Succès Epic Games' : 'Epic Games achievements', kind: 'epic' };
+  }
+  if (sourceLower === 'gog') {
+    return { img: getSourceImg('gog'), label: fr ? 'Succès GOG' : 'GOG achievements', kind: 'gog' };
+  }
+  if (system === 'uplay' || sourceLower.includes('uplay') || sourceLower.includes('ubisoft')) {
+    return { img: pathToFileURL(path.join(appPath, 'resources/img/achievement.svg')).href, label: fr ? 'Succès Ubisoft Connect' : 'Ubisoft Connect achievements', kind: 'ubisoft' };
+  }
+  if (system === 'ea' || sourceLower.includes('ea')) {
+    return { img: pathToFileURL(path.join(appPath, 'resources/img/achievement.svg')).href, label: fr ? 'Succès EA app' : 'EA app achievements', kind: 'ea' };
+  }
+
+  return { img: getSourceImg(source), label: fr ? 'Succès Steam' : 'Steam achievements', kind: 'steam' };
+}
+
+function dllPresentationFor(game) {
+  const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
+  const present = !!(game && game.hasSteamApiDll);
+  return {
+    present,
+    label: present
+      ? fr
+        ? 'steam_api(64).dll détecté'
+        : 'steam_api(64).dll detected'
+      : fr
+        ? 'steam_api(64).dll introuvable'
+        : 'steam_api(64).dll not found',
+  };
+}
+
+function normalizePathKey(value) {
+  return path.resolve(String(value || '')).toLowerCase();
+}
+
+function isPathInsideDir(value, root) {
+  if (!value || !root) return false;
+  const childKey = normalizePathKey(value);
+  const rootKey = normalizePathKey(root);
+  return childKey === rootKey || childKey.startsWith(rootKey + path.sep);
+}
+
+function readJsonFile(file, fallback) {
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return fallback;
+  }
+}
+
+function gbeBackupIndexFile() {
+  return path.join(getUserDataPath(), 'cfg/gbe-backups.db');
+}
+
+function automaticGbeBackupRoot() {
+  return path.join(getUserDataPath(), 'backups', 'gbe');
+}
+
+function readGbeBackupIndex() {
+  const data = readJsonFile(gbeBackupIndexFile(), []);
+  return Array.isArray(data) ? data : [];
+}
+
+function writeGbeBackupIndex(entries) {
+  const file = gbeBackupIndexFile();
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(entries, null, 2), 'utf8');
+}
+
+function backupManifestFor(backupDir) {
+  const manifest = readJsonFile(path.join(backupDir || '', 'backup.json'), null);
+  if (!manifest || !Array.isArray(manifest.files) || !manifest.gameDir) return null;
+  return manifest;
+}
+
+function rememberGbeBackup({ appid, gameDir, backupDir, manifest }) {
+  try {
+    const resolvedBackup = path.resolve(backupDir);
+    const entries = readGbeBackupIndex().filter((entry) => entry && normalizePathKey(entry.backupDir) !== normalizePathKey(resolvedBackup));
+    entries.push({
+      appid: String(appid || ''),
+      gameDir: path.resolve(gameDir),
+      backupDir: resolvedBackup,
+      createdAt: (manifest && manifest.createdAt) || new Date().toISOString(),
+    });
+    writeGbeBackupIndex(entries.slice(-80));
+  } catch (err) {
+    debug.log(`[gbe-backup] could not remember backup => ${formatErr(err)}`);
+  }
+}
+
+function createAutomaticGbeBackup({ appid, gameDir, steamSettings } = {}) {
+  try {
+    const localSteamSettings = isPathInsideDir(steamSettings, gameDir) ? steamSettings : null;
+    const result = goldberg.backupSetup({
+      gameDir,
+      steamSettings: localSteamSettings,
+      destinationRoot: automaticGbeBackupRoot(),
+    });
+    rememberGbeBackup({
+      appid,
+      gameDir,
+      backupDir: result.backupDir,
+      manifest: result.manifest,
+    });
+    debug.log(`[${appid || '?'}] GBE/Goldberg pre-fix backup created => ${result.backupDir}`);
+    return { ...result, skipped: false };
+  } catch (err) {
+    const message = formatErr(err);
+    if (/no steam_settings or Steam API DLL was found/i.test(message)) {
+      debug.log(`[${appid || '?'}] GBE/Goldberg pre-fix backup skipped (${message})`);
+      return { skipped: true, reason: message };
+    }
+    throw new Error(`backup before emulator fix failed: ${message}`);
+  }
+}
+
+function backupCandidateFromDir(backupDir, { appid, gameDir, source = 'scan', indexedAppid = null } = {}) {
+  try {
+    if (!backupDir || !fs.existsSync(backupDir)) return null;
+    const manifest = backupManifestFor(backupDir);
+    if (!manifest) return null;
+    const sameGameDir = normalizePathKey(manifest.gameDir) === normalizePathKey(gameDir);
+    const sameIndexedAppid = indexedAppid && String(indexedAppid) === String(appid);
+    if (!sameGameDir && !sameIndexedAppid) return null;
+    const stat = fs.statSync(backupDir);
+    const createdAt = manifest.createdAt || stat.mtime.toISOString();
+    return { backupDir: path.resolve(backupDir), manifest, createdAt, source };
+  } catch {
+    return null;
+  }
+}
+
+function scanBackupRoot(root, game) {
+  const out = [];
+  if (!root || !fs.existsSync(root)) return out;
+  const push = (dir) => {
+    const candidate = backupCandidateFromDir(dir, { appid: game.appid, gameDir: game.gameDir, source: 'scan' });
+    if (candidate) out.push(candidate);
+  };
+  push(root);
+  let entries = [];
+  try {
+    entries = fs.readdirSync(root, { withFileTypes: true });
+  } catch {
+    return out;
+  }
+  for (const entry of entries) {
+    if (entry.isDirectory()) push(path.join(root, entry.name));
+  }
+  return out;
+}
+
+function findLatestGbeBackup(game) {
+  if (!game || !game.gameDir) return null;
+  const candidates = [];
+  for (const entry of readGbeBackupIndex()) {
+    if (!entry || !entry.backupDir) continue;
+    const candidate = backupCandidateFromDir(entry.backupDir, {
+      appid: game.appid,
+      gameDir: game.gameDir,
+      source: 'index',
+      indexedAppid: entry.appid,
+    });
+    if (candidate) candidates.push(candidate);
+  }
+
+  const roots = [];
+  const addRoot = (root) => {
+    if (!root) return;
+    const key = normalizePathKey(root);
+    if (!roots.some((existing) => normalizePathKey(existing) === key)) roots.push(root);
+  };
+  try {
+    addRoot(remote.app.getPath('documents'));
+  } catch {}
+  try {
+    addRoot(automaticGbeBackupRoot());
+  } catch {}
+  try {
+    addRoot(path.dirname(game.gameDir));
+  } catch {}
+  for (const entry of readGbeBackupIndex()) {
+    try {
+      addRoot(path.dirname(entry.backupDir));
+    } catch {}
+  }
+  for (const root of roots) candidates.push(...scanBackupRoot(root, game));
+
+  const unique = new Map();
+  for (const candidate of candidates) unique.set(normalizePathKey(candidate.backupDir), candidate);
+  return [...unique.values()].sort((a, b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0))[0] || null;
+}
+
+function formatGbeBackupDetail(backup, game, fr) {
+  const lines = [];
+  if (game?.gameDir) lines.push(`${fr ? 'Jeu' : 'Game'}: ${game.gameDir}`);
+  if (backup?.backupDir) lines.push(`${fr ? 'Sauvegarde' : 'Backup'}: ${backup.backupDir}`);
+  if (backup?.createdAt) {
+    const created = moment(backup.createdAt);
+    if (created.isValid()) lines.push(`${fr ? 'Créée' : 'Created'}: ${created.format('L LT')}`);
+  }
+  if (backup?.manifest?.gameDir && game?.gameDir && normalizePathKey(backup.manifest.gameDir) !== normalizePathKey(game.gameDir)) {
+    lines.push(`${fr ? 'Dossier d’origine' : 'Original folder'}: ${backup.manifest.gameDir}`);
+  }
+  if (backup?.source && backup.source !== 'manual') {
+    const source = backup.source === 'index' ? (fr ? 'historique AW' : 'AW history') : fr ? 'scan disque' : 'disk scan';
+    lines.push(fr ? `Trouvée automatiquement via ${source}.` : `Found automatically via ${source}.`);
+  }
+  return lines.join('\n');
 }
 
 // Watchdog-status banner is localized here (it's set imperatively, not via the nth-child locale loader).
@@ -507,6 +764,8 @@ var app = {
             portrait ? $('#game-list').addClass('view-portrait') : $('#game-list').removeClass('view-portrait');
             let isPortrait = portrait && game.img.portrait;
             let imgName = isPortrait ? game.img.portrait : game.img.header;
+            const sourceIcon = sourcePresentationFor(game);
+            const dllIcon = typeof game.hasSteamApiDll === 'boolean' ? dllPresentationFor(game) : null;
             let template = `
             <li>
                 <div class="game-box" data-index="${gameList.length}" data-appid="${game.appid}" data-installed="${
@@ -537,13 +796,15 @@ var app = {
                       <div class="title" title="${escapeHtml(game.name)}"><span>${escapeHtml(game.name)}</span></div>
                       <div class="game-meta">
                         ${
-                          typeof game.hasSteamApiDll === 'boolean'
-                            ? `<span class="dll-badge ${game.hasSteamApiDll ? 'present' : 'missing'}" title="${
-                                game.hasSteamApiDll ? 'steam_api(64).dll detected' : 'No steam_api(64).dll detected'
-                              }"></span>`
+                          dllIcon
+                            ? `<span class="dll-badge ${dllIcon.present ? 'present' : 'missing'}" title="${escapeHtml(
+                                dllIcon.label
+                              )}" role="img" aria-label="${escapeHtml(dllIcon.label)}"></span>`
                             : ''
                         }
-                        <img class="source-icon" src="${getSourceImgFor(game)}">
+                        <img class="source-icon" src="${sourceIcon.img}" data-kind="${escapeHtml(sourceIcon.kind)}" title="${escapeHtml(
+              sourceIcon.label
+            )}" alt="${escapeHtml(sourceIcon.label)}" aria-label="${escapeHtml(sourceIcon.label)}">
                       </div>
                     </div>
                     <div class="progressBar" data-percent="${progress}"><span class="meter" style="width:${progress}%"></span><span class="progress-value">${progress}%</span></div>
@@ -608,7 +869,7 @@ var app = {
           $('#game-list .isEmpty').show();
           return;
         }
-        ipcRenderer.sendSync('close-puppeteer');
+        ipcRenderer.send('close-puppeteer');
         debug.log('Populating game list ...');
 
         // Sort the fully-built list exactly once. The old code re-sorted the whole (growing) list on
@@ -1084,13 +1345,13 @@ var app = {
               emulatorMenu.append(
                 new MenuItem({
                   icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/folder-open.png')),
-                  label: $('#game-list').attr('data-ctx-backupgbe') || 'Back up GBE/steam_settings…',
+                  label: $('#game-list').attr('data-ctx-backupgbe') || 'Back up GBE/Goldberg setup (steam_settings + steam_api(64).dll)…',
                   async click() {
                     try {
                       const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
                       const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-                        title: fr ? 'Choisir où enregistrer la sauvegarde GBE' : 'Choose where to save the GBE backup',
-                        buttonLabel: fr ? 'Sauvegarder ici' : 'Back up here',
+                        title: fr ? 'Où sauvegarder GBE/Goldberg (steam_settings + steam_api) ?' : 'Where should AW save the GBE/Goldberg setup?',
+                        buttonLabel: fr ? 'Créer la sauvegarde' : 'Create backup',
                         defaultPath: remote.app.getPath('documents'),
                         properties: ['openDirectory', 'createDirectory', 'dontAddToRecent'],
                       });
@@ -1100,11 +1361,19 @@ var app = {
                         steamSettings: backupGame.steamSettings,
                         destinationRoot: picked.filePaths[0],
                       });
+                      rememberGbeBackup({
+                        appid,
+                        gameDir: backupGame.gameDir,
+                        backupDir: result.backupDir,
+                        manifest: result.manifest,
+                      });
                       const choice = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                         type: 'info',
-                        title: fr ? 'Sauvegarde GBE terminée' : 'GBE backup complete',
-                        message: fr ? `${result.files.length} élément(s) sauvegardé(s).` : `Backed up ${result.files.length} item(s).`,
-                        detail: result.backupDir,
+                        title: fr ? 'Sauvegarde GBE/Goldberg créée' : 'GBE/Goldberg backup created',
+                        message: fr
+                          ? `${result.files.length} élément(s) sauvegardé(s) : steam_settings + DLL Steam.`
+                          : `Backed up ${result.files.length} item(s): steam_settings + Steam DLLs.`,
+                        detail: formatGbeBackupDetail({ backupDir: result.backupDir, manifest: result.manifest, createdAt: result.manifest?.createdAt }, backupGame, fr),
                         buttons: ['OK', fr ? 'Ouvrir la sauvegarde' : 'Open backup folder'],
                         defaultId: 0,
                         cancelId: 0,
@@ -1115,37 +1384,48 @@ var app = {
                       const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
                       remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                         type: 'error',
-                        title: fr ? 'Échec de la sauvegarde GBE' : 'GBE backup failed',
-                        message: fr ? "Impossible de sauvegarder cette configuration." : 'Could not back up this setup.',
-                        detail: `${err}`,
+                        title: fr ? 'Échec de la sauvegarde GBE/Goldberg' : 'GBE/Goldberg backup failed',
+                        message: fr
+                          ? 'Impossible de sauvegarder steam_settings et les DLL Steam de ce jeu.'
+                          : 'Could not back up steam_settings and Steam DLLs for this game.',
+                        detail: formatErr(err),
                       });
                     }
                   },
                 })
               );
 
-              // Counterpart to "Back up GBE/steam_settings…": copy the files from a backup folder
+              // Counterpart to "Back up GBE/Goldberg setup": copy the files from a backup folder
               // (one created by the item above, identified by its backup.json manifest) back over the
               // live install — the manual undo for a bad emulator fix / DLC edit / DRM strip.
               emulatorMenu.append(
                 new MenuItem({
                   icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/redo-alt.png')),
-                  label: $('#game-list').attr('data-ctx-restoregbe') || 'Restore GBE backup…',
+                  label: $('#game-list').attr('data-ctx-restoregbe') || 'Restore latest GBE/Goldberg backup…',
                   async click() {
                     const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
                     try {
-                      const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-                        title: fr ? 'Choisir le dossier de sauvegarde GBE à restaurer' : 'Select the GBE backup folder to restore',
-                        buttonLabel: fr ? 'Restaurer' : 'Restore',
-                        defaultPath: remote.app.getPath('documents'),
-                        properties: ['openDirectory', 'dontAddToRecent'],
-                      });
-                      if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
+                      let backup = findLatestGbeBackup({ ...backupGame, appid });
+                      if (!backup) {
+                        const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
+                          title: fr ? 'Aucune sauvegarde connue : choisir un dossier GBE/Goldberg' : 'No known backup: choose a GBE/Goldberg backup folder',
+                          buttonLabel: fr ? 'Restaurer ce dossier' : 'Restore this folder',
+                          defaultPath: remote.app.getPath('documents'),
+                          properties: ['openDirectory', 'dontAddToRecent'],
+                        });
+                        if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
+                        const backupDir = path.resolve(picked.filePaths[0]);
+                        const manifest = backupManifestFor(backupDir);
+                        if (!manifest) throw new Error('restore: backup.json manifest is missing — not an Achievement Watcher GBE backup');
+                        backup = { backupDir, manifest, createdAt: manifest.createdAt, source: 'manual' };
+                      }
                       const confirm = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                         type: 'warning',
-                        title: fr ? 'Restaurer la sauvegarde GBE ?' : 'Restore GBE backup?',
-                        message: fr ? 'Les fichiers actuels du jeu seront écrasés par ceux de la sauvegarde.' : 'The current game files will be overwritten with those from the backup.',
-                        detail: backupGame.gameDir,
+                        title: fr ? 'Restaurer la sauvegarde GBE/Goldberg ?' : 'Restore GBE/Goldberg backup?',
+                        message: fr
+                          ? 'AW va restaurer steam_settings et les DLL Steam sauvegardées pour ce jeu.'
+                          : 'AW will restore the saved steam_settings and Steam DLLs for this game.',
+                        detail: formatGbeBackupDetail(backup, backupGame, fr),
                         buttons: [fr ? 'Annuler' : 'Cancel', fr ? 'Restaurer' : 'Restore'],
                         defaultId: 1,
                         cancelId: 0,
@@ -1153,22 +1433,30 @@ var app = {
                       });
                       if (confirm !== 1) return;
                       const result = goldberg.restoreSetup({
-                        backupDir: picked.filePaths[0],
+                        backupDir: backup.backupDir,
                         gameDir: backupGame.gameDir,
+                      });
+                      rememberGbeBackup({
+                        appid,
+                        gameDir: backupGame.gameDir,
+                        backupDir: backup.backupDir,
+                        manifest: backup.manifest || result.manifest,
                       });
                       remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                         type: 'info',
-                        title: fr ? 'Restauration terminée' : 'Restore complete',
+                        title: fr ? 'Restauration GBE/Goldberg terminée' : 'GBE/Goldberg restore complete',
                         message: fr ? `${result.files.length} élément(s) restauré(s).` : `Restored ${result.files.length} item(s).`,
-                        detail: result.gameDir,
+                        detail: formatGbeBackupDetail({ ...backup, manifest: result.manifest }, { ...backupGame, gameDir: result.gameDir }, fr),
                         noLink: true,
                       });
                     } catch (err) {
                       remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                         type: 'error',
-                        title: fr ? 'Échec de la restauration GBE' : 'GBE restore failed',
-                        message: fr ? "Impossible de restaurer cette sauvegarde." : 'Could not restore this backup.',
-                        detail: `${err}`,
+                        title: fr ? 'Échec de la restauration GBE/Goldberg' : 'GBE/Goldberg restore failed',
+                        message: fr
+                          ? 'Impossible de restaurer cette sauvegarde GBE/Goldberg.'
+                          : 'Could not restore this GBE/Goldberg backup.',
+                        detail: formatErr(err),
                       });
                     }
                   },
@@ -1209,7 +1497,24 @@ var app = {
                         gameDir = picked.filePaths[0];
                       }
 
-                      // 1a — Community CrakFiles fix FIRST, same as the per-scan auto-apply
+                      // 1a — Create a portable restore point before any write step. CrakFiles remains
+                      // the first actual fix applied, but the user can now undo the pre-fix
+                      // steam_settings + steam_api(64).dll state from "Restore latest GBE/Goldberg backup".
+                      setGameBoxBusy(self, fr ? 'Sauvegarde avant fix…' : 'Backing up before fix…');
+                      const preFixBackup = createAutomaticGbeBackup({
+                        appid,
+                        gameDir,
+                        steamSettings: game?.steamSettings,
+                      });
+                      const preFixBackupNote = preFixBackup && preFixBackup.backupDir
+                        ? fr
+                          ? `\n\nSauvegarde avant fix:\n${preFixBackup.backupDir}`
+                          : `\n\nBackup before fix:\n${preFixBackup.backupDir}`
+                        : fr
+                          ? '\n\nSauvegarde avant fix: aucun steam_settings / steam_api existant.'
+                          : '\n\nBackup before fix: no existing steam_settings / steam_api found.';
+
+                      // 1b — Community CrakFiles fix FIRST, same as the per-scan auto-apply
                       // (achievements.js autoApplyEmulatorFix STEP 1). On a CONFIDENT name match with an
                       // auto-installable (pixeldrain) fix, apply the crack before the emulator so the GBE
                       // steam_api installed on top makes achievements work — and a cracked runtime makes
@@ -1222,16 +1527,19 @@ var app = {
                         try {
                           const crackFix = require(path.join(appPath, 'parser/crackFix.js'));
                           let arch = null;
+                          let exe0 = null;
                           try {
                             const pe = require(path.join(appPath, 'util/pe.js'));
                             const emu0 = goldberg.detectEmulator(gameDir);
-                            const exe0 = exeDetect.detect(gameDir, game?.name || '', { dllPaths: emu0.dll });
+                            exe0 = exeDetect.detect(gameDir, game?.name || '', { dllPaths: emu0.dll });
                             if (exe0 && exe0.full) arch = pe.exeArch(exe0.full);
                           } catch {}
+                          const gameNameCandidates = [game?.name, path.basename(gameDir || ''), path.basename((exe0 && (exe0.full || exe0.name)) || '').replace(/\.exe$/i, '')].filter(Boolean);
                           setGameBoxBusy(self, fr ? 'Recherche d’un crack communautaire…' : 'Checking community crack…');
                           const cf = await crackFix.applyBestFix({
                             cacheDir: path.join(getUserDataPath(), 'cache/crackfiles'),
                             gameName: game?.name || '',
+                            gameNames: gameNameCandidates,
                             gameDir,
                             arch,
                             proxyFallback: (app.config?.emulator || {}).pixeldrainProxyFallback !== false,
@@ -1242,7 +1550,13 @@ var app = {
                             crackNote = fr
                               ? `\nCrack communautaire : « ${cf.entry?.name} » appliqué (${(cf.files || []).length} fichier(s))`
                               : `\nCommunity crack: "${cf.entry?.name}" applied (${(cf.files || []).length} file(s))`;
-                            debug.log(`[${appid}] CrakFiles (manual emu fix): applied "${cf.entry?.name}" (${(cf.files || []).length} file(s))`);
+                            debug.log(`[${appid}] CrakFiles (manual emu fix): applied "${cf.entry?.name}" via "${cf.matchedName || game?.name}" (${(cf.files || []).length} file(s))`);
+                          } else if (cf && cf.skipped && cf.reason === 'already-applied') {
+                            crackApplied = true;
+                            crackNote = fr
+                              ? `\nCrack communautaire : « ${cf.entry?.name} » déjà appliqué`
+                              : `\nCommunity crack: "${cf.entry?.name}" already applied`;
+                            debug.log(`[${appid}] CrakFiles (manual emu fix): already applied "${cf.entry?.name}" via "${cf.matchedName || game?.name}"`);
                           } else if (cf && cf.reason === 'pixeldrain-unavailable') {
                             // A crack matched but pixeldrain rate-limited it (captcha/paid) — can't be
                             // auto-fetched. Note it so the user knows to grab it manually; the emulator
@@ -1454,6 +1768,7 @@ var app = {
                             dllDirs.join('\n') +
                             `\n\nVersion: ${dlls.tag || 'unknown'}` +
                             (installResult.backedUp > 0 ? `\nExisting dll(s) backed up as *.bak in ${installResult.backedUp} location(s)` : '') +
+                            preFixBackupNote +
                             crackNote +
                             drmNote +
                             `\n\nDiagnostic after install:\n${diagnosisLines.join('\n')}` +
@@ -2068,11 +2383,12 @@ var app = {
       $('#achievement .wrapper > .header .title span').text(game.name);
       // Never let the denominator fall below what's actually displayed: a desynced schema could leave
       // total at 0 for a completed game, rendering "39 / 0" and a NaN%/Infinity% percentage.
-      const counterMax = Math.max(game.achievement.total || 0, game.achievement.list.length, game.achievement.unlocked || 0);
+      const unlockedCount = Math.max(0, Math.floor(finiteNumber(game.achievement.unlocked, 0)));
+      const counterMax = Math.max(Math.floor(finiteNumber(game.achievement.total, 0)), game.achievement.list.length, unlockedCount);
       $('#achievement .wrapper > .header .stats .counter')
-        .attr('data-count', game.achievement.unlocked)
+        .attr('data-count', unlockedCount)
         .attr('data-max', counterMax)
-        .attr('data-percent', counterMax > 0 ? Math.floor((game.achievement.unlocked / counterMax) * 100) : 0);
+        .attr('data-percent', percentFromProgress(unlockedCount, counterMax));
 
       if (game.system === 'playstation') {
         $('#achievement .wrapper > .header[data-system="playstation"] .trophy li.platinum span').text(
@@ -2136,7 +2452,9 @@ var app = {
 
       let i = 0;
       for (let achievement of game.achievement.list) {
-        const percent = achievement.MaxProgress > 0 ? Math.floor((achievement.CurProgress / achievement.MaxProgress) * 100) : '0';
+        const progress = getAchievementProgressState(achievement);
+        const progressMax = progress.hasProgress ? progress.max : 0;
+        const progressLabel = `${progress.current} / ${progress.max}`;
 
         // Hidden + still locked + "show hidden" off => mask the description inline. The real text is
         // stashed in data-desc and revealed in place on click (delegated handler below), instead of
@@ -2170,10 +2488,10 @@ var app = {
                                     : `${escapeHtml(achievement.displayName)}`
                                 }</div>
                                 ${descHtml}
-                                <div class="progressBar" data-current="${achievement.CurProgress || '0'}" data-max="${
-          achievement.MaxProgress || '0'
-        }" data-percent="${percent}">
-                                <span class="meter" style="width:${percent}%"></span></div>
+                                <div class="progressBar" data-current="${progress.current}" data-max="${progressMax}" data-percent="${
+          progress.percent
+        }" data-label="${progressLabel}">
+                                <span class="meter" style="width:${progress.hasProgress ? progress.percent : 0}%"></span></div>
                             </div>
                             <div class="stats">
                               <div class="time" data-time="${achievement.UnlockTime}"><i class="fas fa-clock"></i>
@@ -2243,7 +2561,30 @@ var app = {
       $('#unlock .header .title').attr('data-count', count_unlocked);
       $('#lock .header .title').attr('data-count', count_locked);
 
-      if (count_unlocked == 0) {
+      if (game.achievement.list.length === 0) {
+        $('#unlock').hide();
+        $('#lock').show();
+        const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
+        const title = fr ? 'Aucun succès Steam trouvé' : 'No Steam achievements found';
+        const detail = game.unconfigured
+          ? fr
+            ? "Ce dossier n'a pas encore de configuration Goldberg/GBE avec un AppID Steam fiable."
+            : 'This folder does not have a Goldberg/GBE setup with a reliable Steam AppID yet.'
+          : fr
+            ? "AW affiche le jeu, mais Steam ne fournit aucun schéma de succès pour cet AppID."
+            : 'AW can show the game, but Steam did not provide an achievement schema for this AppID.';
+        lock.append(`
+              <li>
+                <div class="notice empty-achievement-notice">
+                  <p><i class="fas fa-trophy"></i> ${title}</p>
+                  <p>${detail}</p>
+                </div>
+              </li>`);
+      } else {
+        $('#unlock').show();
+      }
+
+      if (game.achievement.list.length > 0 && count_unlocked == 0) {
         let template = `
               <li>
                 <div class="notice">
@@ -2254,7 +2595,7 @@ var app = {
         unlock.append(template);
       }
 
-      if (count_locked == 0) {
+      if (game.achievement.list.length > 0 && count_locked == 0) {
         $('#lock').hide();
       } else {
         $('#lock').show();
@@ -2461,6 +2802,11 @@ var app = {
           try {
             const detectedEmu = goldberg.detectEmulator(game.gameDir);
             const detectedExe = exeDetect.detect(game.gameDir, game.name || '', { dllPaths: detectedEmu.dll });
+            createAutomaticGbeBackup({
+              appid: game.appid,
+              gameDir: game.gameDir,
+              steamSettings: game.steamSettings || detectedEmu.steamSettings,
+            });
             const schema = {
               name: game.name,
               achievement: {

@@ -119,6 +119,11 @@ eq(crackFix.findBestMatch(list, ''), null, 'empty name → null');
 eq(crackFix.findBestMatch([{ name: 'No Fix Game', fixes: [] }], 'No Fix Game'), null, 'confident name but no fixes → null');
 eq(crackFix.findBestMatch([{ name: 'No Fix Game' }], 'No Fix Game'), null, 'confident name but missing fixes array → null');
 
+const multiName = crackFix.findBestMatchForNames(list, ['Cyber', 'Cyberpunk 2077']);
+ok(multiName && multiName.entry.name === 'Cyberpunk 2077', 'multi-name lookup tries later confident candidates');
+eq(multiName && multiName.matchedName, 'Cyberpunk 2077', 'multi-name lookup reports the candidate that matched');
+eq(crackFix.findBestMatchForNames(list, ['Cyber', 'Totally Unrelated Zzz']), null, 'multi-name lookup still rejects weak candidates');
+
 // ---- pickBestFix --------------------------------------------------------------------------------
 const multi = {
   name: 'Some Game',
@@ -247,6 +252,11 @@ eq(crackFix.pickBestFix({}), null, 'missing fixes array → null');
     eq(r2.skipped, true, 'already-applied is skipped:true');
     eq(r2.reason, 'already-applied', 'already-applied reason');
     eq(r2.applied, false, 'already-applied is applied:false');
+    eq(r2.matchedName, 'Cyberpunk 2077', 'already-applied reports the matched candidate');
+
+    const r3 = await crackFix.applyBestFix({ list, gameName: 'Cyber', gameNames: ['Cyber', 'Cyberpunk 2077'], gameDir });
+    eq(r3.reason, 'already-applied', 'applyBestFix can match via alternate local names');
+    eq(r3.matchedName, 'Cyberpunk 2077', 'applyBestFix reports alternate matched name');
   }
 
   // applyLocalArchive — extract a real archive and apply it into the game folder with backup + marker.

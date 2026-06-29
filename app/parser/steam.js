@@ -28,6 +28,8 @@ let cacheRoot;
 const storeDataInFlight = new Map();
 const iconFetchInFlight = new Map();
 const workingLinkCache = new Map();
+const appSearchCache = new Map();
+const TENOKE_SCHEMA_FILE = 'tenoke.ini';
 module.exports.setUserDataPath = (p) => {
   cacheRoot = p;
 };
@@ -826,6 +828,44 @@ async function findInAppList(appID) {
   throw 'ERR_NAME_NOT_FOUND';
 }
 
+async function searchAppsByName(name) {
+  const term = String(name || '').trim();
+  if (!term) return [];
+  const key = term.toLowerCase();
+  if (appSearchCache.has(key)) return appSearchCache.get(key);
+
+  const pending = (async () => {
+    const url = `https://steamcommunity.com/actions/SearchApps/${encodeURIComponent(term)}`;
+    const data = await request.getJson(url, { timeout: 20000 });
+    if (!Array.isArray(data)) return [];
+    return data
+      .map((app) => ({
+        appid: /^[0-9]+$/.test(String(app.appid || '')) ? Number(app.appid) : app.appid,
+        name: app.name,
+        icon: app.icon,
+        logo: app.logo,
+      }))
+      .filter((app) => app.appid && app.name);
+  })();
+
+  appSearchCache.set(key, pending);
+  try {
+    return await pending;
+  } catch (err) {
+    if (debug) debug.log(`Steam app search failed for "${term}" (${err.code || err})`);
+    appSearchCache.delete(key);
+    return [];
+  }
+}
+
+async function loadAppListBestEffort() {
+  try {
+    await findInAppList(753); // ensures appidListMap is loaded (Steam/Spacewar always resolves)
+  } catch {
+    /* list unavailable — callers can fall back to direct Steam search */
+  }
+}
+
 // Reverse lookup: resolve a game NAME to a Steam appid via the cached GetAppList map. Used to borrow
 // real store art (header/icon) for installed games we found on disk but that carry no appid of their
 // own. Exact normalized-name match only, to avoid attaching the wrong game's art. Returns appid|null.
@@ -836,26 +876,112 @@ async function findInAppList(appID) {
 // exact-normalized-equality match, which missed every "<Game> [FitGirl Repack]" / "(GOG)" folder.)
 module.exports.findAppidByName = async (name) => {
   if (!name) return null;
-  try {
-    await findInAppList(753); // ensures appidListMap is loaded (Steam/Spacewar always resolves)
-  } catch {
-    /* list unavailable — fall through */
+  await loadAppListBestEffort();
+
+  if (appidListMap.size > 0) {
+    const hit = fuzzyAppid.bestConfidentAppid(name, appidListMap.values());
+    if (hit) return hit;
   }
-  if (appidListMap.size === 0) return null;
-  return fuzzyAppid.bestConfidentAppid(name, appidListMap.values());
+
+  // GetAppList is not guaranteed to be reachable anymore and stale cached copies miss brand-new
+  // releases. Fall back to Steam's lightweight app search, then apply the same confident matcher.
+  const apps = await searchAppsByName(name);
+  return fuzzyAppid.bestConfidentAppid(name, apps);
+};
+
+function stripIniValue(value) {
+  return String(value == null ? '' : value)
+    .replace(/\s+#.*$/, '')
+    .trim()
+    .replace(/^"|"$/g, '');
+}
+
+function localizedTenokeValue(local, key, lang) {
+  const item = local && local[key];
+  if (!item || typeof item !== 'object') return '';
+  const language = String(lang || 'english').toLowerCase();
+  return stripIniValue(item[language] || item.english || Object.values(item).find((v) => v != null) || '');
+}
+
+function findFileByName(dir, filename, maxDepth = 6) {
+  if (!dir || !fs.existsSync(dir)) return null;
+  const wanted = filename.toLowerCase();
+  const walk = (current, depth) => {
+    if (depth > maxDepth) return null;
+    let entries;
+    try {
+      entries = fs.readdirSync(current, { withFileTypes: true });
+    } catch {
+      return null;
+    }
+    for (const entry of entries) {
+      const full = path.join(current, entry.name);
+      if (entry.isFile() && entry.name.toLowerCase() === wanted) return full;
+    }
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      const hit = walk(path.join(current, entry.name), depth + 1);
+      if (hit) return hit;
+    }
+    return null;
+  };
+  return walk(dir, 0);
+}
+
+function getTenokeSchemaFromFile(file, appid, lang = 'english') {
+  let local;
+  try {
+    local = ini.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return [];
+  }
+  const tenokeAppid = stripIniValue(local.TENOKE && local.TENOKE.id).match(/^[0-9]+/)?.[0];
+  if (appid != null && tenokeAppid && String(tenokeAppid) !== String(appid)) return [];
+
+  const prefix = 'ACHIEVEMENTS.';
+  const names = Object.keys(local)
+    .filter((key) => key.startsWith(prefix) && !key.slice(prefix.length).includes('.'))
+    .map((key) => key.slice(prefix.length));
+
+  return names.map((name) => {
+    const base = `${prefix}${name}`;
+    const entry = local[base] || {};
+    const icon = stripIniValue(entry.icon);
+    const icongray = stripIniValue(entry.icon_gray || entry.icongray);
+    const hidden = stripIniValue(entry.hidden) === '1' ? 1 : 0;
+    const maxProgress = Number(stripIniValue(entry.progress_max || entry.max_progress || '0'));
+    const achievement = {
+      name,
+      default_value: 0,
+      displayName: localizedTenokeValue(local, `${base}.name`, lang) || name,
+      hidden,
+      description: localizedTenokeValue(local, `${base}.desc`, lang) || '',
+      icon: icon && tenokeAppid ? `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${tenokeAppid}/${icon}` : '',
+      icongray: icongray && tenokeAppid ? `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${tenokeAppid}/${icongray}` : '',
+    };
+    if (Number.isFinite(maxProgress) && maxProgress > 0) achievement.max_progress = maxProgress;
+    return achievement;
+  });
+}
+
+module.exports.getLocalAchievementSchema = (gameDir, appid, lang = 'english') => {
+  const tenoke = findFileByName(gameDir, TENOKE_SCHEMA_FILE);
+  if (!tenoke) return [];
+  return getTenokeSchemaFromFile(tenoke, appid, lang);
 };
 
 // Ranked AppID candidates for a name, best first: [{ appid, name, score, tier }]. Includes fuzzy
 // (typo-tolerant) matches — meant for a confirm/pick dialog, not silent auto-application.
 module.exports.findAppidCandidatesByName = async (name, limit = 6) => {
   if (!name) return [];
-  try {
-    await findInAppList(753);
-  } catch {
-    /* list unavailable — fall through */
+  await loadAppListBestEffort();
+
+  const apps = appidListMap.size > 0 ? Array.from(appidListMap.values()) : [];
+  for (const app of await searchAppsByName(name)) {
+    if (!apps.some((candidate) => String(candidate.appid) === String(app.appid))) apps.push(app);
   }
-  if (appidListMap.size === 0) return [];
-  return fuzzyAppid.rankAppidCandidates(name, appidListMap.values(), { limit });
+  if (apps.length === 0) return [];
+  return fuzzyAppid.rankAppidCandidates(name, apps, { limit });
 };
 
 const cdnProviders = [
