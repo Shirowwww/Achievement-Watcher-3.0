@@ -3,6 +3,12 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 3.0.8 - 2026-06-30
+
+### Fixed
+
+- Playtime notifications (overlay and toast) now show the game's high-resolution Steam library art instead of Steam's tiny, low-quality icon, which only shows up as a fallback when no library art is available.
+
 ## 3.0.7 - 2026-06-29
 
 ### Fixed

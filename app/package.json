@@ -2,7 +2,7 @@
   "private": true,
   "name": "Achievement-Watcher",
   "description": "A sexy achievement file parser with real-time notification.",
-  "version": "3.0.7",
+  "version": "3.0.8",
   "main": "./electron/init.js",
   "engines": {
     "node": ">=18.0.0"

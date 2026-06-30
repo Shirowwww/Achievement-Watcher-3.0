@@ -6,7 +6,7 @@
 
 Bring achievements from your PC games and supported emulators into **one modern Windows library**, with progress, rarity, playtime and a live notification the moment you unlock something.
 
-![version](https://img.shields.io/badge/version-3.0.5-blue)
+![version](https://img.shields.io/badge/version-3.0.8-blue)
 ![platform](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows)
 ![electron](https://img.shields.io/badge/Electron-42-47848F?logo=electron&logoColor=white)
 ![node](https://img.shields.io/badge/Node.js-24-339933?logo=node.js&logoColor=white)
@@ -61,7 +61,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the full notes and the [docs](docs/) for gu
 
 ## 📥 Install & use
 
-1. Download the latest `Achievement.Watcher.Setup.3.0.5.exe` from the [**Releases**](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases) page.
+1. Download the latest `Achievement.Watcher.Setup.3.0.8.exe` from the [**Releases**](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases) page.
 2. Install and launch Achievement Watcher — it lives in the system tray; click the tray icon to open the library.
 3. Open **Settings** to configure game folders, sources, notifications and the optional Steam Web API key.
 4. Leave it running: the background tracker auto-starts at sign-in and keeps live notifications and playtime working even with the window closed.
