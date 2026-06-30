@@ -1952,7 +1952,10 @@ function normalizeNotificationProgress(args) {
 
 function resolvePrimaryNotificationIcon({ notificationType, iconPath, gameIconPath, imagePath, progress }) {
   const type = String(notificationType || '').toLowerCase();
-  if (type === 'playtime') return iconPath || gameIconPath || imagePath || '';
+  // Playtime: prefer the Steam library art (gameIcon) over the achievement-style `icon`, which is
+  // Steam's tiny img_icon_url and renders blurry/low-res next to a high-res header. Keep it as a
+  // fallback for the rare appid that has no library art.
+  if (type === 'playtime') return gameIconPath || iconPath || imagePath || '';
   if (progress) return iconPath || gameIconPath || imagePath || '';
   return iconPath || imagePath || gameIconPath || '';
 }

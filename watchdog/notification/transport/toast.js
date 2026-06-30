@@ -35,7 +35,9 @@ module.exports = async (message, options) => {
     timeStamp: message.time,
     title: message.achievementDisplayName,
     message: message.achievementDescription,
-    icon: message.icon,
+    // Playtime's `icon` is Steam's tiny img_icon_url (low-res, looks like an exe icon); prefer the
+    // higher-res gameIcon (Steam library art) and fall back to it only when that's unavailable.
+    icon: message.notificationType === 'playtime' ? message.gameIcon || message.icon : message.icon,
     // Silence the toast only when muted, or when we have our own custom file to play.
     silent: options.toast.customAudio === '0' || (options.toast.customAudio === '2' && !!soundFile) ? true : false,
     // '1' and '2'-without-a-file fall back to a built-in notification sound.
