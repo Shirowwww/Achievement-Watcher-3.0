@@ -1409,5 +1409,11 @@ function populateLegitUsers(selected) {
   selector.empty();
   selector.append(defaultOption);
   if (!list || list.length === 0) return;
-  for (let user of list) selector.append(`<option value="${user.user}" ${selected === user.user ? 'selected' : ''}>${user.name}</option>`);
+  for (let user of list)
+    selector.append(
+      $('<option>')
+        .attr('value', user.user)
+        .prop('selected', selected === user.user)
+        .text(user.name)
+    );
 }

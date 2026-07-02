@@ -17,10 +17,9 @@ const { BrowserWindow, dialog, session, shell, ipcMain, globalShortcut, Tray, Me
 const { autoUpdater } = require('electron-updater');
 autoUpdater.autoInstallOnAppQuit = false;
 const minimist = require('minimist');
-const { exec, execSync, spawn } = require('child_process');
+const { execSync, spawn } = require('child_process');
 const fs = require('fs');
 const ipc = require(path.join(__dirname, 'ipc.js'));
-const { pathToFileURL } = require('url');
 const BASE_URL = 'https://www.steamgriddb.com/api/v2';
 const API_KEY = '2a9d32ddd0bfe4e1191b4f6ff56fef60'; // TODO: remove this and load from config file
 const startupArgs = minimist(process.argv.slice(1));
@@ -95,7 +94,6 @@ manifest.config.debug = process.env.NODE_ENV === 'development' || process.defaul
 let puppeteerWindow = {};
 let MainWin = null;
 let overlayWindow = null;
-let isOverlayShowing = false;
 let debug = new (require('@xan105/log'))({
   console: manifest.config.debug || false,
   file: path.join(userData, `logs/renderer.log`),
@@ -356,8 +354,6 @@ async function closePuppeteer() {
   puppeteerWindow.browser = undefined;
   puppeteerWindow.context = undefined;
   puppeteerWindow.pagesh = undefined;
-  puppeteerWindow.pagesc = undefined;
-  puppeteerWindow.page = undefined;
   try {
     if (context) await context.close();
   } catch {}
@@ -866,9 +862,6 @@ async function startPuppeteer(headless, strip) {
     }
   }
   if (!puppeteerWindow.context) puppeteerWindow.context = await puppeteerWindow.browser.createIncognitoBrowserContext();
-  if (!puppeteerWindow.pagesc) {
-    puppeteerWindow.pagesc = await puppeteerWindow.context.newPage();
-  }
   if (!puppeteerWindow.pagesh) {
     puppeteerWindow.pagesh = await puppeteerWindow.context.newPage();
     if (strip) {
@@ -961,113 +954,11 @@ async function scrapeWithPuppeteer(info = { appid: 269770 }, alternate) {
         return;
       }
 
-      if (alternate.steamcommunity) {
-        const page = puppeteerWindow.pagesc;
-        try {
-          await page.goto(alternate.url, { waitUntil: 'domcontentloaded' });
-        } catch (e) {
-          debug.log(e);
-        }
-        const achs = await page.evaluate(() => {
-          return Array.from(document.querySelectorAll('.achieveRow')).map((row) => {
-            const img = row.querySelector('.achieveImgHolder img')?.src.split('/').pop().split('.jpg')[0] || null;
-            const title = row.querySelector('.achieveTxt h3')?.innerText.trim() || null;
-            const description = row.querySelector('.achieveTxt h5')?.innerText.trim() || null;
-            return { img, title, description };
-          });
-        });
-        info.achievements = achs;
-        return;
-      }
-
-      const url = `https://steamcommunity.com/profiles/${alternate.steamid}`;
-      const page = puppeteerWindow.page;
-      try {
-        await page.goto(url, { waitUntil: 'domcontentloaded' });
-      } catch (e) {
-        debug.log(e);
-      }
-      const url3 = page.url();
-      await page.goto(`${url3}/stats/${info.appid}/?tab=achievements`, { waitUntil: 'domcontentloaded' });
-      return;
+      // NB: the old steamcommunity-in-page and steamdb scrape branches were removed — every caller
+      // goes through the steamhunters paths above (the steamcommunity schema now uses a plain HTTP
+      // fetch, see fetchSteamCommunityAchievements), and the steamdb branch relied on a
+      // `puppeteerWindow.page` that startPuppeteer never created.
     }
-    const url1 = `https://steamdb.info/app/${info.appid}/info/`;
-    const url2 = `https://steamdb.info/app/${info.appid}/stats/`;
-    const page2 = puppeteerWindow.page;
-
-    await page2.goto(url2, { waitUntil: 'domcontentloaded' });
-    const pageText = await page2.evaluate(() => document.body.innerText || '');
-    if (pageText.includes('No app was found matching this AppID')) {
-      info.achievements = [];
-      return;
-    }
-    if (!page2.url().includes('/stats')) {
-      info.achievements = [];
-      return;
-    }
-    info.name = await page2.evaluate(() => {
-      const el = document.querySelector('.pagehead-title h1');
-      return el?.innerText.trim() || null;
-    });
-    await page2.waitForSelector('.achievements_list', { timeout: 5000 }).catch(() => {
-      throw new Error('Achievements list container not found');
-    });
-    // Get achievements
-    info.achievements = await page2.evaluate(() => {
-      const items = document.querySelectorAll('.achievements_list .achievement');
-      const data = [];
-
-      const appid = document.querySelector('.row.app-row table tbody tr')?.children?.[1]?.innerText.trim() || '';
-
-      items.forEach((item) => {
-        const idRaw = item.getAttribute('id') || '';
-        const id = idRaw.replace(/^achievement-/, '');
-        const name = item.querySelector('.achievement_name')?.innerText.trim() || '';
-
-        const descContainer = item.querySelector('.achievement_desc');
-        const spoiler = descContainer?.querySelector('.achievement_spoiler');
-        const hidden = !!spoiler;
-        const description = hidden ? spoiler?.innerText.trim() : descContainer?.innerText.trim() || '';
-
-        const icon = appid
-          ? 'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/' +
-            appid +
-            '/' +
-            (item.querySelector('.achievement_image')?.getAttribute('data-name') || '')
-          : '';
-
-        const icongray = appid
-          ? 'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/' +
-            appid +
-            '/' +
-            (item.querySelector('.achievement_image_small')?.getAttribute('data-name') || '')
-          : '';
-
-        data.push({
-          name: id,
-          default_value: 0,
-          displayName: name,
-          hidden: hidden ? 1 : 0,
-          description,
-          icon,
-          icongray,
-        });
-      });
-
-      return data;
-    });
-    await delay(Math.floor(Math.random() * (1500 - 800 + 1)) + 800);
-
-    await page2.goto(url1, { waitUntil: 'domcontentloaded' });
-    info.icon = await page2.evaluate(() => {
-      const el = document.querySelector('#js-assets-table');
-      const row = Array.from(el.rows).find((r) => r.cells[0].textContent.trim() === 'icon');
-
-      if (row) {
-        return row.cells[1].querySelector('a').textContent.trim();
-      }
-    });
-    return;
   } catch (err) {
     debug.log(err);
   }
@@ -1329,10 +1220,10 @@ function createMainWindow() {
       }
     };
     MainWin.webContents.on('will-navigate', openExternal); //a href
-    MainWin.webContents.on('new-window', openExternal); //a href target="_blank"
 
     // Hardening: never let the renderer spawn its own BrowserWindow; route real links to the OS
-    // browser instead (modern replacement for the deprecated 'new-window' path above).
+    // browser instead (a href target="_blank" lands here — the legacy 'new-window' event no longer
+    // exists on Electron ≥22).
     MainWin.webContents.setWindowOpenHandler(({ url }) => {
       if (/^https?:\/\//i.test(url)) shell.openExternal(url).catch(() => {});
       return { action: 'deny' };
@@ -1538,7 +1429,6 @@ async function createOverlayWindow(info) {
     }
     if (String(info.appid) === '0' || info.action === 'refresh') return;
     const { width, height } = require('electron').screen.getPrimaryDisplay().workAreaSize;
-    isOverlayShowing = true;
 
     await startEngines();
     await getCachedData(info);
@@ -1571,26 +1461,24 @@ async function createOverlayWindow(info) {
       overlayWindow.webContents.openDevTools({ mode: 'undocked' });
       overlayWindow.isDev = true;
       console.info((({ node, electron, chrome }) => ({ node, electron, chrome }))(process.versions));
-      try {
-        const contextMenu = require('electron-context-menu')({
-          append: (defaultActions, params, browserWindow) => [
-            {
-              label: 'Reload',
-              visible: params,
-              click: () => {
-                overlayWindow.reload();
+      // electron-context-menu is ESM-only in v4+ — must use dynamic import (same as the MainWin path;
+      // the old require() always threw here and popped a warning dialog on every debug overlay open).
+      import('electron-context-menu').then((mod) => {
+        const contextMenuFn = mod.default || mod;
+        if (typeof contextMenuFn === 'function') {
+          contextMenuFn({
+            append: (defaultActions, params, browserWindow) => [
+              {
+                label: 'Reload',
+                visible: params,
+                click: () => { if (overlayWindow) overlayWindow.reload(); },
               },
-            },
-          ],
-        });
-      } catch (err) {
-        dialog.showMessageBoxSync({
-          type: 'warning',
-          title: 'Context Menu',
-          message: 'Failed to initialize context menu.',
-          detail: `${err}`,
-        });
-      }
+            ],
+          });
+        }
+      }).catch((err) => {
+        console.warn('electron-context-menu init failed:', err.message);
+      });
     }
 
     //User agent
@@ -1630,7 +1518,6 @@ async function createOverlayWindow(info) {
     overlayWindow.on('moved', persistInGameBounds);
 
     overlayWindow.on('closed', () => {
-      isOverlayShowing = false;
       overlayWindow = null;
       unregisterOverlayShortcuts();
     });
@@ -2414,9 +2301,10 @@ try {
       // alive. The app exits only via the tray "Quit" item.
     })
     .on('web-contents-created', (event, contents) => {
-      contents.on('new-window', (event, url) => {
-        event.preventDefault();
-      });
+      // Default-deny popups for every window (overlay, notification presets, hidden scrape window).
+      // MainWin overrides this right after creation with its own handler that routes http(s) links
+      // to the OS browser. (Replaces the dead 'new-window' listener — removed in Electron 22.)
+      contents.setWindowOpenHandler(() => ({ action: 'deny' }));
     })
     .on('second-instance', async (event, argv, cwd) => {
       // A second launch (user re-running the exe, e.g. from the Start menu while it sits hidden in

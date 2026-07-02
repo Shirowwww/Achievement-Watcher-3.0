@@ -3,6 +3,19 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- The window no longer freezes permanently when an Epic game's artwork lookup (SteamGridDB) finds no match or the network fails.
+- Steam games without store background art no longer lose all their metadata (name, icon, header) during a scan.
+- A failed SteamHunters user-list lookup no longer discards the achievement descriptions that were already fetched.
+- Settings → Advanced "Fix all games" no longer fails every game's DLC configuration step (`steam is not defined`).
+
+### Changed
+
+- Internal cleanup: removed unreachable scraper branches (one less headless-browser tab per scrape), dead Electron APIs and orphan imports; hardened popup handling for all windows.
+
 ## 3.0.8 - 2026-06-30
 
 ### Fixed
