@@ -497,6 +497,8 @@ ipcMain.on('get-title-from-epic-id', async (event, arg) => {
 
 ipcMain.on('get-images-for-game', async (event, arg) => {
   const gameName = arg.name;
+  // Driven by a blocking sendSync (epic.js): every exit path MUST set event.returnValue, or the
+  // renderer stays frozen forever on a SteamGridDB miss / network error.
   try {
     const searchRes = await fetch(`${BASE_URL}/search/autocomplete/${encodeURIComponent(gameName)}`, {
       headers: { Authorization: `Bearer ${API_KEY}` },
@@ -506,6 +508,7 @@ ipcMain.on('get-images-for-game', async (event, arg) => {
     const game = searchData.data[0];
     if (!game) {
       debug.log('Game not found');
+      event.returnValue = null;
       return;
     }
 
@@ -530,7 +533,8 @@ ipcMain.on('get-images-for-game', async (event, arg) => {
     };
     event.returnValue = links;
   } catch (err) {
-    console.error('❌ Error:', err.message);
+    debug.log(`[get-images-for-game] ${gameName}: ${err.message}`);
+    event.returnValue = null;
   }
 });
 
