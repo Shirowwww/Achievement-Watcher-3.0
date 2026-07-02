@@ -2845,7 +2845,7 @@ var app = {
                 appid: game.appid,
                 schema,
                 downloadIcon,
-                fetchDlc: (id) => steam.getDLCList(id),
+                fetchDlc: (id) => steamParser.getDLCList(id),
                 accountName: app.config.general && app.config.general.username,
                 language: app.config.achievement && app.config.achievement.lang,
               });
