@@ -232,7 +232,9 @@ async function getSteamData(request) {
 
       await scrapeWithPuppeteer(info, { userlist: true, steamhunters: true, appid });
       currentlyscraping.steamhunters = false;
-      let u = info.users.map((user) => user.steamId);
+      // The userlist scrape sets info.users only on success — a failed page load leaves it undefined,
+      // which must not throw away the (possibly partial) achievements fetched above.
+      let u = (info.users || []).map((user) => user.steamId);
 
       for (let id of u) {
         userid = id;
@@ -330,11 +332,9 @@ async function getSteamData(request) {
           portrait:
             appInfo.common.library_assets_full?.library_capsule?.image?.[lang.api] ||
             appInfo.common.library_assets_full?.library_capsule?.image?.english,
-          background: storeData?.background.replace(/(\?|&)t=\d+$/, ''),
+          background: storeData?.background?.replace(/(\?|&)t=\d+$/, ''),
         };
     }
-
-    await delay(1000);
   } catch (err) {
     debug.log(err);
   }
