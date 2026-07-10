@@ -896,7 +896,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
             populateLibraryDirList({ dir });
           }
         }
+        const added = Math.max(0, $('#settings #dirlist > li').length + $('#settings #libdirlist > li').length - before);
+        result.text(`${result.attr('data-done') || 'Search complete.'} (${added})`);
       } catch (err) {
+        result.text('');
         remote.dialog.showMessageBoxSync({
           type: 'error',
           title: 'Unexpected Error',
