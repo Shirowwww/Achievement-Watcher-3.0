@@ -81,11 +81,14 @@ function percentFromProgress(current, max) {
 }
 
 function getAchievementProgressState(achievement) {
-  const max = Math.max(0, finiteNumber(achievement.MaxProgress ?? achievement.max_progress, 0));
+  // Float stat counters (e.g. distance driven) can carry long tails (3.3333333…); cap what the
+  // progress label prints at 2 decimals, leaving integers untouched.
+  const max = Math.round(Math.max(0, finiteNumber(achievement.MaxProgress ?? achievement.max_progress, 0)) * 100) / 100;
   let current = Math.max(0, finiteNumber(achievement.CurProgress ?? achievement.progress, 0));
   const achieved = achievement.Achieved == 1 || achievement.Achieved === true;
   if (achieved && max > 0 && current < max) current = max;
   if (max > 0 && current > max) current = max;
+  current = Math.round(current * 100) / 100;
   const percent = percentFromProgress(current, max);
   return {
     current,

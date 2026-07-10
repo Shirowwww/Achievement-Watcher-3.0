@@ -612,8 +612,10 @@ var app = {
                           gameIcon: steamLibraryImage(game.appid),
                           image: steamHeaderImage(game.appid),
                           progress: {
-                            current: achievements[i].CurProgress,
-                            max: achievements[i].MaxProgress,
+                            // Float stat counters (e.g. distance) can carry long tails
+                            // (3.3333333…); cap at 2 decimals for every transport at the source.
+                            current: Math.round(Number(achievements[i].CurProgress) * 100) / 100,
+                            max: Math.round(Number(achievements[i].MaxProgress) * 100) / 100,
                           },
                         },
                         {
