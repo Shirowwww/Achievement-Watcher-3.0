@@ -44,6 +44,7 @@
   "unlocked": "Odblokowane",
   "locked": "Zablokowane",
   "globalStat": "graczy to posiada",
+  "achievementSearchPlaceholder": "Szukaj osiągnięć…",
   "hiddenRemain": "pozostałych ukrytych osiągnięć",
   "revealedOnceUnlocked": "Szczegóły każdego osiągnięcia zostaną ujawnione po odblokowaniu",
   "hiddenDescriptionPlaceholder": "Ukryte — kliknij, aby pokazać",
@@ -174,6 +175,10 @@
       "tray": {
         "name": "Zminimalizuj do zasobnika systemowego",
         "description": "Utrzymuj aplikację w tle, aby powiadomienia uruchamiały się szybciej."
+      },
+      "theme": {
+        "name": "Motyw",
+        "description": "Motyw kolorystyczny okna aplikacji (natychmiastowy podgląd, zapis przyciskiem OK)."
       }
     },
     "emulator": {
@@ -298,6 +303,7 @@
       },
       "test": {
         "achievement": "Osiągnięcie",
+        "rare": "Rzadkie",
         "progress": "Postęp",
         "playtime": "Czas gry",
         "toast": "Toast Windows",
@@ -345,6 +351,11 @@
         },
         "overlayPreset": "Ustawienie",
         "overlayPresetDesc": "Motyw wizualny wyskakującej nakładki w grze",
+        "overlayPresetRare": "Preset (rzadkie)",
+        "overlayPresetRareDesc": "Preset używany dla rzadkich osiągnięć (10% graczy lub mniej)",
+        "overlayPresetPlatinum": "Preset (platyna)",
+        "overlayPresetPlatinumDesc": "Preset używany dla powiadomienia o ukończeniu w 100%",
+        "presetSameAsMain": "Taki sam jak główny",
         "overlayPosition": "Pozycja",
         "overlayPositionDesc": "Gdzie na ekranie pojawia się wyskakująca nakładka",
         "overlayScale": "Rozmiar",
@@ -353,7 +364,7 @@
         "overlaySoundDesc": "Dźwięk odtwarzany, gdy pojawia się wyskakująca nakładka",
         "overlaySoundImport": "Importuj własny dźwięk…",
         "overlayVolume": "Głośność",
-        "overlayVolumeDesc": "Głośność dźwięku wyskakującej nakładki (dźwięk toast jest kontrolowany przez Windows)",
+        "overlayVolumeDesc": "Głośność dźwięków powiadomień — okna overlay można wzmocnić do 200%, a niestandardowe dźwięki toast są ograniczone do 100%.",
         "overlayDuration": "Czas trwania",
         "overlayDurationDesc": "Jak długo wyskakująca nakładka pozostaje na ekranie. Auto pozwala ustawieniu zdecydować; wartość ogranicza czas na ekranie.",
         "overlayDurationAuto": "Auto",
@@ -597,6 +608,8 @@
       "blacklistTitle": "Czarna lista AppID",
       "blacklistButton": "Resetuj czarną listę",
       "blacklistInfo": "Kliknij prawym przyciskiem kafelek gry, aby dodać ją do czarnej listy.",
+      "blacklistEmpty": "Brak ukrytych gier.",
+      "blacklistRestore": "Przywróć tę grę",
       "apiKey": {
         "title": "Klucz Steam Web API",
         "description": "Niektóre dane Steam wymagają osobistego klucza Steam Web API.",
@@ -635,11 +648,11 @@
     "introTitle": "Jak to działa",
     "introCopy": "Achievement Watcher skanuje znane foldery z zapisami gry i biblioteki gier, a następnie Watchdog działa w zasobniku w celu uzyskania powiadomień o odblokowaniu i nakładki w grze.",
     "scanTitle": "Skanuj",
-    "scanCopy": "Na podstawie zapisanych plików osiągnięć wykrywane są foldery Steam, GOG, Epic, emulatory i Goldberg/GBE.",
-    "watchTitle": "Oglądaj",
-    "watchCopy": "Watchdog działający w tle obserwuje pliki i uruchamia gry, więc odblokowania pojawiają się podczas gry.",
-    "fixTitle": "Naprawa",
-    "fixCopy": "W przypadku emulowanych gier Steam, kliknięcie prawym przyciskiem myszy może dodać GBE Fork, schematy, dane DLC i pomoce uruchamiania.",
+    "scanCopy": "Instalacje Steam, GOG, Epic, RPCS3/ShadPS4/Xenia oraz Goldberg/GBE są wykrywane na podstawie plików osiągnięć — np. %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, zapisy CODEX/RUNE lub folder gry zawierający steam_settings.",
+    "watchTitle": "Monitoruj",
+    "watchCopy": "Działający w tle Watchdog wykrywa plik wykonywalny gry podczas uruchamiania, śledzi czas gry i obserwuje pliki osiągnięć, aby pokazywać odblokowania podczas grania.",
+    "fixTitle": "Napraw",
+    "fixCopy": "W emulowanych grach Steam naprawa z menu kontekstowego (lub naprawa automatyczna) instaluje GBE Fork i zapisuje schemat achievements.json, dane DLC oraz pliki pomocnicze uruchamiania w folderze steam_settings gry.",
     "profileTitle": "Profil",
     "profileCopy": "Wybierz nazwę wyświetlaną w nagłówku i opcjonalnie ustaw lokalnego awatara.",
     "username": "Nazwa wyświetlana",
@@ -695,7 +708,7 @@
     "saving": "Zapisywanie...",
     "saved": "Konfiguracja została zapisana.",
     "languageRequired": "Wybierz język, aby kontynuować.",
-    "invalidFolder": "Ten folder nie wygląda na obsługiwany folder osiągnięć.",
+    "invalidFolder": "Ten folder nie wygląda na obsługiwany folder osiągnięć. Oczekiwane: GSE Saves / Goldberg SteamEmu Saves, zapisy CODEX/RUNE, podfoldery AppID (np. 1091500) albo folder gry ze steam_settings lub plikiem .ini emulatora.",
     "smartRunning": "Wyszukiwanie...",
     "smartDone": "Wyszukiwanie zakończone.",
     "saveError": "Nie udało się zapisać konfiguracji."

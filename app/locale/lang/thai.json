@@ -44,6 +44,7 @@
   "unlocked": "ปลดล็อกแล้ว",
   "locked": "ล็อกอยู่",
   "globalStat": "ของผู้เล่นมีสิ่งนี้",
+  "achievementSearchPlaceholder": "ค้นหาความสำเร็จ…",
   "hiddenRemain": "ความสำเร็จที่ซ่อนอยู่เหลืออยู่",
   "revealedOnceUnlocked": "รายละเอียดของแต่ละความสำเร็จจะถูกเปิดเผยเมื่อปลดล็อก",
   "hiddenDescriptionPlaceholder": "ซ่อนอยู่ — คลิกเพื่อเปิดเผย",
@@ -174,6 +175,10 @@
       "tray": {
         "name": "ย่อลงถาดระบบ",
         "description": "ให้แอปทำงานในพื้นหลังเพื่อให้การแจ้งเตือนเริ่มทำงานเร็วขึ้น"
+      },
+      "theme": {
+        "name": "ธีม",
+        "description": "ธีมสีของหน้าต่างแอป (แสดงตัวอย่างทันที และบันทึกเมื่อกดตกลง)"
       }
     },
     "emulator": {
@@ -298,6 +303,7 @@
       },
       "test": {
         "achievement": "ความสำเร็จ",
+        "rare": "หายาก",
         "progress": "ความคืบหน้า",
         "playtime": "เวลาเล่น",
         "toast": "Windows Toast",
@@ -345,6 +351,11 @@
         },
         "overlayPreset": "พรีเซ็ต",
         "overlayPresetDesc": "ธีมภาพของป็อปอัปโอเวอร์เลย์ในเกม",
+        "overlayPresetRare": "พรีเซ็ต (หายาก)",
+        "overlayPresetRareDesc": "พรีเซ็ตที่ใช้กับความสำเร็จหายาก (ผู้เล่นไม่เกิน 10%)",
+        "overlayPresetPlatinum": "พรีเซ็ต (แพลทินัม)",
+        "overlayPresetPlatinumDesc": "พรีเซ็ตที่ใช้กับการแจ้งเตือนเมื่อสำเร็จ 100%",
+        "presetSameAsMain": "เหมือนพรีเซ็ตหลัก",
         "overlayPosition": "ตำแหน่ง",
         "overlayPositionDesc": "ที่ที่ป็อปอัปโอเวอร์เลย์ปรากฏบนหน้าจอ",
         "overlayScale": "ขนาด",
@@ -353,7 +364,7 @@
         "overlaySoundDesc": "เสียงที่เล่นเมื่อป็อปอัปโอเวอร์เลย์ปรากฏ",
         "overlaySoundImport": "นำเข้าเสียงที่กำหนดเอง…",
         "overlayVolume": "ระดับเสียง",
-        "overlayVolumeDesc": "ระดับเสียงของป็อปอัปโอเวอร์เลย์ (เสียง toast ควบคุมโดย Windows)",
+        "overlayVolumeDesc": "ระดับเสียงการแจ้งเตือน — ป๊อปอัป overlay เพิ่มเสียงได้สูงสุด 200% ส่วนเสียง toast แบบกำหนดเองจำกัดที่ 100%",
         "overlayDuration": "ระยะเวลา",
         "overlayDurationDesc": "ระยะเวลาที่ป็อปอัปโอเวอร์เลย์อยู่บนหน้าจอ Auto ให้พรีเซ็ตเป็นผู้ตัดสิน; การตั้งค่าจะจำกัดเวลาบนหน้าจอ",
         "overlayDurationAuto": "Auto",
@@ -597,6 +608,8 @@
       "blacklistTitle": "บัญชีดำ AppID",
       "blacklistButton": "รีเซ็ตบัญชีดำ",
       "blacklistInfo": "คลิกขวาที่ไทล์เกมเพื่อเพิ่มลงในบัญชีดำ",
+      "blacklistEmpty": "ไม่มีเกมที่ซ่อนอยู่",
+      "blacklistRestore": "แสดงเกมนี้อีกครั้ง",
       "apiKey": {
         "title": "คีย์ Steam Web API",
         "description": "ข้อมูล Steam บางอย่างต้องใช้คีย์ Steam Web API ส่วนตัว",
@@ -635,11 +648,11 @@
     "introTitle": "มันทำงานอย่างไร",
     "introCopy": "Achievement Watcher จะสแกนโฟลเดอร์บันทึกที่รู้จักและไลบรารีเกมของคุณ จากนั้น Watchdog จะทำงานต่อไปในถาดเพื่อปลดล็อคการแจ้งเตือนและโอเวอร์เลย์ในเกม",
     "scanTitle": "สแกน",
-    "scanCopy": "ตรวจพบโฟลเดอร์ Steam, GOG, Epic, emulators และ Goldberg/GBE จากไฟล์ความสำเร็จที่บันทึกไว้",
-    "watchTitle": "ดู",
-    "watchCopy": "พื้นหลัง Watchdog จะคอยดูไฟล์และเปิดตัวเกม ดังนั้นการปลดล็อคจะปรากฏขึ้นในขณะที่คุณเล่น",
+    "scanCopy": "ค้นหาการติดตั้ง Steam, GOG, Epic, RPCS3/ShadPS4/Xenia และ Goldberg/GBE จากไฟล์ความสำเร็จ เช่น %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, เซฟ CODEX/RUNE หรือโฟลเดอร์เกมที่มี steam_settings",
+    "watchTitle": "เฝ้าติดตาม",
+    "watchCopy": "Watchdog เบื้องหลังจะตรวจหาไฟล์เรียกทำงานของเกมเมื่อเริ่มเกม บันทึกเวลาเล่น และเฝ้าดูไฟล์ความสำเร็จเพื่อแสดงการปลดล็อกระหว่างเล่น",
     "fixTitle": "ซ่อมแซม",
-    "fixCopy": "สำหรับเกม Steam ที่จำลอง การแก้ไขด้วยการคลิกขวาสามารถเพิ่ม GBE Fork, สคีมา, ข้อมูล DLC และตัวช่วยเปิดใช้งานได้",
+    "fixCopy": "สำหรับเกม Steam ที่ใช้อีมูเลเตอร์ การซ่อมแซมจากเมนูคลิกขวา (หรือการซ่อมแซมอัตโนมัติ) จะติดตั้ง GBE Fork และเขียนสคีมา achievements.json, ข้อมูล DLC และไฟล์ช่วยเปิดเกมลงในโฟลเดอร์ steam_settings ของเกม",
     "profileTitle": "ประวัติโดยย่อ",
     "profileCopy": "เลือกชื่อที่แสดงในส่วนหัวและเลือกตั้งค่าอวตารในเครื่องได้",
     "username": "ชื่อที่แสดง",
@@ -695,7 +708,7 @@
     "saving": "ประหยัด...",
     "saved": "บันทึกการตั้งค่าแล้ว",
     "languageRequired": "เลือกภาษาเพื่อดำเนินการต่อ",
-    "invalidFolder": "โฟลเดอร์นั้นดูไม่เหมือนโฟลเดอร์ความสำเร็จที่ได้รับการสนับสนุน",
+    "invalidFolder": "โฟลเดอร์นี้ไม่เหมือนโฟลเดอร์ความสำเร็จที่รองรับ ควรเป็น: GSE Saves / Goldberg SteamEmu Saves, เซฟ CODEX/RUNE, โฟลเดอร์ย่อย AppID (เช่น 1091500) หรือโฟลเดอร์เกมที่มี steam_settings หรือไฟล์ .ini ของอีมูเลเตอร์",
     "smartRunning": "กำลังค้นหา...",
     "smartDone": "ค้นหาเสร็จสมบูรณ์",
     "saveError": "ไม่สามารถบันทึกการตั้งค่าได้"

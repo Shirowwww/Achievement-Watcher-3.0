@@ -44,6 +44,7 @@
   "unlocked": "Débloqué",
   "locked": "Verrouillé",
   "globalStat": "de tous les joueurs",
+  "achievementSearchPlaceholder": "Rechercher un succès…",
   "hiddenRemain": "succès cachés restants",
   "revealedOnceUnlocked": "Les détails de chaque succès seront révélés une fois débloqués",
   "hiddenDescriptionPlaceholder": "Masqué — cliquez pour révéler",
@@ -159,6 +160,10 @@
       "tray": {
         "name": "Réduire dans la zone de notification",
         "description": "Garde l'application en arrière-plan pour un démarrage plus rapide des notifications."
+      },
+      "theme": {
+        "name": "Thème",
+        "description": "Thème de couleurs de la fenêtre (aperçu immédiat, enregistré avec OK)."
       }
     },
     "emulator": {
@@ -603,6 +608,8 @@
       "blacklistTitle": "Liste noire des AppID",
       "blacklistButton": "Réinitialiser la liste noire",
       "blacklistInfo": "Faites un clic droit sur une vignette de jeu pour l'ajouter à la liste noire.",
+      "blacklistEmpty": "Aucun jeu masqué.",
+      "blacklistRestore": "Réafficher ce jeu",
       "apiKey": {
         "title": "Clé de l'API Web de Steam",
         "description": "Certaines données Steam nécessitent une clé personnelle de l'API Web de Steam.",
@@ -640,12 +647,12 @@
     "languageHint": "Le premier chargement de la bibliothèque ne démarre qu'après ce choix.",
     "introTitle": "Comment ça marche",
     "introCopy": "Achievement Watcher analyse les dossiers de sauvegarde connus et vos bibliothèques de jeux, puis Watchdog continue de fonctionner dans la barre d'état pour les notifications de déverrouillage et la superposition du jeu.",
-    "scanTitle": "Numériser",
-    "scanCopy": "Les dossiers Steam, GOG, Epic, les émulateurs et Goldberg/GBE sont détectés à partir des fichiers de réussite enregistrés.",
-    "watchTitle": "Regarder",
-    "watchCopy": "Le chien de garde en arrière-plan surveille les fichiers et le lancement du jeu afin que les déverrouillages apparaissent pendant que vous jouez.",
-    "fixTitle": "Réparation",
-    "fixCopy": "Pour les jeux Steam émulés, le correctif du clic droit peut ajouter GBE Fork, des schémas, des données DLC et des aides au lancement.",
+    "scanTitle": "Scanner",
+    "scanCopy": "Steam, GOG, Epic, RPCS3/ShadPS4/Xenia et les installations Goldberg/GBE sont détectés via leurs fichiers de succès — ex. %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, sauvegardes CODEX/RUNE, ou un dossier de jeu contenant steam_settings.",
+    "watchTitle": "Surveiller",
+    "watchCopy": "Le Watchdog en arrière-plan détecte l'exécutable du jeu à son lancement, suit le temps de jeu et surveille les fichiers de succès pour afficher les déblocages pendant que tu joues.",
+    "fixTitle": "Réparer",
+    "fixCopy": "Pour les jeux Steam émulés, le fix du clic droit (ou l'auto-fix) installe GBE Fork et écrit le schéma achievements.json, les DLC et les fichiers de lancement dans le steam_settings du jeu.",
     "profileTitle": "Profil",
     "profileCopy": "Choisissez le nom affiché dans l’en-tête et définissez éventuellement un avatar local.",
     "username": "Nom d'affichage",
@@ -701,7 +708,7 @@
     "saving": "Sauvegarde...",
     "saved": "Configuration enregistrée.",
     "languageRequired": "Choisissez une langue pour continuer.",
-    "invalidFolder": "Ce dossier ne ressemble pas à un dossier de réalisations pris en charge.",
+    "invalidFolder": "Ce dossier ne ressemble pas à un dossier de succès pris en charge. Attendu : GSE Saves / Goldberg SteamEmu Saves, sauvegardes CODEX/RUNE, sous-dossiers AppID (ex. 1091500), ou un dossier de jeu avec steam_settings ou un .ini d'émulateur.",
     "smartRunning": "Recherche...",
     "smartDone": "Recherche terminée.",
     "saveError": "Impossible d'enregistrer la configuration."

@@ -44,6 +44,7 @@
   "unlocked": "Desbloqueada",
   "locked": "Bloqueada",
   "globalStat": "dos jogadores têm isto",
+  "achievementSearchPlaceholder": "Pesquisar conquistas…",
   "hiddenRemain": "proezas ocultas restantes",
   "revealedOnceUnlocked": "Os detalhes de cada proeza serão revelados após o desbloqueio",
   "hiddenDescriptionPlaceholder": "Oculta — clique para revelar",
@@ -174,6 +175,10 @@
       "tray": {
         "name": "Minimizar para a bandeja do sistema",
         "description": "Mantém a app em execução em segundo plano para um arranque mais rápido das notificações."
+      },
+      "theme": {
+        "name": "Tema",
+        "description": "Tema de cores da janela da aplicação (pré-visualização imediata, guardado com OK)."
       }
     },
     "emulator": {
@@ -298,6 +303,7 @@
       },
       "test": {
         "achievement": "Proeza",
+        "rare": "Rara",
         "progress": "Progresso",
         "playtime": "Tempo de jogo",
         "toast": "Toast do Windows",
@@ -345,6 +351,11 @@
         },
         "overlayPreset": "Predefinição",
         "overlayPresetDesc": "Tema visual do popup overlay no jogo",
+        "overlayPresetRare": "Predefinição (rara)",
+        "overlayPresetRareDesc": "Predefinição usada para conquistas raras (10% dos jogadores ou menos)",
+        "overlayPresetPlatinum": "Predefinição (platina)",
+        "overlayPresetPlatinumDesc": "Predefinição usada para a notificação de conclusão a 100%",
+        "presetSameAsMain": "Igual à principal",
         "overlayPosition": "Posição",
         "overlayPositionDesc": "Onde o popup overlay aparece no ecrã",
         "overlayScale": "Tamanho",
@@ -353,7 +364,7 @@
         "overlaySoundDesc": "Som reproduzido quando o popup overlay aparece",
         "overlaySoundImport": "Importar um som personalizado…",
         "overlayVolume": "Volume",
-        "overlayVolumeDesc": "Volume do som do popup overlay (o som do toast é controlado pelo Windows)",
+        "overlayVolumeDesc": "Volume dos sons de notificação — as janelas do overlay podem ser amplificadas até 200%; os sons toast personalizados estão limitados a 100%.",
         "overlayDuration": "Duração",
         "overlayDurationDesc": "Quanto tempo o popup overlay permanece no ecrã. Auto deixa a predefinição decidir; um valor limita o tempo no ecrã.",
         "overlayDurationAuto": "Auto",
@@ -597,6 +608,8 @@
       "blacklistTitle": "Lista negra de AppID",
       "blacklistButton": "Repor lista negra",
       "blacklistInfo": "Clique direito num bloco de jogo para o adicionar à lista negra.",
+      "blacklistEmpty": "Não existem jogos ocultos.",
+      "blacklistRestore": "Restaurar este jogo",
       "apiKey": {
         "title": "Chave da API Web da Steam",
         "description": "Alguns dados da Steam exigem uma chave pessoal da API Web da Steam.",
@@ -634,12 +647,12 @@
     "languageHint": "O primeiro carregamento da biblioteca inicia somente após esta escolha.",
     "introTitle": "Como funciona",
     "introCopy": "O Achievement Watcher verifica pastas salvas conhecidas e suas bibliotecas de jogos e, em seguida, o Watchdog continua em execução na bandeja para notificações de desbloqueio e sobreposição no jogo.",
-    "scanTitle": "Digitalizar",
-    "scanCopy": "Steam, GOG, Epic, emuladores e pastas Goldberg/GBE são detectados a partir de arquivos de conquistas salvos.",
-    "watchTitle": "Assistir",
-    "watchCopy": "O Watchdog de fundo monitora arquivos e lançamentos de jogos para que os desbloqueios apareçam enquanto você joga.",
+    "scanTitle": "Analisar",
+    "scanCopy": "As instalações Steam, GOG, Epic, RPCS3/ShadPS4/Xenia e Goldberg/GBE são detetadas através dos ficheiros de conquistas — por exemplo, %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, gravações CODEX/RUNE ou uma pasta de jogo com steam_settings.",
+    "watchTitle": "Monitorizar",
+    "watchCopy": "O Watchdog em segundo plano deteta o executável do jogo quando este inicia, regista o tempo de jogo e monitoriza os ficheiros de conquistas para mostrar os desbloqueios enquanto joga.",
     "fixTitle": "Reparar",
-    "fixCopy": "Para jogos Steam emulados, a correção do botão direito pode adicionar GBE Fork, esquemas, dados DLC e auxiliares de inicialização.",
+    "fixCopy": "Nos jogos Steam emulados, a reparação do menu de contexto (ou a reparação automática) instala o GBE Fork e grava o esquema achievements.json, os dados de DLC e os auxiliares de arranque na pasta steam_settings do jogo.",
     "profileTitle": "Perfil",
     "profileCopy": "Escolha o nome mostrado no cabeçalho e, opcionalmente, defina um avatar local.",
     "username": "Nome de exibição",
@@ -695,7 +708,7 @@
     "saving": "Salvando...",
     "saved": "Configuração salva.",
     "languageRequired": "Escolha um idioma para continuar.",
-    "invalidFolder": "Essa pasta não se parece com uma pasta de conquistas suportada.",
+    "invalidFolder": "Esta pasta não parece conter conquistas suportadas. Esperado: GSE Saves / Goldberg SteamEmu Saves, gravações CODEX/RUNE, subpastas AppID (por exemplo, 1091500) ou uma pasta de jogo com steam_settings ou um ficheiro .ini de emulador.",
     "smartRunning": "Procurando...",
     "smartDone": "Pesquisa concluída.",
     "saveError": "Não foi possível salvar a configuração."

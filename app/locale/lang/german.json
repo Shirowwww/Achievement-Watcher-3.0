@@ -44,6 +44,7 @@
   "unlocked": "Freigeschaltet",
   "locked": "Gesperrt",
   "globalStat": "der Spieler haben dies",
+  "achievementSearchPlaceholder": "Erfolge durchsuchen…",
   "hiddenRemain": "versteckte Erfolge übrig",
   "revealedOnceUnlocked": "Die Details jedes Erfolgs werden nach dem Freischalten angezeigt",
   "hiddenDescriptionPlaceholder": "Versteckt — zum Anzeigen klicken",
@@ -174,6 +175,10 @@
       "tray": {
         "name": "In Infobereich minimieren",
         "description": "Die App im Hintergrund laufen lassen, damit Benachrichtigungen schneller starten."
+      },
+      "theme": {
+        "name": "Design",
+        "description": "Farbschema des App-Fensters (sofortige Vorschau, Speicherung mit OK)."
       }
     },
     "emulator": {
@@ -298,6 +303,7 @@
       },
       "test": {
         "achievement": "Erfolg",
+        "rare": "Selten",
         "progress": "Fortschritt",
         "playtime": "Spielzeit",
         "toast": "Windows-Toast",
@@ -345,6 +351,11 @@
         },
         "overlayPreset": "Vorlage",
         "overlayPresetDesc": "Visuelles Thema des In-Game-Overlay-Popups",
+        "overlayPresetRare": "Preset (selten)",
+        "overlayPresetRareDesc": "Preset für seltene Erfolge (höchstens 10 % der Spieler)",
+        "overlayPresetPlatinum": "Preset (Platin)",
+        "overlayPresetPlatinumDesc": "Preset für die Benachrichtigung bei 100 % Abschluss",
+        "presetSameAsMain": "Wie Haupt-Preset",
         "overlayPosition": "Position",
         "overlayPositionDesc": "Wo das Overlay-Popup auf dem Bildschirm erscheint",
         "overlayScale": "Größe",
@@ -353,7 +364,7 @@
         "overlaySoundDesc": "Ton, der beim Erscheinen des Overlay-Popups abgespielt wird",
         "overlaySoundImport": "Eigenen Ton importieren…",
         "overlayVolume": "Lautstärke",
-        "overlayVolumeDesc": "Lautstärke des Overlay-Popup-Tons (der Toast-Ton wird von Windows gesteuert)",
+        "overlayVolumeDesc": "Lautstärke der Benachrichtigungstöne — Overlay-Pop-ups können bis 200 % verstärkt werden, benutzerdefinierte Toast-Töne sind auf 100 % begrenzt.",
         "overlayDuration": "Dauer",
         "overlayDurationDesc": "Wie lange das Overlay-Popup auf dem Bildschirm bleibt. Auto lässt die Vorlage entscheiden; ein Wert begrenzt die Anzeigezeit.",
         "overlayDurationAuto": "Auto",
@@ -597,6 +608,8 @@
       "blacklistTitle": "AppID-Sperrliste",
       "blacklistButton": "Sperrliste zurücksetzen",
       "blacklistInfo": "Rechtsklick auf eine Spielkachel, um sie zur Sperrliste hinzuzufügen.",
+      "blacklistEmpty": "Keine ausgeblendeten Spiele.",
+      "blacklistRestore": "Dieses Spiel wieder anzeigen",
       "apiKey": {
         "title": "Steam-Web-API-Schlüssel",
         "description": "Manche Steam-Daten erfordern einen persönlichen Steam-Web-API-Schlüssel.",
@@ -635,11 +648,11 @@
     "introTitle": "Wie es funktioniert",
     "introCopy": "Achievement Watcher scannt bekannte Speicherordner und Ihre Spielbibliotheken, dann läuft der Watchdog weiter in der Taskleiste für Freischaltbenachrichtigungen und das In-Game-Overlay.",
     "scanTitle": "Scannen",
-    "scanCopy": "Steam, GOG, Epic, Emulatoren und Goldberg/GBE-Ordner werden aus gespeicherten Erfolgsdateien erkannt.",
-    "watchTitle": "Beobachten Sie",
-    "watchCopy": "Der Hintergrund-Watchdog überwacht Dateien und Spielstarts, sodass beim Spielen Freischaltungen angezeigt werden.",
+    "scanCopy": "Steam-, GOG-, Epic-, RPCS3-/ShadPS4-/Xenia- und Goldberg-/GBE-Installationen werden anhand ihrer Erfolgsdateien gefunden — z. B. %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, CODEX-/RUNE-Spielstände oder ein Spielordner mit steam_settings.",
+    "watchTitle": "Überwachen",
+    "watchCopy": "Der Watchdog erkennt beim Start eines Spiels dessen ausführbare Datei, erfasst die Spielzeit und überwacht Erfolgsdateien, damit Freischaltungen während des Spielens erscheinen.",
     "fixTitle": "Reparieren",
-    "fixCopy": "Bei emulierten Steam-Spielen können mit der Rechtsklick-Korrektur GBE Fork, Schemata, DLC-Daten und Starthilfen hinzugefügt werden.",
+    "fixCopy": "Bei emulierten Steam-Spielen installiert die Reparatur im Kontextmenü (oder die automatische Reparatur) GBE Fork und schreibt achievements.json, DLC-Daten und Starthilfen in den steam_settings-Ordner des Spiels.",
     "profileTitle": "Profil",
     "profileCopy": "Wählen Sie den in der Kopfzeile angezeigten Namen und legen Sie optional einen lokalen Avatar fest.",
     "username": "Anzeigename",
@@ -695,7 +708,7 @@
     "saving": "Sparen...",
     "saved": "Setup gespeichert.",
     "languageRequired": "Wählen Sie eine Sprache, um fortzufahren.",
-    "invalidFolder": "Dieser Ordner sieht nicht wie ein unterstützter Erfolgsordner aus.",
+    "invalidFolder": "Dieser Ordner sieht nicht wie ein unterstützter Erfolgsordner aus. Erwartet werden: GSE Saves / Goldberg SteamEmu Saves, CODEX-/RUNE-Spielstände, AppID-Unterordner (z. B. 1091500) oder ein Spielordner mit steam_settings bzw. einer Emulator-.ini.",
     "smartRunning": "Suche...",
     "smartDone": "Suche abgeschlossen.",
     "saveError": "Das Setup konnte nicht gespeichert werden."

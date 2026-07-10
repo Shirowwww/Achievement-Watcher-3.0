@@ -44,6 +44,7 @@
   "unlocked": "Odemčeno",
   "locked": "Zamčeno",
   "globalStat": "hráčů to má",
+  "achievementSearchPlaceholder": "Hledat úspěchy…",
   "hiddenRemain": "skrytých achievementů zbývá",
   "revealedOnceUnlocked": "Podrobnosti každého achievementu se zobrazí po jeho odemčení",
   "hiddenDescriptionPlaceholder": "Skryté — klikněte pro zobrazení",
@@ -174,6 +175,10 @@
       "tray": {
         "name": "Minimalizovat do oznamovací oblasti",
         "description": "Nechat aplikaci běžet na pozadí pro rychlejší spuštění oznámení."
+      },
+      "theme": {
+        "name": "Motiv",
+        "description": "Barevný motiv okna aplikace (okamžitý náhled, uložení tlačítkem OK)."
       }
     },
     "emulator": {
@@ -298,6 +303,7 @@
       },
       "test": {
         "achievement": "Achievement",
+        "rare": "Vzácné",
         "progress": "Postup",
         "playtime": "Doba hraní",
         "toast": "Windows Toast",
@@ -345,6 +351,11 @@
         },
         "overlayPreset": "Předvolba",
         "overlayPresetDesc": "Vizuální motiv vyskakovacího overlaye ve hře",
+        "overlayPresetRare": "Předvolba (vzácné)",
+        "overlayPresetRareDesc": "Předvolba pro vzácné úspěchy (10 % hráčů nebo méně)",
+        "overlayPresetPlatinum": "Předvolba (platina)",
+        "overlayPresetPlatinumDesc": "Předvolba pro oznámení o 100% dokončení",
+        "presetSameAsMain": "Stejné jako hlavní",
         "overlayPosition": "Pozice",
         "overlayPositionDesc": "Kde se na obrazovce zobrazí vyskakovací overlay",
         "overlayScale": "Velikost",
@@ -353,7 +364,7 @@
         "overlaySoundDesc": "Zvuk přehraný při zobrazení vyskakovacího overlaye",
         "overlaySoundImport": "Importovat vlastní zvuk…",
         "overlayVolume": "Hlasitost",
-        "overlayVolumeDesc": "Hlasitost zvuku vyskakovacího overlaye (zvuk toast ovládá Windows)",
+        "overlayVolumeDesc": "Hlasitost zvuků oznámení — překryvná okna lze zesílit až na 200 %, vlastní zvuky toastů jsou omezeny na 100 %.",
         "overlayDuration": "Doba trvání",
         "overlayDurationDesc": "Jak dlouho vyskakovací overlay zůstane na obrazovce. Auto nechá rozhodnout předvolbu; hodnota omezí dobu na obrazovce.",
         "overlayDurationAuto": "Auto",
@@ -597,6 +608,8 @@
       "blacklistTitle": "Černá listina AppID",
       "blacklistButton": "Resetovat černou listinu",
       "blacklistInfo": "Klikněte pravým tlačítkem na dlaždici hry pro přidání na černou listinu.",
+      "blacklistEmpty": "Žádné skryté hry.",
+      "blacklistRestore": "Obnovit tuto hru",
       "apiKey": {
         "title": "Klíč Steam Web API",
         "description": "Některá data Steamu vyžadují osobní klíč Steam Web API.",
@@ -634,12 +647,12 @@
     "languageHint": "První načtení knihovny se spustí až po této volbě.",
     "introTitle": "Jak to funguje",
     "introCopy": "Achievement Watcher prohledá známé složky pro ukládání a vaše herní knihovny, poté Watchdog stále běží v zásobníku pro odemknutí oznámení a překryvné vrstvy ve hře.",
-    "scanTitle": "Skenujte",
-    "scanCopy": "Steam, GOG, Epic, emulátory a složky Goldberg/GBE jsou detekovány z uložených souborů úspěchů.",
-    "watchTitle": "Sledujte",
-    "watchCopy": "Hlídací pes na pozadí sleduje soubory a spouští se hry, takže odemknutí se objeví během hraní.",
-    "fixTitle": "Oprava",
-    "fixCopy": "U emulovaných her Steam může oprava po kliknutí pravým tlačítkem přidat GBE Fork, schémata, data DLC a pomocníky pro spouštění.",
+    "scanTitle": "Skenovat",
+    "scanCopy": "Instalace Steam, GOG, Epic, RPCS3/ShadPS4/Xenia a Goldberg/GBE se vyhledávají podle souborů úspěchů — například %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, uložené pozice CODEX/RUNE nebo složka hry se steam_settings.",
+    "watchTitle": "Sledovat",
+    "watchCopy": "Watchdog na pozadí při spuštění hry rozpozná její spustitelný soubor, sleduje herní čas a soubory úspěchů, aby během hraní zobrazoval odemčení.",
+    "fixTitle": "Opravit",
+    "fixCopy": "U emulovaných her Steam oprava z kontextové nabídky (nebo automatická oprava) nainstaluje GBE Fork a zapíše schéma achievements.json, data DLC a pomocné soubory pro spuštění do složky steam_settings hry.",
     "profileTitle": "Profil",
     "profileCopy": "Vyberte jméno zobrazené v záhlaví a volitelně nastavte místního avatara.",
     "username": "Zobrazovaný název",
@@ -695,7 +708,7 @@
     "saving": "Ukládání...",
     "saved": "Nastavení bylo uloženo.",
     "languageRequired": "Chcete-li pokračovat, vyberte jazyk.",
-    "invalidFolder": "Tato složka nevypadá jako podporovaná složka úspěchů.",
+    "invalidFolder": "Tato složka nevypadá jako podporovaná složka úspěchů. Očekává se: GSE Saves / Goldberg SteamEmu Saves, uložené pozice CODEX/RUNE, podsložky AppID (např. 1091500) nebo složka hry se steam_settings či emulátorovým souborem .ini.",
     "smartRunning": "Hledání...",
     "smartDone": "Hledání dokončeno.",
     "saveError": "Nastavení se nepodařilo uložit."

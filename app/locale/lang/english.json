@@ -44,6 +44,7 @@
   "unlocked": "Unlocked",
   "locked": "Locked",
   "globalStat": "of players have this",
+  "achievementSearchPlaceholder": "Search achievements…",
   "hiddenRemain": "hidden achievements remaining",
   "revealedOnceUnlocked": "Details for each achievement will be revealed once unlocked",
   "hiddenDescriptionPlaceholder": "Hidden — click to reveal",
@@ -174,6 +175,10 @@
       "tray": {
         "name": "Close to System Tray",
         "description": "Keep the app running in the background for faster notifications startup."
+      },
+      "theme": {
+        "name": "Theme",
+        "description": "Color theme of the app window (previews immediately, saved with OK)."
       }
     },
     "emulator": {
@@ -603,6 +608,8 @@
       "blacklistTitle": "AppID Blacklist",
       "blacklistButton": "Reset blacklist",
       "blacklistInfo": "Right click on a gamebox to add it to the blacklist.",
+      "blacklistEmpty": "No hidden games.",
+      "blacklistRestore": "Restore this game",
       "apiKey": {
         "title": "Steam Web API key",
         "description": "Some Steam data requires a personal Steam Web API key.",
@@ -641,11 +648,11 @@
     "introTitle": "How it works",
     "introCopy": "Achievement Watcher scans known save folders and your game libraries, then the Watchdog keeps running in the tray for unlock notifications and the in-game overlay.",
     "scanTitle": "Scan",
-    "scanCopy": "Steam, GOG, Epic, emulators and Goldberg/GBE folders are detected from saved achievement files.",
+    "scanCopy": "Steam, GOG, Epic, RPCS3/ShadPS4/Xenia and Goldberg/GBE installs are found from their achievement files — e.g. %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, CODEX/RUNE saves, or a game folder holding steam_settings.",
     "watchTitle": "Watch",
-    "watchCopy": "The background Watchdog watches files and game launches so unlocks appear while you play.",
+    "watchCopy": "The background Watchdog detects the game's executable when it launches, tracks playtime, and watches achievement files so unlocks pop up while you play.",
     "fixTitle": "Repair",
-    "fixCopy": "For emulated Steam games, the right-click fix can add GBE Fork, schemas, DLC data, and launch helpers.",
+    "fixCopy": "For emulated Steam games, the right-click fix (or the auto-fix) installs GBE Fork and writes the achievements.json schema, DLC data and launch helpers into the game's steam_settings folder.",
     "profileTitle": "Profile",
     "profileCopy": "Pick the name shown in the header and optionally set a local avatar.",
     "username": "Display name",
@@ -701,7 +708,7 @@
     "saving": "Saving...",
     "saved": "Setup saved.",
     "languageRequired": "Choose a language to continue.",
-    "invalidFolder": "That folder does not look like a supported achievement folder.",
+    "invalidFolder": "That folder does not look like a supported achievement folder. Expected: GSE Saves / Goldberg SteamEmu Saves, CODEX/RUNE saves, AppID subfolders (e.g. 1091500), or a game folder with steam_settings or an emulator .ini.",
     "smartRunning": "Searching...",
     "smartDone": "Search complete.",
     "saveError": "Could not save setup."

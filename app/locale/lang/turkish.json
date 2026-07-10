@@ -44,6 +44,7 @@
   "unlocked": "Açıldı",
   "locked": "Kilitli",
   "globalStat": "oyuncuda bu var",
+  "achievementSearchPlaceholder": "Başarımlarda ara…",
   "hiddenRemain": "gizli başarım kaldı",
   "revealedOnceUnlocked": "Her başarımın ayrıntıları açıldığında gösterilecek",
   "hiddenDescriptionPlaceholder": "Gizli — göstermek için tıkla",
@@ -174,6 +175,10 @@
       "tray": {
         "name": "Sistem tepsisine küçült",
         "description": "Bildirimlerin daha hızlı başlaması için uygulamayı arka planda çalışır tut."
+      },
+      "theme": {
+        "name": "Tema",
+        "description": "Uygulama penceresinin renk teması (anında önizlenir, Tamam ile kaydedilir)."
       }
     },
     "emulator": {
@@ -298,6 +303,7 @@
       },
       "test": {
         "achievement": "Başarım",
+        "rare": "Nadir",
         "progress": "İlerleme",
         "playtime": "Oynama süresi",
         "toast": "Windows Toast",
@@ -345,6 +351,11 @@
         },
         "overlayPreset": "Ön ayar",
         "overlayPresetDesc": "Oyun içi yer paylaşımı açılır penceresinin görsel teması",
+        "overlayPresetRare": "Ön ayar (nadir)",
+        "overlayPresetRareDesc": "Nadir başarımlar için kullanılan ön ayar (oyuncuların en fazla %10’u)",
+        "overlayPresetPlatinum": "Ön ayar (platin)",
+        "overlayPresetPlatinumDesc": "%100 tamamlama bildirimi için kullanılan ön ayar",
+        "presetSameAsMain": "Ana ayarla aynı",
         "overlayPosition": "Konum",
         "overlayPositionDesc": "Yer paylaşımı açılır penceresinin ekranda nerede görüneceği",
         "overlayScale": "Boyut",
@@ -353,7 +364,7 @@
         "overlaySoundDesc": "Yer paylaşımı açılır penceresi göründüğünde çalınan ses",
         "overlaySoundImport": "Özel bir ses içe aktar…",
         "overlayVolume": "Ses düzeyi",
-        "overlayVolumeDesc": "Yer paylaşımı açılır penceresi sesinin düzeyi (toast sesi Windows tarafından kontrol edilir)",
+        "overlayVolumeDesc": "Bildirim seslerinin düzeyi — overlay açılır pencereleri %200’e kadar yükseltilebilir, özel toast sesleri %100 ile sınırlıdır.",
         "overlayDuration": "Süre",
         "overlayDurationDesc": "Yer paylaşımı açılır penceresinin ekranda ne kadar kalacağı. Auto ön ayarın karar vermesini sağlar; bir değer ekranda kalma süresini sınırlar.",
         "overlayDurationAuto": "Auto",
@@ -597,6 +608,8 @@
       "blacklistTitle": "AppID kara listesi",
       "blacklistButton": "Kara listeyi sıfırla",
       "blacklistInfo": "Bir oyun karosuna sağ tıklayarak kara listeye ekle.",
+      "blacklistEmpty": "Gizli oyun yok.",
+      "blacklistRestore": "Bu oyunu geri yükle",
       "apiKey": {
         "title": "Steam Web API anahtarı",
         "description": "Bazı Steam verileri kişisel bir Steam Web API anahtarı gerektirir.",
@@ -634,12 +647,12 @@
     "languageHint": "İlk kütüphane yüklemesi ancak bu seçimden sonra başlar.",
     "introTitle": "Nasıl çalışır?",
     "introCopy": "Achievement Watcher, bilinen kaydetme klasörlerinizi ve oyun kitaplıklarınızı tarar, ardından Watchdog, kilit açma bildirimleri ve oyun içi arayüz için tepside çalışmaya devam eder.",
-    "scanTitle": "Tara",
-    "scanCopy": "Kaydedilen başarı dosyalarından Steam, GOG, Epic, emülatörler ve Goldberg/GBE klasörleri algılanır.",
-    "watchTitle": "Kol saati",
-    "watchCopy": "Arka plandaki Watchdog, dosyaları ve oyunun açılışını izler, böylece siz oyun oynarken kilitlerin açılması görünür.",
-    "fixTitle": "Tamirat",
-    "fixCopy": "Taklit edilmiş Steam oyunları için sağ tıklama düzeltmesi GBE Fork'u, şemaları, DLC verilerini ve başlatma yardımcılarını ekleyebilir.",
+    "scanTitle": "Tarama",
+    "scanCopy": "Steam, GOG, Epic, RPCS3/ShadPS4/Xenia ve Goldberg/GBE kurulumları başarım dosyalarından bulunur — örneğin %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, CODEX/RUNE kayıtları veya steam_settings içeren bir oyun klasörü.",
+    "watchTitle": "İzleme",
+    "watchCopy": "Arka plandaki Watchdog oyun başlatıldığında çalıştırılabilir dosyayı algılar, oynama süresini kaydeder ve oyun sırasında kilit açma bildirimlerini göstermek için başarım dosyalarını izler.",
+    "fixTitle": "Onarma",
+    "fixCopy": "Emüle edilen Steam oyunlarında sağ tık onarımı (veya otomatik onarım) GBE Fork’u kurar ve achievements.json şemasını, DLC verilerini ve başlatma yardımcılarını oyunun steam_settings klasörüne yazar.",
     "profileTitle": "Profil",
     "profileCopy": "Başlıkta gösterilen adı seçin ve isteğe bağlı olarak yerel bir avatar ayarlayın.",
     "username": "Ekran adı",
@@ -695,7 +708,7 @@
     "saving": "Kaydediliyor...",
     "saved": "Kurulum kaydedildi.",
     "languageRequired": "Devam etmek için bir dil seçin.",
-    "invalidFolder": "Bu klasör desteklenen bir başarı klasörüne benzemiyor.",
+    "invalidFolder": "Bu klasör desteklenen bir başarım klasörü gibi görünmüyor. Beklenen: GSE Saves / Goldberg SteamEmu Saves, CODEX/RUNE kayıtları, AppID alt klasörleri (ör. 1091500) veya steam_settings ya da emülatör .ini dosyası içeren bir oyun klasörü.",
     "smartRunning": "Arama...",
     "smartDone": "Arama tamamlandı.",
     "saveError": "Kurulum kaydedilemedi."

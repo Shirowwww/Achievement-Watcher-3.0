@@ -44,6 +44,7 @@
   "unlocked": "解除済み",
   "locked": "ロック中",
   "globalStat": "のプレイヤーが取得",
+  "achievementSearchPlaceholder": "実績を検索…",
   "hiddenRemain": "個の隠し実績が残っています",
   "revealedOnceUnlocked": "各実績の詳細は解除後に表示されます",
   "hiddenDescriptionPlaceholder": "隠し — クリックで表示",
@@ -174,6 +175,10 @@
       "tray": {
         "name": "システムトレイに最小化",
         "description": "通知をより速く起動するため、アプリをバックグラウンドで実行し続けます。"
+      },
+      "theme": {
+        "name": "テーマ",
+        "description": "アプリウィンドウの配色テーマです（すぐにプレビューされ、OKで保存されます）。"
       }
     },
     "emulator": {
@@ -298,6 +303,7 @@
       },
       "test": {
         "achievement": "実績",
+        "rare": "レア",
         "progress": "進捗",
         "playtime": "プレイ時間",
         "toast": "Windows トースト",
@@ -345,6 +351,11 @@
         },
         "overlayPreset": "プリセット",
         "overlayPresetDesc": "ゲーム内オーバーレイのポップアップの外観テーマ",
+        "overlayPresetRare": "プリセット（レア）",
+        "overlayPresetRareDesc": "レア実績（解除率10%以下）に使用するプリセット",
+        "overlayPresetPlatinum": "プリセット（プラチナ）",
+        "overlayPresetPlatinumDesc": "100%完了通知に使用するプリセット",
+        "presetSameAsMain": "メインと同じ",
         "overlayPosition": "位置",
         "overlayPositionDesc": "オーバーレイのポップアップが画面上のどこに表示されるか",
         "overlayScale": "サイズ",
@@ -353,7 +364,7 @@
         "overlaySoundDesc": "オーバーレイのポップアップ表示時に再生されるサウンド",
         "overlaySoundImport": "カスタムサウンドをインポート…",
         "overlayVolume": "音量",
-        "overlayVolumeDesc": "オーバーレイのポップアップ音の音量（トースト音は Windows が制御します）",
+        "overlayVolumeDesc": "通知音の音量 — オーバーレイのポップアップは最大200%まで増幅でき、カスタムトースト音は100%が上限です。",
         "overlayDuration": "表示時間",
         "overlayDurationDesc": "オーバーレイのポップアップが画面に表示される時間。Auto はプリセットに任せ、値を指定すると表示時間を制限します。",
         "overlayDurationAuto": "Auto",
@@ -597,6 +608,8 @@
       "blacklistTitle": "AppID ブラックリスト",
       "blacklistButton": "ブラックリストをリセット",
       "blacklistInfo": "ゲームのタイルを右クリックしてブラックリストに追加します。",
+      "blacklistEmpty": "非表示のゲームはありません。",
+      "blacklistRestore": "このゲームを再表示",
       "apiKey": {
         "title": "Steam Web API キー",
         "description": "一部の Steam データには個人の Steam Web API キーが必要です。",
@@ -635,11 +648,11 @@
     "introTitle": "仕組み",
     "introCopy": "Achievement Watcher は既知の保存フォルダーとゲーム ライブラリをスキャンし、その後 Watchdog がロック解除通知とゲーム内オーバーレイのためにトレイ内で実行され続けます。",
     "scanTitle": "スキャン",
-    "scanCopy": "保存された実績ファイルから Steam、GOG、Epic、エミュレータ、Goldberg/GBE フォルダーが検出されます。",
-    "watchTitle": "時計",
-    "watchCopy": "バックグラウンドのウォッチドッグがファイルを監視し、ゲームが起動するため、プレイ中にロック解除が表示されます。",
-    "fixTitle": "修理",
-    "fixCopy": "エミュレートされた Steam ゲームの場合、右クリック修正により GBE フォーク、スキーマ、DLC データを追加し、ヘルパーを起動できます。",
+    "scanCopy": "Steam、GOG、Epic、RPCS3/ShadPS4/Xenia、Goldberg/GBE のインストールを実績ファイルから検出します（例: %APPDATA%\\GSE Saves、Goldberg SteamEmu Saves、CODEX/RUNE セーブ、steam_settings を含むゲームフォルダー）。",
+    "watchTitle": "監視",
+    "watchCopy": "バックグラウンドの Watchdog がゲーム起動時に実行ファイルを検出し、プレイ時間と実績ファイルを監視して、プレイ中に解除通知を表示します。",
+    "fixTitle": "修復",
+    "fixCopy": "エミュレートされた Steam ゲームでは、右クリックの修復（または自動修復）が GBE Fork をインストールし、achievements.json スキーマ、DLC データ、起動補助ファイルをゲームの steam_settings フォルダーに書き込みます。",
     "profileTitle": "プロフィール",
     "profileCopy": "ヘッダーに表示される名前を選択し、必要に応じてローカル アバターを設定します。",
     "username": "表示名",
@@ -695,7 +708,7 @@
     "saving": "保存中...",
     "saved": "セットアップが保存されました。",
     "languageRequired": "続行するには言語を選択してください。",
-    "invalidFolder": "そのフォルダーは、サポートされている実績フォルダーのようには見えません。",
+    "invalidFolder": "このフォルダーは対応する実績フォルダーではないようです。GSE Saves / Goldberg SteamEmu Saves、CODEX/RUNE セーブ、AppID サブフォルダー（例: 1091500）、または steam_settings やエミュレーターの .ini を含むゲームフォルダーを選択してください。",
     "smartRunning": "検索中...",
     "smartDone": "検索が完了しました。",
     "saveError": "設定を保存できませんでした。"

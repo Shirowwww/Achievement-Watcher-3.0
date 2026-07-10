@@ -401,6 +401,17 @@ function translateUI(lang, locale, template) {
   $('#advanced-blacklist-title').text(clear(template.settings.advanced.blacklistTitle));
   $('#blacklist_reset span').text(clear(template.settings.advanced.blacklistButton));
   $('#blacklist_reset ~ div').text(clear(template.settings.advanced.blacklistInfo));
+  if (template.settings.advanced.blacklistEmpty) {
+    $('#blacklist-manager')
+      .attr('data-empty', clear(template.settings.advanced.blacklistEmpty))
+      .attr('data-restore', clear(template.settings.advanced.blacklistRestore));
+  }
+  if (template.onboarding) {
+    $('#folder-action-result')
+      .attr('data-running', clear(template.onboarding.smartRunning))
+      .attr('data-done', clear(template.onboarding.smartDone))
+      .attr('data-invalid', clear(template.onboarding.invalidFolder));
+  }
   // Maintenance + Fix-all (Avancé tab) — stable ids.
   if (template.settings.advanced.maintenanceTitle) $('#adv-maintenance-title').text(clear(template.settings.advanced.maintenanceTitle));
   if (template.settings.advanced.fixAll) {

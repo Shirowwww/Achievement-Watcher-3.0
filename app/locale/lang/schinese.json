@@ -44,6 +44,7 @@
   "unlocked": "已解锁",
   "locked": "已锁定",
   "globalStat": "的玩家拥有此成就",
+  "achievementSearchPlaceholder": "搜索成就…",
   "hiddenRemain": "个隐藏成就剩余",
   "revealedOnceUnlocked": "每个成就的详情将在解锁后显示",
   "hiddenDescriptionPlaceholder": "隐藏 — 点击显示",
@@ -174,6 +175,10 @@
       "tray": {
         "name": "最小化到系统托盘",
         "description": "让应用在后台运行，以便更快地启动通知。"
+      },
+      "theme": {
+        "name": "主题",
+        "description": "应用窗口的配色主题（即时预览，点击“确定”保存）。"
       }
     },
     "emulator": {
@@ -298,6 +303,7 @@
       },
       "test": {
         "achievement": "成就",
+        "rare": "稀有",
         "progress": "进度",
         "playtime": "游戏时长",
         "toast": "Windows Toast",
@@ -345,6 +351,11 @@
         },
         "overlayPreset": "预设",
         "overlayPresetDesc": "游戏内叠加层弹窗的视觉主题",
+        "overlayPresetRare": "预设（稀有）",
+        "overlayPresetRareDesc": "用于稀有成就（解锁率不超过 10%）的预设",
+        "overlayPresetPlatinum": "预设（白金）",
+        "overlayPresetPlatinumDesc": "用于 100% 完成通知的预设",
+        "presetSameAsMain": "与主预设相同",
         "overlayPosition": "位置",
         "overlayPositionDesc": "叠加层弹窗在屏幕上的显示位置",
         "overlayScale": "大小",
@@ -353,7 +364,7 @@
         "overlaySoundDesc": "叠加层弹窗出现时播放的声音",
         "overlaySoundImport": "导入自定义声音…",
         "overlayVolume": "音量",
-        "overlayVolumeDesc": "叠加层弹窗声音的音量（toast 声音由 Windows 控制）",
+        "overlayVolumeDesc": "通知声音音量 — 叠加弹窗最高可增强到 200%，自定义 Windows 通知声音上限为 100%。",
         "overlayDuration": "持续时间",
         "overlayDurationDesc": "叠加层弹窗在屏幕上停留的时长。Auto 由预设决定；设置数值则限制屏幕停留时间。",
         "overlayDurationAuto": "Auto",
@@ -597,6 +608,8 @@
       "blacklistTitle": "AppID 黑名单",
       "blacklistButton": "重置黑名单",
       "blacklistInfo": "右键点击游戏卡片可将其加入黑名单。",
+      "blacklistEmpty": "没有隐藏的游戏。",
+      "blacklistRestore": "恢复此游戏",
       "apiKey": {
         "title": "Steam Web API 密钥",
         "description": "某些 Steam 数据需要个人的 Steam Web API 密钥。",
@@ -635,11 +648,11 @@
     "introTitle": "它是如何运作的",
     "introCopy": "成就观察者会扫描已知的保存文件夹和游戏库，然后看门狗会在托盘中继续运行以获取解锁通知和游戏内叠加层。",
     "scanTitle": "扫描",
-    "scanCopy": "从保存的成就文件中检测到 Steam、GOG、Epic、模拟器和 Goldberg/GBE 文件夹。",
-    "watchTitle": "手表",
-    "watchCopy": "后台看门狗会监视文件和游戏启动，以便在您玩游戏时出现解锁。",
-    "fixTitle": "维修",
-    "fixCopy": "对于模拟 Steam 游戏，右键修复可以添加 GBE Fork、模式、DLC 数据和启动帮助程序。",
+    "scanCopy": "通过成就文件查找 Steam、GOG、Epic、RPCS3/ShadPS4/Xenia 和 Goldberg/GBE 安装，例如 %APPDATA%\\GSE Saves、Goldberg SteamEmu Saves、CODEX/RUNE 存档，或包含 steam_settings 的游戏文件夹。",
+    "watchTitle": "监控",
+    "watchCopy": "后台 Watchdog 会在游戏启动时检测其可执行文件，记录游戏时间并监控成就文件，以便在游玩时显示解锁通知。",
+    "fixTitle": "修复",
+    "fixCopy": "对于模拟的 Steam 游戏，右键修复（或自动修复）会安装 GBE Fork，并将 achievements.json 架构、DLC 数据和启动辅助文件写入游戏的 steam_settings 文件夹。",
     "profileTitle": "轮廓",
     "profileCopy": "选择标题中显示的名称，并可以选择设置本地头像。",
     "username": "显示名称",
@@ -695,7 +708,7 @@
     "saving": "保存...",
     "saved": "设置已保存。",
     "languageRequired": "选择一种语言以继续。",
-    "invalidFolder": "该文件夹看起来不像受支持的成就文件夹。",
+    "invalidFolder": "该文件夹不像受支持的成就文件夹。应选择：GSE Saves / Goldberg SteamEmu Saves、CODEX/RUNE 存档、AppID 子文件夹（例如 1091500），或包含 steam_settings 或模拟器 .ini 的游戏文件夹。",
     "smartRunning": "正在寻找...",
     "smartDone": "搜索完成。",
     "saveError": "无法保存设置。"

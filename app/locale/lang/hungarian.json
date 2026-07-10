@@ -44,6 +44,7 @@
   "unlocked": "Feloldva",
   "locked": "Zárolva",
   "globalStat": "játékosnak van meg",
+  "achievementSearchPlaceholder": "Eredmények keresése…",
   "hiddenRemain": "rejtett teljesítmény maradt",
   "revealedOnceUnlocked": "Az egyes teljesítmények részletei a feloldás után jelennek meg",
   "hiddenDescriptionPlaceholder": "Rejtett — kattints a megjelenítéshez",
@@ -174,6 +175,10 @@
       "tray": {
         "name": "Kicsinyítés a tálcára",
         "description": "Tartsd az alkalmazást a háttérben az értesítések gyorsabb indulásához."
+      },
+      "theme": {
+        "name": "Téma",
+        "description": "Az alkalmazásablak színtémája (azonnali előnézet, mentés az OK gombbal)."
       }
     },
     "emulator": {
@@ -298,6 +303,7 @@
       },
       "test": {
         "achievement": "Teljesítmény",
+        "rare": "Ritka",
         "progress": "Folyamat",
         "playtime": "Játékidő",
         "toast": "Windows Toast",
@@ -345,6 +351,11 @@
         },
         "overlayPreset": "Előbeállítás",
         "overlayPresetDesc": "A játékon belüli overlay felugró ablak vizuális témája",
+        "overlayPresetRare": "Előbeállítás (ritka)",
+        "overlayPresetRareDesc": "A ritka eredményekhez használt előbeállítás (a játékosok legfeljebb 10%-a)",
+        "overlayPresetPlatinum": "Előbeállítás (platina)",
+        "overlayPresetPlatinumDesc": "A 100%-os teljesítés értesítéséhez használt előbeállítás",
+        "presetSameAsMain": "Ugyanaz, mint a fő",
         "overlayPosition": "Pozíció",
         "overlayPositionDesc": "Hol jelenik meg a felugró overlay a képernyőn",
         "overlayScale": "Méret",
@@ -353,7 +364,7 @@
         "overlaySoundDesc": "A felugró overlay megjelenésekor lejátszott hang",
         "overlaySoundImport": "Egyéni hang importálása…",
         "overlayVolume": "Hangerő",
-        "overlayVolumeDesc": "A felugró overlay hangjának hangereje (a toast hangját a Windows vezérli)",
+        "overlayVolumeDesc": "Az értesítési hangok hangereje — az overlay felugró ablakai 200%-ig erősíthetők, az egyéni toast hangok legfeljebb 100%-osak.",
         "overlayDuration": "Időtartam",
         "overlayDurationDesc": "Meddig marad a felugró overlay a képernyőn. Az Auto az előbeállításra bízza; egy érték korlátozza a képernyőn töltött időt.",
         "overlayDurationAuto": "Auto",
@@ -597,6 +608,8 @@
       "blacklistTitle": "AppID feketelista",
       "blacklistButton": "Feketelista visszaállítása",
       "blacklistInfo": "Kattints jobb gombbal egy játékcsempére, hogy felvedd a feketelistára.",
+      "blacklistEmpty": "Nincsenek rejtett játékok.",
+      "blacklistRestore": "Játék visszaállítása",
       "apiKey": {
         "title": "Steam Web API kulcs",
         "description": "Egyes Steam adatokhoz személyes Steam Web API kulcs szükséges.",
@@ -634,12 +647,12 @@
     "languageHint": "Az első könyvtárbetöltés csak e választás után indul el.",
     "introTitle": "Hogyan működik",
     "introCopy": "Az Achievement Watcher átvizsgálja az ismert mentési mappákat és a játékkönyvtárakat, majd a Watchdog folyamatosan fut a tálcán a feloldási értesítésekért és a játékon belüli fedvényért.",
-    "scanTitle": "Scan",
-    "scanCopy": "Steam, GOG, Epic, emulátorok és Goldberg/GBE mappák észlelhetők a mentett jutalomfájlokból.",
-    "watchTitle": "Nézze meg",
-    "watchCopy": "A háttér Watchdog figyeli a fájlokat és a játékindításokat, így a feloldások megjelennek játék közben.",
+    "scanTitle": "Vizsgálat",
+    "scanCopy": "A Steam, GOG, Epic, RPCS3/ShadPS4/Xenia és Goldberg/GBE telepítések az eredményfájljaik alapján találhatók meg — például %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, CODEX/RUNE mentések vagy steam_settings mappát tartalmazó játékmappa.",
+    "watchTitle": "Figyelés",
+    "watchCopy": "A háttérben futó Watchdog a játék indításakor felismeri a futtatható fájlt, méri a játékidőt és figyeli az eredményfájlokat, hogy játék közben megjelenjenek a feloldások.",
     "fixTitle": "Javítás",
-    "fixCopy": "Az emulált Steam-játékok esetében a jobb gombbal történő javítás hozzáadhatja a GBE Forkot, a sémákat, a DLC-adatokat és az indítási segédeket.",
+    "fixCopy": "Emulált Steam-játékoknál a jobb kattintásos javítás (vagy az automatikus javítás) telepíti a GBE Forkot, és az achievements.json sémát, a DLC-adatokat és az indítási segédfájlokat a játék steam_settings mappájába írja.",
     "profileTitle": "Profil",
     "profileCopy": "Válassza ki a fejlécben látható nevet, és opcionálisan állítson be egy helyi avatart.",
     "username": "Megjelenítési név",
@@ -695,7 +708,7 @@
     "saving": "Mentés...",
     "saved": "A beállítás elmentve.",
     "languageRequired": "A folytatáshoz válasszon nyelvet.",
-    "invalidFolder": "Ez a mappa nem tűnik támogatott jutalommappának.",
+    "invalidFolder": "Ez a mappa nem tűnik támogatott eredménymappának. Elvárt: GSE Saves / Goldberg SteamEmu Saves, CODEX/RUNE mentések, AppID almappák (pl. 1091500), vagy steam_settings mappát, illetve emulátor .ini fájlt tartalmazó játékmappa.",
     "smartRunning": "Keresés...",
     "smartDone": "A keresés befejeződött.",
     "saveError": "Nem sikerült menteni a beállítást."
