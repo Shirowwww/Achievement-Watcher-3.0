@@ -205,7 +205,7 @@ Achievement Watcher is built from source with standard, **non-obfuscated** Elect
 - Some Electron apps — and the emulator-helper DLLs this tool can download on demand — are occasionally flagged as false positives by Windows Defender or other antivirus engines. This is a known industry issue with unsigned Electron builds and Steam-emulator binaries, not evidence of malware.
 - **Download builds only from the [official Releases page](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases).** Never install a build from a third-party mirror.
 - Each release publishes the installer, differential blockmap and `latest.yml` update manifest; the manifest contains the installer's SHA-512 checksum.
-- The installer is self-signed by electron-builder (not a trusted certificate). A proper code-signing certificate can be added in the future to reduce warnings.
+- The installer is currently unsigned, so Windows SmartScreen may show a warning. A trusted code-signing certificate can be added in the future to reduce those warnings.
 
 If your antivirus quarantines a file, prefer reporting the false positive to your AV vendor over disabling protection.
 
