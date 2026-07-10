@@ -36,6 +36,7 @@ const { notificationVolumePercent } = require('./util/notificationVolume.js');
 const playtimeMonitor = require('./playtime/monitor.js');
 const notify = require('./notification/toaster.js');
 const shadps4Watch = require('./console/shadps4Watch.js');
+const xeniaWatch = require('./console/xeniaWatch.js');
 const eaWatch = require('./console/eaWatch.js');
 const { crc32 } = require('crc');
 const { isWinRTAvailable } = require('powertoast');
@@ -315,6 +316,14 @@ var app = {
         await eaWatch.start({ options: self.options, getToastID: () => self.toastID, notify });
       } catch (err) {
         debug.error(`[ea] ${err}`);
+      }
+
+      // Xenia (Xbox 360 emulator) live achievement toasts — watches each title's own GPD under the
+      // user's saved folders (cfg/userdir.db) and diffs against a baseline, like shadps4Watch.
+      try {
+        await xeniaWatch.start({ options: self.options, getToastID: () => self.toastID, notify });
+      } catch (err) {
+        debug.error(`[xenia] ${err}`);
       }
     } catch (err) {
       debug.error(err);

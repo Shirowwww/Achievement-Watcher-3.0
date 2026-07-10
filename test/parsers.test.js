@@ -10,6 +10,7 @@ const path = require('path');
 
 const shadps4 = require('../app/parser/shadps4.js');
 const xenia = require('../app/parser/xenia.js');
+const xeniaWatch = require('../watchdog/console/xeniaWatch.js');
 
 let passed = 0;
 async function test(name, fn) {
@@ -177,6 +178,37 @@ function makeGpdBuffer() {
     assert.strictEqual(ach[0].id, '1');
     assert.strictEqual(ach[0].achieved, true);
     assert.strictEqual(ach[0].earned_time, 1700000000);
+  });
+
+  await test('xenia live watcher reads the same GPD payload and embedded icon', async () => {
+    const tmp = mkTmp('xenia-watch-read');
+    const gpd = path.join(tmp, 'TEST.gpd');
+    fs.writeFileSync(gpd, makeGpdBuffer());
+    const parsed = xeniaWatch._internal.read(gpd);
+    assert.strictEqual(parsed.title, 'My Xbox Game');
+    assert.strictEqual(parsed.list.length, 1);
+    assert.deepStrictEqual(
+      { id: parsed.list[0].id, name: parsed.list[0].displayName, achieved: parsed.list[0].achieved, time: parsed.list[0].time },
+      { id: '1', name: 'Test Ach', achieved: true, time: 1700000000 }
+    );
+    assert.ok(parsed.imagesById.get('1001').equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])));
+  });
+
+  await test('xenia live watcher discovers only each title own GPD', async () => {
+    const tmp = mkTmp('xenia-watch-discover');
+    const titleId = '4D5307E6';
+    const dataDir = path.join(tmp, 'content', '0123456789ABCDEF', titleId, '00000001');
+    fs.mkdirSync(dataDir, { recursive: true });
+    const ownGpd = path.join(dataDir, `${titleId}.gpd`);
+    fs.writeFileSync(ownGpd, makeGpdBuffer());
+    fs.writeFileSync(path.join(dataDir, 'FFFE07D1.gpd'), makeGpdBuffer());
+    const configFile = path.join(tmp, 'userdir.db');
+    fs.writeFileSync(configFile, JSON.stringify([{ path: tmp, notify: true }]), 'utf8');
+
+    const targets = xeniaWatch._internal.discover(configFile);
+    assert.strictEqual(targets.length, 1);
+    assert.strictEqual(targets[0].titleId, titleId);
+    assert.strictEqual(targets[0].gpdPath, ownGpd);
   });
 
   console.log(`\n${passed} passed`);
