@@ -48,12 +48,70 @@ module.exports.get = async () => {
   return exclude;
 };
 
+// Human-readable names for user-blacklisted appids, kept in a sidecar so exclusion.db stays a plain
+// id array (back-compat with every existing install). Best-effort only — a missing name renders as
+// the bare appid in the Settings manager.
+const namesFile = () => path.join(path.dirname(exclusionFile), 'exclusion-names.json');
+
+function readNames() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(namesFile(), 'utf8'));
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function writeNames(names) {
+  try {
+    fs.mkdirSync(path.dirname(exclusionFile), { recursive: true });
+    fs.writeFileSync(namesFile(), JSON.stringify(names, null, 2), 'utf8');
+  } catch (e) {
+    /* names are cosmetic — never fail the caller */
+  }
+}
+
 module.exports.reset = async () => {
   fs.mkdirSync(path.dirname(exclusionFile), { recursive: true });
   fs.writeFileSync(exclusionFile, JSON.stringify([], null, 2), 'utf8');
+  writeNames({});
 };
 
-module.exports.add = async (appid) => {
+// User exclusions only (what the Settings blacklist manager shows) — the builtin/server lists are
+// not the user's to edit.
+module.exports.getUserDetailed = async () => {
+  let userExclusion;
+  try {
+    userExclusion = JSON.parse(fs.readFileSync(exclusionFile, 'utf8'));
+  } catch (e) {
+    userExclusion = [];
+  }
+  const names = readNames();
+  return (Array.isArray(userExclusion) ? userExclusion : []).map((appid) => ({
+    appid,
+    name: names[String(appid)] || '',
+  }));
+};
+
+module.exports.remove = async (appid) => {
+  let userExclusion;
+  try {
+    userExclusion = JSON.parse(fs.readFileSync(exclusionFile, 'utf8'));
+  } catch (e) {
+    userExclusion = [];
+  }
+  const next = (Array.isArray(userExclusion) ? userExclusion : []).filter((id) => String(id) !== String(appid));
+  fs.mkdirSync(path.dirname(exclusionFile), { recursive: true });
+  fs.writeFileSync(exclusionFile, JSON.stringify(next, null, 2), 'utf8');
+  const names = readNames();
+  if (names[String(appid)] != null) {
+    delete names[String(appid)];
+    writeNames(names);
+  }
+  debug.log(`Un-blacklisted ${appid}.`);
+};
+
+module.exports.add = async (appid, name) => {
   try {
     debug.log(`Blacklisting ${appid} ...`);
 
@@ -65,13 +123,18 @@ module.exports.add = async (appid) => {
       userExclusion = [];
     }
 
-    if (!userExclusion.includes(appid)) {
+    if (!userExclusion.some((id) => String(id) === String(appid))) {
       userExclusion.push(appid);
       fs.mkdirSync(path.dirname(exclusionFile), { recursive: true });
       fs.writeFileSync(exclusionFile, JSON.stringify(userExclusion, null, 2), 'utf8');
       debug.log('Done.');
     } else {
       debug.log('Already blacklisted.');
+    }
+    if (name) {
+      const names = readNames();
+      names[String(appid)] = String(name);
+      writeNames(names);
     }
     try {
       const gameIndex = require(path.join(__dirname, 'gameIndex.js'));

@@ -1170,7 +1170,9 @@ var app = {
               label: $('#game-list').attr('data-contextMenu0'),
               click() {
                 try {
-                  blacklist.add(appid);
+                  // Store the display name alongside the id so the Settings blacklist manager can
+                  // show which game each entry is.
+                  blacklist.add(appid, list.find((g) => g.appid == appid)?.name || self.find('.info .title span').text() || '');
                   app.onStart();
                 } catch (err) {
                   remote.dialog.showMessageBoxSync({

@@ -63,6 +63,28 @@ const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-blacklist-'));
       assert.ok(!res.includes(300), 'a removed user id should no longer appear');
     });
 
+    await test('stores display names and restores one game without clearing the others', async () => {
+      await blacklist.add(9001, 'First hidden game');
+      await blacklist.add('9001', 'Updated hidden game');
+      await blacklist.add(9002, 'Second hidden game');
+
+      const detailed = await blacklist.getUserDetailed();
+      assert.deepStrictEqual(detailed, [
+        { appid: 9001, name: 'Updated hidden game' },
+        { appid: 9002, name: 'Second hidden game' },
+      ]);
+
+      await blacklist.remove('9001');
+      assert.deepStrictEqual(await blacklist.getUserDetailed(), [{ appid: 9002, name: 'Second hidden game' }]);
+      assert.deepStrictEqual(JSON.parse(fs.readFileSync(exclusionFile, 'utf8')), [9002]);
+    });
+
+    await test('reset clears both ids and their display-name sidecar', async () => {
+      await blacklist.reset();
+      assert.deepStrictEqual(await blacklist.getUserDetailed(), []);
+      assert.deepStrictEqual(JSON.parse(fs.readFileSync(path.join(temp, 'cfg', 'exclusion-names.json'), 'utf8')), {});
+    });
+
     console.log(`PASS: blacklist.get (${passed} checks)`);
   } finally {
     request.getJson = realGetJson;

@@ -130,6 +130,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#game-config').hide();
       $('#settings').show();
       $('#settings .box').fadeIn();
+      renderBlacklistManager().catch((err) => debug.log(err));
 
       for (let option in app.config.achievement) {
         if ($(`#option_${option} option[value="${app.config.achievement[option]}"]`).length > 0) {
@@ -396,6 +397,11 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         $('title-bar')[0].inSettings = false;
         // Cancel reverts an unsaved theme preview back to the persisted choice.
         document.documentElement.dataset.theme = (app.config.general && app.config.general.theme) || 'default';
+        // Games were un-blacklisted while Settings was open: refresh the library once, now.
+        if (window.__awBlacklistDirty) {
+          window.__awBlacklistDirty = false;
+          app.onStart();
+        }
       });
     });
 
@@ -883,6 +889,47 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#addCustomDir').css('pointer-events', 'initial');
       $('#btn-settings-save').css('pointer-events', 'initial');
     });
+
+    // Blacklist manager: list the user's hidden games, each with a restore button. Restoring only
+    // flags the library for refresh — the actual reload runs once, when Settings closes, instead of
+    // yanking the whole UI on every click.
+    async function renderBlacklistManager() {
+      const listEl = $('#blacklist-manager');
+      const emptyEl = $('#blacklist-empty');
+      listEl.empty();
+      let entries = [];
+      try {
+        entries = await blacklist.getUserDetailed();
+      } catch (err) {
+        debug.log(err);
+      }
+      emptyEl.text(entries.length === 0 ? listEl.attr('data-empty') || 'No hidden games.' : '');
+      for (const entry of entries) {
+        const li = $('<li>');
+        $('<span class="name">')
+          .text(entry.name || `App ${entry.appid}`)
+          .attr('title', String(entry.appid))
+          .appendTo(li);
+        $('<span class="appid">').text(entry.appid).appendTo(li);
+        $('<button type="button" class="inline-action-btn"><i class="fas fa-undo"></i></button>')
+          .attr('title', listEl.attr('data-restore') || 'Restore this game')
+          .on('click', async function () {
+            const btn = $(this);
+            btn.css('pointer-events', 'none');
+            try {
+              await blacklist.remove(entry.appid);
+              window.__awBlacklistDirty = true;
+              await renderBlacklistManager();
+            } catch (err) {
+              debug.log(err);
+              btn.css('pointer-events', 'initial');
+            }
+          })
+          .appendTo(li);
+        listEl.append(li);
+      }
+    }
+    window.renderBlacklistManager = renderBlacklistManager;
 
     $('#blacklist_reset').click(function () {
       let self = $(this);
