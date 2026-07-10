@@ -1,11 +1,19 @@
-# 3.0.8
+# Achievement Watcher 3.1.0
 
-Small notification quality fix: playtime notifications now use proper Steam art instead of a blurry icon.
+This release expands notifications, adds live Xenia unlocks, improves navigation and setup, completes every bundled translation, and restores automatic update checks.
 
-## Changes
+## Highlights
 
-- Playtime notifications (overlay and toast) now show the game's high-resolution Steam library art instead of Steam's tiny, low-quality icon, which only shows up as a fallback when no library art is available.
+- 7 new notification presets, including Game Cover and Xbox Series rare/platinum variants.
+- Separate presets for normal, rare and platinum unlocks.
+- 0–200% notification volume slider with live preview and a dedicated rare test.
+- Live Xenia achievement notifications with safe startup baselines and duplicate suppression.
+- Achievement search, mouse Back/Forward navigation, four app themes and an individual-game blacklist manager.
+- Immediate folder-scan and Smart Find feedback in Settings and onboarding.
+- Float progress values rounded to two decimals.
+- All 18 UI languages updated to the complete 454-key locale set.
+- Packaged builds now check GitHub automatically, download updates and prompt to restart.
 
 ## Download
 
-Download `Achievement.Watcher.Setup.3.0.8.exe` from this release.
+Download `Achievement.Watcher.Setup.3.1.0.exe`. The accompanying `.blockmap` and `latest.yml` files are used by the automatic updater.

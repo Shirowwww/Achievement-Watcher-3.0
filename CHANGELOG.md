@@ -5,16 +5,36 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+## 3.1.0 - 2026-07-11
+
+### Added
+
+- Notification volume is now a real slider (0–200%, live preview at the chosen loudness — including the >100% overlay boost); custom toast sounds follow the same setting instead of playing at a fixed half volume.
+- New "Rare" notification test button, firing a random gold/silver/bronze rarity through both the overlay and toast transports, exactly like a real rare unlock.
+- 7 new overlay notification presets imported from the reference Achievements project: the full Xbox Series family (base, Purple, Rare ×2, Platinum ×2 with the animated diamond) and Game Cover (uses the game's header art as background).
+- Rare unlocks and the platinum (100%) popup can each use their own overlay preset (Settings → Notifications, "Same as main" by default) — pairs naturally with the Xbox Series Rare/Platinum presets.
+- App color themes (Settings → General): Steam Blue (default), OLED Black, Dracula, Graphite — previewed live, applied at startup.
+- Achievement search box in the game view: filter the unlocked/locked lists by title or description.
+- Mouse side-button navigation everywhere: Back closes Settings or returns to the library; Forward reopens the game you just left.
+- Live Xenia (Xbox 360) achievement notifications: each title's GPD is watched while you play, with baseline seeding (no replay of old unlocks at startup) and duplicate-event suppression.
+- Blacklist manager (Settings → Advanced): hidden games are listed by name with a one-click restore, instead of an all-or-nothing reset.
+- Adding a save/config folder (Settings and onboarding) now scans it immediately and reports how many games were found; Smart Find reports how many new folders it added; the "invalid folder" warning lists concrete examples of supported layouts.
+
 ### Fixed
 
+- Packaged builds once again check the GitHub release feed automatically on startup, download available updates and offer to restart after the download completes.
 - The window no longer freezes permanently when an Epic game's artwork lookup (SteamGridDB) finds no match or the network fails.
 - Steam games without store background art no longer lose all their metadata (name, icon, header) during a scan.
 - A failed SteamHunters user-list lookup no longer discards the achievement descriptions that were already fetched.
 - Settings → Advanced "Fix all games" no longer fails every game's DLC configuration step (`steam is not defined`).
+- Float-based achievement progress (e.g. distance stats) is now capped at 2 decimals in the game view, overlay popups and toast footers, instead of printing long tails like `3.3333333`.
 
 ### Changed
 
+- All 18 bundled UI languages now contain the same complete 454-key interface set, including themes, achievement search, notification presets, folder guidance and blacklist actions.
 - Internal cleanup: removed unreachable scraper branches (one less headless-browser tab per scrape), dead Electron APIs and orphan imports; hardened popup handling for all windows.
+- Notifications tab reorganized: the test buttons now sit right below the overlay options they exercise, before the custom-preset builder and souvenir sections.
+- Onboarding "How it works" texts now name the exact folders and files the scanner recognizes (GSE Saves, steam_settings, CODEX/RUNE…) and explain that the Watchdog detects the game's executable; French wording cleaned up.
 
 ## 3.0.8 - 2026-06-30
 
