@@ -1117,7 +1117,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       return Object.assign(
         {
           preset,
-          notificationType: kind === 'toast' ? 'achievement' : kind,
+          // A rare unlock is a normal achievement notification carrying a rarityPercent.
+          notificationType: kind === 'toast' || kind === 'rare' ? 'achievement' : kind,
+          rarityPercent: rarePct,
           position: $('#option_overlayPosition').val() || 'center-bottom',
           scale: parseFloat($('#option_overlayScale').val()) || 1,
           volume: Number.isFinite(volRaw) ? volRaw : 100,
