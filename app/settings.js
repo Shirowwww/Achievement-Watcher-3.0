@@ -48,6 +48,10 @@ module.exports.load = () => {
     if (typeof options.general.closeToTray !== 'boolean') {
       options.general.closeToTray = true;
     }
+    // App color theme (Settings > General) — dark variants applied via <html data-theme="...">.
+    if (!['default', 'oled', 'dracula', 'graphite'].includes(options.general.theme)) {
+      options.general.theme = 'default';
+    }
 
     // overlay = the in-game achievement overlay (Ctrl+Shift+O). Notifications are Windows toasts
     // now, so the old per-notification look settings (position/preset/scale/duration) are gone.
@@ -333,6 +337,7 @@ module.exports.load = () => {
         startWithWindows: true,
         disableHardwareAccel: false,
         closeToTray: true,
+        theme: 'default',
       },
       overlay: {
         hotkey: 'Ctrl+Shift+O',

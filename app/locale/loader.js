@@ -104,6 +104,9 @@ function translateUI(lang, locale, template) {
   $('#unlock .header .title span').text(clear(template.unlocked));
   $('#lock .header .title span').text(clear(template.locked));
   $('#achievement .achievements').data('lang-globalStat', clear(template.globalStat));
+  if (template.achievementSearchPlaceholder) {
+    $('#achievement-search-input').attr('placeholder', clear(template.achievementSearchPlaceholder));
+  }
   $('#unlock').data('lang-noneUnlocked', clear(template.noneUnlocked));
   $('#unlock').data('lang-play', clear(template.play));
   $('#unlock').data('lang-noneUnlockedHint', clear(template.noneUnlockedHint));
@@ -161,6 +164,11 @@ function translateUI(lang, locale, template) {
     $('#hwaccel-settings-help').text(clear(template.settings.general.hardwareAccel.description));
     $("#option_disableHardwareAccel option[value='true']").text(clear(template.settings.common.enable));
     $("#option_disableHardwareAccel option[value='false']").text(clear(template.settings.common.disable));
+  }
+  if (template.settings.general.theme) {
+    $('#theme-settings-label').text(clear(template.settings.general.theme.name));
+    $('#theme-settings-help').text(clear(template.settings.general.theme.description));
+    // Theme names themselves are proper nouns and stay untranslated.
   }
   $('#general-options-title').text(clear(template.settings.general.sectionTitle));
 

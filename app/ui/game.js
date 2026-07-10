@@ -54,10 +54,43 @@ function getGlobalStat(appid, source) {
 
 (function ($, window, document) {
   $(function () {
+    // Remember the tile of the game being viewed so the mouse "Forward" button can reopen it.
+    // Opening a game also resets the achievement search box (fresh view, no stale filter).
+    $('#game-list').on('click', '.game-box', function () {
+      window.__awMouseNavGameBox = this;
+      $('#achievement-search-input').val('');
+      $('#achievement .achievement-list ul > li').removeClass('search-hidden');
+    });
+
+    // Filter the unlocked/locked achievement rows by title or (visible) description. Hidden-masked
+    // descriptions are matched on their displayed label only, so spoilers don't leak through search.
+    $('#achievement-search-input').on('input', function () {
+      const filter = String($(this).val() || '')
+        .replace(/<\/?[^>]+>/gi, '')
+        .trim()
+        .toUpperCase();
+      $('#achievement .achievement-list ul > li').each(function () {
+        const elem = $(this);
+        const title = elem.find('.achievement .content .title').text().toUpperCase();
+        const desc = elem.find('.achievement .content .description').text().toUpperCase();
+        elem.toggleClass('search-hidden', filter !== '' && !title.includes(filter) && !desc.includes(filter));
+      });
+    });
+
+    // Mouse side-button navigation (app-wide): Back (4) closes Settings first — it overlays
+    // everything — then the game detail view; Forward (5) reopens the game closed with Back.
     $(document).mouseup(function (e) {
+      if ($('#onboarding').is(':visible')) return;
       if (e.which === 4) {
-        if ($('#achievement').is(':visible')) {
+        if ($('#settings').is(':visible')) {
+          $('#btn-settings-cancel').trigger('click');
+        } else if ($('#achievement').is(':visible')) {
           $('#btn-previous').trigger('click');
+        }
+      } else if (e.which === 5) {
+        const box = window.__awMouseNavGameBox;
+        if (!$('#achievement').is(':visible') && !$('#settings').is(':visible') && box && document.contains(box)) {
+          $(box).trigger('click');
         }
       }
     });

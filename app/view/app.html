@@ -100,6 +100,10 @@
           </div>
 
           <div class="achievements">
+            <div id="achievement-search">
+              <i class="fas fa-search"></i>
+              <input type="search" id="achievement-search-input" autocomplete="off" spellcheck="false" />
+            </div>
             <div id="unlock" class="achievement-list active">
               <div class="header">
                 <span class="title" data-count="0"><i class="fas fa-unlock"></i> <span></span></span>
@@ -1322,6 +1326,25 @@
                       </div>
                     </div>
                     <div class="help" id="close-tray-settings-help">Keep the app running in the background for faster notifications startup.</div>
+                  </li>
+
+                  <li class="hasHelper">
+                    <div class="left"><i class="fas fa-paint-brush"></i> <span id="theme-settings-label">Theme</span></div>
+                    <div class="right">
+                      <div class="previous">
+                        <span class="arrow"><i class="fas fa-chevron-left"></i></span>
+                      </div>
+                      <select autocomplete="off" id="option_theme">
+                        <option value="default" selected>Steam Blue</option>
+                        <option value="oled">OLED Black</option>
+                        <option value="dracula">Dracula</option>
+                        <option value="graphite">Graphite</option>
+                      </select>
+                      <div class="next">
+                        <span class="arrow"><i class="fas fa-chevron-right"></i></span>
+                      </div>
+                    </div>
+                    <div class="help" id="theme-settings-help">Color theme of the app window (previews immediately, saved with OK).</div>
                   </li>
 
                 </ul>

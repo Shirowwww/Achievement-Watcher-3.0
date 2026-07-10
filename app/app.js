@@ -2730,6 +2730,9 @@ var app = {
 (function ($, window, document) {
   $(function () {
     try {
+      // Apply the saved app theme before anything renders (Settings > General > Theme).
+      document.documentElement.dataset.theme = app.config.general?.theme || 'default';
+
       // On a genuine first run, defer the initial library scan until the onboarding guide is done:
       // onboarding lets the user set their Steam Web API key (and game folders), and finish()/skip()
       // trigger the first scan via resetUI()/onStart(). Scanning here too would run a slow, key-less

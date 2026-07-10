@@ -140,6 +140,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#option_startWithWindows').val(String(app.config.general.startWithWindows !== false)).change();
       $('#option_disableHardwareAccel').val(String(app.config.general.disableHardwareAccel === true)).change();
       $('#option_closeToTray').val(String(app.config.general.closeToTray !== false)).change();
+      $('#option_theme').val(app.config.general.theme || 'default').change();
       ipcRenderer
         .invoke('startup:get-start-with-windows')
         .then((enabled) => {
@@ -393,6 +394,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         $("#settings .box section.content[data-view='" + elem.data('view') + "']").addClass('active');
         self.css('pointer-events', 'initial');
         $('title-bar')[0].inSettings = false;
+        // Cancel reverts an unsaved theme preview back to the persisted choice.
+        document.documentElement.dataset.theme = (app.config.general && app.config.general.theme) || 'default';
       });
     });
 
@@ -406,7 +409,13 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         .each(function (index) {
           try {
             // These General-tab selects persist under `general`, not `achievement` — handled explicitly below.
-            if ($(this)[0].id === 'option_startWithWindows' || $(this)[0].id === 'option_disableHardwareAccel' || $(this)[0].id === 'option_closeToTray') return;
+            if (
+              $(this)[0].id === 'option_startWithWindows' ||
+              $(this)[0].id === 'option_disableHardwareAccel' ||
+              $(this)[0].id === 'option_closeToTray' ||
+              $(this)[0].id === 'option_theme'
+            )
+              return;
             if ($(this)[0].id !== '' && $(this).val() !== '') {
               app.config.achievement[$(this)[0].id.replace('option_', '')] =
                 $(this).val() === 'true' ? true : $(this).val() === 'false' ? false : $(this).val();
@@ -419,6 +428,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       if (!app.config.general) app.config.general = {};
       app.config.general.disableHardwareAccel = $('#option_disableHardwareAccel').val() === 'true';
       app.config.general.closeToTray = $('#option_closeToTray').val() !== 'false';
+      app.config.general.theme = $('#option_theme').val() || 'default';
 
       $('#options-source .right')
         .children('select')
@@ -657,6 +667,12 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     // Bind on the controls themselves as well as using a bubbling event above. This keeps the
     // dependency UI reliable for keyboard changes, programmatic population and the arrow buttons.
     $('#options-emulator select, #options-emulator2 select').on('change', updateEmulatorUi);
+
+    // Live theme preview: applying on change lets the user see the theme before committing with OK;
+    // Cancel restores whatever is saved in the config.
+    $('#option_theme').on('change', function () {
+      document.documentElement.dataset.theme = $(this).val() || 'default';
+    });
 
     // Let the mouse wheel cycle the value displayed between the arrows. This is
     // especially useful for long lists while keeping the compact control aligned.

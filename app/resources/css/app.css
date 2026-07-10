@@ -32,6 +32,7 @@
    them removes palette drift and makes future theming/accent tweaks a one-line edit. */
 :root {
   --bg-base: #1b2838;                /* window / app background */
+  --bg-glow: #26384c;                /* top-centre radial glow behind the header */
   --bg-panel: #15202d;               /* game-list & sunken panels */
   --bg-panel-translucent: #15202db5; /* same panel at ~71% alpha (overlays) */
   --surface: #27374a;                /* cards, buttons, avatar background */
@@ -42,6 +43,51 @@
   --accent-soft: rgba(91, 141, 255, 0.18);
   --surface-elevated: #1f3042;
   --surface-sunken: #101a27;
+}
+
+/* App themes (Settings > General). Dark variants only: the stylesheet's translucent white/black
+   overlays assume a dark base, so every theme keeps light text and shifts backgrounds/accents. */
+:root[data-theme='oled'] {
+  --bg-base: #000000;
+  --bg-glow: #101014;
+  --bg-panel: #060608;
+  --bg-panel-translucent: #060608b5;
+  --surface: #141419;
+  --border: #2c2c34;
+  --text: #e8ecf2;
+  --text-muted: #9aa3b2;
+  --accent: #4da3ff;
+  --accent-soft: rgba(77, 163, 255, 0.18);
+  --surface-elevated: #101015;
+  --surface-sunken: #000000;
+}
+:root[data-theme='dracula'] {
+  --bg-base: #282a36;
+  --bg-glow: #343747;
+  --bg-panel: #1e1f29;
+  --bg-panel-translucent: #1e1f29b5;
+  --surface: #343746;
+  --border: #4b4e63;
+  --text: #f8f8f2;
+  --text-muted: #9ba3c7;
+  --accent: #bd93f9;
+  --accent-soft: rgba(189, 147, 249, 0.2);
+  --surface-elevated: #2b2d3b;
+  --surface-sunken: #171923;
+}
+:root[data-theme='graphite'] {
+  --bg-base: #1d1f22;
+  --bg-glow: #2a2d31;
+  --bg-panel: #17181b;
+  --bg-panel-translucent: #17181bb5;
+  --surface: #292c30;
+  --border: #45494f;
+  --text: #e3e6ea;
+  --text-muted: #a4aab2;
+  --accent: #6fbf73;
+  --accent-soft: rgba(111, 191, 115, 0.18);
+  --surface-elevated: #212327;
+  --surface-sunken: #101113;
 }
 
 html,
@@ -75,7 +121,7 @@ body {
   box-sizing: border-box;
   /* Soft top-centre glow for depth behind the header (flat fill before; JS swaps in game art on
      the detail view, so this only affects the home screen). */
-  background: radial-gradient(140% 90% at 50% -10%, #26384c 0%, var(--bg-base) 60%);
+  background: radial-gradient(140% 90% at 50% -10%, var(--bg-glow) 0%, var(--bg-base) 60%);
   background-size: cover !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
@@ -2847,8 +2893,77 @@ main {
   word-break: break-word;
 }
 
+/* Blacklist manager (Advanced tab): one row per hidden game — name, appid, restore button. */
+.blacklist-manager-row {
+  flex-direction: column;
+  align-items: stretch;
+}
+#blacklist-manager {
+  width: 100%;
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 0 0 4px;
+}
+#blacklist-manager li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 14px;
+}
+#blacklist-manager li:last-child {
+  border-bottom: 0;
+}
+#blacklist-manager li .name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#blacklist-manager li .appid {
+  flex: 0 0 auto;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
 #diag-apikey span {
   font-weight: bold;
+}
+
+/* Achievement search (game detail view): filters unlocked/locked rows by title/description. */
+#achievement .achievements #achievement-search {
+  position: relative;
+  margin: 0 0 14px;
+}
+#achievement .achievements #achievement-search > i {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 12px;
+  color: #9fb2ca;
+  pointer-events: none;
+}
+#achievement .achievements #achievement-search input[type='search'] {
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
+  background: var(--bg-panel-translucent);
+  border: solid #24374c 1px;
+  border-radius: 7px;
+  padding: 8px 12px 8px 34px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: 'Open-Sans';
+  transition: border-color 0.3s ease;
+}
+#achievement .achievements #achievement-search input[type='search']:focus {
+  border-color: var(--accent);
+}
+#achievement .achievement-list ul > li.search-hidden {
+  display: none;
 }
 
 #search-bar {
