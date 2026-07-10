@@ -708,6 +708,21 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       self.css('pointer-events', 'initial');
     });
 
+    // Tell the user what a freshly added save/config folder actually contains: run the real scan on
+    // it and report the game count, so "added but nothing shows up" stops being a mystery.
+    async function reportFolderScan(dir) {
+      const result = $('#folder-action-result');
+      result.text(result.attr('data-running') || 'Scanning…');
+      try {
+        const found = await userDir.scan(dir);
+        const count = Array.isArray(found) ? found.length : 0;
+        result.text(count > 0 ? `${result.attr('data-done') || 'Scan complete.'} (${count})` : result.attr('data-invalid') || 'No game found.');
+      } catch (err) {
+        debug.log(err);
+        result.text('');
+      }
+    }
+
     $('#addCustomDir').click(async function () {
       let self = $(this);
       self.css('pointer-events', 'none');
@@ -720,6 +735,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
           if (await userDir.check(dialog.filePaths[0])) {
             populateUserDirList({ dir: dialog.filePaths[0] });
+            reportFolderScan(dialog.filePaths[0]);
           } else {
             debug.log('-> Invalid folder');
             remote.dialog.showMessageBoxSync({
@@ -729,6 +745,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
                 .html()
                 .replace(/\s{2,}/g, '')
                 .replace(/<br>/g, '\n'),
+              detail: $('#folder-action-result').attr('data-invalid') || '',
             });
           }
         } else {
@@ -858,6 +875,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#btn-settings-save').css('pointer-events', 'none');
 
       debug.log('auto-finding folder(s) ...');
+      const result = $('#folder-action-result');
+      result.text(result.attr('data-running') || 'Searching…');
+      // Diff the lists before/after so the summary reports what Smart Find actually added.
+      const before = $('#settings #dirlist > li').length + $('#settings #libdirlist > li').length;
 
       try {
         for (let dir of await userDir.find()) {

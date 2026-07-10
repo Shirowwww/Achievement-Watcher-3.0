@@ -406,12 +406,28 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     renderDirLists();
   }
 
+  // Scan a freshly added folder and report what it contains, so picking the wrong folder is obvious
+  // immediately instead of silently accepting anything.
+  async function reportFolderScan(dir) {
+    setStatus(text().smartRunning, 'running');
+    try {
+      const found = await userDir.scan(dir);
+      const count = Array.isArray(found) ? found.length : 0;
+      setStatus(count > 0 ? `${text().smartDone} (${count})` : text().invalidFolder, count > 0 ? 'success' : '');
+    } catch (err) {
+      debug.log(err);
+      setStatus('', '');
+    }
+  }
+
   async function pickSaveDir() {
     try {
       const dialog = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), { properties: ['openDirectory', 'showHiddenFiles'] });
       if (!dialog.filePaths || dialog.filePaths.length === 0) return;
-      if (await userDir.check(dialog.filePaths[0])) addSaveDir(dialog.filePaths[0]);
-      else {
+      if (await userDir.check(dialog.filePaths[0])) {
+        addSaveDir(dialog.filePaths[0]);
+        reportFolderScan(dialog.filePaths[0]);
+      } else {
         remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
           type: 'warning',
           title: 'Achievement Watcher',
@@ -427,6 +443,7 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     const button = $('#onboard-smart-find');
     button.css('pointer-events', 'none');
     setStatus(text().smartRunning, 'running');
+    const before = addedSaveDirs.length + addedLibraryDirs.length;
     try {
       for (const dir of await userDir.find()) {
         try {
@@ -440,7 +457,8 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
           addLibraryDir(dir);
         }
       }
-      setStatus(text().smartDone, 'success');
+      const added = Math.max(0, addedSaveDirs.length + addedLibraryDirs.length - before);
+      setStatus(`${text().smartDone} (${added})`, 'success');
     } catch (err) {
       setStatus(`${err}`, 'error');
       debug.log(err);
