@@ -14,6 +14,7 @@ const watch = require('node-watch');
 const moment = require('moment');
 const debug = require('../util/log.js');
 const waitForFileStable = require('../util/waitForFileStable.js');
+const { notificationVolumePercent } = require('../util/notificationVolume.js');
 
 const APPDATA = process.env['APPDATA'] || '';
 const cacheDir = path.join(APPDATA, 'Achievement Watcher/steam_cache/console');
@@ -214,6 +215,7 @@ async function handleChange(target, changedFile, ctx) {
               winrt: ctx.options.notification_transport.winRT,
               balloonFallback: ctx.options.notification_transport.balloon,
               customAudio: ctx.options.notification_toast.customToastAudio,
+              volume: notificationVolumePercent(ctx.options),
               imageIntegration: '0',
               group: ctx.options.notification_toast.groupToast,
               cropIcon: true,

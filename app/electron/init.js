@@ -1683,9 +1683,14 @@ function createNotificationWindow(data = {}) {
       displayName: data.displayName != null ? data.displayName : 'Achievement Unlocked',
       description: data.description != null ? data.description : '',
       rarityPercent: data.rarityPercent,
+      notificationType: data.notificationType || '',
+      // Reference-project presets key on these: `isPlatinum` (Xbox Series Platinum diamond) and
+      // `headerPath` (Game Cover background). Keep them as aliases of our own fields.
+      isPlatinum: String(data.notificationType || '').toLowerCase() === 'platinum',
       iconPath: data.iconPath || data.icon || '',
       gameIconPath: data.gameIconPath || data.gameIcon || '',
       imagePath: data.imagePath || data.image || '',
+      headerPath: data.imagePath || data.image || '',
       progress: data.progress || null,
       progressCurrent: data.progress && data.progress.current,
       progressMax: data.progress && data.progress.max,
@@ -1917,8 +1922,16 @@ async function enqueueNotificationFromArgs(args) {
     (langFr ? 'Succès débloqué' : 'Achievement Unlocked');
 
   const durSec = ov.notificationDuration === 'auto' || ov.notificationDuration == null ? 0 : Number(ov.notificationDuration) || 0;
+  // Per-type preset overrides ('' = main preset): the watchdog only forwards rarityPercent for
+  // rare unlocks (≤10%), and platinum popups carry notificationType 'platinum'.
+  let preset = ov.notificationPreset || 'Default';
+  if (notificationType === 'platinum' && ov.notificationPresetPlatinum) {
+    preset = ov.notificationPresetPlatinum;
+  } else if (ov.notificationPresetRare && Number.isFinite(Number(args.rarityPercent)) && notificationType !== 'progress' && notificationType !== 'playtime') {
+    preset = ov.notificationPresetRare;
+  }
   enqueueNotification({
-    preset: ov.notificationPreset || 'Default',
+    preset,
     position: ov.notificationPosition || 'center-bottom',
     scale: ov.notificationScale || 1,
     volume: Number.isFinite(Number(ov.notificationVolume)) ? Number(ov.notificationVolume) : 100,

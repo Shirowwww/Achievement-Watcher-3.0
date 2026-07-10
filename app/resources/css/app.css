@@ -1818,6 +1818,45 @@ main {
   cursor: pointer;
 }
 
+/* Volume row: a range slider (0–200%) with a live value readout replaces the arrow/select combo. */
+.arrow-list li .right.volume-slider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 4px;
+}
+.arrow-list li .right.volume-slider input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 4px;
+  margin: 0;
+  background: var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.arrow-list li .right.volume-slider input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg-base);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+.arrow-list li .right.volume-slider input[type='range']:hover::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+.arrow-list li .right.volume-slider .volume-value {
+  flex: 0 0 auto;
+  width: 42px;
+  text-align: right;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Rows with a description: a 2-row grid so the help text sits directly UNDER its own label (left
    column), while the control stays vertically centred on the right. This stops a description from
    ever leaning into the next row's label (the old absolute-positioned help did), and reads cleaner

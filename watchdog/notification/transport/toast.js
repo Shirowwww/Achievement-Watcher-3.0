@@ -2,6 +2,7 @@
 
 const toast = require('powertoast');
 const soundPlayer = require('../../util/soundPlayer.js');
+const { mediaPlayerVolume } = require('../../util/notificationVolume.js');
 
 const TOAST_QUEUE_SOUND_DELAY_MS = 5000;
 
@@ -16,6 +17,14 @@ function normalizeProgress(progress) {
     max,
     percent: Math.max(0, Math.min(100, Math.floor((current / max) * 100))),
   };
+}
+
+// Float stat counters (e.g. distance driven) can carry long tails (3.3333333…); cap what the
+// footer prints at 2 decimals, leaving integers untouched.
+function formatProgressValue(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return String(value);
+  return String(Math.round(n * 100) / 100);
 }
 
 module.exports = async (message, options) => {
@@ -70,14 +79,17 @@ module.exports = async (message, options) => {
   if (progress) {
     notification.progress = {
       percent: progress.percent,
-      footer: `${progress.current}/${progress.max}`,
+      footer: `${formatProgressValue(progress.current)}/${formatProgressValue(progress.max)}`,
     };
   }
   await toast(notification);
 
   if (soundFile) {
     const queueDelay = Math.max(0, Number(message.delay) || 0) * TOAST_QUEUE_SOUND_DELAY_MS;
-    soundPlayer.play(soundFile, { delayMs: queueDelay }).catch((e) => {
+    // Honor the user's notification volume (0–200%). The PowerShell MediaPlayer caps at 1.0, so a
+    // >100% boost only applies to overlay popups; here it clamps to full volume.
+    const volume = mediaPlayerVolume(options.toast.volume);
+    soundPlayer.play(soundFile, { delayMs: queueDelay, volume }).catch((e) => {
       const debug = require('../../util/log.js');
       debug.log(`Error playing toast sound:  ${e}`);
     });

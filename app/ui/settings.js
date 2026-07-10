@@ -206,12 +206,26 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const presetsReady = ipcRenderer
         .invoke('list-presets')
         .then((presets) => {
+          const list = presets && presets.length ? presets : ['Default'];
           const sel = $('#option_overlayPreset');
           sel.empty();
-          (presets && presets.length ? presets : ['Default']).forEach((name) => {
+          list.forEach((name) => {
             sel.append($('<option>').attr('value', name).text(name));
           });
           sel.val(cfgOverlay.notificationPreset || 'Default');
+          // Per-type overrides: same preset list plus a "same as main" ('' value) first entry.
+          for (const [id, value] of [
+            ['#option_overlayPresetRare', cfgOverlay.notificationPresetRare || ''],
+            ['#option_overlayPresetPlatinum', cfgOverlay.notificationPresetPlatinum || ''],
+          ]) {
+            const typeSel = $(id);
+            typeSel.empty();
+            typeSel.append($('<option>').attr('value', '').text(typeSel.attr('data-lang-same') || 'Same as main'));
+            list.forEach((name) => {
+              typeSel.append($('<option>').attr('value', name).text(name));
+            });
+            typeSel.val(list.includes(value) ? value : '');
+          }
         })
         .catch(() => {});
       const soundsReady = ipcRenderer
@@ -894,7 +908,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     });
 
     // Auto-save the Notifications tab: persist immediately on any change, no OK required.
-    $("#settings .box section.content[data-view='notification']").on('change', 'select', autosaveNotifications);
+    // The volume slider is a range input, not a <select>, so it is targeted explicitly (the
+    // customiser's own range inputs build presets and must NOT trigger a settings save).
+    $("#settings .box section.content[data-view='notification']").on('change', 'select, #option_overlayVolume', autosaveNotifications);
 
     // Shared by the three Notifications-tab test buttons (achievement/toast, progress, playtime):
     // spawns a fullscreen dummy window so the toast is visible over it, then asks the watchdog
@@ -968,22 +984,43 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       }, 500);
     }
 
+    // Random rarity for the "rare" test: one of the three tiers presets style (gold <3%,
+    // silver <6%, bronze ≤10%), rounded to one decimal like the real watchdog path.
+    function randomRareRarity() {
+      const tiers = [
+        { min: 0.1, max: 2.9 },
+        { min: 3.0, max: 5.9 },
+        { min: 6.0, max: 10.0 },
+      ];
+      const tier = tiers[Math.floor(Math.random() * tiers.length)];
+      return Math.round((tier.min + Math.random() * (tier.max - tier.min)) * 10) / 10;
+    }
     // Build overlay test payload for a given notification kind, using the current overlay settings.
     function overlayTestData(kind) {
-      const preset = $('#option_overlayPreset').val() || 'Default';
+      const mainPreset = $('#option_overlayPreset').val() || 'Default';
+      // Tests honor the per-type preset overrides so they render exactly like the real popups.
+      const preset =
+        kind === 'rare'
+          ? $('#option_overlayPresetRare').val() || mainPreset
+          : kind === 'platinum'
+          ? $('#option_overlayPresetPlatinum').val() || mainPreset
+          : mainPreset;
       const sound = $('#option_overlaySound').val() || '';
+      const rarePct = kind === 'rare' ? randomRareRarity() : null;
       const fr = String((window.app && window.app.config && window.app.config.achievement && window.app.config.achievement.lang) || '')
         .toLowerCase()
         .startsWith('fr');
       const texts = fr
         ? {
             toast: { displayName: 'Succès débloqué', description: 'Test overlay — preset ' + preset },
+            rare: { displayName: 'Succès rare', description: 'Rare · ' + rarePct + ' % des joueurs' },
             progress: { displayName: 'Progression', description: '3 / 10' },
             playtime: { displayName: 'Hollow Knight', description: 'Vous avez joué pendant 42 minutes' },
             platinum: { displayName: 'Trophée Platine', description: '100 % complété' },
           }
         : {
             toast: { displayName: 'Achievement Unlocked', description: 'Overlay test — ' + preset + ' preset' },
+            rare: { displayName: 'Rare Achievement', description: 'Rare · ' + rarePct + '% of players' },
             progress: { displayName: 'Progress', description: '3 / 10' },
             playtime: { displayName: 'Hollow Knight', description: 'You played for 42 minutes' },
             platinum: { displayName: 'Platinum!', description: '100% completed' },
@@ -1020,6 +1057,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     $('#notify_test').click(function () {
       fireNotificationTest('toast', this);
     });
+    $('#notify_rare_test').click(function () {
+      fireNotificationTest('rare', this);
+    });
     $('#notify_progress_test').click(function () {
       fireNotificationTest('progress', this);
     });
@@ -1029,13 +1069,65 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     $('#notify_platinum_test').click(function () {
       fireNotificationTest('platinum', this);
     });
+    // Preview a sound at the configured overlay volume (0–200%). >100% needs a WebAudio gain node
+    // (Audio.volume caps at 1.0) — mirrors how the real notification window plays it (init.js).
+    let previewAudioCtx = null;
+    function previewSoundAtVolume(name) {
+      const file = resolveSoundFile(name);
+      if (!file) return;
+      const raw = parseInt($('#option_overlayVolume').val(), 10);
+      const gain = Math.max(0, Math.min(2, (Number.isFinite(raw) ? raw : 100) / 100));
+      try {
+        const audio = new Audio('file:///' + file.replace(/\\/g, '/'));
+        try {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          if (Ctx && gain !== 1) {
+            if (!previewAudioCtx) previewAudioCtx = new Ctx();
+            const srcNode = previewAudioCtx.createMediaElementSource(audio);
+            const gainNode = previewAudioCtx.createGain();
+            gainNode.gain.value = gain;
+            srcNode.connect(gainNode);
+            gainNode.connect(previewAudioCtx.destination);
+          } else {
+            audio.volume = Math.min(1, gain);
+          }
+        } catch (e) {
+          audio.volume = Math.min(1, gain);
+        }
+        audio.play().catch(() => {});
+      } catch (e) {}
+    }
     // Preview the overlay sound when the dropdown is changed by the user.
     $('#option_overlaySound').on('change', function () {
       const v = $(this).val();
       if (!v) return;
-      try {
-        new Audio('file:///' + resolveSoundFile(v).replace(/\\/g, '/')).play().catch(() => {});
-      } catch (e) {}
+      previewSoundAtVolume(v);
+    });
+    // Volume slider: live % label while dragging; on release (change), preview the selected sound at
+    // the new volume so the user hears what they set (auto-save is the delegated handler above).
+    function updateOverlayVolumeLabel() {
+      const v = parseInt($('#option_overlayVolume').val(), 10);
+      $('#overlayVolume-value').text((Number.isFinite(v) ? v : 100) + '%');
+    }
+    $('#option_overlayVolume').on('input', updateOverlayVolumeLabel);
+    $('#option_overlayVolume').on('change', function () {
+      updateOverlayVolumeLabel();
+      if (!settingsReady) return; // form is being populated — not a user interaction
+      previewSoundAtVolume($('#option_overlaySound').val());
+    });
+    // Mouse wheel nudges the slider one step, then commits via a debounced change so the
+    // preview + auto-save fire once instead of on every tick.
+    let volumeWheelCommit = null;
+    $('#option_overlayVolume').on('wheel', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      const el = this;
+      const step = parseInt(el.step, 10) || 5;
+      const dir = event.originalEvent.deltaY > 0 ? -1 : 1;
+      el.value = Math.max(0, Math.min(200, (parseInt(el.value, 10) || 0) + dir * step));
+      updateOverlayVolumeLabel();
+      clearTimeout(volumeWheelCommit);
+      volumeWheelCommit = setTimeout(() => $(el).trigger('change'), 350);
     });
 
     // Import a custom notification sound: copy it into <userData>/sounds, then refresh the dropdown and
@@ -1200,6 +1292,8 @@ function readNotificationSettings() {
   app.config.notification_transport.mode = $('#option_notifMode').val() || 'toast';
   if (!app.config.overlay) app.config.overlay = {};
   app.config.overlay.notificationPreset = $('#option_overlayPreset').val() || 'Default';
+  app.config.overlay.notificationPresetRare = $('#option_overlayPresetRare').val() || '';
+  app.config.overlay.notificationPresetPlatinum = $('#option_overlayPresetPlatinum').val() || '';
   app.config.overlay.notificationPosition = $('#option_overlayPosition').val() || 'center-bottom';
   app.config.overlay.notificationScale = parseFloat($('#option_overlayScale').val()) || 1;
   app.config.overlay.notificationSound = $('#option_overlaySound').val() || '';

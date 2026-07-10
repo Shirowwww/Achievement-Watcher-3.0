@@ -55,6 +55,7 @@ module.exports = async (message, option = {}) => {
         winrt: option.toast.winrt != null ? option.toast.winrt : true,
         balloonFallback: option.toast.balloonFallback || false,
         customAudio: option.toast.customAudio || '1',
+        volume: option.toast.volume != null ? option.toast.volume : 100,
         imageIntegration: option.toast.imageIntegration || '0',
         group: option.toast.group || false,
         cropIcon: option.toast.cropIcon || false,
@@ -136,17 +137,19 @@ module.exports = async (message, option = {}) => {
         }, 800);
       }
 
-      debug.log(`Prefetching...`);
-      if (message.icon) {
-        message.icon = await fetch(message.icon, message.appid);
-      }
+      if (options.prefetch) {
+        debug.log(`Prefetching...`);
+        if (message.icon) {
+          message.icon = await fetch(message.icon, message.appid);
+        }
 
-      if (message.gameIcon) {
-        message.gameIcon = await fetch(message.gameIcon, message.appid);
-      }
+        if (message.gameIcon) {
+          message.gameIcon = await fetch(message.gameIcon, message.appid);
+        }
 
-      if (options.transport.toast && options.toast.imageIntegration != '0' && message.image) {
-        message.image = await fetch(message.image, message.appid);
+        if (options.transport.toast && options.toast.imageIntegration != '0' && message.image) {
+          message.image = await fetch(message.image, message.appid);
+        }
       }
 
       if (options.transport.toast) {

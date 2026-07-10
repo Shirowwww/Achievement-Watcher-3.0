@@ -265,6 +265,9 @@ function translateUI(lang, locale, template) {
   selector = $('#options-notify-test');
   selector.prev('.title').find('span').text(clear(template.settings.notification.title.test));
   $('#notify_test span').text(clear(template.settings.notification.test.achievement));
+  if (template.settings.notification.test.rare) {
+    $('#notify_rare_test span').text(clear(template.settings.notification.test.rare));
+  }
   $('#notify_progress_test span').text(clear(template.settings.notification.test.progress));
   $('#notify_playtime_test span').text(clear(template.settings.notification.test.playtime));
   $('#notify_platinum_test span').text(clear(template.settings.notification.test.platinum));
@@ -275,6 +278,17 @@ function translateUI(lang, locale, template) {
   $("#option_notifMode option[value='overlay']").text(clear(template.settings.notification.option.mode.value.overlay));
   $("#option_notifMode option[value='both']").text(clear(template.settings.notification.option.mode.value.both));
   $('#lbl-overlayPreset').text(clear(template.settings.notification.option.overlayPreset));
+  if (template.settings.notification.option.overlayPresetRare) {
+    const opt = template.settings.notification.option;
+    $('#lbl-overlayPresetRare').text(clear(opt.overlayPresetRare));
+    $('#lbl-overlayPresetPlatinum').text(clear(opt.overlayPresetPlatinum));
+    $('#lbl-overlayPresetRare').closest('li').find('.help').text(clear(opt.overlayPresetRareDesc));
+    $('#lbl-overlayPresetPlatinum').closest('li').find('.help').text(clear(opt.overlayPresetPlatinumDesc));
+    // "Same as main" is dynamic (the dropdowns are (re)populated async) — expose it as a data attr
+    // and refresh the '' option if it is already there.
+    $('#option_overlayPresetRare, #option_overlayPresetPlatinum').attr('data-lang-same', clear(opt.presetSameAsMain));
+    $("#option_overlayPresetRare option[value=''], #option_overlayPresetPlatinum option[value='']").text(clear(opt.presetSameAsMain));
+  }
   $('#lbl-overlayPosition').text(clear(template.settings.notification.option.overlayPosition));
   $('#lbl-overlayScale').text(clear(template.settings.notification.option.overlayScale));
   $('#lbl-overlaySound').text(clear(template.settings.notification.option.overlaySound));

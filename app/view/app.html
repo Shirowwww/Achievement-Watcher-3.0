@@ -1001,6 +1001,26 @@
                   </li>
 
                   <li class="hasHelper">
+                    <div class="left"><i class="fas fa-gem"></i> <span id="lbl-overlayPresetRare"></span></div>
+                    <div class="right">
+                      <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
+                      <select autocomplete="off" class="dropdown" id="option_overlayPresetRare"></select>
+                      <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
+                    </div>
+                    <div class="help"></div>
+                  </li>
+
+                  <li class="hasHelper">
+                    <div class="left"><i class="fas fa-medal"></i> <span id="lbl-overlayPresetPlatinum"></span></div>
+                    <div class="right">
+                      <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
+                      <select autocomplete="off" class="dropdown" id="option_overlayPresetPlatinum"></select>
+                      <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
+                    </div>
+                    <div class="help"></div>
+                  </li>
+
+                  <li class="hasHelper">
                     <div class="left">
                       <i class="fas fa-arrows-alt"></i> <span id="lbl-overlayPosition"></span>
                       <button type="button" id="btn-overlay-reposition" class="inline-action-btn" title="Reposition popup"><i class="fas fa-crosshairs"></i></button>
@@ -1055,19 +1075,9 @@
 
                   <li class="hasHelper">
                     <div class="left"><i class="fas fa-volume-up"></i> <span id="lbl-overlayVolume"></span></div>
-                    <div class="right">
-                      <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
-                      <select autocomplete="off" class="dropdown" id="option_overlayVolume">
-                        <option value="0">0%</option>
-                        <option value="25">25%</option>
-                        <option value="50">50%</option>
-                        <option value="75">75%</option>
-                        <option value="100" selected>100%</option>
-                        <option value="125">125%</option>
-                        <option value="150">150%</option>
-                        <option value="200">200%</option>
-                      </select>
-                      <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
+                    <div class="right volume-slider">
+                      <input type="range" id="option_overlayVolume" min="0" max="200" step="5" value="100" />
+                      <span id="overlayVolume-value" class="volume-value">100%</span>
                     </div>
                     <div class="help"></div>
                   </li>
@@ -1088,6 +1098,25 @@
                       <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
                     </div>
                     <div class="help"></div>
+                  </li>
+                </ul>
+
+                <div class="title"><span></span></div>
+                <ul id="options-notify-test">
+                  <li>
+                    <div id="notify_test" class="btn"><i class="fas fa-trophy"></i> <span></span></div>
+                  </li>
+                  <li>
+                    <div id="notify_rare_test" class="btn"><i class="fas fa-gem"></i> <span></span></div>
+                  </li>
+                  <li>
+                    <div id="notify_progress_test" class="btn"><i class="fas fa-tachometer-alt"></i> <span></span></div>
+                  </li>
+                  <li>
+                    <div id="notify_playtime_test" class="btn"><i class="fas fa-stopwatch"></i> <span></span></div>
+                  </li>
+                  <li>
+                    <div id="notify_platinum_test" class="btn"><i class="fas fa-medal"></i> <span></span></div>
                   </li>
                 </ul>
 
@@ -1142,22 +1171,6 @@
                       <button type="button" id="btn-souvenir-dir" class="inline-action-btn"><i class="fas fa-folder"></i> <span id="souvenir-dir-display"></span></button>
                     </div>
                     <div class="help" id="souvenir-dir-help"></div>
-                  </li>
-                </ul>
-
-                <div class="title"><span></span></div>
-                <ul id="options-notify-test">
-                  <li>
-                    <div id="notify_test" class="btn"><i class="fas fa-trophy"></i> <span></span></div>
-                  </li>
-                  <li>
-                    <div id="notify_progress_test" class="btn"><i class="fas fa-tachometer-alt"></i> <span></span></div>
-                  </li>
-                  <li>
-                    <div id="notify_playtime_test" class="btn"><i class="fas fa-stopwatch"></i> <span></span></div>
-                  </li>
-                  <li>
-                    <div id="notify_platinum_test" class="btn"><i class="fas fa-medal"></i> <span></span></div>
                   </li>
                 </ul>
               </div>

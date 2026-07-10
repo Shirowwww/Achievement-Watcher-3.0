@@ -159,11 +159,19 @@ function incoming(message) {
         debug.log(`WS[${this.id}] Sending notification`);
         this.send(JSON.stringify(dummy));
       }
-    } else if (req.cmd === 'toast-test' || req.cmd === 'progress-test' || req.cmd === 'playtime-test' || req.cmd === 'platinum-test') {
+    } else if (
+      req.cmd === 'toast-test' ||
+      req.cmd === 'rare-test' ||
+      req.cmd === 'progress-test' ||
+      req.cmd === 'playtime-test' ||
+      req.cmd === 'platinum-test'
+    ) {
       debug.log(`WS[${this.id}] received command '${req.cmd}'`);
 
       const run =
-        req.cmd === 'progress-test'
+        req.cmd === 'rare-test'
+          ? test.rare
+          : req.cmd === 'progress-test'
           ? test.progress
           : req.cmd === 'playtime-test'
           ? test.playtime

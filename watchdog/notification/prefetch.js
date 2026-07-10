@@ -40,6 +40,15 @@ module.exports = async (url, appID) => {
   let validUrl;
   let filePath;
   try {
+    // Console-emulator watchers already provide extracted local icons. Never turn those paths into
+    // failed Steam-CDN probes; keep them untouched for the toast transport.
+    if (typeof url === 'string' && fs.existsSync(url)) return url;
+    if (typeof url === 'string' && url.startsWith('file:///')) {
+      try {
+        const localPath = urlParser.fileURLToPath(url);
+        if (fs.existsSync(localPath)) return localPath;
+      } catch {}
+    }
     const cache = path.join(process.env['APPDATA'], `Achievement Watcher/steam_cache/icon/${appID}`);
     let filename = path.parse(url).base;
     filePath = path.join(cache, filename);

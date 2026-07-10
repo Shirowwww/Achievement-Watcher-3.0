@@ -32,6 +32,7 @@ const rarity = require('./util/rarity.js');
 const steam = require('./steam.js');
 const track = require('./track.js');
 const { mapStatProgressEntries } = require('./util/statProgress.js');
+const { notificationVolumePercent } = require('./util/notificationVolume.js');
 const playtimeMonitor = require('./playtime/monitor.js');
 const notify = require('./notification/toaster.js');
 const shadps4Watch = require('./console/shadps4Watch.js');
@@ -566,6 +567,7 @@ var app = {
                             winrt: self.options.notification_transport.winRT,
                             balloonFallback: self.options.notification_transport.balloon,
                             customAudio: self.options.notification_toast.customToastAudio,
+                            volume: notificationVolumePercent(self.options),
                             imageIntegration: '1',
                             group: self.options.notification_toast.groupToast,
                             cropIcon: true,
@@ -659,6 +661,7 @@ var app = {
                 {
                   source: game.source,
                   appid: game.appid,
+                  notificationType: 'platinum',
                   gameDisplayName: game.name,
                   achievementDisplayName: game.name,
                   achievementDescription: platinumDesc,
@@ -680,6 +683,7 @@ var app = {
                     winrt: self.options.notification_transport.winRT,
                     balloonFallback: self.options.notification_transport.balloon,
                     customAudio: self.options.notification_toast.customToastAudio,
+                    volume: notificationVolumePercent(self.options),
                     imageIntegration: '1',
                     group: self.options.notification_toast.groupToast,
                     cropIcon: true,

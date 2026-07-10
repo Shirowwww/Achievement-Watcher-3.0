@@ -61,6 +61,14 @@ module.exports.load = () => {
     if (options.overlay.notificationPreset === 'Raposo') {
       options.overlay.notificationPreset = 'Shirow';
     }
+    // Optional per-type preset overrides ('' = use notificationPreset): rare unlocks (≤10%) and
+    // the platinum/100% popup can each render with their own preset (e.g. Xbox Series Rare/Platinum).
+    if (typeof options.overlay.notificationPresetRare !== 'string') {
+      options.overlay.notificationPresetRare = '';
+    }
+    if (typeof options.overlay.notificationPresetPlatinum !== 'string') {
+      options.overlay.notificationPresetPlatinum = '';
+    }
     if (typeof options.overlay.notificationPosition !== 'string') {
       options.overlay.notificationPosition = 'center-bottom';
     }
@@ -74,10 +82,11 @@ module.exports.load = () => {
     if (typeof options.overlay.notificationSound !== 'string') {
       options.overlay.notificationSound = '';
     }
-    // Overlay-notification sound volume (percent, 0–200). Toast sound is system-controlled and unaffected.
+    // Notification sound volume (percent, 0–200). Overlay audio can boost above 100%; the
+    // PowerShell player used for custom toast sounds clamps that part to 100%.
     {
       const vol = Number(options.overlay.notificationVolume);
-      options.overlay.notificationVolume = Number.isFinite(vol) && vol >= 0 ? vol : 100;
+      options.overlay.notificationVolume = Number.isFinite(vol) ? Math.max(0, Math.min(200, vol)) : 100;
     }
     // Overlay-notification on-screen duration: 'auto' (preset self-closes) or a number of seconds (force-close cap).
     {
@@ -328,6 +337,8 @@ module.exports.load = () => {
       overlay: {
         hotkey: 'Ctrl+Shift+O',
         notificationPreset: 'Default',
+        notificationPresetRare: '',
+        notificationPresetPlatinum: '',
         notificationPosition: 'center-bottom',
         notificationScale: 1,
         notificationSound: '',
