@@ -12,7 +12,6 @@ for (const sw of ['disable-extensions', 'disable-component-extensions-with-backg
 // spends most of its life as a resident tray daemon — a 256 MB ceiling bounds heap growth and forces
 // the GC to reclaim earlier when idle, without starving the brief scrape/HTML-parse bursts.
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=256');
-const CHROMIUM_REVISION = '1108766';
 const { BrowserWindow, dialog, session, shell, ipcMain, globalShortcut, Tray, Menu, nativeImage, Notification } = require('electron');
 const { autoUpdater } = require('electron-updater');
 autoUpdater.autoDownload = true;
@@ -35,10 +34,8 @@ function getRemoteMain() {
   return remoteMain;
 }
 
-let fetchImpl = null;
 function fetch(...args) {
-  if (!fetchImpl) fetchImpl = require('node-fetch');
-  return fetchImpl(...args);
+  return globalThis.fetch(...args);
 }
 
 function createXmlParser() {
@@ -82,7 +79,7 @@ let achievementsJS = null;
 // here rather than via the async settings loader / renderer.
 let userDisableGpu = false;
 try {
-  const parsed = require('@xan105/ini').parse(fs.readFileSync(path.join(userData, 'cfg/options.ini'), 'utf8'));
+  const parsed = require('../util/ini').parse(fs.readFileSync(path.join(userData, 'cfg/options.ini'), 'utf8'));
   const v = parsed && parsed.general && parsed.general.disableHardwareAccel;
   userDisableGpu = v === true || v === 'true';
 } catch {
@@ -95,7 +92,7 @@ manifest.config.debug = process.env.NODE_ENV === 'development' || process.defaul
 let puppeteerWindow = {};
 let MainWin = null;
 let overlayWindow = null;
-let debug = new (require('@xan105/log'))({
+let debug = new (require('../util/logger'))({
   console: manifest.config.debug || false,
   file: path.join(userData, `logs/renderer.log`),
 });
@@ -809,19 +806,9 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function ensureChromium() {
-  const { BrowserFetcher } = require('puppeteer');
-  const chromium = path.join(process.env['APPDATA'], 'Achievement Watcher', 'Chromium');
-  const fetcher = new BrowserFetcher({ path: chromium });
-  const revisionInfo = fetcher.revisionInfo(CHROMIUM_REVISION);
-  if (revisionInfo.local) return revisionInfo;
-  const info = await fetcher.download(CHROMIUM_REVISION);
-  return info;
-}
-
 // Microsoft Edge ships with Windows 10/11 and is Chromium-based, so puppeteer can drive it exactly
 // like Chrome (the stealth plugin works on the CDP layer, independent of which Chromium binary runs).
-// Using it as a fallback lets machines without Google Chrome skip the ~170 MB ensureChromium() download.
+// Using it as a fallback means AW never needs to download and retain a second, quickly outdated browser.
 function findInstalledEdge() {
   if (process.platform !== 'win32') return null;
   const roots = [process.env['ProgramFiles(x86)'], process.env['ProgramFiles'], 'C:\\Program Files (x86)', 'C:\\Program Files'];
@@ -840,29 +827,31 @@ async function startPuppeteer(headless, strip) {
   const ChromeLauncher = require('chrome-launcher');
   // The old `'…macOS path…' || ChromeLauncher…` form always short-circuited to the (truthy) macOS
   // string, so on Windows Puppeteer never reused an installed Chrome and always downloaded Chromium.
-  // Pick per-platform; getInstallations()[0] may be undefined (no Chrome) -> falls back to ensureChromium.
+  // Pick per-platform; getInstallations()[0] may be undefined when Chrome is not installed.
   const installedChromePath =
     process.platform === 'darwin'
       ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
       : ChromeLauncher.Launcher.getInstallations()[0];
-  // Browser preference: installed Chrome → installed Edge (Win10/11) → last-resort ~170 MB Chromium
-  // download. The Edge tier is purely additive; the download path still exists as the final fallback.
-  const localBrowserPath = (installedChromePath && fs.existsSync(installedChromePath) && installedChromePath) || findInstalledEdge();
+  // Browser preference: installed Chrome, then Edge (included with supported Windows versions).
+  const browserPaths = [installedChromePath, findInstalledEdge()].filter(
+    (browserPath, index, paths) => browserPath && fs.existsSync(browserPath) && paths.indexOf(browserPath) === index
+  );
   const launchArgs = ['--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-extensions'];
   if (!puppeteerWindow.browser) {
-    try {
-      const exePath = localBrowserPath || (await ensureChromium()).executablePath;
-      puppeteerWindow.browser = await puppeteer.launch({ headless: headless ? 'new' : false, executablePath: exePath, args: launchArgs });
-    } catch (err) {
-      // A local Chrome/Edge that fails to drive (rare CDP mismatch) must never regress the no-Chrome
-      // case: fall back to the standalone Chromium download and retry once.
-      if (!localBrowserPath) throw err;
-      debug.log(`puppeteer: local browser launch failed (${err.message}); falling back to downloaded Chromium`);
-      const exePath = (await ensureChromium()).executablePath;
-      puppeteerWindow.browser = await puppeteer.launch({ headless: headless ? 'new' : false, executablePath: exePath, args: launchArgs });
+    if (browserPaths.length === 0) throw new Error('Steam scraping requires Google Chrome or Microsoft Edge.');
+    let lastError;
+    for (const executablePath of browserPaths) {
+      try {
+        puppeteerWindow.browser = await puppeteer.launch({ headless: Boolean(headless), executablePath, args: launchArgs });
+        break;
+      } catch (err) {
+        lastError = err;
+        debug.log(`puppeteer: browser launch failed for ${executablePath} (${err.message})`);
+      }
     }
+    if (!puppeteerWindow.browser) throw lastError;
   }
-  if (!puppeteerWindow.context) puppeteerWindow.context = await puppeteerWindow.browser.createIncognitoBrowserContext();
+  if (!puppeteerWindow.context) puppeteerWindow.context = await puppeteerWindow.browser.createBrowserContext();
   if (!puppeteerWindow.pagesh) {
     puppeteerWindow.pagesh = await puppeteerWindow.context.newPage();
     if (strip) {

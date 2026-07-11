@@ -14,7 +14,7 @@ const path = require('path');
 const util = require('util');
 const xml2js = require('xml2js');
 const glob = require('fast-glob');
-const ffs = require('@xan105/fs');
+const ffs = require('../util/fsAsync');
 
 const binary = ['shadPS4.exe', 'shadps4.exe'];
 

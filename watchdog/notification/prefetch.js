@@ -95,7 +95,6 @@ module.exports = async (url, appID) => {
   } catch (err) {
     if (err.code === 'ESIZEMISMATCH') {
       try {
-        const fetch = require('node-fetch');
         const res = await fetch(validUrl);
         if (!res.ok) return validUrl;
         const buffer = Buffer.from(await res.arrayBuffer());

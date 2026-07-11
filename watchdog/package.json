@@ -5,7 +5,7 @@
   "version": "3.1.0",
   "main": "watchdog.js",
   "engines": {
-    "node": ">=20.18.0"
+    "node": "^22.22.2 || >=24.15.0"
   },
   "scripts": {
     "start": "node watchdog.js",
@@ -23,32 +23,26 @@
     "@nodert-win10-rs4/windows.ui.notifications": "^0.4.4"
   },
   "dependencies": {
-    "@xan105/fs": "^1.2.0",
-    "@xan105/ini": "^1.0.1",
     "@xan105/is": "^2.4.0",
-    "@xan105/log": "^1.0.2",
-    "crc": "^3.8.0",
-    "emittery": "^0.7.2",
+    "crc": "^4.3.2",
     "fast-glob": "^3.2.5",
-    "find-up": "^4.1.0",
-    "get-startapps": "^1.0.4",
     "humanize-duration": "^3.25.1",
+    "ini": "^7.0.0",
     "lodash.omit": "^4.5.0",
     "moment": "^2.29.1",
-    "node-fetch": "^3.3.2",
-    "node-html-parser": "^7.0.1",
-    "node-watch": "^0.6.4",
-    "os-locale": "^3.1.0",
-    "powerballoon": "^1.0.5",
-    "powertoast": "^1.2.3",
+    "node-html-parser": "^9.0.0",
+    "node-watch": "^0.7.4",
+    "os-locale": "^8.0.0",
+    "powerballoon": "^2.0.2",
+    "powertoast": "^3.0.0",
     "regodit": "^2.4.1",
     "request-zero": "^0.3.2",
     "screenshot-desktop": "^1.15.4",
     "single-instance": "0.0.1",
     "sound-play": "^1.1.0",
-    "win-tasklist": "^1.1.0",
+    "win-tasklist": "^2.2.0",
     "wql-process-monitor": "^3.0.2",
-    "ws": "^7.5.11",
+    "ws": "^8.21.0",
     "xinput-ffi": "^4.0.2"
   }
 }

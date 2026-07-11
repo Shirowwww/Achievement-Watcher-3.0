@@ -4,14 +4,14 @@ const os = require('os');
 const path = require('path');
 const fs = require('fs');
 const request = require('request-zero');
-const EventEmitter = require('emittery');
-const tasklist = require('win-tasklist');
+const { EventEmitter } = require('events');
+const tasklist = require('../util/tasklist');
 const Timer = require('./timer.js');
 const TimeTrack = require('./track.js');
 const { findByReadingContentOfKnownConfigfilesIn } = require('./steam_appid_find.js');
 const { loadSteamData } = require('../steam.js');
 
-const debug = new (require('@xan105/log'))({
+const debug = new (require('../util/logger'))({
   console: true,
   file: path.join(process.env['APPDATA'], 'Achievement Watcher/logs/playtime.log'),
 });

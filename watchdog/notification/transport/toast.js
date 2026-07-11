@@ -1,6 +1,6 @@
 'use strict';
 
-const toast = require('powertoast');
+const toast = require('../../util/powertoast');
 const soundPlayer = require('../../util/soundPlayer.js');
 const { mediaPlayerVolume } = require('../../util/notificationVolume.js');
 

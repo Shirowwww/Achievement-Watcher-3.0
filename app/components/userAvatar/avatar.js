@@ -3,7 +3,8 @@
 const fs = require('fs');
 const path = require('path');
 const { readRegistryString } = require('../../util/reg');
-const accountms = require('accountpicture-ms-extractor');
+const accountPictureModule = require('accountpicture-ms-extractor');
+const accountms = accountPictureModule.default || accountPictureModule;
 
 async function imageFileToBase64(filePath) {
   const ext = path.parse(filePath).ext.replace('.', '');
@@ -16,15 +17,14 @@ async function getWindowsProfileAvatar() {
   const sourceID = readRegistryString('HKCU', 'Software/Microsoft/Windows/CurrentVersion/AccountPicture', 'SourceId');
   if (!sourceID) throw 'No source ID found';
 
-  const file = path.join(process.env['APPDATA'], 'Microsoft/Windows/AccountPictures', `${sourceID}.accountpicture-ms`);
-  const windowsProfileAvatar = await accountms(file);
+  const candidates = ['AccountPictures', 'Account Pictures'].map((folder) =>
+    path.join(process.env['APPDATA'], 'Microsoft/Windows', folder, `${sourceID}.accountpicture-ms`)
+  );
+  const file = candidates.find((candidate) => fs.existsSync(candidate));
+  if (!file) throw new Error('Windows account picture file not found');
 
-  const avatar = {
-    highres: `data:image/${windowsProfileAvatar.type};charset=utf-8;base64,${windowsProfileAvatar.highres.toString('base64')}`,
-    lowres: `data:image/${windowsProfileAvatar.type};charset=utf-8;base64,${windowsProfileAvatar.lowres.toString('base64')}`,
-  };
-
-  return avatar.highres;
+  const { highres } = await accountms(file);
+  return highres.base64();
 }
 
 async function getAvatar() {

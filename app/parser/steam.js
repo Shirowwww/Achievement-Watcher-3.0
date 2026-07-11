@@ -5,7 +5,7 @@
 const path = require('path');
 const glob = require('fast-glob');
 const normalize = require('normalize-path');
-const ini = require('@xan105/ini');
+const ini = require('../util/ini');
 const omit = require('lodash.omit');
 const moment = require('moment');
 const request = require('request-zero');
@@ -36,7 +36,7 @@ module.exports.setUserDataPath = (p) => {
 
 module.exports.initDebug = ({ isDev, userDataPath }) => {
   this.setUserDataPath(userDataPath);
-  debug = new (require('@xan105/log'))({
+  debug = new (require('../util/logger'))({
     console: isDev || false,
     file: path.join(userDataPath, 'logs/parser.log'),
   });
@@ -897,7 +897,8 @@ function stripIniValue(value) {
 }
 
 function localizedTenokeValue(local, key, lang) {
-  const item = local && local[key];
+  let item = local && local[key];
+  if (!item && local) item = key.split('.').reduce((value, part) => value && value[part], local);
   if (!item || typeof item !== 'object') return '';
   const language = String(lang || 'english').toLowerCase();
   return stripIniValue(item[language] || item.english || Object.values(item).find((v) => v != null) || '');
@@ -939,13 +940,16 @@ function getTenokeSchemaFromFile(file, appid, lang = 'english') {
   if (appid != null && tenokeAppid && String(tenokeAppid) !== String(appid)) return [];
 
   const prefix = 'ACHIEVEMENTS.';
-  const names = Object.keys(local)
-    .filter((key) => key.startsWith(prefix) && !key.slice(prefix.length).includes('.'))
-    .map((key) => key.slice(prefix.length));
+  const nestedAchievements = local.ACHIEVEMENTS && typeof local.ACHIEVEMENTS === 'object' ? local.ACHIEVEMENTS : null;
+  const names = nestedAchievements
+    ? Object.keys(nestedAchievements).filter((name) => nestedAchievements[name] && typeof nestedAchievements[name] === 'object')
+    : Object.keys(local)
+        .filter((key) => key.startsWith(prefix) && !key.slice(prefix.length).includes('.'))
+        .map((key) => key.slice(prefix.length));
 
   return names.map((name) => {
     const base = `${prefix}${name}`;
-    const entry = local[base] || {};
+    const entry = (nestedAchievements && nestedAchievements[name]) || local[base] || {};
     const icon = stripIniValue(entry.icon);
     const icongray = stripIniValue(entry.icon_gray || entry.icongray);
     const hidden = stripIniValue(entry.hidden) === '1' ? 1 : 0;
@@ -1140,7 +1144,6 @@ const fetchIcon = (module.exports.fetchIcon = async (url, appID) => {
   } catch (err) {
     if (err.code === 'ESIZEMISMATCH') {
       try {
-        const fetch = require('node-fetch');
         const res = await fetch(validUrl);
         if (!res.ok) return validUrl;
         const buffer = Buffer.from(await res.arrayBuffer());

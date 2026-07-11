@@ -4,10 +4,10 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
-const EventEmitter = require('emittery');
+const { EventEmitter } = require('events');
 const ws = require('ws');
 const moment = require('moment');
-const debug = new (require('@xan105/log'))({
+const debug = new (require('./util/logger'))({
   console: true,
   file: path.join(process.env['APPDATA'], 'Achievement Watcher/logs/websocket.log'),
 });

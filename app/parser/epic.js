@@ -10,7 +10,7 @@ let cacheRoot;
 let debug;
 module.exports.initDebug = ({ isDev, userDataPath }) => {
   this.setUserDataPath(userDataPath);
-  debug = new (require('@xan105/log'))({
+  debug = new (require('../util/logger'))({
     console: isDev || false,
     file: path.join(userDataPath, 'logs/parser.log'),
   });

@@ -15,7 +15,7 @@ module.exports.initDebug = ({ isDev, userDataPath }) => {
   // moment it ran. It never actually ran (achievements.initDebug forgot to call us), which left
   // `debug` undefined and made every `debug.log(...)` throw "Cannot read property 'log' of
   // undefined", skipping every UPLAY* game. Use the passed-in flag, like the other parsers.
-  debug = new (require('@xan105/log'))({
+  debug = new (require('../util/logger'))({
     console: isDev || false,
     file: path.join(userDataPath, 'logs/uplay.log'),
   });

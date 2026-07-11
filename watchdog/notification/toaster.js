@@ -3,7 +3,7 @@
 const path = require('path');
 const fs = require('fs');
 const toast = require('./transport/toast.js');
-const balloon = require('powerballoon');
+const balloon = require('../util/powerballoon');
 const fetch = require('./prefetch.js');
 const { broadcast } = require('../websocket.js');
 

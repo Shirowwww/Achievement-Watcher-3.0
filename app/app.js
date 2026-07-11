@@ -48,7 +48,7 @@ const coverStore = require(path.join(appPath, 'util/coverStore.js'));
 // Classic <script>s share a single global lexical scope, so re-declaring `const escapeHtml` here
 // would throw "Identifier 'escapeHtml' has already been declared" and abort app.js entirely — it is
 // consumed from that shared scope, exactly like `path` / `appPath` / `remote`.
-let debug = new (require('@xan105/log'))({
+let debug = new (require(path.join(appPath, 'util/logger.js')))({
   console: isDev,
   file: path.join(userdatapath, `logs/${ipcRenderer.sendSync('get-app-name-sync')}.log`),
 });

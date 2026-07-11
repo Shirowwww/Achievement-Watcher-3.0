@@ -2,8 +2,8 @@
 
 const os = require('os');
 const path = require('path');
-const toast = require('powertoast');
-const balloon = require('powerballoon');
+const toast = require('./util/powertoast');
+const balloon = require('./util/powerballoon');
 const startApps = require('./util/startApps.js');
 const settings = require('./settings.js');
 const soundPlayer = require('./util/soundPlayer.js');

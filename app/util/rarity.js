@@ -11,11 +11,10 @@
 //   - a per-appid sidecar cache (steam_cache/rarity/<appid>.json) with a TTL so repeat views and
 //     offline launches render instantly and the network is only hit when the cache is stale.
 //
-// Uses node-fetch (already an app dependency) rather than axios to avoid a new dependency.
+// Uses the Fetch API provided by the supported Electron/Node runtime.
 
 const fs = require('fs');
 const path = require('path');
-const fetch = require('node-fetch');
 
 const CACHE_DIR = path.join(process.env['APPDATA'] || '', 'Achievement Watcher', 'steam_cache', 'rarity');
 const DEFAULT_TTL_MS = 6 * 60 * 60 * 1000; // 6h — global unlock % drifts slowly, no need to refetch per view
@@ -43,9 +42,7 @@ function normalizeRarityPercent(value) {
 }
 
 async function getJson(url, { timeoutMs = DEFAULT_TIMEOUT_MS, headers } = {}) {
-  // node-fetch v2 honors a native `timeout` (ms), so no AbortController is needed — keeps this working
-  // regardless of the host Node version exposing a global AbortController.
-  const res = await fetch(url, { timeout: timeoutMs, headers });
+  const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs), headers });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }

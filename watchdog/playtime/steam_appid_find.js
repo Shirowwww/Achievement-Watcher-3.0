@@ -1,9 +1,9 @@
 'use strict';
 
 const path = require('path');
-const fs = require('@xan105/fs');
+const fs = require('../util/fsAsync');
 const glob = require('fast-glob');
-const ini = require('@xan105/ini');
+const ini = require('../util/ini');
 
 async function findByReadingContentOfKnownConfigfilesIn(dirPath) {
   const files = [

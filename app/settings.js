@@ -2,7 +2,7 @@
 
 const appPath = __dirname;
 const path = require('path');
-const ini = require('@xan105/ini');
+const ini = require('./util/ini');
 const fs = require('fs');
 const os = require('os');
 const aes = require(path.join(appPath, 'util/aes.js'));
@@ -76,7 +76,7 @@ module.exports.load = () => {
     if (typeof options.overlay.notificationPosition !== 'string') {
       options.overlay.notificationPosition = 'center-bottom';
     }
-    // INI values come back as strings (@xan105/ini only type-coerces booleans), so numbers must be
+    // INI values come back as strings (the compatibility parser only type-coerces booleans), so numbers must be
     // parsed with Number() before validating — a typeof 'number' check would otherwise reset a valid
     // persisted value to its default on every reload.
     {

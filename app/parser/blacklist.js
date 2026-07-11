@@ -15,7 +15,7 @@ const builtinExclude = [
 ];
 module.exports.initDebug = ({ isDev, userDataPath }) => {
   exclusionFile = path.join(userDataPath, 'cfg/exclusion.db');
-  debug = new (require('@xan105/log'))({
+  debug = new (require('../util/logger'))({
     console: isDev || false,
     file: path.join(userDataPath, 'logs/blacklist.log'),
   });

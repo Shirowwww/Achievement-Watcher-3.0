@@ -16,7 +16,7 @@ const os = require('os');
 const { spawn, execFile } = require('child_process');
 const path = require('path');
 const watch = require('node-watch');
-const tasklist = require('win-tasklist');
+const tasklist = require('./util/tasklist');
 const moment = require('moment');
 const websocket = require('./websocket.js');
 const processPriority = require('./util/priority.js');
@@ -39,7 +39,7 @@ const shadps4Watch = require('./console/shadps4Watch.js');
 const xeniaWatch = require('./console/xeniaWatch.js');
 const eaWatch = require('./console/eaWatch.js');
 const { crc32 } = require('crc');
-const { isWinRTAvailable } = require('powertoast');
+const { isWinRTAvailable } = require('./util/powertoast');
 const { isFullscreenAppRunning } = require('./queryUserNotificationState.js');
 const GlobalHotkey = require('./util/globalHotkey.js');
 const humanizeDuration = require('humanize-duration');
@@ -229,7 +229,7 @@ var app = {
 
       RegisterOverlayHotkey(self.options.overlay.hotkey);
 
-      if (isWinRTAvailable() === true && self.options.notification_transport.winRT === true) {
+      if ((await isWinRTAvailable()) === true && self.options.notification_transport.winRT === true) {
         debug.log('[Toast] will use WinRT');
       } else {
         debug.warn('[Toast] will use PowerShell (WinRT unavailable or disabled)');

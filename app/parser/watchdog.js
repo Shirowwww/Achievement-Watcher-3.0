@@ -2,7 +2,7 @@
 
 const path = require('path');
 const glob = require('fast-glob');
-const ffs = require('@xan105/fs');
+const ffs = require('../util/fsAsync');
 
 let cache;
 

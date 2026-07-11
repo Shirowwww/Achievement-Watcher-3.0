@@ -18,7 +18,7 @@ let debug = { log() {}, warn() {}, error() {} };
 
 module.exports.initDebug = ({ isDev, userDataPath }) => {
   module.exports.setUserDataPath(userDataPath);
-  debug = new (require('@xan105/log'))({
+  debug = new (require('../util/logger'))({
     console: isDev || false,
     file: path.join(userDataPath, 'logs/parser.log'),
   });

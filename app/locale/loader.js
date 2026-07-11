@@ -3,7 +3,7 @@
 const remote = require('@electron/remote');
 
 const merge = require('deepmerge');
-const ffs = require('@xan105/fs');
+const ffs = require('../util/fsAsync');
 
 const langDir = path.join(appPath, 'locale/lang');
 const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));

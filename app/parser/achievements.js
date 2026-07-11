@@ -44,7 +44,7 @@ module.exports.initDebug = ({ isDev, userDataPath }) => {
   steam.initDebug({ isDev, userDataPath });
   uplay.initDebug({ isDev, userDataPath }); // was missing — left uplay's `debug` undefined (every UPLAY* game threw and was skipped)
   blacklist.initDebug({ isDev, userDataPath });
-  debug = new (require('@xan105/log'))({
+  debug = new (require('../util/logger'))({
     console: isDev || false,
     file: path.join(userDataPath, 'logs/parser.log'),
   });

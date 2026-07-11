@@ -1,10 +1,10 @@
 'use strict';
 
 const path = require('path');
-const ini = require('@xan105/ini');
-const parentFind = require('find-up');
+const ini = require('./util/ini');
+const parentFind = require('./util/findUp');
 const omit = require('lodash.omit');
-const fs = require('@xan105/fs');
+const fs = require('./util/fsAsync');
 const sse = require('./sse.js');
 
 // regodit is ESM-only (koffi) since v2; load it lazily via dynamic import (cached by Node's module
