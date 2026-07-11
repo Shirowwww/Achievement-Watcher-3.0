@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- **Node.js ≥20.18** (system Node 22+ works) — required by the watchdog's koffi-based native deps, and the version family the bundled Electron 42 (Node 24) provides. Electron is downloaded automatically by `npm install`.
+- **Node.js 22.22.2+ or 24.15+** — required by the current build toolchain. Electron 43 bundles Node 24.18 for the installed application and is downloaded automatically by `npm install`.
 - No VS / Python / node-gyp needed: every native dep ships prebuilt N-API binaries — `registry-js`/`sharp` (app) and `koffi` (watchdog `wql-process-monitor`/`regodit`/`xinput-ffi`).
 
 ## Run in dev (no packaging)

@@ -8,7 +8,7 @@ Bring achievements from your PC games and supported emulators into **one modern 
 
 ![version](https://img.shields.io/badge/version-3.1.0-blue)
 ![platform](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows)
-![electron](https://img.shields.io/badge/Electron-42-47848F?logo=electron&logoColor=white)
+![electron](https://img.shields.io/badge/Electron-43-47848F?logo=electron&logoColor=white)
 ![node](https://img.shields.io/badge/Node.js-24-339933?logo=node.js&logoColor=white)
 ![license](https://img.shields.io/badge/license-LGPL--3.0-green)
 
@@ -38,9 +38,9 @@ Bring achievements from your PC games and supported emulators into **one modern 
 
 ## ⚖️ Quick comparison
 
-| Feature | ⭐ **Achievement Watcher 3.1.0** | [Achievements](https://github.com/PSerban93/Achievements) | [Achievement-Watcher 2.x](https://github.com/darktakayanagi/Achievement-Watcher) |
+| Feature | ⭐ **This fork** | [Achievements](https://github.com/PSerban93/Achievements) | [Achievement-Watcher 2.x](https://github.com/darktakayanagi/Achievement-Watcher) |
 |---|:---:|:---:|:---:|
-| Modern runtime | ✅ Electron 42 | ✅ Electron 43 | ⚠️ Electron 12 |
+| Modern runtime | ✅ Electron 43 | ✅ Electron 43 | ❌ Electron 12 |
 | Unified automatic library | ✅ | ✅ | ⚠️ More manual |
 | Native toast + in-game overlay | ✅ Both | ⚠️ Overlay | ⚠️ Toast |
 | Live Xenia / ShadPS4 unlocks | ✅ | ✅ | ❌ |
@@ -65,9 +65,9 @@ Bring achievements from your PC games and supported emulators into **one modern 
 
 Version 3.0 is a large stability, security, compatibility and feature pass on top of the base fork.
 
-- 🔒 **Modern, hardened platform** — Electron 12 → 42 (Chromium 148, Node 24), every major dependency updated, XSS hardening, a tightened Content-Security-Policy, and **Windows 11 24H2+** compatibility (WMIC removed everywhere).
+- 🔒 **Modern, hardened platform** — Electron 12 → 43 (Chromium 150, Node 24.18), refreshed dependencies, XSS hardening, a tightened Content-Security-Policy, and **Windows 11 24H2+** compatibility (WMIC removed everywhere).
 - 🧰 **System-tray app** — runs quietly in the tray; closing the window keeps tracking, playtime and notifications alive in the background. One lighter background process, one runtime.
-- ⚡ **Faster & lighter** — bounded-concurrency loading, an optional browser-free data path with a Steam Web API key, a roughly halved emulator scan, a size-capped icon cache, and a ~80 MB smaller install.
+- ⚡ **Faster & lighter** — bounded-concurrency loading, an optional browser-free data path with a Steam Web API key, cached repeat scans, a size-capped icon cache, and no separate outdated Chromium download for Steam scraping.
 - 🔔 **Reworked notifications** — Windows **toasts**, an in-game **overlay** (presets, sounds, custom preset builder), or **both**; "Rare · X%" labels, platinum toasts, per-game progress mute, and a duplicate guard.
 - 🧩 **Goldberg / GBE tooling** — diagnose & repair `steam_settings`, install the maintained GBE Fork runtime, strip Steam DRM, and auto-fix new emulated games in the background ([details](#-goldberg--gbe-emulator-handling)).
 - 🕵️ **Smarter detection** — an "installed games only" filter, rewritten per-game executable detection, and automatic new-game detection that registers fresh installs for playtime tracking.
@@ -177,7 +177,7 @@ New emulated games can also be **fixed automatically in the background** (toggle
 
 ## 🔧 Build from source
 
-Requirements: Windows and **Node.js ≥ 20.18** (Node 22+ recommended). Electron is downloaded automatically; native dependencies ship prebuilt — no Visual Studio / Python / node-gyp needed.
+Requirements: Windows and **Node.js 22.22.2+ or 24.15+**. Electron is downloaded automatically; native dependencies ship prebuilt — no Visual Studio / Python / node-gyp needed.
 
 ```powershell
 cd watchdog
