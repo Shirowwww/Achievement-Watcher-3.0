@@ -21,6 +21,7 @@ const watchdog = require(path.join(appPath, 'watchdog.js'));
 const goldberg = require(path.join(appPath, 'goldberg.js'));
 const gbeInstaller = require(path.join(appPath, 'gbeInstaller.js'));
 const pe = require(path.join(appPath, '..', 'util', 'pe.js'));
+const { computeFolderContentVersion } = require(path.join(appPath, '..', 'util', 'contentVersion.js'));
 const steamless = require(path.join(appPath, 'steamless.js'));
 const apiCheckBypass = require(path.join(appPath, 'apiCheckBypass.js'));
 const crackFix = require(path.join(appPath, 'crackFix.js'));
@@ -250,6 +251,13 @@ async function discoverWithCache(option, steamAccFilter) {
 // stops repeated scans from relaunching the same setup while it is still in flight; once it finishes,
 // the written schema/DLL is on disk and the next scan reflects the fixed state.
 let _emuFixInFlight = new Set();
+
+// Last background-setup attempt per fixKey: { version: steam_settings content hash, at: epoch ms }.
+// A setup that FAILS leaves the folder unchanged, so without this the ~70s download/generate run
+// relaunched on every scan for as long as the schema stayed missing. Retry only when the folder
+// content actually changed (someone wrote a fix) or after a cool-down for transient failures.
+let _emuSetupAttempts = new Map();
+const EMU_SETUP_RETRY_MS = 6 * 60 * 60 * 1000;
 
 // detectEmulator() does a recursive disk walk (findDll + findSteamSettings); the same gameDir is
 // inspected by multiple stages of one scan (e.g. the type-'file' emulator detect and the playtime
@@ -1446,9 +1454,22 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       // regardless of that toggle for a needsSchema game, exactly as before.
       const canAutoApply = !!(option.emulator && option.emulator.autoApplyNewGames !== false && resolvedGameDir && _userDataPath);
       const fixKey = `${appid.appid}:${resolvedGameDir || appid.data.steamSettings}`;
+      // Fingerprint the steam_settings content BEFORE the attempt: a successful setup writes into
+      // the folder (schema/configs), so an unchanged version on a later scan means the last attempt
+      // achieved nothing — don't relaunch it until the cool-down passes or someone changes the folder.
+      let settingsVersion = null;
+      try {
+        settingsVersion = computeFolderContentVersion(appid.data.steamSettings, { prefix: 'emusetup' });
+      } catch (err) {
+        debug.log(`[${appid.appid}] steam_settings content-version failed => ${err}`);
+      }
+      const lastAttempt = settingsVersion ? _emuSetupAttempts.get(fixKey) : null;
       if (_emuFixInFlight.has(fixKey)) {
         debug.log(`[${appid.appid}] emulator setup already running in background — will appear fixed on a later scan`);
+      } else if (lastAttempt && lastAttempt.version === settingsVersion && Date.now() - lastAttempt.at < EMU_SETUP_RETRY_MS) {
+        debug.log(`[${appid.appid}] emulator setup skipped — steam_settings unchanged since the last attempt (cool-down)`);
       } else {
+        if (settingsVersion) _emuSetupAttempts.set(fixKey, { version: settingsVersion, at: Date.now() });
         _emuFixInFlight.add(fixKey);
         const bgAppid = appid.appid;
         const bgGameDir = resolvedGameDir;
