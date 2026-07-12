@@ -1220,6 +1220,9 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
         lang: option.achievement.lang,
         key: option.steam.apiKey,
         showHidden: !!(option.achievement && option.achievement.showHidden),
+        // Known emulator config dir (Goldberg discover) — lets the schema fetch resolve cover art
+        // from the local app_product_info.json dump before hitting the network.
+        steamSettings: (appid.data && appid.data.steamSettings) || null,
       });
     }
     if (!game) return;
