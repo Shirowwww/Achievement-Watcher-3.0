@@ -46,7 +46,8 @@ Bring achievements from your PC games and supported emulators into **one modern 
 | Official/local platform integrations | ✅ | ✅ Extensive | ⚠️ Fewer sources |
 | Notification transports | ✅ Toast + overlay | ✅ Animated overlay | ✅ Toast + Chromium |
 | Live Xenia / ShadPS4 unlocks | ✅ | ✅ | ⚠️ Planned |
-| Goldberg / GBE repair and rollback | ✅ Full | ⚠️ Config generation | ⚠️ Emulator support |
+| Goldberg / Steam-emulator tracking | ✅ | ✅ | ✅ |
+| GBE runtime repair + backup/rollback | ✅ Full | ⚠️ Auto-config/schema | ❌ |
 | Game and achievement search | ✅ Both | ⚠️ Game search | ✅ Both |
 | Notification presets | ✅ 28 + builder | ✅ Multiple | ✅ Multiple |
 | Rare and platinum-specific presets | ✅ | ✅ | ⚠️ Not documented |
