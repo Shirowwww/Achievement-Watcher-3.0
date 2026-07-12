@@ -12,3 +12,5 @@ Achievement Watcher is licensed under the [LGPL-3.0 License](./LICENSE).
 
 - **Overlay notifications** – ported from [@PSerban93](https://github.com/PSerban93)
 - **EA Desktop local achievement parser** – ported from [@PSerban93/Achievements](https://github.com/PSerban93/Achievements) (MIT, Copyright 2025 JokerVerse)
+- **Achievement rarity aggregation** – ported from [@PSerban93/Achievements](https://github.com/PSerban93/Achievements) (MIT, Copyright 2025 JokerVerse)
+- **Exophase multi-language achievement scraper** – ported from [@PSerban93/Achievements](https://github.com/PSerban93/Achievements) (MIT, Copyright 2025 JokerVerse)
