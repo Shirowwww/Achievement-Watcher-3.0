@@ -246,7 +246,7 @@ module.exports.getGameData = async (cfg) => {
       needSaving = true;
     }
 
-    needSaving = needSaving || (await GetMissingData(result, cfg.showHidden, cfg.lang));
+    needSaving = needSaving || (await GetMissingData(result, cfg.showHidden, cfg.lang, cfg.steamSettings));
     if (needSaving) {
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
       fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
@@ -1026,18 +1026,39 @@ async function findWorkingLink(appid, basename) {
 // `showHidden` is accepted for call-site compatibility but no longer gates hidden-description
 // backfill: the detail view reveals hidden descriptions on click regardless of the setting, so the
 // real text must always be fetched.
-async function GetMissingData(data, showHidden, lang) {
+async function GetMissingData(data, showHidden, lang, steamSettings) {
   let updated = false;
   try {
     const { ipcRenderer } = require('electron');
     let updatedImgs, updatedDesc;
     if (Object.values(data.img).some((im) => !im)) {
       updated = true;
-      updatedImgs = await ipcRenderer.invoke('get-steam-data', { appid: data.appid, type: 'common' });
-      data.img.header = data.img.header || updatedImgs.header || 'header';
-      data.img.background = data.img.background || updatedImgs.background || 'page_bg_generated_v6b';
-      data.img.portrait = data.img.portrait || updatedImgs.portrait || 'portrait';
-      data.img.icon = data.img.icon || updatedImgs.icon;
+      // Local-first: a GBE/Goldberg install often ships the store's own library-asset metadata in
+      // steam_settings/steam_misc/app_info/app_product_info.json. Resolve the real cover/header
+      // from that dump before the network lookup — it is authoritative for the install and still
+      // works for delisted games whose store page is gone.
+      if (steamSettings) {
+        try {
+          const steamAssets = require('../util/steamAssets.js');
+          for (const [purpose, key] of [
+            ['portrait', 'portrait'],
+            ['header', 'header'],
+          ]) {
+            if (data.img[key]) continue;
+            const local = steamAssets.resolveSteamProductAssetUrls({ appid: data.appid, configPath: steamSettings, purpose, language: lang });
+            if (local.ok) data.img[key] = local.urls[0];
+          }
+        } catch (err) {
+          debug.log(`[${data.appid}] local product-info asset lookup failed: ${err.message || err}`);
+        }
+      }
+      if (Object.values(data.img).some((im) => !im)) {
+        updatedImgs = await ipcRenderer.invoke('get-steam-data', { appid: data.appid, type: 'common' });
+        data.img.header = data.img.header || updatedImgs.header || 'header';
+        data.img.background = data.img.background || updatedImgs.background || 'page_bg_generated_v6b';
+        data.img.portrait = data.img.portrait || updatedImgs.portrait || 'portrait';
+        data.img.icon = data.img.icon || updatedImgs.icon;
+      }
     }
     // Backfill blank achievement descriptions from the supplemental source. That lookup isn't free
     // (a key-less user pays for a puppeteer scrape), so once we've tried we stamp the schema and skip
