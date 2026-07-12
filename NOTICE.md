@@ -15,3 +15,4 @@ Achievement Watcher is licensed under the [LGPL-3.0 License](./LICENSE).
 - **Achievement rarity aggregation** – ported from [@PSerban93/Achievements](https://github.com/PSerban93/Achievements) (MIT, Copyright 2025 JokerVerse)
 - **Exophase multi-language achievement scraper** – ported from [@PSerban93/Achievements](https://github.com/PSerban93/Achievements) (MIT, Copyright 2025 JokerVerse)
 - **Local Steam product-info asset resolver** – ported from [@PSerban93/Achievements](https://github.com/PSerban93/Achievements) (MIT, Copyright 2025 JokerVerse)
+- **Folder content-version fingerprint** – ported from [@PSerban93/Achievements](https://github.com/PSerban93/Achievements) (MIT, Copyright 2025 JokerVerse)
