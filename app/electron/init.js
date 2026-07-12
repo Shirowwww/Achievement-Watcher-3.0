@@ -287,6 +287,13 @@ async function getSteamData(request) {
       }
       return info;
     }
+    // Offline-first name resolution: the cached GetAppList dump answers instantly and keeps
+    // working with no network, while the path below needs a Steam client logon + product-info
+    // request. Misses (brand-new appids) still fall through to the full lookup.
+    if (type === 'name') {
+      const offlineName = require('../util/gameNameCache.js').lookupSteamDbName(appid);
+      if (offlineName) return offlineName;
+    }
     await clientLogOn();
     const storeURL = `https://store.steampowered.com/api/appdetails?appids=${appid}&cc=us&l=en`;
     const storeRes = await fetch(storeURL);
