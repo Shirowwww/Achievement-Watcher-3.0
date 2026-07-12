@@ -41,23 +41,22 @@ Bring achievements from your PC games and supported emulators into **one modern 
 | Feature | ⭐ **This fork** | [Achievements](https://github.com/PSerban93/Achievements) | [Achievement-Watcher 2.x](https://github.com/darktakayanagi/Achievement-Watcher) |
 |---|:---:|:---:|:---:|
 | Modern runtime | ✅ Electron 43 | ✅ Electron 43 | ❌ Electron 12 |
-| Unified automatic library | ✅ | ✅ | ⚠️ More manual |
-| Native toast + in-game overlay | ✅ Both | ⚠️ Overlay | ⚠️ Toast |
-| Live Xenia / ShadPS4 unlocks | ✅ | ✅ | ❌ |
-| Full Goldberg / GBE repair and rollback | ✅ | ⚠️ Config generation | ❌ |
-| Automatic background GBE fixes | ✅ | ❌ | ❌ |
-| Game and achievement search | ✅ Both | ⚠️ Game search | ❌ |
-| Notification presets | ✅ 28 + builder | ✅ 28 | ⚠️ 9 |
-| Rare and platinum-specific presets | ✅ | ❌ | ❌ |
+| Fast, lightweight tray mode | ✅ Optimized | ✅ Tray + caching | ⚠️ Legacy stack |
+| Automatic game library/configuration | ✅ | ✅ | ⚠️ More manual |
+| Official/local platform integrations | ✅ | ✅ Extensive | ⚠️ Fewer sources |
+| Notification transports | ✅ Toast + overlay | ✅ Animated overlay | ✅ Toast + Chromium |
+| Live Xenia / ShadPS4 unlocks | ✅ | ✅ | ⚠️ Planned |
+| Goldberg / GBE repair and rollback | ✅ Full | ⚠️ Config generation | ⚠️ Emulator support |
+| Game and achievement search | ✅ Both | ⚠️ Game search | ✅ Both |
+| Notification presets | ✅ 28 + builder | ✅ Multiple | ✅ Multiple |
+| Rare and platinum-specific presets | ✅ | ✅ | ⚠️ Not documented |
 | Screenshot souvenirs | ✅ | ✅ | ✅ |
-| OBS video souvenirs | ❌ | ❌ | ✅ |
-| Full controller UI navigation | ❌ | ⚠️ Overlay only | ✅ |
-| UI languages | ✅ 18 complete | ✅ 30 locale files | ✅ 18 locale files |
-| Automatic GitHub updates | ✅ | ✅ | ✅ |
+| Full controller UI navigation | ✅ | ⚠️ Overlay only | ⚠️ Planned |
+| UI languages | ✅ 18 complete | ✅ Multi-language | ✅ Multi-language |
 
-> ⭐ **This fork is the most complete all-in-one option** for a modern tray library, native + overlay notifications, live emulator unlocks and advanced Goldberg/GBE repair. **Achievements** is stronger for official/local platform integrations, while **Achievement-Watcher 2.x** still stands out for controller navigation and OBS video souvenirs.
+> ⭐ **This fork focuses on an efficient all-in-one tray library**, native + overlay notifications, full UI controller navigation and advanced Goldberg/GBE repair. **Achievements** offers especially broad official/local platform integrations, automatic configuration and overlay customization. **Achievement-Watcher 2.x** retains the original multi-transport notification workflow and broad Steam-emulator compatibility.
 
-<sub>Compared against the current default branches and releases on 11 July 2026. ✅ = supported, ⚠️ = partial or different workflow, ❌ = unavailable or not documented.</sub>
+<sub>Compared against the public README files and current default branches on 12 July 2026. ✅ = supported, ⚠️ = partial, planned, different workflow or not clearly documented, ❌ = unavailable.</sub>
 
 ---
 
