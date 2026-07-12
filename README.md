@@ -52,7 +52,7 @@ Bring achievements from your PC games and supported emulators into **one modern 
 | Notification presets | ✅ 28 + builder | ✅ Multiple | ✅ Multiple |
 | Rare and platinum-specific presets | ✅ | ✅ | ⚠️ Not documented |
 | Screenshot souvenirs | ✅ | ✅ | ✅ |
-| Full controller UI navigation | ✅ | ⚠️ Overlay only | ⚠️ Planned |
+| Full controller UI navigation | ✅ | ✅ UI + in-game overlay + native PlayStation | ⚠️ Planned |
 | UI languages | ✅ 18 complete | ✅ Multi-language | ✅ Multi-language |
 
 > ⭐ **This fork focuses on an efficient all-in-one tray library**, native + overlay notifications, full UI controller navigation and advanced Goldberg/GBE repair. **Achievements** offers especially broad official/local platform integrations, automatic configuration and overlay customization. **Achievement-Watcher 2.x** retains the original multi-transport notification workflow and broad Steam-emulator compatibility.
