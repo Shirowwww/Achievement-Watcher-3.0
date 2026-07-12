@@ -1,5 +1,8 @@
 # Building Achievement Watcher
 
+For the complete commit, versioning, validation, publishing and auto-update
+checklist, see [docs/RELEASE_WORKFLOW.md](docs/RELEASE_WORKFLOW.md).
+
 ## Prerequisites
 
 - **Node.js 22.22.2+ or 24.15+** — required by the current build toolchain. Electron 43 bundles Node 24.18 for the installed application and is downloaded automatically by `npm install`.
