@@ -102,6 +102,16 @@ p {
 *:focus {
   outline: none;
 }
+
+/* Native Gamepad API navigation. The marker is only visible after an actual controller input, so
+   mouse and keyboard users keep the existing visual treatment. */
+html[data-controller-active='true'] .controller-focus {
+  outline: 3px solid var(--accent) !important;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px var(--accent-soft), 0 0 18px var(--accent) !important;
+  position: relative;
+  z-index: 20;
+}
 img {
   -webkit-user-drag: none;
   user-drag: none;
