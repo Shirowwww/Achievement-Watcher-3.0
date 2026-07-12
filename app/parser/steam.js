@@ -246,7 +246,7 @@ module.exports.getGameData = async (cfg) => {
       needSaving = true;
     }
 
-    needSaving = needSaving || (await GetMissingData(result, cfg.showHidden));
+    needSaving = needSaving || (await GetMissingData(result, cfg.showHidden, cfg.lang));
     if (needSaving) {
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
       fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
@@ -1026,7 +1026,7 @@ async function findWorkingLink(appid, basename) {
 // `showHidden` is accepted for call-site compatibility but no longer gates hidden-description
 // backfill: the detail view reveals hidden descriptions on click regardless of the setting, so the
 // real text must always be fetched.
-async function GetMissingData(data, showHidden) {
+async function GetMissingData(data, showHidden, lang) {
   let updated = false;
   try {
     const { ipcRenderer } = require('electron');
@@ -1071,6 +1071,39 @@ async function GetMissingData(data, showHidden) {
           if ((!ach.description || String(ach.description).trim() === '') && (map.has(ach.displayName) || map.has(ach.name))) {
             ach.description = map.get(ach.displayName) || map.get(ach.name);
           }
+        }
+      }
+      // Exophase fallback for whatever SteamHunters still left blank. Unlike SteamHunters it also
+      // serves the schema's own language, so a localized schema gets localized text. Matching is by
+      // displayName only (localized title first, english title second) — never by list position, so
+      // a miss can't attach another achievement's description. Runs inside the same weekly
+      // descBackfilledAt stamp as the SteamHunters attempt, so it adds no recurring cost.
+      const stillBlank = data.achievement.list.some((ac) => !ac.description || String(ac.description).trim() === '');
+      if (stillBlank && data.name) {
+        try {
+          const exophase = require('./exophase.js');
+          const langKey = lang && exophase.EXOPHASE_LANG_MAP[lang] ? lang : 'english';
+          const res = await exophase.fetchExophaseAchievementsMultiLang({
+            platform: 'steam',
+            title: data.name,
+            langKeys: [langKey],
+          });
+          const norm = (s) => String(s || '').trim().toLowerCase();
+          const byTitle = new Map();
+          for (const item of res.items) {
+            const desc = item.descriptions[langKey] || item.descriptions.english;
+            if (!desc || String(desc).trim() === '') continue;
+            for (const title of [item.titles[langKey], item.titles.english]) {
+              if (title) byTitle.set(norm(title), desc);
+            }
+          }
+          for (const ach of data.achievement.list) {
+            if (ach.description && String(ach.description).trim() !== '') continue;
+            const desc = byTitle.get(norm(ach.displayName));
+            if (desc) ach.description = desc;
+          }
+        } catch (err) {
+          debug.log(`[${data.appid}] exophase description fallback failed: ${err.code || err.message || err}`);
         }
       }
       data.descBackfilledAt = Date.now(); // remember the attempt (even when nothing improved) and persist it

@@ -8,6 +8,7 @@ const gog = require(path.join(appPath, 'gog.js'));
 const epic = require(path.join(appPath, 'epic.js'));
 const ea = require(path.join(appPath, 'ea.js'));
 const steam = require(path.join(appPath, 'steam.js'));
+const exophase = require(path.join(appPath, 'exophase.js'));
 const uplay = require(path.join(appPath, 'uplay.js'));
 const rpcs3 = require(path.join(appPath, 'rpcs3.js'));
 const shadps4 = require(path.join(appPath, 'shadps4.js'));
@@ -42,6 +43,7 @@ module.exports.initDebug = ({ isDev, userDataPath }) => {
   epic.initDebug({ isDev, userDataPath });
   ea.initDebug({ isDev, userDataPath });
   steam.initDebug({ isDev, userDataPath });
+  exophase.initDebug({ isDev, userDataPath });
   uplay.initDebug({ isDev, userDataPath }); // was missing — left uplay's `debug` undefined (every UPLAY* game threw and was skipped)
   blacklist.initDebug({ isDev, userDataPath });
   debug = new (require('../util/logger'))({
