@@ -2077,7 +2077,7 @@ ipcMain.handle('create-custom-preset', async (event, opts = {}) => {
   try {
     const rawName = String(opts.name || '').trim();
     // Folder-safe name; keep it readable. Reject empties and reserved/odd names.
-    const name = rawName.replace(/[<>:"/\\|?* -]/g, '').replace(/\s+/g, ' ').trim().slice(0, 48);
+    const name = rawName.replace(/[<>:"/\\|?*\x00-\x1f]/g, '').replace(/\s+/g, ' ').trim().slice(0, 48);
     if (!name) return { ok: false, error: 'invalid-name' };
     const dir = path.join(__dirname, '../presets/Users Presets', name);
     fs.mkdirSync(dir, { recursive: true });
