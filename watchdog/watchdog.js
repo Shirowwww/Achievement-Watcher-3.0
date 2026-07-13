@@ -38,6 +38,7 @@ const notify = require('./notification/toaster.js');
 const shadps4Watch = require('./console/shadps4Watch.js');
 const xeniaWatch = require('./console/xeniaWatch.js');
 const eaWatch = require('./console/eaWatch.js');
+const gogWatch = require('./console/gogWatch.js');
 const { crc32 } = require('crc');
 const { isWinRTAvailable } = require('./util/powertoast');
 const { isFullscreenAppRunning } = require('./queryUserNotificationState.js');
@@ -324,6 +325,14 @@ var app = {
         await xeniaWatch.start({ options: self.options, getToastID: () => self.toastID, notify });
       } catch (err) {
         debug.error(`[xenia] ${err}`);
+      }
+
+      // GOG Galaxy official live achievement toasts — watches each game's gameplay.db (SQLite,
+      // rewritten by Galaxy the moment an achievement pops) and diffs against a baseline.
+      try {
+        await gogWatch.start({ options: self.options, getToastID: () => self.toastID, notify });
+      } catch (err) {
+        debug.error(`[gog] ${err}`);
       }
     } catch (err) {
       debug.error(err);
