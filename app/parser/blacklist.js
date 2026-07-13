@@ -77,8 +77,31 @@ module.exports.reset = async () => {
   writeNames({});
 };
 
+// Best-effort offline name resolution for entries whose name was never stored (blacklisted before
+// the sidecar existed, or added from a context where the title wasn't known). Steam appids resolve
+// against the local appList dump; non-Steam ids (e.g. UPLAY…) simply stay unresolved.
+function resolveNameOffline(appid) {
+  const id = String(appid ?? '').trim();
+  if (!id || !/^\d+$/.test(id)) return '';
+  try {
+    const gameNameCache = require(path.join(__dirname, '../util/gameNameCache.js'));
+    // Resolve the dumps relative to THIS install's userData (dirname(exclusionFile) === cfg/), not
+    // the hardcoded APPDATA default — keeps portable/relocated installs and tests consistent.
+    const cfgDir = path.dirname(exclusionFile);
+    return (
+      gameNameCache.lookupSteamDbName(id, {
+        runtimePath: path.join(cfgDir, 'steamdb.json'),
+        fallbackPath: path.join(cfgDir, '..', 'steam_cache', 'schema', 'appList.json'),
+      }) || ''
+    );
+  } catch {
+    return '';
+  }
+}
+
 // User exclusions only (what the Settings blacklist manager shows) — the builtin/server lists are
-// not the user's to edit.
+// not the user's to edit. Missing names are backfilled offline and, once resolved, written back to
+// the sidecar so the next render is instant.
 module.exports.getUserDetailed = async () => {
   let userExclusion;
   try {
@@ -87,10 +110,20 @@ module.exports.getUserDetailed = async () => {
     userExclusion = [];
   }
   const names = readNames();
-  return (Array.isArray(userExclusion) ? userExclusion : []).map((appid) => ({
-    appid,
-    name: names[String(appid)] || '',
-  }));
+  let backfilled = false;
+  const detailed = (Array.isArray(userExclusion) ? userExclusion : []).map((appid) => {
+    let name = names[String(appid)] || '';
+    if (!name) {
+      name = resolveNameOffline(appid);
+      if (name) {
+        names[String(appid)] = name;
+        backfilled = true;
+      }
+    }
+    return { appid, name };
+  });
+  if (backfilled) writeNames(names);
+  return detailed;
 };
 
 module.exports.remove = async (appid) => {

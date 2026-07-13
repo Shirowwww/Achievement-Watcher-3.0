@@ -79,6 +79,35 @@ const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-blacklist-'));
       assert.deepStrictEqual(JSON.parse(fs.readFileSync(exclusionFile, 'utf8')), [9002]);
     });
 
+    await test('backfills a missing name from the offline appList dump and persists it', async () => {
+      await blacklist.reset();
+      // A game blacklisted with no stored name (older entry / unknown title at add-time).
+      fs.writeFileSync(exclusionFile, JSON.stringify([242050]));
+      fs.writeFileSync(path.join(temp, 'cfg', 'exclusion-names.json'), JSON.stringify({}));
+      // Seed the local appList dump the offline resolver reads.
+      const schemaDir = path.join(temp, 'steam_cache', 'schema');
+      fs.mkdirSync(schemaDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(schemaDir, 'appList.json'),
+        JSON.stringify([{ appid: 242050, name: "Assassin's Creed IV Black Flag" }])
+      );
+
+      const detailed = await blacklist.getUserDetailed();
+      assert.deepStrictEqual(detailed, [{ appid: 242050, name: "Assassin's Creed IV Black Flag" }]);
+      // Resolved name is written back to the sidecar so the next render is instant.
+      assert.strictEqual(
+        JSON.parse(fs.readFileSync(path.join(temp, 'cfg', 'exclusion-names.json'), 'utf8'))['242050'],
+        "Assassin's Creed IV Black Flag"
+      );
+    });
+
+    await test('leaves a non-Steam id (e.g. UPLAY) unresolved without throwing', async () => {
+      await blacklist.reset();
+      fs.writeFileSync(exclusionFile, JSON.stringify(['UPLAY273']));
+      const detailed = await blacklist.getUserDetailed();
+      assert.deepStrictEqual(detailed, [{ appid: 'UPLAY273', name: '' }]);
+    });
+
     await test('reset clears both ids and their display-name sidecar', async () => {
       await blacklist.reset();
       assert.deepStrictEqual(await blacklist.getUserDetailed(), []);
