@@ -43,7 +43,7 @@ Bring achievements from your PC games and supported emulators into **one modern 
 | Modern runtime | ✅ Electron 43 | ✅ Electron 43 | ❌ Electron 12 |
 | Fast, lightweight tray mode | ✅ Optimized | ✅ Tray + caching | ⚠️ Legacy stack |
 | Automatic game library/configuration | ✅ | ✅ | ⚠️ More manual |
-| Official/local platform integrations | ✅ | ✅ Extensive | ⚠️ Fewer sources |
+| Official/local platform integrations | ✅ GOG · Ubisoft · Steam · Epic (local) | ✅ Extensive | ⚠️ Fewer sources |
 | Notification transports | ✅ Toast + overlay | ✅ Animated overlay | ✅ Toast + Chromium |
 | Live Xenia / ShadPS4 unlocks | ✅ | ✅ | ⚠️ Planned |
 | Goldberg / Steam-emulator tracking | ✅ | ✅ | ✅ |
