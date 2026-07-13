@@ -84,15 +84,18 @@ function spoolRecord(achId, time) {
     assert.ok(schema.imageBuffers.has('1'));
     assert.ok(!schema.imageBuffers.has('2'));
 
-    // ---- full contract: getGameData localizes, extracts icons, borrows steam art via the asset
+    // ---- full contract: getGameData localizes, extracts icons, borrows steam art via the asset.
+    // appid is namespaced ("uplay-8006") to avoid colliding with Steam appid 8006; the raw id lives
+    // in data.uplayId and is what the uplay-steam mapping is keyed by.
     ubi.setUserDataPath(path.join(tmp, 'Achievement Watcher'));
     const appidEntry = {
-      appid: '8006',
+      appid: 'uplay-8006',
       source: 'Ubisoft Connect',
-      data: { type: 'ubisoftOfficial', spoolFilePath: spoolFile, archivePath, title: '' },
+      data: { type: 'ubisoftOfficial', uplayId: '8006', spoolFilePath: spoolFile, archivePath, title: '' },
     };
     const game = await ubi.getGameData(appidEntry, 'french');
-    assert.equal(game.name, "Assassin's Creed® Shadows"); // from assets/uplay-steam.json
+    assert.equal(game.appid, 'uplay-8006'); // namespaced identity preserved
+    assert.equal(game.name, "Assassin's Creed® Shadows"); // resolved via data.uplayId, not the namespaced appid
     assert.equal(game.achievement.total, 2);
     assert.equal(game.achievement.list[0].displayName, 'Premier sang');
     assert.equal(game.achievement.list[1].description, 'Tout collecter');

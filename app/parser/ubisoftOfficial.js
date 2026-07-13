@@ -24,6 +24,7 @@
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
+const { officialAppId } = require('../util/platformId.js');
 
 let cacheRoot;
 let debug = { log() {}, warn() {}, error() {} };
@@ -425,8 +426,10 @@ function normalizeSteamAchName(name) {
   return result;
 }
 
-async function seedRarityFromSteam(appid, ids) {
-  const mapping = getUplaySteamMapping().get(String(appid));
+// cacheId = the (namespaced) appid the UI reads rarity by; uplayId = the raw Ubisoft id used to
+// bridge to a Steam appid via the uplay-steam mapping.
+async function seedRarityFromSteam(cacheId, uplayId, ids) {
+  const mapping = getUplaySteamMapping().get(String(uplayId));
   const steamAppId = mapping?.steam_appid != null ? String(mapping.steam_appid).trim() : '';
   if (!/^\d+$/.test(steamAppId)) return;
   try {
@@ -437,9 +440,9 @@ async function seedRarityFromSteam(appid, ids) {
     const entries = ids
       .map((id) => (byNormalized.has(id) ? { name: id, percent: byNormalized.get(id) } : null))
       .filter(Boolean);
-    if (entries.length > 0) rarity.writeRarityCache(String(appid), entries, 'steam');
+    if (entries.length > 0) rarity.writeRarityCache(String(cacheId), entries, 'steam');
   } catch (err) {
-    debug.log(`[${appid}] ubisoft rarity bridge failed => ${err}`);
+    debug.log(`[${cacheId}] ubisoft rarity bridge failed => ${err}`);
   }
 }
 
@@ -470,11 +473,15 @@ module.exports.scan = () => {
     const prev = byProduct.get(entry.appid);
     if (prev && mtimeOf(prev.data.spoolFilePath) >= mtimeOf(entry.spoolFilePath)) continue;
     const mapping = getUplaySteamMapping().get(entry.appid);
+    // Ubisoft product ids are small integers (1843, 6100, …) that overlap Steam's appid space, so
+    // the shared rarity/cover/gameIndex caches would collide with a same-numbered Steam game. Use a
+    // namespaced identity ("uplay-<id>") as the appid and keep the raw id in data for the mapping.
     byProduct.set(entry.appid, {
-      appid: entry.appid,
+      appid: officialAppId('ubisoftOfficial', entry.appid),
       source: 'Ubisoft Connect',
       data: {
         type: 'ubisoftOfficial',
+        uplayId: entry.appid,
         path: path.dirname(entry.spoolFilePath),
         spoolFilePath: entry.spoolFilePath,
         userId: entry.userId,
@@ -532,8 +539,10 @@ module.exports.getGameData = async (appid, lang) => {
     };
   });
 
-  // borrow Steam store art through the uplay↔steam mapping (best-effort; delisted → placeholders)
-  const mapping = getUplaySteamMapping().get(String(appid.appid));
+  // borrow Steam store art through the uplay↔steam mapping (best-effort; delisted → placeholders).
+  // Keyed by the RAW Ubisoft id — the appid is now namespaced ("uplay-<id>") for cache safety.
+  const uplayId = data.uplayId || appid.appid;
+  const mapping = getUplaySteamMapping().get(String(uplayId));
   const steamAppId = mapping?.steam_appid != null ? String(mapping.steam_appid).trim() : '';
   const img = /^\d+$/.test(steamAppId)
     ? {
@@ -544,11 +553,12 @@ module.exports.getGameData = async (appid, lang) => {
       }
     : { header: null, background: null, portrait: null, icon: null };
 
-  // rarity: Steam global percentages bridged onto the numeric ids (best-effort, TTL-cached)
-  await seedRarityFromSteam(appid.appid, schema.ids);
+  // rarity: Steam global % bridged onto the numeric ids, cached under the (namespaced) appid so the
+  // detail view reads it back by game.appid without colliding with a same-numbered Steam game.
+  await seedRarityFromSteam(appid.appid, uplayId, schema.ids);
 
   return {
-    name: data.title || mapping?.uplay_name || mapping?.steam_name || `Ubisoft ${appid.appid}`,
+    name: data.title || mapping?.uplay_name || mapping?.steam_name || `Ubisoft ${uplayId}`,
     appid: appid.appid,
     img,
     achievement: {
