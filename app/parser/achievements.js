@@ -1642,6 +1642,23 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
               game.img && game.img.icon ? String(game.img.icon).split('/').pop().split('.')[0] : '';
             gameIndex.upsert({ appid: appid.appid, name: game.name, binary: exeInfo.name, icon: iconHash });
             debug.log(`[${appid.appid}] auto-seeded playtime tracking: binary="${exeInfo.name}"`);
+          } else if (/^[0-9]+$/.test(String(appid.appid))) {
+            // No local exe found (obfuscated/renamed build, or a launcher-only install): fall back to
+            // SteamDB's launch metadata so the watchdog still has a process name to match on. Fetched
+            // through the main-process stealth browser (SteamDB 403s plain requests) and disk-cached,
+            // so this only hits the network once per game. Best-effort — never blocks the seed.
+            try {
+              const { ipcRenderer } = require('electron');
+              const meta = await ipcRenderer.invoke('get-steamdb-launch', appid.appid);
+              if (meta && meta.best_process_name) {
+                _seededGameDirs.add(gameDirKey);
+                const iconHash = game.img && game.img.icon ? String(game.img.icon).split('/').pop().split('.')[0] : '';
+                gameIndex.upsert({ appid: appid.appid, name: game.name, binary: meta.best_process_name, icon: iconHash });
+                debug.log(`[${appid.appid}] auto-seeded playtime tracking from SteamDB: binary="${meta.best_process_name}"`);
+              }
+            } catch (err) {
+              debug.log(`[${appid.appid}] SteamDB launch fallback failed: ${err.message || err}`);
+            }
           }
         }
       } catch (err) {

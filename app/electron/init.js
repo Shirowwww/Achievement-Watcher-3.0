@@ -1069,6 +1069,82 @@ async function scrapeWithPuppeteer(info = { appid: 269770 }, alternate) {
   }
 }
 
+// SteamDB launch-metadata fallback: when local exe detection fails, scrape the game's SteamDB config
+// page (through the stealth browser — it 403s plain requests) to learn the launch executable's
+// process name so the watchdog can still detect the game running. Disk-cached for 30 days since
+// launch options change rarely. Returns { process_name, best_process_name, arguments } or null.
+const steamdbLaunchInFlight = new Map();
+async function fetchSteamDbLaunch(appid) {
+  const id = String(appid || '').trim();
+  if (!/^\d+$/.test(id)) return null;
+  const cacheFile = path.join(userData, 'steam_cache', 'steamdb_launch', `${id}.json`);
+  const TTL = 30 * 24 * 60 * 60 * 1000;
+  try {
+    if (fs.existsSync(cacheFile) && Date.now() - fs.statSync(cacheFile).mtimeMs < TTL) {
+      const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+      return cached && cached.best_process_name ? cached : null;
+    }
+  } catch {
+    /* stale/corrupt -> refetch */
+  }
+  if (steamdbLaunchInFlight.has(id)) return steamdbLaunchInFlight.get(id);
+
+  const pending = (async () => {
+    const steamdbLaunch = require(path.join(app.getAppPath(), 'parser/steamdbLaunch.js'));
+    let page = null;
+    try {
+      await startPuppeteer(true, false);
+      page = await puppeteerWindow.context.newPage();
+      await page.setUserAgent(
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121 Safari/537.36'
+      );
+      await page.goto(`https://steamdb.info/app/${id}/config/`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+      await page.waitForSelector('h2', { timeout: 8000 }).catch(() => {});
+      // Pull just the "Launch Options" section HTML; steamdbLaunch parses/ranks it (unit-tested).
+      const sectionHtml = await page.evaluate(() => {
+        const norm = (s) => String(s || '').replace(/\s+/g, ' ').trim();
+        const h = Array.from(document.querySelectorAll('h2')).find((el) => norm(el.textContent) === 'Launch Options');
+        if (!h) return '';
+        let html = h.outerHTML;
+        let n = h.nextElementSibling;
+        while (n && n.tagName !== 'H2') {
+          html += n.outerHTML;
+          n = n.nextElementSibling;
+        }
+        return html;
+      });
+      const meta = steamdbLaunch.launchMetadataFromHtml(id, sectionHtml);
+      if (meta && meta.best_process_name) {
+        try {
+          fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
+          fs.writeFileSync(cacheFile, JSON.stringify(meta, null, 2));
+        } catch {
+          /* cache write failure is non-fatal */
+        }
+        debug.log(`[${id}] SteamDB launch metadata: process_name="${meta.process_name}"`);
+        return meta;
+      }
+      debug.log(`[${id}] SteamDB launch metadata: no usable launch option found`);
+      return null;
+    } catch (err) {
+      debug.log(`[${id}] SteamDB launch metadata fetch failed: ${err.message || err}`);
+      return null;
+    } finally {
+      if (page) await page.close().catch(() => {});
+    }
+  })();
+  steamdbLaunchInFlight.set(id, pending);
+  try {
+    return await pending;
+  } finally {
+    steamdbLaunchInFlight.delete(id);
+  }
+}
+
+ipcMain.handle('get-steamdb-launch', async (event, appid) => {
+  return await fetchSteamDbLaunch(appid);
+});
+
 async function searchForGameName(info = { appid: '' }) {
   if (info.appid.length === 0) {
     info.title = undefined;
