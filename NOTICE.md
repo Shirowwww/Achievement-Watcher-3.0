@@ -22,3 +22,4 @@ Achievement Watcher is licensed under the [LGPL-3.0 License](./LICENSE).
 - **Steam appcache binary KV reader (local user stats)** – ported from [@PSerban93/Achievements](https://github.com/PSerban93/Achievements) (MIT, Copyright 2025 JokerVerse)
 - **Epic Games official achievement reader + OAuth connect flow** – ported from [@PSerban93/Achievements](https://github.com/PSerban93/Achievements) (MIT, Copyright 2025 JokerVerse)
 - **SteamDB launch-metadata resolver** – ported from [@PSerban93/Achievements](https://github.com/PSerban93/Achievements) (MIT, Copyright 2025 JokerVerse)
+- **Platform-aware appid validation** – ported from [@PSerban93/Achievements](https://github.com/PSerban93/Achievements) (MIT, Copyright 2025 JokerVerse)
