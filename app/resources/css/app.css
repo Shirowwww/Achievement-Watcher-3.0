@@ -3296,6 +3296,10 @@ main {
   border-radius: 12px;
   background: linear-gradient(135deg, rgba(112, 77, 31, 0.14), rgba(29, 47, 67, 0.76));
 }
+/* The Epic connect card sits under the Sources arrow-list — give it breathing room above. */
+#settings #epic-connect {
+  margin-top: 16px;
+}
 #settings .emulator-login.is-visible {
   display: block;
 }
