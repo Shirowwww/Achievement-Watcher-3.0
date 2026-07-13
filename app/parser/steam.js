@@ -197,12 +197,19 @@ module.exports.getGameData = async (cfg) => {
   try {
     result = this.getCachedData(cfg);
     if (!result || !result.name) {
-      if (!(await findInAppList(+cfg.appID))) throw `Error trying to load steam data for ${cfg.appID}`;
+      // A brand-new appid (e.g. a just-released remaster) may not be in the GetAppList dump yet —
+      // it is only refreshed every few days and can 404. getProductInfo / the store appdetails call
+      // still resolve such an appid's name + cover, so don't bail on the appList miss up front: try
+      // the fetch, and only give up if it comes back empty AND the id was never listed (i.e. it is
+      // almost certainly not a real Steam app). This is what let cracked new titles show with no
+      // cover and a bare-appid name.
+      const inAppList = await findInAppList(+cfg.appID);
       if (cfg.key) {
         result = await getSteamData(cfg);
       } else {
         result = await getSteamDataFromSRV(cfg.appID, cfg.lang);
       }
+      if ((!result || !result.name) && !inAppList) throw `Error trying to load steam data for ${cfg.appID}`;
       needSaving = true;
     }
 
@@ -535,6 +542,14 @@ async function getSteamDataFromSRV(appID, lang) {
     }
   }
 
+  // No library capsule in the product info (common for brand-new appids) — recover the real hashed
+  // cover from SteamDB before falling back to the 'portrait' placeholder (main process: stealth
+  // browser + 30-day disk cache). Only worth it for an actual game with a resolved name.
+  let portrait = result.portrait;
+  if (!portrait && result.name) {
+    portrait = (await ipcRenderer.invoke('get-steamdb-cover', appID).catch(() => null)) || null;
+  }
+
   return {
     name: result.name,
     appid: appID,
@@ -542,7 +557,7 @@ async function getSteamDataFromSRV(appID, lang) {
     img: {
       header: result.header || 'header',
       background: result.background || 'page_bg_generated_v6b',
-      portrait: result.portrait || 'portrait',
+      portrait: portrait || 'portrait',
       icon: result.icon,
     },
     achievement: {
@@ -984,10 +999,60 @@ function getTenokeSchemaFromFile(file, appid, lang = 'english') {
   });
 }
 
+// A Goldberg/GBE-Fork achievements.json field can be a plain string or a localized object
+// ({english, french, …}); resolve to the requested language, then English, then any value.
+function pickLocalized(value, lang) {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') return value[lang] || value.english || Object.values(value).find((v) => typeof v === 'string') || '';
+  return String(value);
+}
+
+// Read a Goldberg / GBE-Fork steam_settings/achievements.json (the emulator's own SCHEMA) into AW's
+// schema shape. This is the offline schema a cracked game already ships, so brand-new titles that
+// aren't on SteamHunters yet (and keyless setups with no Web API schema) still show their real
+// achievement names/descriptions/icons instead of an empty list. Icons follow the same community-CDN
+// pattern as the rest of the pipeline (basename of whatever the emu recorded).
+function getGoldbergSchemaFromFile(file, appid, lang = 'english') {
+  let parsed;
+  try {
+    parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
+  const cdn = (icon) => {
+    const base = icon ? path.basename(String(icon).split('?')[0]) : '';
+    return base && appid ? `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${appid}/${base}` : '';
+  };
+  return parsed
+    .filter((entry) => entry && entry.name != null)
+    .map((entry) => {
+      const achievement = {
+        name: String(entry.name),
+        default_value: 0,
+        displayName: pickLocalized(entry.displayName, lang) || String(entry.name),
+        hidden: String(entry.hidden) === '1' || entry.hidden === 1 ? 1 : 0,
+        description: pickLocalized(entry.description, lang) || '',
+        icon: cdn(entry.icon),
+        icongray: cdn(entry.icongray || entry.icon_gray),
+      };
+      const maxProgress = Number(entry?.progress?.max_progress || entry?.progress?.value?.operand1 || 0);
+      if (Number.isFinite(maxProgress) && maxProgress > 0) achievement.max_progress = maxProgress;
+      return achievement;
+    });
+}
+
 module.exports.getLocalAchievementSchema = (gameDir, appid, lang = 'english') => {
   const tenoke = findFileByName(gameDir, TENOKE_SCHEMA_FILE);
-  if (!tenoke) return [];
-  return getTenokeSchemaFromFile(tenoke, appid, lang);
+  if (tenoke) {
+    const schema = getTenokeSchemaFromFile(tenoke, appid, lang);
+    if (schema.length > 0) return schema;
+  }
+  // Fall back to the emulator's own schema dump (Goldberg / GBE Fork) — present on cracked installs.
+  const goldberg = findFileByName(gameDir, 'achievements.json');
+  if (goldberg) return getGoldbergSchemaFromFile(goldberg, appid, lang);
+  return [];
 };
 
 // Ranked AppID candidates for a name, best first: [{ appid, name, score, tier }]. Includes fuzzy
