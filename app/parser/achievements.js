@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const appPath = __dirname;
 const gog = require(path.join(appPath, 'gog.js'));
+const gogOfficial = require(path.join(appPath, 'gogOfficial.js'));
 const epic = require(path.join(appPath, 'epic.js'));
 const ea = require(path.join(appPath, 'ea.js'));
 const steam = require(path.join(appPath, 'steam.js'));
@@ -41,6 +42,7 @@ module.exports.initDebug = ({ isDev, userDataPath }) => {
   userDir.setUserDataPath(userDataPath);
   libraryDirs.setUserDataPath(userDataPath);
   gog.initDebug({ isDev, userDataPath });
+  gogOfficial.initDebug({ isDev, userDataPath });
   epic.initDebug({ isDev, userDataPath });
   ea.initDebug({ isDev, userDataPath });
   steam.initDebug({ isDev, userDataPath });
@@ -982,6 +984,15 @@ async function discover(source, steamAccFilter) {
     }
   }
 
+  //GOG Galaxy official (legit client data — schema, unlocks and rarity read from Galaxy's SQLite)
+  if (source.gogOfficial) {
+    try {
+      data = data.concat(gogOfficial.scan());
+    } catch (err) {
+      debug.error(err);
+    }
+  }
+
   if (source.epic) {
     try {
       data = data.concat(await epic.scan());
@@ -1220,6 +1231,8 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       }
     } else if (appid.data.type === 'ea') {
       game = await ea.getGameData(appid, option.achievement.lang);
+    } else if (appid.data.type === 'gogOfficial') {
+      game = await gogOfficial.getGameData(appid);
     } else if (appid.source === 'epic') {
       game = await epic.getGameData({ appID: appid.appid, steamappid: appid.steamappid, lang: option.achievement.lang });
     } else {
@@ -1638,6 +1651,8 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
           root = uplay.getAchievementsFromLumaPlay(appid.data.root, appid.data.path);
         } else if (appid.data.type === 'ea') {
           root = await ea.getAchievements(appid);
+        } else if (appid.data.type === 'gogOfficial') {
+          root = gogOfficial.getAchievements(appid);
         } else if (appid.data.type === 'cached') {
           root = await watchdog.getAchievements(appid.appid);
         } else if (appid.data.type === 'uplay') {

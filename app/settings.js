@@ -162,6 +162,10 @@ module.exports.load = () => {
       options.achievement_source.gog = true;
     }
 
+    if (typeof options.achievement_source.gogOfficial !== 'boolean') {
+      options.achievement_source.gogOfficial = true;
+    }
+
     if (typeof options.achievement_source.epic !== 'boolean') {
       options.achievement_source.epic = true;
     }
@@ -367,6 +371,7 @@ module.exports.load = () => {
         xenia: true,
         lumaPlay: false,
         gog: true,
+        gogOfficial: true,
         epic: true,
         ea: true,
         importCache: true,

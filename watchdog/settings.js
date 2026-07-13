@@ -89,6 +89,11 @@ module.exports.load = async (cfg_file) => {
       fixFile = true;
     }
 
+    if (typeof options.achievement_source.gogOfficial !== 'boolean') {
+      options.achievement_source.gogOfficial = true;
+      fixFile = true;
+    }
+
     if (typeof options.achievement_source.epic !== 'boolean') {
       options.achievement_source.epic = true;
       fixFile = true;
@@ -284,6 +289,7 @@ module.exports.load = async (cfg_file) => {
         rpcs3: true,
         lumaPlay: false,
         gog: true,
+        gogOfficial: true,
         epic: true,
         ea: true,
         importCache: true,
