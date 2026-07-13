@@ -606,6 +606,82 @@ ipcMain.handle('get-achievements', async (event, appid) => {
   return await getSteamData({ appid, type: 'steamhunters' });
 });
 
+// ---- Epic "Connect account" OAuth flow ---------------------------------------------------------
+// Opens a real Epic sign-in window; once the user authenticates, Epic's redirect endpoint serves
+// { authorizationCode }, which we exchange for (and persist, encrypted) an Epic token set. This
+// unlocks per-player achievement state for the epic-official source (parser/epicOfficial.js). The
+// schema + rarity already work without connecting — this only adds "which are unlocked".
+ipcMain.handle('epic:auth-status', async () => {
+  try {
+    return await require(path.join(app.getAppPath(), 'util/epicAuth.js')).getEpicAuthStatus({ userDataDir: userData });
+  } catch (err) {
+    return { configured: false, connected: false, error: String(err && err.message ? err.message : err) };
+  }
+});
+
+ipcMain.handle('epic:logout', async () => {
+  try {
+    await require(path.join(app.getAppPath(), 'util/epicAuth.js')).clearEpicTokens({ userDataDir: userData });
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: String(err && err.message ? err.message : err) };
+  }
+});
+
+let epicLoginWindow = null;
+ipcMain.handle('epic:login', async () => {
+  const epicAuth = require(path.join(app.getAppPath(), 'util/epicAuth.js'));
+  if (epicLoginWindow && !epicLoginWindow.isDestroyed()) {
+    epicLoginWindow.focus();
+    return { ok: false, error: 'login-already-open' };
+  }
+  const loginUrl = epicAuth.buildEpicLoginUrl();
+  const redirectUrl = epicAuth.buildEpicAuthCodeUrl();
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (result) => {
+      if (settled) return;
+      settled = true;
+      if (epicLoginWindow && !epicLoginWindow.isDestroyed()) epicLoginWindow.destroy();
+      epicLoginWindow = null;
+      resolve(result);
+    };
+
+    epicLoginWindow = new BrowserWindow({
+      width: 480,
+      height: 720,
+      title: 'Connect Epic Games account',
+      autoHideMenuBar: true,
+      webPreferences: { nodeIntegration: false, contextIsolation: true, partition: 'persist:epic-login' },
+    });
+
+    // After a successful sign-in the redirect page returns a JSON body with the authorizationCode.
+    // Poll it whenever navigation settles on the Epic domain; the user may bounce through 2FA first.
+    const tryCapture = async () => {
+      if (settled || !epicLoginWindow || epicLoginWindow.isDestroyed()) return;
+      try {
+        const code = await epicLoginWindow.webContents.executeJavaScript(
+          `(async () => { try { const r = await fetch(${JSON.stringify(redirectUrl)}, { credentials: 'include' }); const j = await r.json(); return (j && (j.authorizationCode || j.code)) || ''; } catch { return ''; } })()`,
+          true
+        );
+        if (code) {
+          const token = await epicAuth.authenticateEpicWithCode(code, { userDataDir: userData });
+          debug.log('[epic] account connected');
+          finish({ ok: true, accountId: epicAuth.normalizeEpicAccountId(token && token.account_id), displayName: (token && token.displayName) || '' });
+        }
+      } catch (err) {
+        debug.log(`[epic] auth code capture failed: ${err.message || err}`);
+      }
+    };
+
+    epicLoginWindow.webContents.on('did-navigate', tryCapture);
+    epicLoginWindow.webContents.on('did-navigate-in-page', tryCapture);
+    epicLoginWindow.on('closed', () => finish({ ok: false, error: 'window-closed' }));
+    epicLoginWindow.loadURL(loginUrl).catch((err) => finish({ ok: false, error: String(err && err.message ? err.message : err) }));
+  });
+});
+
 // Kill any Watchdog currently holding the WS port (8082). The Watchdog is a detached nw.exe -> node
 // chain we cannot track by PID, so we target it by its well-known port. This is used before launching
 // a fresh Watchdog so it always loads the current code, while normal app quits leave the background
