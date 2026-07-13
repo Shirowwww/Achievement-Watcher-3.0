@@ -179,6 +179,18 @@
       "theme": {
         "name": "Tema",
         "description": "Tema cromatico della finestra dell'app (anteprima immediata, salvataggio con OK)."
+      },
+      "controller": {
+        "title": "Controller",
+        "enabled": {
+          "name": "Controlla l'overlay con un controller",
+          "description": "Apri e sposta l'overlay di gioco con un gamepad (Back+Start per aprire; tieni premuto LB+RB per spostare/scorrere). Supporta Xbox, PlayStation (DualSense/DualShock) e Switch Pro."
+        },
+        "backend": {
+          "name": "Backend del controller",
+          "description": "Auto sceglie il miglior backend di input disponibile. Scegli XInput per la massima compatibilità o GameInput sulle versioni recenti di Windows.",
+          "auto": "Auto"
+        }
       }
     },
     "emulator": {

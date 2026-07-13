@@ -244,6 +244,32 @@ module.exports.load = async (cfg_file) => {
       fixFile = true;
     }
 
+    //Controller (native → overlay control, Tier 4). Opt-in; the koffi/HID stack loads only when enabled.
+    if (!options.controller || typeof options.controller !== 'object') {
+      options.controller = {};
+      fixFile = true;
+    }
+    if (typeof options.controller.enabled !== 'boolean') {
+      options.controller.enabled = false;
+      fixFile = true;
+    }
+    if (!['auto', 'xinput', 'gameinput'].includes(options.controller.backend)) {
+      options.controller.backend = 'auto';
+      fixFile = true;
+    }
+    if (typeof options.controller.toggleBinding !== 'string' || !options.controller.toggleBinding) {
+      options.controller.toggleBinding = 'BACK+START';
+      fixFile = true;
+    }
+    if (typeof options.controller.controlModeBinding !== 'string' || !options.controller.controlModeBinding) {
+      options.controller.controlModeBinding = 'LEFT_SHOULDER+RIGHT_SHOULDER';
+      fixFile = true;
+    }
+    if (typeof options.controller.debugLogging !== 'boolean') {
+      options.controller.debugLogging = false;
+      fixFile = true;
+    }
+
     //Action
     if (typeof options.action.target !== 'string') {
       options.action.target = '';
@@ -326,6 +352,13 @@ module.exports.load = async (cfg_file) => {
       souvenir: {
         screenshot: false,
         dir: '',
+      },
+      controller: {
+        enabled: false,
+        backend: 'auto',
+        toggleBinding: 'BACK+START',
+        controlModeBinding: 'LEFT_SHOULDER+RIGHT_SHOULDER',
+        debugLogging: false,
       },
       action: {
         target: '',

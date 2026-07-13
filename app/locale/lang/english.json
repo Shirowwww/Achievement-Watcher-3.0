@@ -179,6 +179,18 @@
       "theme": {
         "name": "Theme",
         "description": "Color theme of the app window (previews immediately, saved with OK)."
+      },
+      "controller": {
+        "title": "Controller",
+        "enabled": {
+          "name": "Control the overlay with a controller",
+          "description": "Toggle and move the in-game overlay with a gamepad (Back+Start to open; hold LB+RB to move/scroll). Supports Xbox, PlayStation (DualSense/DualShock) and Switch Pro controllers."
+        },
+        "backend": {
+          "name": "Controller backend",
+          "description": "Auto picks the best available input backend. Choose XInput for maximum compatibility, or GameInput on newer Windows builds.",
+          "auto": "Auto"
+        }
       }
     },
     "emulator": {

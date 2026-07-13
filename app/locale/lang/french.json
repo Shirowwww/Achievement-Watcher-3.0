@@ -164,6 +164,18 @@
       "theme": {
         "name": "Thème",
         "description": "Thème de couleurs de la fenêtre (aperçu immédiat, enregistré avec OK)."
+      },
+      "controller": {
+        "title": "Manette",
+        "enabled": {
+          "name": "Contrôler l'overlay à la manette",
+          "description": "Ouvrez et déplacez l'overlay en jeu à la manette (Back+Start pour ouvrir ; maintenez LB+RB pour déplacer/faire défiler). Compatible Xbox, PlayStation (DualSense/DualShock) et Switch Pro."
+        },
+        "backend": {
+          "name": "Backend de la manette",
+          "description": "Auto choisit le meilleur backend d'entrée disponible. Choisissez XInput pour une compatibilité maximale, ou GameInput sur les versions récentes de Windows.",
+          "auto": "Auto"
+        }
       }
     },
     "emulator": {

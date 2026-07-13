@@ -179,6 +179,18 @@
       "theme": {
         "name": "主题",
         "description": "应用窗口的配色主题（即时预览，点击“确定”保存）。"
+      },
+      "controller": {
+        "title": "手柄",
+        "enabled": {
+          "name": "使用手柄控制悬浮层",
+          "description": "使用手柄开关并移动游戏内悬浮层（Back+Start 打开；按住 LB+RB 移动/滚动）。支持 Xbox、PlayStation（DualSense/DualShock）和 Switch Pro 手柄。"
+        },
+        "backend": {
+          "name": "手柄后端",
+          "description": "自动会选择可用的最佳输入后端。追求最大兼容性请选 XInput，较新的 Windows 版本可选 GameInput。",
+          "auto": "自动"
+        }
       }
     },
     "emulator": {

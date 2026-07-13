@@ -179,6 +179,18 @@
       "theme": {
         "name": "テーマ",
         "description": "アプリウィンドウの配色テーマです（すぐにプレビューされ、OKで保存されます）。"
+      },
+      "controller": {
+        "title": "コントローラー",
+        "enabled": {
+          "name": "コントローラーでオーバーレイを操作",
+          "description": "ゲーム内オーバーレイをコントローラーで開閉・移動できます（Back+Startで開く、LB+RB長押しで移動/スクロール）。Xbox、PlayStation（DualSense/DualShock）、Switch Proに対応。"
+        },
+        "backend": {
+          "name": "コントローラーのバックエンド",
+          "description": "Autoは利用可能な最適な入力バックエンドを選択します。最大限の互換性にはXInput、新しいWindowsではGameInputを選んでください。",
+          "auto": "自動"
+        }
       }
     },
     "emulator": {

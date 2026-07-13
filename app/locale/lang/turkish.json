@@ -179,6 +179,18 @@
       "theme": {
         "name": "Tema",
         "description": "Uygulama penceresinin renk teması (anında önizlenir, Tamam ile kaydedilir)."
+      },
+      "controller": {
+        "title": "Oyun Kumandası",
+        "enabled": {
+          "name": "Yer paylaşımını bir kumandayla kontrol et",
+          "description": "Oyun içi yer paylaşımını bir kumandayla aç ve taşı (açmak için Back+Start; taşımak/kaydırmak için LB+RB basılı tut). Xbox, PlayStation (DualSense/DualShock) ve Switch Pro kumandalarını destekler."
+        },
+        "backend": {
+          "name": "Kumanda arka ucu",
+          "description": "Auto mevcut en iyi giriş arka ucunu seçer. Maksimum uyumluluk için XInput, daha yeni Windows sürümlerinde GameInput seçin.",
+          "auto": "Otomatik"
+        }
       }
     },
     "emulator": {

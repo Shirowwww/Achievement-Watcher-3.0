@@ -179,6 +179,18 @@
       "theme": {
         "name": "Téma",
         "description": "Az alkalmazásablak színtémája (azonnali előnézet, mentés az OK gombbal)."
+      },
+      "controller": {
+        "title": "Kontroller",
+        "enabled": {
+          "name": "Az overlay vezérlése kontrollerrel",
+          "description": "Nyisd meg és mozgasd a játékbeli overlayt kontrollerrel (Back+Start a megnyitáshoz; tartsd az LB+RB-t a mozgatáshoz/görgetéshez). Támogatja az Xbox, PlayStation (DualSense/DualShock) és Switch Pro kontrollereket."
+        },
+        "backend": {
+          "name": "Kontroller backend",
+          "description": "Az Auto a legjobb elérhető beviteli backendet választja. Válaszd az XInputot a maximális kompatibilitásért, vagy a GameInputot újabb Windows-verziókon.",
+          "auto": "Auto"
+        }
       }
     },
     "emulator": {

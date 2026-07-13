@@ -165,6 +165,17 @@ function translateUI(lang, locale, template) {
     $("#option_disableHardwareAccel option[value='true']").text(clear(template.settings.common.enable));
     $("#option_disableHardwareAccel option[value='false']").text(clear(template.settings.common.disable));
   }
+  if (template.settings.general.controller) {
+    const ctl = template.settings.general.controller;
+    $('#controller-settings-title').text(clear(ctl.title));
+    $('#controller-enabled-label').text(clear(ctl.enabled.name));
+    $('#controller-enabled-help').text(clear(ctl.enabled.description));
+    $("#option_controllerEnabled option[value='true']").text(clear(template.settings.common.enable));
+    $("#option_controllerEnabled option[value='false']").text(clear(template.settings.common.disable));
+    $('#controller-backend-label').text(clear(ctl.backend.name));
+    $('#controller-backend-help').text(clear(ctl.backend.description));
+    $("#option_controllerBackend option[value='auto']").text(clear(ctl.backend.auto));
+  }
   if (template.settings.general.theme) {
     $('#theme-settings-label').text(clear(template.settings.general.theme.name));
     $('#theme-settings-help').text(clear(template.settings.general.theme.description));

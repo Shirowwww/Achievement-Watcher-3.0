@@ -179,6 +179,18 @@
       "theme": {
         "name": "Motyw",
         "description": "Motyw kolorystyczny okna aplikacji (natychmiastowy podgląd, zapis przyciskiem OK)."
+      },
+      "controller": {
+        "title": "Kontroler",
+        "enabled": {
+          "name": "Sterowanie nakładką za pomocą kontrolera",
+          "description": "Otwieraj i przesuwaj nakładkę w grze kontrolerem (Back+Start, aby otworzyć; przytrzymaj LB+RB, aby przesuwać/przewijać). Obsługuje Xbox, PlayStation (DualSense/DualShock) i Switch Pro."
+        },
+        "backend": {
+          "name": "Backend kontrolera",
+          "description": "Auto wybiera najlepszy dostępny backend wejścia. Wybierz XInput dla maksymalnej zgodności lub GameInput w nowszych wersjach Windows.",
+          "auto": "Auto"
+        }
       }
     },
     "emulator": {

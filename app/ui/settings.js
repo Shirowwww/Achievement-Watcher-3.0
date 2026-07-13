@@ -141,6 +141,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#option_startWithWindows').val(String(app.config.general.startWithWindows !== false)).change();
       $('#option_disableHardwareAccel').val(String(app.config.general.disableHardwareAccel === true)).change();
       $('#option_closeToTray').val(String(app.config.general.closeToTray !== false)).change();
+      if (!app.config.controller) app.config.controller = {};
+      $('#option_controllerEnabled').val(String(app.config.controller.enabled === true)).change();
+      $('#option_controllerBackend').val(app.config.controller.backend || 'auto').change();
       $('#option_theme').val(app.config.general.theme || 'default').change();
       ipcRenderer
         .invoke('startup:get-start-with-windows')
@@ -435,6 +438,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       app.config.general.disableHardwareAccel = $('#option_disableHardwareAccel').val() === 'true';
       app.config.general.closeToTray = $('#option_closeToTray').val() !== 'false';
       app.config.general.theme = $('#option_theme').val() || 'default';
+
+      if (!app.config.controller) app.config.controller = {};
+      app.config.controller.enabled = $('#option_controllerEnabled').val() === 'true';
+      app.config.controller.backend = $('#option_controllerBackend').val() || 'auto';
 
       $('#options-source .right')
         .children('select')

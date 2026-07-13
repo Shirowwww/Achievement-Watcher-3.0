@@ -230,33 +230,43 @@ async function getSteamData(request) {
       currentlyscraping.steamhunters = false;
       // The userlist scrape sets info.users only on success — a failed page load leaves it undefined,
       // which must not throw away the (possibly partial) achievements fetched above.
-      let u = (info.users || []).map((user) => user.steamId);
 
-      for (let id of u) {
-        userid = id;
-        const url = `https://steamcommunity.com/profiles/${userid}/stats/${appid}/?xml=1`; // this for all data
-        const res = await fetch(url);
-        xml = await res.text();
-        validXml = !(xml.startsWith('<!DOCTYPE html') || xml.includes('<html'));
-        if (!validXml) continue;
+      // Try each candidate owner's public profile: read its XML stats, and if every achievement has a
+      // localized description, adopt that profile's schema. Returns true once one succeeds.
+      const tryOwnerProfiles = async (ids) => {
+        for (let id of ids) {
+          userid = id;
+          const url = `https://steamcommunity.com/profiles/${userid}/stats/${appid}/?xml=1`; // this for all data
+          const res = await fetch(url);
+          xml = await res.text();
+          validXml = !(xml.startsWith('<!DOCTYPE html') || xml.includes('<html'));
+          if (!validXml) continue;
 
-        const parser = createXmlParser();
-        const data = parser.parse(xml);
-        const achievements = data?.playerstats?.achievements?.achievement || [];
-        const list = achievements.map((a) => {
-          const unlocked = a['@_closed'] === '1';
-          const name = a.name.__cdata;
-          const description = a.description.__cdata;
-          return { name, description, unlocked };
-        });
-        const allgood = list.every((a) => a.description);
-        if (!allgood) continue;
-        const url2 = `https://steamcommunity.com/profiles/${userid}/stats/${appid}?l=${lang.api}`; // this for name and description, match them via icon hash
-        info.achievements = await fetchSteamCommunityAchievements(url2);
-        currentlyscraping.steamcommunity = false;
-        return info;
-      }
-      // TODO: fallback to steamuserids if noone on steamhunters has 100% the game
+          const parser = createXmlParser();
+          const data = parser.parse(xml);
+          const achievements = data?.playerstats?.achievements?.achievement || [];
+          const list = achievements.map((a) => {
+            const unlocked = a['@_closed'] === '1';
+            const name = a.name.__cdata;
+            const description = a.description.__cdata;
+            return { name, description, unlocked };
+          });
+          const allgood = list.length > 0 && list.every((a) => a.description);
+          if (!allgood) continue;
+          const url2 = `https://steamcommunity.com/profiles/${userid}/stats/${appid}?l=${lang.api}`; // this for name and description, match them via icon hash
+          info.achievements = await fetchSteamCommunityAchievements(url2);
+          currentlyscraping.steamcommunity = false;
+          return true;
+        }
+        return false;
+      };
+
+      if (await tryOwnerProfiles((info.users || []).map((user) => user.steamId))) return info;
+
+      // Fallback when no SteamHunters owner 100%'d the game: try the top-owners SteamID pool (prolific
+      // collectors with public profiles, scraped from SteamLadder and cached).
+      const owners = await fetchTopOwners();
+      if (owners.length && (await tryOwnerProfiles(owners))) return info;
       return info;
     }
 
@@ -757,6 +767,7 @@ let watchdogStatusInterval = null;
 function handleMonitorMessage(msg) {
   try {
     if (msg && Array.isArray(msg.argv)) parseArgs(minimist(msg.argv));
+    else if (msg && msg.overlayControl) handleOverlayControl(msg.overlayControl.action, msg.overlayControl.payload);
   } catch (err) {
     debug.log(`[monitor] message handling failed: ${err.message || err}`);
   }
@@ -1069,6 +1080,150 @@ async function scrapeWithPuppeteer(info = { appid: 269770 }, alternate) {
   }
 }
 
+// Drop the payloads a SteamDB/HTML scrape never reads: video, fonts and (optionally) images. The
+// shared SteamHunters page does this via startPuppeteer(strip), but the on-demand SteamDB pages open
+// their own page — without this they pull the whole capsule/screenshot gallery over the wire.
+async function blockHeavyResources(page, { keepImages = false } = {}) {
+  const blockedTypes = new Set(['media', 'font', 'stylesheet']);
+  if (!keepImages) blockedTypes.add('image');
+  await page.setRequestInterception(true);
+  page.on('request', (req) => {
+    if (blockedTypes.has(req.resourceType()) || /\.(mp4|webm|gif|woff2?|ttf|otf)(\?|$)/i.test(req.url())) req.abort();
+    else req.continue();
+  });
+}
+
+// SteamDB library-capsule fallback: modern Steam covers live under a hashed store_item_assets path
+// that cannot be derived from the appid, so when every guessable portrait URL 404s the game ends up
+// with no cover. SteamDB's app-info page lists the real asset links — scrape it (stealth browser: it
+// 403s plain requests) and cache the result for 30 days. Returns an absolute image URL or null.
+const steamdbCoverInFlight = new Map();
+async function fetchSteamDbCover(appid) {
+  const id = String(appid || '').trim();
+  if (!/^\d+$/.test(id)) return null;
+  const cacheFile = path.join(userData, 'steam_cache', 'steamdb_cover', `${id}.json`);
+  const TTL = 30 * 24 * 60 * 60 * 1000;
+  try {
+    if (fs.existsSync(cacheFile) && Date.now() - fs.statSync(cacheFile).mtimeMs < TTL) {
+      const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+      return cached && cached.url ? cached.url : null;
+    }
+  } catch {
+    /* stale/corrupt -> refetch */
+  }
+  if (steamdbCoverInFlight.has(id)) return steamdbCoverInFlight.get(id);
+
+  const pending = (async () => {
+    const steamdbCover = require(path.join(app.getAppPath(), 'parser/steamdbCover.js'));
+    let page = null;
+    try {
+      await startPuppeteer(true, false);
+      page = await puppeteerWindow.context.newPage();
+      await blockHeavyResources(page);
+      await page.setUserAgent(
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121 Safari/537.36'
+      );
+      await page.goto(`https://steamdb.info/app/${id}/info/`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+      await page
+        .waitForSelector('a[href*="library_600x900.jpg"], a[href*="library_capsule"], #js-assets-table', { timeout: 8000 })
+        .catch(() => {});
+      const html = await page.evaluate(() => {
+        const assets = document.querySelector('#js-assets-table');
+        return assets ? assets.outerHTML : document.documentElement.innerHTML;
+      });
+      const url = steamdbCover.coverFromHtml(id, html);
+      if (url) {
+        try {
+          fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
+          fs.writeFileSync(cacheFile, JSON.stringify({ appid: id, url }, null, 2));
+        } catch {
+          /* cache write failure is non-fatal */
+        }
+        debug.log(`[${id}] SteamDB cover: ${url}`);
+        return url;
+      }
+      debug.log(`[${id}] SteamDB cover: no library asset found`);
+      return null;
+    } catch (err) {
+      debug.log(`[${id}] SteamDB cover fetch failed: ${err.message || err}`);
+      return null;
+    } finally {
+      if (page) await page.close().catch(() => {});
+    }
+  })();
+  steamdbCoverInFlight.set(id, pending);
+  try {
+    return await pending;
+  } finally {
+    steamdbCoverInFlight.delete(id);
+  }
+}
+
+ipcMain.handle('get-steamdb-cover', async (event, appid) => {
+  return await fetchSteamDbCover(appid);
+});
+
+// Top-owners SteamID pool. Last-resort seed for the keyless schema/rarity scrape: when no SteamHunters
+// owner 100%'d a game, these prolific collectors' public profiles are tried instead. Scraped from
+// SteamLadder through the stealth browser (it challenges plain requests) and disk-cached for 7 days.
+let topOwnersInFlight = null;
+async function fetchTopOwners() {
+  const cacheFile = path.join(userData, 'steam_cache', 'topOwners.json');
+  const TTL = 7 * 24 * 60 * 60 * 1000;
+  try {
+    if (fs.existsSync(cacheFile) && Date.now() - fs.statSync(cacheFile).mtimeMs < TTL) {
+      const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+      if (Array.isArray(cached) && cached.length) return cached;
+    }
+  } catch {
+    /* stale/corrupt -> refetch */
+  }
+  if (topOwnersInFlight) return topOwnersInFlight;
+
+  topOwnersInFlight = (async () => {
+    const topOwners = require(path.join(app.getAppPath(), 'parser/topOwners.js'));
+    let page = null;
+    try {
+      await startPuppeteer(true, false);
+      page = await puppeteerWindow.context.newPage();
+      await blockHeavyResources(page);
+      await page.setUserAgent(
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123 Safari/537.36'
+      );
+      await page.goto(topOwners.DEFAULT_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
+      await page.waitForSelector('a[href^="/profile/"]', { timeout: 12000 }).catch(() => {});
+      const html = await page.content();
+      const ids = topOwners.extractSteamIdsFromHtml(html, 250);
+      if (ids.length >= 10) {
+        try {
+          fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
+          fs.writeFileSync(cacheFile, JSON.stringify(ids, null, 0));
+        } catch {
+          /* cache write failure is non-fatal */
+        }
+        debug.log(`[top-owners] scraped ${ids.length} SteamIDs`);
+        return ids;
+      }
+      debug.log(`[top-owners] not enough SteamIDs found (${ids.length})`);
+      return [];
+    } catch (err) {
+      debug.log(`[top-owners] fetch failed: ${err.message || err}`);
+      return [];
+    } finally {
+      if (page) await page.close().catch(() => {});
+    }
+  })();
+  try {
+    return await topOwnersInFlight;
+  } finally {
+    topOwnersInFlight = null;
+  }
+}
+
+ipcMain.handle('get-top-owners', async () => {
+  return await fetchTopOwners();
+});
+
 // SteamDB launch-metadata fallback: when local exe detection fails, scrape the game's SteamDB config
 // page (through the stealth browser — it 403s plain requests) to learn the launch executable's
 // process name so the watchdog can still detect the game running. Disk-cached for 30 days since
@@ -1095,6 +1250,7 @@ async function fetchSteamDbLaunch(appid) {
     try {
       await startPuppeteer(true, false);
       page = await puppeteerWindow.context.newPage();
+      await blockHeavyResources(page);
       await page.setUserAgent(
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121 Safari/537.36'
       );
@@ -1563,6 +1719,68 @@ function toggleOverlayClickThrough() {
   if (!overlayWindow || overlayWindow.isDestroyed()) return;
   overlayClickThrough = !overlayClickThrough;
   overlayWindow.setIgnoreMouseEvents(overlayClickThrough, { forward: true });
+}
+
+// --- Controller-driven overlay control (Tier 4) ----------------------------------------------------
+// The Watchdog forwards { overlayControl: { action, payload } } over IPC when a controller drives the
+// overlay (see handleMonitorMessage). These reuse the same window ops as the keyboard shortcuts.
+let overlaySnapIndex = 0;
+function moveOverlayRelative(dx, dy) {
+  const x = Number(dx) || 0;
+  const y = Number(dy) || 0;
+  if (!x && !y) return;
+  nudgeOverlay(x, y);
+}
+function cycleOverlaySnapPreset() {
+  overlaySnapIndex = (overlaySnapIndex % 5) + 1;
+  snapOverlay(overlaySnapIndex);
+}
+function scrollOverlayPage(direction) {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  const sign = direction === 'up' ? -1 : 1;
+  // The overlay content scrolls inside .scroll-container; nudge it by ~55% of the viewport per repeat.
+  overlayWindow.webContents
+    .executeJavaScript(
+      `(() => { const el = document.querySelector('.scroll-container') || document.scrollingElement || document.body;` +
+        ` if (el) el.scrollBy({ top: ${sign} * Math.round(window.innerHeight * 0.55), behavior: 'smooth' }); })();`,
+      true
+    )
+    .catch(() => {});
+}
+function setOverlayControlMode(active) {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  // In control mode the overlay must receive stick/dpad-driven moves, so force it interactive
+  // (not click-through). Leaving control mode restores the last click-through state.
+  if (active) {
+    overlayWindow.setIgnoreMouseEvents(false);
+  } else {
+    overlayWindow.setIgnoreMouseEvents(overlayClickThrough, { forward: true });
+  }
+}
+function handleOverlayControl(action, payload = {}) {
+  switch (String(action || '')) {
+    case 'move-relative':
+      moveOverlayRelative(payload.dx, payload.dy);
+      return;
+    case 'scroll-page':
+      scrollOverlayPage(payload.direction);
+      return;
+    case 'nudge': {
+      const step = 20;
+      const map = { up: [0, -step], down: [0, step], left: [-step, 0], right: [step, 0] };
+      const d = map[payload.direction];
+      if (d) nudgeOverlay(d[0], d[1]);
+      return;
+    }
+    case 'snap-cycle':
+      cycleOverlaySnapPreset();
+      return;
+    case 'control-mode':
+      setOverlayControlMode(payload.active === true);
+      return;
+    default:
+      return;
+  }
 }
 const OVERLAY_SHORTCUT_KEYS = ['Up', 'Down', 'Left', 'Right', '1', '2', '3', '4', '5', 'C'];
 function registerOverlayShortcuts() {

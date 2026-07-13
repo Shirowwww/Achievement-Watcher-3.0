@@ -10,6 +10,18 @@ process.on('unhandledRejection', (reason, promise) => {
   debug?.error?.(`Unhandled promise rejection: ${reason}`);
 });
 
+// Terminate the controller HID worker thread cleanly when the monitor is asked to stop.
+for (const signal of ['SIGTERM', 'SIGINT']) {
+  try {
+    process.on(signal, () => {
+      try {
+        overlayControllerService?.shutdown('signal');
+      } catch {}
+      process.exit();
+    });
+  } catch {}
+}
+
 const debug = require('./util/log.js');
 const instance = new (require('single-instance'))('Achievement Watchdog');
 const os = require('os');
@@ -44,6 +56,7 @@ const { crc32 } = require('crc');
 const { isWinRTAvailable } = require('./util/powertoast');
 const { isFullscreenAppRunning } = require('./queryUserNotificationState.js');
 const GlobalHotkey = require('./util/globalHotkey.js');
+const { createOverlayControllerService } = require('./console/controller/overlay-controller-service.js');
 const humanizeDuration = require('humanize-duration');
 const { resolvePowerShell } = require('./util/powershell.js');
 const startApps = require('./util/startApps.js');
@@ -148,11 +161,98 @@ function steamLibraryImage(appid) {
 
 function RegisterOverlayHotkey(hotkey) {
   overlayHotkey.register(hotkey, () => {
-      if (runningAppid) {
-        SpawnOverlayNotification([`--wintype=overlay`, `--appid=${runningAppid}`, `--description=${overlayOpened ? 'close' : 'open'}`]);
-        overlayOpened = !overlayOpened;
-      }
+    toggleOverlayForRunningGame();
   });
+}
+
+// Shared open/close path for the overlay of the currently running game — used by both the keyboard
+// hotkey and the controller "overlay.toggle" action so they stay in sync (overlayOpened tracks state).
+function toggleOverlayForRunningGame() {
+  if (!runningAppid) return;
+  SpawnOverlayNotification([`--wintype=overlay`, `--appid=${runningAppid}`, `--description=${overlayOpened ? 'close' : 'open'}`]);
+  overlayOpened = !overlayOpened;
+  overlayControllerService?.notifyOverlayPresentationChanged(overlayOpened, 'overlay-toggled');
+}
+
+// --- Native controller → overlay control (Tier 4) --------------------------------------------------
+// A controller can toggle and drive the in-game overlay while the game is focused. Polling + HID
+// live here in the Watchdog (koffi single-runtime, like the WQL monitor); overlay window ops that the
+// main process owns (move/scroll/nudge/snap/click-through) are forwarded over the existing 'ipc'
+// channel as { overlayControl } messages (init.js handleMonitorMessage routes them).
+let overlayControllerService = null;
+
+// Parse a stored "BACK+START" binding string into the button-name array the manager expects.
+function parseControllerBinding(value, fallback) {
+  const parts = String(value || '')
+    .split('+')
+    .map((p) => p.trim().toUpperCase())
+    .filter(Boolean);
+  return parts.length ? parts : fallback;
+}
+
+function controllerOptions() {
+  return (app && app.options && app.options.controller) || {};
+}
+
+function forwardOverlayControl(action, payload) {
+  if (typeof process.send === 'function' && process.connected) {
+    try {
+      process.send({ overlayControl: { action, payload: payload || {} } });
+    } catch (err) {
+      debug.error(`[controller] overlayControl IPC failed: ${err}`);
+    }
+  }
+}
+
+function handleControllerAction(type, payload = {}) {
+  const action = String(type || '');
+  switch (action) {
+    case 'overlay.toggle':
+      toggleOverlayForRunningGame();
+      return;
+    case 'overlay.control-mode':
+      // Entering control mode makes the overlay interactive so stick/dpad ops land; leaving restores it.
+      forwardOverlayControl('control-mode', { active: payload.active === true });
+      return;
+    case 'overlay.move-relative':
+    case 'overlay.scroll-page':
+    case 'overlay.nudge':
+    case 'overlay.snap-cycle':
+      forwardOverlayControl(action.replace('overlay.', ''), payload);
+      return;
+    default:
+      return;
+  }
+}
+
+function syncOverlayController() {
+  const opts = controllerOptions();
+  if (!overlayControllerService) {
+    // Nothing to do until the user opts in (avoids loading koffi/HID when the feature is off).
+    if (opts.enabled !== true) return;
+    overlayControllerService = createOverlayControllerService({
+      logger: {
+        info: (event, data) => debug.log(`[controller] ${event} ${data ? JSON.stringify(data) : ''}`),
+        warn: (event, data) => debug.warn(`[controller] ${event} ${data ? JSON.stringify(data) : ''}`),
+        error: (event, data) => debug.error(`[controller] ${event} ${data ? JSON.stringify(data) : ''}`),
+        debug: () => {},
+      },
+      isSupportEnabled: () => controllerOptions().enabled === true,
+      getPreferredBackend: () => controllerOptions().backend || 'auto',
+      isDebugLoggingEnabled: () => controllerOptions().debugLogging === true,
+      getOverlayToggleBinding: () => parseControllerBinding(controllerOptions().toggleBinding, ['BACK', 'START']),
+      getOverlayControlModeBinding: () =>
+        parseControllerBinding(controllerOptions().controlModeBinding, ['LEFT_SHOULDER', 'RIGHT_SHOULDER']),
+      canEnterOverlayControlMode: () => overlayOpened === true,
+      isOverlayPresented: () => overlayOpened === true,
+      onAction: handleControllerAction,
+    });
+  }
+  try {
+    overlayControllerService.sync('settings');
+  } catch (err) {
+    debug.error(`[controller] sync failed: ${err}`);
+  }
 }
 
 function SpawnOverlayNotification(args) {
@@ -230,6 +330,7 @@ var app = {
       debug.log(self.options);
 
       RegisterOverlayHotkey(self.options.overlay.hotkey);
+      syncOverlayController();
 
       if ((await isWinRTAvailable()) === true && self.options.notification_transport.winRT === true) {
         debug.log('[Toast] will use WinRT');
@@ -812,7 +913,9 @@ var app = {
 
         monitor.on('disable-overlay', () => {
           runningAppid = null;
+          overlayOpened = false;
           SpawnOverlayNotification([`--wintype=overlay`, `--appid=0`]);
+          overlayControllerService?.notifyOverlayPresentationChanged(false, 'game-exited');
         });
 
         monitor.on('enable-overlay', (appid) => {

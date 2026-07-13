@@ -179,6 +179,18 @@
       "theme": {
         "name": "Motiv",
         "description": "Barevný motiv okna aplikace (okamžitý náhled, uložení tlačítkem OK)."
+      },
+      "controller": {
+        "title": "Ovladač",
+        "enabled": {
+          "name": "Ovládat překryv ovladačem",
+          "description": "Otevírejte a posouvejte herní překryv ovladačem (Back+Start pro otevření; podržte LB+RB pro posun/rolování). Podporuje Xbox, PlayStation (DualSense/DualShock) a Switch Pro."
+        },
+        "backend": {
+          "name": "Backend ovladače",
+          "description": "Auto zvolí nejlepší dostupný vstupní backend. Zvolte XInput pro maximální kompatibilitu nebo GameInput na novějších verzích Windows.",
+          "auto": "Auto"
+        }
       }
     },
     "emulator": {

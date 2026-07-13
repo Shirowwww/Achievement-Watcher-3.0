@@ -179,6 +179,18 @@
       "theme": {
         "name": "ธีม",
         "description": "ธีมสีของหน้าต่างแอป (แสดงตัวอย่างทันที และบันทึกเมื่อกดตกลง)"
+      },
+      "controller": {
+        "title": "จอยเกม",
+        "enabled": {
+          "name": "ควบคุมโอเวอร์เลย์ด้วยจอยเกม",
+          "description": "เปิดและย้ายโอเวอร์เลย์ในเกมด้วยจอยเกม (Back+Start เพื่อเปิด; กด LB+RB ค้างเพื่อย้าย/เลื่อน) รองรับ Xbox, PlayStation (DualSense/DualShock) และ Switch Pro"
+        },
+        "backend": {
+          "name": "แบ็กเอนด์ของจอยเกม",
+          "description": "Auto จะเลือกแบ็กเอนด์อินพุตที่ดีที่สุดที่มี เลือก XInput เพื่อความเข้ากันได้สูงสุด หรือ GameInput บน Windows รุ่นใหม่",
+          "auto": "อัตโนมัติ"
+        }
       }
     },
     "emulator": {

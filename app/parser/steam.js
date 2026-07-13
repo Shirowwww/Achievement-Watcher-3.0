@@ -617,6 +617,14 @@ async function getSteamData(cfg) {
       }
       result.img.portrait = portrait_options.shift();
     }
+    // Every guessable portrait URL 404'd — for modern titles the real capsule lives under a hashed
+    // store_item_assets path we cannot derive. Ask SteamDB for the actual asset link (main process:
+    // it needs the stealth browser; result is disk-cached for 30 days).
+    if (!result.img.portrait) {
+      const { ipcRenderer } = require('electron');
+      const steamdbPortrait = await ipcRenderer.invoke('get-steamdb-cover', result.appid).catch(() => null);
+      if (steamdbPortrait) result.img.portrait = steamdbPortrait;
+    }
   } catch (err) {
     console.log(err);
   }

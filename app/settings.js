@@ -104,6 +104,25 @@ module.exports.load = () => {
     delete options.overlay.scale;
     delete options.overlay.duration;
 
+    // Native controller → overlay control (Tier 4). Opt-in: loads the koffi/HID stack in the Watchdog
+    // only when enabled. Bindings are stored as "BUTTON+BUTTON" strings the watchdog parses.
+    if (!options.controller || typeof options.controller !== 'object') options.controller = {};
+    if (typeof options.controller.enabled !== 'boolean') {
+      options.controller.enabled = false;
+    }
+    if (!['auto', 'xinput', 'gameinput'].includes(options.controller.backend)) {
+      options.controller.backend = 'auto';
+    }
+    if (typeof options.controller.toggleBinding !== 'string' || !options.controller.toggleBinding) {
+      options.controller.toggleBinding = 'BACK+START';
+    }
+    if (typeof options.controller.controlModeBinding !== 'string' || !options.controller.controlModeBinding) {
+      options.controller.controlModeBinding = 'LEFT_SHOULDER+RIGHT_SHOULDER';
+    }
+    if (typeof options.controller.debugLogging !== 'boolean') {
+      options.controller.debugLogging = false;
+    }
+
     if (typeof options.achievement.thumbnailPortrait !== 'boolean') {
       options.achievement.thumbnailPortrait = false;
     }

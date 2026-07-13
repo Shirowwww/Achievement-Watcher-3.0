@@ -179,6 +179,18 @@
       "theme": {
         "name": "Tema",
         "description": "Tema de cores da janela da aplicação (pré-visualização imediata, guardado com OK)."
+      },
+      "controller": {
+        "title": "Comando",
+        "enabled": {
+          "name": "Controlar a sobreposição com um comando",
+          "description": "Abra e mova a sobreposição no jogo com um comando (Back+Start para abrir; mantenha LB+RB para mover/deslocar). Compatível com Xbox, PlayStation (DualSense/DualShock) e Switch Pro."
+        },
+        "backend": {
+          "name": "Backend do comando",
+          "description": "Auto escolhe o melhor backend de entrada disponível. Escolha XInput para máxima compatibilidade ou GameInput em versões recentes do Windows.",
+          "auto": "Auto"
+        }
       }
     },
     "emulator": {

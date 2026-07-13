@@ -179,6 +179,18 @@
       "theme": {
         "name": "Tema",
         "description": "Tema de color de la ventana de la aplicación (vista previa inmediata, se guarda con Aceptar)."
+      },
+      "controller": {
+        "title": "Mando",
+        "enabled": {
+          "name": "Controlar la superposición con un mando",
+          "description": "Abre y mueve la superposición en el juego con un mando (Back+Start para abrir; mantén LB+RB para mover/desplazar). Compatible con Xbox, PlayStation (DualSense/DualShock) y Switch Pro."
+        },
+        "backend": {
+          "name": "Backend del mando",
+          "description": "Auto elige el mejor backend de entrada disponible. Elige XInput para máxima compatibilidad, o GameInput en versiones recientes de Windows.",
+          "auto": "Auto"
+        }
       }
     },
     "emulator": {
