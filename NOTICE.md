@@ -20,3 +20,4 @@ Achievement Watcher is licensed under the [LGPL-3.0 License](./LICENSE).
 - **GOG Galaxy official achievement reader** – ported from [@PSerban93/Achievements](https://github.com/PSerban93/Achievements) (MIT, Copyright 2025 JokerVerse)
 - **Ubisoft Connect official achievement reader + uplay-steam mapping asset** – ported from [@PSerban93/Achievements](https://github.com/PSerban93/Achievements) (MIT, Copyright 2025 JokerVerse)
 - **Steam appcache binary KV reader (local user stats)** – ported from [@PSerban93/Achievements](https://github.com/PSerban93/Achievements) (MIT, Copyright 2025 JokerVerse)
+- **Epic Games official achievement reader + OAuth connect flow** – ported from [@PSerban93/Achievements](https://github.com/PSerban93/Achievements) (MIT, Copyright 2025 JokerVerse)
