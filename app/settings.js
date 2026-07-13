@@ -166,6 +166,10 @@ module.exports.load = () => {
       options.achievement_source.gogOfficial = true;
     }
 
+    if (typeof options.achievement_source.ubisoftOfficial !== 'boolean') {
+      options.achievement_source.ubisoftOfficial = true;
+    }
+
     if (typeof options.achievement_source.epic !== 'boolean') {
       options.achievement_source.epic = true;
     }
@@ -372,6 +376,7 @@ module.exports.load = () => {
         lumaPlay: false,
         gog: true,
         gogOfficial: true,
+        ubisoftOfficial: true,
         epic: true,
         ea: true,
         importCache: true,
