@@ -390,7 +390,15 @@ module.exports.getAchievementsFromAPI = async (cfg) => {
     }
 
     if (time.steam > time.local) {
-      if (cfg.key) {
+      // Local-first: the freshly rewritten bin IS the state we're after — parse it together with
+      // the sibling UserGameStatsSchema bin (statId/bit mapping) instead of asking the network.
+      // Works offline/keyless and also carries achievement progress. Only when the schema bin is
+      // absent/unreadable does the old WebAPI/steamcommunity round-trip run.
+      const steamOfficial = require('./steamOfficial.js');
+      result = steamOfficial.readLocalUserStats({ statsDir: cfg.path, appid: cfg.appID, accountId: cfg.user.user });
+      if (result) {
+        debug.log(`[${cfg.appID}] user stats read locally from appcache (${result.filter((r) => r.achieved).length} unlocked)`);
+      } else if (cfg.key) {
         result = await getSteamUserStats(cfg);
       } else {
         result = await getSteamUserStatsFromSRV(cfg.user.id, cfg.appID);

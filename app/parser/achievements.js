@@ -45,6 +45,7 @@ module.exports.initDebug = ({ isDev, userDataPath }) => {
   gog.initDebug({ isDev, userDataPath });
   gogOfficial.initDebug({ isDev, userDataPath });
   ubisoftOfficial.initDebug({ isDev, userDataPath });
+  require(path.join(appPath, 'steamOfficial.js')).initDebug({ isDev, userDataPath });
   epic.initDebug({ isDev, userDataPath });
   ea.initDebug({ isDev, userDataPath });
   steam.initDebug({ isDev, userDataPath });
