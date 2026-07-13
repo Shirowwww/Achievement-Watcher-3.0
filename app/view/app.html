@@ -619,6 +619,32 @@
                   </li>
                 </ul>
               </div>
+
+              <!-- Epic account connect (standalone card — NOT an arrow-list li, so it never
+                   disturbs the nth-child i18n bindings above). Modeled on the emulator-login card.
+                   Connecting unlocks per-player achievement state for the epic-official source;
+                   the schema + rarity already work without connecting. -->
+              <div id="epic-connect" class="emulator-login is-visible">
+                <div class="emulator-login-heading">
+                  <div class="title"><i class="fas fa-fw fa-gamepad"></i> <span id="epic-connect-title">Epic Games account</span></div>
+                  <span class="emulator-warning" id="epic-connect-badge" style="display:none"><i class="fas fa-check-circle"></i> <span id="epic-connect-badge-label">Connected</span></span>
+                </div>
+                <p id="epic-connect-desc">Optional. Connect your Epic account to show which achievements you have unlocked in installed Epic games. Achievement names, descriptions and rarity already work without connecting. Your Epic token is stored encrypted on this PC.</p>
+                <div class="emulator-login-actions">
+                  <button type="button" id="epic-connect-btn" class="btn">
+                    <span class="emulator-test-icon"><i class="fas fa-sign-in-alt"></i></span>
+                    <span class="emulator-test-copy">
+                      <strong id="epic-connect-btn-label">Connect Epic account</strong>
+                      <small id="epic-connect-btn-hint">opens the Epic sign-in window</small>
+                    </span>
+                    <i class="fas fa-chevron-right emulator-test-arrow"></i>
+                  </button>
+                  <button type="button" id="epic-disconnect-btn" class="btn secondary" style="display:none">
+                    <span class="emulator-test-copy"><strong id="epic-disconnect-btn-label">Disconnect</strong></span>
+                  </button>
+                  <span id="epic-connect-status" aria-live="polite"></span>
+                </div>
+              </div>
             </section>
 
             <section class="content platform-guide-settings" data-view="guide">
@@ -1354,32 +1380,6 @@
                   </li>
 
                 </ul>
-              </div>
-
-              <!-- Epic account connect (standalone card — NOT an arrow-list li, so it never
-                   disturbs the nth-child i18n bindings above). Modeled on the emulator-login card.
-                   Connecting unlocks per-player achievement state for the epic-official source;
-                   the schema + rarity already work without connecting. -->
-              <div id="epic-connect" class="emulator-login is-visible">
-                <div class="emulator-login-heading">
-                  <div class="title"><i class="fas fa-fw fa-gamepad"></i> <span id="epic-connect-title">Epic Games account</span></div>
-                  <span class="emulator-warning" id="epic-connect-badge" style="display:none"><i class="fas fa-check-circle"></i> <span id="epic-connect-badge-label">Connected</span></span>
-                </div>
-                <p id="epic-connect-desc">Optional. Connect your Epic account to show which achievements you have unlocked in installed Epic games. Achievement names, descriptions and rarity already work without connecting. Your Epic token is stored encrypted on this PC.</p>
-                <div class="emulator-login-actions">
-                  <button type="button" id="epic-connect-btn" class="btn">
-                    <span class="emulator-test-icon"><i class="fas fa-sign-in-alt"></i></span>
-                    <span class="emulator-test-copy">
-                      <strong id="epic-connect-btn-label">Connect Epic account</strong>
-                      <small id="epic-connect-btn-hint">opens the Epic sign-in window</small>
-                    </span>
-                    <i class="fas fa-chevron-right emulator-test-arrow"></i>
-                  </button>
-                  <button type="button" id="epic-disconnect-btn" class="btn secondary" style="display:none">
-                    <span class="emulator-test-copy"><strong id="epic-disconnect-btn-label">Disconnect</strong></span>
-                  </button>
-                  <span id="epic-connect-status" aria-live="polite"></span>
-                </div>
               </div>
             </section>
           </div>
