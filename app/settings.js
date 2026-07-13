@@ -174,6 +174,10 @@ module.exports.load = () => {
       options.achievement_source.epic = true;
     }
 
+    if (typeof options.achievement_source.epicOfficial !== 'boolean') {
+      options.achievement_source.epicOfficial = true;
+    }
+
     if (typeof options.achievement_source.ea !== 'boolean') {
       options.achievement_source.ea = true;
     }
@@ -378,6 +382,7 @@ module.exports.load = () => {
         gogOfficial: true,
         ubisoftOfficial: true,
         epic: true,
+        epicOfficial: true,
         ea: true,
         importCache: true,
       },

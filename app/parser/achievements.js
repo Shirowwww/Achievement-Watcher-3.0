@@ -8,6 +8,7 @@ const gog = require(path.join(appPath, 'gog.js'));
 const gogOfficial = require(path.join(appPath, 'gogOfficial.js'));
 const ubisoftOfficial = require(path.join(appPath, 'ubisoftOfficial.js'));
 const epic = require(path.join(appPath, 'epic.js'));
+const epicOfficial = require(path.join(appPath, 'epicOfficial.js'));
 const ea = require(path.join(appPath, 'ea.js'));
 const steam = require(path.join(appPath, 'steam.js'));
 const exophase = require(path.join(appPath, 'exophase.js'));
@@ -47,6 +48,7 @@ module.exports.initDebug = ({ isDev, userDataPath }) => {
   ubisoftOfficial.initDebug({ isDev, userDataPath });
   require(path.join(appPath, 'steamOfficial.js')).initDebug({ isDev, userDataPath });
   epic.initDebug({ isDev, userDataPath });
+  epicOfficial.initDebug({ isDev, userDataPath });
   ea.initDebug({ isDev, userDataPath });
   steam.initDebug({ isDev, userDataPath });
   exophase.initDebug({ isDev, userDataPath });
@@ -1005,6 +1007,15 @@ async function discover(source, steamAccFilter) {
     }
   }
 
+  //Epic official (installed Epic games — public localized schema + rarity; unlocks when connected)
+  if (source.epicOfficial) {
+    try {
+      data = data.concat(epicOfficial.scan());
+    } catch (err) {
+      debug.error(err);
+    }
+  }
+
   if (source.epic) {
     try {
       data = data.concat(await epic.scan());
@@ -1247,6 +1258,8 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       game = await gogOfficial.getGameData(appid);
     } else if (appid.data.type === 'ubisoftOfficial') {
       game = await ubisoftOfficial.getGameData(appid, option.achievement.lang);
+    } else if (appid.data.type === 'epicOfficial') {
+      game = await epicOfficial.getGameData(appid, option.achievement.lang);
     } else if (appid.source === 'epic') {
       game = await epic.getGameData({ appID: appid.appid, steamappid: appid.steamappid, lang: option.achievement.lang });
     } else {
@@ -1669,6 +1682,8 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
           root = gogOfficial.getAchievements(appid);
         } else if (appid.data.type === 'ubisoftOfficial') {
           root = ubisoftOfficial.getAchievements(appid);
+        } else if (appid.data.type === 'epicOfficial') {
+          root = await epicOfficial.getAchievements(appid);
         } else if (appid.data.type === 'cached') {
           root = await watchdog.getAchievements(appid.appid);
         } else if (appid.data.type === 'uplay') {
