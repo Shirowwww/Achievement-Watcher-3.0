@@ -649,19 +649,52 @@ ipcMain.handle('epic:login', async () => {
     };
 
     epicLoginWindow = new BrowserWindow({
-      width: 480,
-      height: 720,
+      width: 520,
+      height: 760,
       title: 'Connect Epic Games account',
+      parent: MainWin && !MainWin.isDestroyed() ? MainWin : undefined, // keep it above the app window
       autoHideMenuBar: true,
+      show: false, // shown on ready-to-show so it never flashes an empty frame or opens behind
       webPreferences: { nodeIntegration: false, contextIsolation: true, partition: 'persist:epic-login' },
+    });
+    epicLoginWindow.once('ready-to-show', () => {
+      if (epicLoginWindow && !epicLoginWindow.isDestroyed()) {
+        epicLoginWindow.show();
+        epicLoginWindow.focus();
+      }
+    });
+
+    // Epic's sign-in page offers Google / Apple / Xbox / PlayStation / Steam / Facebook SSO, each of
+    // which opens a popup window for that provider's OAuth. The app-wide setWindowOpenHandler denies
+    // all popups (anti-abuse) — that silently broke "Sign in with Google/…". Re-allow popups spawned
+    // BY the Epic login window (same session partition so the SSO cookie flows back), and watch those
+    // child windows for the redirect code too, since some providers finalize the flow in the popup.
+    const attachCapture = (contents) => {
+      const grab = () => tryCapture(contents);
+      contents.on('did-navigate', grab);
+      contents.on('did-navigate-in-page', grab);
+    };
+    epicLoginWindow.webContents.setWindowOpenHandler(() => ({
+      action: 'allow',
+      overrideBrowserWindowOptions: {
+        parent: epicLoginWindow,
+        width: 520,
+        height: 760,
+        autoHideMenuBar: true,
+        webPreferences: { nodeIntegration: false, contextIsolation: true, partition: 'persist:epic-login' },
+      },
+    }));
+    epicLoginWindow.webContents.on('did-create-window', (childWindow) => {
+      attachCapture(childWindow.webContents);
     });
 
     // After a successful sign-in the redirect page returns a JSON body with the authorizationCode.
-    // Poll it whenever navigation settles on the Epic domain; the user may bounce through 2FA first.
-    const tryCapture = async () => {
-      if (settled || !epicLoginWindow || epicLoginWindow.isDestroyed()) return;
+    // Poll it whenever navigation settles on the Epic domain; the user may bounce through 2FA/SSO first.
+    const tryCapture = async (contents) => {
+      const wc = contents && !contents.isDestroyed() ? contents : epicLoginWindow && !epicLoginWindow.isDestroyed() ? epicLoginWindow.webContents : null;
+      if (settled || !wc) return;
       try {
-        const code = await epicLoginWindow.webContents.executeJavaScript(
+        const code = await wc.executeJavaScript(
           `(async () => { try { const r = await fetch(${JSON.stringify(redirectUrl)}, { credentials: 'include' }); const j = await r.json(); return (j && (j.authorizationCode || j.code)) || ''; } catch { return ''; } })()`,
           true
         );
@@ -675,8 +708,7 @@ ipcMain.handle('epic:login', async () => {
       }
     };
 
-    epicLoginWindow.webContents.on('did-navigate', tryCapture);
-    epicLoginWindow.webContents.on('did-navigate-in-page', tryCapture);
+    attachCapture(epicLoginWindow.webContents);
     epicLoginWindow.on('closed', () => finish({ ok: false, error: 'window-closed' }));
     epicLoginWindow.loadURL(loginUrl).catch((err) => finish({ ok: false, error: String(err && err.message ? err.message : err) }));
   });
