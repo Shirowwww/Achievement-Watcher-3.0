@@ -670,6 +670,95 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       }
     });
 
+    // Epic account connect: shows unlock state for installed Epic games (epic-official source).
+    // The login window and encrypted token storage live in the main process (init.js epic:* IPC).
+    (function wireEpicConnect() {
+      const fr = () => String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
+      const T = () =>
+        fr()
+          ? {
+              connectedAs: (n) => `Connecté${n ? ' : ' + n : ''}`,
+              notConnected: 'Non connecté',
+              connecting: 'Ouverture de la fenêtre de connexion Epic…',
+              connected: 'Compte Epic connecté.',
+              cancelled: 'Connexion annulée.',
+              failed: 'Échec de la connexion Epic',
+              disconnected: 'Compte Epic déconnecté.',
+            }
+          : {
+              connectedAs: (n) => `Connected${n ? ': ' + n : ''}`,
+              notConnected: 'Not connected',
+              connecting: 'Opening the Epic sign-in window…',
+              connected: 'Epic account connected.',
+              cancelled: 'Sign-in cancelled.',
+              failed: 'Epic sign-in failed',
+              disconnected: 'Epic account disconnected.',
+            };
+      const status = $('#epic-connect-status');
+      const badge = $('#epic-connect-badge');
+      const connectBtn = $('#epic-connect-btn');
+      const disconnectBtn = $('#epic-disconnect-btn');
+      const setStatus = (text, cls = '') => status.removeClass('success error running').addClass(cls).text(text || '');
+
+      // Localize the static card labels here (kept out of loader.js's fragile nth-child i18n).
+      if (fr()) {
+        $('#epic-connect-title').text('Compte Epic Games');
+        $('#epic-connect-desc').text(
+          "Optionnel. Connecte ton compte Epic pour afficher les succès que tu as débloqués dans les jeux Epic installés. Les noms, descriptions et la rareté fonctionnent déjà sans connexion. Ton jeton Epic est stocké chiffré sur ce PC."
+        );
+        $('#epic-connect-btn-hint').text('ouvre la fenêtre de connexion Epic');
+        $('#epic-connect-badge-label').text('Connecté');
+        $('#epic-disconnect-btn-label').text('Déconnecter');
+      }
+
+      async function refresh() {
+        let s = {};
+        try {
+          s = (await ipcRenderer.invoke('epic:auth-status')) || {};
+        } catch {}
+        if (s.connected) {
+          badge.show();
+          disconnectBtn.show();
+          $('#epic-connect-btn-label').text(fr() ? 'Reconnecter' : 'Reconnect');
+          setStatus(T().connectedAs(s.displayName), 'success');
+        } else {
+          badge.hide();
+          disconnectBtn.hide();
+          $('#epic-connect-btn-label').text(fr() ? 'Connecter le compte Epic' : 'Connect Epic account');
+          if (!status.hasClass('error')) setStatus(T().notConnected);
+        }
+      }
+
+      connectBtn.off('click').on('click', async function () {
+        if (connectBtn.hasClass('disabled')) return;
+        connectBtn.addClass('disabled').css('pointer-events', 'none');
+        setStatus(T().connecting, 'running');
+        try {
+          const res = (await ipcRenderer.invoke('epic:login')) || {};
+          if (res.ok) setStatus(T().connected, 'success');
+          else if (res.error === 'window-closed') setStatus(T().cancelled, 'error');
+          else setStatus(`${T().failed}${res.error ? ': ' + res.error : ''}`, 'error');
+        } catch (err) {
+          setStatus(`${T().failed}: ${err.message || err}`, 'error');
+        } finally {
+          connectBtn.removeClass('disabled').css('pointer-events', '');
+          refresh();
+        }
+      });
+
+      disconnectBtn.off('click').on('click', async function () {
+        try {
+          await ipcRenderer.invoke('epic:logout');
+          setStatus(T().disconnected);
+        } catch (err) {
+          setStatus(`${err.message || err}`, 'error');
+        }
+        refresh();
+      });
+
+      refresh();
+    })();
+
     // Bind on the controls themselves as well as using a bubbling event above. This keeps the
     // dependency UI reliable for keyboard changes, programmatic population and the arrow buttons.
     $('#options-emulator select, #options-emulator2 select').on('change', updateEmulatorUi);
