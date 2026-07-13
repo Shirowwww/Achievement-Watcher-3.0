@@ -39,6 +39,7 @@ const shadps4Watch = require('./console/shadps4Watch.js');
 const xeniaWatch = require('./console/xeniaWatch.js');
 const eaWatch = require('./console/eaWatch.js');
 const gogWatch = require('./console/gogWatch.js');
+const ubisoftWatch = require('./console/ubisoftWatch.js');
 const { crc32 } = require('crc');
 const { isWinRTAvailable } = require('./util/powertoast');
 const { isFullscreenAppRunning } = require('./queryUserNotificationState.js');
@@ -333,6 +334,14 @@ var app = {
         await gogWatch.start({ options: self.options, getToastID: () => self.toastID, notify });
       } catch (err) {
         debug.error(`[gog] ${err}`);
+      }
+
+      // Ubisoft Connect official live achievement toasts — watches the client's spool files
+      // (protobuf unlock records appended on the spot) and diffs against a baseline.
+      try {
+        await ubisoftWatch.start({ options: self.options, getToastID: () => self.toastID, notify });
+      } catch (err) {
+        debug.error(`[ubisoft] ${err}`);
       }
     } catch (err) {
       debug.error(err);

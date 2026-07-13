@@ -7,6 +7,8 @@ const path = require('node:path');
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-ubi-official-'));
 process.env.APPDATA = tmp; // keep the rarity sidecar inside the sandbox
+// watchdog/util/log.js opens its log file at require time — give it a home inside the sandbox
+fs.mkdirSync(path.join(tmp, 'Achievement Watcher', 'logs'), { recursive: true });
 
 const ubi = require('../app/parser/ubisoftOfficial.js');
 const AdmZip = require('../app/node_modules/adm-zip');
@@ -117,6 +119,15 @@ function spoolRecord(achId, time) {
     assert.equal(entries.length, 1);
     assert.equal(entries[0].appid, '8006');
     assert.equal(entries[0].userId, 'user-guid-1');
+
+    // ---- watchdog live-watcher readers share the same formats
+    const ubiWatch = require('../watchdog/console/ubisoftWatch.js');
+    const wRecords = ubiWatch._internal.readSpool(spoolFile);
+    assert.equal(wRecords.length, 2);
+    assert.deepEqual(wRecords[0], { id: '32', time: T1 });
+    const wZip = ubiWatch._internal.readZipEntries(archivePath);
+    const wTexts = ubiWatch._internal.parseLocTxt(wZip.readEntry('fr-FR_loc.txt'));
+    assert.equal(wTexts.get('1').displayName, 'Premier sang');
 
     console.log('PASS: ubisoftOfficial spool + archive schema + contract');
   } finally {

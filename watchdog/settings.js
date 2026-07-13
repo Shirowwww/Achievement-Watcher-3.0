@@ -94,6 +94,11 @@ module.exports.load = async (cfg_file) => {
       fixFile = true;
     }
 
+    if (typeof options.achievement_source.ubisoftOfficial !== 'boolean') {
+      options.achievement_source.ubisoftOfficial = true;
+      fixFile = true;
+    }
+
     if (typeof options.achievement_source.epic !== 'boolean') {
       options.achievement_source.epic = true;
       fixFile = true;
@@ -290,6 +295,7 @@ module.exports.load = async (cfg_file) => {
         lumaPlay: false,
         gog: true,
         gogOfficial: true,
+        ubisoftOfficial: true,
         epic: true,
         ea: true,
         importCache: true,
