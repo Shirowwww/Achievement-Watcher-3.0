@@ -371,16 +371,12 @@ function translateUI(lang, locale, template) {
   $('#addCustomDir span').text(clear(template.settings.folder.add));
   if (template.settings.folder.smartFind) $('#smartFind-label').text(clear(template.settings.folder.smartFind));
   if (template.settings.folder.smartFindHelp) $('#smartFind-help').text(clear(template.settings.folder.smartFindHelp));
-  $("#settings .content[data-view='folder'] > .controls .info p")
-    .eq(0)
-    .html(clear(template.settings.folder.addInfo.join('\n')).replace(/\n/g, '<br>'));
+  $('#folder-add-info').html(clear(template.settings.folder.addInfo.join('\n')).replace(/\n/g, '<br>'));
   selector.find('.title:eq(2) span').text(clear(template.settings.folder.library));
   $('#addLibraryDir span').text(clear(template.settings.folder.addLibrary));
   if (template.settings.folder.generateConfigs) $('#generate-configs-label').text(clear(template.settings.folder.generateConfigs));
   if (template.settings.folder.generateConfigsHelp) $('#generate-configs-help').text(clear(template.settings.folder.generateConfigsHelp));
-  $("#settings .content[data-view='folder'] > .controls .info p")
-    .eq(1)
-    .html(clear(template.settings.folder.libraryInfo.join('\n')).replace(/\n/g, '<br>'));
+  $('#folder-library-info').html(clear(template.settings.folder.libraryInfo.join('\n')).replace(/\n/g, '<br>'));
   selector = $('#options-source');
   $('#source-options-title').text(clear(template.settings.source.title));
   selector.find('li:nth-child(1) .left span').text(clear(template.settings.source.legitSteam.name));
@@ -411,7 +407,7 @@ function translateUI(lang, locale, template) {
   selector.find('li:nth-child(7) .help').text(clear(template.settings.source.importCache.description));
   $('#advanced-blacklist-title').text(clear(template.settings.advanced.blacklistTitle));
   $('#blacklist_reset span').text(clear(template.settings.advanced.blacklistButton));
-  $('#blacklist_reset ~ div').text(clear(template.settings.advanced.blacklistInfo));
+  $('#blacklist-info').text(clear(template.settings.advanced.blacklistInfo));
   if (template.settings.advanced.blacklistEmpty) {
     $('#blacklist-manager')
       .attr('data-empty', clear(template.settings.advanced.blacklistEmpty))

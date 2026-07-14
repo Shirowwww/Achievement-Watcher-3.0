@@ -393,8 +393,9 @@
                 </ul>
               </div>
 
-              <ul class="adv-card" id="controller-card">
-                <li class="title"><i class="fas fa-gamepad"></i> <span id="controller-settings-title">Controller</span></li>
+              <div class="arrow-list" id="controller-card">
+                <div class="title"><i class="fas fa-gamepad"></i> <span id="controller-settings-title">Controller</span></div>
+                <ul>
                 <li class="hasHelper">
                   <div class="left"><i class="fas fa-gamepad"></i> <span id="controller-enabled-label">Control the overlay with a controller</span></div>
                   <div class="right">
@@ -420,19 +421,22 @@
                   </div>
                   <div class="help" id="controller-backend-help">Auto picks the best available input backend. Choose XInput for maximum compatibility, or GameInput on newer Windows builds.</div>
                 </li>
-              </ul>
+                </ul>
+              </div>
 
-              <ul class="adv-card">
-                <li class="title"><i class="fas fa-ban"></i> <span id="advanced-blacklist-title"></span></li>
-                <li class="blacklist-manager-row">
-                  <ul id="blacklist-manager"></ul>
-                  <div id="blacklist-empty" class="diag-line"></div>
-                </li>
-                <li>
-                  <div id="blacklist_reset" class="btn"><i class="fas fa-file-medical-alt"></i> <span></span></div>
-                  <div></div>
-                </li>
-              </ul>
+              <div class="arrow-list">
+                <div class="title"><i class="fas fa-ban"></i> <span id="advanced-blacklist-title"></span></div>
+                <ul>
+                  <li class="blacklist-manager-row">
+                    <ul id="blacklist-manager"></ul>
+                    <div id="blacklist-empty" class="diag-line"></div>
+                  </li>
+                  <li class="actions-row">
+                    <div id="blacklist_reset" class="btn"><i class="fas fa-file-medical-alt"></i> <span></span></div>
+                    <div id="blacklist-info" class="help"></div>
+                  </li>
+                </ul>
+              </div>
 
               <div id="options-steam-api">
                 <div class="title"><i class="fas fa-key"></i> <span id="steam-api-title"></span></div>
@@ -451,76 +455,80 @@
                 <span id="steam-api-security"></span>
               </div>
 
-              <div>
-                <ul>
-                  <div class="title" id="adv-mainsteam-title"><i class="fas fa-user-shield"></i> <span></span></div>
-                  <li>
-                    <div class="arrow-list">
-                      <ul id="options-mainSteam">
-                        <li class="hasHelper">
-                          <div class="left"><i class="fas fa-users"></i> <span></span></div>
-                          <div class="right">
-                            <div class="previous">
-                              <span class="arrow"><i class="fas fa-chevron-left"></i></span>
-                            </div>
-                            <select autocomplete="off" class="dropdown" id="option_mainSteam">
-                              <option value="0" selected></option>
-                            </select>
-                            <div class="next">
-                              <span class="arrow"><i class="fas fa-chevron-right"></i></span>
-                            </div>
-                          </div>
-                          <div class="help"></div>
-                        </li>
-                      </ul>
+              <div class="arrow-list">
+                <div class="title" id="adv-mainsteam-title"><i class="fas fa-user-shield"></i> <span></span></div>
+                <ul id="options-mainSteam">
+                  <li class="hasHelper">
+                    <div class="left"><i class="fas fa-users"></i> <span></span></div>
+                    <div class="right">
+                      <div class="previous">
+                        <span class="arrow"><i class="fas fa-chevron-left"></i></span>
+                      </div>
+                      <select autocomplete="off" class="dropdown" id="option_mainSteam">
+                        <option value="0" selected></option>
+                      </select>
+                      <div class="next">
+                        <span class="arrow"><i class="fas fa-chevron-right"></i></span>
+                      </div>
                     </div>
+                    <div class="help"></div>
                   </li>
                 </ul>
               </div>
 
-              <ul class="diag-list adv-card">
-                <li class="title"><i class="fas fa-heartbeat"></i> <span id="adv-diag-title">Diagnostics</span></li>
-                <li>
-                  <div id="diag-versions" class="diag-line"></div>
-                </li>
-                <li>
-                  <div id="diag-apikey" class="diag-line"><span id="diag-apikey-label">Steam Web API key :</span> <span></span></div>
-                </li>
-                <li>
-                  <div id="open-logs" class="btn"><i class="fas fa-folder-open"></i> <span>Open logs folder</span></div>
-                  <div id="open-userdata" class="btn"><i class="fas fa-folder-open"></i> <span>Open data folder</span></div>
-                </li>
+              <div class="arrow-list diag-list">
+                <div class="title"><i class="fas fa-heartbeat"></i> <span id="adv-diag-title">Diagnostics</span></div>
+                <ul>
+                  <li>
+                    <div id="diag-versions" class="diag-line"></div>
+                  </li>
+                  <li>
+                    <div id="diag-apikey" class="diag-line"><span id="diag-apikey-label">Steam Web API key :</span> <span></span></div>
+                  </li>
+                  <li class="actions-row">
+                    <div id="open-logs" class="btn"><i class="fas fa-folder-open"></i> <span>Open logs folder</span></div>
+                    <div id="open-userdata" class="btn"><i class="fas fa-folder-open"></i> <span>Open data folder</span></div>
+                  </li>
+                </ul>
+              </div>
 
-                <li class="title"><i class="fas fa-puzzle-piece"></i> <span id="adv-goldberg-title">Goldberg / GBE Fork</span></li>
-                <li>
-                  <p id="adv-goldberg-desc">
-                    Scan a game-library folder for Goldberg / GBE Fork installs and flag the ones missing their
-                    steam_settings/achievements.json schema. Use a game's right-click menu (Diagnose / Repair) to fix one.
-                  </p>
-                </li>
-                <li>
-                  <div id="scan-gbe" class="btn"><i class="fas fa-search"></i> <span>Scan a folder…</span></div>
-                </li>
-                <li>
-                  <div id="scan-gbe-result" class="diag-line"></div>
-                </li>
+              <div class="arrow-list diag-list">
+                <div class="title"><i class="fas fa-puzzle-piece"></i> <span id="adv-goldberg-title">Goldberg / GBE Fork</span></div>
+                <ul>
+                  <li>
+                    <p id="adv-goldberg-desc">
+                      Scan a game-library folder for Goldberg / GBE Fork installs and flag the ones missing their
+                      steam_settings/achievements.json schema. Use a game's right-click menu (Diagnose / Repair) to fix one.
+                    </p>
+                  </li>
+                  <li class="actions-row">
+                    <div id="scan-gbe" class="btn"><i class="fas fa-search"></i> <span>Scan a folder…</span></div>
+                  </li>
+                  <li>
+                    <div id="scan-gbe-result" class="diag-line"></div>
+                  </li>
+                </ul>
+              </div>
 
-                <li class="title"><i class="fas fa-bell"></i> <span id="adv-winnotif-title">Windows notification settings</span></li>
-                <li>
-                  <a href="ms-settings:quiethours" target="_blank" class="btn"
-                    ><i class="fas fa-moon fa-flip-horizontal"></i> <span id="adv-focus-assist">Focus Assist</span></a
-                  >
-                  <a href="ms-settings:notifications" target="_blank" class="btn"
-                    ><i class="fas fa-comment"></i> <span id="adv-notif-actions">Notifications &amp; actions</span></a
-                  >
-                </li>
-                <li>
-                  <p id="adv-winnotif-desc">
-                    Windows 10 &gt;= 1903 : the focus-assist auto-rule for fullscreen apps (alarms only by default) can suppress toast
-                    notifications — set it to "Off" if toasts don't appear in-game.
-                  </p>
-                </li>
-              </ul>
+              <div class="arrow-list diag-list">
+                <div class="title"><i class="fas fa-bell"></i> <span id="adv-winnotif-title">Windows notification settings</span></div>
+                <ul>
+                  <li class="actions-row">
+                    <a href="ms-settings:quiethours" target="_blank" class="btn"
+                      ><i class="fas fa-moon fa-flip-horizontal"></i> <span id="adv-focus-assist">Focus Assist</span></a
+                    >
+                    <a href="ms-settings:notifications" target="_blank" class="btn"
+                      ><i class="fas fa-comment"></i> <span id="adv-notif-actions">Notifications &amp; actions</span></a
+                    >
+                  </li>
+                  <li>
+                    <p id="adv-winnotif-desc">
+                      Windows 10 &gt;= 1903 : the focus-assist auto-rule for fullscreen apps (alarms only by default) can suppress toast
+                      notifications — set it to "Off" if toasts don't appear in-game.
+                    </p>
+                  </li>
+                </ul>
+              </div>
             </section>
 
             <section class="content" data-view="source">
@@ -653,10 +661,10 @@
                    disturbs the nth-child i18n bindings above). Modeled on the emulator-login card.
                    Connecting unlocks per-player achievement state for the epic-official source;
                    the schema + rarity already work without connecting. -->
-              <div id="epic-connect" class="emulator-login is-visible">
+              <div id="epic-connect" class="settings-card">
                 <div class="emulator-login-heading">
                   <div class="title"><i class="fas fa-fw fa-gamepad"></i> <span id="epic-connect-title">Epic Games account</span></div>
-                  <span class="emulator-warning" id="epic-connect-badge" style="display:none"><i class="fas fa-check-circle"></i> <span id="epic-connect-badge-label">Connected</span></span>
+                  <span class="emulator-warning is-success" id="epic-connect-badge" style="display:none"><i class="fas fa-check-circle"></i> <span id="epic-connect-badge-label">Connected</span></span>
                 </div>
                 <p id="epic-connect-desc">Optional. Connect your Epic account to show which achievements you have unlocked in installed Epic games. Achievement names, descriptions and rarity already work without connecting. Your Epic token is stored encrypted on this PC.</p>
                 <div class="emulator-login-actions">
@@ -747,7 +755,8 @@
             <section class="content" data-view="folder">
               <div class="disclaimer"><i class="fas fa-info-circle"></i> <span></span></div>
 
-              <div class="title"><span></span></div>
+              <div class="arrow-list">
+              <div class="title"><i class="fas fa-folder"></i> <span></span></div>
               <ul id="defaultdir">
                 <li>
                   <div class="path"><span class="constant">%PUBLIC%</span>\Documents\OnlineFix</div>
@@ -865,379 +874,396 @@
                   <div class="path"><span class="constant">%appdata%</span>\CreamAPI</div>
                 </li>
               </ul>
-
-              <div class="title"><i class="fas fa-user-edit"></i> <span></span></div>
-
-              <div class="controls">
-                <div class="info">
-                  <p></p>
-                </div>
-                <ul>
-                  <li>
-                    <div id="addCustomDir" class="btn"><i class="fas fa-folder-plus"></i> <span></span></div>
-                  </li>
-                  <li>
-                    <div id="smartFind" class="btn"><i class="fas fa-search-plus fa-flip-horizontal"></i> <span id="smartFind-label">Smart Find</span><small id="smartFind-help">finds saves/configs + libraries</small></div>
-                  </li>
-                </ul>
               </div>
 
-              <div id="folder-action-result" class="diag-line"></div>
+              <div class="arrow-list">
+                <div class="title"><i class="fas fa-user-edit"></i> <span></span></div>
 
-              <div id="wrap-dirlist">
-                <ul id="dirlist"></ul>
-                <div class="loading-overlay">
-                  <div class="wrap"><i class="fas fa-spinner fa-spin"></i></div>
+                <div class="controls folder-actions">
+                  <div class="info">
+                    <p id="folder-add-info"></p>
+                  </div>
+                  <ul>
+                    <li>
+                      <div id="addCustomDir" class="btn"><i class="fas fa-folder-plus"></i> <span></span></div>
+                    </li>
+                    <li>
+                      <div id="smartFind" class="btn"><i class="fas fa-search-plus fa-flip-horizontal"></i> <span id="smartFind-label">Smart Find</span><small id="smartFind-help">finds saves/configs + libraries</small></div>
+                    </li>
+                  </ul>
+                </div>
+
+                <div id="folder-action-result" class="diag-line"></div>
+
+                <div id="wrap-dirlist">
+                  <ul id="dirlist"></ul>
+                  <div class="loading-overlay">
+                    <div class="wrap"><i class="fas fa-spinner fa-spin"></i></div>
+                  </div>
                 </div>
               </div>
 
-              <div class="title"><i class="fas fa-folder-open"></i> <span></span></div>
+              <div class="arrow-list">
+                <div class="title"><i class="fas fa-folder-open"></i> <span></span></div>
 
-              <div class="controls">
-                <div class="info">
-                  <p></p>
+                <div class="controls folder-actions">
+                  <div class="info">
+                    <p id="folder-library-info"></p>
+                  </div>
+                  <ul>
+                    <li>
+                      <div id="addLibraryDir" class="btn"><i class="fas fa-folder-plus"></i> <span></span></div>
+                    </li>
+                    <li>
+                      <div id="generate-configs" class="btn"><i class="fas fa-magic"></i> <span id="generate-configs-label">Generate configs</span><small id="generate-configs-help">full scan + auto-fix if enabled</small></div>
+                    </li>
+                  </ul>
                 </div>
-                <ul>
-                  <li>
-                    <div id="addLibraryDir" class="btn"><i class="fas fa-folder-plus"></i> <span></span></div>
-                  </li>
-                  <li>
-                    <div id="generate-configs" class="btn"><i class="fas fa-magic"></i> <span id="generate-configs-label">Generate configs</span><small id="generate-configs-help">full scan + auto-fix if enabled</small></div>
-                  </li>
-                </ul>
-              </div>
 
-              <ul id="libdirlist"></ul>
-              <div id="generate-configs-result" class="diag-line"></div>
+                <ul id="libdirlist"></ul>
+                <div id="generate-configs-result" class="diag-line"></div>
+              </div>
             </section>
 
             <section class="content" data-view="notification">
-              <div id="options-notify" class="arrow-list">
+              <div id="options-notify">
                 <div class="autosave-hint"><i class="fas fa-check-circle"></i> <span></span></div>
-                <div class="title"><span></span></div>
-                <ul id="options-notify-common">
-                  <li class="hasHelper">
-                    <div class="left"><i class="fas fa-bell"></i> <span></span></div>
-                    <div class="right">
-                      <div class="previous">
-                        <span class="arrow"><i class="fas fa-chevron-left"></i></span>
-                      </div>
-                      <select autocomplete="off" id="option_notify">
-                        <option value="true" selected></option>
-                        <option value="false"></option>
-                      </select>
-                      <div class="next">
-                        <span class="arrow"><i class="fas fa-chevron-right"></i></span>
-                      </div>
-                    </div>
-                    <div class="help"></div>
-                  </li>
-
-                  <li class="hasHelper">
-                    <div class="left"><i class="fas fa-gamepad"></i> <span></span></div>
-                    <div class="right">
-                      <div class="previous">
-                        <span class="arrow"><i class="fas fa-chevron-left"></i></span>
-                      </div>
-                      <select autocomplete="off" id="option_rumble">
-                        <option value="true" selected></option>
-                        <option value="false"></option>
-                      </select>
-                      <div class="next">
-                        <span class="arrow"><i class="fas fa-chevron-right"></i></span>
-                      </div>
-                    </div>
-                    <div class="help"></div>
-                  </li>
-
-                  <li class="hasHelper">
-                    <div class="left"><i class="fas fa-tachometer-alt"></i> <span></span></div>
-                    <div class="right">
-                      <div class="previous">
-                        <span class="arrow"><i class="fas fa-chevron-left"></i></span>
-                      </div>
-                      <select autocomplete="off" id="option_notifyOnProgress">
-                        <option value="true" selected></option>
-                        <option value="false"></option>
-                      </select>
-                      <div class="next">
-                        <span class="arrow"><i class="fas fa-chevron-right"></i></span>
-                      </div>
-                    </div>
-                    <div class="help"></div>
-                  </li>
-
-                  <li class="hasHelper">
-                    <div class="left"><i class="fas fa-stopwatch"></i> <span></span></div>
-                    <div class="right">
-                      <div class="previous">
-                        <span class="arrow"><i class="fas fa-chevron-left"></i></span>
-                      </div>
-                      <select autocomplete="off" id="option_playtime">
-                        <option value="true"></option>
-                        <option value="false" selected></option>
-                      </select>
-                      <div class="next">
-                        <span class="arrow"><i class="fas fa-chevron-right"></i></span>
-                      </div>
-                    </div>
-                    <div class="help"></div>
-                  </li>
-
-                  <li class="hasHelper">
-                    <div class="left"><i class="fas fa-medal"></i> <span></span></div>
-                    <div class="right">
-                      <div class="previous">
-                        <span class="arrow"><i class="fas fa-chevron-left"></i></span>
-                      </div>
-                      <select autocomplete="off" id="option_platinum">
-                        <option value="true" selected></option>
-                        <option value="false"></option>
-                      </select>
-                      <div class="next">
-                        <span class="arrow"><i class="fas fa-chevron-right"></i></span>
-                      </div>
-                    </div>
-                    <div class="help"></div>
-                  </li>
-
-                  <li class="hasHelper expand">
-                    <div class="left"><i class="fas fa-layer-group"></i> <span></span></div>
-                    <div class="right">
-                      <div class="previous">
-                        <span class="arrow"><i class="fas fa-chevron-left"></i></span>
-                      </div>
-                      <select autocomplete="off" id="option_groupToast">
-                        <option value="false" selected></option>
-                        <option value="true"></option>
-                      </select>
-                      <div class="next">
-                        <span class="arrow"><i class="fas fa-chevron-right"></i></span>
-                      </div>
-                    </div>
-                    <div class="help"></div>
-                  </li>
-                </ul>
-
-                <div class="title"><span></span></div>
-                <ul id="options-notify-transport">
-                  <li class="hasHelper expand">
-                    <div class="left"><i class="fas fa-plug"></i> <span>Websocket @localhost:8082</span></div>
-                    <div class="right">
-                      <div class="previous">
-                        <span class="arrow"><i class="fas fa-chevron-left"></i></span>
-                      </div>
-                      <select autocomplete="off" id="option_websocket">
-                        <option value="true" selected></option>
-                        <option value="false"></option>
-                      </select>
-                      <div class="next">
-                        <span class="arrow"><i class="fas fa-chevron-right"></i></span>
-                      </div>
-                    </div>
-                    <div class="help"></div>
-                  </li>
-                </ul>
-
-                <div class="title"><span id="overlay-notify-title"></span></div>
-                <ul id="options-notify-overlay">
-                  <li class="hasHelper">
-                    <div class="left"><i class="fas fa-bell"></i> <span id="lbl-notifMode"></span></div>
-                    <div class="right">
-                      <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
-                      <select autocomplete="off" class="dropdown" id="option_notifMode">
-                        <option value="toast" selected></option>
-                        <option value="overlay"></option>
-                        <option value="both"></option>
-                      </select>
-                      <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
-                    </div>
-                    <div class="help"></div>
-                  </li>
-
-                  <li class="hasHelper">
-                    <div class="left"><i class="fas fa-palette"></i> <span id="lbl-overlayPreset"></span></div>
-                    <div class="right">
-                      <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
-                      <select autocomplete="off" class="dropdown" id="option_overlayPreset"></select>
-                      <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
-                    </div>
-                    <div class="help"></div>
-                  </li>
-
-                  <li class="hasHelper">
-                    <div class="left"><i class="fas fa-gem"></i> <span id="lbl-overlayPresetRare"></span></div>
-                    <div class="right">
-                      <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
-                      <select autocomplete="off" class="dropdown" id="option_overlayPresetRare"></select>
-                      <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
-                    </div>
-                    <div class="help"></div>
-                  </li>
-
-                  <li class="hasHelper">
-                    <div class="left"><i class="fas fa-medal"></i> <span id="lbl-overlayPresetPlatinum"></span></div>
-                    <div class="right">
-                      <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
-                      <select autocomplete="off" class="dropdown" id="option_overlayPresetPlatinum"></select>
-                      <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
-                    </div>
-                    <div class="help"></div>
-                  </li>
-
-                  <li class="hasHelper">
-                    <div class="left">
-                      <i class="fas fa-arrows-alt"></i> <span id="lbl-overlayPosition"></span>
-                      <button type="button" id="btn-overlay-reposition" class="inline-action-btn" title="Reposition popup"><i class="fas fa-crosshairs"></i></button>
-                    </div>
-                    <div class="right">
-                      <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
-                      <select autocomplete="off" class="dropdown" id="option_overlayPosition">
-                        <option value="center-bottom" selected>Center bottom</option>
-                        <option value="center-top">Center top</option>
-                        <option value="top-left">Top left</option>
-                        <option value="top-right">Top right</option>
-                        <option value="bottom-left">Bottom left</option>
-                        <option value="bottom-right">Bottom right</option>
-                        <option value="middle-left">Middle left</option>
-                        <option value="middle-right">Middle right</option>
-                        <option value="custom">Custom</option>
-                      </select>
-                      <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
-                    </div>
-                    <div class="help"></div>
-                  </li>
-
-                  <li class="hasHelper">
-                    <div class="left">
-                      <i class="fas fa-volume-up"></i> <span id="lbl-overlaySound"></span>
-                      <button type="button" id="btn-import-sound" class="inline-action-btn" title="Import sound"><i class="fas fa-folder-open"></i></button>
-                    </div>
-                    <div class="right">
-                      <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
-                      <select autocomplete="off" class="dropdown" id="option_overlaySound"></select>
-                      <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
-                    </div>
-                    <div class="help"></div>
-                  </li>
-
-                  <li class="hasHelper expand">
-                    <div class="left"><i class="fas fa-expand"></i> <span id="lbl-overlayScale"></span></div>
-                    <div class="right">
-                      <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
-                      <select autocomplete="off" class="dropdown" id="option_overlayScale">
-                        <option value="0.5">50%</option>
-                        <option value="0.75">75%</option>
-                        <option value="1" selected>100%</option>
-                        <option value="1.25">125%</option>
-                        <option value="1.5">150%</option>
-                        <option value="2">200%</option>
-                      </select>
-                      <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
-                    </div>
-                    <div class="help"></div>
-                  </li>
-
-                  <li class="hasHelper">
-                    <div class="left"><i class="fas fa-volume-up"></i> <span id="lbl-overlayVolume"></span></div>
-                    <div class="right volume-slider">
-                      <input type="range" id="option_overlayVolume" min="0" max="200" step="5" value="100" />
-                      <span id="overlayVolume-value" class="volume-value">100%</span>
-                    </div>
-                    <div class="help"></div>
-                  </li>
-
-                  <li class="hasHelper">
-                    <div class="left"><i class="fas fa-clock"></i> <span id="lbl-overlayDuration"></span></div>
-                    <div class="right">
-                      <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
-                      <select autocomplete="off" class="dropdown" id="option_overlayDuration">
-                        <option value="auto" selected></option>
-                        <option value="2">2s</option>
-                        <option value="3">3s</option>
-                        <option value="4">4s</option>
-                        <option value="5">5s</option>
-                        <option value="7">7s</option>
-                        <option value="10">10s</option>
-                      </select>
-                      <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
-                    </div>
-                    <div class="help"></div>
-                  </li>
-                </ul>
-
-                <div class="title"><span></span></div>
-                <ul id="options-notify-test">
-                  <li>
-                    <div id="notify_test" class="btn"><i class="fas fa-trophy"></i> <span></span></div>
-                  </li>
-                  <li>
-                    <div id="notify_rare_test" class="btn"><i class="fas fa-gem"></i> <span></span></div>
-                  </li>
-                  <li>
-                    <div id="notify_progress_test" class="btn"><i class="fas fa-tachometer-alt"></i> <span></span></div>
-                  </li>
-                  <li>
-                    <div id="notify_playtime_test" class="btn"><i class="fas fa-stopwatch"></i> <span></span></div>
-                  </li>
-                  <li>
-                    <div id="notify_platinum_test" class="btn"><i class="fas fa-medal"></i> <span></span></div>
-                  </li>
-                </ul>
-
-                <div class="title"><span id="customiser-title">Custom preset</span></div>
-                <ul id="options-notify-customiser">
-                  <li class="hasHelper" style="flex-wrap: wrap">
-                    <div class="left" style="width: 100%"><i class="fas fa-magic"></i> <span id="customiser-intro">Build your own overlay notification preset.</span></div>
-                    <div style="display: flex; flex-wrap: wrap; gap: 12px 18px; width: 100%; padding: 8px 0">
-                      <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-name">Name</span><input type="text" id="cust-name" maxlength="48" placeholder="My preset" /></label>
-                      <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-bg">Background</span><input type="color" id="cust-bg" value="#16181d" /></label>
-                      <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-text">Text</span><input type="color" id="cust-text" value="#ffffff" /></label>
-                      <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-accent">Accent</span><input type="color" id="cust-accent" value="#4aa3ff" /></label>
-                      <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-opacity">Opacity</span><input type="range" id="cust-opacity" min="20" max="100" value="100" /></label>
-                      <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-font">Font size</span><input type="range" id="cust-font" min="10" max="28" value="16" /></label>
-                      <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-radius">Corners</span><input type="range" id="cust-radius" min="0" max="40" value="12" /></label>
-                      <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-icon">Icon size</span><input type="range" id="cust-icon" min="24" max="110" value="64" /></label>
-                    </div>
-                    <div style="width: 100%; display: flex; justify-content: center; padding: 14px 0; background: rgba(0, 0, 0, 0.25); border-radius: 8px; margin: 6px 0">
-                      <div id="cust-preview" style="display: flex; align-items: center; gap: 12px; width: 360px; box-sizing: border-box; padding: 12px 18px; background: #16181d; color: #ffffff; border-radius: 12px; border-left: 4px solid #4aa3ff; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 16px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4)">
-                        <div style="flex: 0 0 auto"><i class="fas fa-trophy" id="cust-preview-icon" style="font-size: 40px; color: #4aa3ff"></i></div>
-                        <div style="min-width: 0">
-                          <div id="cust-preview-title" style="font-weight: 700; color: #4aa3ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Achievement Unlocked</div>
-                          <div id="cust-preview-detail" style="opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Sample achievement description</div>
+                <div class="arrow-list">
+                  <div class="title"><span></span></div>
+                  <ul id="options-notify-common">
+                    <li class="hasHelper">
+                      <div class="left"><i class="fas fa-bell"></i> <span></span></div>
+                      <div class="right">
+                        <div class="previous">
+                          <span class="arrow"><i class="fas fa-chevron-left"></i></span>
+                        </div>
+                        <select autocomplete="off" id="option_notify">
+                          <option value="true" selected></option>
+                          <option value="false"></option>
+                        </select>
+                        <div class="next">
+                          <span class="arrow"><i class="fas fa-chevron-right"></i></span>
                         </div>
                       </div>
-                    </div>
-                    <div class="right action-right" style="width: 100%">
-                      <button type="button" id="btn-create-preset" class="inline-action-btn"><i class="fas fa-plus"></i> <span id="cust-lbl-create">Create preset</span></button>
-                      <span id="cust-status" style="margin-left: 10px; font-size: 0.85em; opacity: 0.85"></span>
-                    </div>
-                  </li>
-                </ul>
+                      <div class="help"></div>
+                    </li>
 
-                <div class="title"><span id="souvenir-notify-title"></span></div>
-                <ul id="options-notify-souvenir">
-                  <li class="hasHelper">
-                    <div class="left"><i class="fas fa-camera"></i> <span id="lbl-souvenirScreenshot"></span></div>
-                    <div class="right">
-                      <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
-                      <select autocomplete="off" class="dropdown" id="option_souvenirScreenshot">
-                        <option value="false" selected></option>
-                        <option value="true"></option>
-                      </select>
-                      <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
-                    </div>
-                    <div class="help"></div>
-                  </li>
+                    <li class="hasHelper">
+                      <div class="left"><i class="fas fa-gamepad"></i> <span></span></div>
+                      <div class="right">
+                        <div class="previous">
+                          <span class="arrow"><i class="fas fa-chevron-left"></i></span>
+                        </div>
+                        <select autocomplete="off" id="option_rumble">
+                          <option value="true" selected></option>
+                          <option value="false"></option>
+                        </select>
+                        <div class="next">
+                          <span class="arrow"><i class="fas fa-chevron-right"></i></span>
+                        </div>
+                      </div>
+                      <div class="help"></div>
+                    </li>
 
-                  <li class="hasHelper">
-                    <div class="left"><i class="fas fa-folder-open"></i> <span id="lbl-souvenirDir"></span></div>
-                    <div class="right action-right">
-                      <button type="button" id="btn-souvenir-dir" class="inline-action-btn"><i class="fas fa-folder"></i> <span id="souvenir-dir-display"></span></button>
-                    </div>
-                    <div class="help" id="souvenir-dir-help"></div>
-                  </li>
-                </ul>
+                    <li class="hasHelper">
+                      <div class="left"><i class="fas fa-tachometer-alt"></i> <span></span></div>
+                      <div class="right">
+                        <div class="previous">
+                          <span class="arrow"><i class="fas fa-chevron-left"></i></span>
+                        </div>
+                        <select autocomplete="off" id="option_notifyOnProgress">
+                          <option value="true" selected></option>
+                          <option value="false"></option>
+                        </select>
+                        <div class="next">
+                          <span class="arrow"><i class="fas fa-chevron-right"></i></span>
+                        </div>
+                      </div>
+                      <div class="help"></div>
+                    </li>
+
+                    <li class="hasHelper">
+                      <div class="left"><i class="fas fa-stopwatch"></i> <span></span></div>
+                      <div class="right">
+                        <div class="previous">
+                          <span class="arrow"><i class="fas fa-chevron-left"></i></span>
+                        </div>
+                        <select autocomplete="off" id="option_playtime">
+                          <option value="true"></option>
+                          <option value="false" selected></option>
+                        </select>
+                        <div class="next">
+                          <span class="arrow"><i class="fas fa-chevron-right"></i></span>
+                        </div>
+                      </div>
+                      <div class="help"></div>
+                    </li>
+
+                    <li class="hasHelper">
+                      <div class="left"><i class="fas fa-medal"></i> <span></span></div>
+                      <div class="right">
+                        <div class="previous">
+                          <span class="arrow"><i class="fas fa-chevron-left"></i></span>
+                        </div>
+                        <select autocomplete="off" id="option_platinum">
+                          <option value="true" selected></option>
+                          <option value="false"></option>
+                        </select>
+                        <div class="next">
+                          <span class="arrow"><i class="fas fa-chevron-right"></i></span>
+                        </div>
+                      </div>
+                      <div class="help"></div>
+                    </li>
+
+                    <li class="hasHelper expand">
+                      <div class="left"><i class="fas fa-layer-group"></i> <span></span></div>
+                      <div class="right">
+                        <div class="previous">
+                          <span class="arrow"><i class="fas fa-chevron-left"></i></span>
+                        </div>
+                        <select autocomplete="off" id="option_groupToast">
+                          <option value="false" selected></option>
+                          <option value="true"></option>
+                        </select>
+                        <div class="next">
+                          <span class="arrow"><i class="fas fa-chevron-right"></i></span>
+                        </div>
+                      </div>
+                      <div class="help"></div>
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="arrow-list">
+                  <div class="title"><span></span></div>
+                  <ul id="options-notify-transport">
+                    <li class="hasHelper expand">
+                      <div class="left"><i class="fas fa-plug"></i> <span>Websocket @localhost:8082</span></div>
+                      <div class="right">
+                        <div class="previous">
+                          <span class="arrow"><i class="fas fa-chevron-left"></i></span>
+                        </div>
+                        <select autocomplete="off" id="option_websocket">
+                          <option value="true" selected></option>
+                          <option value="false"></option>
+                        </select>
+                        <div class="next">
+                          <span class="arrow"><i class="fas fa-chevron-right"></i></span>
+                        </div>
+                      </div>
+                      <div class="help"></div>
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="arrow-list">
+                  <div class="title"><span id="overlay-notify-title"></span></div>
+                  <ul id="options-notify-overlay">
+                    <li class="hasHelper">
+                      <div class="left"><i class="fas fa-bell"></i> <span id="lbl-notifMode"></span></div>
+                      <div class="right">
+                        <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
+                        <select autocomplete="off" class="dropdown" id="option_notifMode">
+                          <option value="toast" selected></option>
+                          <option value="overlay"></option>
+                          <option value="both"></option>
+                        </select>
+                        <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
+                      </div>
+                      <div class="help"></div>
+                    </li>
+
+                    <li class="hasHelper">
+                      <div class="left"><i class="fas fa-palette"></i> <span id="lbl-overlayPreset"></span></div>
+                      <div class="right">
+                        <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
+                        <select autocomplete="off" class="dropdown" id="option_overlayPreset"></select>
+                        <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
+                      </div>
+                      <div class="help"></div>
+                    </li>
+
+                    <li class="hasHelper">
+                      <div class="left"><i class="fas fa-gem"></i> <span id="lbl-overlayPresetRare"></span></div>
+                      <div class="right">
+                        <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
+                        <select autocomplete="off" class="dropdown" id="option_overlayPresetRare"></select>
+                        <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
+                      </div>
+                      <div class="help"></div>
+                    </li>
+
+                    <li class="hasHelper">
+                      <div class="left"><i class="fas fa-medal"></i> <span id="lbl-overlayPresetPlatinum"></span></div>
+                      <div class="right">
+                        <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
+                        <select autocomplete="off" class="dropdown" id="option_overlayPresetPlatinum"></select>
+                        <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
+                      </div>
+                      <div class="help"></div>
+                    </li>
+
+                    <li class="hasHelper">
+                      <div class="left">
+                        <i class="fas fa-arrows-alt"></i> <span id="lbl-overlayPosition"></span>
+                        <button type="button" id="btn-overlay-reposition" class="inline-action-btn" title="Reposition popup"><i class="fas fa-crosshairs"></i></button>
+                      </div>
+                      <div class="right">
+                        <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
+                        <select autocomplete="off" class="dropdown" id="option_overlayPosition">
+                          <option value="center-bottom" selected>Center bottom</option>
+                          <option value="center-top">Center top</option>
+                          <option value="top-left">Top left</option>
+                          <option value="top-right">Top right</option>
+                          <option value="bottom-left">Bottom left</option>
+                          <option value="bottom-right">Bottom right</option>
+                          <option value="middle-left">Middle left</option>
+                          <option value="middle-right">Middle right</option>
+                          <option value="custom">Custom</option>
+                        </select>
+                        <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
+                      </div>
+                      <div class="help"></div>
+                    </li>
+
+                    <li class="hasHelper">
+                      <div class="left">
+                        <i class="fas fa-volume-up"></i> <span id="lbl-overlaySound"></span>
+                        <button type="button" id="btn-import-sound" class="inline-action-btn" title="Import sound"><i class="fas fa-folder-open"></i></button>
+                      </div>
+                      <div class="right">
+                        <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
+                        <select autocomplete="off" class="dropdown" id="option_overlaySound"></select>
+                        <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
+                      </div>
+                      <div class="help"></div>
+                    </li>
+
+                    <li class="hasHelper expand">
+                      <div class="left"><i class="fas fa-expand"></i> <span id="lbl-overlayScale"></span></div>
+                      <div class="right">
+                        <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
+                        <select autocomplete="off" class="dropdown" id="option_overlayScale">
+                          <option value="0.5">50%</option>
+                          <option value="0.75">75%</option>
+                          <option value="1" selected>100%</option>
+                          <option value="1.25">125%</option>
+                          <option value="1.5">150%</option>
+                          <option value="2">200%</option>
+                        </select>
+                        <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
+                      </div>
+                      <div class="help"></div>
+                    </li>
+
+                    <li class="hasHelper">
+                      <div class="left"><i class="fas fa-volume-up"></i> <span id="lbl-overlayVolume"></span></div>
+                      <div class="right volume-slider">
+                        <input type="range" id="option_overlayVolume" min="0" max="200" step="5" value="100" />
+                        <span id="overlayVolume-value" class="volume-value">100%</span>
+                      </div>
+                      <div class="help"></div>
+                    </li>
+
+                    <li class="hasHelper">
+                      <div class="left"><i class="fas fa-clock"></i> <span id="lbl-overlayDuration"></span></div>
+                      <div class="right">
+                        <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
+                        <select autocomplete="off" class="dropdown" id="option_overlayDuration">
+                          <option value="auto" selected></option>
+                          <option value="2">2s</option>
+                          <option value="3">3s</option>
+                          <option value="4">4s</option>
+                          <option value="5">5s</option>
+                          <option value="7">7s</option>
+                          <option value="10">10s</option>
+                        </select>
+                        <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
+                      </div>
+                      <div class="help"></div>
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="arrow-list">
+                  <div class="title"><span></span></div>
+                  <ul id="options-notify-test">
+                    <li>
+                      <div id="notify_test" class="btn"><i class="fas fa-trophy"></i> <span></span></div>
+                    </li>
+                    <li>
+                      <div id="notify_rare_test" class="btn"><i class="fas fa-gem"></i> <span></span></div>
+                    </li>
+                    <li>
+                      <div id="notify_progress_test" class="btn"><i class="fas fa-tachometer-alt"></i> <span></span></div>
+                    </li>
+                    <li>
+                      <div id="notify_playtime_test" class="btn"><i class="fas fa-stopwatch"></i> <span></span></div>
+                    </li>
+                    <li>
+                      <div id="notify_platinum_test" class="btn"><i class="fas fa-medal"></i> <span></span></div>
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="arrow-list">
+                  <div class="title"><span id="customiser-title">Custom preset</span></div>
+                  <ul id="options-notify-customiser">
+                    <li class="hasHelper" style="flex-wrap: wrap">
+                      <div class="left" style="width: 100%"><i class="fas fa-magic"></i> <span id="customiser-intro">Build your own overlay notification preset.</span></div>
+                      <div style="display: flex; flex-wrap: wrap; gap: 12px 18px; width: 100%; padding: 8px 0">
+                        <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-name">Name</span><input type="text" id="cust-name" maxlength="48" placeholder="My preset" /></label>
+                        <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-bg">Background</span><input type="color" id="cust-bg" value="#16181d" /></label>
+                        <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-text">Text</span><input type="color" id="cust-text" value="#ffffff" /></label>
+                        <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-accent">Accent</span><input type="color" id="cust-accent" value="#4aa3ff" /></label>
+                        <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-opacity">Opacity</span><input type="range" id="cust-opacity" min="20" max="100" value="100" /></label>
+                        <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-font">Font size</span><input type="range" id="cust-font" min="10" max="28" value="16" /></label>
+                        <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-radius">Corners</span><input type="range" id="cust-radius" min="0" max="40" value="12" /></label>
+                        <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-icon">Icon size</span><input type="range" id="cust-icon" min="24" max="110" value="64" /></label>
+                      </div>
+                      <div style="width: 100%; display: flex; justify-content: center; padding: 14px 0; background: rgba(0, 0, 0, 0.25); border-radius: 8px; margin: 6px 0">
+                        <div id="cust-preview" style="display: flex; align-items: center; gap: 12px; width: 360px; box-sizing: border-box; padding: 12px 18px; background: #16181d; color: #ffffff; border-radius: 12px; border-left: 4px solid #4aa3ff; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 16px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4)">
+                          <div style="flex: 0 0 auto"><i class="fas fa-trophy" id="cust-preview-icon" style="font-size: 40px; color: #4aa3ff"></i></div>
+                          <div style="min-width: 0">
+                            <div id="cust-preview-title" style="font-weight: 700; color: #4aa3ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Achievement Unlocked</div>
+                            <div id="cust-preview-detail" style="opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Sample achievement description</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="right action-right" style="width: 100%">
+                        <button type="button" id="btn-create-preset" class="inline-action-btn"><i class="fas fa-plus"></i> <span id="cust-lbl-create">Create preset</span></button>
+                        <span id="cust-status" style="margin-left: 10px; font-size: 0.85em; opacity: 0.85"></span>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="arrow-list">
+                  <div class="title"><span id="souvenir-notify-title"></span></div>
+                  <ul id="options-notify-souvenir">
+                    <li class="hasHelper">
+                      <div class="left"><i class="fas fa-camera"></i> <span id="lbl-souvenirScreenshot"></span></div>
+                      <div class="right">
+                        <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
+                        <select autocomplete="off" class="dropdown" id="option_souvenirScreenshot">
+                          <option value="false" selected></option>
+                          <option value="true"></option>
+                        </select>
+                        <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
+                      </div>
+                      <div class="help"></div>
+                    </li>
+
+                    <li class="hasHelper">
+                      <div class="left"><i class="fas fa-folder-open"></i> <span id="lbl-souvenirDir"></span></div>
+                      <div class="right action-right">
+                        <button type="button" id="btn-souvenir-dir" class="inline-action-btn"><i class="fas fa-folder"></i> <span id="souvenir-dir-display"></span></button>
+                      </div>
+                      <div class="help" id="souvenir-dir-help"></div>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </section>
 
