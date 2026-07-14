@@ -1,66 +1,141 @@
-# Building Achievement Watcher
+# Build Achievement Watcher
 
-For the complete commit, versioning, validation, publishing and auto-update
-checklist, see [docs/RELEASE_WORKFLOW.md](docs/RELEASE_WORKFLOW.md).
+This guide covers local development and Windows packaging. Use [docs/RELEASE_WORKFLOW.md](docs/RELEASE_WORKFLOW.md) for versioning, publishing, CI and auto-update validation.
 
-## Prerequisites
+## Requirements
 
-- **Node.js 22.22.2+ or 24.15+** — required by the current build toolchain. Electron 43 bundles Node 24.18 for the installed application and is downloaded automatically by `npm install`.
-- No VS / Python / node-gyp needed: every native dep ships prebuilt N-API binaries — `registry-js`/`sharp` (app) and `koffi` (watchdog `wql-process-monitor`/`regodit`/`xinput-ffi`).
+- Windows 10 or Windows 11.
+- Node.js `22.22.2+` or `24.15+`, matching the `engines` field in both package manifests.
+- npm, included with Node.js.
 
-## Run in dev (no packaging)
+Electron is installed with the app dependencies. The supported native packages ship prebuilt binaries, so a normal setup does not require Visual Studio, Python or a manual `node-gyp` build.
 
-```cmd
-cd app
-npm install   # first time only
-npm start     # runs `electron .`
+## Install dependencies
+
+The desktop app and background Watchdog are separate npm workspaces. Install both from the repository root:
+
+```powershell
+Push-Location watchdog
+npm ci
+Pop-Location
+
+Push-Location app
+npm ci
+Pop-Location
 ```
 
-**Gotcha:** if `ELECTRON_RUN_AS_NODE=1` is set in the environment, `electron.exe` runs as plain Node and `app` is `undefined` → `init.js` throws immediately. Remove that env var before launching.
+Use `npm install` instead of `npm ci` only when intentionally updating a dependency or lockfile.
 
-## Build the portable app (no installer)
+## Run in development
 
-```cmd
-cd app
-npx electron-builder --dir
+```powershell
+Push-Location app
+npm start
+Pop-Location
 ```
 
-Output: `app\dist\win-unpacked\Achievement Watcher.exe` (watchdog bundled via `extraFiles`; the monitor is spawned as an `ELECTRON_RUN_AS_NODE` child of the main process — the portable node.exe and nw.exe are both gone).
+The command starts Electron directly from `app/`. The background Watchdog is launched by the main process.
 
-## Build the full NSIS installer
+If `ELECTRON_RUN_AS_NODE` is present in the parent environment, remove it first:
 
-```cmd
-cd app
+```powershell
+Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
+```
+
+That variable is used only for the Watchdog child process. Setting it globally makes Electron start as plain Node and prevents the desktop app from loading.
+
+## Run tests
+
+```powershell
+Push-Location app
+npm test
+Pop-Location
+
+Push-Location watchdog
+npm test
+Pop-Location
+```
+
+The app suite includes parser, discovery, install-state and locale-completeness checks. The Watchdog suite covers monitoring, notifications and related helpers.
+
+Before handing off a change, also run:
+
+```powershell
+git diff --check
+```
+
+## Build an unpacked app
+
+```powershell
+Push-Location app
+npx electron-builder --dir --config electron-builder.yml
+Pop-Location
+```
+
+The executable is written to:
+
+```text
+app\dist\win-unpacked\Achievement Watcher.exe
+```
+
+Use the unpacked build for packaging smoke tests. It is not the installed release used to prove automatic updates.
+
+## Build the installer
+
+Make sure Watchdog dependencies are installed, then run:
+
+```powershell
+Push-Location app
 npm run build
+Pop-Location
 ```
 
-This runs `npm run prepare:watchdog` (prunes watchdog devDependencies with `npm prune --omit=dev`) then `electron-builder --config electron-builder.yml --publish never`.
+Expected output:
 
-Output: `app\dist\Achievement.Watcher.Setup.<version>.exe` (NSIS installer, watchdog bundled; portable node.exe and nw.exe removed).
-
-### Known build gotcha: `npmRebuild: false`
-
-`electron-builder.yml` has `npmRebuild: false` at the top level. **Do not remove it.** Without it, electron-builder's default native-module rebuild step (`@electron/rebuild` → node-gyp) fails whenever the repo path contains a space (e.g. `Achievement Watcher 3.0`), with:
-
-```
-⨯ Attempting to build a module with a space in the path
+```text
+app\dist\Achievement.Watcher.Setup.<version>.exe
+app\dist\Achievement.Watcher.Setup.<version>.exe.blockmap
+app\dist\latest.yml
 ```
 
-Skipping the rebuild is safe here because `registry-js` and `sharp` already ship N-API prebuilt binaries — no compilation needed, and this is validated working in dev (`npm start`).
+The installer uses NSIS. `latest.yml` and the blockmap are required by the automatic updater.
 
-### Installer resources
+### Watchdog dependencies after a build
 
-The NSIS installer is configured by `app/electron-builder.yml` and `app/build/installer.nsh`.
+`npm run build` calls `npm run prepare:watchdog`, which prunes Watchdog development dependencies before packaging. Restore the development tree before running more Watchdog tests:
 
-- `app/build/icon.ico` is the app/installer icon.
-- `app/build/left.bmp` is the NSIS sidebar image.
+```powershell
+Push-Location watchdog
+npm install
+Pop-Location
+```
 
-Legacy setup payloads are not copied into the installed app. The old `setup/` tree was removed because it only contained unused installer-era files (`curl.exe`, avatar/wizard bitmaps, duplicated icons, `LICENSE` and loopback-audio files).
+The prune can also update `watchdog/package-lock.json`; inspect the worktree after every build and keep only intentional changes.
 
-### Code signing
+## Packaging configuration
 
-electron-builder self-signs the output executables via `signtool.exe` automatically during NSIS packaging. There is no real certificate configured — this is expected and not a security/distribution signature, just electron-builder's default behavior.
+The main packaging files are:
+
+| Path | Purpose |
+|---|---|
+| `app/electron-builder.yml` | Product metadata, files, NSIS target and update provider |
+| `app/build/installer.nsh` | Installer shutdown and upgrade behavior |
+| `app/build/afterPack.js` | Ensures the packaged Watchdog dependency tree is copied correctly |
+| `app/build/icon.ico` | Application and installer icon |
+| `app/build/left.bmp` | NSIS installer sidebar |
+
+The Watchdog runs under Electron's bundled Node runtime through `ELECTRON_RUN_AS_NODE`. No separate portable Node or NW.js runtime is packaged.
+
+### Why `npmRebuild` is disabled
+
+`app/electron-builder.yml` sets `npmRebuild: false`. Keep it unless the native-dependency strategy changes. The current dependencies ship compatible prebuilt binaries, while Electron Builder's rebuild path can fail when the repository path contains spaces.
+
+### Signing
+
+No trusted code-signing certificate is configured. Installers built from the repository are unsigned and may trigger SmartScreen. A release must not be described as signed unless a real certificate and signature verification have been added.
 
 ## Versioning
 
-Bump both `app/package.json` and `watchdog/package.json` before each release. The app version drives the installer filename (`Achievement.Watcher.Setup.<version>.exe`) and the in-app updater config (`config.update` in the same file).
+The app and Watchdog versions must stay synchronized across both `package.json` files and both lockfiles. The app version controls the installer name and update feed.
+
+Do not edit `app/dist/latest.yml` by hand. It is generated from the package version during the build. Follow the [release workflow](docs/RELEASE_WORKFLOW.md) for the complete checklist.

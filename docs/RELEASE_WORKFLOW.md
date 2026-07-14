@@ -1,8 +1,7 @@
 # Commit and release workflow
 
-This is the canonical checklist for `Shirowwww/Achievement-Watcher-3.0`. It is
-shared by every contributor. Project instruction files point here so the process
-stays identical across sessions.
+This is the canonical checklist for `Shirowwww/Achievement-Watcher-3.0`. Other
+project documents link here instead of duplicating the release process.
 
 ## Commit rules
 
@@ -14,10 +13,10 @@ stays identical across sessions.
 4. Use short English Conventional Commit subjects, for example:
    - `fix: sync dependency lockfile`
    - `feat: add controller UI navigation`
-   - `docs: refine feature comparison`
+   - `docs: clarify notification setup`
    - `chore: update runtime and dependencies`
-5. Do not add generated-by, assistant, tool or co-authoring attribution to commits
-   or any public-facing text.
+5. Do not add generated-by or unrelated co-authoring attribution to commits or
+   public-facing text.
 6. Never rewrite already-pushed history unless the user explicitly requests it.
 
 ## Release preparation
@@ -31,12 +30,12 @@ Update the same version in all of these places:
 - `app/package-lock.json` (root package entries)
 - `watchdog/package.json`
 - `watchdog/package-lock.json` (root package entries)
-- the README version badge, “What's new” heading and installer filename
 - `CHANGELOG.md`: move relevant `Unreleased` entries under the dated version
 - `RELEASE_NOTES.md`: title, highlights and installer filename
 
-Keep dependency/runtime badges and build requirements truthful. Do not hand-edit
-generated `app/dist/latest.yml`; the build creates it.
+Review `README.md`, `BUILD.md` and the user guides for claims affected by the
+release. The README release badge is dynamic and does not require a manual version
+edit. Do not hand-edit generated `app/dist/latest.yml`; the build creates it.
 
 ## Clean validation
 
@@ -48,13 +47,13 @@ git diff --check
 Push-Location app
 npm ci
 npm test
-npm audit
+npm audit --omit=dev
 Pop-Location
 
 Push-Location watchdog
 npm ci
 npm test
-npm audit
+npm audit --omit=dev
 Pop-Location
 ```
 
@@ -118,12 +117,13 @@ dependencies afterward with `npm install` from `watchdog/`.
 
 ```powershell
 $version = (Get-Content app/package.json | ConvertFrom-Json).version
+$target = git rev-parse HEAD
 gh release create "v$version" `
   "app/dist/Achievement.Watcher.Setup.$version.exe" `
   "app/dist/Achievement.Watcher.Setup.$version.exe.blockmap" `
   "app/dist/latest.yml" `
   --repo Shirowwww/Achievement-Watcher-3.0 `
-  --target main `
+  --target $target `
   --title "Achievement Watcher $version" `
   --notes-file RELEASE_NOTES.md
 ```
