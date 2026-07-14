@@ -5,7 +5,7 @@
 // Epic redirect page, and a refresh-token loop. Tokens are stored AES-256-GCM encrypted at
 // <userData>/epic_tokens.enc so a stolen file is useless without the machine's passphrase.
 //
-// Ported from PSerban93/Achievements (JokerVerse) utils/epic-auth.js — MIT-licensed; see NOTICE.md.
+// Ported from PSerban93/Achievements (JokerVerse) utils/epic-auth.js — MIT-licensed; see THIRD_PARTY_NOTICES.md.
 // Rewritten off axios onto the runtime's global fetch (no new dependency).
 
 const fs = require('fs');

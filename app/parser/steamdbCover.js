@@ -12,7 +12,7 @@
 // SteamDB launch-metadata scrape). This module is the pure logic — resolve a cover URL out of the
 // page HTML — so it stays unit-testable offline.
 //
-// Ported from PSerban93/Achievements (JokerVerse) utils/game-cover.js — MIT-licensed; see NOTICE.md.
+// Ported from PSerban93/Achievements (JokerVerse) utils/game-cover.js — MIT-licensed; see THIRD_PARTY_NOTICES.md.
 // Playwright's page.evaluate() is replaced by node-html-parser + regex over the captured HTML.
 
 const htmlParser = require('node-html-parser');

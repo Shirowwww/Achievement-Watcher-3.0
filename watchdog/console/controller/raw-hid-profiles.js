@@ -1,6 +1,6 @@
 // Raw-HID controller profiles: per-vendor report decoders (Sony DualSense/DualShock native, Xbox, Nintendo Switch Pro, 8BitDo, FakerInput) mapping HID input reports to a normalized button/stick snapshot.
 //
-// Ported from PSerban93/Achievements (JokerVerse) — MIT-licensed; see NOTICE.md. Runs under the
+// Ported from PSerban93/Achievements (JokerVerse) — MIT-licensed; see THIRD_PARTY_NOTICES.md. Runs under the
 // Watchdog (Electron Node via ELECTRON_RUN_AS_NODE) using koffi, the same single-runtime FFI stack as
 // the A2 migration (wql-process-monitor / regodit / xinput-ffi).
 

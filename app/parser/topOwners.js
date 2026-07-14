@@ -12,7 +12,7 @@
 // unit-testable offline.
 //
 // Ported from PSerban93/Achievements (JokerVerse) utils/update-top-owners.js — MIT-licensed; see
-// NOTICE.md. cheerio + Playwright are replaced by a regex sweep (no new dependency).
+// THIRD_PARTY_NOTICES.md. cheerio + Playwright are replaced by a regex sweep (no new dependency).
 
 const PROFILE_HREF_RE = /\/profile\/(\d{17})\b/g;
 

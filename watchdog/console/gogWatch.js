@@ -10,7 +10,7 @@
 // console watchers: own discovery, own baseline cache, shared notify() only.
 //
 // DB layout knowledge ported from PSerban93/Achievements (JokerVerse) utils/gog-galaxy-local.js —
-// MIT-licensed; see NOTICE.md.
+// MIT-licensed; see THIRD_PARTY_NOTICES.md.
 
 const fs = require('fs');
 const path = require('path');

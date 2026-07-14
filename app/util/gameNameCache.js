@@ -4,7 +4,7 @@
 // file mtime+size so repeated lookups never re-read or re-parse an unchanged file.
 //
 // Ported from PSerban93/Achievements (JokerVerse) utils/local-game-name-cache.js — MIT-licensed;
-// see NOTICE.md. Adapted to Achievement Watcher: instead of bundling upstream's 7.9 MB
+// see THIRD_PARTY_NOTICES.md. Adapted to Achievement Watcher: instead of bundling upstream's 7.9 MB
 // assets/steamdb.json snapshot, the fallback source is the GetAppList dump the app already
 // maintains at steam_cache/schema/appList.json (identical [{appid, name}] shape, refreshed every
 // 3 days by the renderer, see steam.js findInAppList). An optional user-provided cfg/steamdb.json

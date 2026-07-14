@@ -11,7 +11,7 @@
 // ubisoftOfficial.js on purpose — the watchdog is packaged standalone and cannot require app/*.
 //
 // Format knowledge ported from PSerban93/Achievements (JokerVerse) utils/ubisoft-connect-local.js —
-// MIT-licensed; see NOTICE.md.
+// MIT-licensed; see THIRD_PARTY_NOTICES.md.
 
 const fs = require('fs');
 const path = require('path');

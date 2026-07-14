@@ -1,6 +1,6 @@
 // Raw-HID controller hub: spawns/supervises the raw-HID worker thread and exposes the latest snapshot + guide-button events to the input manager.
 //
-// Ported from PSerban93/Achievements (JokerVerse) — MIT-licensed; see NOTICE.md. Runs under the
+// Ported from PSerban93/Achievements (JokerVerse) — MIT-licensed; see THIRD_PARTY_NOTICES.md. Runs under the
 // Watchdog (Electron Node via ELECTRON_RUN_AS_NODE) using koffi, the same single-runtime FFI stack as
 // the A2 migration (wql-process-monitor / regodit / xinput-ffi).
 

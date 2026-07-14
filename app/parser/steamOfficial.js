@@ -11,7 +11,7 @@
 // Steam source; the old steamcommunity/WebAPI round-trip remains the fallback.
 //
 // Ported from PSerban93/Achievements (JokerVerse) utils/steam-appcache.js — MIT-licensed; see
-// NOTICE.md. The binary KV reader (parseKVBinary) is kept byte-for-byte faithful.
+// THIRD_PARTY_NOTICES.md. The binary KV reader (parseKVBinary) is kept byte-for-byte faithful.
 
 const fs = require('fs');
 const path = require('path');

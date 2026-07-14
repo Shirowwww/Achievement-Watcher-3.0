@@ -7,7 +7,7 @@
 // delisted titles whose store page is gone.
 //
 // Ported from PSerban93/Achievements (JokerVerse) utils/steam-product-assets.js — MIT-licensed;
-// see NOTICE.md. Pure fs/JSON, no dependencies.
+// see THIRD_PARTY_NOTICES.md. Pure fs/JSON, no dependencies.
 //
 // Asset values in the dump are either full URLs or store-relative basenames
 // ("library_600x900.jpg", "en/library_header.jpg"); relative ones are expanded against the

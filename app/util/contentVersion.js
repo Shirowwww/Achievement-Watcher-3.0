@@ -7,7 +7,7 @@
 // derived cache (generated schema, setup attempt, migrated assets) is still current.
 //
 // Ported from PSerban93/Achievements (JokerVerse) utils/content-version.js — MIT-licensed; see
-// NOTICE.md. Pure crypto/fs, no dependencies.
+// THIRD_PARTY_NOTICES.md. Pure crypto/fs, no dependencies.
 //
 // NB: this reads every file under rootDir — cheap for config-sized folders (steam_settings,
 // presets), not meant for game install dirs.

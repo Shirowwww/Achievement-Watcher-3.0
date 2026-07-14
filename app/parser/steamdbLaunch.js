@@ -12,7 +12,7 @@
 // the pure logic: parse the launch-options HTML and rank the candidates — unit-testable offline.
 //
 // Ported from PSerban93/Achievements (JokerVerse) utils/steamdb-launch-metadata.js — MIT-licensed;
-// see NOTICE.md. Playwright's page.evaluate scraping is replaced by node-html-parser over the
+// see THIRD_PARTY_NOTICES.md. Playwright's page.evaluate scraping is replaced by node-html-parser over the
 // section HTML (no Playwright dependency).
 
 const htmlParser = require('node-html-parser');

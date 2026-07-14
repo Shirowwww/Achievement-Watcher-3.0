@@ -14,7 +14,7 @@
 // for the schema and public rarity, and live unlock state once connected.
 //
 // Ported from PSerban93/Achievements (JokerVerse) utils/epic-api.js + epic-official.js +
-// epic-local-installations.js — MIT-licensed; see NOTICE.md. Trimmed to the read paths AW needs and
+// epic-local-installations.js — MIT-licensed; see THIRD_PARTY_NOTICES.md. Trimmed to the read paths AW needs and
 // moved off axios onto the runtime's global fetch (no new dependency).
 
 const fs = require('fs');

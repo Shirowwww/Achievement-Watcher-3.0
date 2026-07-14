@@ -7,7 +7,7 @@
 // that have no localized descriptions at all.
 //
 // Ported from PSerban93/Achievements (JokerVerse) utils/exophase-scraper.js — MIT-licensed; see
-// NOTICE.md. Rewritten for Achievement Watcher: the upstream Playwright + cheerio stack is
+// THIRD_PARTY_NOTICES.md. Rewritten for Achievement Watcher: the upstream Playwright + cheerio stack is
 // replaced by a static request-zero fetch parsed with node-html-parser (Exophase serves the
 // award list as static HTML), with a puppeteer-extra + stealth fallback (both already bundled
 // for the SteamHunters scrape) when the static fetch is blocked. No new dependencies.

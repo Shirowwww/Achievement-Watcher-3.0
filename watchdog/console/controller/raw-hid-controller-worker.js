@@ -1,6 +1,6 @@
 // Raw-HID controller worker: enumerates + reads HID gamepads (SetupAPI + hid.dll + overlapped ReadFile via koffi) in a worker thread and posts normalized snapshots. Enables native PlayStation input and the guide button while a game is foregrounded.
 //
-// Ported from PSerban93/Achievements (JokerVerse) — MIT-licensed; see NOTICE.md. Runs under the
+// Ported from PSerban93/Achievements (JokerVerse) — MIT-licensed; see THIRD_PARTY_NOTICES.md. Runs under the
 // Watchdog (Electron Node via ELECTRON_RUN_AS_NODE) using koffi, the same single-runtime FFI stack as
 // the A2 migration (wql-process-monitor / regodit / xinput-ffi).
 

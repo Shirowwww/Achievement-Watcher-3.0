@@ -1,7 +1,7 @@
 'use strict';
 
 // Platform-aware appid identity. Ported concept from PSerban93/Achievements (JokerVerse)
-// utils/config-platform-migrator.js `sanitizeAppIdForPlatform` — MIT-licensed; see NOTICE.md. The
+// utils/config-platform-migrator.js `sanitizeAppIdForPlatform` — MIT-licensed; see THIRD_PARTY_NOTICES.md. The
 // target uses it to migrate a persisted per-game config store (which AW doesn't have); the reusable
 // kernel is validating that an appid matches its platform's id shape.
 //

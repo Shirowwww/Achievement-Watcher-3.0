@@ -6,7 +6,7 @@
 // This parser reads that log to build both the schema and the unlock state.
 //
 // The log-parsing core (regexes, set/snapshot building) is ported from PSerban93/Achievements
-// (JokerVerse) utils/ea-desktop-local.js — MIT-licensed; see NOTICE.md. Adapted to Achievement
+// (JokerVerse) utils/ea-desktop-local.js — MIT-licensed; see THIRD_PARTY_NOTICES.md. Adapted to Achievement
 // Watcher's parser contract (scan / getGameData / getAchievements) and to request-zero for icons; the
 // online icon download is dropped in favour of the EA icon CDN URL used directly by the renderer.
 

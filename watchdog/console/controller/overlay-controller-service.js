@@ -1,6 +1,6 @@
 // Overlay controller service: thin lifecycle wrapper that (re)creates the controller input manager when the relevant preferences change and syncs its enabled state.
 //
-// Ported from PSerban93/Achievements (JokerVerse) — MIT-licensed; see NOTICE.md. Runs under the
+// Ported from PSerban93/Achievements (JokerVerse) — MIT-licensed; see THIRD_PARTY_NOTICES.md. Runs under the
 // Watchdog (Electron Node via ELECTRON_RUN_AS_NODE) using koffi, the same single-runtime FFI stack as
 // the A2 migration (wql-process-monitor / regodit / xinput-ffi).
 
