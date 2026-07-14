@@ -1,5 +1,5 @@
 'use strict';
-const { ipcRenderer } = require('electron');
+const { ipcRenderer, clipboard } = require('electron');
 let userDataPath = null;
 function getUserDataPath() {
   if (userDataPath) return userDataPath;
@@ -34,6 +34,8 @@ const userDir = require(path.join(appPath, 'parser/userDir.js'));
 const libraryDirs = require(path.join(appPath, 'parser/libraryDirs.js'));
 const goldberg = require(path.join(appPath, 'parser/goldberg.js'));
 const gbeInstaller = require(path.join(appPath, 'parser/gbeInstaller.js'));
+const uplayR2 = require(path.join(appPath, 'parser/uplayR2.js'));
+const uplayR2Installer = require(path.join(appPath, 'parser/uplayR2Installer.js'));
 const steamParser = require(path.join(appPath, 'parser/steam.js'));
 const exeList = require(path.join(appPath, 'parser/exeList.js'));
 const exeDetect = require(path.join(appPath, 'parser/exeDetect.js'));
@@ -295,8 +297,16 @@ function sourcePresentationFor(game) {
   const source = game && game.source;
   const sourceLower = String(source || '').toLowerCase();
   const system = String((game && game.system) || '').toLowerCase();
+  const isUbisoft = uplayR2.isUbisoftGame(game, game && game.appid);
 
   if (!gameHasAchievements(game)) {
+    if (isUbisoft) {
+      return {
+        img: getSourceImg('ubisoft'),
+        label: fr ? 'Jeu Ubisoft — aucun succès trouvé' : 'Ubisoft game — no achievements found',
+        kind: 'ubisoft-empty',
+      };
+    }
     return {
       img: getSourceImg('Unconfigured'),
       label: fr ? 'Aucun succès trouvé' : 'No achievements found',
@@ -316,8 +326,8 @@ function sourcePresentationFor(game) {
   if (sourceLower === 'gog') {
     return { img: getSourceImg('gog'), label: fr ? 'Succès GOG' : 'GOG achievements', kind: 'gog' };
   }
-  if (system === 'uplay' || sourceLower.includes('uplay') || sourceLower.includes('ubisoft')) {
-    return { img: pathToFileURL(path.join(appPath, 'resources/img/achievement.svg')).href, label: fr ? 'Succès Ubisoft Connect' : 'Ubisoft Connect achievements', kind: 'ubisoft' };
+  if (isUbisoft) {
+    return { img: getSourceImg('ubisoft'), label: fr ? 'Succès Ubisoft Connect' : 'Ubisoft Connect achievements', kind: 'ubisoft' };
   }
   if (system === 'ea' || sourceLower.includes('ea')) {
     return { img: pathToFileURL(path.join(appPath, 'resources/img/achievement.svg')).href, label: fr ? 'Succès EA app' : 'EA app achievements', kind: 'ea' };
@@ -1042,6 +1052,14 @@ var app = {
           // fuzzy picker and reassign this so the diagnose/repair closures (which read it at call time)
           // write the correct steam_appid.txt.
           let writableAppid = /^[0-9]+$/.test(String(appid)) ? appid : list.find((g) => g.appid == appid)?.steamappid || null;
+          const ctxGame = list.find((g) => g.appid == appid);
+          const gameSource = ctxGame?.source || '';
+          const isUbisoftSource = uplayR2.isUbisoftGame(ctxGame, appid);
+          const ubisoftTools = isUbisoftSource ? uplayR2.getGameToolPaths(ctxGame, appid) : null;
+          const catalogAppid = String(
+            (ubisoftTools && ubisoftTools.steamAppid) || ctxGame?.steamappid || writableAppid || (/^[0-9]+$/.test(String(appid)) ? appid : '')
+          );
+          const contextIsFrench = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
 
           const { Menu, MenuItem, nativeImage } = remote;
           const menu = new Menu();
@@ -1189,6 +1207,36 @@ var app = {
             })
           );
 
+          if (isUbisoftSource) {
+            gameMenu.append(new MenuItem({ type: 'separator' }));
+            gameMenu.append(
+              new MenuItem({
+                label: contextIsFrench ? 'Lancer le jeu' : 'Launch game',
+                async click() {
+                  await app.onPlayButtonClick(self.find('.play-button'));
+                },
+              })
+            );
+            gameMenu.append(
+              new MenuItem({
+                label: contextIsFrench ? "Configurer l’exécutable…" : 'Configure executable…',
+                async click() {
+                  await app.onConfigButtonClick(self.find('.config-button'));
+                },
+              })
+            );
+            gameMenu.append(
+              new MenuItem({
+                label: $('#game-list').attr('data-ctx-resetplaytime') || 'Reset playtime and last played',
+                async click() {
+                  self.css('pointer-events', 'none');
+                  await PlaytimeTracking.reset(appid).catch((err) => debug.error(err));
+                  self.css('pointer-events', 'initial');
+                },
+              })
+            );
+          }
+
           gameMenu.append(
             new MenuItem({
               label: progressMute.isMuted(appid)
@@ -1204,8 +1252,11 @@ var app = {
             })
           );
 
-          if (!self.data('system')) {
-            //Steam only
+          // Native-platform records normally skip Steam-emulator tools. Ubisoft is the exception:
+          // it needs its own Uplay R2 section plus the common folder/catalog/cover actions below.
+          if (!self.data('system') || isUbisoftSource) {
+            if (!isUbisoftSource) {
+            // Steam/GBE only
             gameMenu.append(
               new MenuItem({
                 label: $('#game-list').attr('data-ctx-resetplaytime') || 'Reset playtime and last played',
@@ -1476,10 +1527,14 @@ var app = {
             // custom Folder-tab dirs with no explicit source, …) is some flavor of cracked/emulated
             // install and can always have GBE Fork (re)installed — this used to be an allowlist that
             // missed most crack sources (#bug: "ne marche pas sur Fast Food Simulator/Forza Horizon 6").
-            const gameSource = list.find((g) => g.appid == appid)?.source || '';
             const isLegitSteamOwned = gameSource.startsWith('Steam (');
             const isNativeLauncher = gameSource === 'gog' || gameSource === 'epic';
-            if (!isLegitSteamOwned && !isNativeLauncher) {
+            // Ubisoft/uPlay sources have no steam_api.dll to replace — GBE Fork (Steam) can never
+            // apply there. They get the Uplay R2 fix block below instead ("instead of GBE").
+            // `uplayR2` covers the installs discover() found on disk by their Ubisoft markers: those
+            // carry a Steam appid (mapped via uplay-steam.json) or none at all, so the source string
+            // alone wouldn't tell them apart from a cracked Steam game.
+            if (!isLegitSteamOwned && !isNativeLauncher && !isUbisoftSource) {
               emulatorMenu.append(new MenuItem({ type: 'separator' }));
               emulatorMenu.append(
                 new MenuItem({
@@ -2113,13 +2168,285 @@ var app = {
                 })
               );
             }
+            }
+
+            // Ubisoft/uPlay counterpart of the GBE Fork block above — "instead of GBE" for a game
+            // with no steam_api.dll. Maps the game to its Steam equivalent (uplay-steam.json), fetches
+            // the real Steam achievement schema, generates a matching achievements_schema.json for the
+            // Goldberg Uplay R2 ("demde" build) emulator and redirects its save path into
+            // %AppData%\GSE Saves\<steamAppid> — the folder AW's existing Steam/GBE scan already reads,
+            // so no changes are needed on the read side. See app/parser/uplayR2.js.
+            if (isUbisoftSource) {
+              if (emulatorMenu.items.length) {
+                emulatorMenu.append(new MenuItem({ type: 'separator' }));
+              }
+
+              const diagnoseUplayR2Setup = async ({ game, gameDir, showDialog = true }) => {
+                const report = uplayR2.diagnose({ gameDir, appid, name: game?.name });
+                if (showDialog) {
+                  const lines = [];
+                  lines.push(
+                    report.mapping ? `Steam AppID: ${report.mapping.steam_appid} (${report.mapping.steam_name})` : 'Steam AppID: not resolved'
+                  );
+                  lines.push('');
+                  for (const issue of report.issues) lines.push(`[${issue.level}] ${issue.code}: ${issue.message}`);
+                  remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                    type: report.ok ? 'info' : 'warning',
+                    title: `Uplay R2 diagnosis — ${game?.name || appid}`,
+                    message: report.ok ? 'Setup looks valid.' : 'Problems were detected.',
+                    detail: lines.join('\n'),
+                    noLink: true,
+                  });
+                }
+                return report;
+              };
+
+              emulatorMenu.append(
+                new MenuItem({
+                  icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/file-text.png')),
+                  label: contextIsFrench
+                    ? 'Appliquer le correctif émulateur (Uplay R2)…'
+                    : $('#game-list').attr('data-ctx-installuplayr2') || 'Apply emulator fix (Uplay R2)…',
+                  async click() {
+                    const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
+                    try {
+                      const game = list.find((g) => g.appid == appid);
+                      let gameDir = game?.gameDir && fs.existsSync(game.gameDir) ? game.gameDir : null;
+                      if (!gameDir) {
+                        const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
+                          title: "Select the game's install folder (where the Uplay R2 loader .dll should go)",
+                          buttonLabel: 'Install here',
+                          properties: ['openDirectory', 'dontAddToRecent'],
+                        });
+                        if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
+                        gameDir = picked.filePaths[0];
+                      }
+
+                      setGameBoxBusy(self, fr ? 'Résolution du jeu Steam…' : 'Resolving the Steam equivalent…');
+                      const mapping = uplayR2.resolveSteamMapping({ appid, name: game?.name, gameDir });
+                      if (!mapping) {
+                        remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                          type: 'warning',
+                          title: fr ? 'Jeu Steam introuvable' : 'No Steam equivalent found',
+                          message: fr
+                            ? "Ce jeu Ubisoft n'a pas de correspondance connue dans uplay-steam.json."
+                            : 'This Ubisoft game has no known match in uplay-steam.json.',
+                          detail: fr
+                            ? 'Le fix Uplay R2 a besoin de la version Steam du jeu pour récupérer le schéma des succès.'
+                            : 'The Uplay R2 fix needs the Steam version of the game to fetch the achievement schema.',
+                        });
+                        return;
+                      }
+
+                      setGameBoxBusy(self, fr ? 'Récupération du schéma Steam…' : 'Fetching the Steam schema…');
+                      let schema = null;
+                      try {
+                        schema = await steamParser.getGameData({
+                          appID: mapping.steam_appid,
+                          lang: app.config?.achievement?.lang || 'english',
+                          key: app.config?.steam?.apiKey,
+                          showHidden: true,
+                        });
+                      } catch (e) {
+                        debug.log(`[${appid}] uplayR2: getGameData failed => ${formatErr(e)}`);
+                      }
+                      const achList = (schema && schema.achievement && schema.achievement.list) || [];
+                      const prefixInfo = uplayR2.derivePrefixedIds(achList);
+                      if (!prefixInfo) {
+                        remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                          type: 'warning',
+                          title: fr ? 'Jeu non pris en charge' : 'Unsupported game',
+                          message: fr
+                            ? 'Les noms de succès Steam de ce jeu ne suivent pas le format <préfixe><chiffres> requis.'
+                            : "This game's Steam achievement names don't follow the required <prefix><digits> pattern.",
+                          detail: fr
+                            ? 'Le mappage automatique vers Goldberg Uplay R2 ne peut pas être généré pour ce jeu.'
+                            : 'The automatic Goldberg Uplay R2 mapping cannot be generated for this game.',
+                        });
+                        return;
+                      }
+
+                      // Most Ubisoft repacks already ship the Goldberg Uplay R2 loader — they just never
+                      // configure its achievement half. Only fall back to the user-seeded dll cache when
+                      // the game has no loader at all, so a game that already has one is fixable with an
+                      // empty cache (all it needs is achievements_schema.json + the ini keys).
+                      const emu = uplayR2.detectEmulator(gameDir);
+                      const dllDirs = emu.dll.length > 0 ? [...new Set(emu.dll.map((f) => path.dirname(f)))] : [gameDir];
+                      let installResult = { installed: 0, backedUp: 0 };
+                      if (emu.dll.length === 0) {
+                        setGameBoxBusy(self, fr ? 'Installation de la DLL…' : 'Installing the DLL…');
+                        const cacheDir = path.join(getUserDataPath(), 'cache/uplayR2');
+                        const dlls = uplayR2Installer.ensureEmulatorDlls({ cacheDir });
+                        if (!dlls.seeded) {
+                          remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                            type: 'warning',
+                            title: fr ? 'DLL Uplay R2 manquantes' : 'Uplay R2 dll not seeded',
+                            message: fr ? 'Aucun fichier trouvé dans le cache Uplay R2.' : 'No files found in the Uplay R2 cache.',
+                            detail: fr
+                              ? `Copie une fois les fichiers uplay_r2_loader(64).dll / upc_r2_loader(64).dll dans :\n${cacheDir}`
+                              : `Copy the uplay_r2_loader(64).dll / upc_r2_loader(64).dll files into (one-time setup):\n${cacheDir}`,
+                          });
+                          remote.shell.openPath(cacheDir);
+                          return;
+                        }
+                        installResult = uplayR2Installer.installDlls({ dllDirs, dlls, log: debug });
+                      }
+
+                      setGameBoxBusy(self, fr ? 'Configuration (succès)…' : 'Configuring (achievements)…');
+                      const targetDir = dllDirs[0];
+                      const summary = uplayR2.repair({
+                        dir: targetDir,
+                        steamAppid: mapping.steam_appid,
+                        schema,
+                        prefix: prefixInfo.prefix,
+                        accountName: app.config?.general?.username,
+                        language: app.config?.achievement?.lang,
+                      });
+
+                      remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                        type: 'info',
+                        title: 'Uplay R2 installed',
+                        message: `${installResult.installed > 0 ? `${installResult.installed} dll(s) installed` : 'loader already present'} — ${Object.keys(summary.achievementsSchemaJson).length} achievement(s) mapped`,
+                        detail:
+                          targetDir +
+                          `\n\nSteam AppID: ${mapping.steam_appid} (${mapping.steam_name})` +
+                          `\nAchKeyPrefix: ${prefixInfo.prefix || '(none)'}` +
+                          (installResult.backedUp > 0 ? `\nExisting dll(s) backed up as *.bak` : '') +
+                          (summary.backupDir ? `\nPrevious config backed up: ${summary.backupDir}` : ''),
+                        noLink: true,
+                      });
+
+                      await diagnoseUplayR2Setup({ game, gameDir: targetDir, showDialog: false });
+                    } catch (err) {
+                      remote.dialog.showMessageBoxSync({
+                        type: 'error',
+                        title: 'Uplay R2 install failed',
+                        message: 'Could not install or configure Goldberg Uplay R2.',
+                        detail: formatErr(err),
+                      });
+                    } finally {
+                      clearGameBoxBusy(self);
+                    }
+                  },
+                })
+              );
+
+              emulatorMenu.append(
+                new MenuItem({
+                  icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/file-text.png')),
+                  label: contextIsFrench
+                    ? 'Diagnostiquer la configuration Uplay R2'
+                    : $('#game-list').attr('data-ctx-diagnoseuplayr2') || 'Diagnose Uplay R2 setup',
+                  async click() {
+                    try {
+                      const game = list.find((g) => g.appid == appid);
+                      let gameDir = game?.gameDir && fs.existsSync(game.gameDir) ? game.gameDir : null;
+                      if (!gameDir) {
+                        const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
+                          title: "Select the game's install folder (where the Uplay R2 loader .dll is)",
+                          buttonLabel: 'Diagnose',
+                          properties: ['openDirectory', 'dontAddToRecent'],
+                        });
+                        if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
+                        gameDir = picked.filePaths[0];
+                      }
+                      await diagnoseUplayR2Setup({ game, gameDir });
+                    } catch (err) {
+                      remote.dialog.showMessageBoxSync({ type: 'error', title: 'Diagnose failed', message: 'Could not diagnose the Uplay R2 setup.', detail: `${err}` });
+                    }
+                  },
+                })
+              );
+
+              emulatorMenu.append(new MenuItem({ type: 'separator' }));
+              emulatorMenu.append(
+                new MenuItem({
+                  label: contextIsFrench ? 'Actualiser les données du jeu' : 'Refresh game data',
+                  click() {
+                    app.onStart();
+                  },
+                })
+              );
+              if (ubisoftTools.steamAppid) {
+                emulatorMenu.append(
+                  new MenuItem({
+                    label: `${contextIsFrench ? 'Copier l’AppID Steam' : 'Copy Steam AppID'} (${ubisoftTools.steamAppid})`,
+                    click() {
+                      clipboard.writeText(ubisoftTools.steamAppid);
+                    },
+                  })
+                );
+              }
+              if (ubisoftTools.uplayId) {
+                emulatorMenu.append(
+                  new MenuItem({
+                    label: `${contextIsFrench ? 'Copier l’ID produit Ubisoft' : 'Copy Ubisoft product ID'} (${ubisoftTools.uplayId})`,
+                    click() {
+                      clipboard.writeText(ubisoftTools.uplayId);
+                    },
+                  })
+                );
+              }
+            }
+
+            if (isUbisoftSource && ubisoftTools) {
+              let addedUbisoftFolder = false;
+              if (ubisoftTools.runtimeDir && fs.existsSync(ubisoftTools.runtimeDir)) {
+                folderMenu.append(
+                  new MenuItem({
+                    icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/folder-open.png')),
+                    label: contextIsFrench ? 'Ouvrir le dossier de configuration Uplay R2' : 'Open Uplay R2 configuration folder',
+                    click() {
+                      remote.shell.openPath(ubisoftTools.runtimeDir);
+                    },
+                  })
+                );
+                addedUbisoftFolder = true;
+              }
+              if (ubisoftTools.configFile && fs.existsSync(ubisoftTools.configFile)) {
+                folderMenu.append(
+                  new MenuItem({
+                    label: contextIsFrench ? 'Afficher le fichier de configuration Uplay R2' : 'Show Uplay R2 configuration file',
+                    click() {
+                      remote.shell.showItemInFolder(ubisoftTools.configFile);
+                    },
+                  })
+                );
+                addedUbisoftFolder = true;
+              }
+              if (ubisoftTools.schemaFile && fs.existsSync(ubisoftTools.schemaFile)) {
+                folderMenu.append(
+                  new MenuItem({
+                    label: contextIsFrench ? 'Afficher achievements_schema.json' : 'Show achievements_schema.json',
+                    click() {
+                      remote.shell.showItemInFolder(ubisoftTools.schemaFile);
+                    },
+                  })
+                );
+                addedUbisoftFolder = true;
+              }
+              if (ubisoftTools.saveDir) {
+                folderMenu.append(
+                  new MenuItem({
+                    icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/folder-open.png')),
+                    label: contextIsFrench ? 'Ouvrir les sauvegardes de succès Ubisoft' : 'Open Ubisoft achievement saves',
+                    click() {
+                      fs.mkdirSync(ubisoftTools.saveDir, { recursive: true });
+                      remote.shell.openPath(ubisoftTools.saveDir);
+                    },
+                  })
+                );
+                addedUbisoftFolder = true;
+              }
+              if (addedUbisoftFolder) folderMenu.append(new MenuItem({ type: 'separator' }));
+            }
 
             folderMenu.append(
               new MenuItem({
                 icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/folder-open.png')),
                 label: $('#game-list').attr('data-ctx-iconcache') || `Open the game's icon cache folder`,
                 click() {
-                  remote.shell.openPath(path.join(process.env['APPDATA'], 'Achievement Watcher', 'steam_cache', 'icon', `${appid}`));
+                  remote.shell.openPath(path.join(process.env['APPDATA'], 'Achievement Watcher', 'steam_cache', 'icon', catalogAppid || `${appid}`));
                 },
               })
             );
@@ -2129,7 +2456,7 @@ var app = {
                 label: $('#game-list').attr('data-ctx-dbcache') || `Open the game's .db cache folder`,
                 click() {
                   remote.shell.showItemInFolder(
-                    path.join(process.env['APPDATA'], 'Achievement Watcher', 'steam_cache', 'schema', `${app.config.achievement.lang}`, `${appid}.db`)
+                    path.join(process.env['APPDATA'], 'Achievement Watcher', 'steam_cache', 'schema', `${app.config.achievement.lang}`, `${catalogAppid || appid}.db`)
                   );
                 },
               })
@@ -2150,16 +2477,15 @@ var app = {
               );
             }
 
-            // Steam/SteamDB/PCGamingWiki links rely on `appid` being a real Steam appid. "Unconfigured"
-            // entries use a synthetic "local-<hash>" id (no confirmed Steam catalog match), so these
-            // links would 404/error — hide them for exe-detected-only games.
-            if (gameSource !== 'Unconfigured') {
+            // Catalog links use the mapped Steam appid for Ubisoft records (including namespaced
+            // uplay-<productId> official entries). Never emit broken URLs with a local/native id.
+            if (/^[0-9]+$/.test(catalogAppid)) {
               linkMenu.append(
                 new MenuItem({
                   icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/globe.png')),
                   label: 'Steam',
                   click() {
-                    remote.shell.openExternal(`https://store.steampowered.com/app/${appid}/`);
+                    remote.shell.openExternal(`https://store.steampowered.com/app/${catalogAppid}/`);
                   },
                 })
               );
@@ -2168,7 +2494,7 @@ var app = {
                   icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/globe.png')),
                   label: 'SteamDB',
                   click() {
-                    remote.shell.openExternal(`https://steamdb.info/app/${appid}/`);
+                    remote.shell.openExternal(`https://steamdb.info/app/${catalogAppid}/`);
                   },
                 })
               );
@@ -2177,7 +2503,7 @@ var app = {
                   icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/globe.png')),
                   label: 'PCGamingWiki',
                   click() {
-                    remote.shell.openExternal(`https://pcgamingwiki.com/api/appid.php?appid=${appid}`);
+                    remote.shell.openExternal(`https://pcgamingwiki.com/api/appid.php?appid=${catalogAppid}`);
                   },
                 })
               );
@@ -2186,7 +2512,7 @@ var app = {
                   icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/globe.png')),
                   label: 'SteamHunters',
                   click() {
-                    remote.shell.openExternal(`https://steamhunters.com/apps/${appid}/achievements`);
+                    remote.shell.openExternal(`https://steamhunters.com/apps/${catalogAppid}/achievements`);
                   },
                 })
               );
@@ -2195,7 +2521,7 @@ var app = {
                   icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/globe.png')),
                   label: 'Steam Community',
                   click() {
-                    remote.shell.openExternal(`https://steamcommunity.com/app/${appid}/guides/`);
+                    remote.shell.openExternal(`https://steamcommunity.com/app/${catalogAppid}/guides/`);
                   },
                 })
               );
@@ -2208,15 +2534,25 @@ var app = {
           const groupLabel = (attribute, fallback) => ($('#game-list').attr(attribute) || fallback).replace(/&/g, '&&');
           if (gameMenu.items.length) menu.append(new MenuItem({ label: groupLabel('data-ctx-group-game', 'Game'), submenu: gameMenu }));
           if (emulatorMenu.items.length)
-            menu.append(new MenuItem({ label: groupLabel('data-ctx-group-emulator', 'Emulator & tools'), submenu: emulatorMenu }));
+            menu.append(
+              new MenuItem({
+                label: isUbisoftSource ? 'Ubisoft Connect' : groupLabel('data-ctx-group-emulator', 'Emulator & tools'),
+                submenu: emulatorMenu,
+              })
+            );
           if (folderMenu.items.length) menu.append(new MenuItem({ label: groupLabel('data-ctx-group-folders', 'Folders'), submenu: folderMenu }));
           if (linkMenu.items.length) menu.append(new MenuItem({ label: groupLabel('data-ctx-group-links', 'Useful links'), submenu: linkMenu }));
 
           // ---- Cover art management (re-download / alternate AppID / local image) ----
           const coverGame = list.find((g) => g.appid == appid);
           if (coverGame) {
-            const coverCacheAppid = String(coverGame.steamappid || appid);
-            const defaultCoverUrl = () => (coverGame.img && (coverGame.img.header || coverGame.img.landscape || coverGame.img.portrait)) || null;
+            const coverCacheAppid = catalogAppid || String(coverGame.steamappid || appid);
+            const defaultCoverUrl = () => {
+              const img = coverGame.img || {};
+              return app.config?.achievement?.thumbnailPortrait
+                ? img.portrait || img.header || img.landscape || null
+                : img.header || img.landscape || img.portrait || null;
+            };
             const refetchDefaultCover = async () => {
               if (EMU_LOCAL_ICON_SOURCES.has(coverGame.source)) {
                 applyCoverBackground(appid, (coverGame.img && coverGame.img.header) || 'none');
@@ -2230,7 +2566,7 @@ var app = {
             const coverMenu = new Menu();
             coverMenu.append(
               new MenuItem({
-                label: 'Re-download cover',
+                label: contextIsFrench ? 'Retélécharger la jaquette' : 'Re-download cover',
                 async click() {
                   try {
                     coverStore.remove(appid);
@@ -2250,9 +2586,12 @@ var app = {
             );
             coverMenu.append(
               new MenuItem({
-                label: 'Use another Steam AppID…',
+                label: contextIsFrench ? 'Utiliser un autre AppID Steam…' : 'Use another Steam AppID…',
                 async click() {
-                  const alt = await promptText('Steam AppID to pull cover art from:', /^[0-9]+$/.test(String(appid)) ? String(appid) : '');
+                  const alt = await promptText(
+                    contextIsFrench ? 'AppID Steam à utiliser pour la jaquette :' : 'Steam AppID to pull cover art from:',
+                    /^[0-9]+$/.test(coverCacheAppid) ? coverCacheAppid : ''
+                  );
                   if (!alt || !/^[0-9]+$/.test(alt)) return;
                   let local = await ipcRenderer.invoke('fetch-icon', `https://cdn.cloudflare.steamstatic.com/steam/apps/${alt}/header.jpg`, appid);
                   if (!local)
@@ -2269,7 +2608,7 @@ var app = {
             );
             coverMenu.append(
               new MenuItem({
-                label: 'Choose local image…',
+                label: contextIsFrench ? 'Choisir une image locale…' : 'Choose local image…',
                 click() {
                   const files = remote.dialog.showOpenDialogSync({
                     title: 'Choose cover image',
@@ -2299,7 +2638,7 @@ var app = {
               coverMenu.append(new MenuItem({ type: 'separator' }));
               coverMenu.append(
                 new MenuItem({
-                  label: 'Reset cover to default',
+                  label: contextIsFrench ? 'Réinitialiser la jaquette' : 'Reset cover to default',
                   async click() {
                     coverStore.remove(appid);
                     reloadCoverOverrides();
