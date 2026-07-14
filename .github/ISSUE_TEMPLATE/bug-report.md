@@ -1,35 +1,40 @@
 ---
 name: Bug report
-about: Report a problem with Achievement Watcher
+about: Report reproducible incorrect behavior
 title: ''
 labels: bug
 assignees: ''
 ---
 
-> Please keep reports focused on Achievement Watcher's behaviour. The issue tracker is not a piracy helpdesk.
+<!-- Search existing issues and remove private data from logs before uploading them. -->
 
-**Describe the bug**
-A clear and concise description of what goes wrong.
+## What happened?
 
-**Steps to reproduce**
-1. Go to '...'
-2. Click on '...'
-3. See error
+Describe the problem clearly. Include the game/source involved and what you were doing when it occurred.
 
-**Expected behaviour**
-What you expected to happen.
+## Steps to reproduce
 
-**Actual behaviour**
-What actually happened (include screenshots if helpful).
+1. First action.
+2. Next action.
+3. Result.
 
-**Environment**
-- OS: [e.g. Windows 11 24H2]
-- App version: [e.g. 3.0.0]
-- Source/emulator involved: [e.g. Steam, Goldberg/GBE, GOG, RPCS3...]
+## Expected behavior
 
-**Logs**
-Logs are very helpful. They live in `%AppData%\Achievement Watcher\logs`.
-Please attach the relevant log (a zip is fine).
+What should have happened?
 
-**Additional context**
-Anything else that might help.
+## Environment
+
+- Achievement Watcher version:
+- Windows version:
+- Source or emulator:
+- Installation type: installer / unpacked build / development
+
+## Logs and screenshots
+
+Attach screenshots or a zip of the relevant files from `%APPDATA%\Achievement Watcher\logs`. Logs can also be opened from **Settings → Advanced → Diagnostics**.
+
+## Additional context
+
+Include any custom folder, notification or emulator settings that may matter. Do not attach game files, credentials or account tokens.
+
+> Keep reports focused on Achievement Watcher. The issue tracker cannot provide games, account access or piracy support.

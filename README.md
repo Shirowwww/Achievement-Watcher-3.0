@@ -2,225 +2,196 @@
 
 # 🏆 Achievement Watcher 3.0
 
-### A clean, modern achievement file parser for PC games — with real-time notifications.
+### All your PC achievements in one modern Windows library.
 
-Bring achievements from your PC games and supported emulators into **one modern Windows library**, with progress, rarity, playtime and a live notification the moment you unlock something.
+Track achievements, rarity and playtime across launchers, local saves and supported emulators — with live Windows toasts or an in-game overlay.
 
-![version](https://img.shields.io/badge/version-3.1.0-blue)
-![platform](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows)
-![electron](https://img.shields.io/badge/Electron-43-47848F?logo=electron&logoColor=white)
-![node](https://img.shields.io/badge/Node.js-24-339933?logo=node.js&logoColor=white)
-![license](https://img.shields.io/badge/license-LGPL--3.0-green)
+[![Latest release](https://img.shields.io/github/v/release/Shirowwww/Achievement-Watcher-3.0?display_name=tag&sort=semver&style=flat-square)](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Shirowwww/Achievement-Watcher-3.0/total?style=flat-square)](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases)
+![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?logo=windows&style=flat-square)
+![Electron](https://img.shields.io/badge/Electron-43-47848F?logo=electron&logoColor=white&style=flat-square)
+[![License](https://img.shields.io/badge/license-LGPL--3.0-green?style=flat-square)](LICENSE)
+
+**[Download](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/latest)** · [Documentation](docs/README.md) · [Changelog](CHANGELOG.md) · [Issues](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues)
 
 <table>
 <tr>
-<td align="center"><img src="screenshot/home.png" width="440px"><br><sub>Unified game library</sub></td>
-<td align="center"><img src="screenshot/achievements.png" width="440px"><br><sub>Per-game achievements & rarity</sub></td>
+<td align="center"><img src="screenshot/home.png" width="440" alt="Unified game library"><br><sub>One library for every supported source</sub></td>
+<td align="center"><img src="screenshot/achievements.png" width="440" alt="Achievement progress and rarity"><br><sub>Progress, rarity and unlock history</sub></td>
 </tr>
 </table>
 
 </div>
 
-> **Achievement Watcher 3.0** is an improved, modernized fork of [Xan105's original Achievement Watcher](https://github.com/xan105/Achievement-Watcher) (via [darktakayanagi](https://github.com/darktakayanagi/Achievement-Watcher)), distributed under **LGPL-3.0**.
+> This fork continues [Xan105's original Achievement Watcher](https://github.com/xan105/Achievement-Watcher) and [darktakayanagi's 2.x branch](https://github.com/darktakayanagi/Achievement-Watcher), with a modern runtime and a large compatibility, reliability and feature pass.
 
 ---
 
-## ✨ What's new in 3.1.0
+## ✨ What this fork adds
 
-- 🔔 **More flexible notifications** — 7 new presets, separate presets for rare and platinum unlocks, a real 0–200% volume slider with live preview, and a dedicated rare-achievement test.
-- 🎮 **Live Xenia notifications** — Xbox 360 GPD files are watched per title with a safe startup baseline and duplicate suppression.
-- 🎨 **Faster navigation** — achievement search, mouse Back/Forward support, and four app themes: Steam Blue, OLED Black, Dracula and Graphite.
-- 🧹 **Clearer setup** — restore individual blacklisted games, see immediate folder-scan feedback, and get more precise onboarding guidance.
-- 🌍 **Complete locale parity** — all 18 bundled UI languages contain the full 454-key interface set.
-- ⬆️ **Working automatic updates** — packaged builds check the GitHub release feed on startup, download updates and offer to restart when ready.
+| Area | Main improvements since Achievement Watcher 2.x |
+|---|---|
+| **Modern foundation** | Electron 12 → 43, current Node runtime, refreshed dependencies, tighter renderer security and Windows 11 support without WMIC |
+| **More real sources** | Local Steam appcache, GOG Galaxy and Ubisoft Connect readers; Epic account connection; EA Desktop; RPCS3, ShadPS4 and Xenia |
+| **Live tracking** | Tray-first background Watchdog, Xenia/ShadPS4/GOG/Ubisoft unlock monitoring, safer startup baselines and duplicate suppression |
+| **Better library** | Game and achievement search, installed-only filtering, blacklist restore, rarity tiers, progress achievements, smarter covers and executable detection |
+| **Notifications** | Native Windows toasts + in-game overlay, preset library, custom builder, custom sounds, 0–200% volume and separate rare/completion styles |
+| **Controller and UI** | Full controller navigation, mouse Back/Forward, optional native overlay control, resizable interface, four themes and 18 complete UI languages |
+| **Goldberg / GBE tools** | Read-only diagnosis, `steam_settings` repair, matched runtime install, Steamless support, backups/restore and opt-in background setup |
+| **Local-first reliability** | Offline names and artwork, local schemas, platform-aware cache IDs, bounded caches, self-healing folders and fewer browser-dependent lookups |
+
+The current `main` branch also adds dedicated detection and repair for compatible **Goldberg Uplay R2** installs. It is newer than the packaged 3.1.0 release; see [`Unreleased`](CHANGELOG.md#unreleased) for what will ship next.
 
 ---
 
 ## ⚖️ Quick comparison
 
-| Feature | ⭐ **This fork** | [Achievements](https://github.com/PSerban93/Achievements) | [Achievement-Watcher 2.x](https://github.com/darktakayanagi/Achievement-Watcher) |
+| Feature | ⭐ **This fork** | [Achievements](https://github.com/PSerban93/Achievements) | [Achievement Watcher 2.x](https://github.com/darktakayanagi/Achievement-Watcher) |
 |---|:---:|:---:|:---:|
-| Modern runtime | ✅ Electron 43 | ✅ Electron 43 | ❌ Electron 12 |
-| Fast, lightweight tray mode | ✅ Optimized | ✅ Tray + caching | ⚠️ Legacy stack |
-| Automatic game library/configuration | ✅ | ✅ | ⚠️ More manual |
-| Official/local platform integrations | ✅ GOG · Ubisoft · Steam · Epic (local) | ✅ Extensive | ⚠️ Fewer sources |
-| Notification transports | ✅ Toast + overlay | ✅ Animated overlay | ✅ Toast + Chromium |
-| Live Xenia / ShadPS4 unlocks | ✅ | ✅ | ⚠️ Planned |
-| Goldberg / Steam-emulator tracking | ✅ | ✅ | ✅ |
-| GBE runtime repair + backup/rollback | ✅ Full | ⚠️ Auto-config/schema | ❌ |
-| Game and achievement search | ✅ Both | ⚠️ Game search | ✅ Both |
-| Notification presets | ✅ 28 + builder | ✅ Multiple | ✅ Multiple |
-| Rare and platinum-specific presets | ✅ | ✅ | ⚠️ Not documented |
+| Modern desktop runtime | ✅ Electron 43 | ✅ Electron 40 | ❌ Electron 12 |
+| Unified game dashboard | ✅ | ✅ | ✅ |
+| Game + achievement search | ✅ Both | ⚠️ Game search | ✅ Both |
+| Installed-games-only filter | ✅ | ⚠️ Install-aware configs | ❌ |
+| Automatic folder discovery/config | ✅ | ✅ | ⚠️ More manual |
+| Official/local platform readers | ✅ Steam · GOG · Ubisoft · Epic · EA | ✅ Steam · GOG · Ubisoft · Epic · EA | ⚠️ Older mapped paths |
+| Native Windows toasts | ✅ | ❌ | ✅ |
+| Animated in-game overlay | ✅ | ✅ | ✅ Chromium |
+| Toast + overlay together | ✅ | ❌ | ⚠️ Separate legacy transports |
+| No-code custom preset builder | ✅ | ❌ | ❌ |
+| Separate rare/completion presets | ✅ | ✅ | ❌ Not documented |
+| Live ShadPS4 / Xenia unlocks | ✅ | ✅ | ❌ Planned only |
+| Steam-emulator tracking | ✅ | ✅ | ✅ |
+| GBE runtime install + schema repair | ✅ Full | ⚠️ Auto-config/schema | ❌ Manual setup |
+| Backup and one-click restore | ✅ | ❌ | ❌ |
+| Integrated Steamless path | ✅ | ❌ | ❌ |
+| Full controller UI navigation | ✅ | ⚠️ Overlay control only | ❌ Planned only |
 | Screenshot souvenirs | ✅ | ✅ | ✅ |
-| Full controller UI navigation | ✅ UI + in-game overlay + native PlayStation | ✅ UI + in-game overlay + native PlayStation | ⚠️ Planned |
-| UI languages | ✅ 18 complete | ✅ Multi-language | ✅ Multi-language |
+| Multiple UI themes | ✅ 4 | ✅ | ❌ |
+| Interface languages | ✅ 18 complete | ✅ Multi-language | ✅ Multi-language |
 
-> ⭐ **This fork focuses on an efficient all-in-one tray library**, native + overlay notifications, full UI and in-game controller navigation (Xbox/PlayStation/Switch, overlay control) and advanced Goldberg/GBE repair. **Achievements** offers especially broad official/local platform integrations, automatic configuration and overlay customization. **Achievement-Watcher 2.x** retains the original multi-transport notification workflow and broad Steam-emulator compatibility.
+This fork focuses on an all-in-one library, a quiet tray workflow, native toasts and deeper Goldberg/GBE repair. **Achievements** has a strong auto-configuration and animated-overlay workflow. **Achievement Watcher 2.x** remains the historical base with broad emulator compatibility and several legacy notification transports.
 
-<sub>Compared against the public README files and current default branches on 12 July 2026. ✅ = supported, ⚠️ = partial, planned, different workflow or not clearly documented, ❌ = unavailable.</sub>
-
----
-
-## 🚀 What version 3 adds
-
-Version 3.0 is a large stability, security, compatibility and feature pass on top of the base fork.
-
-- 🔒 **Modern, hardened platform** — Electron 12 → 43 (Chromium 150, Node 24.18), refreshed dependencies, XSS hardening, a tightened Content-Security-Policy, and **Windows 11 24H2+** compatibility (WMIC removed everywhere).
-- 🧰 **System-tray app** — runs quietly in the tray; closing the window keeps tracking, playtime and notifications alive in the background. One lighter background process, one runtime.
-- ⚡ **Faster & lighter** — bounded-concurrency loading, an optional browser-free data path with a Steam Web API key, cached repeat scans, a size-capped icon cache, and no separate outdated Chromium download for Steam scraping.
-- 🔔 **Reworked notifications** — Windows **toasts**, an in-game **overlay** (presets, sounds, custom preset builder), or **both**; "Rare · X%" labels, platinum toasts, per-game progress mute, and a duplicate guard.
-- 🧩 **Goldberg / GBE tooling** — diagnose & repair `steam_settings`, install the maintained GBE Fork runtime, strip Steam DRM, and auto-fix new emulated games in the background ([details](#-goldberg--gbe-emulator-handling)).
-- 🕵️ **Smarter detection** — an "installed games only" filter, rewritten per-game executable detection, and automatic new-game detection that registers fresh installs for playtime tracking.
-- 🎮 **More sources** — ShadPS4 (PS4, live toasts), Xenia (Xbox 360, live toasts), and EA Desktop, plus GreenLuma / Uplay / RPCS3 / Epic load fixes.
-- 🎨 **Modern dark UI** — refreshed library, details, settings and dialogs; resizable window; advanced cover management; four themes and 18 complete UI languages.
-
-<div align="center">
-<img src="screenshot/live.gif" width="60%"><br>
-<sub>Real-time toast the moment an achievement unlocks</sub>
-</div>
-
-See [CHANGELOG.md](CHANGELOG.md) for the full notes and the [docs](docs/) for guides.
+<sub>✅ = supported and documented · ⚠️ = partial, manual or a different workflow · ❌ = unavailable or not documented on the current public branch. Checked against the public READMEs and default branches on 14 July 2026.</sub>
 
 ---
 
 ## 🎯 Supported sources
 
-- ✅ Legitimate **Steam** libraries and common Steam emulator save formats (**Goldberg / GBE Fork**, **GreenLuma**, …)
-- ✅ **GOG**, **Epic Games**, **Ubisoft Connect** and **EA Desktop**
-- 🎮 **RPCS3** (PS3) trophies
-- 🎮 **ShadPS4** (PS4) trophies — *including live unlock notifications*
-- 🎮 **Xenia** (Xbox 360) achievements — *including live unlock notifications*
+| Source | Support |
+|---|---|
+| **Steam** | Local appcache state, public-profile data, schemas and cached product metadata |
+| **Steam-compatible saves** | Goldberg, GBE Fork, GreenLuma, SmartSteamEmu, TENOKE and compatible layouts |
+| **GOG Galaxy** | Native local Galaxy databases and compatible legacy saves |
+| **Epic Games** | Local installations and official achievement state after optional account connection |
+| **Ubisoft Connect** | Native local data, legacy Uplay formats and compatible Uplay R2 setups |
+| **EA Desktop** | Achievement data recorded by the EA client log |
+| **Console emulators** | RPCS3, ShadPS4 and Xenia |
 
-> A Steam Web API key is **optional** — it improves and speeds up Steam lookups, but the app falls back to automatic retrieval without one.
+The optional Steam Web API key can improve some lookups, but local sources and cached metadata continue to work without one.
 
 ---
 
-## 📥 Install & use
+## 📥 Install and use
 
-1. Download the latest `Achievement.Watcher.Setup.3.1.0.exe` from the [**Releases**](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases) page.
-2. Install and launch Achievement Watcher — it lives in the system tray; click the tray icon to open the library.
-3. Open **Settings** to configure game folders, sources, notifications and the optional Steam Web API key.
-4. Leave it running: the background tracker auto-starts at sign-in and keeps live notifications and playtime working even with the window closed.
-
-> 💡 On first run, the setup guide auto-detects common save/achievement folders. If a game isn't detected, add its folder from **Settings → Folders → Generate configs**, or set its executable from the game's configuration dialog.
+1. Download `Achievement.Watcher.Setup.<version>.exe` from the [latest release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/latest).
+2. Install and open Achievement Watcher.
+3. Use the first-run guide to choose your language, sources, folders and notification mode.
+4. Run **Settings → Folders → Smart Find** and add any custom game or save location.
+5. Leave the app in the system tray for live notifications and playtime tracking.
 
 <div align="center">
-<img src="screenshot/settings.png" width="640px"><br>
-<sub>Settings — interface, sources, notifications, folders and emulator tools</sub>
+<img src="screenshot/settings.png" width="680" alt="Achievement Watcher settings"><br>
+<sub>Sources, folders, notifications, appearance and diagnostics in one place</sub>
 </div>
+
+Updating over an older build keeps settings, cache, playtime and achievement data under `%APPDATA%\Achievement Watcher`. See [Getting started](docs/getting-started.md) for the full first-run and update guide.
 
 ---
 
 ## 🔔 Notifications
 
-Choose how unlocks are announced in **Settings → Notification**:
+Choose **Toast**, **Overlay** or **Both** under **Settings → Notification**.
 
-- **Toast** — native Windows notifications (with progress bar and game hero image for playtime).
-- **Overlay** — a styled in-game popup drawn on top of the game, with a library of presets and sounds.
-- **Both** — toast *and* overlay.
-
-Extras: a no-code **custom preset builder** (colours, opacity, font/icon size, corners, live preview), **custom sounds** (import your own `.wav`/`.mp3`/`.ogg`), 0–200% overlay **volume**, adjustable duration, movable/click-through overlays, "Rare · X%" labels for sub-10% unlocks, dedicated rare/platinum presets, platinum toasts, and per-game progress-notification muting.
+- Presets for clean desktop, Steam, PlayStation, Xbox, rare and completion styles.
+- A no-code preset builder with live preview.
+- Custom `.wav`, `.mp3` and `.ogg` sounds.
+- Position, scale, duration and overlay volume up to 200%.
+- Separate presets for normal, rare and 100% completion events.
+- Per-game progress mute without hiding real unlocks.
+- Optional screenshot souvenirs.
 
 <table>
 <tr>
-<td align="center"><img src="screenshot/notifications.png" width="460px"><br><sub>Custom overlay preset builder</sub></td>
-<td align="center"><img src="screenshot/overlay.png" width="320px"><br><sub>In-game overlay popup</sub></td>
+<td align="center"><img src="screenshot/notifications.png" width="470" alt="Notification settings"><br><sub>Preset library and custom builder</sub></td>
+<td align="center"><img src="screenshot/overlay.png" width="330" alt="In-game overlay"><br><sub>In-game achievement overlay</sub></td>
 </tr>
 </table>
 
----
-
-## 🧩 Goldberg / GBE emulator handling
-
-Games that run through a Steam emulator (Goldberg, GBE Fork, and similar setups) store their achievements locally instead of on Steam. Achievement Watcher reads those saves, and can also **set up or repair the emulator runtime** for a game so its achievements are tracked correctly and pop up in-game.
-
-**What it does** (right-click a game → *Emulator & tools*)
-
-- **Diagnose** — a clear report of the game's emulator setup (which emulator, schema vs. save state, missing icons or descriptions, app-id mismatches).
-- **Repair `steam_settings`** — rebuilds a correct achievement schema, icons, app id, DLC list and identity config, matching the names Steam actually uses.
-- **Apply emulator fix (GBE Fork)** — installs the maintained [GBE Fork](https://github.com/Detanup01/gbe_fork) `steam_api(64).dll`, writes `steam_settings`, and creates the save folder so the game shows up immediately.
-- **Remove Steam DRM (Steamless)** — strips Valve's SteamStub from a game's executable when a plain DLL swap won't load.
-- **Back up / Restore configuration** — snapshot the emulator files before changes, and roll back a bad fix.
-
-New emulated games can also be **fixed automatically in the background** (toggle in Settings → Emulator).
-
-**When to use it** — when a cracked/emulated game's achievements aren't detected, descriptions are blank, or in-game pop-ups don't appear.
-
-**What gets modified**
-
-- The game's `steam_api.dll` / `steam_api64.dll` is replaced (original kept as `*.bak`).
-- Files inside `steam_settings/` are written or refreshed (previous versions snapshotted under `steam_settings/.aw-backups/`).
-- Optionally the game executable is unpacked by Steamless (original kept as `*.steamstub.bak`).
-
-**Precautions**
-
-- Use this only on games you own, for legitimate, personal achievement tracking.
-- It modifies game files. Backups are made automatically, but use it at your own risk.
-- It does **not** bypass online ownership checks, and it can't track PlayStation-PSPC Steam ports (e.g. *The Last of Us Part II*, *God of War*) — those trophies never reach the Steam API any emulator watches (use a RUNE release, which Achievement Watcher monitors out of the box).
-- Antivirus tools sometimes flag emulator DLLs — see [Security & false positives](#-security--false-positives).
-
-> Guides: [docs/emulator-setup.md](docs/emulator-setup.md) (user guide) · [GOLDBERG-GBE.md](GOLDBERG-GBE.md) (technical reference).
+[Notification guide](docs/notifications.md)
 
 ---
 
-## 🛠️ Notable bugfixes & improvements
+## 🧩 Goldberg, GBE Fork and Uplay R2
 
-- Hidden achievement descriptions resolve correctly even with a Steam Web API key (`GetGameAchievements`), and stale blank entries are repaired in place.
-- Persistent rarity (global unlock % and gold/silver/bronze tiers) cached per game — shown instantly and offline.
-- No more permanent blacklisting after a single transient load failure; GreenLuma, Uplay, RPCS3 and Epic first-load failures fixed.
-- Emulator notification edge cases (3DM, TENOKE, GOG/Nemirtingas, `[object Object]` titles) now notify correctly.
-- Executable auto-detection rewritten so each game resolves to its own binary instead of several sharing one.
-- Self-healing config — a corrupted folder database is quarantined and defaults restored instead of silently disabling your folders.
-- Window resizable down to 900 × 600; the main window can no longer get stuck invisible at startup.
+Normal achievement reading is read-only. Extra actions appear under **Emulator & tools** when a local setup needs help:
+
+- **Diagnose** the AppID, schema, save state, icons and configuration.
+- **Repair `steam_settings`** while preserving richer existing data.
+- **Apply GBE Fork** with the matching 32-bit or 64-bit runtime.
+- **Back up and restore** DLLs and configuration files.
+- **Use Steamless** after confirmation when SteamStub prevents a DLL replacement from loading.
+
+Full background setup is **off by default**. Repairs create backups, but they still modify game files; use them only with games you own.
+
+Ubisoft titles use a separate **Uplay R2** path because they do not load `steam_api.dll`. Achievement Watcher can derive a safe mapping for compatible games and reuse the normal `GSE Saves` pipeline. The loader must be provided locally because no stable official download exists.
+
+[Goldberg/GBE setup](docs/emulator-setup.md) · [Uplay R2 setup](docs/uplay-r2.md) · [Technical reference](docs/goldberg-gbe.md)
 
 ---
+
+## 📚 Documentation
+
+- [Getting started](docs/getting-started.md)
+- [Notifications](docs/notifications.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [Contributing](CONTRIBUTING.md)
+- [Build guide](BUILD.md)
+- [Architecture](docs/architecture.md)
+- [Release workflow](docs/RELEASE_WORKFLOW.md)
+
+The [documentation index](docs/README.md) explains what each guide covers.
 
 ## 🔧 Build from source
 
-Requirements: Windows and **Node.js 22.22.2+ or 24.15+**. Electron is downloaded automatically; native dependencies ship prebuilt — no Visual Studio / Python / node-gyp needed.
+Requirements: Windows and Node.js `22.22.2+` or `24.15+`.
 
 ```powershell
-cd watchdog
+Push-Location watchdog
 npm ci
-cd ..\app
+npm test
+Pop-Location
+
+Push-Location app
 npm ci
+npm test
 npm run build
+Pop-Location
 ```
 
-The NSIS installer is written to `app/dist/`. Full details (dev run, portable build, known gotchas, versioning) are in [BUILD.md](BUILD.md).
+The installer and updater files are written to `app\dist`. See [BUILD.md](BUILD.md) for packaging details and known constraints.
 
-Run the automated checks from the repository root:
+## 🔐 Security and support
 
-```powershell
-node --test test\*.test.js
-node --test watchdog\test\*.test.js
-```
+- Download builds only from the [official Releases page](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases).
+- Releases are currently unsigned, so SmartScreen or antivirus warnings are possible.
+- `latest.yml` contains the installer's SHA-512 digest.
+- Sensitive settings and Epic account tokens are encrypted before local storage.
+- The project contains no game files and does not bypass online ownership checks.
 
----
+For a bug report, include the app version, Windows version, affected source and relevant files from `%APPDATA%\Achievement Watcher\logs`. The issue tracker cannot provide games, credentials or piracy support.
 
-## 🔐 Security & false positives
+## ⚖️ Credits and license
 
-Achievement Watcher is built from source with standard, **non-obfuscated** Electron + Node packaging.
+Created by [Xan105](https://github.com/xan105/Achievement-Watcher), continued by [darktakayanagi](https://github.com/darktakayanagi/Achievement-Watcher), and maintained here by Shirowwww and project contributors.
 
-- Some Electron apps — and the emulator-helper DLLs this tool can download on demand — are occasionally flagged as false positives by Windows Defender or other antivirus engines. This is a known industry issue with unsigned Electron builds and Steam-emulator binaries, not evidence of malware.
-- **Download builds only from the [official Releases page](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases).** Never install a build from a third-party mirror.
-- Each release publishes the installer, differential blockmap and `latest.yml` update manifest; the manifest contains the installer's SHA-512 checksum.
-- The installer is currently unsigned, so Windows SmartScreen may show a warning. A trusted code-signing certificate can be added in the future to reduce those warnings.
-
-If your antivirus quarantines a file, prefer reporting the false positive to your AV vendor over disabling protection.
-
----
-
-## 🤝 Contributing & issues
-
-Bug reports and feature requests are welcome via the [issue tracker](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues) — please use the provided templates and include your OS, app version and relevant logs (`%AppData%\Achievement Watcher\logs`).
-
-> The issue tracker is **not** a piracy helpdesk. Please keep reports focused on Achievement Watcher's behaviour.
-
----
-
-## ⚖️ Credits & legal
-
-Created originally by [Xan105](https://github.com/xan105/Achievement-Watcher), extended by [darktakayanagi](https://github.com/darktakayanagi/Achievement-Watcher) and the fork contributors. See [NOTICE.md](NOTICE.md) for full attribution.
-
-This software does not provide copyrighted game content or bypass ownership checks. It is supplied **as-is** and is **not affiliated** with Valve, Sony, Microsoft, GOG, Epic Games or Ubisoft. All trademarks belong to their respective owners.
+Licensed under [LGPL-3.0](LICENSE). See [third-party notices](THIRD_PARTY_NOTICES.md) for adapted components and attribution. This project is not affiliated with Valve, Sony, Microsoft, GOG, Epic Games, Electronic Arts or Ubisoft.

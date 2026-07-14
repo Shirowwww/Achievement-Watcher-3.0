@@ -1,20 +1,27 @@
 ---
-name: Question / support
-about: Ask a question about using Achievement Watcher
+name: Question or support
+about: Ask for help using Achievement Watcher
 title: ''
 labels: question
 assignees: ''
 ---
 
-> Please keep questions focused on Achievement Watcher. The issue tracker is not a piracy helpdesk.
+## Before asking
 
-**Before asking**
-- [ ] I checked the [README](../../README.md) and [BUILD.md](../../BUILD.md).
-- [ ] I searched existing issues for a similar question.
+- [ ] I checked the [documentation](../../docs/README.md) and [troubleshooting guide](../../docs/troubleshooting.md).
+- [ ] I searched existing issues for the same question.
+- [ ] I am using the latest release, or I have explained why I cannot update.
 
-**Your question**
-Describe what you're trying to do and where you're stuck.
+## Question
 
-**Environment (if relevant)**
-- OS: [e.g. Windows 11 24H2]
-- App version: [e.g. 3.0.0]
+What are you trying to do, what did you expect, and where are you stuck?
+
+## Environment
+
+- Achievement Watcher version:
+- Windows version:
+- Source or emulator involved:
+
+Add screenshots or relevant logs if they make the question easier to understand. Remove credentials and private data first.
+
+> The issue tracker cannot provide games, account access or piracy support.

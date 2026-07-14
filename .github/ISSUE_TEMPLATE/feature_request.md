@@ -1,19 +1,23 @@
 ---
 name: Feature request
-about: Suggest an idea or improvement
+about: Suggest a focused improvement
 title: ''
 labels: enhancement
 assignees: ''
 ---
 
-**What problem does this solve?**
-A clear and concise description of the problem or limitation. Ex. "I can't ..."
+## Problem
 
-**Describe the solution you'd like**
-What you'd like to happen.
+What limitation or repeated difficulty would this solve?
 
-**Alternatives considered**
-Any alternative approaches you've thought about.
+## Proposed behavior
 
-**Additional context**
-Mockups, screenshots or related sources, if any.
+Describe what you would like Achievement Watcher to do. A short example or mockup is welcome.
+
+## Alternatives
+
+What workarounds or other approaches have you considered?
+
+## Scope and context
+
+Which source, screen or workflow is affected? Add related issues, screenshots or technical references when useful.
