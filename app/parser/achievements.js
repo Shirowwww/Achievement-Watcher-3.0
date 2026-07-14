@@ -22,6 +22,7 @@ const libraryDirs = require(path.join(appPath, 'libraryDirs.js'));
 const blacklist = require(path.join(appPath, 'blacklist.js'));
 const watchdog = require(path.join(appPath, 'watchdog.js'));
 const goldberg = require(path.join(appPath, 'goldberg.js'));
+const uplayR2 = require(path.join(appPath, 'uplayR2.js'));
 const gbeInstaller = require(path.join(appPath, 'gbeInstaller.js'));
 const pe = require(path.join(appPath, '..', 'util', 'pe.js'));
 const { computeFolderContentVersion } = require(path.join(appPath, '..', 'util', 'contentVersion.js'));
@@ -112,7 +113,7 @@ function mergeDiscoveryData(target, incoming) {
   const data = target && typeof target === 'object' ? target : {};
   for (const [key, value] of Object.entries(incoming)) {
     if (value == null || value === '') continue;
-    if (key === 'needsSchema' || key === 'trustedInstalled' || key === 'hasSteamApiDll') {
+    if (key === 'needsSchema' || key === 'trustedInstalled' || key === 'hasSteamApiDll' || key === 'uplayR2') {
       data[key] = !!data[key] || !!value;
     } else if (data[key] == null || data[key] === '') {
       data[key] = value;
@@ -884,6 +885,25 @@ async function resolveUnconfiguredSteamAppid(u) {
   return null;
 }
 
+/*
+  A Ubisoft install found by the unconfigured scan has no steam_api.dll and no steam_appid.txt, so the
+  Steam-app-list resolver above can never identify it — it would stay a nameless "local-<crc>" box with
+  no icon and no achievements. Identify it the way the Uplay R2 fix already does instead: match its
+  folder/exe name against uplay-steam.json to get the game's Steam release, which is exactly the appid
+  whose schema (title, art, achievement list) the emulator's unlocks are keyed on once the fix is
+  applied. Returns the mapping | null (null = Ubisoft install we can't map; it stays unconfigured but is
+  still flagged so the app offers the Uplay R2 fix rather than GBE Fork).
+*/
+function resolveUplayR2Mapping(u) {
+  const byInstallState = uplayR2.resolveSteamMapping({ gameDir: u && u.data && u.data.gameDir });
+  if (byInstallState) return { ...byInstallState, matchedName: 'uplay_install.state' };
+  for (const name of unconfiguredNameCandidates(u)) {
+    const mapping = uplayR2.resolveSteamMapping({ name });
+    if (mapping) return { ...mapping, matchedName: name };
+  }
+  return null;
+}
+
 async function discover(source, steamAccFilter) {
   let data = [];
 
@@ -1073,6 +1093,50 @@ async function discover(source, steamAccFilter) {
       for (const u of unconfigured) {
         let real = null;
         let resolved = null;
+
+        // Ubisoft/uPlay install (Goldberg Uplay R2 territory — no steam_api.dll to look at). Identify it
+        // against uplay-steam.json and promote it to its Steam appid, so the game gets its real title,
+        // art and achievement schema from the ordinary Steam pipeline and its unlocks are read from
+        // GSE Saves\<steamAppid> — the folder the Uplay R2 fix redirects the emulator's save into.
+        if (u.data && uplayR2.isUbisoftInstall(u.data.gameDir)) {
+          u.source = 'Uplay R2';
+          u.data.uplayR2 = true;
+          u.data.system = 'uplay';
+          const mapping = resolveUplayR2Mapping(u);
+          if (!mapping) {
+            data.push(u); // keep it visible; the Uplay R2 fix can still be run on it manually
+            added++;
+            debug.log(`[unconfigured-scan] Ubisoft install "${u.name}" has no uplay-steam.json match — left unconfigured`);
+            continue;
+          }
+          const known = data.find((g) => String(g.appid) === String(mapping.steam_appid));
+          if (known) {
+            if (!known.data || typeof known.data !== 'object') known.data = {};
+            if (!known.data.gameDir) known.data.gameDir = u.data.gameDir;
+            if (!known.data.exe) known.data.exe = u.data.exe;
+            known.data.uplayR2 = true;
+            known.data.system = 'uplay';
+            merged++;
+          } else {
+            data.push({
+              appid: String(mapping.steam_appid),
+              source: 'Uplay R2',
+              data: {
+                type: 'file',
+                path: goldbergSaveFolder('gbe', mapping.steam_appid),
+                gameDir: u.data.gameDir,
+                exe: u.data.exe,
+                uplayR2: true,
+                system: 'uplay',
+                hasSteamApiDll: false,
+              },
+            });
+            added++;
+          }
+          debug.log(`[unconfigured-scan] Ubisoft install "${u.name}" (${mapping.matchedName}) mapped to Steam appid ${mapping.steam_appid} (${mapping.steam_name})`);
+          continue;
+        }
+
         const hasLocalSteamEvidence = !!(u.data && (u.data.hasSteamApiDll || u.data.steamSettings));
         try {
           if (hasLocalSteamEvidence) resolved = await resolveUnconfiguredSteamAppid(u);
@@ -1221,8 +1285,10 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
         steamappid,
         name: uname,
         source: appid.source || 'Unconfigured',
+        system: appid.data.uplayR2 ? 'uplay' : undefined,
         gameDir: appid.data.gameDir,
         unconfigured: true,
+        uplayR2: !!appid.data.uplayR2,
         installed: true,
         img,
         achievement: { total: 0, unlocked: 0, list: [] },
@@ -1302,6 +1368,10 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     }
 
     if (appid.steamappid) game.steamappid = appid.steamappid;
+    if (appid.data && appid.data.uplayR2) {
+      game.uplayR2 = true;
+      game.system = 'uplay';
+    }
     game.source = appid.source;
     if (!option.achievement.mergeDuplicate && appid.source) game.source = appid.source;
     const dataType = appid.data && appid.data.type;
