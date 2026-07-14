@@ -1,19 +1,19 @@
-# Achievement Watcher 3.1.0
+# Achievement Watcher 3.2.0
 
-This release expands notifications, adds live Xenia unlocks, improves navigation and setup, completes every bundled translation, and restores automatic update checks.
+Version 3.2.0 adds a dedicated Goldberg Uplay R2 diagnosis and repair flow, strengthens local platform support, and refreshes the Settings experience and public documentation.
 
 ## Highlights
 
-- 7 new notification presets, including Game Cover and Xbox Series rare/platinum variants.
-- Separate presets for normal, rare and platinum unlocks.
-- 0–200% notification volume slider with live preview and a dedicated rare test.
-- Live Xenia achievement notifications with safe startup baselines and duplicate suppression.
-- Achievement search, mouse Back/Forward navigation, four app themes and an individual-game blacklist manager.
-- Immediate folder-scan and Smart Find feedback in Settings and onboarding.
-- Float progress values rounded to two decimals.
-- All 18 UI languages updated to the complete 454-key locale set.
-- Packaged builds now check GitHub automatically, download updates and prompt to restart.
+- Detect compatible Ubisoft/Uplay R2 installations even when no Steam AppID marker is present.
+- Diagnose and repair supported Uplay R2 setups using a user-provided loader, backed-up configuration, and a verified Steam achievement mapping.
+- Show Ubisoft Connect titles with their own source identity, artwork, valid catalog links, and contextual tools.
+- Improve local achievement readers, platform-aware caches, metadata fallbacks, and native controller support.
+- Refresh the Settings panels, user guides, architecture reference, contribution guidance, and third-party notices.
 
-## Download
+See the [changelog](CHANGELOG.md#320---2026-07-14) for the full list of fixes and changes.
 
-Download `Achievement.Watcher.Setup.3.1.0.exe`. The accompanying `.blockmap` and `latest.yml` files are used by the automatic updater.
+## Install
+
+Download `Achievement.Watcher.Setup.3.2.0.exe` from the [v3.2.0 release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/tag/v3.2.0).
+
+The `.blockmap` and `latest.yml` assets are used by automatic updates. Existing settings and tracked data under `%APPDATA%\Achievement Watcher` are preserved when upgrading.

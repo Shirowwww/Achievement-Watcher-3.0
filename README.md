@@ -40,7 +40,7 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 | **Goldberg / GBE tools** | Read-only diagnosis, `steam_settings` repair, matched runtime install, Steamless support, backups/restore and opt-in background setup |
 | **Local-first reliability** | Offline names and artwork, local schemas, platform-aware cache IDs, bounded caches, self-healing folders and fewer browser-dependent lookups |
 
-The current `main` branch also adds dedicated detection and repair for compatible **Goldberg Uplay R2** installs. It is newer than the packaged 3.1.0 release; see [`Unreleased`](CHANGELOG.md#unreleased) for what will ship next.
+The 3.2.0 release adds dedicated detection and repair for compatible **Goldberg Uplay R2** installs; see the [3.2.0 changelog](CHANGELOG.md#320---2026-07-14) for the complete release scope.
 
 ---
 

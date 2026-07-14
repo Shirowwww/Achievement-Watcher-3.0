@@ -5,16 +5,28 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+## 3.2.0 - 2026-07-14
+
 ### Added
 
 - Full controller navigation across the library, achievement view, settings, onboarding and in-app prompts, including spatial D-pad/stick movement, activation/back, search, scrolling and settings-tab shortcuts.
+- Native local achievement readers for GOG Galaxy, Ubisoft Connect and Steam appcache, with live unlock monitoring for GOG and Ubisoft sources.
+- An Epic account connection flow and official Epic achievement source, integrated into the Sources settings and normal library scan.
+- Local-first metadata fallbacks for multi-language achievement descriptions, GBE product-info artwork, offline game names, SteamDB launch executables and hard-to-resolve covers.
+- Optional native controller input for in-game overlay movement and control, including XInput, newer Windows input backends and raw-HID profiles.
+- A dedicated Goldberg Uplay R2 diagnosis and repair path for compatible Ubisoft games, using a user-provided loader and a safely derived Steam achievement mapping.
 
 ### Fixed
 
+- Ubisoft/Uplay R2 installs without Steam DLLs or AppID markers are now detected from their Ubisoft files and internal install-state title, even when a repack renamed the folder; known games regain Steam metadata and achievements, while every detected Ubisoft install gets the Uplay R2 repair action instead of GBE Fork.
+- Ubisoft games now use a dedicated Ubisoft Connect source icon, correctly fill the game-card artwork, and expose launch/configuration, Uplay R2 diagnostics, mapped IDs, runtime folders and valid Steam catalog links from the right-click menu.
 - Windows account avatars are read correctly with the current extractor API and from both account-picture folder names used by supported Windows versions.
 
 ### Changed
 
+- Reorganized and expanded the public documentation with a richer project overview, task-focused user guides, current build and architecture references, clearer issue templates, and consolidated attribution.
+- Platform-aware IDs now keep Steam, Ubisoft, Epic and GOG entries separate across shared artwork, rarity and game-index caches.
+- Emulator setup attempts use a content fingerprint, avoiding repeated work while still retrying when `steam_settings` changes.
 - Updated the desktop runtime to Electron 43.1.0 (Chromium 150, Node 24.18) and moved direct dependencies to their current releases.
 - Replaced Puppeteer's bundled Chromium 110 fallback with Puppeteer Core 25 using an installed Chrome or Microsoft Edge, and moved network requests to the built-in Fetch API.
 
