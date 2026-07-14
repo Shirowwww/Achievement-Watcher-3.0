@@ -12,7 +12,11 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
   let step = 0;
   let addedSaveDirs = [];
   let addedLibraryDirs = [];
+  let visitedSteps = new Set([0]);
   let languageChosenThisSession = false;
+  let smartFindRunning = false;
+  let persistRunning = false;
+  let openedFromSettings = false;
   // Auto-config gate: at first run, proactively detect candidate save folders when the folders step is
   // first shown so the user reviews/trims real candidates instead of starting from an empty list.
   let isFirstRunSession = false;
@@ -225,7 +229,64 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
   }
 
   function setStatus(message, kind) {
-    $('#onboarding-status').removeClass('success error running').addClass(kind || '').text(message || '');
+    $('#onboarding-status, #onboarding-folder-status').removeClass('success error running').addClass(kind || '').text(message || '');
+  }
+
+  function updateProgress() {
+    const t = text();
+    const percent = ((step + 1) / STEP_COUNT) * 100;
+    $('#onboarding-progress-text').text(`${step + 1} / ${STEP_COUNT}`);
+    $('#onboarding-progress-fill').css('width', `${percent}%`);
+    $('.onboarding-steps button').each(function (index) {
+      const current = index === step;
+      $(this)
+        .toggleClass('is-complete', !current && visitedSteps.has(index))
+        .attr('aria-current', current ? 'step' : null)
+        .attr('aria-label', `${index + 1} / ${STEP_COUNT}: ${t.steps[index]}`);
+    });
+  }
+
+  function focusStep() {
+    const activeStep = $(`.onboarding-step[data-step='${step}']`);
+    const target = activeStep.find('input, select, button, a').filter(':visible').first();
+    if (target.length) setTimeout(() => target.trigger('focus'), 0);
+  }
+
+  function setSmartFindBusy(isBusy) {
+    const button = $('#onboard-smart-find');
+    const icon = button.find('i');
+    smartFindRunning = isBusy;
+    button.prop('disabled', isBusy).attr('aria-busy', String(isBusy)).toggleClass('is-running', isBusy);
+    icon.toggleClass('fa-search-plus', !isBusy).toggleClass('fa-spinner fa-spin', isBusy);
+  }
+
+  function setPersistBusy(isBusy) {
+    persistRunning = isBusy;
+    $('#onboarding-next, #onboarding-prev, #onboarding-skip, #onboarding-close').prop('disabled', isBusy);
+    $('#onboarding').attr('aria-busy', String(isBusy));
+    if (!isBusy) updateStepButtons();
+  }
+
+  function setApiKeyVisibility(visible) {
+    $('#onboard-api-key').attr('type', visible ? 'text' : 'password');
+    $('#onboard-api-toggle')
+      .attr('aria-pressed', String(visible))
+      .find('i')
+      .toggleClass('fa-eye', !visible)
+      .toggleClass('fa-eye-slash', visible);
+  }
+
+  // A Steam Web API key is exactly 32 hex characters. Strip stray whitespace from a paste and reflect
+  // valid/malformed state visually so a bad key is caught before the first (slow) library load.
+  function updateApiKeyState() {
+    const field = $('#onboard-api-key');
+    const raw = String(field.val() || '');
+    const value = raw.replace(/\s+/g, '');
+    if (raw !== value) field.val(value);
+    const valid = /^[a-fA-F0-9]{32}$/.test(value);
+    $('.onboarding-api-input')
+      .toggleClass('is-valid', valid)
+      .toggleClass('is-invalid', value.length > 0 && !valid);
   }
 
   function applyText() {
@@ -261,6 +322,7 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     $('#onboard-api-copy').text(t.apiCopy);
     $('#onboard-api-warning-text').text(t.apiWarning);
     $('#onboard-api-label').text(t.apiLabel);
+    $('#onboard-api-toggle').attr('title', t.apiToggle).attr('aria-label', t.apiToggle);
     $('#onboard-api-link span').text(t.apiLink);
     $('#onboard-api-note').text(t.apiNote);
     $('#onboard-folders-title').text(t.foldersTitle);
@@ -277,6 +339,7 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     $('#onboard-settings-copy').text(t.settingsCopy);
     $('#onboard-source-label').text(t.source);
     $('#onboard-notification-mode-label').text(t.notifications);
+    $('#onboard-notification-test span').text(t.notificationTest);
     $('#onboard-playtime-label').text(t.playtime);
     $('#onboard-auto-fix-label').text(t.autoFix);
     $('#onboard-hidden-label').text(t.hidden);
@@ -300,6 +363,7 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     $('#onboarding-prev span').text(t.back);
     $('#onboarding-skip').text(t.skip);
     updateStepButtons();
+    updateProgress();
     renderDirLists();
   }
 
@@ -353,6 +417,7 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     populateLanguageSelect(app.config.achievement?.lang || 'english');
     $('#onboard-username').val(app.config.general?.username || os.userInfo().username || 'User');
     $('#onboard-api-key').val(app.config.steam?.apiKey || '');
+    updateApiKeyState();
     populateMainSteamSelect(app.config.steam?.main || '0');
     $('#onboard-legit-steam').val(String(app.config.achievement_source?.legitSteam ?? 0));
     $('#onboard-notification-mode').val(app.config.notification_transport?.mode || 'toast');
@@ -440,8 +505,8 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
   }
 
   async function smartFindDirs() {
-    const button = $('#onboard-smart-find');
-    button.css('pointer-events', 'none');
+    if (smartFindRunning) return;
+    setSmartFindBusy(true);
     setStatus(text().smartRunning, 'running');
     const before = addedSaveDirs.length + addedLibraryDirs.length;
     try {
@@ -458,12 +523,12 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
         }
       }
       const added = Math.max(0, addedSaveDirs.length + addedLibraryDirs.length - before);
-      setStatus(`${text().smartDone} (${added})`, 'success');
+      setStatus(`${text().smartDone} (${added})`, added > 0 ? 'success' : '');
     } catch (err) {
       setStatus(`${err}`, 'error');
       debug.log(err);
     } finally {
-      button.css('pointer-events', 'initial');
+      setSmartFindBusy(false);
     }
   }
 
@@ -483,13 +548,16 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
       return;
     }
     step = Math.max(0, Math.min(STEP_COUNT - 1, nextStep));
+    visitedSteps.add(step);
     setStatus('', '');
     $('.onboarding-step').removeClass('active');
     $(`.onboarding-step[data-step='${step}']`).addClass('active');
     $('.onboarding-steps button').removeClass('active');
     $(`.onboarding-steps button[data-step='${step}']`).addClass('active');
     updateStepButtons();
+    updateProgress();
     maybeAutoDetectFolders();
+    focusStep();
   }
 
   // First time the folders step is reached during a first-run session, kick off the smart-find scan so
@@ -507,7 +575,8 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     $('#onboarding-prev').prop('disabled', step === 0);
     $('#onboarding-next span').text(step === STEP_COUNT - 1 ? t.finish : t.next);
     $('#onboarding-next i').toggleClass('fa-check', step === STEP_COUNT - 1).toggleClass('fa-chevron-right', step !== STEP_COUNT - 1);
-    $('#onboarding-skip, #onboarding-close').toggle(!isFirstRunSession);
+    $('#onboarding-skip').text(isFirstRunSession ? t.skip : t.close).toggle(!isFirstRunSession);
+    $('#onboarding-close').toggle(!isFirstRunSession);
   }
 
   function mergeSaveDirs(existing, additions) {
@@ -548,7 +617,9 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
   }
 
   async function persist(markComplete = true) {
+    if (persistRunning) return false;
     const t = text();
+    setPersistBusy(true);
     setStatus(t.saving, 'running');
     try {
       if (!app.config.general) app.config.general = {};
@@ -590,6 +661,8 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
       setStatus(t.saveError, 'error');
       debug.log(err);
       return false;
+    } finally {
+      setPersistBusy(false);
     }
   }
 
@@ -605,29 +678,35 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
       return;
     }
     if (!(await persist(true))) return;
-    hide();
+    hide({ returnToSettings: true });
   }
 
-  function hide() {
+  function hide({ returnToSettings = false } = {}) {
+    const restoreSettings = returnToSettings && openedFromSettings;
     $('#onboarding').attr('aria-hidden', 'true').hide();
     setStatus('', '');
+    openedFromSettings = false;
+    if (restoreSettings) $('title-bar').trigger('open-settings');
   }
 
   function show(force) {
     if (!force && app.config.general?.onboardingCompleted === true) return;
+    openedFromSettings = Boolean(force && $('#settings').is(':visible'));
     isFirstRunSession = !force; // auto-detect candidates only on the genuine first-run guide
     autoDetectedThisSession = false;
     languageChosenThisSession = false;
     addedSaveDirs = [];
     addedLibraryDirs = [];
+    visitedSteps = new Set([0]);
     applyText();
     populateValues();
+    setApiKeyVisibility(false);
     renderDirLists();
-    showStep(0);
     $('#settings .box').hide();
     $('#settings').hide();
     if ($('title-bar')[0]) $('title-bar')[0].inSettings = false;
-    $('#onboarding').attr('aria-hidden', 'false').show();
+    $('#onboarding').toggleClass('is-first-run', isFirstRunSession).attr('aria-hidden', 'false').show();
+    showStep(0);
   }
 
   window.openAchievementWatcherOnboarding = show;
@@ -682,12 +761,28 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
       if (avatarEl && typeof avatarEl.update === 'function') avatarEl.update();
     });
     $('#onboard-api-link').attr('href', STEAM_API_KEY_URL);
+    $('#onboard-api-toggle').on('click', function () {
+      setApiKeyVisibility($(this).attr('aria-pressed') !== 'true');
+    });
+    $('#onboard-api-key').on('input', updateApiKeyState);
+    $('#onboard-notification-test').on('click', function () {
+      if (typeof window.testAchievementWatcherNotification !== 'function') {
+        debug.log('notification test is not ready yet');
+        return;
+      }
+      window.testAchievementWatcherNotification($('#onboard-notification-mode').val() || 'toast', this);
+    });
     $('#onboard-language').on('change', function () {
       if (!app.config.achievement) app.config.achievement = {};
       app.config.achievement.lang = $(this).val() || 'english';
       languageChosenThisSession = uiLanguages.has(app.config.achievement.lang);
       applyText();
       populateLanguageSelect(app.config.achievement.lang);
+    });
+    $(document).on('keydown.awOnboarding', (event) => {
+      if (!$('#onboarding').is(':visible') || event.key !== 'Escape' || isFirstRunSession || persistRunning) return;
+      event.preventDefault();
+      skip();
     });
 
     setTimeout(() => show(false), 600);

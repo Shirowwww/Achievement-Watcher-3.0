@@ -5,6 +5,12 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+## 3.2.1 - 2026-07-14
+
+### Changed
+
+- The first-run guide now has visible step progress, completed-step markers, contextual folder-search feedback, an API-key visibility control with live valid/malformed feedback and paste sanitizing, a notification test using the selected transport, reliable keyboard dismissal when reopened from Settings, and a layout that remains usable at the minimum window height.
+
 ## 3.2.0 - 2026-07-14
 
 ### Added

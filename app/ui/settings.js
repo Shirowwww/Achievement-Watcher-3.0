@@ -1234,11 +1234,17 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       );
     }
     // Route a test through whichever transport(s) the user picked (toast / overlay / both).
-    function fireNotificationTest(kind, btn) {
-      const mode = $('#option_notifMode').val() || 'toast';
+    function fireNotificationTest(kind, btn, modeOverride) {
+      const mode = modeOverride || $('#option_notifMode').val() || 'toast';
       if (mode === 'toast' || mode === 'both') runNotificationTest.call(btn, kind + '-test');
       if (mode === 'overlay' || mode === 'both') ipcRenderer.send('spawn-overlay-notification', overlayTestData(kind));
     }
+    // The first-run guide shares the exact same test path, while supplying its still-unsaved
+    // notification transport choice. Keep the rendering and Watchdog protocol in one place.
+    window.testAchievementWatcherNotification = function (mode, button) {
+      const transport = ['toast', 'overlay', 'both'].includes(mode) ? mode : 'toast';
+      fireNotificationTest('toast', button, transport);
+    };
     $('#notify_test').click(function () {
       fireNotificationTest('toast', this);
     });

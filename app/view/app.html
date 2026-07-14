@@ -1507,25 +1507,29 @@
         <div class="overlay"></div>
         <div class="box" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
           <div class="onboarding-header">
-            <div>
+            <div class="onboarding-brand">
               <div class="eyebrow" id="onboarding-eyebrow">First setup</div>
               <h1 id="onboarding-title">Achievement Watcher</h1>
+            </div>
+            <div class="onboarding-progress" aria-live="polite">
+              <span id="onboarding-progress-text">1 / 6</span>
+              <span class="onboarding-progress-track" aria-hidden="true"><span id="onboarding-progress-fill"></span></span>
             </div>
             <button type="button" id="onboarding-close" class="icon-button" title="Close"><i class="fas fa-times"></i></button>
           </div>
 
           <div class="onboarding-body">
             <nav class="onboarding-steps" aria-label="Setup steps">
-              <button type="button" class="active" data-step="0"><i class="fas fa-language"></i> <span>Language</span></button>
-              <button type="button" data-step="1"><i class="fas fa-info-circle"></i> <span>How it works</span></button>
-              <button type="button" data-step="2"><i class="fas fa-user-circle"></i> <span>Account</span></button>
-              <button type="button" data-step="3"><i class="fas fa-key"></i> <span>API key</span></button>
-              <button type="button" data-step="4"><i class="fas fa-folder-open"></i> <span>Games</span></button>
-              <button type="button" data-step="5"><i class="fas fa-sliders-h"></i> <span>Settings</span></button>
+              <button type="button" class="active" data-step="0" aria-controls="onboarding-step-0" aria-current="step"><i class="fas fa-language"></i> <span>Language</span></button>
+              <button type="button" data-step="1" aria-controls="onboarding-step-1"><i class="fas fa-info-circle"></i> <span>How it works</span></button>
+              <button type="button" data-step="2" aria-controls="onboarding-step-2"><i class="fas fa-user-circle"></i> <span>Account</span></button>
+              <button type="button" data-step="3" aria-controls="onboarding-step-3"><i class="fas fa-key"></i> <span>API key</span></button>
+              <button type="button" data-step="4" aria-controls="onboarding-step-4"><i class="fas fa-folder-open"></i> <span>Games</span></button>
+              <button type="button" data-step="5" aria-controls="onboarding-step-5"><i class="fas fa-sliders-h"></i> <span>Settings</span></button>
             </nav>
 
             <div class="onboarding-panel">
-              <section class="onboarding-step active" data-step="0">
+              <section class="onboarding-step active" id="onboarding-step-0" data-step="0">
                 <div class="step-heading">
                   <i class="fas fa-language"></i>
                   <div>
@@ -1542,7 +1546,7 @@
                 </div>
               </section>
 
-              <section class="onboarding-step" data-step="1">
+              <section class="onboarding-step" id="onboarding-step-1" data-step="1">
                 <div class="step-heading">
                   <i class="fas fa-info-circle"></i>
                   <div>
@@ -1569,7 +1573,7 @@
                 </div>
               </section>
 
-              <section class="onboarding-step" data-step="2">
+              <section class="onboarding-step" id="onboarding-step-2" data-step="2">
                 <div class="step-heading">
                   <i class="fas fa-user-circle"></i>
                   <div>
@@ -1597,7 +1601,7 @@
                 </div>
               </section>
 
-              <section class="onboarding-step" data-step="3">
+              <section class="onboarding-step" id="onboarding-step-3" data-step="3">
                 <div class="step-heading">
                   <i class="fas fa-key"></i>
                   <div>
@@ -1605,13 +1609,16 @@
                     <p id="onboard-api-copy">A key improves Steam metadata retrieval. You can leave it empty and add it later.</p>
                   </div>
                 </div>
-                <div id="onboard-api-warning" class="onboarding-warning" role="alert" style="display:flex;gap:10px;align-items:flex-start;margin:4px 0 14px;padding:12px 14px;border:1px solid #e6a23c;border-left-width:4px;border-radius:8px;background:rgba(230,162,60,0.12);color:#f3c97a;font-weight:600;line-height:1.45;">
-                  <i class="fas fa-exclamation-triangle" style="margin-top:3px;font-size:1.05em;"></i>
+                <div id="onboard-api-warning" class="onboarding-warning" role="alert">
+                  <i class="fas fa-exclamation-triangle"></i>
                   <span id="onboard-api-warning-text">Without an API key, the very first library load will be VERY slow.</span>
                 </div>
                 <label class="full">
                   <span id="onboard-api-label">Steam Web API key</span>
-                  <input type="password" id="onboard-api-key" autocomplete="off" spellcheck="false" />
+                  <span class="onboarding-api-input">
+                    <input type="password" id="onboard-api-key" pattern="[a-fA-F\d]+" autocomplete="off" spellcheck="false" />
+                    <button type="button" id="onboard-api-toggle" class="onboarding-api-toggle" aria-pressed="false"><i class="fas fa-eye"></i></button>
+                  </span>
                 </label>
                 <div class="onboarding-link-row">
                   <a id="onboard-api-link" href="https://steamcommunity.com/dev/apikey" target="_blank"><i class="fab fa-steam-symbol"></i> <span>Get a Steam Web API key</span></a>
@@ -1619,7 +1626,7 @@
                 </div>
               </section>
 
-              <section class="onboarding-step" data-step="4">
+              <section class="onboarding-step" id="onboarding-step-4" data-step="4">
                 <div class="step-heading">
                   <i class="fas fa-folder-open"></i>
                   <div>
@@ -1632,6 +1639,7 @@
                   <button type="button" id="onboard-add-save-dir" class="inline-action-btn"><i class="fas fa-folder-plus"></i> <span>Save/config folder</span><small id="onboard-add-save-dir-hint">one emulator/source</small></button>
                   <button type="button" id="onboard-add-library-dir" class="inline-action-btn"><i class="fas fa-folder-open"></i> <span>Game library folder</span><small id="onboard-add-library-dir-hint">many installed games</small></button>
                 </div>
+                <div id="onboarding-folder-status" class="onboarding-inline-status"></div>
                 <div class="onboarding-lists">
                   <div>
                     <div class="list-title" id="onboard-save-list-title">Save/config folders</div>
@@ -1644,7 +1652,7 @@
                 </div>
               </section>
 
-              <section class="onboarding-step" data-step="5">
+              <section class="onboarding-step" id="onboarding-step-5" data-step="5">
                 <div class="step-heading">
                   <i class="fas fa-sliders-h"></i>
                   <div>
@@ -1662,15 +1670,18 @@
                     </select>
                     <small class="onboard-field-hint" id="onboard-source-hint"></small>
                   </label>
-                  <label>
-                    <span id="onboard-notification-mode-label">Notifications</span>
-                    <select id="onboard-notification-mode">
-                      <option value="toast">Toast</option>
-                      <option value="overlay">Overlay</option>
-                      <option value="both">Both</option>
-                    </select>
-                    <small class="onboard-field-hint" id="onboard-notification-mode-hint"></small>
-                  </label>
+                  <div class="onboarding-notification-field">
+                    <label>
+                      <span id="onboard-notification-mode-label">Notifications</span>
+                      <select id="onboard-notification-mode">
+                        <option value="toast">Toast</option>
+                        <option value="overlay">Overlay</option>
+                        <option value="both">Both</option>
+                      </select>
+                      <small class="onboard-field-hint" id="onboard-notification-mode-hint"></small>
+                    </label>
+                    <button type="button" id="onboard-notification-test" class="onboarding-test-button"><i class="fas fa-bell"></i> <span>Test notification</span></button>
+                  </div>
                   <label>
                     <span id="onboard-playtime-label">Playtime tracking</span>
                     <select id="onboard-playtime">
