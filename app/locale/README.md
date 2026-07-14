@@ -1,94 +1,77 @@
-Default back to English if your language is not there, missing elements will also default back to English if any.
-Fetching data from Steam will use your specified language, if the game doesn't support it Steam will respond with English data.
+# Interface translations
 
-Nb: the Steam web API Key disclaimer in the Settings section is never translated.
+Achievement Watcher loads interface text from `app/locale/lang`. English is the reference locale. When the selected language does not provide game metadata, the upstream game source may return English instead.
 
-Translation Help
-================
+The Steam Web API key disclaimer remains in English by design.
 
-I do my best to translate everything for every supported language by Steam, but it's rather difficult and I don't speak that much languages.
-Fluent in another language ? Any help to add/modify/improve would be greatly appreciated.
+## Bundled languages
 
-Please use the `lang/english.json` as template (others might have missing elements).
-Translate the values on the right side.
+The current build includes:
 
-If some UI changes are needed you can css override in `override.css` by using:
-```css
-  html[lang=xx] .selector{/*modification*/}
+- Brazilian Portuguese
+- Chinese (Simplified)
+- Czech
+- English
+- French
+- German
+- Hungarian
+- Italian
+- Japanese
+- Latin American Spanish
+- Polish
+- Portuguese
+- Russian
+- Slovak
+- Spanish
+- Thai
+- Turkish
+- Ukrainian
+
+`uiLanguages.js` exposes only languages that have a matching JSON file. Other entries in `steam.json` remain available as Steam language metadata but do not appear as interface choices.
+
+## Update a translation
+
+1. Use `lang/english.json` as the structural reference.
+2. Translate values, never keys.
+3. Preserve placeholders, HTML fragments and array order.
+4. Keep terminology consistent with the labels visible in the application.
+5. Add every new key to every bundled locale in the same change.
+6. Run the app tests from `app/`.
+
+```powershell
+Push-Location app
+npm test
+Pop-Location
 ```
 
-Available/Supported langs (based on [steam](https://partner.steamgames.com/doc/store/localization)) are stored in `steam.json`.
+The locale test compares recursive key paths and rejects missing or empty values. A top-level object count is not enough to prove parity.
 
-Translation Status
-==================
-As of 12/09/2019 | dd-mm-yyyy
+## Layout overrides
 
-- Arabic (ar) | العربية
-- Bulgarian (bg) | български език
-- Chinese: Simplified  (zh-CN) | 简体中文
-    <br/>Complete <br/>
-    No css override <br/>
-    [fiyeck](https://github.com/fiyeck)
-- Chinese: Traditional (zh-TW) | 繁體中文	
-- Czech (cs) | čeština	
-- Danish (da) | Dansk	
-- Dutch (nl) | Nederlands	
-- English (en) | English
-    <br/>Complete <br/>
-    No css override <br/>
-    Anthony Beaumont
-- Finnish (fi) | Suomi	
-- French (fr) | Français
-    <br/>Complete <br/>
-    Css override <br/>
-    Anthony Beaumont
-- German (de) | Deutsch
-    <br/>Complete <br/>
-    Css override <br/>
-    Anthony Beaumont, [Shanas377](https://github.com/Shanas377), [shakeyourbunny](https://github.com/shakeyourbunny)
-- Greek (el) | Ελληνικά	
-- Hungarian (hu) | Magyar
-    <br/>Complete <br/>
-    Css override <br/>
-    [Roschach96](https://github.com/Roschach96)
-- Italian (it) | Italiano
-    <br/>Incomplete <br/>
-    Css override <br/>
-    pollolollo9001
-- Japanese (ja) | 日本語	
-    <br/>Incomplete <br/>
-    css override <br/>
-    Steam UI + Google Translate	
-- Korean (ko) | 한국어
-- Norwegian (no) | Norsk	
-- Polish (pl) | Polski
-    <br/> Complete <br/>
-    Css override <br/>
-    [GrzybDev](https://github.com/GrzybDev)	
-- Portuguese (pt) | Português	
-- Portuguese: Brazil (pt-BR) | Português-Brasil	
-    <br/>Complete <br/>
-    Css override <br/>
-    [wallis6n](https://github.com/wallis6n), [Ardente07](https://github.com/Ardente07)	
-- Romanian (ro) | Română	
-- Russian (ru) | Русский	
-    <br/>Copmplete <br/>
-    Css override <br/>
-    [hugmouse](https://github.com/hugmouse)
-    [kochetov2000](https://github.com/kochetov2000)
-- Spanish (es) | Español-España
-    <br/> Complete <br/>
-    Css override <br/>
-    [1024mb](https://github.com/1024mb)	
-- Spanish: Latin America (es-419) | Español-Latinoamérica
-    <br/> Complete <br/>
-    Inherit css override from Spanish (es) <br/>
-    [1024mb](https://github.com/1024mb)	
-- Swedish (sv) | Svenska	
-- Thai (th) | ไทย
-    <br/>Incomplete <br/>
-    No css override <br/>
-    Anthony Beaumont
-- Turkish (tr) | Türkçe
-- Ukrainian (uk) | Українська	
-- Vietnamese (vn) | Tiếng Việt
+Use `override.css` only when translated text genuinely needs a language-specific layout adjustment:
+
+```css
+html[lang='fr'] .selector {
+  /* minimal layout adjustment */
+}
+```
+
+Prefer flexible layout and wrapping in the shared styles before adding a locale override.
+
+## Translation credits
+
+The current translation set builds on work from the original Achievement Watcher community and later contributors.
+
+| Language or area | Contributors recorded by the original project |
+|---|---|
+| English and French | Anthony Beaumont |
+| Simplified Chinese | [fiyeck](https://github.com/fiyeck) |
+| German | Anthony Beaumont, [Shanas377](https://github.com/Shanas377), [shakeyourbunny](https://github.com/shakeyourbunny) |
+| Hungarian | [Roschach96](https://github.com/Roschach96) |
+| Italian | pollolollo9001 |
+| Brazilian Portuguese | [wallis6n](https://github.com/wallis6n), [Ardente07](https://github.com/Ardente07) |
+| Russian | [hugmouse](https://github.com/hugmouse), [kochetov2000](https://github.com/kochetov2000) |
+| Spanish and Latin American Spanish | [1024mb](https://github.com/1024mb) |
+| Thai and early Japanese work | Anthony Beaumont and the original localization sources |
+
+Corrections from fluent speakers are welcome. See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the normal contribution and validation process.

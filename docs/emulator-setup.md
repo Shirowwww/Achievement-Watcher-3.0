@@ -1,71 +1,95 @@
-# Emulator setup (Goldberg / GBE)
+# Goldberg and GBE Fork setup
 
-Games that run through a Steam emulator (Goldberg, GBE Fork, and similar repacks)
-keep their achievements in local save files instead of on Steam. Achievement Watcher
-reads those saves and can also set up or repair the emulator for a game so its
-achievements are detected and pop up in-game.
+Achievement Watcher can read achievement saves produced by Goldberg, GBE Fork and compatible Steam-emulator layouts. It can also diagnose and repair a game's local emulator configuration when the achievement schema, AppID or runtime files are incomplete.
 
-> Use these tools only on games you own, for personal achievement tracking. They
-> modify game files (backups are made automatically), so use them at your own risk.
+The repair tools are optional. They modify files inside the selected game directory, so use them only with games you own and keep any additional backup you consider important.
 
-## The two `achievements.json` files
+## Schema and save files are different
 
-This trips up almost every "achievements stay locked" report. There are **two**
-unrelated files with the same name:
+Two unrelated files are commonly named `achievements.json`:
 
-| | **Schema** | **Save** |
+| | Schema file | Runtime save file |
 |---|---|---|
-| Where | game folder → `steam_settings/` | `%APPDATA%\GSE Saves\<appid>\` (GBE) or `Goldberg SteamEmu Saves\<appid>\` |
-| Written by | the cracker/repacker at setup | the emulator at runtime, as you unlock |
-| Purpose | *defines* which achievements exist + text/icons | *records* which ones you unlocked |
-| If missing | nothing pops in-game; the app falls back to the online Steam schema | the game is simply at 0% — everything shows locked, and that is correct |
+| Typical location | `<game>\steam_settings\achievements.json` | `%APPDATA%\GSE Saves\<appid>\achievements.json` or `%APPDATA%\Goldberg SteamEmu Saves\<appid>\achievements.json` |
+| Written by | The game/emulator setup | The emulator while the game runs |
+| Purpose | Defines achievement names, descriptions and icons | Records which achievements have unlocked |
+| When missing | In-game achievement handling may be incomplete; Achievement Watcher can use another schema source | The game correctly appears at 0% until the first unlock is written |
 
-If you've launched a game but unlocked nothing, 0% / all-locked is the **expected**
-state, not a bug.
+A schema file does not prove that anything has unlocked. A runtime save that contains no earned entry is a valid 0% state.
 
-## Right-click actions (game → *Emulator & tools*)
+## Recommended workflow
 
-- **Diagnose** — reports the emulator type, where `steam_settings` lives, schema vs.
-  save counts, and any missing icons, blank descriptions or app-id mismatch.
-- **Repair `steam_settings`** — writes a correct, schema-matching `achievements.json`,
-  downloads icons, creates `steam_appid.txt` if missing, enables DLCs and stamps your
-  identity/language. Previous files are snapshotted under `steam_settings/.aw-backups/`.
-- **Apply emulator fix (GBE Fork)** — installs the maintained
-  [GBE Fork](https://github.com/Detanup01/gbe_fork) `steam_api(64).dll` (original kept
-  as `*.bak`), writes `steam_settings`, and creates the `GSE Saves\<appid>` folder so the
-  game appears immediately at 0%.
-- **Remove Steam DRM (Steamless)** — strips Valve's SteamStub from the executable when a
-  plain DLL swap won't load (original kept as `*.steamstub.bak`). A no-op for games with
-  no stub.
-- **Back up / Restore configuration** — snapshot the emulator files before a change, and
-  roll back a bad fix from the saved backup.
+1. Add the game library or save root under **Settings → Folders**.
+2. Run **Smart Find** or **Generate configs**.
+3. If the game appears with missing data, right-click it and open **Emulator & tools → Diagnose**.
+4. Read the report before applying a repair.
+5. Use **Repair `steam_settings`** for schema or configuration problems.
+6. Use **Apply emulator fix (GBE Fork)** only when the game needs a matching runtime DLL as well.
+7. Launch the game and unlock an achievement, then refresh Achievement Watcher if needed.
 
-New emulated games can also be fixed **automatically in the background** — toggle it in
-**Settings → Emulator**.
+Automatic setup for newly discovered games is opt-in under **Settings → Emulator**. When disabled, scanning does not perform the full runtime installation in the background.
 
-## Conditions for a game to show unlocked achievements
+## Context-menu actions
 
-1. The emulator has run at least once, so a save folder exists (this is how the app finds
-   the app id — there is no install-dir scan on the normal path).
-2. The save's achievement names match the schema names the app gets from Steam.
-3. For in-game pop-ups, `steam_settings/achievements.json` must list every achievement with
-   valid icon paths.
+### Diagnose
 
-## "Achievements stay locked even though the files are there"
+Reports the detected emulator type, AppID, `steam_settings` location, schema and save counts, missing entries or icons, custom save paths and AppID mismatches. Diagnosis is read-only.
 
-In order of likelihood:
+### Repair `steam_settings`
 
-1. **Nothing unlocked yet** → no/empty save → all locked. Correct.
-2. **Schema mismatch** → a hand-made `achievements.json` whose names don't match Steam's.
-   Run **Repair**.
-3. **Wrong save folder** → a customised save path sends unlocks somewhere the app doesn't
-   watch. Re-run the emulator fix (it clears stray placeholder paths) or add that folder.
-4. **App-id mismatch** → `steam_appid.txt` ≠ the real app id. **Repair** resolves it.
+Builds a schema that matches the detected Steam achievement names, refreshes relevant configuration files, writes the AppID when missing, and can download icons. Existing files are snapshotted before replacement.
 
-## PlayStation-PSPC ports
+### Apply emulator fix (GBE Fork)
 
-Some Steam ports (e.g. *The Last of Us Part II*, *God of War*) route trophies through
-Sony's PSPC SDK and never call the Steam API, so **no Steam emulator can track them**.
-The only thing that works is a **RUNE** release — Achievement Watcher monitors
-`%PUBLIC%\Documents\Steam\RUNE` out of the box, so those unlocks are picked up
-automatically once a RUNE version is installed.
+Downloads and caches a matching GBE Fork release, backs up an existing `steam_api.dll` or `steam_api64.dll`, installs the required architecture and repairs `steam_settings`.
+
+The runtime is installed as a normal DLL replacement. Achievement Watcher does not configure a separate ColdClient launcher.
+
+### Remove Steam DRM (Steamless)
+
+Attempts to unpack SteamStub from the selected executable when a DLL replacement cannot load. The original executable is kept as `*.steamstub.bak`. This action is not useful for games without SteamStub and does not bypass server-side ownership checks.
+
+### Back up and restore
+
+Creates a manifest-backed snapshot of the relevant DLL and `steam_settings` files, or restores a previous snapshot. Schema repairs also keep timestamped backups under `steam_settings\.aw-backups`.
+
+## Common problems
+
+### The game is missing
+
+- Start the emulator once so it creates a runtime save, or add the actual game library so install discovery can find `steam_settings`, `steam_appid.txt` or the Steam API DLL.
+- Confirm that the folder added to Settings is high enough to contain the game directory, but not an entire drive with unrelated data.
+- Run **Generate configs** and review the result count.
+
+### Every achievement remains locked
+
+Check these causes in order:
+
+1. **No achievement has unlocked yet.** An absent or empty runtime save is expected.
+2. **Schema names do not match the save keys.** Run **Diagnose**, then repair the schema.
+3. **The save path is customized.** Point Achievement Watcher at the actual save root or remove the placeholder override.
+4. **The AppID is wrong.** Correct the game mapping before writing a new `steam_appid.txt`.
+
+### Descriptions or icons are missing
+
+Run a full repair with icon download enabled. When online metadata is unavailable, Achievement Watcher can reuse a valid local schema, but it cannot invent descriptions that are absent from every source.
+
+### In-game notifications are missing but the library updates
+
+The runtime save is being read, but the game's own emulator schema or overlay may be incomplete. Confirm that `steam_settings\achievements.json` contains the same API names as the runtime save and valid icon paths.
+
+## Files a repair may change
+
+- `steam_api.dll` or `steam_api64.dll`, with the original kept as `*.bak`;
+- `steam_settings\achievements.json` and its `images` directory;
+- `steam_settings\steam_appid.txt` when missing;
+- GBE configuration such as `configs.app.ini`, `configs.main.ini` and `configs.user.ini`;
+- the selected executable when Steamless is explicitly used.
+
+Review the [technical Goldberg/GBE reference](goldberg-gbe.md) for file formats, detection rules and implementation details.
+
+## Limitations
+
+Some games do not report achievements through Steamworks at all, even when sold on Steam. Those titles cannot be tracked through a Goldberg/GBE save path. Achievement Watcher also cannot repair a game whose real identity or achievement schema cannot be resolved safely.
+
+[Back to the documentation index](README.md)
