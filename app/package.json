@@ -2,7 +2,7 @@
   "private": true,
   "name": "Achievement-Watcher",
   "description": "A modern achievement tracker for PC games with real-time notifications.",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "main": "./electron/init.js",
   "engines": {
     "node": "^22.22.2 || >=24.15.0"
