@@ -50,7 +50,7 @@ Starting with Windows and closing to the tray can be changed under **Settings â†
 
 ## Updates and existing data
 
-Installed releases check the project's GitHub release feed for a newer version. When an update finishes downloading, the app asks before restarting.
+Installed releases check the project's GitHub release feed for a newer version. When one is found, the app asks first whether you want to download and install it â€” nothing is downloaded without your OK. Once the download finishes, it asks again before restarting to apply the update.
 
 Installing a newer build over an older one replaces program files but preserves user data in:
 
