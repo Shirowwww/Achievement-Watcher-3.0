@@ -10,6 +10,7 @@ const Timer = require('./timer.js');
 const TimeTrack = require('./track.js');
 const { findByReadingContentOfKnownConfigfilesIn } = require('./steam_appid_find.js');
 const { loadSteamData } = require('../steam.js');
+const { binaryMatchesProcess, buildSeededSessions } = require('./seed.js');
 
 const debug = new (require('../util/logger'))({
   console: true,
@@ -66,19 +67,6 @@ const filter = {
   },
 };
 
-// Case-insensitive match of a running process name against a game's stored binary, tolerating the
-// Unreal Engine "<name>-Win64-Shipping.exe" variant. Returns false for entries with a missing/empty
-// binary so a malformed index entry can never silently cross-track a process that belongs to another
-// game (issue #36), and never throws on a null binary.
-function binaryMatchesProcess(binary, process) {
-  if (typeof binary !== 'string') return false;
-  const b = binary.trim().toLowerCase();
-  if (!b) return false;
-  const p = String(process || '').toLowerCase();
-  if (!p) return false;
-  return b === p || b.replace('.exe', '-win64-shipping.exe') === p;
-}
-
 function normalizeAppid(appid) {
   return String(appid || '').trim();
 }
@@ -126,6 +114,21 @@ async function init() {
   appidByDirCache = new Map();
   gameIndex = await getGameIndex();
   await getSavedConfigs();
+
+  // Process trail: games that were already running when the Watchdog started (e.g. the machine woke
+  // from sleep with a game open, or the app restarted mid-session) are seeded as active sessions so
+  // their playtime is recorded on exit. Only unambiguous known-binary matches are seeded; everything
+  // else is left to the live creation watcher below.
+  let snapshot = [];
+  try {
+    snapshot = await tasklist.list();
+  } catch (err) {
+    debug.warn(`[Process trail] process snapshot failed => ${err}`);
+  }
+  for (const playing of buildSeededSessions({ gameIndex, processes: snapshot, now: Date.now(), createTimer: () => new Timer() })) {
+    nowPlaying.push(playing);
+    debug.log(`[Process trail] tracking already-running ${playing.name}(${playing.appid}) pid=${[...playing.pids].join(',')}`);
+  }
 
   // createEventSink() is auto-invoked by subscribe() since v2, so we no longer call it explicitly.
   // The built-in "Windows noise"/"usual program locations" filters were removed in v2; we intentionally
