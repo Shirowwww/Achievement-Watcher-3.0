@@ -43,6 +43,8 @@ const gameIndex = require(path.join(appPath, 'parser/gameIndex.js'));
 const PlaytimeTracking = require(path.join(appPath, 'parser/playtime.js'));
 const progressMute = require(path.join(appPath, 'parser/progressMute.js'));
 progressMute.setUserDataPath(getUserDataPath());
+const emulatorSourceOverride = require(path.join(appPath, 'parser/emulatorSourceOverride.js'));
+emulatorSourceOverride.setUserDataPath(getUserDataPath());
 const l10n = require(path.join(appPath, 'locale/loader.js'));
 const toastAudio = require(path.join(appPath, 'util/toastAudio.js'));
 const coverStore = require(path.join(appPath, 'util/coverStore.js'));
@@ -1054,7 +1056,27 @@ var app = {
           let writableAppid = /^[0-9]+$/.test(String(appid)) ? appid : list.find((g) => g.appid == appid)?.steamappid || null;
           const ctxGame = list.find((g) => g.appid == appid);
           const gameSource = ctxGame?.source || '';
-          const isUbisoftSource = uplayR2.isUbisoftGame(ctxGame, appid);
+          // GBE Fork install helper — hidden only for games legitimately owned/installed via the
+          // real Steam client (source "Steam (<username>)") or native-launcher sources (GOG/Epic),
+          // none of which use a replaceable steam_api dll. Every other source (OnlineFix, Codex,
+          // Rune, Skidrow, SmartSteamEmu, CreamAPI, Reloaded - 3DM, Goldberg, GBE Fork, Unconfigured,
+          // custom Folder-tab dirs with no explicit source, …) is some flavor of cracked/emulated
+          // install and can always have GBE Fork (re)installed — this used to be an allowlist that
+          // missed most crack sources (#bug: "ne marche pas sur Fast Food Simulator/Forza Horizon 6").
+          const isLegitSteamOwned = gameSource.startsWith('Steam (');
+          const isNativeLauncher = gameSource === 'gog' || gameSource === 'epic';
+          // A raw console-emulator record (RPCS3/ShadPS4/Xenia -> system="playstation"/"xbox"/…) never
+          // gets Steam/Ubisoft tools; "uplay" is the one system value that does, so games with no
+          // system or system="uplay" both remain candidates below.
+          const rawSystem = self.data('system');
+          const isConsoleSystem = !!rawSystem && rawSystem !== 'uplay';
+          // Manual per-game override (right-click → Emulator source) lets the user force GBE Fork or
+          // Uplay R2 when the on-disk marker heuristic (isUbisoftGame) guesses wrong — e.g. a Ubisoft
+          // title repacked with both a steam_api dll and leftover Ubisoft engine files (a Steam-store
+          // Ubisoft remaster). `null` means no override: keep the automatic detection.
+          const emulatorSourceForced = emulatorSourceOverride.get(appid);
+          const isUbisoftSource =
+            emulatorSourceForced === 'ubisoft' ? true : emulatorSourceForced === 'steam' ? false : uplayR2.isUbisoftGame(ctxGame, appid);
           const ubisoftTools = isUbisoftSource ? uplayR2.getGameToolPaths(ctxGame, appid) : null;
           const catalogAppid = String(
             (ubisoftTools && ubisoftTools.steamAppid) || ctxGame?.steamappid || writableAppid || (/^[0-9]+$/.test(String(appid)) ? appid : '')
@@ -1207,6 +1229,40 @@ var app = {
             })
           );
 
+          // Manual override for which emulator family this game's tools should target — for the
+          // rare Ubisoft title (e.g. a Steam-store Ubisoft remaster) whose folder trips the on-disk
+          // marker heuristic the wrong way, or a genuine Ubisoft install the user wants to try GBE
+          // Fork on anyway. Hidden for legit Steam-owned/GOG/Epic records and console emulators,
+          // where neither fix could ever apply.
+          if (!isConsoleSystem && !isLegitSteamOwned && !isNativeLauncher) {
+            gameMenu.append(new MenuItem({ type: 'separator' }));
+            const emulatorSourceMenu = new Menu();
+            const emulatorSourceOptions = [
+              { value: null, labelEn: 'Automatic (detected)', labelFr: 'Automatique (détecté)' },
+              { value: 'steam', labelEn: 'Steam / GBE Fork', labelFr: 'Steam / GBE Fork' },
+              { value: 'ubisoft', labelEn: 'Ubisoft (Uplay R2)', labelFr: 'Ubisoft (Uplay R2)' },
+            ];
+            for (const opt of emulatorSourceOptions) {
+              emulatorSourceMenu.append(
+                new MenuItem({
+                  type: 'radio',
+                  label: contextIsFrench ? opt.labelFr : opt.labelEn,
+                  checked: emulatorSourceForced === opt.value,
+                  click() {
+                    emulatorSourceOverride.set(appid, opt.value);
+                  },
+                })
+              );
+            }
+            gameMenu.append(
+              new MenuItem({
+                icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/file-text.png')),
+                label: contextIsFrench ? 'Source de l’émulateur' : 'Emulator source',
+                submenu: emulatorSourceMenu,
+              })
+            );
+          }
+
           if (isUbisoftSource) {
             gameMenu.append(new MenuItem({ type: 'separator' }));
             gameMenu.append(
@@ -1254,7 +1310,10 @@ var app = {
 
           // Native-platform records normally skip Steam-emulator tools. Ubisoft is the exception:
           // it needs its own Uplay R2 section plus the common folder/catalog/cover actions below.
-          if (!self.data('system') || isUbisoftSource) {
+          // Gated on the raw system value (isConsoleSystem), not isUbisoftSource, so forcing a
+          // system="uplay" record to 'steam' via the override still opens this block (for the GBE
+          // Fork tools) instead of hiding both toolsets.
+          if (!isConsoleSystem) {
             if (!isUbisoftSource) {
             // Steam/GBE only
             gameMenu.append(
@@ -1520,20 +1579,12 @@ var app = {
               );
             }
 
-            // GBE Fork install helper — hidden only for games legitimately owned/installed via the
-            // real Steam client (source "Steam (<username>)") or native-launcher sources (GOG/Epic),
-            // none of which use a replaceable steam_api dll. Every other source (OnlineFix, Codex,
-            // Rune, Skidrow, SmartSteamEmu, CreamAPI, Reloaded - 3DM, Goldberg, GBE Fork, Unconfigured,
-            // custom Folder-tab dirs with no explicit source, …) is some flavor of cracked/emulated
-            // install and can always have GBE Fork (re)installed — this used to be an allowlist that
-            // missed most crack sources (#bug: "ne marche pas sur Fast Food Simulator/Forza Horizon 6").
-            const isLegitSteamOwned = gameSource.startsWith('Steam (');
-            const isNativeLauncher = gameSource === 'gog' || gameSource === 'epic';
             // Ubisoft/uPlay sources have no steam_api.dll to replace — GBE Fork (Steam) can never
             // apply there. They get the Uplay R2 fix block below instead ("instead of GBE").
             // `uplayR2` covers the installs discover() found on disk by their Ubisoft markers: those
             // carry a Steam appid (mapped via uplay-steam.json) or none at all, so the source string
-            // alone wouldn't tell them apart from a cracked Steam game.
+            // alone wouldn't tell them apart from a cracked Steam game. (isLegitSteamOwned/
+            // isNativeLauncher are computed near the top of this handler, alongside isUbisoftSource.)
             if (!isLegitSteamOwned && !isNativeLauncher && !isUbisoftSource) {
               emulatorMenu.append(new MenuItem({ type: 'separator' }));
               emulatorMenu.append(
