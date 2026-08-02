@@ -39,6 +39,7 @@ const uplayR2Installer = require(path.join(appPath, 'parser/uplayR2Installer.js'
 const steamParser = require(path.join(appPath, 'parser/steam.js'));
 const exeList = require(path.join(appPath, 'parser/exeList.js'));
 const manualUnlock = require(path.join(appPath, 'parser/manualUnlock.js'));
+const userThemes = require(path.join(appPath, 'util/userThemes.js'));
 const exeDetect = require(path.join(appPath, 'parser/exeDetect.js'));
 const gameIndex = require(path.join(appPath, 'parser/gameIndex.js'));
 const PlaytimeTracking = require(path.join(appPath, 'parser/playtime.js'));
@@ -3238,7 +3239,20 @@ var app = {
   $(function () {
     try {
       // Apply the saved app theme before anything renders (Settings > General > Theme).
-      document.documentElement.dataset.theme = app.config.general?.theme || 'default';
+      const savedTheme = app.config.general?.theme || 'default';
+      const savedUserTheme = userThemes.parseValue(savedTheme);
+      if (savedUserTheme) {
+        ipcRenderer
+          .invoke('list-user-themes')
+          .then((themes) => {
+            const t = (themes || []).find((x) => x && x.name === savedUserTheme);
+            userThemes.applyCss(t && t.css ? t.css : '');
+          })
+          .catch(() => userThemes.applyCss(''));
+        document.documentElement.dataset.theme = 'default';
+      } else {
+        document.documentElement.dataset.theme = savedTheme;
+      }
 
       // On a genuine first run, defer the initial library scan until the onboarding guide is done:
       // onboarding lets the user set their Steam Web API key (and game folders), and finish()/skip()

@@ -8,6 +8,7 @@ const settingsFs = require('fs');
 
 const appPath = remote.app.getAppPath();
 const { escapeHtml } = require(path.join(appPath, 'util/escapeHtml.js'));
+const userThemes = require(path.join(appPath, 'util/userThemes.js'));
 let listeningHotkey = false;
 let keysDown = new Set();
 let keys = '';
@@ -17,6 +18,47 @@ let holdingKeysCheck = null;
 let settingsReady = false;
 let notifAutosaveTimer = null;
 const SETTINGS_SAVE_TIMEOUT_MS = 30000;
+
+// Apply a stored theme value: built-ins switch <html data-theme>, user themes inject their CSS.
+function applyThemeValue(value) {
+  const user = userThemes.parseValue(value);
+  if (user) {
+    ipcRenderer
+      .invoke('list-user-themes')
+      .then((themes) => {
+        const t = (themes || []).find((x) => x && x.name === user);
+        userThemes.applyCss(t && t.css ? t.css : '');
+      })
+      .catch(() => userThemes.applyCss(''));
+    document.documentElement.dataset.theme = 'default';
+  } else {
+    userThemes.applyCss('');
+    document.documentElement.dataset.theme = value || 'default';
+  }
+}
+
+// Populate the theme dropdown: the four built-ins + any user theme found in <userData>\themes.
+function populateThemeSelect() {
+  const sel = $('#option_theme');
+  const wanted = (app.config.general && app.config.general.theme) || 'default';
+  sel.empty();
+  [
+    ['default', 'Steam Blue'],
+    ['oled', 'OLED Black'],
+    ['dracula', 'Dracula'],
+    ['graphite', 'Graphite'],
+  ].forEach(([value, label]) => sel.append($('<option>').attr('value', value).text(label)));
+  ipcRenderer
+    .invoke('list-user-themes')
+    .then((themes) => {
+      (themes || []).forEach((t) => sel.append($('<option>').attr('value', userThemes.valueFor(t.name)).text(`User: ${t.name}`)));
+      const matches = sel.find('option').filter(function () {
+        return $(this).val() === wanted;
+      });
+      sel.val(matches.length ? wanted : 'default').change();
+    })
+    .catch(() => sel.val(wanted).change());
+}
 
 function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_MS) {
   let timer;
@@ -144,7 +186,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       if (!app.config.controller) app.config.controller = {};
       $('#option_controllerEnabled').val(String(app.config.controller.enabled === true)).change();
       $('#option_controllerBackend').val(app.config.controller.backend || 'auto').change();
-      $('#option_theme').val(app.config.general.theme || 'default').change();
+      populateThemeSelect();
       ipcRenderer
         .invoke('startup:get-start-with-windows')
         .then((enabled) => {
@@ -401,7 +443,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         self.css('pointer-events', 'initial');
         $('title-bar')[0].inSettings = false;
         // Cancel reverts an unsaved theme preview back to the persisted choice.
-        document.documentElement.dataset.theme = (app.config.general && app.config.general.theme) || 'default';
+        applyThemeValue((app.config.general && app.config.general.theme) || 'default');
         // Games were un-blacklisted while Settings was open: refresh the library once, now.
         if (window.__awBlacklistDirty) {
           window.__awBlacklistDirty = false;
@@ -775,7 +817,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     // Live theme preview: applying on change lets the user see the theme before committing with OK;
     // Cancel restores whatever is saved in the config.
     $('#option_theme').on('change', function () {
-      document.documentElement.dataset.theme = $(this).val() || 'default';
+      applyThemeValue($(this).val() || 'default');
     });
 
     // Let the mouse wheel cycle the value displayed between the arrows. This is

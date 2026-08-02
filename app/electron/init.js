@@ -21,6 +21,7 @@ const { execSync, spawn } = require('child_process');
 const fs = require('fs');
 const ipc = require(path.join(__dirname, 'ipc.js'));
 const notificationSounds = require(path.join(__dirname, '../util/notificationSounds.js'));
+const userThemes = require(path.join(__dirname, '../util/userThemes.js'));
 const BASE_URL = 'https://www.steamgriddb.com/api/v2';
 const DEFAULT_API_KEY = '2a9d32ddd0bfe4e1191b4f6ff56fef60'; // bundled public fallback (rate-limited)
 const startupArgs = minimist(process.argv.slice(1));
@@ -2538,6 +2539,11 @@ ipcMain.handle('list-sounds', async () => {
   for (const { name } of notificationSounds.listSoundFiles([path.join(__dirname, '../sounds'), userSoundsDir()])) set.add(name);
   return [...set].sort((a, b) => a.localeCompare(b));
 });
+
+// User themes: *.css from <userData>\themes (Settings > General > Theme).
+ipcMain.handle('list-user-themes', async () =>
+  userThemes.listUserThemes(userData).map((t) => ({ name: t.name, file: t.file, css: userThemes.readThemeFile(t.file) }))
+);
 
 // Import a custom notification sound: copy a user-picked audio file into <userData>/sounds and return
 // its (possibly de-duplicated) filename so the renderer can select it. Returns null on cancel/failure.

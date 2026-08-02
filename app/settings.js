@@ -48,8 +48,12 @@ module.exports.load = () => {
     if (typeof options.general.closeToTray !== 'boolean') {
       options.general.closeToTray = true;
     }
-    // App color theme (Settings > General) — dark variants applied via <html data-theme="...">.
-    if (!['default', 'oled', 'dracula', 'graphite'].includes(options.general.theme)) {
+    // App color theme (Settings > General) — built-in variants applied via <html data-theme="...">,
+    // plus user themes loaded from <userData>\themes (stored as "user:<name>").
+    if (
+      typeof options.general.theme !== 'string' ||
+      (!['default', 'oled', 'dracula', 'graphite'].includes(options.general.theme) && !/^user:.+$/i.test(options.general.theme))
+    ) {
       options.general.theme = 'default';
     }
 
