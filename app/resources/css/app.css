@@ -5605,3 +5605,15 @@ body {
     min-height: 52px;
   }
 }
+
+/* Manually-unlocked achievements (right-click override): a soft amber ring plus a check mark so
+   the state is visible without hiding the real unlock/locked styling. */
+#achievement .achievement-list .achievement.manual .box {
+  box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.55);
+}
+
+#achievement .achievement-list .achievement.manual .content .title::after {
+  content: " ✓";
+  color: #f5a623;
+  font-weight: 700;
+}

@@ -73,7 +73,10 @@
     "groupEmulator": "Emulator & Tools",
     "groupFolders": "Ordner",
     "groupLinks": "Nützliche Links",
-    "groupCover": "Cover"
+    "groupCover": "Cover",
+    "manualUnlock": "Als manuell freigeschaltet markieren",
+    "clearManualUnlock": "Manuelle Freischaltung aufheben",
+    "manualUnlocked": "Manuell freigeschaltet"
   },
   "settings": {
     "title": "Einstellungen",

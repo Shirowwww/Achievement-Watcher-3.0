@@ -73,7 +73,10 @@
     "groupEmulator": "Émulateur et outils",
     "groupFolders": "Dossiers",
     "groupLinks": "Liens utiles",
-    "groupCover": "Jaquette"
+    "groupCover": "Jaquette",
+    "manualUnlock": "Marquer comme débloqué manuellement",
+    "clearManualUnlock": "Annuler le déblocage manuel",
+    "manualUnlocked": "Débloqué manuellement"
   },
   "settings": {
     "title": "Paramètres",

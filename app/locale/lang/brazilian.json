@@ -73,7 +73,10 @@
     "groupEmulator": "Emulador e ferramentas",
     "groupFolders": "Pastas",
     "groupLinks": "Links úteis",
-    "groupCover": "Capa"
+    "groupCover": "Capa",
+    "manualUnlock": "Marcar como desbloqueado manualmente",
+    "clearManualUnlock": "Cancelar desbloqueio manual",
+    "manualUnlocked": "Desbloqueado manualmente"
   },
   "settings": {
     "title": "Configurações",

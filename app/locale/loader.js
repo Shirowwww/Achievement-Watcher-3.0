@@ -78,6 +78,9 @@ function translateUI(lang, locale, template) {
   selector.attr('data-contextMenu1', clear(template.buildIconPrefetchCache));
   if (template.contextMenu) {
     selector.attr('data-ctx-resetplaytime', clear(template.contextMenu.resetPlaytime));
+    if (template.contextMenu.manualUnlock) selector.attr('data-ctx-manualunlock', clear(template.contextMenu.manualUnlock));
+    if (template.contextMenu.clearManualUnlock) selector.attr('data-ctx-clearmanualunlock', clear(template.contextMenu.clearManualUnlock));
+    if (template.contextMenu.manualUnlocked) $('#achievement .achievement-list').attr('data-lang-manualUnlocked', clear(template.contextMenu.manualUnlocked));
     if (template.contextMenu.muteProgress) selector.attr('data-ctx-muteprogress', clear(template.contextMenu.muteProgress));
     if (template.contextMenu.unmuteProgress) selector.attr('data-ctx-unmuteprogress', clear(template.contextMenu.unmuteProgress));
     selector.attr('data-ctx-genjson', clear(template.contextMenu.generateAchievementsJson));

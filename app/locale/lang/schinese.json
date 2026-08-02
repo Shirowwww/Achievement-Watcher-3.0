@@ -73,7 +73,10 @@
     "groupEmulator": "模拟器与工具",
     "groupFolders": "文件夹",
     "groupLinks": "实用链接",
-    "groupCover": "封面"
+    "groupCover": "封面",
+    "manualUnlock": "标记为手动解锁",
+    "clearManualUnlock": "清除手动解锁",
+    "manualUnlocked": "已手动解锁"
   },
   "settings": {
     "title": "设置",

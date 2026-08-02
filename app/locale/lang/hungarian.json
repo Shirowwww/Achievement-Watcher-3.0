@@ -73,7 +73,10 @@
     "groupEmulator": "Emulátor és eszközök",
     "groupFolders": "Mappák",
     "groupLinks": "Hasznos linkek",
-    "groupCover": "Borító"
+    "groupCover": "Borító",
+    "manualUnlock": "Megjelölés kézzel feloldottként",
+    "clearManualUnlock": "Kézi feloldás törlése",
+    "manualUnlocked": "Kézzel feloldva"
   },
   "settings": {
     "title": "Beállítások",

@@ -73,7 +73,10 @@
     "groupEmulator": "エミュレーターとツール",
     "groupFolders": "フォルダー",
     "groupLinks": "便利なリンク",
-    "groupCover": "カバー"
+    "groupCover": "カバー",
+    "manualUnlock": "手動解除としてマーク",
+    "clearManualUnlock": "手動解除をクリア",
+    "manualUnlocked": "手動で解除済み"
   },
   "settings": {
     "title": "設定",

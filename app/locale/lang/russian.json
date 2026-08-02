@@ -73,7 +73,10 @@
     "groupEmulator": "Эмулятор и инструменты",
     "groupFolders": "Папки",
     "groupLinks": "Полезные ссылки",
-    "groupCover": "Обложка"
+    "groupCover": "Обложка",
+    "manualUnlock": "Отметить как разблокированное вручную",
+    "clearManualUnlock": "Снять ручную разблокировку",
+    "manualUnlocked": "Разблокировано вручную"
   },
   "settings": {
     "title": "Настройки",

@@ -73,7 +73,10 @@
     "groupEmulator": "อีมูเลเตอร์และเครื่องมือ",
     "groupFolders": "โฟลเดอร์",
     "groupLinks": "ลิงก์ที่เป็นประโยชน์",
-    "groupCover": "ปก"
+    "groupCover": "ปก",
+    "manualUnlock": "ทำเครื่องหมายว่าปลดล็อกด้วยตนเอง",
+    "clearManualUnlock": "ยกเลิกการปลดล็อกด้วยตนเอง",
+    "manualUnlocked": "ปลดล็อกด้วยตนเอง"
   },
   "settings": {
     "title": "การตั้งค่า",

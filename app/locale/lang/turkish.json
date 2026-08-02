@@ -73,7 +73,10 @@
     "groupEmulator": "Emülatör ve araçlar",
     "groupFolders": "Klasörler",
     "groupLinks": "Yararlı bağlantılar",
-    "groupCover": "Kapak"
+    "groupCover": "Kapak",
+    "manualUnlock": "Manuel açılmış olarak işaretle",
+    "clearManualUnlock": "Manuel açmayı kaldır",
+    "manualUnlocked": "Manuel açıldı"
   },
   "settings": {
     "title": "Ayarlar",

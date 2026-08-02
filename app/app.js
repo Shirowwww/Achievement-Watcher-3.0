@@ -38,6 +38,7 @@ const uplayR2 = require(path.join(appPath, 'parser/uplayR2.js'));
 const uplayR2Installer = require(path.join(appPath, 'parser/uplayR2Installer.js'));
 const steamParser = require(path.join(appPath, 'parser/steam.js'));
 const exeList = require(path.join(appPath, 'parser/exeList.js'));
+const manualUnlock = require(path.join(appPath, 'parser/manualUnlock.js'));
 const exeDetect = require(path.join(appPath, 'parser/exeDetect.js'));
 const gameIndex = require(path.join(appPath, 'parser/gameIndex.js'));
 const PlaytimeTracking = require(path.join(appPath, 'parser/playtime.js'));
@@ -2740,6 +2741,10 @@ var app = {
       return;
     }
 
+    // Merge manually-unlocked achievements (user overrides) before anything renders, so the header
+    // counters, unlocked/locked lists and sorting all reflect them consistently.
+    manualUnlock.loadAndApplyToGame(game, game.appid, game.source);
+
     if (self.data('time') > 0) $('#unlock > .header .sort-ach .sort.time').addClass('show');
 
     $('#search-bar-float input[type=search]').val('').blur().removeClass('has'); //reset
@@ -2760,6 +2765,7 @@ var app = {
       // Mark which game the detail view is currently showing, so a live unlock toast only
       // refreshes this page when it belongs to the game on screen (see updateGamePage).
       $('#achievement .wrapper > .header').attr('data-appid', game.appid);
+      $('#achievement .wrapper > .header').attr('data-source', game.source || '');
 
       if (game.system) {
         $('#achievement .wrapper > .header').attr('data-system', game.system);
@@ -2867,7 +2873,9 @@ var app = {
         let template = `
                 <li>
 
-                         <div class="achievement" data-name="${escapeHtml(achievement.name)}" data-index="${i}">
+                         <div class="achievement${achievement.manual ? ' manual' : ''}" data-name="${escapeHtml(achievement.name)}" data-index="${i}" data-achieved="${
+          achievement.Achieved ? 1 : 0
+        }" data-manual="${achievement.manual ? 1 : 0}" title="${achievement.manual ? escapeHtml($('#achievement .achievement-list').attr('data-lang-manualUnlocked') || 'Manually unlocked') : ''}">
                             <div class="box">
                               <div class="glow mask contain">
                                   <div class="glow mask ray ">
@@ -3032,6 +3040,26 @@ var app = {
         self.css('pointer-events', 'initial');
       });
     });
+  },
+  // Mark/clear a manually-unlocked achievement (right-click on an achievement row) and re-render
+  // the current game view so counters/lists reflect the override immediately.
+  manualUnlockAction: async function (appid, source, name, action) {
+    try {
+      const result = manualUnlock.saveUpdate(appid, source, name, action);
+      if (!result.changed) return result;
+      const box = $('#game-list .game-box')
+        .filter(function () {
+          return String($(this).data('appid')) === String(appid);
+        })
+        .first();
+      if (box.length && typeof this.onGameBoxClick === 'function') {
+        this.onGameBoxClick(box, gameList);
+      }
+      return result;
+    } catch (err) {
+      debug.warn(`[manualUnlock] ${err && err.stack ? err.stack : err}`);
+      return { changed: false };
+    }
   },
   onPlayButtonClick: async function (self) {
     let appid = self.closest('.game-box').data('appid');

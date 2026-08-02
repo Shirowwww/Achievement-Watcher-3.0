@@ -73,7 +73,10 @@
     "groupEmulator": "Emulatore e strumenti",
     "groupFolders": "Cartelle",
     "groupLinks": "Link utili",
-    "groupCover": "Copertina"
+    "groupCover": "Copertina",
+    "manualUnlock": "Segna come sbloccato manualmente",
+    "clearManualUnlock": "Annulla sblocco manuale",
+    "manualUnlocked": "Sbloccato manualmente"
   },
   "settings": {
     "title": "Impostazioni",

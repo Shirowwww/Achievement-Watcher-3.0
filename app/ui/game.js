@@ -95,6 +95,34 @@ function getGlobalStat(appid, source) {
       }
     });
 
+    // Right-click an achievement row to mark it as manually unlocked (or clear the override).
+    $('#achievement .achievement-list').on('contextmenu', '.achievement', function (event) {
+      const row = $(this);
+      const name = row.data('name');
+      const appid = $('#achievement .wrapper > .header').attr('data-appid');
+      const source = $('#achievement .wrapper > .header').attr('data-source') || '';
+      if (!name || !appid) return;
+
+      const achieved = row.data('achieved') === 1;
+      const manual = row.data('manual') === 1;
+      const remote = require('@electron/remote');
+      const items = [];
+      if (manual) {
+        items.push({
+          label: $('#game-list').attr('data-ctx-clearmanualunlock') || 'Clear manual unlock',
+          click: () => window.app?.manualUnlockAction?.(appid, source, name, 'clear-manual'),
+        });
+      } else if (!achieved) {
+        items.push({
+          label: $('#game-list').attr('data-ctx-manualunlock') || 'Mark as manually unlocked',
+          click: () => window.app?.manualUnlockAction?.(appid, source, name, 'mark-unlocked'),
+        });
+      }
+      if (items.length === 0) return;
+      event.preventDefault();
+      remote.Menu.buildFromTemplate(items).popup({ window: remote.getCurrentWindow() });
+    });
+
     $('#btn-previous').click(function () {
       let self = $(this);
       self.css('pointer-events', 'none');

@@ -73,7 +73,10 @@
     "groupEmulator": "Emulator i narzędzia",
     "groupFolders": "Foldery",
     "groupLinks": "Przydatne linki",
-    "groupCover": "Okładka"
+    "groupCover": "Okładka",
+    "manualUnlock": "Oznacz jako odblokowane ręcznie",
+    "clearManualUnlock": "Cofnij ręczne odblokowanie",
+    "manualUnlocked": "Odblokowane ręcznie"
   },
   "settings": {
     "title": "Ustawienia",

@@ -73,7 +73,10 @@
     "groupEmulator": "Emulátor a nástroje",
     "groupFolders": "Priečinky",
     "groupLinks": "Užitočné odkazy",
-    "groupCover": "Obal"
+    "groupCover": "Obal",
+    "manualUnlock": "Označiť ako ručne odomknuté",
+    "clearManualUnlock": "Zrušiť ručné odomknutie",
+    "manualUnlocked": "Ručne odomknuté"
   },
   "settings": {
     "title": "Nastavenia",

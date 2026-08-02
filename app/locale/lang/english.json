@@ -73,7 +73,10 @@
     "groupEmulator": "Emulator & tools",
     "groupFolders": "Folders",
     "groupLinks": "Useful links",
-    "groupCover": "Cover"
+    "groupCover": "Cover",
+    "manualUnlock": "Mark as manually unlocked",
+    "clearManualUnlock": "Clear manual unlock",
+    "manualUnlocked": "Manually unlocked"
   },
   "settings": {
     "title": "Settings",
