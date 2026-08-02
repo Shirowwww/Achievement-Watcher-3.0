@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@xan105/is": "^2.4.0",
+    "@xboxreplay/xboxlive-auth": "^5.1.0",
     "crc": "^4.3.2",
     "fast-glob": "^3.2.5",
     "humanize-duration": "^3.25.1",

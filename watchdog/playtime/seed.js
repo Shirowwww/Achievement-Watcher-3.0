@@ -37,6 +37,7 @@ function buildSeededSessions({ gameIndex, processes, now = Date.now(), createTim
       name: game.name,
       binary: game.binary,
       icon: game.icon,
+      source: game.source || '',
       pids: new Set([pid]),
       timer: createTimer(now),
       exePath: proc.filepath || '',

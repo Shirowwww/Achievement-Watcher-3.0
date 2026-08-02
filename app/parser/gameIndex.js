@@ -4,9 +4,11 @@
   Manages the user-override game index (cfg/gameIndex.json) that the watchdog playtime monitor
   reads at startup to match running processes to game appids.
 
-  Shape of an entry: { appid: string, name: string, binary: string, icon: string }
+  Shape of an entry: { appid: string, name: string, binary: string, icon: string, source?: string }
     - binary is the executable filename (no path, e.g. "GameName.exe"), matched case-insensitively
     - icon is the Steam CDN icon hash (filename without extension)
+    - source is the human-readable source label ("GBE Fork", "Xbox PC", ...) used by the Watchdog to
+      pick per-platform notification presets and start source-specific polling (e.g. Xbox Network)
 
   The watchdog also reads a larger system cache at steam_cache/schema/gameIndex.json;
   this module only manages the smaller per-user override that seeds auto-detected installs.
@@ -50,13 +52,22 @@ module.exports.upsert = (entry) => {
       name: String(entry.name || ''),
       binary: String(entry.binary || ''),
       icon: String(entry.icon || ''),
+      source: String(entry.source || ''),
     };
     const existing = list.find((g) => String(g.appid) === appid);
     if (existing) {
-      if (existing.binary === next.binary && existing.name === next.name && existing.icon === next.icon) return;
+      if (
+        existing.binary === next.binary &&
+        existing.name === next.name &&
+        existing.icon === next.icon &&
+        String(existing.source || '') === next.source
+      ) {
+        return;
+      }
       existing.binary = next.binary;
       existing.name = next.name;
       existing.icon = next.icon;
+      if (next.source) existing.source = next.source;
     } else {
       list.push(next);
     }

@@ -1750,7 +1750,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
             _seededGameDirs.add(gameDirKey);
             const iconHash =
               game.img && game.img.icon ? String(game.img.icon).split('/').pop().split('.')[0] : '';
-            gameIndex.upsert({ appid: appid.appid, name: game.name, binary: exeInfo.name, icon: iconHash });
+            gameIndex.upsert({ appid: appid.appid, name: game.name, binary: exeInfo.name, icon: iconHash, source: appid.source });
             debug.log(`[${appid.appid}] auto-seeded playtime tracking: binary="${exeInfo.name}"`);
           } else if (/^[0-9]+$/.test(String(appid.appid))) {
             // No local exe found (obfuscated/renamed build, or a launcher-only install): fall back to
@@ -1763,7 +1763,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
               if (meta && meta.best_process_name) {
                 _seededGameDirs.add(gameDirKey);
                 const iconHash = game.img && game.img.icon ? String(game.img.icon).split('/').pop().split('.')[0] : '';
-                gameIndex.upsert({ appid: appid.appid, name: game.name, binary: meta.best_process_name, icon: iconHash });
+                gameIndex.upsert({ appid: appid.appid, name: game.name, binary: meta.best_process_name, icon: iconHash, source: appid.source });
                 debug.log(`[${appid.appid}] auto-seeded playtime tracking from SteamDB: binary="${meta.best_process_name}"`);
               }
             } catch (err) {

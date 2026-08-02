@@ -46,6 +46,7 @@ const track = require('./track.js');
 const { mapStatProgressEntries } = require('./util/statProgress.js');
 const { notificationVolumePercent } = require('./util/notificationVolume.js');
 const playtimeMonitor = require('./playtime/monitor.js');
+const xboxPc = require('./xboxPc.js');
 const notify = require('./notification/toaster.js');
 const shadps4Watch = require('./console/shadps4Watch.js');
 const xeniaWatch = require('./console/xeniaWatch.js');
@@ -71,6 +72,95 @@ const appRoot = path.join(__dirname, '../');
 let isDev = process.env.NODE_ENV === 'development';
 let runningAppid;
 let overlayOpened = false;
+let xboxPollState = null;
+const XBOX_POLL_INTERVAL_MS = 30000;
+
+// Live Xbox PC unlocks: while a title with source "Xbox PC" is running, poll the Xbox Live API and
+// fire a notification for each new unlock. Uses the session the app stored (cfg/xbox-auth.json),
+// refreshes it when needed, and keeps the local state cache in sync so the app view matches.
+function startXboxPolling(game) {
+  stopXboxPolling();
+  const auth = xboxPc.loadAuth();
+  const titleId = xboxPc.normalizeTitleId(game && game.appid);
+  if (!auth || !titleId) return;
+  debug.log(`[xbox-pc] live polling started for ${game.name}(${titleId})`);
+  xboxPollState = {
+    appid: titleId,
+    game,
+    auth,
+    snapshot: xboxPc.readState(titleId),
+    timer: null,
+  };
+  const poll = async () => {
+    if (!xboxPollState || xboxPollState.appid !== titleId) return;
+    try {
+      xboxPollState.auth = await xboxPc.ensureSession(xboxPollState.auth);
+      const { snapshot, newUnlocked } = await xboxPc.pollOnce({
+        auth: xboxPollState.auth,
+        titleId,
+        previousSnapshot: xboxPollState.snapshot,
+      });
+      xboxPollState.snapshot = snapshot;
+      xboxPc.writeState(titleId, snapshot);
+      if (!newUnlocked.length) return;
+      debug.log(`[xbox-pc] ${newUnlocked.length} new unlock(s) for ${game.name}`);
+      const schema = xboxPc.readSchema(titleId);
+      const schemaList = schema && schema.achievement && Array.isArray(schema.achievement.list) ? schema.achievement.list : [];
+      for (const id of newUnlocked) {
+        const ach = schemaList.find((a) => a && String(a.name) === id);
+        const rarityPercent = ach && ach.rarityPct != null ? Number(ach.rarityPct) : null;
+        const rounded = Number.isFinite(rarityPercent) ? Math.round(rarityPercent * 10) / 10 : null;
+        await notify(
+          {
+            source: 'Xbox PC',
+            appid: titleId,
+            gameDisplayName: game.name || titleId,
+            achievementName: id,
+            achievementDisplayName: (ach && ach.displayName) || id,
+            achievementDescription: (ach && ach.description) || '',
+            rarityPercent: rounded !== null && rounded <= 10 ? rounded : null,
+            icon: (ach && ach.icon) || '',
+            gameIcon: (schema && schema.img && schema.img.portrait) || '',
+            image: (schema && schema.img && schema.img.header) || '',
+            time: Math.floor(Date.now() / 1000),
+          },
+          {
+            notify: app.options.notification.notify,
+            transport: {
+              toast: app.options.notification_transport.mode !== 'overlay',
+              websocket: app.options.notification_transport.mode !== 'toast',
+              overlay: app.options.notification_transport.mode === 'overlay' || app.options.notification_transport.mode === 'both',
+            },
+            toast: {
+              appid: app.toastID,
+              winrt: app.options.notification_transport.winRT,
+              balloonFallback: app.options.notification_transport.balloon,
+              customAudio: '0',
+              imageIntegration: '1',
+              group: app.options.notification_toast.groupToast,
+              cropIcon: true,
+              attribution: 'Achievement Watcher',
+            },
+            prefetch: app.options.notification_advanced.iconPrefetch,
+            rumble: false,
+          }
+        );
+      }
+    } catch (err) {
+      debug.warn(`[xbox-pc] poll failed: ${err && err.message ? err.message : err}`);
+    }
+  };
+  xboxPollState.timer = setInterval(poll, XBOX_POLL_INTERVAL_MS);
+  poll();
+}
+
+function stopXboxPolling() {
+  if (xboxPollState && xboxPollState.timer) {
+    clearInterval(xboxPollState.timer);
+    debug.log(`[xbox-pc] live polling stopped for ${xboxPollState.game && xboxPollState.game.name}`);
+  }
+  xboxPollState = null;
+}
 const overlayHotkey = new GlobalHotkey({ debug });
 let runningGames = [];
 const localProgressSchemaCache = new Map();
@@ -148,6 +238,7 @@ function mergeIndexedGameMetadata(game, appID) {
   if (!game.binary && indexed.binary) game.binary = indexed.binary;
   if (!game.icon && indexed.icon) game.icon = indexed.icon;
   if (!game.name && indexed.name) game.name = indexed.name;
+  if (!game.source && indexed.source) game.source = indexed.source;
   return game;
 }
 
@@ -928,8 +1019,10 @@ var app = {
           if (isExit) {
             let gameIndex = runningGames.findIndex((g) => g.appid === game.appid);
             if (gameIndex !== -1) runningGames.splice(gameIndex, 1);
+            stopXboxPolling();
           } else {
             runningGames.push(game);
+            if (String(game.source || '') === 'Xbox PC') startXboxPolling(game);
           }
           if (app.options.notification.playtime) {
             // Localize the playtime text here (the monitor stays language-agnostic and emits raw seconds).

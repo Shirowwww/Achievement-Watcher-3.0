@@ -5,8 +5,8 @@ const assert = require('node:assert/strict');
 const { binaryMatchesProcess, buildSeededSessions } = require('../playtime/seed.js');
 
 const gameIndex = [
-  { appid: '100', name: 'Alpha', binary: 'alpha.exe', icon: 'a' },
-  { appid: '200', name: 'Unreal Game', binary: 'unrealgame.exe', icon: 'u' },
+  { appid: '100', name: 'Alpha', binary: 'alpha.exe', icon: 'a', source: 'GBE Fork' },
+  { appid: '200', name: 'Unreal Game', binary: 'unrealgame.exe', icon: 'u', source: 'Xbox PC' },
   { appid: '300', name: 'Beta', binary: 'beta.exe', icon: 'b' },
 ];
 
@@ -35,8 +35,11 @@ test('seeds one session per running known game and groups multi-process games', 
   assert.deepEqual([...alpha.pids], [11, 12]);
   assert.equal(alpha.seeded, true);
   assert.equal(alpha.timer.fake, true);
+  assert.equal(alpha.source, 'GBE Fork');
   const unreal = sessions.find((s) => s.appid === '200');
   assert.deepEqual([...unreal.pids], [21]);
+  assert.equal(unreal.source, 'Xbox PC');
+  assert.equal(sessions.find((s) => s.appid === '300'), undefined);
 });
 
 test('ambiguous binary matches are skipped (delegated to the live watcher)', () => {
