@@ -3,19 +3,17 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 3.3.1 - 2026-08-03
+
+### Changed
+
+- Updates are now proposed before anything is downloaded: a "Download & Install" prompt appears when a new version is found, and the install prompt appears only after the download completes ("Later" keeps the app running; "Skip this version" mutes that release).
 
 ### Fixed
 
 - Fixed the 3.3.0 startup crash that left the main window blank: `app.js` no longer redeclares the shared `userThemes` binding, which previously threw a `SyntaxError` and stopped the whole renderer script before the library could load.
 - Fixed the Xbox PC account card throwing `fr is not defined` at startup, which aborted the rest of the Settings initialization.
 - Fixed the Xbox PC parser being loaded from a doubled `parser/parser/xboxPc.js` path, which silently disabled the Xbox PC source in every scan.
-
-## 3.3.1 - 2026-08-03
-
-### Changed
-
-- Updates are now proposed before anything is downloaded: a "Download & Install" prompt appears when a new version is found, and the install prompt appears only after the download completes ("Later" keeps the app running; "Skip this version" mutes that release).
 
 ## 3.3.0 - 2026-08-03
 
