@@ -73,6 +73,9 @@ The 3.2.0 release adds dedicated detection and repair for compatible **Goldberg 
 | User themes from AppData | ✅ | ✅ | ❌ |
 | Process trail (playtime for already-running games) | ✅ | ✅ | ❌ |
 | Random notification sound + FLAC/M4A/AAC | ✅ | ✅ | ❌ |
+| Per-emulator notification presets (Xenia/RPCS3/ShadPS4) | ✅ | ✅ | ❌ |
+| Emulator rarity (Exophase global %) | ✅ | ✅ | ❌ |
+| Live Xbox unlock notifications | ✅ | ✅ | ❌ |
 
 This fork focuses on an all-in-one library, a quiet tray workflow, native toasts and deeper Goldberg/GBE repair. **Achievements** has a strong auto-configuration and animated-overlay workflow. **Achievement Watcher 2.x** remains the historical base with broad emulator compatibility and several legacy notification transports.
 
