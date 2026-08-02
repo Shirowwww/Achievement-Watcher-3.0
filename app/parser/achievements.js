@@ -1055,7 +1055,7 @@ async function discover(source, steamAccFilter) {
   //Xbox PC (Game Pass / Microsoft Store / Online-Fix) — local installs + imported Xbox Network cache.
   if (source.xboxPc) {
     try {
-      const xboxPc = require(path.join(appPath, 'parser/xboxPc.js'));
+      const xboxPc = require(path.join(appPath, 'xboxPc.js'));
       xboxPc.setUserDataPath(_userDataPath || (process.env['APPDATA'] ? path.join(process.env['APPDATA'], 'Achievement Watcher') : ''));
       for (const titleId of xboxPc.listCachedTitles()) {
         data.push({ appid: titleId, source: xboxPc.XBOX_PC_SOURCE, data: { type: 'xboxPc' } });
@@ -1356,7 +1356,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     } else if (appid.source === 'epic') {
       game = await epic.getGameData({ appID: appid.appid, steamappid: appid.steamappid, lang: option.achievement.lang });
     } else if (appid.data.type === 'xboxPc') {
-      const xboxPc = require(path.join(appPath, 'parser/xboxPc.js'));
+      const xboxPc = require(path.join(appPath, 'xboxPc.js'));
       xboxPc.setUserDataPath(_userDataPath || (process.env['APPDATA'] ? path.join(process.env['APPDATA'], 'Achievement Watcher') : ''));
       game =
         (await xboxPc.getGameData(appid.appid, option.achievement.lang)) || {

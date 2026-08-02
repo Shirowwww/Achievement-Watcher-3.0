@@ -816,6 +816,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     // Xbox PC account card (Settings > Sources): connect Microsoft/Xbox Network, then import the
     // library. Import progress arrives as `xbox-pc:import-progress` IPC events.
     (function () {
+      const fr = () => String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
       const T = () =>
         fr()
           ? {

@@ -39,7 +39,6 @@ const uplayR2Installer = require(path.join(appPath, 'parser/uplayR2Installer.js'
 const steamParser = require(path.join(appPath, 'parser/steam.js'));
 const exeList = require(path.join(appPath, 'parser/exeList.js'));
 const manualUnlock = require(path.join(appPath, 'parser/manualUnlock.js'));
-const userThemes = require(path.join(appPath, 'util/userThemes.js'));
 const exeDetect = require(path.join(appPath, 'parser/exeDetect.js'));
 const gameIndex = require(path.join(appPath, 'parser/gameIndex.js'));
 const PlaytimeTracking = require(path.join(appPath, 'parser/playtime.js'));
