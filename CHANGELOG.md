@@ -5,6 +5,12 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+## 3.3.1 - 2026-08-03
+
+### Changed
+
+- Updates are now proposed before anything is downloaded: a "Download & Install" prompt appears when a new version is found, and the install prompt appears only after the download completes ("Later" keeps the app running; "Skip this version" mutes that release).
+
 ## 3.3.0 - 2026-08-03
 
 ### Added
@@ -29,7 +35,6 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - The SteamGridDB artwork key can now be overridden per user in `cfg/options.ini` (`[steamgriddb] apiKey`, AES-encrypted on disk like the Steam Web API key); the bundled public key remains the fallback.
-- Updates are now proposed before anything is downloaded: a "Download & Install" prompt appears when a new version is found, and the install prompt appears only after the download completes ("Later" keeps the app running; "Skip this version" mutes that release).
 
 ## 3.2.1 - 2026-07-14
 
