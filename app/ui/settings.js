@@ -197,6 +197,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#option_notifMode').val(app.config.notification_transport.mode || 'toast').change();
       $('#option_overlayPosition').val(cfgOverlay.notificationPosition || 'center-bottom').change();
       $('#option_overlayScale').val(String(cfgOverlay.notificationScale || 1)).change();
+      $('#option_overlayRandomSound').val(String(cfgOverlay.randomSound === true)).change();
+      $('#option_overlayPlaytimeScale').val(String(Number(cfgOverlay.playtimeNotificationScale) > 0 ? cfgOverlay.playtimeNotificationScale : 0)).change();
       $('#option_overlayVolume').val(String(cfgOverlay.notificationVolume != null ? cfgOverlay.notificationVolume : 100)).change();
       $('#option_overlayDuration').val(String(cfgOverlay.notificationDuration || 'auto')).change();
       const cfgSouvenir = app.config.souvenir || {};
@@ -1487,6 +1489,8 @@ function readNotificationSettings() {
   app.config.overlay.notificationPresetPlatinum = $('#option_overlayPresetPlatinum').val() || '';
   app.config.overlay.notificationPosition = $('#option_overlayPosition').val() || 'center-bottom';
   app.config.overlay.notificationScale = parseFloat($('#option_overlayScale').val()) || 1;
+  app.config.overlay.randomSound = $('#option_overlayRandomSound').val() === 'true';
+  app.config.overlay.playtimeNotificationScale = parseFloat($('#option_overlayPlaytimeScale').val()) || 0;
   app.config.overlay.notificationSound = $('#option_overlaySound').val() || '';
   const volRaw = parseInt($('#option_overlayVolume').val(), 10);
   app.config.overlay.notificationVolume = Number.isFinite(volRaw) ? volRaw : 100;

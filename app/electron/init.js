@@ -20,6 +20,7 @@ const minimist = require('minimist');
 const { execSync, spawn } = require('child_process');
 const fs = require('fs');
 const ipc = require(path.join(__dirname, 'ipc.js'));
+const notificationSounds = require(path.join(__dirname, '../util/notificationSounds.js'));
 const BASE_URL = 'https://www.steamgriddb.com/api/v2';
 const DEFAULT_API_KEY = '2a9d32ddd0bfe4e1191b4f6ff56fef60'; // bundled public fallback (rate-limited)
 const startupArgs = minimist(process.argv.slice(1));
@@ -2332,6 +2333,14 @@ async function enqueueNotificationFromArgs(args) {
 
   // Playtime (and any caller passing --silent) must never play the overlay sound.
   const silent = !!args.silent;
+  // "Random sound" picks a fresh file from the merged bundled+user sound list for each popup.
+  const randomSound = ov.randomSound === true;
+  const chosenSound = silent
+    ? ''
+    : randomSound
+      ? notificationSounds.pickRandomSound([path.join(__dirname, '../sounds'), userSoundsDir()]) ||
+        resolveNotificationSound(ov.notificationSound)
+      : resolveNotificationSound(ov.notificationSound);
   const langFr = String((cfg && cfg.achievement && cfg.achievement.lang) || '')
     .toLowerCase()
     .startsWith('fr');
@@ -2352,7 +2361,10 @@ async function enqueueNotificationFromArgs(args) {
   enqueueNotification({
     preset,
     position: ov.notificationPosition || 'center-bottom',
-    scale: ov.notificationScale || 1,
+    scale:
+      notificationType === 'playtime' && Number(ov.playtimeNotificationScale) > 0
+        ? Number(ov.playtimeNotificationScale)
+        : ov.notificationScale || 1,
     volume: Number.isFinite(Number(ov.notificationVolume)) ? Number(ov.notificationVolume) : 100,
     durationMs: durSec > 0 ? durSec * 1000 : undefined,
     // Playtime notifications pass the game name in both fields. Keeping the dedicated game-name
@@ -2366,7 +2378,7 @@ async function enqueueNotificationFromArgs(args) {
     gameIconPath,
     imagePath,
     progress,
-    soundPath: silent ? '' : resolveNotificationSound(ov.notificationSound),
+    soundPath: chosenSound,
   });
 }
 
@@ -2523,11 +2535,7 @@ ipcMain.handle('create-custom-preset', async (event, opts = {}) => {
 // List available notification sound files for the overlay sound dropdown (bundled + user-imported).
 ipcMain.handle('list-sounds', async () => {
   const set = new Set();
-  for (const dir of [path.join(__dirname, '../sounds'), userSoundsDir()]) {
-    try {
-      for (const f of fs.readdirSync(dir)) if (/\.(wav|mp3|ogg)$/i.test(f)) set.add(f);
-    } catch {}
-  }
+  for (const { name } of notificationSounds.listSoundFiles([path.join(__dirname, '../sounds'), userSoundsDir()])) set.add(name);
   return [...set].sort((a, b) => a.localeCompare(b));
 });
 
@@ -2538,7 +2546,7 @@ ipcMain.handle('import-sound', async () => {
     const res = await dialog.showOpenDialog({
       title: 'Choose a notification sound',
       properties: ['openFile', 'dontAddToRecent'],
-      filters: [{ name: 'Audio', extensions: ['wav', 'mp3', 'ogg'] }],
+      filters: [{ name: 'Audio', extensions: ['wav', 'mp3', 'ogg', 'flac', 'm4a', 'aac'] }],
     });
     if (res.canceled || !res.filePaths || !res.filePaths.length) return null;
     const src = res.filePaths[0];

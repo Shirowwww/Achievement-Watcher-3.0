@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 - A right-click "Emulator source" option lets you force a game's tools to Steam/GBE Fork or Ubisoft (Uplay R2) instead of relying on automatic detection, for the rare title that trips the on-disk marker heuristic the wrong way.
 - Right-click an achievement in the game view to mark it as manually unlocked (or clear the override). The state is stored locally per game/source and never touches the game's save files; manually unlocked entries render with an amber marker and count toward progress.
+- "Random sound" option for overlay notifications: each popup picks a fresh sound from the bundled and imported sound list instead of always replaying the same file.
+- Sound import and the overlay dropdown now accept `.flac`, `.m4a` and `.aac` in addition to `.wav`, `.mp3` and `.ogg`.
+- A dedicated playtime notification scale (Settings → Notifications) lets playtime popups render at a different size than regular achievement popups.
 
 ### Fixed
 

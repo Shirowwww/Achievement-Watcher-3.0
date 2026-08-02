@@ -86,6 +86,15 @@ module.exports.load = () => {
     if (typeof options.overlay.notificationSound !== 'string') {
       options.overlay.notificationSound = '';
     }
+    // Randomize the overlay notification sound from the merged bundled+user sound list.
+    if (typeof options.overlay.randomSound !== 'boolean') {
+      options.overlay.randomSound = false;
+    }
+    // Optional dedicated scale for playtime popups (0 = follow the main notification scale).
+    {
+      const pscl = Number(options.overlay.playtimeNotificationScale);
+      options.overlay.playtimeNotificationScale = Number.isFinite(pscl) && pscl > 0 ? pscl : 0;
+    }
     // Notification sound volume (percent, 0–200). Overlay audio can boost above 100%; the
     // PowerShell player used for custom toast sounds clamps that part to 100%.
     {
@@ -387,7 +396,9 @@ module.exports.load = () => {
         notificationPresetPlatinum: '',
         notificationPosition: 'center-bottom',
         notificationScale: 1,
+        playtimeNotificationScale: 0,
         notificationSound: '',
+        randomSound: false,
         notificationVolume: 100,
         notificationDuration: 'auto',
       },
