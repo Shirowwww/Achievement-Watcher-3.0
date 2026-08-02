@@ -9,6 +9,10 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 - A right-click "Emulator source" option lets you force a game's tools to Steam/GBE Fork or Ubisoft (Uplay R2) instead of relying on automatic detection, for the rare title that trips the on-disk marker heuristic the wrong way.
 
+### Fixed
+
+- Games with no Steam client icon (common for brand-new releases) now show their header/portrait art instead of a blank icon on the achievement page, and no longer silently break playtime tracking.
+
 ## 3.2.1 - 2026-07-14
 
 ### Changed

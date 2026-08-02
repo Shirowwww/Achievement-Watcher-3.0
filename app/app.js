@@ -2767,10 +2767,14 @@ var app = {
         $('#achievement .wrapper > .header').removeAttr('data-system');
       }
 
-      if (game.img.icon) {
+      // Steam doesn't set a "clienticon" for every app (notably brand-new releases — their store
+      // page/product info simply has no icon hash yet), which used to leave this box empty. Fall
+      // back to the header/portrait art so there's always something recognizable to show.
+      const headerIconSource = game.img.icon || game.img.header || game.img.portrait;
+      if (headerIconSource) {
         const iconEl = $('#achievement .wrapper > .header .title .icon');
         iconEl.css('background', `url('${pathToFileURL(path.join(appPath, 'resources/img/loading.gif')).href}')`);
-        ipcRenderer.invoke('fetch-icon', game.img.icon, game.steamappid || game.appid).then((localPath) => {
+        ipcRenderer.invoke('fetch-icon', headerIconSource, game.steamappid || game.appid).then((localPath) => {
           if (localPath) iconEl.css('background', `url('${localPath}')`);
         });
       }

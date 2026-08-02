@@ -180,7 +180,10 @@ async function init() {
           const lang = options.achievement.lang;
           const apikey = options.steam.apiKey;
           let d = await loadSteamData(appid, lang, apikey, process);
-          game = { appid, binary: process, icon: d.img.icon.split('/').pop().split('.')[0], name: d.name };
+          // Not every app has a Steam "clienticon" (e.g. brand-new releases) — d.img.icon can be
+          // undefined; guard it the same way achievements.js does instead of throwing here.
+          const iconHash = d.img && d.img.icon ? String(d.img.icon).split('/').pop().split('.')[0] : '';
+          game = { appid, binary: process, icon: iconHash, name: d.name };
           addToGameIndex(game);
         }
       } catch (err) {
