@@ -552,6 +552,10 @@
         "name": "EA Desktop",
         "description": "Lê o registo local de proezas do EA Desktop — apenas para jogos instalados fora das pastas geridas pela EA (títulos crackados)."
       },
+      "xboxPc": {
+        "name": "Xbox PC",
+        "description": "Jogos de Xbox PC (Game Pass / Microsoft Store). Conecte e importe nas Configurações para ver status e raridade."
+      },
       "importCache": {
         "name": "Importar cache de notificações",
         "description": "Importar a cache do Watchdog como outra fonte de proezas"

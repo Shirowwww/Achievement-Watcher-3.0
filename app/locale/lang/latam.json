@@ -552,6 +552,10 @@
         "name": "EA Desktop",
         "description": "Lee el registro local de logros de EA Desktop — solo para juegos instalados fuera de las carpetas gestionadas por EA (títulos crackeados)."
       },
+      "xboxPc": {
+        "name": "Xbox PC",
+        "description": "Juegos de Xbox PC (Game Pass / Microsoft Store). Conecta e importa desde Ajustes para ver el estado y la rareza."
+      },
       "importCache": {
         "name": "Importar caché de notificaciones",
         "description": "Importa la caché de Watchdog como otra fuente de logros"

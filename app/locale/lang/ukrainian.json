@@ -552,6 +552,10 @@
         "name": "EA Desktop",
         "description": "Читає локальний журнал досягнень EA Desktop — лише для ігор, встановлених поза керованими EA папками (зламані ігри)."
       },
+      "xboxPc": {
+        "name": "Xbox PC",
+        "description": "Ігри Xbox PC (Game Pass / Microsoft Store). Підключіться та імпортуйте в налаштуваннях, щоб бачити статус і рідкість."
+      },
       "importCache": {
         "name": "Імпортувати кеш сповіщень",
         "description": "Імпортувати кеш Watchdog як ще одне джерело досягнень"

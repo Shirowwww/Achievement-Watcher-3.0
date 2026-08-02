@@ -552,6 +552,10 @@
         "name": "EA Desktop",
         "description": "อ่านบันทึกความสำเร็จในเครื่องของ EA Desktop — เฉพาะเกมที่ติดตั้งนอกโฟลเดอร์ที่จัดการโดย EA (เกมที่ถูกแคร็ก)"
       },
+      "xboxPc": {
+        "name": "Xbox PC",
+        "description": "เกม Xbox PC (Game Pass / Microsoft Store) เชื่อมต่อและนำเข้าจากการตั้งค่าเพื่อดูสถานะและความหายาก"
+      },
       "importCache": {
         "name": "นำเข้าแคชการแจ้งเตือน",
         "description": "นำเข้าแคชของ Watchdog เป็นอีกแหล่งของความสำเร็จ"

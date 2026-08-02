@@ -639,6 +639,23 @@
                   </li>
 
                   <li class="hasHelper">
+                    <div class="left"><i class="fab fa-xbox"></i> <span></span></div>
+                    <div class="right">
+                      <div class="previous">
+                        <span class="arrow"><i class="fas fa-chevron-left"></i></span>
+                      </div>
+                      <select autocomplete="off" id="option_xboxPc">
+                        <option value="true" selected></option>
+                        <option value="false"></option>
+                      </select>
+                      <div class="next">
+                        <span class="arrow"><i class="fas fa-chevron-right"></i></span>
+                      </div>
+                    </div>
+                    <div class="help"></div>
+                  </li>
+
+                  <li class="hasHelper">
                     <div class="left"><i class="fas fa-database"></i> <span></span></div>
                     <div class="right">
                       <div class="previous">
@@ -680,6 +697,40 @@
                     <span class="emulator-test-copy"><strong id="epic-disconnect-btn-label">Disconnect</strong></span>
                   </button>
                   <span id="epic-connect-status" aria-live="polite"></span>
+                </div>
+              </div>
+
+              <!-- Xbox PC account (Game Pass / Microsoft Store). Connect + Import mirror the Epic card. -->
+              <div id="xbox-connect" class="settings-card">
+                <div class="emulator-login-heading">
+                  <div class="title"><i class="fab fa-xbox"></i> <span id="xbox-connect-title">Xbox PC account</span></div>
+                  <span class="emulator-warning is-success" id="xbox-connect-badge" style="display:none"><i class="fas fa-check-circle"></i> <span id="xbox-connect-badge-label">Connected</span></span>
+                </div>
+                <p id="xbox-connect-desc">
+                  Optional. Connect your Microsoft / Xbox Network account to import your Xbox PC library (Game Pass and Microsoft Store
+                  games): achievement names, descriptions, unlock state and rarity are fetched from Xbox Network and cached locally.
+                  Your session token is stored encrypted on this PC.
+                </p>
+                <div class="emulator-login-actions">
+                  <button type="button" id="xbox-connect-btn" class="btn">
+                    <span class="emulator-test-icon"><i class="fas fa-sign-in-alt"></i></span>
+                    <span class="emulator-test-copy">
+                      <strong id="xbox-connect-btn-label">Connect Xbox account</strong>
+                      <small id="xbox-connect-btn-hint">opens the Microsoft sign-in window</small>
+                    </span>
+                    <i class="fas fa-chevron-right emulator-test-arrow"></i>
+                  </button>
+                  <button type="button" id="xbox-import-btn" class="btn" style="display:none">
+                    <span class="emulator-test-icon"><i class="fas fa-download"></i></span>
+                    <span class="emulator-test-copy">
+                      <strong id="xbox-import-btn-label">Import Xbox PC library</strong>
+                      <small id="xbox-import-btn-hint">fetch achievements from Xbox Network</small>
+                    </span>
+                  </button>
+                  <button type="button" id="xbox-disconnect-btn" class="btn secondary" style="display:none">
+                    <span class="emulator-test-copy"><strong id="xbox-disconnect-btn-label">Disconnect</strong></span>
+                  </button>
+                  <span id="xbox-connect-status" aria-live="polite"></span>
                 </div>
               </div>
             </section>

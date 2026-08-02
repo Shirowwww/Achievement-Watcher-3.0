@@ -411,10 +411,14 @@ function translateUI(lang, locale, template) {
   selector.find("li:nth-child(6) .right select option[value='true']").text(clear(template.settings.common.enable));
   selector.find("li:nth-child(6) .right select option[value='false']").text(clear(template.settings.common.disable));
   selector.find('li:nth-child(6) .help').text(clear(template.settings.source.ea.description));
-  selector.find('li:nth-child(7) .left span').text(clear(template.settings.source.importCache.name));
+  selector.find('li:nth-child(7) .left span').text(clear(template.settings.source.xboxPc.name));
   selector.find("li:nth-child(7) .right select option[value='true']").text(clear(template.settings.common.enable));
   selector.find("li:nth-child(7) .right select option[value='false']").text(clear(template.settings.common.disable));
-  selector.find('li:nth-child(7) .help').text(clear(template.settings.source.importCache.description));
+  selector.find('li:nth-child(7) .help').text(clear(template.settings.source.xboxPc.description));
+  selector.find('li:nth-child(8) .left span').text(clear(template.settings.source.importCache.name));
+  selector.find("li:nth-child(8) .right select option[value='true']").text(clear(template.settings.common.enable));
+  selector.find("li:nth-child(8) .right select option[value='false']").text(clear(template.settings.common.disable));
+  selector.find('li:nth-child(8) .help').text(clear(template.settings.source.importCache.description));
   $('#advanced-blacklist-title').text(clear(template.settings.advanced.blacklistTitle));
   $('#blacklist_reset span').text(clear(template.settings.advanced.blacklistButton));
   $('#blacklist-info').text(clear(template.settings.advanced.blacklistInfo));

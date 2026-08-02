@@ -552,6 +552,10 @@
         "name": "EA Desktop",
         "description": "EA Desktop のローカル実績ログを読み取ります — EA の管理フォルダー外にインストールされたゲーム（クラック版）のみ。"
       },
+      "xboxPc": {
+        "name": "Xbox PC",
+        "description": "Xbox PC ゲーム（Game Pass / Microsoft Store）。設定から接続・インポートすると解除状況とレア度を表示します。"
+      },
       "importCache": {
         "name": "通知キャッシュをインポート",
         "description": "Watchdog のキャッシュを別の実績ソースとしてインポートします"

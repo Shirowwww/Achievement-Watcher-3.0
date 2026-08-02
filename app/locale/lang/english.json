@@ -552,6 +552,10 @@
         "name": "EA Desktop",
         "description": "Read EA Desktop's local achievement log — only for games installed outside EA's managed folders (cracked titles)."
       },
+      "xboxPc": {
+        "name": "Xbox PC",
+        "description": "Xbox PC games (Game Pass / Microsoft Store). Connect and import from Settings to see unlock state and rarity."
+      },
       "importCache": {
         "name": "Import notification cache",
         "description": "Import Watchdog's cache as another source of achievement"

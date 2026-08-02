@@ -552,6 +552,10 @@
         "name": "EA Desktop",
         "description": "Beolvassa az EA Desktop helyi teljesítménynaplóját — csak az EA által kezelt mappákon kívül telepített játékokhoz (feltört címek)."
       },
+      "xboxPc": {
+        "name": "Xbox PC",
+        "description": "Xbox PC játékok (Game Pass / Microsoft Store). Csatlakozz és importálj a Beállításokban az állapot és ritkaság megtekintéséhez."
+      },
       "importCache": {
         "name": "Értesítési gyorsítótár importálása",
         "description": "A Watchdog gyorsítótárának importálása újabb teljesítményforrásként"

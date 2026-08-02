@@ -1052,6 +1052,33 @@ async function discover(source, steamAccFilter) {
     }
   }
 
+  //Xbox PC (Game Pass / Microsoft Store / Online-Fix) — local installs + imported Xbox Network cache.
+  if (source.xboxPc) {
+    try {
+      const xboxPc = require(path.join(appPath, 'parser/xboxPc.js'));
+      xboxPc.setUserDataPath(_userDataPath || (process.env['APPDATA'] ? path.join(process.env['APPDATA'], 'Achievement Watcher') : ''));
+      for (const titleId of xboxPc.listCachedTitles()) {
+        data.push({ appid: titleId, source: xboxPc.XBOX_PC_SOURCE, data: { type: 'xboxPc' } });
+      }
+      // Locally discovered installs (fs-only scan; Appx enumeration is reserved for the import action).
+      const installed = await xboxPc.discoverXboxPcInstallations({ skipAppx: true });
+      const known = new Set(data.filter((g) => g.data && g.data.type === 'xboxPc').map((g) => String(g.appid)));
+      for (const inst of installed) {
+        if (inst.titleId && !known.has(String(inst.titleId))) {
+          data.push({
+            appid: inst.titleId,
+            name: inst.title,
+            source: xboxPc.XBOX_PC_SOURCE,
+            data: { type: 'xboxPc', gameDir: inst.installLocation, executable: inst.executable, aumid: inst.aumid },
+          });
+          known.add(String(inst.titleId));
+        }
+      }
+    } catch (err) {
+      debug.log(err);
+    }
+  }
+
   if (source.importCache) {
     try {
       data = data.concat(await watchdog.scan());
@@ -1328,6 +1355,19 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       game = await epicOfficial.getGameData(appid, option.achievement.lang);
     } else if (appid.source === 'epic') {
       game = await epic.getGameData({ appID: appid.appid, steamappid: appid.steamappid, lang: option.achievement.lang });
+    } else if (appid.data.type === 'xboxPc') {
+      const xboxPc = require(path.join(appPath, 'parser/xboxPc.js'));
+      xboxPc.setUserDataPath(_userDataPath || (process.env['APPDATA'] ? path.join(process.env['APPDATA'], 'Achievement Watcher') : ''));
+      game =
+        (await xboxPc.getGameData(appid.appid, option.achievement.lang)) || {
+          appid: appid.appid,
+          name: appid.name || `Xbox ${appid.appid}`,
+          source: xboxPc.XBOX_PC_SOURCE,
+          img: {},
+          achievement: { total: 0, unlocked: 0, list: [] },
+          installed: true,
+          xboxPc: true,
+        };
     } else {
       game = await steam.getGameData({
         appID: appid.appid,

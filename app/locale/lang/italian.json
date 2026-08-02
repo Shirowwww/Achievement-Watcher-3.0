@@ -552,6 +552,10 @@
         "name": "EA Desktop",
         "description": "Legge il registro locale degli obiettivi di EA Desktop — solo per i giochi installati al di fuori delle cartelle gestite da EA (titoli craccati)."
       },
+      "xboxPc": {
+        "name": "Xbox PC",
+        "description": "Giochi Xbox PC (Game Pass / Microsoft Store). Collegati e importa dalle Impostazioni per vedere stato e rarità."
+      },
       "importCache": {
         "name": "Importa cache notifiche",
         "description": "Importa la cache di Watchdog come ulteriore sorgente di obiettivi"

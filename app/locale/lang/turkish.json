@@ -552,6 +552,10 @@
         "name": "EA Desktop",
         "description": "EA Desktop'un yerel başarım günlüğünü okur — yalnızca EA'nın yönettiği klasörlerin dışına kurulan oyunlar için (cracklenmiş başlıklar)."
       },
+      "xboxPc": {
+        "name": "Xbox PC",
+        "description": "Xbox PC oyunları (Game Pass / Microsoft Store). Durumu ve nadirliği görmek için Ayarlar'dan bağlanın ve içe aktarın."
+      },
       "importCache": {
         "name": "Bildirim önbelleğini içe aktar",
         "description": "Watchdog'un önbelleğini başka bir başarım kaynağı olarak içe aktar"

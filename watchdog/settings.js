@@ -109,6 +109,11 @@ module.exports.load = async (cfg_file) => {
       fixFile = true;
     }
 
+    if (typeof options.achievement_source.xboxPc !== 'boolean') {
+      options.achievement_source.xboxPc = true;
+      fixFile = true;
+    }
+
     if (typeof options.achievement_source.importCache !== 'boolean') {
       options.achievement_source.importCache = true;
       fixFile = true;
@@ -324,6 +329,7 @@ module.exports.load = async (cfg_file) => {
         ubisoftOfficial: true,
         epic: true,
         ea: true,
+        xboxPc: true,
         importCache: true,
       },
       notification: {

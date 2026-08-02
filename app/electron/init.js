@@ -746,6 +746,130 @@ ipcMain.handle('epic:login', async () => {
   });
 });
 
+// ---- Xbox PC "Connect Microsoft / Xbox Network" + library import -------------------------------
+// Ported from PSerban93/Achievements: OAuth against the public Xbox Live client id, XSTS session
+// stored encrypted, then an import that caches every PC title's achievements under steam_cache/xbox.
+let xboxLoginWindow = null;
+ipcMain.handle('xbox-pc:status', async () => {
+  try {
+    const xboxPc = require(path.join(__dirname, '../parser/xboxPc.js'));
+    xboxPc.setUserDataPath(userData);
+    return xboxPc.status();
+  } catch (err) {
+    return { connected: false, error: String(err && err.message ? err.message : err) };
+  }
+});
+
+ipcMain.handle('xbox-pc:disconnect', async () => {
+  try {
+    const xboxPc = require(path.join(__dirname, '../parser/xboxPc.js'));
+    xboxPc.setUserDataPath(userData);
+    xboxPc.clearAuth();
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: String(err && err.message ? err.message : err) };
+  }
+});
+
+ipcMain.handle('xbox-pc:login', async () => {
+  const xboxPc = require(path.join(__dirname, '../parser/xboxPc.js'));
+  xboxPc.setUserDataPath(userData);
+  if (xboxLoginWindow && !xboxLoginWindow.isDestroyed()) {
+    xboxLoginWindow.focus();
+    return { ok: false, error: 'login-already-open' };
+  }
+  return new Promise((resolve) => {
+    let settled = false;
+    let pollTimer = null;
+    const finish = (result) => {
+      if (settled) return;
+      settled = true;
+      if (pollTimer) clearInterval(pollTimer);
+      if (xboxLoginWindow && !xboxLoginWindow.isDestroyed()) xboxLoginWindow.destroy();
+      xboxLoginWindow = null;
+      resolve(result);
+    };
+    const state = `${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+    let loginUrl;
+    try {
+      loginUrl = xboxPc.buildXboxDirectAuthorizeUrl(xboxPc.XBOX_PC_CLIENT_ID, state);
+    } catch (err) {
+      return finish({ ok: false, error: String(err && err.message ? err.message : err) });
+    }
+    const tryCapture = (contents) => {
+      const wc =
+        contents && !contents.isDestroyed()
+          ? contents
+          : xboxLoginWindow && !xboxLoginWindow.isDestroyed()
+            ? xboxLoginWindow.webContents
+            : null;
+      if (settled || !wc) return;
+      const result = xboxPc.extractXboxDirectAuthResult(wc.getURL(), state);
+      if (!result) return;
+      if (result.error) {
+        finish({ ok: false, error: result.error });
+        return;
+      }
+      xboxPc
+        .completeXboxDirectAuthentication(result)
+        .then((auth) => finish({ ok: true, gamertag: auth.gamertag || '', xuid: auth.xuid || '' }))
+        .catch((err) => finish({ ok: false, error: String(err && err.message ? err.message : err) }));
+    };
+    xboxLoginWindow = new BrowserWindow({
+      width: 560,
+      height: 760,
+      title: 'Connect Microsoft / Xbox Network',
+      parent: MainWin && !MainWin.isDestroyed() ? MainWin : undefined,
+      autoHideMenuBar: true,
+      show: false,
+      webPreferences: { nodeIntegration: false, contextIsolation: true },
+    });
+    xboxLoginWindow.once('ready-to-show', () => {
+      if (xboxLoginWindow && !xboxLoginWindow.isDestroyed()) {
+        xboxLoginWindow.show();
+        xboxLoginWindow.focus();
+      }
+    });
+    const attach = (contents) => {
+      contents.on('will-navigate', (event, url) => {
+        const result = xboxPc.extractXboxDirectAuthResult(url, state);
+        if (result) event.preventDefault();
+        tryCapture(contents);
+      });
+      contents.on('will-redirect', (event, url) => {
+        const result = xboxPc.extractXboxDirectAuthResult(url, state);
+        if (result) event.preventDefault();
+        tryCapture(contents);
+      });
+      contents.on('did-navigate', () => tryCapture(contents));
+      contents.on('did-navigate-in-page', () => tryCapture(contents));
+    };
+    attach(xboxLoginWindow.webContents);
+    xboxLoginWindow.on('closed', () => finish({ ok: false, error: 'window-closed' }));
+    // Safety net: some flows end on a redirect the navigation events never surface (blocked
+    // localhost load); poll the current URL until the user closes the window.
+    pollTimer = setInterval(() => tryCapture(xboxLoginWindow && !xboxLoginWindow.isDestroyed() ? xboxLoginWindow.webContents : null), 400);
+    xboxLoginWindow.loadURL(loginUrl).catch((err) => finish({ ok: false, error: String(err && err.message ? err.message : err) }));
+  });
+});
+
+ipcMain.handle('xbox-pc:import', async (event, opts = {}) => {
+  try {
+    const xboxPc = require(path.join(__dirname, '../parser/xboxPc.js'));
+    xboxPc.setUserDataPath(userData);
+    const lang = String(opts.lang || '').trim() || (configJS && configJS.achievement && configJS.achievement.lang) || 'english';
+    const result = await xboxPc.importLibrary({
+      lang,
+      onProgress: (p) => {
+        if (!event.sender.isDestroyed()) event.sender.send('xbox-pc:import-progress', p);
+      },
+    });
+    return { ok: true, result };
+  } catch (err) {
+    return { ok: false, error: String(err && err.message ? err.message : err) };
+  }
+});
+
 // Kill any Watchdog currently holding the WS port (8082). The Watchdog is a detached nw.exe -> node
 // chain we cannot track by PID, so we target it by its well-known port. This is used before launching
 // a fresh Watchdog so it always loads the current code, while normal app quits leave the background

@@ -214,6 +214,10 @@ module.exports.load = () => {
       options.achievement_source.ea = true;
     }
 
+    if (typeof options.achievement_source.xboxPc !== 'boolean') {
+      options.achievement_source.xboxPc = true;
+    }
+
     if (typeof options.achievement_source.importCache !== 'boolean') {
       options.achievement_source.importCache = true;
     }
@@ -428,6 +432,7 @@ module.exports.load = () => {
         epic: true,
         epicOfficial: true,
         ea: true,
+        xboxPc: true,
         importCache: true,
       },
       emulator: {

@@ -552,6 +552,10 @@
         "name": "EA Desktop",
         "description": "Odczytuje lokalny dziennik osiągnięć EA Desktop — tylko dla gier zainstalowanych poza folderami zarządzanymi przez EA (gry crackowane)."
       },
+      "xboxPc": {
+        "name": "Xbox PC",
+        "description": "Gry Xbox PC (Game Pass / Microsoft Store). Połącz i zaimportuj w Ustawieniach, aby zobaczyć stan i rzadkość."
+      },
       "importCache": {
         "name": "Importuj pamięć podręczną powiadomień",
         "description": "Importuj pamięć podręczną Watchdoga jako kolejne źródło osiągnięć"

@@ -12,6 +12,10 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - "Random sound" option for overlay notifications: each popup picks a fresh sound from the bundled and imported sound list instead of always replaying the same file.
 - Sound import and the overlay dropdown now accept `.flac`, `.m4a` and `.aac` in addition to `.wav`, `.mp3` and `.ogg`.
 - A dedicated playtime notification scale (Settings → Notifications) lets playtime popups render at a different size than regular achievement popups.
+- Xbox PC support (ported from the reference Achievements project): connect a Microsoft / Xbox Network account from Settings → Sources, import the Xbox PC library (Game Pass and Microsoft Store installs, discovered from `XboxGames` folders, `.GamingRoot` markers and Appx packages), and read each title's achievements, unlock state and rarity from the local cache. The session token is stored encrypted.
+- User themes: drop any `.css` file into `%APPDATA%\Achievement Watcher\themes` and it appears in Settings → General → Theme (stored as `user:<name>`).
+- Per-platform metadata links in the game right-click menu: Epic Games Store / GOG / EA / Ubisoft Store / RPCS3 Wiki plus PCGamingWiki, for every non-Steam source.
+- Process trail: games already running when the background Watchdog starts are seeded as active playtime sessions, so their playtime is recorded on exit instead of being lost.
 
 ### Fixed
 

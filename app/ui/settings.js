@@ -810,6 +810,126 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       refresh();
     })();
 
+    // Xbox PC account card (Settings > Sources): connect Microsoft/Xbox Network, then import the
+    // library. Import progress arrives as `xbox-pc:import-progress` IPC events.
+    (function () {
+      const T = () =>
+        fr()
+          ? {
+              connectedAs: (n) => `Connecté${n ? ' : ' + n : ''}`,
+              notConnected: 'Non connecté',
+              connecting: 'Ouverture de la fenêtre de connexion Microsoft…',
+              connected: 'Compte Xbox connecté.',
+              cancelled: 'Connexion annulée.',
+              failed: 'Échec de la connexion Xbox',
+              disconnected: 'Compte Xbox déconnecté.',
+              importing: 'Importation de la bibliothèque Xbox…',
+              imported: (r) => `Importation terminée : ${r?.created || 0} créé(s), ${r?.updated || 0} mis à jour, ${r?.failed || 0} échec(s).`,
+              importFailed: 'Échec de l’importation Xbox',
+            }
+          : {
+              connectedAs: (n) => `Connected${n ? ': ' + n : ''}`,
+              notConnected: 'Not connected',
+              connecting: 'Opening the Microsoft sign-in window…',
+              connected: 'Xbox account connected.',
+              cancelled: 'Sign-in cancelled.',
+              failed: 'Xbox sign-in failed',
+              disconnected: 'Xbox account disconnected.',
+              importing: 'Importing the Xbox PC library…',
+              imported: (r) => `Import complete: ${r?.created || 0} created, ${r?.updated || 0} updated, ${r?.failed || 0} failed.`,
+              importFailed: 'Xbox library import failed',
+            };
+      const status = $('#xbox-connect-status');
+      const badge = $('#xbox-connect-badge');
+      const connectBtn = $('#xbox-connect-btn');
+      const importBtn = $('#xbox-import-btn');
+      const disconnectBtn = $('#xbox-disconnect-btn');
+      const setStatus = (text, cls = '') => status.removeClass('success error running').addClass(cls).text(text || '');
+
+      if (fr()) {
+        $('#xbox-connect-title').text('Compte Xbox PC');
+        $('#xbox-connect-desc').text(
+          'Optionnel. Connecte ton compte Microsoft / Xbox Network pour importer ta bibliothèque Xbox PC (Game Pass et Microsoft Store) : noms, descriptions, état de déblocage et rareté sont récupérés depuis Xbox Network puis mis en cache localement. Ton jeton est stocké chiffré sur ce PC.'
+        );
+        $('#xbox-connect-btn-hint').text('ouvre la fenêtre de connexion Microsoft');
+        $('#xbox-import-btn-hint').text('récupère les succès depuis Xbox Network');
+        $('#xbox-connect-badge-label').text('Connecté');
+        $('#xbox-disconnect-btn-label').text('Déconnecter');
+      }
+
+      async function refresh() {
+        let s = {};
+        try {
+          s = (await ipcRenderer.invoke('xbox-pc:status')) || {};
+        } catch {}
+        if (s.connected) {
+          badge.show();
+          importBtn.show();
+          disconnectBtn.show();
+          $('#xbox-connect-btn-label').text(fr() ? 'Reconnecter' : 'Reconnect');
+          setStatus(T().connectedAs(s.gamertag), 'success');
+        } else {
+          badge.hide();
+          importBtn.hide();
+          disconnectBtn.hide();
+          $('#xbox-connect-btn-label').text(fr() ? 'Connecter le compte Xbox' : 'Connect Xbox account');
+          if (!status.hasClass('error')) setStatus(T().notConnected);
+        }
+      }
+
+      connectBtn.off('click').on('click', async function () {
+        if (connectBtn.hasClass('disabled')) return;
+        connectBtn.addClass('disabled').css('pointer-events', 'none');
+        setStatus(T().connecting, 'running');
+        try {
+          const res = (await ipcRenderer.invoke('xbox-pc:login')) || {};
+          if (res.ok) setStatus(T().connected, 'success');
+          else if (res.error === 'window-closed') setStatus(T().cancelled, 'error');
+          else setStatus(`${T().failed}${res.error ? ': ' + res.error : ''}`, 'error');
+        } catch (err) {
+          setStatus(`${T().failed}: ${err.message || err}`, 'error');
+        } finally {
+          connectBtn.removeClass('disabled').css('pointer-events', '');
+          refresh();
+        }
+      });
+
+      importBtn.off('click').on('click', async function () {
+        if (importBtn.hasClass('disabled')) return;
+        importBtn.addClass('disabled').css('pointer-events', 'none');
+        setStatus(T().importing, 'running');
+        try {
+          const res = (await ipcRenderer.invoke('xbox-pc:import', { lang: app.config?.achievement?.lang || 'english' })) || {};
+          if (res.ok) {
+            setStatus(T().imported(res.result), 'success');
+            app.onStart(); // refresh the library so newly imported titles appear
+          } else {
+            setStatus(`${T().importFailed}${res.error ? ': ' + res.error : ''}`, 'error');
+          }
+        } catch (err) {
+          setStatus(`${T().importFailed}: ${err.message || err}`, 'error');
+        } finally {
+          importBtn.removeClass('disabled').css('pointer-events', '');
+        }
+      });
+
+      ipcRenderer.on('xbox-pc:import-progress', (_event, p) => {
+        if (p && p.detail) setStatus(`${T().importing} ${p.current}/${p.total} — ${p.detail}`, 'running');
+      });
+
+      disconnectBtn.off('click').on('click', async function () {
+        try {
+          await ipcRenderer.invoke('xbox-pc:disconnect');
+          setStatus(T().disconnected);
+        } catch (err) {
+          setStatus(`${err.message || err}`, 'error');
+        }
+        refresh();
+      });
+
+      refresh();
+    })();
+
     // Bind on the controls themselves as well as using a bubbling event above. This keeps the
     // dependency UI reliable for keyboard changes, programmatic population and the arrow buttons.
     $('#options-emulator select, #options-emulator2 select').on('change', updateEmulatorUi);

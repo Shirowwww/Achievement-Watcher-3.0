@@ -552,6 +552,10 @@
         "name": "EA Desktop",
         "description": "Čte místní záznam achievementů EA Desktop — pouze pro hry nainstalované mimo složky spravované EA (cracknuté tituly)."
       },
+      "xboxPc": {
+        "name": "Xbox PC",
+        "description": "Hry Xbox PC (Game Pass / Microsoft Store). Připojte a importujte v Nastavení pro zobrazení stavu a vzácnosti."
+      },
       "importCache": {
         "name": "Importovat mezipaměť oznámení",
         "description": "Importovat mezipaměť Watchdogu jako další zdroj achievementů"

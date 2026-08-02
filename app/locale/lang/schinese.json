@@ -552,6 +552,10 @@
         "name": "EA Desktop",
         "description": "读取 EA Desktop 的本地成就日志 — 仅限安装在 EA 托管文件夹之外的游戏（破解版）。"
       },
+      "xboxPc": {
+        "name": "Xbox PC",
+        "description": "Xbox PC 游戏（Game Pass / Microsoft Store）。在设置中连接并导入以查看解锁状态和稀有度。"
+      },
       "importCache": {
         "name": "导入通知缓存",
         "description": "将 Watchdog 的缓存作为另一个成就来源导入"

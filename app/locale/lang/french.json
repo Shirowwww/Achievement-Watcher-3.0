@@ -552,6 +552,10 @@
         "name": "EA Desktop",
         "description": "Lit le journal local des succès EA Desktop — uniquement pour les jeux installés hors des dossiers gérés par EA (jeux crackés)."
       },
+      "xboxPc": {
+        "name": "Xbox PC",
+        "description": "Jeux Xbox PC (Game Pass / Microsoft Store). Connecte-toi et importe depuis les Réglages pour voir les succès débloqués et leur rareté."
+      },
       "importCache": {
         "name": "Importer le cache de notification",
         "description": "Importer le cache de Watchdog comme une autre source de succès"

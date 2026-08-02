@@ -552,6 +552,10 @@
         "name": "EA Desktop",
         "description": "Liest das lokale Erfolgsprotokoll von EA Desktop — nur für Spiele, die außerhalb der von EA verwalteten Ordner installiert sind (gecrackte Titel)."
       },
+      "xboxPc": {
+        "name": "Xbox PC",
+        "description": "Xbox-PC-Spiele (Game Pass / Microsoft Store). Verbinde und importiere in den Einstellungen, um Freischaltstatus und Seltenheit zu sehen."
+      },
       "importCache": {
         "name": "Benachrichtigungs-Cache importieren",
         "description": "Den Cache von Watchdog als weitere Erfolgsquelle importieren"
