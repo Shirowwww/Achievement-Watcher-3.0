@@ -77,6 +77,15 @@ module.exports.load = () => {
     if (typeof options.overlay.notificationPresetPlatinum !== 'string') {
       options.overlay.notificationPresetPlatinum = '';
     }
+    if (typeof options.overlay.notificationPresetXenia !== 'string') {
+      options.overlay.notificationPresetXenia = '';
+    }
+    if (typeof options.overlay.notificationPresetRpcs3 !== 'string') {
+      options.overlay.notificationPresetRpcs3 = '';
+    }
+    if (typeof options.overlay.notificationPresetShadps4 !== 'string') {
+      options.overlay.notificationPresetShadps4 = '';
+    }
     if (typeof options.overlay.notificationPosition !== 'string') {
       options.overlay.notificationPosition = 'center-bottom';
     }
@@ -402,6 +411,9 @@ module.exports.load = () => {
         notificationPreset: 'Default',
         notificationPresetRare: '',
         notificationPresetPlatinum: '',
+        notificationPresetXenia: '',
+        notificationPresetRpcs3: '',
+        notificationPresetShadps4: '',
         notificationPosition: 'center-bottom',
         notificationScale: 1,
         playtimeNotificationScale: 0,

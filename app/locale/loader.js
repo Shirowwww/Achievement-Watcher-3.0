@@ -310,6 +310,10 @@ function translateUI(lang, locale, template) {
     // and refresh the '' option if it is already there.
     $('#option_overlayPresetRare, #option_overlayPresetPlatinum').attr('data-lang-same', clear(opt.presetSameAsMain));
     $("#option_overlayPresetRare option[value=''], #option_overlayPresetPlatinum option[value='']").text(clear(opt.presetSameAsMain));
+    $('#option_overlayPresetXenia, #option_overlayPresetRpcs3, #option_overlayPresetShadps4').attr('data-lang-same', clear(opt.presetSameAsMain));
+    $("#option_overlayPresetXenia option[value=''], #option_overlayPresetRpcs3 option[value=''], #option_overlayPresetShadps4 option[value='']").text(
+      clear(opt.presetSameAsMain)
+    );
   }
   $('#lbl-overlayPosition').text(clear(template.settings.notification.option.overlayPosition));
   $('#lbl-overlayScale').text(clear(template.settings.notification.option.overlayScale));
@@ -327,6 +331,12 @@ function translateUI(lang, locale, template) {
   // Per-option descriptions for the in-game overlay rows (bound to each row's .help via its label).
   $('#lbl-notifMode').closest('li').find('.help').text(clear(template.settings.notification.option.mode.description));
   $('#lbl-overlayPreset').closest('li').find('.help').text(clear(template.settings.notification.option.overlayPresetDesc));
+  $('#lbl-overlayPresetXenia').text(clear(template.settings.notification.option.overlayPresetXenia));
+  $('#lbl-overlayPresetXenia').closest('li').find('.help').text(clear(template.settings.notification.option.overlayPresetXeniaDesc));
+  $('#lbl-overlayPresetRpcs3').text(clear(template.settings.notification.option.overlayPresetRpcs3));
+  $('#lbl-overlayPresetRpcs3').closest('li').find('.help').text(clear(template.settings.notification.option.overlayPresetRpcs3Desc));
+  $('#lbl-overlayPresetShadps4').text(clear(template.settings.notification.option.overlayPresetShadps4));
+  $('#lbl-overlayPresetShadps4').closest('li').find('.help').text(clear(template.settings.notification.option.overlayPresetShadps4Desc));
   $('#lbl-overlayPosition').closest('li').find('.help').text(clear(template.settings.notification.option.overlayPositionDesc));
   $('#lbl-overlaySound').closest('li').find('.help').text(clear(template.settings.notification.option.overlaySoundDesc));
   $('#lbl-overlayRandomSound').closest('li').find('.help').text(clear(template.settings.notification.option.overlayRandomSoundDesc));

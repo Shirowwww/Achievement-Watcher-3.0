@@ -110,6 +110,7 @@ module.exports = async (message, option = {}) => {
           ];
           if (message.gameIcon) overlayArgs.push(`--gameIcon=${message.gameIcon}`);
           if (message.image) overlayArgs.push(`--image=${message.image}`);
+          if (message.source) overlayArgs.push(`--source=${message.source}`);
           if (progress) {
             overlayArgs.push(`--progressCurrent=${progress.current}`);
             overlayArgs.push(`--progressMax=${progress.max}`);

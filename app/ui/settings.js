@@ -266,6 +266,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           for (const [id, value] of [
             ['#option_overlayPresetRare', cfgOverlay.notificationPresetRare || ''],
             ['#option_overlayPresetPlatinum', cfgOverlay.notificationPresetPlatinum || ''],
+            ['#option_overlayPresetXenia', cfgOverlay.notificationPresetXenia || ''],
+            ['#option_overlayPresetRpcs3', cfgOverlay.notificationPresetRpcs3 || ''],
+            ['#option_overlayPresetShadps4', cfgOverlay.notificationPresetShadps4 || ''],
           ]) {
             const typeSel = $(id);
             typeSel.empty();
@@ -1649,6 +1652,9 @@ function readNotificationSettings() {
   app.config.overlay.notificationPreset = $('#option_overlayPreset').val() || 'Default';
   app.config.overlay.notificationPresetRare = $('#option_overlayPresetRare').val() || '';
   app.config.overlay.notificationPresetPlatinum = $('#option_overlayPresetPlatinum').val() || '';
+  app.config.overlay.notificationPresetXenia = $('#option_overlayPresetXenia').val() || '';
+  app.config.overlay.notificationPresetRpcs3 = $('#option_overlayPresetRpcs3').val() || '';
+  app.config.overlay.notificationPresetShadps4 = $('#option_overlayPresetShadps4').val() || '';
   app.config.overlay.notificationPosition = $('#option_overlayPosition').val() || 'center-bottom';
   app.config.overlay.notificationScale = parseFloat($('#option_overlayScale').val()) || 1;
   app.config.overlay.randomSound = $('#option_overlayRandomSound').val() === 'true';

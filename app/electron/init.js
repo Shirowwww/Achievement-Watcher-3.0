@@ -2475,14 +2475,22 @@ async function enqueueNotificationFromArgs(args) {
     (langFr ? 'Succès débloqué' : 'Achievement Unlocked');
 
   const durSec = ov.notificationDuration === 'auto' || ov.notificationDuration == null ? 0 : Number(ov.notificationDuration) || 0;
-  // Per-type preset overrides ('' = main preset): the watchdog only forwards rarityPercent for
-  // rare unlocks (≤10%), and platinum popups carry notificationType 'platinum'.
-  let preset = ov.notificationPreset || 'Default';
-  if (notificationType === 'platinum' && ov.notificationPresetPlatinum) {
-    preset = ov.notificationPresetPlatinum;
-  } else if (ov.notificationPresetRare && Number.isFinite(Number(args.rarityPercent)) && notificationType !== 'progress' && notificationType !== 'playtime') {
-    preset = ov.notificationPresetRare;
-  }
+  // Per-type and per-emulator preset overrides ('' = main preset): the watchdog only forwards
+  // rarityPercent for rare unlocks (≤10%), platinum popups carry notificationType 'platinum', and
+  // the source lets Xenia/RPCS3/ShadPS4 notifications use their own preset.
+  const preset = require(path.join(__dirname, '../util/notificationPreset.js')).resolvePreset({
+    presets: {
+      main: ov.notificationPreset || 'Default',
+      rare: ov.notificationPresetRare || '',
+      platinum: ov.notificationPresetPlatinum || '',
+      xenia: ov.notificationPresetXenia || '',
+      rpcs3: ov.notificationPresetRpcs3 || '',
+      shadps4: ov.notificationPresetShadps4 || '',
+    },
+    source: args.source || '',
+    notificationType,
+    rarityPercent: Number(args.rarityPercent),
+  });
   enqueueNotification({
     preset,
     position: ov.notificationPosition || 'center-bottom',

@@ -16,6 +16,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - User themes: drop any `.css` file into `%APPDATA%\Achievement Watcher\themes` and it appears in Settings → General → Theme (stored as `user:<name>`).
 - Per-platform metadata links in the game right-click menu: Epic Games Store / GOG / EA / Ubisoft Store / RPCS3 Wiki plus PCGamingWiki, for every non-Steam source.
 - Process trail: games already running when the background Watchdog starts are seeded as active playtime sessions, so their playtime is recorded on exit instead of being lost.
+- Per-emulator overlay presets: Xenia, RPCS3 and ShadPS4 notifications can each use their own preset (Settings → Notifications), alongside the existing rare/platinum overrides.
+- Emulator rarity: RPCS3, ShadPS4 and Xenia achievements now show global unlock percentages fetched from Exophase (cached per game), and Xbox PC titles paint the rarity captured at import time.
+- Live Xbox PC unlock notifications: while a Game Pass / Microsoft Store title is running, the background Watchdog polls Xbox Network and fires a toast/overlay for each new unlock (requires the connected account + imported library).
 
 ### Fixed
 
