@@ -3092,14 +3092,28 @@ var app = {
       let elem = $('#achievement .achievement-list ul > li');
       elem.removeClass('highlight');
 
-      if (game.system) {
+      // Emulator and Xbox PC sources get global rarity from Exophase / the import cache, so the
+      // community % column stays visible (with a trophy icon instead of the Steam brand).
+      const emulatorSource = EMU_LOCAL_ICON_SOURCES.has(game.source) || game.source === 'Xbox PC';
+      if (game.system && !emulatorSource) {
         $('.achievement .stats .community').hide();
       } else {
         $('.achievement .stats .community').show();
-        getGlobalStat(
-          game.source === 'epic' && game.steamappid ? game.steamappid : self.data('appid'),
-          game.source === 'epic' ? (game.steamappid ? 'steam' : 'epic') : 'steam'
-        );
+        $('.achievement .stats .community i').attr('class', emulatorSource ? 'fas fa-trophy' : 'fab fa-steam');
+        if (game.source === 'Xbox PC') {
+          // Rarity was cached at import time on each schema entry — paint it directly, no network.
+          const entries = (game.achievement.list || [])
+            .filter((a) => a && a.rarityPct != null && Number.isFinite(Number(a.rarityPct)))
+            .map((a) => ({ name: a.name, percent: Number(a.rarityPct) }));
+          applyRarity(entries);
+        } else {
+          getGlobalStat(
+            game.source === 'epic' && game.steamappid ? game.steamappid : self.data('appid'),
+            game.source === 'epic' ? (game.steamappid ? 'steam' : 'epic') : game.source,
+            game.name,
+            game.achievement.list
+          );
+        }
       }
 
       $('#achievement').fadeIn(600, function () {

@@ -24,6 +24,7 @@ const RARITY_SOURCES = Object.freeze({
   steam: 'steam-global-achievement-percentages',
   epic: 'epic-public-achievement-percentages',
   gog: 'gog-gameplay-achievement-percentages',
+  exophase: 'exophase',
 });
 
 // Clamp anything the APIs hand back to a sane 0–100 number, tolerating "12,3" style decimals.
@@ -109,7 +110,26 @@ async function fetchGogGlobalAchievementPercentages(productId, options = {}) {
   return out;
 }
 
+function platformFromSource(source) {
+  const s = String(source || '').toLowerCase();
+  if (s.includes('rpcs3')) return 'rpcs3';
+  if (s.includes('shadps4')) return 'shadps4';
+  if (s.includes('xenia')) return 'xenia';
+  return '';
+}
+
 function fetchForSource(appid, source, options) {
+  const platform = platformFromSource(source);
+  if (platform) {
+    // Emulator rarity comes from Exophase (global unlock % per trophy/achievement). It needs the
+    // game name for slug lookup and the schema list to map awards back to achievement ids.
+    if (!options.gameName || !Array.isArray(options.achievements)) return Promise.resolve([]);
+    return require(path.join(__dirname, '../parser/exophase.js')).fetchExophaseRarity({
+      gameName: options.gameName,
+      platform,
+      achievements: options.achievements,
+    });
+  }
   if (source === 'epic') return fetchEpicGlobalAchievementPercentages(appid, options);
   if (source === 'gog') return fetchGogGlobalAchievementPercentages(appid, options);
   return fetchSteamGlobalAchievementPercentages(appid, options);

@@ -44,6 +44,7 @@ const EXOPHASE_PLATFORM_MAP = {
 };
 
 const TROPHY_PLATFORMS = new Set(['ps3', 'ps4', 'ps5']);
+const EXOPHASE_RARITY_SOURCE = 'exophase';
 
 // Exophase language path segments, keyed by the Steam API language names the whole app already
 // uses (settings `lang`, steam_cache/schema/<lang>). Keep in sync with locale/steam.json.
@@ -191,6 +192,72 @@ function absoluteUrl(u, baseUrl) {
   }
 }
 
+// ---- Rarity (global unlock %) — Exophase serves it on every award card ----
+
+function normalizeExophaseRarityPct(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? Number(Math.min(100, Math.max(0, value)).toFixed(4)) : null;
+  }
+  if (typeof value === 'string') {
+    const match = value.replace(',', '.').trim().match(/(\d+(?:\.\d+)?)/);
+    if (!match) return null;
+    const parsed = Number(match[1]);
+    return Number.isFinite(parsed) ? Number(Math.min(100, Math.max(0, parsed)).toFixed(4)) : null;
+  }
+  return null;
+}
+
+function elementLooksLikeRarityNode(el) {
+  const haystack = [
+    el.rawTagName,
+    el.getAttribute('class'),
+    el.getAttribute('id'),
+    el.getAttribute('title'),
+    el.getAttribute('aria-label'),
+    el.getAttribute('data-title'),
+    el.getAttribute('data-label'),
+    el.getAttribute('data-percent'),
+    el.getAttribute('data-percentage'),
+    el.getAttribute('data-rarity'),
+  ]
+    .filter(Boolean)
+    .join(' ');
+  return /\b(rarity|rare|percent|percentage|unlock|unlocked|earned|owners|players|completion|completed)\b/i.test(haystack);
+}
+
+function extractRarityPctFromCard(card) {
+  // 1) The ".award-average.text-center > span" summary row.
+  const average = card.querySelector('.award-average.text-center > span');
+  if (average) {
+    const pct = normalizeExophaseRarityPct(cleanText(average.text));
+    if (pct !== null) return pct;
+  }
+  // 2) Any element whose attributes/text look like a rarity value.
+  for (const node of card.querySelectorAll('*')) {
+    if (!elementLooksLikeRarityNode(node)) continue;
+    const values = [
+      node.getAttribute('data-percent'),
+      node.getAttribute('data-percentage'),
+      node.getAttribute('data-rarity'),
+      node.getAttribute('title'),
+      node.getAttribute('aria-label'),
+      cleanText(node.text),
+    ];
+    for (const value of values) {
+      const pct = normalizeExophaseRarityPct(value);
+      if (pct !== null) return pct;
+    }
+  }
+  // 3) Fallback: remaining card text after removing the title/description.
+  const titleEl = card.querySelector('[class*=award-title]');
+  const descEl = card.querySelector('[class*=award-description]');
+  let rest = cleanText(card.text);
+  if (titleEl) rest = rest.replace(cleanText(titleEl.text), '');
+  if (descEl) rest = rest.replace(cleanText(descEl.text), '');
+  return normalizeExophaseRarityPct(rest);
+}
+
 // The award list markup (one <li> per achievement):
 //   <li ...><img class="award-image trophy-image" src="..."/>
 //     <div class="... award-details ..."><div class="... award-title ...">name</div>
@@ -210,6 +277,7 @@ function extractAchievementsFromHtml(html, baseUrl) {
     let card = detail;
     while (card && card.tagName !== 'LI') card = card.parentNode;
     if (!card) card = detail.parentNode || detail;
+    const rarityPct = extractRarityPctFromCard(card);
 
     let iconUrl = '';
     const img = card.querySelector('img[class*=award-image]') || card.querySelector('[class*=award-image] img');
@@ -227,6 +295,8 @@ function extractAchievementsFromHtml(html, baseUrl) {
       title,
       description,
       icon_url: iconUrl,
+      rarityPct,
+      raritySource: rarityPct !== null ? EXOPHASE_RARITY_SOURCE : '',
     });
   });
 
@@ -428,6 +498,8 @@ async function fetchExophaseAchievementsMultiLang(options = {}) {
       titles: { english: it.title },
       descriptions: { english: it.description },
       icon_url: it.icon_url || '',
+      rarityPct: normalizeExophaseRarityPct(it.rarityPct),
+      raritySource: normalizeExophaseRarityPct(it.rarityPct) !== null ? EXOPHASE_RARITY_SOURCE : '',
     }));
 
     const normalizePair = (a, b) => `${cleanText(a).toLowerCase()}|${cleanText(b).toLowerCase()}`;
@@ -456,6 +528,10 @@ async function fetchExophaseAchievementsMultiLang(options = {}) {
       for (let i = 0; i < min; i += 1) {
         achievements[i].titles[langKey] = items[i].title;
         achievements[i].descriptions[langKey] = items[i].description;
+        if (achievements[i].rarityPct === null && normalizeExophaseRarityPct(items[i].rarityPct) !== null) {
+          achievements[i].rarityPct = normalizeExophaseRarityPct(items[i].rarityPct);
+          achievements[i].raritySource = EXOPHASE_RARITY_SOURCE;
+        }
       }
     }
 
@@ -470,11 +546,132 @@ async function fetchExophaseAchievementsMultiLang(options = {}) {
   }
 }
 
+// ---- Rarity lookup for emulator platforms (Xenia/RPCS3/ShadPS4) ----
+
+function normalizeExophaseMatchText(value) {
+  if (!value) return '';
+  return String(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function buildExophaseMatchKey(title, description) {
+  const t = normalizeExophaseMatchText(title);
+  if (!t) return '';
+  return `${t}|${normalizeExophaseMatchText(description)}`;
+}
+
+function getSchemaLocalizedTextForRarity(value) {
+  if (typeof value === 'string' || typeof value === 'number') return String(value).trim();
+  if (value && typeof value === 'object') {
+    return (
+      String(value.english || '').trim() ||
+      Object.values(value)
+        .map((v) => (typeof v === 'string' || typeof v === 'number' ? String(v).trim() : ''))
+        .find(Boolean) ||
+      ''
+    );
+  }
+  return '';
+}
+
+function buildExophaseRaritySlugCandidates(title, platform) {
+  const clean = String(title || '')
+    .replace(/\((?:Xenia|RPCS3|PS4|shadps4)\)\s*$/i, '')
+    .replace(/[™®©]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const variants = buildExophaseSlugVariants(clean);
+  if (platform === 'shadps4') {
+    return Array.from(new Set([...variants, ...variants.map((slug) => `${slug}-ps4`)]));
+  }
+  if (platform !== 'rpcs3') return variants;
+  return Array.from(
+    new Set([...variants, ...variants.map((slug) => `${slug}-ps3`), ...variants.map((slug) => `${slug}-psn`)])
+  );
+}
+
+// Match fetched Exophase awards (titled items with rarityPct) against the game's achievement list
+// and return [{ name, percent }] keyed by the schema's own achievement ids.
+function matchExophaseRarityToAchievements(achievements, items) {
+  const keyMap = new Map();
+  const keyDupes = new Set();
+  const titleMap = new Map();
+  const titleDupes = new Set();
+  const register = (map, dupes, key, item) => {
+    if (!key) return;
+    if (map.has(key) && map.get(key) !== item) dupes.add(key);
+    else map.set(key, item);
+  };
+  for (const item of Array.isArray(items) ? items : []) {
+    const titles = item?.titles || {};
+    const descriptions = item?.descriptions || {};
+    for (const langKey of Object.keys(titles)) {
+      register(keyMap, keyDupes, buildExophaseMatchKey(titles[langKey], descriptions[langKey] || ''), item);
+      register(titleMap, titleDupes, normalizeExophaseMatchText(titles[langKey]), item);
+    }
+  }
+
+  const out = [];
+  for (const ach of Array.isArray(achievements) ? achievements : []) {
+    if (!ach || ach.name == null) continue;
+    const title = getSchemaLocalizedTextForRarity(ach.displayName);
+    const description = getSchemaLocalizedTextForRarity(ach.description);
+    let match = null;
+    const key = buildExophaseMatchKey(title, description);
+    if (key && !keyDupes.has(key)) match = keyMap.get(key) || null;
+    if (!match) {
+      const titleKey = normalizeExophaseMatchText(title);
+      if (titleKey && !titleDupes.has(titleKey)) match = titleMap.get(titleKey) || null;
+    }
+    const percent = normalizeExophaseRarityPct(match?.rarityPct);
+    if (!match || percent === null) continue;
+    out.push({ name: String(ach.name), percent });
+  }
+  return out;
+}
+
+// High-level emulator rarity fetch: tries every slug candidate, then matches awards to the schema.
+async function fetchExophaseRarity({ gameName = '', platform = 'rpcs3', achievements = [] } = {}) {
+  const platformKey = mapExophasePlatform(platform);
+  if (!platformKey) return [];
+  const slugCandidates = buildExophaseRaritySlugCandidates(gameName, platform);
+  let exo = null;
+  let firstErr = null;
+  for (const slug of slugCandidates) {
+    try {
+      const result = await fetchExophaseAchievementsMultiLang({
+        slug,
+        platform: platformKey,
+        langKeys: ['english'],
+        langMap: EXOPHASE_LANG_MAP,
+      });
+      if (result && result.items && result.items.length) {
+        exo = result;
+        break;
+      }
+    } catch (err) {
+      firstErr = firstErr || err;
+    }
+  }
+  if (!exo) throw firstErr || new Error('No working Exophase URL');
+  return matchExophaseRarityToAchievements(achievements, exo.items);
+}
+
 module.exports.EXOPHASE_LANG_KEYS = EXOPHASE_LANG_KEYS;
 module.exports.EXOPHASE_LANG_MAP = EXOPHASE_LANG_MAP;
+module.exports.EXOPHASE_RARITY_SOURCE = EXOPHASE_RARITY_SOURCE;
 module.exports.mapExophasePlatform = mapExophasePlatform;
 module.exports.buildExophaseSlug = buildExophaseSlug;
 module.exports.buildExophaseSlugVariants = buildExophaseSlugVariants;
 module.exports.extractAchievementsFromHtml = extractAchievementsFromHtml;
 module.exports.fetchExophaseAchievementsMultiLang = fetchExophaseAchievementsMultiLang;
 module.exports.downloadExophaseIcon = downloadExophaseIcon;
+module.exports.normalizeExophaseRarityPct = normalizeExophaseRarityPct;
+module.exports.buildExophaseRaritySlugCandidates = buildExophaseRaritySlugCandidates;
+module.exports.matchExophaseRarityToAchievements = matchExophaseRarityToAchievements;
+module.exports.fetchExophaseRarity = fetchExophaseRarity;

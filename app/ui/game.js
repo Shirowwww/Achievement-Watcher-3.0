@@ -26,7 +26,7 @@ function applyRarity(entries) {
   if (typeof window.restoreAchievementSorts === 'function') window.restoreAchievementSorts();
 }
 
-function getGlobalStat(appid, source) {
+function getGlobalStat(appid, source, gameName, achievements) {
   let rarity;
   try {
     const path = require('path');
@@ -47,7 +47,7 @@ function getGlobalStat(appid, source) {
   // 2. Background refresh: hits the network only when the cache is stale (TTL-gated inside the util),
   //    persists the result, and repaints. Failures fall back to whatever the cache already showed.
   rarity
-    .getRarityEntries(appid, source)
+    .getRarityEntries(appid, source, { gameName, achievements })
     .then((entries) => applyRarity(entries))
     .catch(() => {});
 }
