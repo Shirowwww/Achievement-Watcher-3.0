@@ -21,9 +21,25 @@ const { execSync, spawn } = require('child_process');
 const fs = require('fs');
 const ipc = require(path.join(__dirname, 'ipc.js'));
 const BASE_URL = 'https://www.steamgriddb.com/api/v2';
-const API_KEY = '2a9d32ddd0bfe4e1191b4f6ff56fef60'; // TODO: remove this and load from config file
+const DEFAULT_API_KEY = '2a9d32ddd0bfe4e1191b4f6ff56fef60'; // bundled public fallback (rate-limited)
 const startupArgs = minimist(process.argv.slice(1));
 const safeMode = startupArgs['safe-mode'] === true || startupArgs.safeMode === true || startupArgs['reset-window'] === true;
+
+// SteamGridDB artwork key: an optional per-user key from options.ini ([steamgriddb] apiKey,
+// AES-encrypted like the Steam Web API key) overrides the bundled public fallback.
+function getSteamGridDbApiKey() {
+  try {
+    const parsed = require('../util/ini').parse(fs.readFileSync(path.join(userData, 'cfg/options.ini'), 'utf8'));
+    const raw = parsed && parsed.steamgriddb && parsed.steamgriddb.apiKey;
+    if (typeof raw === 'string' && raw.trim()) {
+      const value = raw.includes(':') ? require('../util/aes').decrypt(raw) : raw;
+      return value && value.trim() ? value.trim() : DEFAULT_API_KEY;
+    }
+  } catch {
+    /* no options.ini yet — bundled fallback */
+  }
+  return DEFAULT_API_KEY;
+}
 
 let remoteMain = null;
 function getRemoteMain() {
@@ -508,11 +524,12 @@ ipcMain.on('get-title-from-epic-id', async (event, arg) => {
 
 ipcMain.on('get-images-for-game', async (event, arg) => {
   const gameName = arg.name;
+  const apiKey = getSteamGridDbApiKey();
   // Driven by a blocking sendSync (epic.js): every exit path MUST set event.returnValue, or the
   // renderer stays frozen forever on a SteamGridDB miss / network error.
   try {
     const searchRes = await fetch(`${BASE_URL}/search/autocomplete/${encodeURIComponent(gameName)}`, {
-      headers: { Authorization: `Bearer ${API_KEY}` },
+      headers: { Authorization: `Bearer ${apiKey}` },
     });
 
     const searchData = await searchRes.json();
@@ -526,10 +543,10 @@ ipcMain.on('get-images-for-game', async (event, arg) => {
     const gameId = game.id;
 
     const [iconsRes, gridsRes, heroesRes, logosRes] = await Promise.all([
-      fetch(`${BASE_URL}/icons/game/${gameId}`, { headers: { Authorization: `Bearer ${API_KEY}` } }),
-      fetch(`${BASE_URL}/grids/game/${gameId}`, { headers: { Authorization: `Bearer ${API_KEY}` } }),
-      fetch(`${BASE_URL}/heroes/game/${gameId}`, { headers: { Authorization: `Bearer ${API_KEY}` } }),
-      fetch(`${BASE_URL}/logos/game/${gameId}`, { headers: { Authorization: `Bearer ${API_KEY}` } }),
+      fetch(`${BASE_URL}/icons/game/${gameId}`, { headers: { Authorization: `Bearer ${apiKey}` } }),
+      fetch(`${BASE_URL}/grids/game/${gameId}`, { headers: { Authorization: `Bearer ${apiKey}` } }),
+      fetch(`${BASE_URL}/heroes/game/${gameId}`, { headers: { Authorization: `Bearer ${apiKey}` } }),
+      fetch(`${BASE_URL}/logos/game/${gameId}`, { headers: { Authorization: `Bearer ${apiKey}` } }),
     ]);
 
     const [icons, grids, heroes, logos] = await Promise.all([iconsRes.json(), gridsRes.json(), heroesRes.json(), logosRes.json()]);

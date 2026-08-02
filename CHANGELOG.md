@@ -13,6 +13,10 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 - Games with no Steam client icon (common for brand-new releases) now show their header/portrait art instead of a blank icon on the achievement page, and no longer silently break playtime tracking.
 
+### Changed
+
+- The SteamGridDB artwork key can now be overridden per user in `cfg/options.ini` (`[steamgriddb] apiKey`, AES-encrypted on disk like the Steam Web API key); the bundled public key remains the fallback.
+
 ## 3.2.1 - 2026-07-14
 
 ### Changed
