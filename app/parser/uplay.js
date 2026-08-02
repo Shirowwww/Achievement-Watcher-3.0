@@ -49,51 +49,6 @@ module.exports.scan = async () => {
       }
     }
     return result;
-    //TODO: continue this
-    const { ipcRenderer } = require('electron');
-    const cacheFile = path.join(cacheRoot, 'steam_cache', 'uplay.db');
-    //uplay game ids: https://github.com/Haoose/UPLAY_GAME_ID
-    let cache = [];
-    let update_cache = false;
-
-    if (fs.existsSync(cacheFile)) {
-      cache = JSON.parse(fs.readFileSync(cacheFile, { encoding: 'utf8' }));
-    }
-
-    let search = [path.join(process.env['APPDATA'], 'Goldberg UplayEmu Saves')];
-    for (let dir of await glob(search, { onlyDirectories: true, absolute: true })) {
-      let game = {
-        appid: path.parse(dir).name,
-        source: 'uplay',
-        data: {
-          type: 'file',
-          path: dir,
-        },
-      };
-      let steamid;
-      let cached = cache.find((g) => g.gogid === game.appid);
-      if (cached) {
-        steamid = cached.steamid;
-      } else {
-        steamid = ipcRenderer.sendSync('get-steam-appid-from-title', { title });
-        cache.push({ epicid: game.appid, steamid });
-        if (gameinfo) {
-          steamid = gameinfo.game.releases.find((r) => r.platform_id === 'steam').external_id;
-          if (steamid) {
-            cache.push({ gogid: game.appid, steamid });
-            update_cache = true;
-          }
-        }
-      }
-      if (steamid) {
-        game.appid = steamid || game.appid;
-        data.push(game);
-      }
-    }
-    fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
-    if (update_cache) fs.writeFileSync(cacheFile, JSON.stringify(cache, null, 2));
-
-    return data;
   } catch (err) {
     throw err;
   }

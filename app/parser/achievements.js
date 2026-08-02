@@ -1779,7 +1779,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
           // locked instead of throwing a misleading "Not yet implemented" FAIL on every scan.
           root = {};
         } else {
-          throw 'Not yet implemented';
+          throw `Unsupported achievement source type "${appid.data ? appid.data.type : 'unknown'}" for appid ${appid.appid}`;
         }
       } catch (err) {
         // A missing save file is the normal 0%-game case (emulator made the folder but nothing is

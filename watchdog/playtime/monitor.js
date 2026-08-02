@@ -197,8 +197,11 @@ async function init() {
       return;
     }
     debug.log(`DB Hit for ${game.name}(${game.appid}) ["${filepath}"]`);
-    //TODO: get launched game and add it to exeList
-    //TODO: check for game updates?
+    // A newly discovered game was already added to gameIndex.json above (addToGameIndex), which is
+    // the Watchdog-side executable list. The app-side exeList (cfg/exeList.db) is the renderer's
+    // config for launch buttons and the installed filter — writing it from the monitor would race
+    // the app and is not needed for tracking. Schema/metadata refreshes for a new appid happen on
+    // the next library scan (loadSteamData above already seeds the name/icon for this session).
 
     //RunningAppID is not that reliable and this intefere with Greenluma; Commenting out for now
     /*const runningAppID = await regedit.promises.RegQueryIntegerValue("HKCU","SOFTWARE/Valve/Steam", "RunningAppID") || 0;
