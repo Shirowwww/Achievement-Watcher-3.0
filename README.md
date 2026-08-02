@@ -32,7 +32,7 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 | Area | Main improvements since Achievement Watcher 2.x |
 |---|---|
 | **Modern foundation** | Electron 12 → 43, current Node runtime, refreshed dependencies, tighter renderer security and Windows 11 support without WMIC |
-| **More real sources** | Local Steam appcache, GOG Galaxy and Ubisoft Connect readers; Epic account connection; EA Desktop; RPCS3, ShadPS4 and Xenia |
+| **More real sources** | Local Steam appcache, GOG Galaxy and Ubisoft Connect readers; Epic account connection; EA Desktop; Xbox PC (Game Pass / Microsoft Store) with account import; RPCS3, ShadPS4 and Xenia |
 | **Live tracking** | Tray-first background Watchdog, Xenia/ShadPS4/GOG/Ubisoft unlock monitoring, safer startup baselines and duplicate suppression |
 | **Better library** | Game and achievement search, installed-only filtering, blacklist restore, rarity tiers, progress achievements, smarter covers and executable detection |
 | **Notifications** | Native Windows toasts + in-game overlay, preset library, custom builder, custom sounds, 0–200% volume and separate rare/completion styles |
@@ -68,6 +68,11 @@ The 3.2.0 release adds dedicated detection and repair for compatible **Goldberg 
 | Screenshot souvenirs | ✅ | ✅ | ✅ |
 | Multiple UI themes | ✅ 4 | ✅ | ❌ |
 | Interface languages | ✅ 18 complete | ✅ Multi-language | ✅ Multi-language |
+| Xbox PC (Game Pass / Store) | ✅ Account import | ✅ Account import | ❌ |
+| Manual achievement unlock | ✅ | ✅ | ❌ |
+| User themes from AppData | ✅ | ✅ | ❌ |
+| Process trail (playtime for already-running games) | ✅ | ✅ | ❌ |
+| Random notification sound + FLAC/M4A/AAC | ✅ | ✅ | ❌ |
 
 This fork focuses on an all-in-one library, a quiet tray workflow, native toasts and deeper Goldberg/GBE repair. **Achievements** has a strong auto-configuration and animated-overlay workflow. **Achievement Watcher 2.x** remains the historical base with broad emulator compatibility and several legacy notification transports.
 
@@ -86,6 +91,7 @@ This fork focuses on an all-in-one library, a quiet tray workflow, native toasts
 | **Ubisoft Connect** | Native local data, legacy Uplay formats and compatible Uplay R2 setups |
 | **EA Desktop** | Achievement data recorded by the EA client log |
 | **Console emulators** | RPCS3, ShadPS4 and Xenia |
+| **Xbox PC** | Local Game Pass / Microsoft Store installs plus imported Xbox Network achievement state (optional account connection) |
 
 The optional Steam Web API key can improve some lookups, but local sources and cached metadata continue to work without one.
 
