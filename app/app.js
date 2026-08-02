@@ -2578,6 +2578,86 @@ var app = {
                 })
               );
             }
+
+            // Platform metadata links (ported from PSerban93/Achievements): non-Steam sources get a
+            // store/search page plus PCGamingWiki instead of Steam-only links.
+            const linkGame = list.find((g) => g.appid == appid);
+            const linkName = encodeURIComponent((linkGame && linkGame.name) || '');
+            const sourceLower = String((linkGame && linkGame.source) || '').toLowerCase();
+            const globeIcon = () => nativeImage.createFromPath(path.join(appPath, 'resources/img/globe.png'));
+            const hasLink = (label) => linkMenu.items.some((item) => item.label === label);
+            const addPcgw = (label) => {
+              if (hasLink(label)) return;
+              linkMenu.append(
+                new MenuItem({
+                  icon: globeIcon(),
+                  label,
+                  click() {
+                    remote.shell.openExternal(`https://pcgamingwiki.com/w/index.php?search=${linkName}`);
+                  },
+                })
+              );
+            };
+            if (linkName) {
+              if (sourceLower.startsWith('epic')) {
+                linkMenu.append(
+                  new MenuItem({
+                    icon: globeIcon(),
+                    label: 'Epic Games Store',
+                    click() {
+                      remote.shell.openExternal(`https://store.epicgames.com/search?q=${linkName}`);
+                    },
+                  })
+                );
+                addPcgw('PCGamingWiki');
+              } else if (sourceLower.startsWith('gog')) {
+                linkMenu.append(
+                  new MenuItem({
+                    icon: globeIcon(),
+                    label: 'GOG',
+                    click() {
+                      remote.shell.openExternal(`https://www.gog.com/games?search=${linkName}`);
+                    },
+                  })
+                );
+                addPcgw('PCGamingWiki');
+              } else if (sourceLower === 'ea') {
+                linkMenu.append(
+                  new MenuItem({
+                    icon: globeIcon(),
+                    label: 'EA',
+                    click() {
+                      remote.shell.openExternal(`https://www.ea.com/search?q=${linkName}`);
+                    },
+                  })
+                );
+                addPcgw('PCGamingWiki');
+              } else if (sourceLower.includes('rpcs3')) {
+                linkMenu.append(
+                  new MenuItem({
+                    icon: globeIcon(),
+                    label: 'RPCS3 Wiki',
+                    click() {
+                      remote.shell.openExternal(`https://wiki.rpcs3.net/index.php?search=${linkName}`);
+                    },
+                  })
+                );
+                addPcgw('PCGamingWiki');
+              } else if (sourceLower.includes('shadps4') || sourceLower.includes('xenia')) {
+                addPcgw('PCGamingWiki');
+              } else if (sourceLower.includes('uplay') || sourceLower === 'lumaplay' || sourceLower.includes('ubisoft')) {
+                linkMenu.append(
+                  new MenuItem({
+                    icon: globeIcon(),
+                    label: 'Ubisoft Store',
+                    click() {
+                      remote.shell.openExternal(`https://store.ubi.com/us/search?q=${linkName}`);
+                    },
+                  })
+                );
+                addPcgw('PCGamingWiki');
+              }
+            }
           }
 
           // Native Electron menu labels treat a lone "&" as an accelerator marker (swallowed at
