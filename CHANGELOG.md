@@ -3,6 +3,13 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- The update prompt's "Download & Install" button now shows its ampersand literally. Windows was
+  treating the single `&` as a keyboard-mnemonic prefix, which hid it from the button label.
+
 ## 3.4.3 - 2026-08-03
 
 ### Reliability

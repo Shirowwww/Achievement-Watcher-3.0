@@ -14,9 +14,10 @@ for (const sw of ['disable-extensions', 'disable-component-extensions-with-backg
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=256');
 const { BrowserWindow, dialog, session, shell, ipcMain, globalShortcut, Tray, Menu, nativeImage, Notification } = require('electron');
 const { autoUpdater } = require('electron-updater');
-// Never download silently: the user is asked first (update-available → "Download & Install"), then
-// asked again once the download finishes (update-downloaded → "Install now"). Install-on-quit stays
-// off so an update is only applied through the explicit prompt.
+// Never download silently: the user is asked first (update-available → "Download && Install" —
+// the ampersand is doubled because Win32 treats a single '&' as a mnemonic prefix and hides it),
+// then asked again once the download finishes (update-downloaded → "Install now"). Install-on-quit
+// stays off so an update is only applied through the explicit prompt.
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
 let updateCheckTimer = null;
@@ -2910,7 +2911,7 @@ try {
         title: 'Update Available',
         message: `A new version (${info.version}) is available.`,
         detail: 'Download and install it now?',
-        buttons: ['Download & Install', 'Later', 'Skip this version'],
+        buttons: ['Download && Install', 'Later', 'Skip this version'],
         defaultId: 0,
         cancelId: 1,
       });
