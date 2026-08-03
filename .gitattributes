@@ -1,0 +1,9 @@
+# This repository stores line endings exactly as committed (core.autocrlf=false) and its files
+# legitimately mix CRLF and LF, often within the same file. Without this, `git diff --check` reports
+# every CRLF line as "trailing whitespace" — hundreds of false positives on any sizeable change,
+# which hides the real ones. `cr-at-eol` tells Git the carriage return belongs there; genuine
+# trailing spaces and tabs are still reported.
+#
+# Deliberately NOT setting `text`/`eol` here: normalising endings would rewrite nearly every file and
+# bury real changes under whole-file diffs.
+* whitespace=cr-at-eol

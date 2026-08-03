@@ -2184,13 +2184,23 @@ module.exports.makeList = async (option, callbackProgress, onGame = () => {}) =>
           // Non-installed 0-achievement entries (phantom cache imports) are still filtered out.
           if (game && (game.unconfigured || game.installed || (game.achievement && game.achievement.total > 0))) {
             result.push(game);
-            // requestAnimationFrame is a renderer-only API. The daemon runs makeList headless (no
-            // window) to apply emulator fixes in the background, so fall back to a direct call there.
-            if (typeof requestAnimationFrame === 'function') {
-              requestAnimationFrame(() => onGame?.(game));
-            } else {
-              onGame?.(game);
-            }
+            /*
+              Hand the game to the caller. This must NOT be deferred to a frame callback.
+
+              requestAnimationFrame is only delivered to a VISIBLE document. Achievement Watcher is a
+              tray app whose main window spends most of its life hidden, and that window runs with
+              backgroundThrottling enabled, so while it is hidden the frame callbacks never fire. The
+              renderer builds its `gameList` inside this callback, which meant a scan could complete
+              in the background having appended nothing: the list stayed empty, so the periodic
+              new-game check saw the ENTIRE library as newly installed and triggered a full refresh —
+              every three minutes, indefinitely (observed in the wild: "54 new game(s) detected" on
+              every tick, for a 52-game library).
+
+              Calling straight through costs one DOM append per game, spread across a loop that is
+              already awaiting disk and network between games, and it keeps the caller's state correct
+              whether or not anyone is looking at the window.
+            */
+            onGame?.(game);
 
             debug.log(`[${game.appid}] ${game.name} took ${(endTime - startTime) / 1000} seconds.`);
           }
