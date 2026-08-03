@@ -285,6 +285,50 @@ function withTimeout(promise, ms, message) {
   ]).finally(() => clearTimeout(timer));
 }
 
+/*
+  Read a Goldberg Uplay R2 game's unlock state and return it keyed by Steam api-name, ready for the
+  generic merge loop below.
+
+  Two translations are needed that no other source requires. The emulator stores unlocks under the
+  Ubisoft OBJECTIVE ID (optionally prefixed, on loader builds that parse AchKeyPrefix) while AW is
+  keyed by Steam api-name, and it stores them in a directory it picks from its own ini rather than in
+  a fixed well-known folder. Both are resolved from the game's own files, so an install configured by
+  an older AW build, by a community script, or reset by a game update all still read back.
+*/
+function readUplayR2Save(appid, game) {
+  const data = (appid && appid.data) || {};
+  const list = (game && game.achievement && Array.isArray(game.achievement.list) && game.achievement.list) || [];
+  const apiNames = list.map((a) => a && a.name).filter(Boolean);
+  const gameDir = data.gameDir || '';
+  // The ini sits next to the loader dll, which a repack may bury under the install root.
+  const loader = gameDir ? (uplayR2.detectEmulator(gameDir).dll || [])[0] : '';
+
+  const dirs = uplayR2.resolveAchievementSaveDirs({
+    gameDir,
+    runtimeDir: loader ? path.dirname(loader) : gameDir,
+    uplayId: data.uplayId,
+    steamAppid: appid.appid,
+  });
+  // The discovered save folder itself is always a candidate: it is where the scan found this game.
+  if (data.path && !dirs.includes(data.path)) dirs.unshift(data.path);
+
+  const save = uplayR2.readAchievementSave(dirs);
+  if (!save) {
+    debug.log(`[${appid.appid}] no Uplay R2 save found in: ${dirs.join(', ') || '(none)'}`);
+    return {};
+  }
+
+  const prefix = (uplayR2.derivePrefixedIds(list) || {}).prefix || '';
+  const mapped = uplayR2.mapSaveToSchemaKeys(save.entries, { prefix, apiNames });
+  const found = Object.keys(mapped).length;
+  const total = Object.keys(save.entries).length;
+  debug.log(`[${appid.appid}] Uplay R2 save '${save.file}': matched ${found}/${total} entr${total === 1 ? 'y' : 'ies'} to the Steam schema`);
+  if (found === 0 && total > 0) {
+    debug.warn(`[${appid.appid}] Uplay R2 save keys do not match this game's Steam api-names — re-apply the Uplay R2 fix to regenerate achievements_schema.json`);
+  }
+  return mapped;
+}
+
 // Apply the same non-interactive emulator setup used by the right-click action. It runs for newly
 // detected installs with a missing schema, and for an already-known setup whose runtime DLL is
 // missing the architecture the detected exe needs. The emulator is always applied standalone (the
@@ -1160,6 +1204,25 @@ async function discover(source, steamAccFilter) {
             });
             added++;
           }
+          // Second read source for the same game: the emulator's OWN save location. The entry above
+          // only covers GSE Saves\<steamAppid>, which is where the fix redirects unlocks on loader
+          // builds that support redirection — older builds ignore the redirect and keep writing to
+          // their default folder, and a game update that restores the repack's ini silently moves an
+          // already-redirected install back there too. Carrying the install dir here is what lets
+          // readUplayR2Save() consult the game's own ini instead of guessing.
+          data.push({
+            appid: String(mapping.steam_appid),
+            source: 'Uplay R2',
+            data: {
+              type: 'uplayR2',
+              path: '',
+              uplayId: String(mapping.uplay_id || ''),
+              gameDir: u.data.gameDir,
+              exe: u.data.exe,
+              uplayR2: true,
+              system: 'uplay',
+            },
+          });
           debug.log(`[unconfigured-scan] Ubisoft install "${u.name}" (${mapping.matchedName}) mapped to Steam appid ${mapping.steam_appid} (${mapping.steam_name})`);
           continue;
         }
@@ -1547,6 +1610,51 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     }
 
     const hasSteamAchievementSchema = !!(game.achievement && Array.isArray(game.achievement.list) && game.achievement.list.length > 0);
+
+    /*
+      Keep a Uplay R2 setup alive across game updates.
+
+      A Ubisoft repack update re-extracts its own files: achievements_schema.json disappears and the
+      repack's ini (with Achievements off) replaces the configured one. Nothing announces that — the
+      game simply stops recording unlocks and AW keeps showing 0%, which is what the "achievements
+      don't work" report turned out to be. The GBE side already self-heals a missing schema on scan;
+      this is the same idea for the Ubisoft side, and it is purely local: the Steam schema is already
+      in hand at this point, so re-applying is a couple of file writes with no download.
+    */
+    if (
+      appid.data &&
+      appid.data.uplayR2 &&
+      resolvedGameDir &&
+      hasSteamAchievementSchema &&
+      /^[0-9]+$/.test(String(appid.appid)) &&
+      option.emulator &&
+      option.emulator.autoApplyNewGames !== false
+    ) {
+      try {
+        const report = uplayR2.diagnose({ gameDir: resolvedGameDir, appid: appid.appid, name: game.name });
+        const broken = report.issues.some((i) => i.code === 'NO_SCHEMA_JSON' || i.code === 'ACHIEVEMENTS_DISABLED' || i.code === 'BAD_SAVE_REDIRECT' || i.code === 'SCHEMA_KEYS_PREFIXED' || i.code === 'SCHEMA_KEYS_UNPREFIXED');
+        const prefixInfo = broken && report.mapping ? uplayR2.derivePrefixedIds(game.achievement.list) : null;
+        if (broken && prefixInfo && report.dll && report.dll.length > 0) {
+          const summary = uplayR2.repair({
+            dir: path.dirname(report.dll[0]),
+            steamAppid: report.mapping.steam_appid,
+            schema: game,
+            prefix: prefixInfo.prefix,
+            accountName: option.general && option.general.username,
+            language: option.achievement && option.achievement.lang,
+          });
+          debug.log(
+            `[${appid.appid}] Uplay R2 setup was incomplete (${report.issues.map((i) => i.code).join(', ')}) — re-applied into ${summary.dir}` +
+              `${summary.loader && !summary.loader.supportsAchRedirect ? ' (legacy loader: unlocks read from the emulator save folder)' : ''}`
+          );
+        } else if (broken) {
+          debug.log(`[${appid.appid}] Uplay R2 setup is incomplete but cannot be auto-repaired (${report.issues.map((i) => i.code).join(', ')})`);
+        }
+      } catch (err) {
+        debug.log(`[${appid.appid}] Uplay R2 auto-repair failed => ${err}`);
+      }
+    }
+
     let needsRuntimeFix = false;
     let runtimeFixReason = '';
     if (
@@ -1737,6 +1845,12 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     // "show installed only" toggle (see game.installed below).
     let hasResolvedExe = false;
     if (resolvedGameDir && game.name) {
+      // Carry the Ubisoft product id into the watchdog's index. The emulator names its save folder
+      // with that id, so without the pair the watchdog cannot tell which game an unlock under
+      // "Goldberg UplayEmu Saves\<uplayId>" belongs to, and Uplay R2 games never fire a live
+      // notification — they only appear after a manual refresh.
+      const seedUplayId = (appid.data && appid.data.uplayId) || (appid.data && appid.data.uplayR2 ? uplayR2.resolveGameIdentity({ appid: appid.appid, name: game.name, gameDir: resolvedGameDir }).uplayId : '');
+
       try {
         const gameDirKey = path.resolve(resolvedGameDir).toLowerCase();
         if (_seededGameDirs.has(gameDirKey)) {
@@ -1750,7 +1864,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
             _seededGameDirs.add(gameDirKey);
             const iconHash =
               game.img && game.img.icon ? String(game.img.icon).split('/').pop().split('.')[0] : '';
-            gameIndex.upsert({ appid: appid.appid, name: game.name, binary: exeInfo.name, icon: iconHash, source: appid.source });
+            gameIndex.upsert({ appid: appid.appid, name: game.name, binary: exeInfo.name, icon: iconHash, source: appid.source, uplayId: seedUplayId });
             debug.log(`[${appid.appid}] auto-seeded playtime tracking: binary="${exeInfo.name}"`);
           } else if (/^[0-9]+$/.test(String(appid.appid))) {
             // No local exe found (obfuscated/renamed build, or a launcher-only install): fall back to
@@ -1763,7 +1877,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
               if (meta && meta.best_process_name) {
                 _seededGameDirs.add(gameDirKey);
                 const iconHash = game.img && game.img.icon ? String(game.img.icon).split('/').pop().split('.')[0] : '';
-                gameIndex.upsert({ appid: appid.appid, name: game.name, binary: meta.best_process_name, icon: iconHash, source: appid.source });
+                gameIndex.upsert({ appid: appid.appid, name: game.name, binary: meta.best_process_name, icon: iconHash, source: appid.source, uplayId: seedUplayId });
                 debug.log(`[${appid.appid}] auto-seeded playtime tracking from SteamDB: binary="${meta.best_process_name}"`);
               }
             } catch (err) {
@@ -1786,6 +1900,13 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
           //Note to self: Empty file should be considered as a 0% game -> do not throw an error just issue a warning
           if (root.constructor === Object && Object.entries(root).length === 0)
             debug.warn(`[${appid.appid}] Warning ! Achievement file in '${appid.data.path}' is probably empty`);
+        } else if (appid.data.type === 'uplayR2') {
+          // Goldberg Uplay R2. Unlike the Steam emus there is no single well-known folder: the loader
+          // resolves its save dir from its own ini (SaveType/SavePath, plus AchSavePath on builds that
+          // support the redirect), and a game update that re-extracts the repack's ini moves it without
+          // warning. Ask uplayR2 for every plausible location, then translate the emulator's Ubisoft
+          // objective ids back onto the Steam api-names the rest of the pipeline is keyed by.
+          root = readUplayR2Save(appid, game);
         } else if (appid.data.type === 'reg') {
           root = await greenluma.getAchievements(appid.data.root, appid.data.path);
         } else if (appid.data.type === 'steamAPI') {

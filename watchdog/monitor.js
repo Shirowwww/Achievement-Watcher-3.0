@@ -56,6 +56,14 @@ module.exports.getFolders = async (userDir_file) => {
       options: { recursive: true, filter: /([0-9]+)/, file: [files.achievement[1], files.achievement[9], files.achievement[0]] }, //keeping "achievements.ini" [0] for backward compatibility with custom goldberg emu build
     },
     {
+      // Goldberg Uplay R2. Folders here are named with the UBISOFT product id, not a Steam AppID,
+      // so watchdog.js maps it through the gameIndex `uplayId` pair before loading the game and
+      // re-keys the objective ids onto the schema's api-names. Without this entry a Ubisoft unlock
+      // never fired a live notification at all — it only showed up on the next manual refresh.
+      dir: path.join(process.env['APPDATA'], 'Goldberg UplayEmu Saves'),
+      options: { recursive: true, filter: /([0-9]+)/, file: [files.achievement[1]], uplayR2: true },
+    },
+    {
       dir: path.join(process.env['APPDATA'], 'EMPRESS'),
       options: { recursive: true, filter: /([0-9]+)\\remote\\([0-9]+)/, file: [files.achievement[1]] },
     },

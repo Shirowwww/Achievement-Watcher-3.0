@@ -50,11 +50,22 @@ The setup:
 - resolves the matching Steam achievement schema;
 - installs the selected Uplay R2 loader and keeps an existing file as `*.bak`;
 - writes `achievements_schema.json` next to the loader;
-- updates `uplay_r2.ini` or `upc_r2.ini` with achievement support, the derived key prefix and save format;
-- directs `AchSavePath` to `%APPDATA%\GSE Saves\<steamAppid>`;
+- updates `upc_r2.ini` and `uplay_r2.ini` with achievement support and the save format;
+- on loader builds that support it, sets the derived key prefix and directs `AchSavePath` to `%APPDATA%\GSE Saves\<steamAppid>`;
 - creates the runtime save folder so the game can appear at 0% before the first unlock.
 
-The shared `GSE Saves` path lets the normal Achievement Watcher scan, artwork and notification pipeline handle the result like a compatible Steam-emulator save.
+The loader reads `upc_r2.ini` first and falls back to `uplay_r2.ini`; both are written so the one actually in use is always correct.
+
+## Loader builds
+
+The achievement redirect (`AchSaveType` / `AchSavePath` / `AchKeyPrefix`) was added to the loader partway through its life. Builds released before that ignore those keys entirely: they look an unlock up by the bare objective ID and always write to their own save folder. Achievement Watcher probes the installed loader for those key names and adapts:
+
+| Loader | INI written | `achievements_schema.json` keys | Unlocks read from |
+| --- | --- | --- | --- |
+| With redirect support | `Achievements`, `AchKeyPrefix`, `AchSaveType`, `AchSavePath` | Steam API names (`<prefix><id>`) | `%APPDATA%\GSE Saves\<steamAppid>` |
+| Without redirect support | `Achievements` only | bare objective IDs (`<id>`) | the emulator's own save folder |
+
+In both cases the unlock file is read from every plausible location — the configured `AchSavePath`, `%APPDATA%\Goldberg UplayEmu Saves\<uplayId>`, the game's `saves\<uplayId>` folder and any custom `SavePath` — and the objective IDs are translated back to the game's Steam achievement names. Updating the loader to a build with redirect support is worthwhile but not required.
 
 ## Compatibility limits
 
@@ -64,10 +75,10 @@ The mapping works only when the Steam achievement API names contain a stable num
 
 An empty or missing runtime save is expected until the game records an unlock. If an earned achievement still does not appear:
 
-1. Run **Diagnose Uplay R2 setup** again.
-2. Confirm the INI file points to the displayed `GSE Saves` folder.
+1. Run **Diagnose Uplay R2 setup** again. It names the INI the loader actually reads, whether that loader supports the redirect, and every folder that was searched for a save.
+2. Check for `NO_SCHEMA_JSON` or `ACHIEVEMENTS_DISABLED`. **A Ubisoft game update commonly causes both**: re-extracting the repack deletes `achievements_schema.json` and restores an INI with `Achievements = 0`. Achievement Watcher re-applies the setup automatically on the next scan when *Automatically fix newly detected games* is enabled; otherwise run **Apply emulator fix (Uplay R2)** again.
 3. Confirm the installed loader architecture matches the game.
-4. Check that `achievements_schema.json` exists and contains the derived IDs.
+4. Set `Logging = 1` in the INI the diagnosis reported and check `upc_r2.log` next to the game executable — `Achievements disabled or achievements.json file not found!` confirms the emulator never armed achievements.
 5. Review `%APPDATA%\Achievement Watcher\logs\parser.log`.
 
 For general schema/save distinctions, see the [Goldberg and GBE Fork guide](emulator-setup.md#schema-and-save-files-are-different).

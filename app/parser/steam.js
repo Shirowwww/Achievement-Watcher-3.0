@@ -19,6 +19,7 @@ const sse = require(path.join(appPath, 'parser/sse.js'));
 const htmlParser = require('node-html-parser');
 const fs = require('fs');
 const saveRoots = require(path.join(appPath, 'parser/saveRoots.js'));
+const uplayR2 = require(path.join(appPath, 'parser/uplayR2.js'));
 
 let listReady = true;
 let steamUsersList;
@@ -69,6 +70,24 @@ module.exports.scan = async (additionalSearch = []) => {
       } else if (dirKeyLower.includes('onlinefix')) {
         game.source = 'OnlineFix';
       } else if (dirKeyLower.includes('goldberg uplayemu')) {
+        // Folders under "Goldberg UplayEmu Saves" are named with the UBISOFT product id, not a Steam
+        // AppID. Handing that number to the Steam pipeline asks the store/Web API about an app that
+        // does not exist: every scan burned a full 30s per-game timeout on it, parking the loading bar
+        // at its last percent, and the entry that never loaded then read as a brand-new install to the
+        // background detector, which refreshed the whole library every few minutes. Translate the id
+        // through uplay-steam.json and skip the folder when there is no Steam counterpart.
+        const mapping = uplayR2.resolveSteamMapping({ appid: `UPLAY${game.appid}` });
+        if (!mapping) {
+          // scan() can run before initDebug() (the watchdog seeds its index straight from it).
+          if (debug) debug.log(`[uplay-r2] ignoring save folder '${dir}' — no Steam equivalent for Ubisoft product id ${game.appid}`);
+          continue;
+        }
+        game.data.type = 'uplayR2';
+        game.data.uplayId = String(game.appid);
+        game.data.uplayR2 = true;
+        game.data.system = 'uplay';
+        game.appid = String(mapping.steam_appid);
+        game.name = mapping.steam_name;
         game.source = 'Goldberg Uplay';
       } else if (dirKeyLower.includes('goldberg') || dirKeyLower.includes('gse')) {
         game.source = 'Goldberg';
@@ -185,6 +204,86 @@ module.exports.saveGameToCache = async (cfg) => {
   fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
 };
 
+/*
+  Negative cache for appids that resolve to nothing on Steam.
+
+  An id that is neither in the GetAppList dump nor resolvable through getProductInfo / the store
+  appdetails endpoint costs a full round of network calls before it can be ruled out — 11s to 30s in
+  practice — and, because nothing is written when the lookup fails, it paid that price again on EVERY
+  scan, stalling the loading bar near the end each time. Remembering the misses turns the second and
+  later scans into a dictionary lookup. The TTL keeps it honest for genuinely new releases, which are
+  the legitimate reason an appid isn't listed yet.
+
+  CRITICAL: only a *definitive* miss may be remembered. "No data came back" and "this is not a Steam
+  app" look identical at the call site, and offline they are the same thing for EVERY appid — the
+  app-list download fails, the store fetch fails, and a single offline scan would otherwise blacklist
+  the entire library for the whole TTL. appListUsable() is the guard: the miss is only trusted when
+  the app-list actually loaded (from network or cache), which is exactly when its absence means
+  something. See appListUsable() next to findInAppList().
+*/
+const NEGATIVE_CACHE_TTL_MS = 3 * 24 * 60 * 60 * 1000;
+let _negativeCache = null;
+
+function negativeCacheFile() {
+  return cacheRoot ? path.join(cacheRoot, 'steam_cache', 'unresolved.json') : '';
+}
+
+function loadNegativeCache() {
+  if (_negativeCache) return _negativeCache;
+  _negativeCache = new Map();
+  try {
+    const file = negativeCacheFile();
+    if (file && fs.existsSync(file)) {
+      for (const [key, at] of Object.entries(JSON.parse(fs.readFileSync(file, 'utf8')) || {})) {
+        if (Date.now() - Number(at) < NEGATIVE_CACHE_TTL_MS) _negativeCache.set(key, Number(at));
+      }
+    }
+  } catch {
+    /* a corrupt cache is not worth failing a scan over — start empty */
+  }
+  return _negativeCache;
+}
+
+function isKnownUnresolved(appID) {
+  return loadNegativeCache().has(String(appID));
+}
+
+function rememberUnresolved(appID) {
+  const cache = loadNegativeCache();
+  cache.set(String(appID), Date.now());
+  try {
+    const file = negativeCacheFile();
+    if (!file) return;
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(Object.fromEntries(cache)));
+  } catch {
+    /* best-effort: the in-memory copy still saves the rest of this session */
+  }
+}
+
+/*
+  May this miss be remembered? Exported so the rule can be asserted directly — getting it wrong is
+  not a small bug: caching a network failure as "not a Steam app" hides real games for the whole TTL,
+  and offline it would do that to the entire library at once.
+
+  A miss only means something when the app-list was actually available to miss against.
+*/
+module.exports.shouldRememberUnresolved = ({ hasResult, inAppList, appListLoaded } = {}) =>
+  !hasResult && !inAppList && !!appListLoaded;
+
+// Drop the memo for one appid (or all of them) so a manual retry really re-checks Steam.
+module.exports.forgetUnresolved = (appID) => {
+  const cache = loadNegativeCache();
+  if (appID == null) cache.clear();
+  else cache.delete(String(appID));
+  try {
+    const file = negativeCacheFile();
+    if (file) fs.writeFileSync(file, JSON.stringify(Object.fromEntries(cache)));
+  } catch {
+    /* best-effort */
+  }
+};
+
 module.exports.getGameData = async (cfg) => {
   if (!steamLanguages.some((language) => language.api === cfg.lang)) {
     throw 'Unsupported API language code';
@@ -196,6 +295,10 @@ module.exports.getGameData = async (cfg) => {
 
   try {
     result = this.getCachedData(cfg);
+    if ((!result || !result.name) && isKnownUnresolved(cfg.appID)) {
+      debug.log(`[${cfg.appID}] skipped: known to have no Steam data (cached miss)`);
+      return;
+    }
     if (!result || !result.name) {
       // A brand-new appid (e.g. a just-released remaster) may not be in the GetAppList dump yet —
       // it is only refreshed every few days and can 404. getProductInfo / the store appdetails call
@@ -209,7 +312,14 @@ module.exports.getGameData = async (cfg) => {
       } else {
         result = await getSteamDataFromSRV(cfg.appID, cfg.lang);
       }
-      if ((!result || !result.name) && !inAppList) throw `Error trying to load steam data for ${cfg.appID}`;
+      if ((!result || !result.name) && !inAppList) {
+        // Only a miss against a list we actually have says anything about this appid (see the
+        // negative-cache comment above); offline, everything misses.
+        if (module.exports.shouldRememberUnresolved({ hasResult: !!(result && result.name), inAppList, appListLoaded: appListUsable() })) {
+          rememberUnresolved(cfg.appID);
+        }
+        throw `Error trying to load steam data for ${cfg.appID}`;
+      }
       needSaving = true;
     }
 
@@ -857,6 +967,12 @@ async function findInAppList(appID) {
   const name = await ipcRenderer.invoke('get-steam-data', { appid: appID, type: 'name' });
   return name;
   throw 'ERR_NAME_NOT_FOUND';
+}
+
+// Did the Steam app-list actually load? When it did not (offline, endpoint down and no cached copy
+// yet) EVERY appid misses it, so a miss carries no information and must not be cached as a negative.
+function appListUsable() {
+  return appidListMap.size > 0;
 }
 
 async function searchAppsByName(name) {

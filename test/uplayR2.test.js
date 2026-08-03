@@ -51,7 +51,17 @@ process.env.APPDATA = path.join(temp, 'AppData');
       Ach_Prologue_1: { displayName: 'Prologue', description: 'Complete the Prologue', earned: 0 },
       Ach_Prologue_10: { displayName: 'The Ronin', description: '', earned: 0 },
     });
-    console.log('PASS: buildAchievementsSchemaJson keys by the real Steam api-name');
+
+    // Loader builds without AchKeyPrefix support look the unlock up by the BARE objective id, so the
+    // schema they are given has to be keyed that way or every in-game unlock misses.
+    assert.deepStrictEqual(
+      uplayR2.buildAchievementsSchemaJson(
+        { achievement: { list: [{ name: 'Ach_Prologue_1', displayName: 'Prologue', description: 'Complete the Prologue' }] } },
+        { keyed: false }
+      ),
+      { 1: { displayName: 'Prologue', description: 'Complete the Prologue', earned: 0 } }
+    );
+    console.log('PASS: buildAchievementsSchemaJson keys by api-name, or by bare id for legacy loaders');
 
     // resolveSteamMapping: exact uplay_id match (Assassin's Creed II, a real entry in uplay-steam.json).
     const byId = uplayR2.resolveSteamMapping({ appid: 'UPLAY4' });
@@ -86,10 +96,14 @@ process.env.APPDATA = path.join(temp, 'AppData');
     console.log('PASS: resolveSteamMapping and UI identity normalize native, namespaced and mapped ids');
 
     // detectEmulator: bounded shallow walk finds the loader dll in a nested Binaries folder.
+    // The stub carries the ini key names a real loader binary embeds, because inspectLoader() reads
+    // them to decide whether this build understands the achievement redirect at all.
+    const MODERN_LOADER = 'stub AchSavePath AchSaveType AchKeyPrefix Achievements';
+    const LEGACY_LOADER = 'stub Achievements SaveType SavePath'; // pre-redirect build
     const gameDir = path.join(temp, 'My Ubisoft Game');
     const dllDir = path.join(gameDir, 'Binaries', 'Win64');
     fs.mkdirSync(dllDir, { recursive: true });
-    fs.writeFileSync(path.join(dllDir, 'uplay_r2_loader64.dll'), 'stub');
+    fs.writeFileSync(path.join(dllDir, 'uplay_r2_loader64.dll'), MODERN_LOADER);
     const emu = uplayR2.detectEmulator(gameDir);
     assert.strictEqual(emu.type, 'uplayR2');
     assert.strictEqual(emu.dll.length, 1);
@@ -118,9 +132,13 @@ process.env.APPDATA = path.join(temp, 'AppData');
     assert.strictEqual(toolPaths.steamAppid, '3751950');
     assert.strictEqual(toolPaths.uplayId, '65043');
     assert.strictEqual(toolPaths.runtimeDir, dllDir);
-    assert.strictEqual(toolPaths.configFile, path.join(dllDir, 'uplay_r2.ini'));
+    // The loader opens upc_r2.ini first and only falls back to uplay_r2.ini, so that precedence is
+    // what INI_NAMES (and therefore the reported config file) must follow.
+    assert.strictEqual(uplayR2.INI_NAMES[0], 'upc_r2.ini');
+    assert.strictEqual(toolPaths.configFile, path.join(dllDir, 'upc_r2.ini'));
     assert.strictEqual(toolPaths.schemaFile, path.join(dllDir, 'achievements_schema.json'));
     assert.strictEqual(toolPaths.saveDir, path.join(process.env.APPDATA, 'GSE Saves', '3751950'));
+    assert.strictEqual(toolPaths.loader.supportsAchRedirect, true, 'the modern stub advertises redirect support');
 
     const sourceIcon = path.join(__dirname, '..', 'app', 'Source', 'ubisoft.svg');
     assert.ok(fs.existsSync(sourceIcon), 'the Ubisoft source must ship a dedicated icon');
@@ -207,8 +225,113 @@ process.env.APPDATA = path.join(temp, 'AppData');
     fs.writeFileSync(path.join(cacheDir, 'uplay_r2_loader64.dll'), 'REAL DLL V2');
     const installResult2 = uplayR2Installer.installDlls({ dllDirs: [dllDir], dlls: uplayR2Installer.ensureEmulatorDlls({ cacheDir }) });
     assert.strictEqual(installResult2.backedUp, 0, 're-installing must not clobber the original .bak');
-    assert.strictEqual(fs.readFileSync(path.join(dllDir, 'uplay_r2_loader64.dll.bak'), 'utf8'), 'stub', 'the .bak must remain the original cracked stub');
+    assert.strictEqual(fs.readFileSync(path.join(dllDir, 'uplay_r2_loader64.dll.bak'), 'utf8'), MODERN_LOADER, 'the .bak must remain the original cracked stub');
     console.log('PASS: uplayR2Installer seeds from a user cache and installs with a one-time backup');
+
+    /*
+      Legacy loader (no AchSaveType/AchSavePath/AchKeyPrefix support).
+
+      Writing the redirect keys to such a build produces an ini that reads as fully configured while
+      the emulator quietly keeps saving to its own folder and looks unlocks up by bare objective id —
+      the exact silent failure behind "the achievements don't work". repair() must therefore adapt
+      both the ini it writes and the way it keys the schema.
+    */
+    const legacyDir = path.join(temp, 'Legacy Ubisoft Game');
+    fs.mkdirSync(legacyDir, { recursive: true });
+    fs.writeFileSync(path.join(legacyDir, 'upc_r2_loader64.dll'), LEGACY_LOADER);
+    const legacyRepair = uplayR2.repair({
+      dir: legacyDir,
+      steamAppid: 3751950,
+      schema: { achievement: { list: [{ name: 'ACObsidian_Ach_1', displayName: 'Last to Leave' }, { name: 'ACObsidian_Ach_7', displayName: 'Fort Fight' }] } },
+      prefix: 'ACObsidian_Ach_',
+    });
+    assert.strictEqual(legacyRepair.loader.supportsAchRedirect, false);
+    assert.deepStrictEqual(Object.keys(legacyRepair.achievementsSchemaJson), ['1', '7'], 'a legacy loader gets bare objective ids');
+    for (const iniName of uplayR2.INI_NAMES) {
+      const ini = fs.readFileSync(path.join(legacyDir, iniName), 'utf8');
+      assert.ok(/Achievements\s*=\s*1/.test(ini), `${iniName} should still enable achievements`);
+      assert.ok(!/^[ \t]*AchSavePath[ \t]*=[ \t]*\S/m.test(ini), `${iniName} must not claim a redirect the loader ignores`);
+    }
+    console.log('PASS: repair adapts schema keys and ini keys to a legacy loader build');
+
+    // Reading back what such a build wrote: its own save folder, keyed by bare objective id.
+    const legacySaveDir = path.join(process.env.APPDATA, 'Goldberg UplayEmu Saves', '65043');
+    fs.mkdirSync(legacySaveDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(legacySaveDir, 'achievements.json'),
+      JSON.stringify({
+        1: { displayName: 'Last to Leave', earned: 1, earned_time: 1750000000 },
+        7: { displayName: 'Fort Fight', earned: 0 },
+      })
+    );
+    const saveDirs = uplayR2.resolveAchievementSaveDirs({ gameDir: legacyDir, runtimeDir: legacyDir, uplayId: '65043', steamAppid: 3751950 });
+    assert.ok(saveDirs.includes(legacySaveDir), `the emulator's default save folder must be a candidate: ${saveDirs.join(', ')}`);
+    const legacySave = uplayR2.readAchievementSave(saveDirs);
+    assert.strictEqual(legacySave.dir, legacySaveDir);
+
+    const remapped = uplayR2.mapSaveToSchemaKeys(legacySave.entries, {
+      prefix: 'ACObsidian_Ach_',
+      apiNames: ['ACObsidian_Ach_1', 'ACObsidian_Ach_7', 'ACObsidian_Ach_9'],
+    });
+    assert.deepStrictEqual(Object.keys(remapped).sort(), ['ACObsidian_Ach_1', 'ACObsidian_Ach_7']);
+    assert.strictEqual(remapped.ACObsidian_Ach_1.earned, 1);
+    assert.strictEqual(remapped.ACObsidian_Ach_1.earned_time, 1750000000);
+
+    // A save that uses the prefixed keys (modern loader) resolves through the same call, and a key
+    // belonging to no achievement in this game's schema is dropped rather than guessed at.
+    assert.deepStrictEqual(
+      Object.keys(uplayR2.mapSaveToSchemaKeys({ ACObsidian_Ach_7: { earned: 1 }, ACOther_Ach_3: { earned: 1 } }, { prefix: 'ACObsidian_Ach_', apiNames: ['ACObsidian_Ach_7'] })),
+      ['ACObsidian_Ach_7']
+    );
+
+    /*
+      Several candidate folders routinely hold an achievements.json at once — the emulator seeds a
+      fully-locked copy from the schema, a previous SaveType leaves one behind, and repair()
+      pre-creates the redirect target. Stopping at the first file found would let any of those stale,
+      all-zero copies mask the one the game is really writing, so the read merges them and an unlock
+      always wins over a lock.
+    */
+    const staleDir = path.join(legacyDir, 'saves', '65043');
+    fs.mkdirSync(staleDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(staleDir, 'achievements.json'),
+      JSON.stringify({ 1: { earned: 0 }, 7: { earned: 0 }, 12: { earned: 1, earned_time: 1750000900 } })
+    );
+    const mergedSave = uplayR2.readAchievementSave(
+      uplayR2.resolveAchievementSaveDirs({ gameDir: legacyDir, runtimeDir: legacyDir, uplayId: '65043', steamAppid: 3751950 })
+    );
+    assert.ok(mergedSave.files.length >= 2, `both saves should be read, got ${JSON.stringify(mergedSave.files)}`);
+    assert.equal(mergedSave.entries['1'].earned, 1, 'an unlock in one file must not be masked by a lock in another');
+    assert.equal(mergedSave.entries['12'].earned, 1, 'an unlock only present in the second file must still be seen');
+
+    // Same rule for timestamps: the most recent unlock wins.
+    fs.writeFileSync(path.join(staleDir, 'achievements.json'), JSON.stringify({ 1: { earned: 1, earned_time: 1760000000 } }));
+    const newest = uplayR2.readAchievementSave(
+      uplayR2.resolveAchievementSaveDirs({ gameDir: legacyDir, runtimeDir: legacyDir, uplayId: '65043', steamAppid: 3751950 })
+    );
+    assert.equal(newest.entries['1'].earned_time, 1760000000);
+    fs.rmSync(path.join(legacyDir, 'saves'), { recursive: true, force: true });
+    console.log('PASS: unlock state is merged across every save folder, never masked by a stale copy');
+
+    // An ini pointing somewhere custom is honoured ahead of the defaults.
+    const customSaveDir = path.join(temp, 'custom-saves');
+    fs.writeFileSync(path.join(legacyDir, 'upc_r2.ini'), '[Settings]\nAchievements = 1\nSaveType = 2\nSavePath = ' + customSaveDir + '\n');
+    assert.strictEqual(
+      uplayR2.resolveAchievementSaveDirs({ gameDir: legacyDir, runtimeDir: legacyDir, uplayId: '65043', steamAppid: 3751950 })[0],
+      customSaveDir
+    );
+    console.log('PASS: unlocks are read from wherever the emulator actually writes them, re-keyed to Steam api-names');
+
+    // diagnose() must surface a wiped setup rather than silently reporting 0%: a game update that
+    // re-extracts the repack removes achievements_schema.json and restores its own ini.
+    fs.rmSync(path.join(legacyDir, 'achievements_schema.json'));
+    fs.writeFileSync(path.join(legacyDir, 'upc_r2.ini'), '[Settings]\nAchievements = 0\n');
+    const wipedReport = uplayR2.diagnose({ gameDir: legacyDir, appid: 'UPLAY65043' });
+    assert.strictEqual(wipedReport.ok, false);
+    assert.ok(wipedReport.issues.some((i) => i.code === 'NO_SCHEMA_JSON'), 'a missing schema is an error');
+    assert.ok(wipedReport.issues.some((i) => i.code === 'ACHIEVEMENTS_DISABLED'), 'Achievements=0 is an error, not a warning');
+    assert.ok(wipedReport.issues.some((i) => i.code === 'LOADER_NO_ACH_REDIRECT'), 'the loader limitation is reported');
+    console.log('PASS: diagnose detects a setup wiped by a game update');
   } finally {
     if (savedAppData === undefined) delete process.env.APPDATA;
     else process.env.APPDATA = savedAppData;

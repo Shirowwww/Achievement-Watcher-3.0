@@ -114,6 +114,14 @@ const NEW_GAME_SCAN_INTERVAL_MS = 3 * 60 * 1000; // 3 minutes
 let newGameScanTimer = null;
 let scanInFlight = false;
 
+// Appids discovery keeps reporting that never reach the rendered list. Discovery is deliberately
+// broader than the list: an entry can fail to load (no Steam data for it), or be filtered out by
+// "hide 0%" or a disabled source. Comparing discovery against the SCREEN alone therefore made every
+// such appid look brand-new on every tick, and the library refreshed itself every 3 minutes forever —
+// the "it reloads on its own" report. Each appid now triggers at most one refresh; once it is on
+// screen the `known` check below takes over, so a game that starts loading correctly is unaffected.
+let unrenderedAppids = new Set();
+
 // One detection tick: cheap discover, diff against the games on screen, full refresh only on a new one.
 async function runNewGameScan() {
   if (scanInFlight) return; // a scan is already running
@@ -123,15 +131,31 @@ async function runNewGameScan() {
   try {
     const discovered = await achievements.detectInstalledAppids(app.config);
     const known = new Set(gameList.map((g) => String(g.appid)));
-    const fresh = discovered.filter((id) => !known.has(id));
+    const fresh = discovered.filter((id) => !known.has(id) && !unrenderedAppids.has(id));
     if (fresh.length > 0) {
       debug.log(`[new-game-scan] ${fresh.length} new game(s) detected (${fresh.join(', ')}) — refreshing library`);
+      // Anything still absent from the list after this refresh is not a new install; remember it so
+      // the next tick doesn't refresh again for the same appid.
+      for (const id of fresh) unrenderedAppids.add(id);
       app.onStart(); // re-seeds the watchdog gameIndex so the new game is tracked
     }
   } catch (err) {
     debug.log(`[new-game-scan] failed: ${err}`);
   } finally {
     scanInFlight = false;
+  }
+}
+
+// Called by the manual refresh (ui/refresh.js). An explicit refresh means "try everything again",
+// so drop both write-offs: the appids the background detector stopped treating as new, and the
+// appids the Steam lookup memoized as unresolvable. Automatic refreshes keep both, since their whole
+// purpose is to stop re-doing work that already failed.
+function forgetUnrenderedAppids() {
+  unrenderedAppids = new Set();
+  try {
+    steamParser.forgetUnresolved();
+  } catch (err) {
+    debug.log(`[new-game-scan] could not clear the unresolved-appid cache: ${err}`);
   }
 }
 
@@ -2342,6 +2366,41 @@ var app = {
                           return;
                         }
                         installResult = uplayR2Installer.installDlls({ dllDirs, dlls, log: debug });
+                      } else if (!uplayR2.inspectInstalledLoaders(emu.dll).supportsAchRedirect) {
+                        // The game has a loader, but one too old to understand AchSaveType/AchSavePath.
+                        // Everything still works on such a build (AW reads the emulator's own save
+                        // folder), so this is an optional upgrade — and swapping a loader the game
+                        // currently launches with is not something to do behind the user's back.
+                        const cacheDir = path.join(getUserDataPath(), 'cache/uplayR2');
+                        let cached = { seeded: false, files: {} };
+                        try {
+                          cached = uplayR2Installer.ensureEmulatorDlls({ cacheDir });
+                        } catch (err) {
+                          debug.log(`[${appid}] uplayR2: could not read the loader cache => ${formatErr(err)}`);
+                        }
+                        const betterCached = Object.values(cached.files || {}).some(
+                          (file) => file && uplayR2.inspectLoader(file).supportsAchRedirect
+                        );
+                        if (betterCached) {
+                          const choice = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                            type: 'question',
+                            title: fr ? 'Mettre à jour le loader Uplay R2 ?' : 'Update the Uplay R2 loader?',
+                            message: fr
+                              ? "Ce jeu utilise un loader trop ancien pour rediriger les succès."
+                              : 'This game uses a loader too old to redirect achievements.',
+                            detail: fr
+                              ? "Le correctif fonctionne sans mise à jour : Achievement Watcher lit le dossier de sauvegarde de l'émulateur.\n\nMettre à jour le loader permet la redirection vers GSE Saves, mais remplace une DLL avec laquelle le jeu se lance actuellement (l'originale est conservée en .bak)."
+                              : "The fix works without updating: Achievement Watcher reads the emulator's own save folder.\n\nUpdating enables the redirect into GSE Saves, but replaces a DLL the game currently launches with (the original is kept as .bak).",
+                            buttons: fr ? ['Garder le loader actuel', 'Mettre à jour'] : ['Keep the current loader', 'Update'],
+                            defaultId: 0,
+                            cancelId: 0,
+                            noLink: true,
+                          });
+                          if (choice === 1) {
+                            setGameBoxBusy(self, fr ? 'Mise à jour de la DLL…' : 'Updating the DLL…');
+                            installResult = uplayR2Installer.installDlls({ dllDirs, dlls: cached, log: debug });
+                          }
+                        }
                       }
 
                       setGameBoxBusy(self, fr ? 'Configuration (succès)…' : 'Configuring (achievements)…');
@@ -2478,13 +2537,24 @@ var app = {
                 addedUbisoftFolder = true;
               }
               if (ubisoftTools.saveDir) {
+                // Prefer the folder that actually holds the unlock file over the redirect target:
+                // on a loader build without AchSavePath support the emulator ignores the redirect and
+                // keeps writing to its own folder, so `saveDir` alone would open an empty directory.
+                const liveSaveDir =
+                  (ubisoftTools.saveDirs || []).find((dir) => {
+                    try {
+                      return fs.existsSync(path.join(dir, uplayR2.ACH_SAVE_FILE));
+                    } catch {
+                      return false;
+                    }
+                  }) || ubisoftTools.saveDir;
                 folderMenu.append(
                   new MenuItem({
                     icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/folder-open.png')),
                     label: contextIsFrench ? 'Ouvrir les sauvegardes de succès Ubisoft' : 'Open Ubisoft achievement saves',
                     click() {
-                      fs.mkdirSync(ubisoftTools.saveDir, { recursive: true });
-                      remote.shell.openPath(ubisoftTools.saveDir);
+                      fs.mkdirSync(liveSaveDir, { recursive: true });
+                      remote.shell.openPath(liveSaveDir);
                     },
                   })
                 );

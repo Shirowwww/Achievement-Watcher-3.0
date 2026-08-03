@@ -58,12 +58,15 @@ function upsertIniSection(doc, name, body) {
 // Update existing `key=value` lines in place (preserving their indentation, comments and order) and
 // append any keys that weren't present. `updates` keys are matched case-insensitively.
 function upsertIniKeys(body, updates) {
-  const remaining = new Map(Object.entries(updates).map(([k, v]) => [k.toLowerCase(), v]));
+  // Keep the caller's spelling alongside the lookup key: an appended line must use the emulator's
+  // documented casing (`AchKeyPrefix`, not `achkeyprefix`) — Goldberg's Uplay R2 loader compares
+  // key names case-sensitively, so a lower-cased append is silently ignored by the emulator.
+  const remaining = new Map(Object.entries(updates).map(([k, v]) => [k.toLowerCase(), { name: k, value: v }]));
   const out = body.map((line) => {
     const m = line.match(/^(\s*)([A-Za-z0-9_]+)(\s*=\s*)(.*)$/);
     if (m && remaining.has(m[2].toLowerCase())) {
       const key = m[2].toLowerCase();
-      const value = remaining.get(key);
+      const { value } = remaining.get(key);
       remaining.delete(key);
       return `${m[1]}${m[2]}${m[3]}${value}`;
     }
@@ -73,9 +76,24 @@ function upsertIniKeys(body, updates) {
     // Append new keys after the last real line so they stay inside the section block (no stray blank
     // line splitting the section when the source ended with a trailing newline).
     while (out.length > 0 && out[out.length - 1].trim() === '') out.pop();
-    for (const [key, value] of remaining) out.push(`${key}=${value}`);
+    for (const { name, value } of remaining.values()) out.push(`${name}=${value}`);
   }
   return out;
+}
+
+// Read a section's `key = value` pairs into a plain object (lower-cased keys). Comment lines
+// (`;`/`#`) are ignored, so a documented-but-disabled key such as `;Ticket = fake` never reads back
+// as a live setting.
+function readIniSectionValues(doc, name) {
+  const section = getIniSection(doc, name);
+  const values = {};
+  if (!section) return values;
+  for (const line of section.body) {
+    if (/^\s*[;#]/.test(line)) continue;
+    const m = line.match(/^\s*([A-Za-z0-9_]+)\s*=\s*(.*?)\s*$/);
+    if (m) values[m[1].toLowerCase()] = m[2];
+  }
+  return values;
 }
 
 // INI values can't span lines and both emulators split on the first '='; strip CR/LF so a stray
@@ -88,6 +106,7 @@ module.exports = {
   parseIni,
   stringifyIni,
   getIniSection,
+  readIniSectionValues,
   upsertIniSection,
   upsertIniKeys,
   sanitizeIniValue,

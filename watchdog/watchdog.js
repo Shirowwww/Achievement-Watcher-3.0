@@ -38,6 +38,7 @@ const settings = require('./settings.js');
 const monitor = require('./monitor.js');
 const parseWithRetry = require('./util/parseWithRetry.js');
 const waitForFileStable = require('./util/waitForFileStable.js');
+const uplayR2 = require('./util/uplayR2.js');
 const notificationDedup = require('./util/notificationDedup.js');
 const progressMute = require('./util/progressMute.js');
 const rarity = require('./util/rarity.js');
@@ -574,6 +575,13 @@ var app = {
           appID = await self.steamAppIdForGogId(appID);
         }
 
+        if (options.uplayR2) {
+          const mapped = uplayR2.steamAppIdForUplayId(appID);
+          if (!mapped) throw `Unknown Ubisoft product id ${appID} — run a library refresh so Achievement Watcher can map it`;
+          debug.log(`[uplay-r2] product id ${appID} -> Steam appid ${mapped}`);
+          appID = mapped;
+        }
+
         let game = runningGames.find((g) => String(g.appid) === appID) || (await self.load(appID));
         if (game.achievement === undefined) {
           let g = await self.load(appID);
@@ -629,6 +637,10 @@ var app = {
               debug.warn(`Achievement parse attempt ${attempt + 1} failed for "${name}": ${err.message || err}`);
             },
           });
+          if (options.uplayR2) {
+            const remapped = uplayR2.remapObjectiveIds(achievements, game.achievement && game.achievement.list);
+            if (remapped > 0) debug.log(`[uplay-r2] mapped ${remapped} objective id(s) onto the game's achievement names`);
+          }
           const progressSchema = findLocalProgressSchema(appID, game);
           const mappedStats = mapStatProgressEntries(achievements, progressSchema);
           if (mappedStats > 0) debug.log(`Mapped ${mappedStats} stat progress entr${mappedStats === 1 ? 'y' : 'ies'} through local GBE schema`);
