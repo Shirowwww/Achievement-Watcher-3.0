@@ -56,6 +56,15 @@ The setup:
 
 The loader reads `upc_r2.ini` first and falls back to `uplay_r2.ini`; both are written so the one actually in use is always correct.
 
+## Steam percentages in the detail view
+
+Because a mapped Uplay R2 game keeps the Steam AppID and its achievements are keyed by the Steam API
+names, the detail view shows the same community percentage column as a native Steam game (Steam icon,
+global unlock % per achievement, offline via the shared rarity cache). Official Ubisoft Connect games
+get the same column through the Steam↔numeric-id bridge: the Steam global percentages are translated
+onto the Ubisoft achievement ids and cached under the game's namespaced appid. Games whose Steam
+counterpart cannot be resolved simply keep the column hidden.
+
 ## Loader builds
 
 The achievement redirect (`AchSaveType` / `AchSavePath` / `AchKeyPrefix`) was added to the loader partway through its life. Builds released before that ignore those keys entirely: they look an unlock up by the bare objective ID and always write to their own save folder. Achievement Watcher probes the installed loader for those key names and adapts:

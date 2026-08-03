@@ -26,7 +26,7 @@ function applyRarity(entries) {
   if (typeof window.restoreAchievementSorts === 'function') window.restoreAchievementSorts();
 }
 
-function getGlobalStat(appid, source, gameName, achievements) {
+function getGlobalStat(appid, source, gameName, achievements, context) {
   let rarity;
   try {
     const path = require('path');
@@ -46,10 +46,11 @@ function getGlobalStat(appid, source, gameName, achievements) {
 
   // 2. Background refresh: hits the network only when the cache is stale (TTL-gated inside the util),
   //    persists the result, and repaints. Failures fall back to whatever the cache already showed.
-  rarity
-    .getRarityEntries(appid, source, { gameName, achievements })
-    .then((entries) => applyRarity(entries))
-    .catch(() => {});
+  const pending =
+    source === 'steam-bridge' && context && context.steamAppId
+      ? rarity.getSteamBridgeRarity(appid, context.steamAppId, context.names || achievements.map((a) => a && a.name), {})
+      : rarity.getRarityEntries(appid, source, { gameName, achievements });
+  pending.then((entries) => applyRarity(entries)).catch(() => {});
 }
 
 (function ($, window, document) {

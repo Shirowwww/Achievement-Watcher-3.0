@@ -416,14 +416,10 @@ function collectSchemaData(archivePath) {
 // ---- rarity bridge (ubisoft numeric ids ↔ steam apinames) ---------------------------------------
 
 // Steam apinames for Ubisoft ports are usually "Ach_<id>"/"ACH_<id>" or "<something>_<id>"; strip
-// down to the trailing number so they can be matched to the archive's numeric ids.
+// down to the trailing number so they can be matched to the archive's numeric ids. Single
+// implementation lives in util/rarity.js so the parser seed and the renderer bridge stay in sync.
 function normalizeSteamAchName(name) {
-  let result = String(name || '').trim();
-  const ach = result.match(/Ach_(.+)$/i);
-  if (ach && ach[1]) result = ach[1];
-  const trailing = result.match(/^(.*)_(\d+)$/);
-  if (trailing && trailing[1] && /[A-Za-z]/.test(trailing[1])) result = trailing[2];
-  return result;
+  return require('../util/rarity.js').normalizeSteamBridgeName(name);
 }
 
 // cacheId = the (namespaced) appid the UI reads rarity by; uplayId = the raw Ubisoft id used to
@@ -434,13 +430,7 @@ async function seedRarityFromSteam(cacheId, uplayId, ids) {
   if (!/^\d+$/.test(steamAppId)) return;
   try {
     const rarity = require('../util/rarity.js');
-    const steamEntries = await rarity.getRarityEntries(steamAppId, 'steam');
-    if (!Array.isArray(steamEntries) || steamEntries.length === 0) return;
-    const byNormalized = new Map(steamEntries.map((e) => [normalizeSteamAchName(e.name), e.percent]));
-    const entries = ids
-      .map((id) => (byNormalized.has(id) ? { name: id, percent: byNormalized.get(id) } : null))
-      .filter(Boolean);
-    if (entries.length > 0) rarity.writeRarityCache(String(cacheId), entries, 'steam');
+    await rarity.getSteamBridgeRarity(String(cacheId), steamAppId, ids);
   } catch (err) {
     debug.log(`[${cacheId}] ubisoft rarity bridge failed => ${err}`);
   }

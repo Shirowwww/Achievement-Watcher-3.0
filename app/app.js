@@ -49,6 +49,7 @@ emulatorSourceOverride.setUserDataPath(getUserDataPath());
 const l10n = require(path.join(appPath, 'locale/loader.js'));
 const toastAudio = require(path.join(appPath, 'util/toastAudio.js'));
 const coverStore = require(path.join(appPath, 'util/coverStore.js'));
+const { resolveGameRarityContext } = require(path.join(appPath, 'util/rarity.js'));
 // `escapeHtml` is declared once in ui/settings.js (which loads immediately before this script).
 // Classic <script>s share a single global lexical scope, so re-declaring `const escapeHtml` here
 // would throw "Identifier 'escapeHtml' has already been declared" and abort app.js entirely — it is
@@ -315,6 +316,7 @@ window.awPromptText = promptText;
 // Emulator sources whose achievement/header icons are already resolved local file:/// paths, so they
 // must bypass the Steam `fetch-icon` IPC (which expects a Steam icon hash) and be used verbatim.
 const EMU_LOCAL_ICON_SOURCES = new Set(['RPCS3 Emulator', 'ShadPS4 Emulator', 'Xenia Emulator']);
+
 function gameHasAchievements(game) {
   return !!(game && game.achievement && (Number(game.achievement.total) > 0 || (Array.isArray(game.achievement.list) && game.achievement.list.length > 0)));
 }
@@ -3161,27 +3163,33 @@ var app = {
       let elem = $('#achievement .achievement-list ul > li');
       elem.removeClass('highlight');
 
-      // Emulator and Xbox PC sources get global rarity from Exophase / the import cache, so the
-      // community % column stays visible (with a trophy icon instead of the Steam brand).
-      const emulatorSource = EMU_LOCAL_ICON_SOURCES.has(game.source) || game.source === 'Xbox PC';
-      if (game.system && !emulatorSource) {
+      // Reconciled rarity: any source that maps to Steam (Uplay R2, official Ubisoft via the id
+      // bridge, Epic-with-Steam-release) gets the same Steam community column and refresh path as a
+      // native Steam game. Console emulators keep Exophase (trophy icon), Xbox PC paints its import
+      // cache, and sources without any percentage source (EA) keep the column hidden.
+      const rarityContext = resolveGameRarityContext(game, { emulatorSources: EMU_LOCAL_ICON_SOURCES });
+      if (!rarityContext) {
         $('.achievement .stats .community').hide();
       } else {
         $('.achievement .stats .community').show();
-        $('.achievement .stats .community i').attr('class', emulatorSource ? 'fas fa-trophy' : 'fab fa-steam');
-        if (game.source === 'Xbox PC') {
+        $('.achievement .stats .community i').attr(
+          'class',
+          rarityContext.kind === 'emulator' ? 'fas fa-trophy' : 'fab fa-steam'
+        );
+        if (rarityContext.kind === 'xbox') {
           // Rarity was cached at import time on each schema entry — paint it directly, no network.
           const entries = (game.achievement.list || [])
             .filter((a) => a && a.rarityPct != null && Number.isFinite(Number(a.rarityPct)))
             .map((a) => ({ name: a.name, percent: Number(a.rarityPct) }));
           applyRarity(entries);
+        } else if (rarityContext.kind === 'steam-bridge') {
+          getGlobalStat(rarityContext.cacheId, 'steam-bridge', game.name, game.achievement.list, rarityContext);
+        } else if (rarityContext.kind === 'emulator') {
+          getGlobalStat(game.appid, rarityContext.source, game.name, game.achievement.list);
+        } else if (rarityContext.kind === 'steam') {
+          getGlobalStat(rarityContext.appid, 'steam', game.name, game.achievement.list);
         } else {
-          getGlobalStat(
-            game.source === 'epic' && game.steamappid ? game.steamappid : self.data('appid'),
-            game.source === 'epic' ? (game.steamappid ? 'steam' : 'epic') : game.source,
-            game.name,
-            game.achievement.list
-          );
+          getGlobalStat(rarityContext.appid, rarityContext.source, game.name, game.achievement.list);
         }
       }
 
