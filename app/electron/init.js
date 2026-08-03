@@ -1051,6 +1051,7 @@ function launchWatchdog() {
     return { ok: true };
   } catch (err) {
     debug.log(`[monitor] exception launching: ${err.message}`);
+    scheduleMonitorRespawn();
     return { ok: false, error: err.message };
   }
 }
