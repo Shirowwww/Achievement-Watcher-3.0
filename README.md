@@ -40,7 +40,7 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 | **Goldberg / GBE tools** | Read-only diagnosis, `steam_settings` repair, matched runtime install, Steamless support, backups/restore and opt-in background setup |
 | **Local-first reliability** | Offline names and artwork, local schemas, platform-aware cache IDs, bounded caches, self-healing folders and fewer browser-dependent lookups |
 
-The 3.2.0 release adds dedicated detection and repair for compatible **Goldberg Uplay R2** installs; see the [3.2.0 changelog](CHANGELOG.md#320---2026-07-14) for the complete release scope.
+The 3.2.0 release adds dedicated detection and repair for compatible **Goldberg Uplay R2** installs; see the [3.2.0 changelog](CHANGELOG.md#320---2026-07-14) for the complete release scope. The 3.4.2 release reconciles Steam rarity across sources: Uplay R2, official Ubisoft Connect and Epic-with-a-Steam-release games now show the same Steam community percentages as native Steam games.
 
 ---
 
@@ -91,7 +91,7 @@ This fork focuses on an all-in-one library, a quiet tray workflow, native toasts
 | **Steam-compatible saves** | Goldberg, GBE Fork, GreenLuma, SmartSteamEmu, TENOKE and compatible layouts |
 | **GOG Galaxy** | Native local Galaxy databases and compatible legacy saves |
 | **Epic Games** | Local installations and official achievement state after optional account connection |
-| **Ubisoft Connect** | Native local data, legacy Uplay formats and compatible Uplay R2 setups |
+| **Ubisoft Connect** | Native local data, legacy Uplay formats and compatible Uplay R2 setups, with Steam global percentages bridged onto native achievement ids |
 | **EA Desktop** | Achievement data recorded by the EA client log |
 | **Console emulators** | RPCS3, ShadPS4 and Xenia |
 | **Xbox PC** | Local Game Pass / Microsoft Store installs plus imported Xbox Network achievement state (optional account connection) |
@@ -153,6 +153,8 @@ Normal achievement reading is read-only. Extra actions appear under **Emulator &
 Full background setup is **off by default**. Repairs create backups, but they still modify game files; use them only with games you own.
 
 Ubisoft titles use a separate **Uplay R2** path because they do not load `steam_api.dll`. Achievement Watcher can derive a safe mapping for compatible games and reuse the normal `GSE Saves` pipeline. The loader must be provided locally because no stable official download exists.
+
+Those games show the same Steam community percentage column as native Steam games: Uplay R2 uses its mapped Steam AppID directly, official Ubisoft Connect titles are bridged from Steam's global percentages onto their native ids, and the result is cached like any other rarity.
 
 [Goldberg/GBE setup](docs/emulator-setup.md) · [Uplay R2 setup](docs/uplay-r2.md) · [Technical reference](docs/goldberg-gbe.md)
 

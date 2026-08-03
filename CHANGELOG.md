@@ -3,6 +3,13 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 3.4.2 - 2026-08-03
+
+### Added
+
+- Steam global achievement percentages now appear for games that are not running under a Steam emulator, so a Ubisoft/Uplay game behaves exactly like a Steam game in the detail view. Goldberg Uplay R2 titles keep their mapped Steam AppID and fetch the percentages directly; official Ubisoft Connect titles go through a Steam↔numeric-id bridge that translates Steam achievement names onto the game's native ids and caches the result in the shared rarity sidecar; Epic installs with a known Steam release borrow the Steam percentages. The community % column, the rare tiers and the percentage sort work identically for all of these sources.
+- Native non-Steam ids (Ubisoft Connect, GOG/Epic official, Lumaplay, EA, Xbox) are never sent to Steam's global-percentages endpoint anymore. Sources without a Steam counterpart keep their own rarity: GOG/Epic sidecars, Exophase for console emulators, and the Xbox import cache.
+
 ## 3.4.1 - 2026-08-03
 
 ### Fixed

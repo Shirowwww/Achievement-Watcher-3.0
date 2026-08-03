@@ -1,16 +1,17 @@
-# Achievement Watcher 3.4.1
+# Achievement Watcher 3.4.2
 
-Version 3.4.1 fixes the real cause of the library reloading itself every few minutes, and updates two dependencies that were pinned at vulnerable versions.
+Version 3.4.2 reconciles achievement rarity across sources: games that are not running under a Steam emulator — Ubisoft/Uplay in particular — now show the same Steam community percentages as native Steam games.
 
 ## Highlights
 
-- **The library stops reloading itself, for good.** 3.4.0 capped how often an unrecognised game could trigger a refresh; this release fixes why it happened at all. Each loaded game was handed to the interface from inside a frame callback, which the browser engine only delivers to a **visible** window — and Achievement Watcher normally sits in the tray with its window hidden. A background scan therefore finished having added nothing to the on-screen list, so the periodic check saw the whole library as newly installed and started a full refresh, every three minutes, indefinitely. Real logs showed `54 new game(s) detected` on every tick for a 52-game library. That also explains scans feeling slow: the app was continuously rescanning in the background.
-- **Two vulnerable dependencies updated.** `protobufjs` 7.6.4 → 7.6.5 (denial of service via `.proto` option parsing) and `adm-zip` 0.5.18 → 0.6.0 (a crafted ZIP triggering a 4 GB allocation). `npm audit --omit=dev` now reports no vulnerabilities.
+- **Steam percentages for Uplay games.** The community % column was previously hidden for every Ubisoft/Uplay game, and there was no path to fetch Steam's global percentages for them. Uplay R2 games keep their mapped Steam AppID and now fetch them directly; official Ubisoft Connect games go through a Steam↔numeric-id bridge that translates Steam achievement names onto the game's native ids and caches the result like any other rarity. The column, the rare tiers and the percentage sort behave exactly like a Steam game's.
+- **Epic installs with a known Steam release** borrow the Steam percentages instead of showing nothing, matching their Steam siblings.
+- **No more wasted Steam lookups** for native non-Steam ids. Ubisoft Connect, GOG/Epic official, Lumaplay, EA and Xbox ids are never sent to Steam's percentages endpoint; those sources keep their own rarity (GOG/Epic sidecars, Exophase for console emulators, the Xbox import cache).
 
-See the [changelog](CHANGELOG.md#341---2026-08-03) for the full list of changes, and [3.4.0](CHANGELOG.md#340---2026-08-03) for the Ubisoft achievement fixes and the Settings search field released alongside it.
+See the [changelog](CHANGELOG.md#342---2026-08-03) for the full list of changes.
 
 ## Install
 
-Download `Achievement.Watcher.Setup.3.4.1.exe` from the [v3.4.1 release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/tag/v3.4.1).
+Download `Achievement.Watcher.Setup.3.4.2.exe` from the [v3.4.2 release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/tag/v3.4.2).
 
 The `.blockmap` and `latest.yml` assets are used by automatic updates. Existing settings and tracked data under `%APPDATA%\Achievement Watcher` are preserved when upgrading.
