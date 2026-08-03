@@ -119,6 +119,10 @@ function translateUI(lang, locale, template) {
   $('#lock').data('lang-hidden', clear(template.settings.common.show));
   $('#btn-scrollup span').text(clear(template.scrollUp));
   $('#settings .box .header span').text(clear(template.settings.title));
+  if (template.settings.search) {
+    $('#settings-search-input').attr('placeholder', clear(template.settings.search.placeholder));
+    $('#settings-search-empty-text').text(clear(template.settings.search.empty));
+  }
   selector = $('#options-ui');
   selector.find('li:nth-child(1) .left span').text(clear(template.settings.general.language.name));
   selector.find('li:nth-child(1) .help span').text(clear(template.settings.general.language.description));

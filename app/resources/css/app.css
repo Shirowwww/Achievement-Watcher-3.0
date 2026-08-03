@@ -1602,6 +1602,154 @@ main {
   color: var(--accent);
 }
 
+/* ---- Settings search ------------------------------------------------------
+   The panel carries seven tabs and roughly a hundred rows, so finding one
+   option meant remembering which tab owns it. The field filters every row in
+   every tab at once and the nav counters say where the matches are, which is
+   the only navigation aid that scales as more options are added. */
+#settings .box .header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#settings .box .header > span {
+  flex: 0 0 auto;
+}
+
+#settings-search {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  min-width: 190px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  border: 1px solid var(--set-hairline);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+#settings-search:focus-within {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+}
+#settings-search > i {
+  font-size: 12px;
+  color: var(--text-muted);
+  flex: 0 0 auto;
+}
+#settings-search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: Raleway;
+  font-size: 13px;
+  text-shadow: none;
+}
+#settings-search input::placeholder {
+  color: var(--text-muted);
+}
+/* The platform search-cancel widget is replaced by our own button so it can be
+   styled and stays visible while the field has focus. */
+#settings-search input::-webkit-search-cancel-button {
+  display: none;
+}
+#settings-search button {
+  flex: 0 0 auto;
+  border: 0;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--text) 16%, transparent);
+  color: var(--text);
+  font-size: 9px;
+  line-height: 1;
+  display: none;
+}
+#settings-search button:hover {
+  background: var(--accent);
+}
+#settings.searching #settings-search button {
+  display: block;
+}
+
+/* Per-tab match counter, only meaningful while a search is active. The row becomes a flex line so
+   the counter pins to the trailing edge whatever the length of a translated label. */
+#settingNav li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#settingNav li > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#settingNav li .nav-count {
+  display: none;
+  flex: 0 0 auto;
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  font-family: Raleway;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  background: var(--accent);
+  color: var(--set-modal-bottom);
+}
+#settings.searching #settingNav li .nav-count {
+  display: block;
+}
+#settings.searching #settingNav li.no-match {
+  opacity: 0.4;
+}
+#settings.searching #settingNav li.no-match .nav-count {
+  background: color-mix(in srgb, var(--text) 18%, transparent);
+  color: var(--text-muted);
+}
+
+/* A search hides rows, and with them the group headings and whole blocks that
+   would otherwise be left standing empty. */
+#settings .box .content .search-hidden,
+#settings .box .content.search-hidden {
+  display: none !important;
+}
+
+#settings-search-empty {
+  display: none;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: min(560px, calc(100vh - 270px));
+  color: var(--text-muted);
+  text-align: center;
+}
+#settings-search-empty i {
+  font-size: 28px;
+  opacity: 0.5;
+}
+#settings-search-empty p {
+  margin: 0;
+  font-size: 14px;
+}
+#settings.no-search-result #settings-search-empty {
+  display: flex;
+}
+/* With nothing to show, the empty state replaces the tab rather than sitting under an empty card. */
+#settings.no-search-result .box .content.active {
+  display: none;
+}
+
 #settings .box .container,
 #game-config .box .container {
   display: flex;
@@ -4790,6 +4938,34 @@ body {
   margin: 0;
   padding: 0;
   border-bottom: 0;
+}
+
+/* A tab scrolls well past one screen, so the header of the block you are reading pins to the top of
+   the viewport: the row under the cursor always names the section it belongs to. The card must use
+   `overflow: clip` rather than `hidden` for this — `hidden` makes the card its own (never-scrolling)
+   scrollport, which cancels sticky positioning outright. `clip` still clips to the rounded corners. */
+#settings .box .content .arrow-list,
+#settings .box .content .emulator-group,
+#settings .box .content #options-steam-api,
+#settings .box .content #epic-connect,
+#settings .box .content .settings-card {
+  overflow: clip;
+}
+#settings .box .content .arrow-list > .title,
+#settings .box .content .settings-card > .title,
+#settings .box .content #options-steam-api > .title,
+#settings .box .content #epic-connect > .title,
+#settings .box .content .emulator-group > .emulator-group-title {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--set-panel);
+}
+/* Inline headings live inside a hero/heading block, not at the top of a scrolling card. */
+#settings .emulator-hero .title,
+#settings .emulator-login-heading > .title,
+#settings .platform-guide-settings .platform-guide-head .title {
+  position: static;
 }
 
 /* ── ONE SECTION MODEL FOR EVERY TAB ───────────────────────────────────────

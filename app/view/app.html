@@ -138,18 +138,28 @@
       <section id="settings">
         <div class="overlay"></div>
         <div class="box">
-          <div class="header"><i class="fas fa-cog"></i> <span></span></div>
+          <!-- NB: the i18n loader binds the settings title with `#settings .box .header span`, so the
+               search field below must contain NO <span> — its icon and clear button use <i>/<button>. -->
+          <div class="header">
+            <i class="fas fa-cog"></i> <span></span>
+            <div id="settings-search">
+              <i class="fas fa-search"></i>
+              <input type="search" id="settings-search-input" autocomplete="off" spellcheck="false" placeholder="Search settings…" aria-label="Search settings" />
+              <button type="button" id="settings-search-clear" tabindex="-1" aria-label="Clear"><i class="fas fa-times"></i></button>
+            </div>
+          </div>
 
           <div class="container">
+            <!-- Same rule as above for the <b> counters: the loader targets `li[data-view=…] span`. -->
             <nav id="settingNav">
               <ul>
-                <li class="active" data-view="general"><i class="fas fa-tools"></i> <span></span></li>
-                <li data-view="notification"><i class="fas fa-bell"></i> <span></span></li>
-                <li data-view="source"><i class="fas fa-file-import"></i> <span></span></li>
-                <li data-view="folder"><i class="far fa-folder"></i> <span></span></li>
-                <li data-view="emulator"><i class="fas fa-microchip"></i> <span id="emulator-nav-label">Emulator</span></li>
-                <li data-view="guide"><i class="fas fa-map-signs"></i> <span id="guide-nav-label">Guide</span></li>
-                <li data-view="advanced"><i class="fas fa-flask"></i> <span></span></li>
+                <li class="active" data-view="general"><i class="fas fa-tools"></i> <span></span><b class="nav-count"></b></li>
+                <li data-view="notification"><i class="fas fa-bell"></i> <span></span><b class="nav-count"></b></li>
+                <li data-view="source"><i class="fas fa-file-import"></i> <span></span><b class="nav-count"></b></li>
+                <li data-view="folder"><i class="far fa-folder"></i> <span></span><b class="nav-count"></b></li>
+                <li data-view="emulator"><i class="fas fa-microchip"></i> <span id="emulator-nav-label">Emulator</span><b class="nav-count"></b></li>
+                <li data-view="guide"><i class="fas fa-map-signs"></i> <span id="guide-nav-label">Guide</span><b class="nav-count"></b></li>
+                <li data-view="advanced"><i class="fas fa-flask"></i> <span></span><b class="nav-count"></b></li>
               </ul>
             </nav>
 
@@ -1549,6 +1559,12 @@
                 </ul>
               </div>
             </section>
+
+            <!-- Shown instead of a tab when a search matches nothing anywhere. -->
+            <div id="settings-search-empty">
+              <i class="fas fa-search"></i>
+              <p id="settings-search-empty-text">No setting matches your search.</p>
+            </div>
           </div>
 
           <div class="footer">

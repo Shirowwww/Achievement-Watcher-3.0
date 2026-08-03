@@ -103,6 +103,10 @@
       "original": "Originál v1.6.8",
       "edit": "Upravit"
     },
+    "search": {
+      "placeholder": "Hledat nastavení…",
+      "empty": "Hledání neodpovídá žádné nastavení."
+    },
     "watchdog": {
       "startup": {
         "name": "Spustit při přihlášení",

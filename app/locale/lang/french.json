@@ -103,6 +103,10 @@
       "original": "Version originale 1.6.8",
       "edit": "Changer"
     },
+    "search": {
+      "placeholder": "Rechercher un réglage…",
+      "empty": "Aucun réglage ne correspond à votre recherche."
+    },
     "watchdog": {
       "startup": {
         "name": "Lancer au démarrage de session",

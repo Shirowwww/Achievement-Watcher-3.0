@@ -103,6 +103,10 @@
       "original": "Originale v1.6.8",
       "edit": "Modifica"
     },
+    "search": {
+      "placeholder": "Cerca impostazioni…",
+      "empty": "Nessuna impostazione corrisponde alla ricerca."
+    },
     "watchdog": {
       "startup": {
         "name": "Avvia all'accesso",

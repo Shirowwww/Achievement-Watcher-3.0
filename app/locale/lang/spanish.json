@@ -103,6 +103,10 @@
       "original": "Original v1.6.8",
       "edit": "Editar"
     },
+    "search": {
+      "placeholder": "Buscar ajustes…",
+      "empty": "Ningún ajuste coincide con tu búsqueda."
+    },
     "watchdog": {
       "startup": {
         "name": "Ejecutar al iniciar sesión",

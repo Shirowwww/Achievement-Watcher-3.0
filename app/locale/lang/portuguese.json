@@ -103,6 +103,10 @@
       "original": "Original v1.6.8",
       "edit": "Editar"
     },
+    "search": {
+      "placeholder": "Procurar definições…",
+      "empty": "Nenhuma definição corresponde à sua pesquisa."
+    },
     "watchdog": {
       "startup": {
         "name": "Executar ao iniciar sessão",

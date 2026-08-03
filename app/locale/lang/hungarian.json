@@ -103,6 +103,10 @@
       "original": "Eredeti v1.6.8",
       "edit": "Szerkesztés"
     },
+    "search": {
+      "placeholder": "Beállítások keresése…",
+      "empty": "Egyetlen beállítás sem felel meg a keresésnek."
+    },
     "watchdog": {
       "startup": {
         "name": "Indítás bejelentkezéskor",

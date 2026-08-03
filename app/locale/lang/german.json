@@ -103,6 +103,10 @@
       "original": "Original v1.6.8",
       "edit": "Bearbeiten"
     },
+    "search": {
+      "placeholder": "Einstellungen durchsuchen…",
+      "empty": "Keine Einstellung entspricht Ihrer Suche."
+    },
     "watchdog": {
       "startup": {
         "name": "Beim Anmelden starten",

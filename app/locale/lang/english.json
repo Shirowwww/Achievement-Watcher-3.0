@@ -103,6 +103,10 @@
       "original": "Original v1.6.8",
       "edit": "Edit"
     },
+    "search": {
+      "placeholder": "Search settings…",
+      "empty": "No setting matches your search."
+    },
     "watchdog": {
       "startup": {
         "name": "Run at login",

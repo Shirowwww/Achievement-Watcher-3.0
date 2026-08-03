@@ -103,6 +103,10 @@
       "original": "Oryginał v1.6.8",
       "edit": "Edytuj"
     },
+    "search": {
+      "placeholder": "Szukaj ustawień…",
+      "empty": "Żadne ustawienie nie pasuje do wyszukiwania."
+    },
     "watchdog": {
       "startup": {
         "name": "Uruchom przy logowaniu",

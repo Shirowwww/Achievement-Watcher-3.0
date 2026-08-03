@@ -22,6 +22,8 @@ The first-run guide asks for the main choices needed to populate the library:
 
 You can revisit every option later from **Settings**.
 
+The search field at the top of **Settings** filters every tab at once, and the side menu shows how many options each tab matches — useful when you remember what an option does but not where it lives. It matches labels, descriptions, the values an option offers and its internal name, so `hideZero` finds the same row in any interface language. Press `Ctrl+F` to jump to it and `Esc` to clear it.
+
 ## Find games and saves
 
 Open **Settings → Folders** and choose one of these paths:

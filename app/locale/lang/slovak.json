@@ -103,6 +103,10 @@
       "original": "Originál v1.6.8",
       "edit": "Upraviť"
     },
+    "search": {
+      "placeholder": "Hľadať nastavenia…",
+      "empty": "Hľadaniu nezodpovedá žiadne nastavenie."
+    },
     "watchdog": {
       "startup": {
         "name": "Spustiť pri prihlásení",

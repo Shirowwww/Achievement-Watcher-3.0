@@ -172,6 +172,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#game-config').hide();
       $('#settings').show();
       $('#settings .box').fadeIn();
+      // Reopening starts from the full list, not from whatever was typed last time.
+      if (typeof window.resetSettingsSearch === 'function') window.resetSettingsSearch();
       renderBlacklistManager().catch((err) => debug.log(err));
 
       for (let option in app.config.achievement) {
@@ -971,6 +973,86 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
       self.css('pointer-events', 'initial');
     });
+
+    /* ---- Settings search ---------------------------------------------------
+       Seven tabs and roughly a hundred rows means the hardest part of changing a
+       setting is remembering which tab owns it. Typing here filters the rows of
+       every tab at once and the nav counters show where the matches are, so a
+       half-remembered word is enough to find an option.
+
+       Rows are hidden with a class rather than removed: the i18n loader binds
+       most labels positionally (`li:nth-child(n)`), and :nth-child counts
+       elements whether or not they are displayed, so filtering must never touch
+       the DOM structure. */
+    const searchRules = require(path.join(appPath, 'util/settingsSearch.js'));
+
+    function clearSettingsSearch() {
+      $('#settings').removeClass('searching no-search-result');
+      $('#settings .box .content').removeClass('search-hidden');
+      $('#settings .box .content .search-hidden').removeClass('search-hidden');
+      $('#settingNav li').removeClass('no-match').find('.nav-count').text('');
+    }
+
+    function applySettingsSearch(rawQuery) {
+      if (searchRules.parseTerms(rawQuery).length === 0) {
+        clearSettingsSearch();
+        return;
+      }
+
+      $('#settings').addClass('searching');
+      const { total, perView } = searchRules.filterSections($, rawQuery);
+
+      for (const [view, count] of Object.entries(perView)) {
+        const navItem = $(`#settingNav li[data-view='${view}']`);
+        navItem.find('.nav-count').text(count);
+        navItem.toggleClass('no-match', count === 0);
+      }
+
+      $('#settings').toggleClass('no-search-result', total === 0);
+
+      // Land the user on results rather than on an empty tab, but never yank them off a tab that
+      // still has matches — that would fight their own typing.
+      if (total > 0 && $('#settingNav li.active').hasClass('no-match')) {
+        $('#settingNav li:not(.no-match)').first().trigger('click');
+      }
+    }
+
+    let searchDebounce = null;
+    $('#settings-search-input').on('input', function () {
+      const value = $(this).val();
+      clearTimeout(searchDebounce);
+      // Filtering walks every row of every tab; debouncing keeps fast typing from re-running it per
+      // keystroke while still feeling immediate.
+      searchDebounce = setTimeout(() => applySettingsSearch(value), 80);
+    });
+
+    $('#settings-search-input').on('keydown', function (e) {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        $(this).val('');
+        clearSettingsSearch();
+      }
+    });
+
+    $('#settings-search-clear').click(function () {
+      $('#settings-search-input').val('').focus();
+      clearSettingsSearch();
+    });
+
+    // Ctrl+F while Settings is open goes to the field, matching every other search box in the app.
+    $(document).on('keydown', function (e) {
+      if (!$('#settings').is(':visible')) return;
+      if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === 'f') {
+        e.preventDefault();
+        $('#settings-search-input').focus().select();
+      }
+    });
+
+    // Reopening Settings should start from a clean slate rather than the last search.
+    window.resetSettingsSearch = function () {
+      $('#settings-search-input').val('');
+      clearSettingsSearch();
+    };
 
     // Tell the user what a freshly added save/config folder actually contains: run the real scan on
     // it and report the game count, so "added but nothing shows up" stops being a mystery.

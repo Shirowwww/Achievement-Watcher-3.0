@@ -103,6 +103,10 @@
       "original": "オリジナル v1.6.8",
       "edit": "編集"
     },
+    "search": {
+      "placeholder": "設定を検索…",
+      "empty": "検索に一致する設定はありません。"
+    },
     "watchdog": {
       "startup": {
         "name": "ログイン時に起動",

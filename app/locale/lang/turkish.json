@@ -103,6 +103,10 @@
       "original": "Orijinal v1.6.8",
       "edit": "Düzenle"
     },
+    "search": {
+      "placeholder": "Ayarlarda ara…",
+      "empty": "Aramanızla eşleşen ayar yok."
+    },
     "watchdog": {
       "startup": {
         "name": "Oturum açılışında çalıştır",
