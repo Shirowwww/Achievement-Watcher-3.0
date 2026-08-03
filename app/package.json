@@ -2,7 +2,7 @@
   "private": true,
   "name": "Achievement-Watcher",
   "description": "A modern achievement tracker for PC games with real-time notifications.",
-  "version": "3.4.0",
+  "version": "3.4.1",
   "main": "./electron/init.js",
   "engines": {
     "node": "^22.22.2 || >=24.15.0"
@@ -59,10 +59,11 @@
     "xml2js": "^0.6.2"
   },
   "overrides": {
-    "protobufjs": "7.6.4",
+    "protobufjs": "7.6.5",
     "tar-fs": "2.1.4",
     "ws": "8.21.0",
-    "xml2js": "$xml2js"
+    "xml2js": "$xml2js",
+    "adm-zip": "^0.6.0"
   },
   "config": {
     "user-agent": "Chrome/",
