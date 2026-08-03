@@ -48,38 +48,38 @@ The 3.2.0 release adds dedicated detection and repair for compatible **Goldberg 
 
 | Feature | ⭐ **This fork** | [Achievements](https://github.com/PSerban93/Achievements) | [Achievement Watcher 2.x](https://github.com/darktakayanagi/Achievement-Watcher) |
 |---|:---:|:---:|:---:|
-| Modern desktop runtime | ✅ Electron 43 | ✅ Electron 40 | ❌ Electron 12 |
+| Modern desktop runtime | ✅ Electron 43 | ✅ Electron 43 | ❌ Electron 12 |
 | Unified game dashboard | ✅ | ✅ | ✅ |
-| Game + achievement search | ✅ Both | ⚠️ Game search | ✅ Both |
-| Installed-games-only filter | ✅ | ⚠️ Install-aware configs | ❌ |
-| Automatic folder discovery/config | ✅ | ✅ | ⚠️ More manual |
-| Official/local platform readers | ✅ Steam · GOG · Ubisoft · Epic · EA | ✅ Steam · GOG · Ubisoft · Epic · EA | ⚠️ Older mapped paths |
-| Native Windows toasts | ✅ | ❌ | ✅ |
+| Game + achievement search | ✅ Both | ✅ Both | ✅ Both |
+| Installed-games-only filter | ✅ | ❌ | ❌ |
+| Automatic folder discovery/config | ✅ | ✅ Auto-config | ✅ Smart Find |
+| Official/local platform readers | ✅ Steam · GOG · Ubisoft · Epic · EA | ✅ Steam · GOG · Ubisoft · Epic · EA | ⚠️ Steam · GOG · Epic · Uplay (legacy) |
+| Native Windows toasts | ✅ | ✅ Native preset | ✅ |
 | Animated in-game overlay | ✅ | ✅ | ✅ Chromium |
-| Toast + overlay together | ✅ | ❌ | ⚠️ Separate legacy transports |
+| Toast + overlay together | ✅ | ❌ | ✅ |
 | No-code custom preset builder | ✅ | ❌ | ❌ |
 | Separate rare/completion presets | ✅ | ✅ | ❌ Not documented |
-| Live ShadPS4 / Xenia unlocks | ✅ | ✅ | ❌ Planned only |
+| Live RPCS3 / ShadPS4 / Xenia unlocks | ✅ | ✅ | ⚠️ RPCS3 only |
 | Steam-emulator tracking | ✅ | ✅ | ✅ |
 | GBE runtime install + schema repair | ✅ Full | ⚠️ Auto-config/schema | ❌ Manual setup |
 | Backup and one-click restore | ✅ | ❌ | ❌ |
 | Integrated Steamless path | ✅ | ❌ | ❌ |
-| Full controller UI navigation | ✅ | ⚠️ Overlay control only | ❌ Planned only |
+| Full controller UI navigation | ✅ | ✅ Full UI + overlay | ❌ Planned only |
 | Screenshot souvenirs | ✅ | ✅ | ✅ |
-| Multiple UI themes | ✅ 4 | ✅ | ❌ |
-| Interface languages | ✅ 18 complete | ✅ Multi-language | ✅ Multi-language |
+| Multiple UI themes | ✅ 4 | ✅ 8 + user | ❌ |
+| Interface languages | ✅ 18 complete | ✅ 30 locales | ✅ 18 locales |
 | Xbox PC (Game Pass / Store) | ✅ Account import | ✅ Account import | ❌ |
 | Manual achievement unlock | ✅ | ✅ | ❌ |
 | User themes from AppData | ✅ | ✅ | ❌ |
 | Process trail (playtime for already-running games) | ✅ | ✅ | ❌ |
-| Random notification sound + FLAC/M4A/AAC | ✅ | ✅ | ❌ |
+| Random notification sound + FLAC/M4A/AAC | ✅ | ✅ | ⚠️ Custom FLAC/M4A/AAC |
 | Per-emulator notification presets (Xenia/RPCS3/ShadPS4) | ✅ | ✅ | ❌ |
 | Emulator rarity (Exophase global %) | ✅ | ✅ | ❌ |
 | Live Xbox unlock notifications | ✅ | ✅ | ❌ |
 
 This fork focuses on an all-in-one library, a quiet tray workflow, native toasts and deeper Goldberg/GBE repair. **Achievements** has a strong auto-configuration and animated-overlay workflow. **Achievement Watcher 2.x** remains the historical base with broad emulator compatibility and several legacy notification transports.
 
-<sub>✅ = supported and documented · ⚠️ = partial, manual or a different workflow · ❌ = unavailable or not documented on the current public branch. Checked against the public READMEs and default branches on 14 July 2026.</sub>
+<sub>✅ = supported and documented · ⚠️ = partial, manual or a different workflow · ❌ = unavailable or not documented on the current public branch. Checked against the public READMEs and default branches on 3 August 2026.</sub>
 
 ---
 
