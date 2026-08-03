@@ -3,6 +3,20 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 3.4.1 - 2026-08-03
+
+### Fixed
+
+- Fixed the real cause of the library reloading itself and of scans feeling slow. Each loaded game was handed to the interface from inside a `requestAnimationFrame` callback, which the browser engine only delivers to a *visible* window. Achievement Watcher lives in the tray with its window hidden, so a background scan finished having added nothing to the on-screen list; the periodic new-game check then saw the entire library as newly installed and started a full refresh — every three minutes, indefinitely. Real logs showed `54 new game(s) detected` on every tick for a 52-game library. Games are now handed over directly, so the list is correct whether or not the window is open.
+
+### Security
+
+- Updated two pinned dependencies that were held at vulnerable versions: `protobufjs` (7.6.4 → 7.6.5, denial of service via `.proto` option parsing) and `adm-zip` (0.5.18 → 0.6.0, 4 GB memory allocation from a crafted ZIP). `npm audit --omit=dev` now reports no vulnerabilities. Pinning the patched releases avoids the downgrade of `steam-user` that `npm audit fix` proposed.
+
+### Changed
+
+- Added `.gitattributes` marking the repository `whitespace=cr-at-eol`. Files here legitimately mix CRLF and LF, so `git diff --check` was reporting every CRLF line as trailing whitespace and burying genuine hits; real trailing spaces and tabs are still reported.
+
 ## 3.4.0 - 2026-08-03
 
 ### Added
