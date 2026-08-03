@@ -1,17 +1,29 @@
-# Achievement Watcher 3.4.2
+# Achievement Watcher 3.4.3
 
-Version 3.4.2 reconciles achievement rarity across sources: games that are not running under a Steam emulator — Ubisoft/Uplay in particular — now show the same Steam community percentages as native Steam games.
+Version 3.4.3 is a reliability and maintenance release: the background monitor and the automatic
+updater are hardened, the dependency tree is clean, and a batch of broken context-menu icons is fixed.
 
 ## Highlights
 
-- **Steam percentages for Uplay games.** The community % column was previously hidden for every Ubisoft/Uplay game, and there was no path to fetch Steam's global percentages for them. Uplay R2 games keep their mapped Steam AppID and now fetch them directly; official Ubisoft Connect games go through a Steam↔numeric-id bridge that translates Steam achievement names onto the game's native ids and caches the result like any other rarity. The column, the rare tiers and the percentage sort behave exactly like a Steam game's.
-- **Epic installs with a known Steam release** borrow the Steam percentages instead of showing nothing, matching their Steam siblings.
-- **No more wasted Steam lookups** for native non-Steam ids. Ubisoft Connect, GOG/Epic official, Lumaplay, EA and Xbox ids are never sent to Steam's percentages endpoint; those sources keep their own rarity (GOG/Epic sidecars, Exophase for console emulators, the Xbox import cache).
+- **Resilient background monitor.** The Watchdog is supervised with an exponential respawn backoff
+  (3 s → 60 s), a failed spawn can no longer leave it dead for the whole session, manual restarts
+  wait for the real process exit instead of a fixed delay, and uncaught exceptions restart it cleanly
+  instead of leaving it half-initialized.
+- **Self-healing automatic updates.** Failed update checks retry after 30 minutes and a healthy
+  install re-checks every 6 hours while it stays resident; errors surface as a tray notification,
+  overlapping prompts are ignored, and the dependency tree is pinned so `npm audit` reports zero
+  vulnerabilities.
+- **Restored game-list context-menu icons** (they referenced image files that no longer existed) and
+  removed the unused @1x/@4x icon scales.
+- **Leaner packages.** Dropped the unused `sound-play` dependency from the app and the Watchdog, and
+  removed stale local build output.
 
-See the [changelog](CHANGELOG.md#342---2026-08-03) for the full list of changes.
+See the [changelog](CHANGELOG.md#343---2026-08-03) for the full list of changes.
 
 ## Install
 
-Download `Achievement.Watcher.Setup.3.4.2.exe` from the [v3.4.2 release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/tag/v3.4.2).
+Download `Achievement.Watcher.Setup.3.4.3.exe` from the
+[v3.4.3 release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/tag/v3.4.3).
 
-The `.blockmap` and `latest.yml` assets are used by automatic updates. Existing settings and tracked data under `%APPDATA%\Achievement Watcher` are preserved when upgrading.
+The `.blockmap` and `latest.yml` assets are used by automatic updates. Existing settings and tracked
+data under `%APPDATA%\Achievement Watcher` are preserved when upgrading.
