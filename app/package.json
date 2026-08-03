@@ -53,14 +53,20 @@
     "request-zero": "^0.3.2",
     "semver": "^7.7.3",
     "sharp": "^0.35.1",
-    "sound-play": "^1.1.0",
     "steam-user": "^5.2.3",
     "steamid": "^2.1.0",
     "xml2js": "^0.6.2"
   },
   "overrides": {
+    "ip-address": "10.4.0",
     "protobufjs": "7.6.5",
     "tar-fs": "2.1.4",
+    "@electron/get": {
+      "undici": "7.29.0"
+    },
+    "node-gyp": {
+      "undici": "6.28.0"
+    },
     "ws": "8.21.0",
     "xml2js": "$xml2js",
     "adm-zip": "^0.6.0"
