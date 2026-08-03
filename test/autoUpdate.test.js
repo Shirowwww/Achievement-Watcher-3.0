@@ -18,9 +18,18 @@ test('packaged builds check the GitHub feed, ask before downloading, then ask be
   const init = fs.readFileSync(path.join(appRoot, 'electron', 'init.js'), 'utf8');
   assert.match(init, /autoUpdater\.autoDownload\s*=\s*false/);
   assert.match(init, /if \(app\.isPackaged\)/);
-  assert.match(init, /autoUpdater\.checkForUpdates\(\)/);
+  assert.match(init, /autoUpdater\s*\.\s*checkForUpdates\(\)/);
   assert.match(init, /autoUpdater\.on\('update-available'/);
   assert.match(init, /autoUpdater\.downloadUpdate\(\)/);
   assert.match(init, /autoUpdater\.on\('update-downloaded'/);
   assert.match(init, /autoUpdater\.quitAndInstall\(\)/);
+
+  // The updater stays supervised while the app is resident: a failed check retries after a delay,
+  // a successful one re-checks every six hours, and errors surface in the tray instead of being
+  // silently logged away.
+  assert.match(init, /scheduleUpdateCheck\(8000\)/);
+  assert.match(init, /UPDATE_RECHECK_MS/);
+  assert.match(init, /UPDATE_RETRY_MS/);
+  assert.match(init, /tray\.displayBalloon/);
+  assert.match(init, /updatePromptOpen/);
 });

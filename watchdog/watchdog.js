@@ -2,7 +2,10 @@
 
 process.on('uncaughtException', (err) => {
   console.error('Uncaught exception:', err);
-  debug?.error?.(`Uncaught exception: ${err}`); // safe optional chaining if debug isn’t loaded yet
+  debug?.error?.(`Uncaught exception: ${err && err.stack ? err.stack : err}`); // safe optional chaining if debug isn’t loaded yet
+  // The app main process supervises this monitor (launchWatchdog in app/electron/init.js) and
+  // respawns it with a backoff. Dying here is better than limping on with half-initialized state.
+  process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
@@ -480,6 +483,7 @@ var app = {
             self.start();
           }
         });
+        self.watcher[0].on('error', (err) => debug.error(`[watch:options] ${err}`));
       } catch (err) {
         debug.warn('No option file > settings live reloading disabled');
       }
@@ -935,6 +939,7 @@ var app = {
         debug.warn(err);
       }
     });
+    self.watcher[i].on('error', (err) => debug.error(`[watch:${dir}] ${err}`));
   },
   load: async function (appID) {
     try {

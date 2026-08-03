@@ -19,6 +19,53 @@ const { autoUpdater } = require('electron-updater');
 // off so an update is only applied through the explicit prompt.
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
+let updateCheckTimer = null;
+let updatePromptOpen = false;
+let updaterErrorNotified = false;
+const UPDATE_RECHECK_MS = 6 * 60 * 60 * 1000; // silent re-check while the app stays resident
+const UPDATE_RETRY_MS = 30 * 60 * 1000; // slower retry after a failed check
+
+function isVersionSkipped(version) {
+  try {
+    const skipped = configJS && configJS.general && configJS.general.skippedVersion;
+    if (typeof skipped !== 'string' || skipped.toLowerCase() === 'none') return false;
+    return require('semver').gte(skipped, version);
+  } catch {
+    return false;
+  }
+}
+
+function notifyUpdateError(message) {
+  debug.log(`[updater] ${message}`);
+  if (!updaterErrorNotified && tray) {
+    updaterErrorNotified = true;
+    try {
+      tray.displayBalloon({
+        iconType: 'warning',
+        title: 'Achievement Watcher',
+        content: `Update check failed: ${message}`,
+      });
+    } catch {}
+  }
+}
+
+function scheduleUpdateCheck(delayMs) {
+  clearTimeout(updateCheckTimer);
+  updateCheckTimer = setTimeout(() => {
+    updateCheckTimer = null;
+    if (!app.isPackaged || updatePromptOpen) return;
+    autoUpdater
+      .checkForUpdates()
+      .then(() => {
+        updaterErrorNotified = false; // a healthy check clears the "already told the user" flag
+        scheduleUpdateCheck(UPDATE_RECHECK_MS);
+      })
+      .catch((err) => {
+        notifyUpdateError(err && err.message ? err.message : String(err));
+        scheduleUpdateCheck(UPDATE_RETRY_MS);
+      });
+  }, delayMs);
+}
 const minimist = require('minimist');
 const { execSync, spawn } = require('child_process');
 const fs = require('fs');
@@ -873,10 +920,10 @@ ipcMain.handle('xbox-pc:import', async (event, opts = {}) => {
   }
 });
 
-// Kill any Watchdog currently holding the WS port (8082). The Watchdog is a detached nw.exe -> node
-// chain we cannot track by PID, so we target it by its well-known port. This is used before launching
-// a fresh Watchdog so it always loads the current code, while normal app quits leave the background
-// tracker alive for overlay/toast notifications.
+// Kill any Watchdog currently holding the WS port (8082). The monitor is normally our own supervised
+// child, but a crash of this app can leave an orphaned Watchdog behind (it outlives its parent on
+// Windows), so we sweep by the well-known port once at startup before the first launch. Normal quits
+// tear the child down explicitly; respawns skip the sweep.
 function killWatchdog() {
   try {
     const out = execSync('netstat -ano -p tcp', { encoding: 'utf8', windowsHide: true });
@@ -910,6 +957,8 @@ function killWatchdog() {
 let monitorProc = null;
 let monitorRespawnTimer = null;
 let watchdogStatusInterval = null;
+let monitorRespawnDelay = 3000;
+let watchdogSwept = false;
 
 // Route a monitor IPC message. It sends { argv: ['--wintype=overlay'|'notification', ...] } in place
 // of the legacy `Achievement Watcher.exe --wintype=...` spawn; feed it through the existing dispatch.
@@ -920,6 +969,20 @@ function handleMonitorMessage(msg) {
   } catch (err) {
     debug.log(`[monitor] message handling failed: ${err.message || err}`);
   }
+}
+
+// Schedule the supervised respawn with an exponential backoff (3s -> 6s -> 12s -> ... -> 60s cap)
+// so a monitor that crashes in a loop (bad code, missing native module, config corruption) does not
+// hammer the machine every three seconds. The backoff resets once a child survives 30 seconds.
+function scheduleMonitorRespawn() {
+  if (app.isQuiting || monitorRespawnTimer) return;
+  const delay = monitorRespawnDelay;
+  monitorRespawnDelay = Math.min(monitorRespawnDelay * 2, 60000);
+  monitorRespawnTimer = setTimeout(() => {
+    monitorRespawnTimer = null;
+    launchWatchdog();
+  }, delay);
+  debug.log(`[monitor] respawn scheduled in ${delay}ms`);
 }
 
 function launchWatchdog() {
@@ -944,10 +1007,6 @@ function launchWatchdog() {
     }
   }
 
-  // Sweep any stale detached Watchdog left by an older app version (it would hold port 8082 / the
-  // 'Achievement Watchdog' single-instance lock and double-fire notifications). No-op when none runs.
-  killWatchdog();
-
   // Run the monitor under Electron's own Node by re-launching this executable in ELECTRON_RUN_AS_NODE
   // mode (replaces the old bundled portable node.exe). The 'ipc' stdio channel and the child's
   // process.send()/'message' path are unchanged.
@@ -968,16 +1027,26 @@ function launchWatchdog() {
     child.stdout?.on('data', (d) => debug.log(`[monitor] ${String(d).trimEnd()}`));
     child.stderr?.on('data', (d) => debug.log(`[monitor:err] ${String(d).trimEnd()}`));
     child.on('message', handleMonitorMessage);
-    child.on('error', (err) => debug.log(`[monitor] spawn error: ${err.message}`));
+    child.on('error', (err) => {
+      // spawn failure (missing exe, EACCES, ...) emits 'error' but not 'exit'; without this the stale
+      // monitorProc would make every future launch return "already running" and the monitor would
+      // stay dead for the whole session.
+      debug.log(`[monitor] spawn error: ${err.message}`);
+      if (monitorProc === child) monitorProc = null;
+      scheduleMonitorRespawn();
+    });
     child.on('exit', (code, signal) => {
       debug.log(`[monitor] exited code=${code}${signal ? ` signal=${signal}` : ''}`);
-      if (monitorProc === child) monitorProc = null; // only clear if still the current child
-      // Supervise: respawn after a short backoff unless we're quitting on purpose.
-      if (!app.isQuiting && monitorProc === null) {
-        clearTimeout(monitorRespawnTimer);
-        monitorRespawnTimer = setTimeout(() => launchWatchdog(), 3000);
-      }
+      const wasCurrent = monitorProc === child;
+      if (wasCurrent) monitorProc = null; // only clear if still the current child
+      if (wasCurrent) scheduleMonitorRespawn(); // manual restarts take over their own relaunch
     });
+    // Backoff reset: if this child survives 30s the crash loop is likely over.
+    const stableTimer = setTimeout(() => {
+      if (!app.isQuiting) monitorRespawnDelay = 3000;
+    }, 30000);
+    child.once('exit', () => clearTimeout(stableTimer));
+    child.once('error', () => clearTimeout(stableTimer));
     debug.log('[monitor] launched (node.exe watchdog.js, ipc channel)');
     return { ok: true };
   } catch (err) {
@@ -986,17 +1055,31 @@ function launchWatchdog() {
   }
 }
 
-ipcMain.handle('start-watchdog', async (event, arg) => {
-  event.sender.send('reset-watchdog-status');
-  // Manual restart from the Settings button: kill the current child then relaunch so it always loads
-  // the current code. The brief delay lets the old child release port 8082 before the new one binds.
-  if (monitorProc) {
-    try {
-      monitorProc.kill();
-    } catch {}
+// Manual restart (Settings button or tray menu): kill the current child then relaunch so it always
+// loads the current code. We wait for the child's actual 'exit' (port 8082 is then free) instead of
+// a fixed sleep, with a safety fallback in case the exit event is lost.
+function restartWatchdog() {
+  monitorRespawnDelay = 3000;
+  const child = monitorProc;
+  monitorProc = null;
+  if (!child || child.exitCode !== null || child.killed) return launchWatchdog();
+  const fallback = setTimeout(() => launchWatchdog(), 5000);
+  child.once('exit', () => {
+    clearTimeout(fallback);
+    launchWatchdog();
+  });
+  try {
+    child.kill();
+  } catch {
+    clearTimeout(fallback);
+    return launchWatchdog();
   }
-  await new Promise((r) => setTimeout(r, 500));
-  return launchWatchdog();
+  return { ok: true };
+}
+
+ipcMain.handle('start-watchdog', async (event) => {
+  event.sender.send('reset-watchdog-status');
+  return restartWatchdog();
 });
 
 // --- Background emulator auto-fix (daemon) -----------------------------------
@@ -2775,14 +2858,7 @@ function createTray() {
         { label: 'Open Achievement Watcher', click: () => createMainWindow() },
         {
           label: 'Restart background monitor',
-          click: () => {
-            if (monitorProc) {
-              try {
-                monitorProc.kill();
-              } catch {}
-            }
-            setTimeout(() => launchWatchdog(), 500);
-          },
+          click: () => restartWatchdog(),
         },
         { type: 'separator' },
         {
@@ -2813,52 +2889,74 @@ try {
   autoUpdater.on('checking-for-update', () => debug.log('[updater] checking for updates'));
   autoUpdater.on('update-available', async (info) => {
     debug.log(`[updater] update available: ${info.version}`);
-    await startEngines();
-    const skippedVersion = configJS.general.skippedVersion;
-    if (skippedVersion.toLowerCase() !== 'none' && require('semver').gte(skippedVersion, info.version)) {
-      debug.log(`[updater] version ${info.version} skipped (skippedVersion=${skippedVersion})`);
+    if (updatePromptOpen) {
+      debug.log('[updater] a prompt is already open; ignoring duplicate update-available');
       return;
     }
-    const { response } = await dialog.showMessageBox({
-      type: 'info',
-      title: 'Update Available',
-      message: `A new version (${info.version}) is available.`,
-      detail: 'Download and install it now?',
-      buttons: ['Download & Install', 'Later', 'Skip this version'],
-      defaultId: 0,
-      cancelId: 1,
-    });
-    if (response === 0) {
-      debug.log(`[updater] user accepted download of ${info.version}`);
-      autoUpdater.downloadUpdate().catch((err) => debug.log(`[updater] download failed: ${err.message || err}`));
-    } else if (response === 2) {
-      configJS.general.skippedVersion = info.version;
-      settingsJS.save(configJS);
-      debug.log(`[updater] version ${info.version} skipped by user`);
+    try {
+      await startEngines();
+    } catch (err) {
+      debug.log(`[updater] config load failed before prompt: ${err.message || err}`);
+    }
+    if (isVersionSkipped(info.version)) {
+      debug.log(`[updater] version ${info.version} skipped (skippedVersion=${configJS && configJS.general.skippedVersion})`);
+      return;
+    }
+    updatePromptOpen = true;
+    try {
+      const { response } = await dialog.showMessageBox({
+        type: 'info',
+        title: 'Update Available',
+        message: `A new version (${info.version}) is available.`,
+        detail: 'Download and install it now?',
+        buttons: ['Download & Install', 'Later', 'Skip this version'],
+        defaultId: 0,
+        cancelId: 1,
+      });
+      if (response === 0) {
+        debug.log(`[updater] user accepted download of ${info.version}`);
+        autoUpdater.downloadUpdate().catch((err) => notifyUpdateError(`download failed: ${err.message || err}`));
+      } else if (response === 2) {
+        configJS.general.skippedVersion = info.version;
+        settingsJS.save(configJS);
+        debug.log(`[updater] version ${info.version} skipped by user`);
+      }
+    } finally {
+      updatePromptOpen = false;
     }
   });
   autoUpdater.on('update-not-available', (info) => debug.log(`[updater] current version is up to date (${info.version})`));
-  autoUpdater.on('error', (err) => debug.log(`[updater] ${err.message || err}`));
+  autoUpdater.on('error', (err) => notifyUpdateError(err && err.message ? err.message : String(err)));
   autoUpdater.on('update-downloaded', async (info) => {
-    await startEngines();
-    const skippedVersion = configJS.general.skippedVersion;
-    if (skippedVersion.toLowerCase() !== 'none' && require('semver').gte(skippedVersion, info.version)) {
+    if (updatePromptOpen) {
+      debug.log('[updater] a prompt is already open; ignoring duplicate update-downloaded');
       return;
     }
-    const { response } = await dialog.showMessageBox({
-      type: 'info',
-      title: 'Update Ready',
-      message: `A new version (${info.version}) has been downloaded.`,
-      detail: `Would you like to install it now?`,
-      buttons: ['Yes', 'Later', 'Skip this version'],
-      defaultId: 0,
-      cancelId: 1,
-    });
+    try {
+      await startEngines();
+    } catch (err) {
+      debug.log(`[updater] config load failed before install prompt: ${err.message || err}`);
+    }
+    if (isVersionSkipped(info.version)) return;
+    updatePromptOpen = true;
+    try {
+      const { response } = await dialog.showMessageBox({
+        type: 'info',
+        title: 'Update Ready',
+        message: `A new version (${info.version}) has been downloaded.`,
+        detail: `Would you like to install it now?`,
+        buttons: ['Yes', 'Later', 'Skip this version'],
+        defaultId: 0,
+        cancelId: 1,
+      });
 
-    if (response === 0) autoUpdater.quitAndInstall();
-    else if (response === 2) {
-      configJS.general.skippedVersion = info.version;
-      settingsJS.save(configJS);
+      if (response === 0) autoUpdater.quitAndInstall();
+      else if (response === 2) {
+        configJS.general.skippedVersion = info.version;
+        settingsJS.save(configJS);
+      }
+    } finally {
+      updatePromptOpen = false;
     }
   });
 
@@ -2886,17 +2984,19 @@ try {
       }
       createTray();
       // electron-updater reads resources/app-update.yml generated by electron-builder. Checking a
-      // few seconds after startup keeps the tray responsive; autoDownload then leads into the
-    // update-available prompt above (proposes the download first), then the update-downloaded prompt
-    // proposes the install. Development runs never contact the release feed.
-      if (app.isPackaged) {
-        setTimeout(() => {
-          autoUpdater.checkForUpdates().catch((err) => debug.log(`[updater] check failed: ${err.message || err}`));
-        }, 8000);
-      }
+      // few seconds after startup keeps the tray responsive; failed checks retry and healthy checks
+      // re-run periodically while the app stays resident (see scheduleUpdateCheck). Development
+      // runs never contact the release feed.
+      if (app.isPackaged) scheduleUpdateCheck(8000);
       if (safeMode) {
         debug.log('[safe-mode] startup monitor/background scans skipped');
       } else {
+        if (!watchdogSwept) {
+          watchdogSwept = true;
+          // Sweep stale detached Watchdogs from older app versions once, before the first launch.
+          // They would hold port 8082 / the single-instance lock and double-fire notifications.
+          killWatchdog();
+        }
         launchWatchdog();
         scheduleBackgroundAutoFix(); // headless emulator auto-fix while the window stays closed
       }
