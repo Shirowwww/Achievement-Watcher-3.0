@@ -675,7 +675,7 @@ ipcMain.on('fetch-source-img', async (event, arg) => {
     case 'Unconfigured':
       // Exe-detected-only entry (no Steam appid match) — use a generic file icon instead of the
       // Steam logo so these don't look like confirmed Steam games in the list.
-      event.returnValue = path.join(__dirname, '../resources/img/file-text@2x.png');
+      event.returnValue = path.join(__dirname, '../resources/img/file-text.png');
       break;
     case 'steam':
     default:
