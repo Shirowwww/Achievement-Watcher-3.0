@@ -15,6 +15,10 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The Watchdog no longer re-notifies the latest pre-unlocked achievements on every save-file change
+  after a fresh install: the per-game baseline cache folder (`steam_cache/data`) is now created before
+  the first write, baselines are saved atomically, and a failed disk write keeps the baseline in
+  memory for the session instead of making the next scan look like a first observation.
 - Presets that previously required a full `displayName`/`description`/`iconPath` payload (Modern,
   Neon Future, LAZ0RBOX, PS5 presets, Xbox 360, xqjan) now render whatever fields are present, so
   progress-only and playtime notifications no longer skip their content.

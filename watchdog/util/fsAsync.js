@@ -15,4 +15,7 @@ module.exports = {
   exists,
   readFile: fs.promises.readFile.bind(fs.promises),
   writeFile: fs.promises.writeFile.bind(fs.promises),
+  mkdir: fs.promises.mkdir.bind(fs.promises),
+  rename: fs.promises.rename.bind(fs.promises),
+  unlink: fs.promises.unlink.bind(fs.promises),
 };

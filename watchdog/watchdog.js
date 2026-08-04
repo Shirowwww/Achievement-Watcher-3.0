@@ -879,7 +879,11 @@ var app = {
                 }
               }
             }
-            await track.save(appID, achievements);
+            try {
+              await track.save(appID, achievements);
+            } catch (err) {
+              debug.error(`[track] failed to persist baseline for ${appID}: ${err.message || err} — keeping the in-memory baseline for this session`);
+            }
 
             // Fire a dedicated Platinum toast when this scan flips the game to 100%.
             const platinumNowUnlocked = achievements.filter((a) => a.Achieved == 1).length;
