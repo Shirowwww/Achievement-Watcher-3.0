@@ -20,6 +20,7 @@ const htmlParser = require('node-html-parser');
 const fs = require('fs');
 const saveRoots = require(path.join(appPath, 'parser/saveRoots.js'));
 const uplayR2 = require(path.join(appPath, 'parser/uplayR2.js'));
+const emuIni = require(path.join(appPath, 'util/emuIni.js'));
 
 let listReady = true;
 let steamUsersList;
@@ -396,6 +397,7 @@ module.exports.getAchievementsFromFile = async (filePath) => {
     const filter = ['SteamAchievements', 'Steam64', 'Steam'];
 
     let local;
+    let matchedFile;
     for (let file of files) {
       try {
         if (path.parse(file).ext == '.json') {
@@ -405,6 +407,7 @@ module.exports.getAchievementsFromFile = async (filePath) => {
         } else {
           local = ini.parse(fs.readFileSync(path.join(filePath, file), 'utf8'));
         }
+        matchedFile = file;
         break;
       } catch (e) {}
     }
@@ -437,12 +440,31 @@ module.exports.getAchievementsFromFile = async (filePath) => {
       }
     } else if (local.ACHIEVEMENTS) {
       //TENOKE
+      // user_stats.ini also carries a sibling [STATS] section (raw stat values for progress-type
+      // achievements, e.g. "kill 100 enemies"). Tenoke ties an achievement's progress stat to its OWN
+      // key name (no separate stat-name indirection like the GBE/Goldberg schema's operand1), so a
+      // same-key lookup is enough — cross-referenced here since achievements.js has no other chance to
+      // see the STATS section once this function returns only the ACHIEVEMENTS-derived result.
+      // The `ini` package preserves section casing as written, and repacks don't agree on it
+      // (`[STATS]` vs `[Stats]`) — find the section case-insensitively.
+      const statsSectionKey = Object.keys(local).find((k) => String(k).toLowerCase() === 'stats');
+      const statsSection = statsSectionKey && typeof local[statsSectionKey] === 'object' ? local[statsSectionKey] : {};
+      const tenokeStatValues = {};
+      for (let s in statsSection) {
+        if (!Object.prototype.hasOwnProperty.call(statsSection, s)) continue;
+        const statKey = s.replace(/^"|"$/g, '');
+        const statNum = Number(String(statsSection[s]).replace(/,\s*$/, ''));
+        if (statKey && Number.isFinite(statNum)) tenokeStatValues[statKey] = statNum;
+      }
+
       for (let i in local.ACHIEVEMENTS) {
         if (!Object.prototype.hasOwnProperty.call(local.ACHIEVEMENTS, i)) continue;
         const key = i.replace(/^"|"$/g, '');
         const raw = local.ACHIEVEMENTS[i]; // e.g. "{unlocked=true, time=1712253396}"
         const unlockedMatch = /unlocked\s*=\s*(true|false)/i.exec(raw);
         const timeMatch = /time\s*=\s*(\d+)/i.exec(raw);
+        // Older Tenoke saves can store progress inline on the achievement entry itself.
+        const progressMatch = /(?:progress|value)\s*=\s*([\d.]+)/i.exec(raw);
 
         const unlocked = unlockedMatch ? unlockedMatch[1].toLowerCase() === 'true' : false;
         const time = timeMatch ? Number(timeMatch[1]) : 0;
@@ -451,6 +473,11 @@ module.exports.getAchievementsFromFile = async (filePath) => {
           Achieved: unlocked ? '1' : '0',
           UnlockTime: time,
         };
+        if (progressMatch) {
+          result[key].CurProgress = Number(progressMatch[1]);
+        } else if (key in tenokeStatValues) {
+          result[key].CurProgress = tenokeStatValues[key];
+        }
       }
     } else {
       result = omit(local.ACHIEVE_DATA || local, filter);
@@ -471,6 +498,38 @@ module.exports.getAchievementsFromFile = async (filePath) => {
           //creamAPI
           result[i].unlocktime = +result[i].unlocktime * 1000; //cf: https://cs.rin.ru/forum/viewtopic.php?p=2074273#p2074273 | timestamp is invalid/incomplete
         }
+      }
+    }
+
+    // Online-Fix (and similar Goldberg-family repacks) split raw stat values into a sibling Stats.ini
+    // next to achievements.ini instead of embedding progress inline. Merge any values found there —
+    // keyed one level up, next to whichever achievements.ini variant matched — so
+    // parser/statProgress.js's applyLocalStatProgress can resolve progress-type achievements via the
+    // local GBE schema's stat_name (progress.value.operand1). Never touch entries that are already
+    // real achievements.
+    if (matchedFile && /achievements\.ini$/i.test(matchedFile)) {
+      for (const statsName of ['Stats.ini', 'stats.ini']) {
+        const statsPath = path.join(filePath, path.dirname(matchedFile), statsName);
+        let statsSize = -1;
+        try {
+          statsSize = fs.statSync(statsPath).size;
+        } catch {
+          continue; // doesn't exist under this casing — try the next candidate
+        }
+        if (statsSize === 0) break; // present but empty: nothing to merge, not an error
+        try {
+          const doc = emuIni.parseIni(fs.readFileSync(statsPath, 'utf8'));
+          const values = emuIni.readIniSectionValues(doc, 'Stats');
+          const resultKeys = new Set(Object.keys(result).map((k) => String(k).toUpperCase()));
+          for (const [name, raw] of Object.entries(values)) {
+            // readIniSectionValues lower-cases stat names while achievement keys keep the repack's
+            // original casing, so the shadow guard must be case-insensitive.
+            if (resultKeys.has(String(name).toUpperCase())) continue; // never shadow a real achievement entry
+            const num = Number(raw);
+            if (Number.isFinite(num)) result[name] = num;
+          }
+        } catch (e) {}
+        break;
       }
     }
 

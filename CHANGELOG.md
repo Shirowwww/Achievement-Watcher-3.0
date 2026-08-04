@@ -5,10 +5,25 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- Online-Fix emu support: a sibling `Stats.ini` next to `achievements.ini` is now merged into the
+  parsed save, so progress-type achievements resolve through the local Goldberg/GBE schema instead
+  of showing 0% forever.
+- TENOKE `user_stats.ini` stat support: `[STATS]` values are cross-referenced onto same-key
+  achievements (and inline `progress=`/`value=` entries on the achievement itself are honored), so
+  Tenoke progress-type achievements display real progress.
+- Epic appid detection: legacy NemirtingasEpicEmu installs (hex artifact ids) now resolve their real
+  Epic namespace/title through egdata.app, reuse the same cached, localized, rarity-annotated schema
+  as official Epic installs, and fetch their community rarity against the correct product id instead
+  of the artifact id.
+
 ### Fixed
 
 - The update prompt's "Download & Install" button now shows its ampersand literally. Windows was
   treating the single `&` as a keyboard-mnemonic prefix, which hid it from the button label.
+- Achievement progress is no longer permanently zeroed when a save file lacks `MaxProgress`: the
+  parser leaves the field unset so the schema's own `max_progress` fallback still applies.
 
 ## 3.4.3 - 2026-08-03
 

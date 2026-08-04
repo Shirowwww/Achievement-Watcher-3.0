@@ -1983,6 +1983,11 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
               typeof root[i] === 'object' &&
               ['Achieved', 'achieved', 'State', 'HaveAchieved', 'Unlocked', 'unlocked', 'earned'].some((k) => k in root[i]);
 
+            // Leave MaxProgress unset (rather than defaulting to 0) when the save file itself doesn't
+            // carry one: Object.assign below would otherwise stamp achievement.MaxProgress = 0 and
+            // permanently hide the schema's own max_progress (app.js reads `MaxProgress ?? max_progress`,
+            // and 0 is not nullish, so the schema fallback never kicks in once a 0 is written).
+            const rawMaxProgress = root[i].MaxProgress || root[i].max_progress;
             let parsed = {
               Achieved:
                 isTruthyFlag(root[i].Achieved) ||
@@ -1996,7 +2001,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
                   ? true
                   : false,
               CurProgress: root[i].CurProgress || root[i].progress || 0,
-              MaxProgress: root[i].MaxProgress || root[i].max_progress || 0,
+              ...(rawMaxProgress ? { MaxProgress: rawMaxProgress } : {}),
               UnlockTime:
                 root[i].UnlockTime ||
                 root[i].unlocktime ||

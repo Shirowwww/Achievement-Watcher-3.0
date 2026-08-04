@@ -15,6 +15,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { resolveEpicArtifactIdentity } = require('./epicIdentity.js');
 
 const CACHE_DIR = path.join(process.env['APPDATA'] || '', 'Achievement Watcher', 'steam_cache', 'rarity');
 const DEFAULT_TTL_MS = 6 * 60 * 60 * 1000; // 6h — global unlock % drifts slowly, no need to refetch per view
@@ -98,6 +99,21 @@ async function fetchEpicGlobalAchievementPercentages(productId, options = {}) {
   return out;
 }
 
+// `appid` here is parser/epic.js's NemirtingasEpicEmu artifact id (a hex string), not the Epic
+// productId the public achievements endpoint expects — resolve the real productId (catalogItemId)
+// via egdata.app first so legacy Epic-emu installs get real rarity instead of a near-always-empty
+// lookup against the wrong id. Falls back to the raw id when resolution fails (unchanged behavior).
+async function fetchEpicRarityByArtifactId(appid, options = {}) {
+  let productId = appid;
+  try {
+    const identity = await resolveEpicArtifactIdentity(appid);
+    if (identity?.catalogItemId) productId = identity.catalogItemId;
+  } catch {
+    /* identity lookup is best-effort — fall back to the raw id below */
+  }
+  return fetchEpicGlobalAchievementPercentages(productId, options);
+}
+
 // GOG gameplay % requires a logged-in user id + access token (the desktop client's). When those are
 // not available the caller simply gets an empty set — rarity is a non-essential enrichment.
 async function fetchGogGlobalAchievementPercentages(productId, options = {}) {
@@ -146,7 +162,7 @@ function fetchForSource(appid, source, options) {
       achievements: options.achievements,
     });
   }
-  if (source === 'epic') return fetchEpicGlobalAchievementPercentages(appid, options);
+  if (source === 'epic') return fetchEpicRarityByArtifactId(appid, options);
   if (source === 'gog') return fetchGogGlobalAchievementPercentages(appid, options);
   if (CACHE_ONLY_SOURCES.has(source)) return Promise.resolve([]);
   return fetchSteamGlobalAchievementPercentages(appid, options);
@@ -331,6 +347,7 @@ module.exports = {
   RARITY_SOURCES,
   normalizeRarityPercent,
   normalizeSteamBridgeName,
+  fetchEpicRarityByArtifactId,
   fetchSteamGlobalAchievementPercentages,
   fetchEpicGlobalAchievementPercentages,
   fetchGogGlobalAchievementPercentages,

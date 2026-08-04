@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const glob = require('fast-glob');
 const request = require('request-zero');
+const epicIdentity = require('../util/epicIdentity.js');
 
 let gameList;
 let cacheRoot;
@@ -104,6 +105,7 @@ module.exports.getCachedData = async (cfg) => {
 };
 
 module.exports.getGameData = async (cfg) => {
+  const { ipcRenderer } = require('electron');
   const cache = path.join(cacheRoot, 'steam_cache/schema', cfg.lang);
   let filePath = path.join(`${cache}`, `${cfg.appID}.db`);
   let result;
@@ -117,7 +119,30 @@ module.exports.getGameData = async (cfg) => {
   }
   let list = [];
   let title;
-  let icon;
+
+  // Resolve the real Epic namespace/title from the artifact id via egdata.app's public index first —
+  // far more reliable than the store-content productmapping below (dead for many delisted/renamed
+  // titles) and it lets us reuse epicOfficial's cached, localized, rarity-annotated schema fetchers
+  // instead of a direct achievements-by-id lookup (which is often mis-targeted: `cfg.appID` here is
+  // the artifact id, not the Epic productId the public achievements endpoint expects).
+  let identity = null;
+  try {
+    identity = await epicIdentity.resolveEpicArtifactIdentity(cfg.appID);
+  } catch (err) {
+    debug.log(`[epic ${cfg.appID}] egdata artifact identity lookup failed => ${err}`);
+  }
+  if (identity && identity.namespace) {
+    try {
+      const epicOfficial = require('./epicOfficial.js');
+      const schema = await epicOfficial.getSchemaByNamespace(identity.namespace, cfg.lang);
+      if (schema && Array.isArray(schema.list) && schema.list.length > 0) list = schema.list;
+    } catch (err) {
+      debug.log(`[epic ${cfg.appID}] namespace schema fetch failed => ${err}`);
+    }
+    if (identity.displayName) title = identity.displayName;
+  }
+
+  if (!title) {
   try {
     if (!gameList) gameList = JSON.parse(await getEpicProductMapping());
     const gameSlug = gameList[cfg.appID];
@@ -128,10 +153,12 @@ module.exports.getGameData = async (cfg) => {
     //lets assume its new and search for it on the epic games store
     title = ipcRenderer.sendSync('get-title-from-epic-id', { appid: cfg.appID }) || 'Unknown game';
   }
+  }
   if (!title) return result;
-  let achievements;
+
+  if (list.length === 0) {
   try {
-    achievements = await request.getJson(
+      const achievements = await request.getJson(
       `https://api.epicgames.dev/epic/achievements/v1/public/achievements/product/${cfg.appID}/locale/en-us?includeAchievements=true`
     );
     for (let achievement of achievements.achievements) {
@@ -154,6 +181,7 @@ module.exports.getGameData = async (cfg) => {
     if (!cfg.steamappid) return result;
     const achs = await ipcRenderer.invoke('get-steam-data', { appid: cfg.steamappid, type: 'steamhunters' });
     list = Array.isArray(achs?.achievements) ? achs.achievements : []; //guard: empty scrape must not throw and drop the game
+  }
   }
 
   result = {

@@ -11,6 +11,7 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-rarity-'));
 process.env.APPDATA = tmp;
 
 const rarity = require('../app/util/rarity.js');
+const { clearEpicIdentityCache } = require('../app/util/epicIdentity.js');
 
 after(() => {
   try {
@@ -88,6 +89,38 @@ test('getSteamBridgeRarity seeds the bridge cache when missing', async () => {
     const cached = rarity.readRarityCache('uplay-1234');
     assert.equal(cached.source, 'steam-global-achievement-percentages');
     assert.deepEqual(cached.entries, [{ name: '1', percent: 12.5 }]);
+  });
+});
+
+test('fetchEpicRarityByArtifactId resolves the real productId via egdata before fetching percentages', async () => {
+  clearEpicIdentityCache();
+  const calls = [];
+  await withFetchStub(async (url) => {
+    calls.push(String(url));
+    if (String(url).includes('api.egdata.app/assets/')) {
+      return { status: 200, json: async () => ({ artifactId: 'deadbeef', itemId: 'cid-real-product', namespace: 'ns-x' }) };
+    }
+    if (String(url).includes('api.egdata.app/items/')) {
+      return { status: 200, json: async () => ({ title: 'X' }) };
+    }
+    assert.ok(url.includes('/product/cid-real-product/'), `expected the resolved catalogItemId in the percentages URL, got ${url}`);
+    return { ok: true, json: async () => ({ achievements: [{ achievement: { name: 'A1', rarity: { percent: 42 } } }] }) };
+  }, async () => {
+    const entries = await rarity.fetchEpicRarityByArtifactId('deadbeef');
+    assert.deepEqual(entries, [{ name: 'A1', percent: 42 }]);
+  });
+  assert.ok(calls.some((u) => u.includes('/product/cid-real-product/')), 'percentages must be fetched with the resolved productId');
+});
+
+test('fetchEpicRarityByArtifactId falls back to the raw id when identity resolution fails', async () => {
+  clearEpicIdentityCache();
+  await withFetchStub(async (url) => {
+    if (String(url).includes('api.egdata.app/')) return { status: 500, json: async () => ({}) };
+    assert.ok(url.includes('/product/deadc0de/'), `expected the raw id in the percentages URL, got ${url}`);
+    return { ok: true, json: async () => ({ achievements: [] }) };
+  }, async () => {
+    const entries = await rarity.fetchEpicRarityByArtifactId('deadc0de');
+    assert.deepEqual(entries, []);
   });
 });
 
