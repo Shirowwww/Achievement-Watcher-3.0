@@ -3,15 +3,30 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 3.5.2 - 2026-08-04
 
 ### Added
 
+- Local Windows builds can now be signed with a self-signed `CN=Shirow`
+  certificate (`build/signing/create-self-signed-cert.ps1`); `npm run build`
+  signs automatically when the local PFX exists. Installing the certificate
+  into the Windows trust stores is opt-in (`-InstallTrust`) so the script
+  never shows a certificate-install prompt by default. Windows publisher
+  metadata (used by the firewall prompt) is now `Shirow` instead of the
+  original author.
 - Every overlay notification preset now consumes the same payload richness as the Shirow preset:
   rare achievements get a gold/silver/bronze tier (accent, glow and progress colors) and progress
   notifications show a real progress bar with a `current/max - %` label. This covers all bundled
   presets, the user presets and the custom preset builder. Presets that lacked it also gained
   marquee scrolling for long titles/descriptions so text stays readable.
+- Smart Find now probes `Program Files\Games` and `Program Files (x86)\Games`, and the default
+  library folder list includes `C:\Games`.
+
+### Changed
+
+- Notification delivery now defaults to the in-game overlay with the Shirow preset instead of
+  Windows toasts; first-run onboarding, settings and the Watchdog defaults were updated, while
+  existing saved settings keep their previous choice.
 
 ### Fixed
 
@@ -22,6 +37,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - Presets that previously required a full `displayName`/`description`/`iconPath` payload (Modern,
   Neon Future, LAZ0RBOX, PS5 presets, Xbox 360, xqjan) now render whatever fields are present, so
   progress-only and playtime notifications no longer skip their content.
+- Smart Find no longer adds Steam library/install paths (`Steam`, `SteamLibrary`, `steamapps`, …)
+  as emulator scan roots, and Steam-sourced library entries no longer show a redundant Steam
+  source icon or dll badge.
 
 ## 3.5.1 - 2026-08-04
 

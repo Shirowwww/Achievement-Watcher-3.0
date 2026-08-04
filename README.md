@@ -43,14 +43,16 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 Recent releases have focused on covering more games and making the library trustworthy: **3.5.0**
 adds Online-Fix `Stats.ini` and TENOKE `user_stats.ini` progress support, resolves legacy Epic
 (NemirtingasEpicEmu) installs to their real schema, titles and rarity, and stops achievement progress
-from being zeroed when a save file lacks a `MaxProgress`; **3.5.1** fixes the Xbox / Microsoft login
-window staying open after the consent page is accepted. **3.3.0** brought Xbox PC (Game Pass /
-Microsoft Store) import and live unlock notifications, user themes, per-emulator overlay presets,
-emulator rarity from Exophase, manual unlock, random sounds, per-platform metadata links and
-process-trail playtime. The **3.4.x** line added Steam community percentages for non-Steam sources,
-a settings search field, deeper Goldberg Uplay R2 diagnosis and repair, a supervised background
-monitor and a hardened automatic updater. See the [changelog](CHANGELOG.md) for the complete
-per-release scope.
+from being zeroed when a save file lacks a `MaxProgress`; **3.5.2** makes the in-game overlay the
+default notification delivery (Shirow preset), keeps Steam library paths out of emulator scans,
+cleans up Steam-sourced badges and adds optional self-signed signing for local builds; **3.5.1**
+fixes the Xbox / Microsoft login window staying open after the consent page is accepted. **3.3.0**
+brought Xbox PC (Game Pass / Microsoft Store) import and live unlock notifications, user themes,
+per-emulator overlay presets, emulator rarity from Exophase, manual unlock, random sounds,
+per-platform metadata links and process-trail playtime. The **3.4.x** line added Steam community
+percentages for non-Steam sources, a settings search field, deeper Goldberg Uplay R2 diagnosis and
+repair, a supervised background monitor and a hardened automatic updater. See the
+[changelog](CHANGELOG.md) for the complete per-release scope.
 
 ---
 
