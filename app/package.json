@@ -13,9 +13,11 @@
     "clean": "npm prune --omit=dev",
     "prepare": "patch-package",
     "prepare:watchdog": "cd ../watchdog && npm prune --omit=dev",
-    "build": "npm run prepare:watchdog && electron-builder --config electron-builder.yml --publish never"
+    "build": "npm run prepare:watchdog && node build/build.js"
   },
-  "author": "Anthony Beaumont",
+  "author": {
+    "name": "Shirow"
+  },
   "license": "LGPL-3.0-only",
   "devDependencies": {
     "electron": "^43.1.0",

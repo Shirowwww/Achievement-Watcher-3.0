@@ -22,6 +22,11 @@ win:
   icon: build/icon.ico
   target: nsis
   artifactName: 'Achievement.Watcher.Setup.${version}.${ext}'
+  # Code signing: no trusted certificate is configured. `npm run build`
+  # signs automatically when app/build/signing/Shirow.pfx exists (created by
+  # build/signing/create-self-signed-cert.ps1); otherwise the build stays
+  # unsigned. The Windows publisher shown to the firewall is "Shirow"
+  # (CompanyName metadata + certificate subject CN=Shirow).
 
 nsis:
   oneClick: false

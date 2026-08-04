@@ -1,0 +1,4 @@
+# Private signing material - never commit these.
+*.pfx
+*.cer
+.password

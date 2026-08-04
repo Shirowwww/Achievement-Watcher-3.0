@@ -132,7 +132,75 @@ The Watchdog runs under Electron's bundled Node runtime through `ELECTRON_RUN_AS
 
 ### Signing
 
-No trusted code-signing certificate is configured. Installers built from the repository are unsigned and may trigger SmartScreen. A release must not be described as signed unless a real certificate and signature verification have been added.
+No *trusted* code-signing certificate is configured, so public releases remain
+unsigned and may trigger SmartScreen. For local builds, the repository
+supports signing with a self-signed certificate:
+
+```powershell
+Push-Location app
+powershell -ExecutionPolicy Bypass -File build/signing/create-self-signed-cert.ps1
+Pop-Location
+```
+
+The script creates `CN=Shirow` and exports `app/build/signing/Shirow.pfx`
+plus a local `.password` file (both git-ignored). It does not touch the
+Windows trust stores by default, so it never shows a certificate-install
+prompt. Once the PFX exists, `npm run build` signs the app and installer
+automatically; without it the build stays unsigned (see `app/build/build.js`).
+
+To also suppress SmartScreen on a machine you control, run the script again
+with `-InstallTrust` (accepting the one-time Windows confirmation):
+
+```powershell
+Push-Location app
+powershell -ExecutionPolicy Bypass -File build/signing/create-self-signed-cert.ps1 -InstallTrust
+Pop-Location
+```
+
+That confirmation only ever appears on the machine where the script is run -
+people who download or run the app are never asked to install a certificate.
+
+Important: a self-signed certificate removes the SmartScreen
+"Windows protected your PC" warning only on machines that trust the
+certificate (this script trusts it for the current Windows user). Other
+machines still need either this certificate installed or a certificate issued
+by a public CA. A release must never be described as signed by a trusted
+publisher unless a real certificate and signature verification have been added.
+
+The Windows Firewall prompt shows the publisher name from the executable
+metadata and the signing certificate subject; both are set to `Shirow`
+(CompanyName comes from `author` in `app/package.json`).
+
+### Why self-signed cannot silence SmartScreen for users
+
+Microsoft's official SmartScreen documentation is explicit: a self-signed
+certificate has the same first-download behavior as no signature at all -
+Windows still shows "Windows protected your PC". There is no registry key,
+flag, or build option that changes this for machines that do not trust the
+certificate. The only real paths to a warning-free install for end users are:
+
+1. **Publish through the Microsoft Store.** Store apps are re-signed by
+   Microsoft and never show a SmartScreen download warning. This is the only
+   option with a guaranteed absence of warnings.
+2. **Sign with a public code-signing certificate (OV/EV) or Microsoft
+   Artifact Signing** (formerly Trusted Signing, roughly $10/month). Even
+   then, a brand-new file is flagged as "unrecognized" until reputation
+   accumulates (typically weeks and hundreds of downloads). EV certificates
+   no longer bypass SmartScreen; they only make the verified publisher name
+   visible instead of "unknown publisher".
+3. **Enterprise-only:** distribute from a trusted intranet location, or let
+   an IT administrator submit files through the Microsoft Security
+   Intelligence portal.
+
+For one machine you control, installing the self-signed certificate into that
+machine's trusted stores (`-InstallTrust`) is the only local way to avoid the
+warning - it never applies to other users.
+
+References:
+
+- [SmartScreen reputation for Windows app developers (Microsoft Learn)](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/smartscreen-reputation)
+- [What is Artifact Signing? (Microsoft Learn)](https://learn.microsoft.com/en-us/azure/trusted-signing/overview)
+- [electron-builder Code Signing documentation](https://www.electron.build/docs/features/code-signing)
 
 ## Versioning
 
