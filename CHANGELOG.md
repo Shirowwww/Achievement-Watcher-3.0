@@ -3,6 +3,16 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- Interface translations across the bundled locales: corrected false-friend
+  terms ("Disabled" no longer reads as "disabled person", "Toast" no longer
+  reads as toasted bread), aligned onboarding labels with the wording used in
+  Settings (Smart Find, Overlay, Enabled/Disabled), fixed capitalization in
+  onboarding steps, and cleaned up English source punctuation.
+
 ## 3.5.2 - 2026-08-04
 
 ### Added

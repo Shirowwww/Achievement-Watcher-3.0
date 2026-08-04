@@ -49,7 +49,7 @@
   "revealedOnceUnlocked": "Details for each achievement will be revealed once unlocked",
   "hiddenDescriptionPlaceholder": "Hidden — click to reveal",
   "noneUnlocked": "No achievement unlocked yet",
-  "play": "Start playing !",
+  "play": "Start playing!",
   "noneUnlockedHint": "Not seeing any unlocks? Check the FAQ / Troubleshooting section of the",
   "scrollUp": "Scroll up",
   "allGamesBackButton": "All Games",
@@ -156,7 +156,7 @@
       },
       "timeMerge": {
         "name": "Timestamp merge",
-        "description": "When merging duplicates, which time value is preferred ?",
+        "description": "When merging duplicates, which time value is preferred?",
         "value": {
           "recent": "Recent",
           "oldest": "Oldest"
@@ -514,7 +514,7 @@
       }
     },
     "folder": {
-      "headline": "Where to look for achievements files :",
+      "headline": "Where to look for achievement files:",
       "default": "Default Dir",
       "custom": "User Dir",
       "addInfo": [
@@ -538,7 +538,7 @@
       "title": "Game sources",
       "legitSteam": {
         "name": "Display Steam Games",
-        "description": "Steam must be installed and your Steam profile public !",
+        "description": "Steam must be installed and your Steam profile public!",
         "value": {
           "none": "None",
           "installed": "Installed",
@@ -626,7 +626,7 @@
       },
       "diag": {
         "title": "Diagnostics",
-        "apiKeyLabel": "Steam Web API key :",
+        "apiKeyLabel": "Steam Web API key:",
         "apiKeyConfigured": "configured",
         "apiKeyFallback": "not set — using fallback scraping",
         "logsFolder": "Open logs folder",
@@ -637,7 +637,7 @@
         "winNotifTitle": "Windows notification settings",
         "focusAssist": "Focus Assist",
         "notifActions": "Notifications & actions",
-        "winNotifDesc": "Windows 10 >= 1903 : the focus-assist auto-rule for fullscreen apps (alarms only by default) can suppress toast notifications — set it to \"Off\" if toasts don't appear in-game."
+        "winNotifDesc": "Windows 10 >= 1903: the focus-assist auto-rule for fullscreen apps (alarms only by default) can suppress toast notifications — set it to \"Off\" if toasts don't appear in-game."
       },
       "blacklistTitle": "AppID Blacklist",
       "blacklistButton": "Reset blacklist",

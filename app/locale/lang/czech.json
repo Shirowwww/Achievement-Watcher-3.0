@@ -524,7 +524,7 @@
       ],
       "add": "Přidat složku",
       "smartFind": "Chytré hledání",
-      "smartFindHelp": "najde savy/konfigy + knihovny",
+      "smartFindHelp": "najde saves/konfigy + knihovny",
       "library": "Složky knihovny",
       "libraryInfo": [
         "Vyberte složku obsahující mnoho instalačních složek her (např. D:\\Games, E:\\SteamLibrary).",
@@ -583,8 +583,8 @@
       ],
       "steamTitle": "Emulátory Steamu",
       "steam": [
-        "Savy GBE / Goldberg bývají v %APPDATA%\\GSE Saves nebo %APPDATA%\\Goldberg SteamEmu Saves.",
-        "Savy stylu CODEX / RUNE často leží v Public Documents\\Steam\\CODEX nebo Public Documents\\Steam\\RUNE.",
+        "Saves GBE / Goldberg bývají v %APPDATA%\\GSE Saves nebo %APPDATA%\\Goldberg SteamEmu Saves.",
+        "Saves stylu CODEX / RUNE často leží v Public Documents\\Steam\\CODEX nebo Public Documents\\Steam\\RUNE.",
         "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 a Hoodlum se detekují z jejich složek konfigurací/savů."
       ],
       "emulatorTitle": "Konzolové emulátory",
@@ -635,7 +635,7 @@
         "goldbergDesc": "Prohledá složku knihovny her na instalace Goldberg / GBE Fork a označí ty, kterým chybí schéma steam_settings/achievements.json. Pro opravu jedné použijte kontextovou nabídku hry (Diagnostikovat / Opravit).",
         "scanFolder": "Prohledat složku…",
         "winNotifTitle": "Nastavení oznámení Windows",
-        "focusAssist": "Soustředění",
+        "focusAssist": "Asistent fokusu",
         "notifActions": "Oznámení a akce",
         "winNotifDesc": "Windows 10 >= 1903 : automatické pravidlo soustředění pro celoobrazovkové aplikace (ve výchozím nastavení pouze budíky) může potlačit toast oznámení — nastavte na „Vypnuto“, pokud se toasty ve hře neobjevují."
       },
@@ -669,7 +669,7 @@
     "steps": [
       "Jazyk",
       "Jak to funguje",
-      "účet",
+      "Účet",
       "API klíč",
       "Hry",
       "Nastavení"
@@ -706,12 +706,12 @@
     "addSave": "Přidat složku pro uložení",
     "smartFind": "Chytré hledání",
     "addLibrary": "Přidat složku knihovny",
-    "smartFindHint": "savy + knihovny",
+    "smartFindHint": "saves + knihovny",
     "addSaveHint": "jeden emulátor/zdroj",
     "addLibraryHint": "mnoho nainstalovaných her",
     "saveList": "Uložit/konfigurovat složky",
     "libraryList": "Složky knihovny",
-    "emptyList": "K této relaci nic nepřidalo.",
+    "emptyList": "Do této relace nebylo nic přidáno.",
     "settingsTitle": "Doporučená nastavení",
     "settingsCopy": "Toto jsou hlavní přepínače, které většina uživatelů potřebuje jako první. Vše lze později upravit v Nastavení.",
     "source": "Zobrazit hry na Steamu",
@@ -729,7 +729,7 @@
     "autoFixHint": "Použije opravu emulátoru (GBE Fork, achievementy, DLC) na nové emulované hry.",
     "hiddenHint": "Odhalí skryté názvy a popisy úspěchů, než je odemknete.",
     "mergeHint": "Kombinuje stejnou hru z několika zdrojů do jedné dlaždice.",
-    "none": "žádný",
+    "none": "Žádné",
     "installed": "Instalováno",
     "owned": "Vlastněno",
     "toast": "Toast",
