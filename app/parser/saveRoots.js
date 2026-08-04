@@ -125,9 +125,32 @@ function parseSteamLibraryFolders(steamPath) {
   return roots;
 }
 
+// A path is "Steam-ish" when its normalized name contains a Steam library/install segment
+// (steam, steamapps, steamlibrary, "steam library", "steam games"). Automatic detection must
+// never add these as library roots: legit Steam games are handled by the Steam source, not by
+// the emulator scans. A neutral folder like C:\Games that merely *contains* a steamapps
+// subtree stays eligible — the scans skip that subtree themselves.
+function isSteamLikePath(p) {
+  const value = String(p || '');
+  if (!value) return false;
+  const normalized = value.replace(/\//g, path.sep);
+  return /(?:^|[\\/])(steam|steamapps|steamlibrary|steam library|steam games)(?:[\\/]|$)/i.test(normalized);
+}
+
+// Common game-library folder names probed on every fixed drive by Smart Find. `Program Files`
+// variants are only added under their Games subfolder so the scanner never treats the whole
+// Windows install (Steam, Office, …) as a game library.
+const GAME_LIBRARY_FOLDER_NAMES = [
+  'Games',
+  'Jeux',
+  'GOG Games',
+  'Epic Games',
+  path.join('Program Files', 'Games'),
+  path.join('Program Files (x86)', 'Games'),
+];
+
 async function discoverLibraryRoots() {
   const roots = [];
-  for (const dir of parseSteamLibraryFolders(readSteamInstallPath())) addUnique(roots, dir);
 
   let drives = [];
   try {
@@ -137,12 +160,14 @@ async function discoverLibraryRoots() {
   }
 
   for (const drive of drives) {
-    ['Jeux', 'Games', 'SteamLibrary', 'GOG Games', 'Epic Games'].forEach((name) => addUnique(roots, path.join(`${drive}\\`, name)));
+    for (const name of GAME_LIBRARY_FOLDER_NAMES) {
+      addUnique(roots, path.join(`${drive}\\`, name));
+    }
   }
 
   return roots.filter((p) => {
     try {
-      return fs.existsSync(p) && fs.statSync(p).isDirectory();
+      return !isSteamLikePath(p) && fs.existsSync(p) && fs.statSync(p).isDirectory();
     } catch {
       return false;
     }
@@ -154,4 +179,5 @@ module.exports = {
   defaultSteamScanRoots,
   discoverLibraryRoots,
   expandKnownSteamSourceRoots,
+  isSteamLikePath,
 };

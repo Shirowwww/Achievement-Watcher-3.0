@@ -4162,6 +4162,10 @@ body {
   opacity: 0.72;
 }
 
+#game-list .game-box .info .source-icon[data-kind='steam-hidden'] {
+  display: none;
+}
+
 #game-list .game-box .info .dll-badge {
   display: block;
   width: 8px;

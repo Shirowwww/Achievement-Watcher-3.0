@@ -321,12 +321,23 @@ function gameHasAchievements(game) {
   return !!(game && game.achievement && (Number(game.achievement.total) > 0 || (Array.isArray(game.achievement.list) && game.achievement.list.length > 0)));
 }
 
+// Games surfaced by the "Display Steam games" library source (parser/steam.js scanLegit) carry a
+// source like "Steam (<account>)": they are already identified by their Steam appid, so showing a
+// Steam logo, a "?"/"no achievements" icon, or any other badge next to them is pure noise.
+function isLegitSteamLibraryGame(game) {
+  return String((game && game.source) || '').startsWith('Steam (');
+}
+
 function sourcePresentationFor(game) {
   const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
   const source = game && game.source;
   const sourceLower = String(source || '').toLowerCase();
   const system = String((game && game.system) || '').toLowerCase();
   const isUbisoft = uplayR2.isUbisoftGame(game, game && game.appid);
+
+  if (isLegitSteamLibraryGame(game)) {
+    return { img: '', label: '', kind: 'steam-hidden' };
+  }
 
   if (!gameHasAchievements(game)) {
     if (isUbisoft) {
@@ -808,6 +819,7 @@ var app = {
             let imgName = isPortrait ? game.img.portrait : game.img.header;
             const sourceIcon = sourcePresentationFor(game);
             const dllIcon = typeof game.hasSteamApiDll === 'boolean' ? dllPresentationFor(game) : null;
+            const hideSteamBadges = sourceIcon.kind === 'steam-hidden';
             let template = `
             <li>
                 <div class="game-box" data-index="${gameList.length}" data-appid="${game.appid}" data-installed="${
@@ -838,15 +850,19 @@ var app = {
                       <div class="title" title="${escapeHtml(game.name)}"><span>${escapeHtml(game.name)}</span></div>
                       <div class="game-meta">
                         ${
-                          dllIcon
+                          dllIcon && !hideSteamBadges
                             ? `<span class="dll-badge ${dllIcon.present ? 'present' : 'missing'}" title="${escapeHtml(
                                 dllIcon.label
                               )}" role="img" aria-label="${escapeHtml(dllIcon.label)}"></span>`
                             : ''
                         }
-                        <img class="source-icon" src="${sourceIcon.img}" data-kind="${escapeHtml(sourceIcon.kind)}" title="${escapeHtml(
-              sourceIcon.label
-            )}" alt="${escapeHtml(sourceIcon.label)}" aria-label="${escapeHtml(sourceIcon.label)}">
+                        ${
+                          sourceIcon.img
+                            ? `<img class="source-icon" src="${sourceIcon.img}" data-kind="${escapeHtml(sourceIcon.kind)}" title="${escapeHtml(
+                                sourceIcon.label
+                              )}" alt="${escapeHtml(sourceIcon.label)}" aria-label="${escapeHtml(sourceIcon.label)}">`
+                            : ''
+                        }
                       </div>
                     </div>
                     <div class="progressBar" data-percent="${progress}"><span class="meter" style="width:${progress}%"></span><span class="progress-value">${progress}%</span></div>

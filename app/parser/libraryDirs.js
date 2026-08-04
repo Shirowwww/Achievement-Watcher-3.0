@@ -9,7 +9,7 @@ const saveRoots = require(path.join(__dirname, 'saveRoots.js'));
 // Distinct from userDir.js, which stores per-game SAVE folders validated against known emulator
 // marker files — a library root has no such marker, it's just a folder full of game subfolders.
 let file;
-const DEFAULTS = ['C:\\Jeux'];
+const DEFAULTS = ['C:\\Games', 'C:\\Jeux'];
 
 module.exports.setUserDataPath = async (p) => {
   file = path.join(p, 'cfg/librarydirs.db');

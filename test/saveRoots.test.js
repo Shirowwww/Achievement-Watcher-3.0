@@ -73,3 +73,13 @@ test('Public Documents Steam parent expands to concrete RUNE/CODEX save roots', 
   assert.ok(roots.includes(runeRoot));
   assert.equal(await userDir.check(steamParent), true);
 });
+
+test('isSteamLikePath flags Steam library/install paths but keeps neutral game folders', () => {
+  assert.equal(saveRoots.isSteamLikePath('D:\\SteamLibrary'), true);
+  assert.equal(saveRoots.isSteamLikePath('D:\\Steam'), true);
+  assert.equal(saveRoots.isSteamLikePath('C:\\Program Files (x86)\\Steam'), true);
+  assert.equal(saveRoots.isSteamLikePath('D:\\Steam\\steamapps\\common\\Portal 2'), true);
+  assert.equal(saveRoots.isSteamLikePath('C:\\Games'), false);
+  assert.equal(saveRoots.isSteamLikePath('C:\\Games\\SteamWorld Dig 2'), false);
+  assert.equal(saveRoots.isSteamLikePath(''), false);
+});
