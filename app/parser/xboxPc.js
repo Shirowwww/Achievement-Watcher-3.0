@@ -153,9 +153,11 @@ function extractXboxDirectAuthResult(rawUrl, expectedState = '') {
     return null;
   }
   const expectedRedirect = new URL(XBOX_PC_REDIRECT_URI);
-  if (url.origin !== expectedRedirect.origin || url.pathname.toLowerCase() !== expectedRedirect.pathname.toLowerCase()) {
-    return null;
-  }
+  if (url.origin !== expectedRedirect.origin) return null;
+  // Microsoft may hand back the callback with or without a trailing slash; compare pathnames
+  // without it so both `…/auth/callback` and `…/auth/callback/` are recognized.
+  const normalizePath = (value) => String(value || '/').toLowerCase().replace(/\/+$/, '') || '/';
+  if (normalizePath(url.pathname) !== normalizePath(expectedRedirect.pathname)) return null;
   const fragment = new URLSearchParams(url.hash.replace(/^#/, ''));
   const getParameter = (name) => fragment.get(name) || url.searchParams.get(name) || '';
   const state = getParameter('state');

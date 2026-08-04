@@ -3,6 +3,16 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- The Microsoft / Xbox Network login window no longer stays open after you accept the consent page.
+  The OAuth redirect to the localhost callback is now captured from the navigation itself (the code
+  was previously invisible because the navigation was cancelled before the URL committed), the
+  callback path tolerates a trailing slash, and popups the consent flow opens are watched like the
+  main window instead of being denied by the default popup blocker.
+
 ## 3.5.0 - 2026-08-04
 
 ### Added

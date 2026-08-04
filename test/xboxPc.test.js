@@ -25,6 +25,15 @@ test('extractXboxDirectAuthResult accepts the localhost callback code', () => {
   assert.equal(xboxPc.extractXboxDirectAuthResult('http://localhost:8080/auth/callback?error=access_denied', '').error, 'access_denied');
 });
 
+test('extractXboxDirectAuthResult tolerates a trailing slash on the callback path', () => {
+  const result = xboxPc.extractXboxDirectAuthResult(
+    'http://localhost:8080/auth/callback/?code=abc123&state=xyz',
+    'xyz'
+  );
+  assert.deepEqual(result, { code: 'abc123' });
+  assert.equal(xboxPc.extractXboxDirectAuthResult('http://localhost:8080/other/callback?code=x', 'xyz'), null);
+});
+
 test('parseMicrosoftGameConfig reads title id, name, executable and package family', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-xboxcfg-'));
   const file = path.join(dir, 'MicrosoftGame.config');

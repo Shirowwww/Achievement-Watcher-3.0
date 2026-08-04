@@ -847,7 +847,11 @@ ipcMain.handle('xbox-pc:login', async () => {
     } catch (err) {
       return finish({ ok: false, error: String(err && err.message ? err.message : err) });
     }
-    const tryCapture = (contents) => {
+    // Tracks every webContents that may carry the OAuth redirect: the login window itself plus any
+    // popup live.com opens for the consent/SSO flow (the app-wide setWindowOpenHandler denies all
+    // popups, so the login window re-allows its own, mirroring the Epic login flow).
+    const trackedContents = new Set();
+    const tryCapture = (contents, url) => {
       const wc =
         contents && !contents.isDestroyed()
           ? contents
@@ -855,7 +859,10 @@ ipcMain.handle('xbox-pc:login', async () => {
             ? xboxLoginWindow.webContents
             : null;
       if (settled || !wc) return;
-      const result = xboxPc.extractXboxDirectAuthResult(wc.getURL(), state);
+      // Navigation events carry the redirect URL before it commits; fall back to the current URL
+      // for the poll timer and for flows that never surface navigation events (blocked localhost
+      // load — the URL is still readable from getURL() once the navigation is attempted).
+      const result = xboxPc.extractXboxDirectAuthResult(url || wc.getURL(), state);
       if (!result) return;
       if (result.error) {
         finish({ ok: false, error: result.error });
@@ -883,23 +890,34 @@ ipcMain.handle('xbox-pc:login', async () => {
     });
     const attach = (contents) => {
       contents.on('will-navigate', (event, url) => {
-        const result = xboxPc.extractXboxDirectAuthResult(url, state);
-        if (result) event.preventDefault();
-        tryCapture(contents);
+        // Do NOT prevent the navigation: the callback URL must commit (even as a failed localhost
+        // load) so getURL() exposes the code to the poll fallback.
+        tryCapture(contents, url);
       });
       contents.on('will-redirect', (event, url) => {
-        const result = xboxPc.extractXboxDirectAuthResult(url, state);
-        if (result) event.preventDefault();
-        tryCapture(contents);
+        tryCapture(contents, url);
       });
       contents.on('did-navigate', () => tryCapture(contents));
       contents.on('did-navigate-in-page', () => tryCapture(contents));
+      trackedContents.add(contents);
+      contents.on('destroyed', () => trackedContents.delete(contents));
     };
+    xboxLoginWindow.webContents.setWindowOpenHandler(() => ({
+      action: 'allow',
+      overrideBrowserWindowOptions: {
+        parent: xboxLoginWindow,
+        autoHideMenuBar: true,
+        webPreferences: { nodeIntegration: false, contextIsolation: true },
+      },
+    }));
+    xboxLoginWindow.webContents.on('did-create-window', (childWindow) => attach(childWindow.webContents));
     attach(xboxLoginWindow.webContents);
     xboxLoginWindow.on('closed', () => finish({ ok: false, error: 'window-closed' }));
     // Safety net: some flows end on a redirect the navigation events never surface (blocked
     // localhost load); poll the current URL until the user closes the window.
-    pollTimer = setInterval(() => tryCapture(xboxLoginWindow && !xboxLoginWindow.isDestroyed() ? xboxLoginWindow.webContents : null), 400);
+    pollTimer = setInterval(() => {
+      for (const wc of trackedContents) tryCapture(wc);
+    }, 400);
     xboxLoginWindow.loadURL(loginUrl).catch((err) => finish({ ok: false, error: String(err && err.message ? err.message : err) }));
   });
 });
