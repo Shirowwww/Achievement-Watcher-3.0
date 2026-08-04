@@ -82,7 +82,7 @@
     "title": "Einstellungen",
     "sideMenu": {
       "general": "Allgemein",
-      "overlay": "Overlay",
+      "overlay": "In-Game-Overlay",
       "notification": "Benachrichtigung",
       "souvenir": "Souvenir",
       "folder": "Ordner",
@@ -126,8 +126,8 @@
         "description": "Legacy verwendet das „alte“ Benachrichtigungssystem"
       },
       "hotkey": {
-        "name": "Overlay-Tastenkürzel",
-        "description": "Drücke dieses Tastenkürzel, um das Erfolgs-Overlay im Spiel anzuzeigen."
+        "name": "In-Game-Overlay-Tastenkürzel",
+        "description": "Drücke dieses Tastenkürzel, um das In-Game-Overlay der Erfolge anzuzeigen."
       },
       "scale": "Benachrichtigungsgröße",
       "duration": "Animationsdauer"
@@ -177,7 +177,7 @@
       },
       "hardwareAccel": {
         "name": "Hardwarebeschleunigung deaktivieren",
-        "description": "GPU-Beschleunigung deaktivieren, falls Overlay oder Fenster fehlerhaft sind. Neustart erforderlich."
+        "description": "GPU-Beschleunigung deaktivieren, falls In-Game-Overlay oder Fenster fehlerhaft sind. Neustart erforderlich."
       },
       "tray": {
         "name": "In Infobereich minimieren",
@@ -190,7 +190,7 @@
       "controller": {
         "title": "Controller",
         "enabled": {
-          "name": "Overlay mit einem Controller steuern",
+          "name": "In-Game-Overlay mit einem Controller steuern",
           "description": "Öffne und bewege das In-Game-Overlay mit einem Gamepad (Back+Start zum Öffnen; LB+RB halten zum Bewegen/Scrollen). Unterstützt Xbox, PlayStation (DualSense/DualShock) und Switch Pro."
         },
         "backend": {
@@ -309,7 +309,7 @@
     "notification": {
       "title": {
         "common": "Allgemein",
-        "toast": "Toast-Benachrichtigung",
+        "toast": "Windows-Benachrichtigung",
         "transport": "Transport",
         "chromium": "Chromium-Benachrichtigung",
         "watchdog": "Watchdog",
@@ -325,9 +325,9 @@
         "rare": "Selten",
         "progress": "Fortschritt",
         "playtime": "Spielzeit",
-        "toast": "Windows-Toast",
+        "toast": "Windows-Benachrichtigung",
         "platinum": "Platin",
-        "overlay": "Overlay"
+        "overlay": "In-Game-Overlay"
       },
       "option": {
         "transportMode": {
@@ -335,7 +335,7 @@
           "description": "Wähle ein einziges aktives Benachrichtigungssystem",
           "value": {
             "chromium": "Chromium (gestylt)",
-            "toast": "Windows-Toast",
+            "toast": "Windows-Benachrichtigung",
             "none": "Deaktiviert"
           }
         },
@@ -357,14 +357,14 @@
         },
         "platinum": {
           "name": "Platin (100 %)",
-          "description": "Einen eigenen Toast auslösen, wenn ein Spiel 100 % Abschluss erreicht"
+          "description": "Eine eigene Windows-Benachrichtigung auslösen, wenn ein Spiel 100 % Abschluss erreicht"
         },
         "mode": {
           "name": "Benachrichtigungstyp",
-          "description": "Wo Freischalt-Benachrichtigungen erscheinen: Windows-Toast, In-Game-Overlay oder beides",
+          "description": "Wo Freischalt-Benachrichtigungen erscheinen: Windows-Benachrichtigung, In-Game-Overlay oder beides",
           "value": {
-            "toast": "Toast",
-            "overlay": "Overlay",
+            "toast": "Windows-Benachrichtigung",
+            "overlay": "In-Game-Overlay",
             "both": "Beide"
           }
         },
@@ -382,11 +382,11 @@
         "overlayPresetShadps4Desc": "Preset für ShadPS4-Benachrichtigungen (PlayStation 4)",
         "presetSameAsMain": "Wie Haupt-Preset",
         "overlayPosition": "Position",
-        "overlayPositionDesc": "Wo das Overlay-Popup auf dem Bildschirm erscheint",
+        "overlayPositionDesc": "Wo das In-Game-Overlay-Popup auf dem Bildschirm erscheint",
         "overlayScale": "Größe",
-        "overlayScaleDesc": "Größe des Overlay-Popups",
+        "overlayScaleDesc": "Größe des In-Game-Overlay-Popups",
         "overlaySound": "Ton",
-        "overlaySoundDesc": "Ton, der beim Erscheinen des Overlay-Popups abgespielt wird",
+        "overlaySoundDesc": "Ton, der beim Erscheinen des In-Game-Overlay-Popups abgespielt wird",
         "overlayRandomSound": "Zufälliger Sound",
         "overlayRandomSoundDesc": "Wählt für jede Benachrichtigung einen zufälligen Sound aus der integrierten und importierten Liste.",
         "overlayPlaytimeScale": "Playtime-Skalierung",
@@ -394,13 +394,13 @@
         "playtimeScaleSameAsMain": "Wie Haupt",
         "overlaySoundImport": "Eigenen Ton importieren…",
         "overlayVolume": "Lautstärke",
-        "overlayVolumeDesc": "Lautstärke der Benachrichtigungstöne — Overlay-Pop-ups können bis 200 % verstärkt werden, benutzerdefinierte Toast-Töne sind auf 100 % begrenzt.",
+        "overlayVolumeDesc": "Lautstärke der Benachrichtigungstöne — In-Game-Overlay-Pop-ups können bis 200 % verstärkt werden, benutzerdefinierte Toast-Töne sind auf 100 % begrenzt.",
         "overlayDuration": "Dauer",
-        "overlayDurationDesc": "Wie lange das Overlay-Popup auf dem Bildschirm bleibt. Auto lässt die Vorlage entscheiden; ein Wert begrenzt die Anzeigezeit.",
+        "overlayDurationDesc": "Wie lange das In-Game-Overlay-Popup auf dem Bildschirm bleibt. Auto lässt die Vorlage entscheiden; ein Wert begrenzt die Anzeigezeit.",
         "overlayDurationAuto": "Auto",
         "customiser": {
           "title": "Eigene Vorlage",
-          "intro": "Erstelle deine eigene Overlay-Benachrichtigungs-Vorlage.",
+          "intro": "Erstelle deine eigene In-Game-Overlay-Benachrichtigungs-Vorlage.",
           "name": "Name",
           "namePlaceholder": "Meine Vorlage",
           "background": "Hintergrund",
@@ -434,16 +434,16 @@
         },
         "reposition": "Popup neu positionieren (an die gewünschte Stelle ziehen)",
         "customToastAudio": {
-          "name": "Toast-Ton",
-          "description": "Legt den Ton fest, der beim Anzeigen eines Toasts abgespielt wird",
+          "name": "Ton der Windows-Benachrichtigung",
+          "description": "Legt den Ton fest, der beim Anzeigen einer Windows-Benachrichtigung abgespielt wird",
           "value": {
             "systemDefault": "Standard",
             "muted": "Stumm"
           }
         },
         "toastSouvenir": {
-          "name": "Souvenir im Toast",
-          "description": "Souvenir-Screenshot innerhalb des Toasts anzeigen",
+          "name": "Souvenir in der Windows-Benachrichtigung",
+          "description": "Souvenir-Screenshot innerhalb der Windows-Benachrichtigung anzeigen",
           "value": {
             "top": "Oben",
             "bottom": "Unten"
@@ -451,19 +451,19 @@
         },
         "groupToast": {
           "name": "Nach Spiel gruppieren",
-          "description": "Toasts desselben Spiels im Info-Center optisch gruppieren"
+          "description": "Windows-Benachrichtigungen desselben Spiels im Info-Center optisch gruppieren"
         },
         "useToast": {
-          "name": "Toast-Benachrichtigung",
-          "description": "Windows-8-10-Toast-Benachrichtigung"
+          "name": "Windows-Benachrichtigung",
+          "description": "Windows-8-10-Systembenachrichtigung"
         },
         "useWinRT": {
           "name": "WinRT-API",
-          "description": "WinRT verwenden, falls verfügbar, für schnellere Toasts statt PowerShell"
+          "description": "WinRT verwenden, falls verfügbar, für schnellere Windows-Benachrichtigungen statt PowerShell"
         },
         "useBalloon": {
           "name": "Sprechblasen-Tooltip",
-          "description": "Bei Fehlschlag der Toast-Benachrichtigung auf Sprechblasen-Tooltip zurückgreifen"
+          "description": "Bei Fehlschlag der Windows-Benachrichtigung auf Sprechblasen-Tooltip zurückgreifen"
         },
         "useWS": {
           "description": "Erfolg an alle verbundenen Clients senden"
@@ -637,7 +637,7 @@
         "winNotifTitle": "Windows-Benachrichtigungseinstellungen",
         "focusAssist": "Fokusunterstützung",
         "notifActions": "Benachrichtigungen & Aktionen",
-        "winNotifDesc": "Windows 10 >= 1903 : Die automatische Benachrichtigungsassistent-Regel für Vollbild-Apps (standardmäßig nur Wecker) kann Toast-Benachrichtigungen unterdrücken — auf „Aus“ stellen, falls Toasts im Spiel nicht erscheinen."
+        "winNotifDesc": "Windows 10 >= 1903 : Die automatische Benachrichtigungsassistent-Regel für Vollbild-Apps (standardmäßig nur Wecker) kann Windows-Benachrichtigungen unterdrücken — auf „Aus“ stellen, falls sie im Spiel nicht erscheinen."
       },
       "blacklistTitle": "AppID-Sperrliste",
       "blacklistButton": "Sperrliste zurücksetzen",
@@ -724,7 +724,7 @@
     "show": "Zeigen",
     "hide": "Verstecken",
     "sourceHint": "Listet außerdem Ihre legitimen Steam-Spiele auf (öffentliches Profil erforderlich).",
-    "notificationsHint": "Wo Freischaltungen angezeigt werden: Windows-Toast, In-Game-Overlay oder beides.",
+    "notificationsHint": "Wo Freischaltungen angezeigt werden: Windows-Benachrichtigung, In-Game-Overlay oder beides.",
     "playtimeHint": "Verfolgt automatisch die Spielzeit für erkannte Spiele.",
     "autoFixHint": "Wendet den Emulator-Fix (GBE Fork, Erfolge, DLC) auf neue emulierte Spiele an.",
     "hiddenHint": "Zeigt versteckte Erfolgsnamen und Beschreibungen an, bevor Sie sie freischalten.",
@@ -732,8 +732,8 @@
     "none": "Keine",
     "installed": "Installiert",
     "owned": "Im Besitz",
-    "toast": "Toast",
-    "overlay": "Overlay",
+    "toast": "Windows-Benachrichtigung",
+    "overlay": "In-Game-Overlay",
     "both": "Beides",
     "enabled": "Aktiviert",
     "disabled": "Deaktiviert",

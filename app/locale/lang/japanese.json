@@ -82,7 +82,7 @@
     "title": "設定",
     "sideMenu": {
       "general": "一般",
-      "overlay": "オーバーレイ",
+      "overlay": "ゲーム内オーバーレイ",
       "notification": "通知",
       "souvenir": "記念",
       "folder": "フォルダー",
@@ -126,8 +126,8 @@
         "description": "Legacy は「旧」通知システムを使用します"
       },
       "hotkey": {
-        "name": "オーバーレイのホットキー",
-        "description": "このホットキーを押すと、ゲーム中に実績オーバーレイを表示します。"
+        "name": "ゲーム内オーバーレイのホットキー",
+        "description": "このホットキーを押すと、ゲーム中に実績のゲーム内オーバーレイを表示します。"
       },
       "scale": "通知のサイズ",
       "duration": "アニメーション時間"
@@ -177,7 +177,7 @@
       },
       "hardwareAccel": {
         "name": "ハードウェアアクセラレーションを無効化",
-        "description": "オーバーレイやウィンドウの動作が不安定な場合、GPU アクセラレーションをオフにします。再起動が必要です。"
+        "description": "ゲーム内オーバーレイやウィンドウの動作が不安定な場合、GPU アクセラレーションをオフにします。再起動が必要です。"
       },
       "tray": {
         "name": "システムトレイに最小化",
@@ -190,7 +190,7 @@
       "controller": {
         "title": "コントローラー",
         "enabled": {
-          "name": "コントローラーでオーバーレイを操作",
+          "name": "コントローラーでゲーム内オーバーレイを操作",
           "description": "ゲーム内オーバーレイをコントローラーで開閉・移動できます（Back+Startで開く、LB+RB長押しで移動/スクロール）。Xbox、PlayStation（DualSense/DualShock）、Switch Proに対応。"
         },
         "backend": {
@@ -309,7 +309,7 @@
     "notification": {
       "title": {
         "common": "共通",
-        "toast": "トースト通知",
+        "toast": "Windows 通知",
         "transport": "トランスポート",
         "chromium": "Chromium 通知",
         "watchdog": "Watchdog",
@@ -325,9 +325,9 @@
         "rare": "レア",
         "progress": "進捗",
         "playtime": "プレイ時間",
-        "toast": "Windows トースト",
+        "toast": "Windows 通知",
         "platinum": "プラチナ",
-        "overlay": "オーバーレイ"
+        "overlay": "ゲーム内オーバーレイ"
       },
       "option": {
         "transportMode": {
@@ -335,7 +335,7 @@
           "description": "アクティブな通知システムを 1 つ選択します",
           "value": {
             "chromium": "Chromium (スタイル付き)",
-            "toast": "Windows トースト",
+            "toast": "Windows 通知",
             "none": "無効"
           }
         },
@@ -357,14 +357,14 @@
         },
         "platinum": {
           "name": "プラチナ (100%)",
-          "description": "ゲームが 100% 達成に到達したとき専用のトーストを表示します"
+          "description": "ゲームが 100% 達成に到達したとき専用の Windows 通知を表示します"
         },
         "mode": {
           "name": "通知の種類",
-          "description": "解除通知の表示場所：Windows トースト、ゲーム内オーバーレイ、または両方",
+          "description": "解除通知の表示場所：Windows 通知、ゲーム内オーバーレイ、または両方",
           "value": {
-            "toast": "トースト",
-            "overlay": "オーバーレイ",
+            "toast": "Windows 通知",
+            "overlay": "ゲーム内オーバーレイ",
             "both": "両方"
           }
         },
@@ -382,11 +382,11 @@
         "overlayPresetShadps4Desc": "ShadPS4（PlayStation 4）の通知に使うプリセット",
         "presetSameAsMain": "メインと同じ",
         "overlayPosition": "位置",
-        "overlayPositionDesc": "オーバーレイのポップアップが画面上のどこに表示されるか",
+        "overlayPositionDesc": "ゲーム内オーバーレイのポップアップが画面上のどこに表示されるか",
         "overlayScale": "サイズ",
-        "overlayScaleDesc": "オーバーレイのポップアップのサイズ",
+        "overlayScaleDesc": "ゲーム内オーバーレイのポップアップのサイズ",
         "overlaySound": "サウンド",
-        "overlaySoundDesc": "オーバーレイのポップアップ表示時に再生されるサウンド",
+        "overlaySoundDesc": "ゲーム内オーバーレイのポップアップ表示時に再生されるサウンド",
         "overlayRandomSound": "ランダムサウンド",
         "overlayRandomSoundDesc": "各通知で内蔵・インポート済みリストからランダムに音声を選びます。",
         "overlayPlaytimeScale": "プレイタイムのスケール",
@@ -394,13 +394,13 @@
         "playtimeScaleSameAsMain": "メインと同じ",
         "overlaySoundImport": "カスタムサウンドをインポート…",
         "overlayVolume": "音量",
-        "overlayVolumeDesc": "通知音の音量 — オーバーレイのポップアップは最大200%まで増幅でき、カスタムトースト音は100%が上限です。",
+        "overlayVolumeDesc": "通知音の音量 — ゲーム内オーバーレイのポップアップは最大200%まで増幅でき、カスタムトースト音は100%が上限です。",
         "overlayDuration": "表示時間",
-        "overlayDurationDesc": "オーバーレイのポップアップが画面に表示される時間。Auto はプリセットに任せ、値を指定すると表示時間を制限します。",
+        "overlayDurationDesc": "ゲーム内オーバーレイのポップアップが画面に表示される時間。Auto はプリセットに任せ、値を指定すると表示時間を制限します。",
         "overlayDurationAuto": "Auto",
         "customiser": {
           "title": "カスタムプリセット",
-          "intro": "独自のオーバーレイ通知プリセットを作成します。",
+          "intro": "独自のゲーム内オーバーレイ通知プリセットを作成します。",
           "name": "名前",
           "namePlaceholder": "マイプリセット",
           "background": "背景",
@@ -434,16 +434,16 @@
         },
         "reposition": "ポップアップの位置を変更（好きな場所にドラッグ）",
         "customToastAudio": {
-          "name": "トースト音",
-          "description": "トースト表示時に再生する音を指定します",
+          "name": "Windows 通知のサウンド",
+          "description": "Windows 通知表示時に再生する音を指定します",
           "value": {
             "systemDefault": "既定",
             "muted": "ミュート"
           }
         },
         "toastSouvenir": {
-          "name": "トースト内の記念",
-          "description": "記念スクリーンショットをトースト内に表示します",
+          "name": "Windows 通知内の記念",
+          "description": "記念スクリーンショットを Windows 通知内に表示します",
           "value": {
             "top": "上",
             "bottom": "下"
@@ -451,19 +451,19 @@
         },
         "groupToast": {
           "name": "ゲームごとにグループ化",
-          "description": "アクションセンター内で同じゲームのトーストを視覚的にグループ化します"
+          "description": "アクションセンターで同じゲームの Windows 通知を視覚的にグループ化します"
         },
         "useToast": {
-          "name": "トースト通知",
-          "description": "Windows 8-10 のトースト通知"
+          "name": "Windows 通知",
+          "description": "Windows 8-10 システム通知"
         },
         "useWinRT": {
           "name": "WinRT API",
-          "description": "PowerShell の代わりに、利用可能なら WinRT を使用してより高速なトースト"
+          "description": "可能な場合は WinRT を使用して、PowerShell よりも高速な Windows 通知を実現します"
         },
         "useBalloon": {
           "name": "バルーンチップ",
-          "description": "トースト通知が失敗したときバルーンチップにフォールバックします"
+          "description": "Windows 通知が失敗した場合はバルーンヒントにフォールバックします"
         },
         "useWS": {
           "description": "接続中のすべてのクライアントに実績をブロードキャストします"
@@ -637,7 +637,7 @@
         "winNotifTitle": "Windows 通知設定",
         "focusAssist": "集中モード",
         "notifActions": "通知とアクション",
-        "winNotifDesc": "Windows 10 >= 1903 ：全画面アプリ向けの集中モード自動ルール（既定ではアラームのみ）がトースト通知を抑制することがあります — ゲーム中にトーストが表示されない場合は「オフ」に設定してください。"
+        "winNotifDesc": "Windows 10 >= 1903 : 全画面アプリのフォーカスアシスト自動ルール（既定ではアラームのみ）によって Windows 通知が抑制される場合があります — ゲーム内に表示されない場合は「オフ」に設定してください。"
       },
       "blacklistTitle": "AppID ブラックリスト",
       "blacklistButton": "ブラックリストをリセット",
@@ -680,7 +680,7 @@
     "languagePlaceholder": "言語を選択してください...",
     "languageHint": "最初のライブラリのロードは、この選択後にのみ開始されます。",
     "introTitle": "仕組み",
-    "introCopy": "Achievement Watcher は既知の保存フォルダーとゲーム ライブラリをスキャンし、その後 Watchdog がロック解除通知とゲーム内オーバーレイのためにトレイ内で実行され続けます。",
+    "introCopy": "Achievement Watcher は既知の保存フォルダーとゲームライブラリをスキャンし、その後 Watchdog はアンロック通知とゲーム内オーバーレイのためにトレイで動作し続けます。",
     "scanTitle": "スキャン",
     "scanCopy": "Steam、GOG、Epic、RPCS3/ShadPS4/Xenia、Goldberg/GBE のインストールを実績ファイルから検出します（例: %APPDATA%\\GSE Saves、Goldberg SteamEmu Saves、CODEX/RUNE セーブ、steam_settings を含むゲームフォルダー）。",
     "watchTitle": "監視",
@@ -724,7 +724,7 @@
     "show": "見せる",
     "hide": "隠れる",
     "sourceHint": "正規の Steam ゲームもリストされます (パブリック プロファイルが必要)。",
-    "notificationsHint": "ロック解除が表示される場所: Windows トースト、ゲーム内オーバーレイ、またはその両方。",
+    "notificationsHint": "解除通知の表示場所：Windows 通知、ゲーム内オーバーレイ、または両方。",
     "playtimeHint": "検出されたゲームのプレイ時間を自動的に追跡します。",
     "autoFixHint": "エミュレータの修正 (GBE フォーク、アチーブメント、DLC) を新しいエミュレートされたゲームに適用します。",
     "hiddenHint": "ロックを解除する前に、隠された実績の名前と説明が表示されます。",
@@ -732,8 +732,8 @@
     "none": "なし",
     "installed": "インストール済み",
     "owned": "所有",
-    "toast": "トースト",
-    "overlay": "オーバーレイ",
+    "toast": "Windows 通知",
+    "overlay": "ゲーム内オーバーレイ",
     "both": "両方",
     "enabled": "有効",
     "disabled": "無効",

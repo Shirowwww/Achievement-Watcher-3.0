@@ -82,7 +82,7 @@
     "title": "Ayarlar",
     "sideMenu": {
       "general": "Genel",
-      "overlay": "Yer paylaşımı",
+      "overlay": "Oyun içi yer paylaşımı",
       "notification": "Bildirim",
       "souvenir": "Anı",
       "folder": "Klasörler",
@@ -126,8 +126,8 @@
         "description": "Legacy, „eski” bildirim sistemini kullanır"
       },
       "hotkey": {
-        "name": "Yer paylaşımı kısayolu",
-        "description": "Oyun içindeyken başarım yer paylaşımını göstermek için bu kısayola bas."
+        "name": "Oyun içi yer paylaşımı kısayolu",
+        "description": "Oyun içindeyken başarım oyun içi yer paylaşımını göstermek için bu kısayola bas."
       },
       "scale": "Bildirim boyutu",
       "duration": "Animasyon süresi"
@@ -177,7 +177,7 @@
       },
       "hardwareAccel": {
         "name": "Donanım hızlandırmayı devre dışı bırak",
-        "description": "Yer paylaşımı veya pencere düzgün çalışmıyorsa GPU hızlandırmasını kapat. Yeniden başlatma gerektirir."
+        "description": "Oyun içi yer paylaşımı veya pencere düzgün çalışmıyorsa GPU hızlandırmasını kapat. Yeniden başlatma gerektirir."
       },
       "tray": {
         "name": "Sistem tepsisine küçült",
@@ -190,7 +190,7 @@
       "controller": {
         "title": "Oyun Kumandası",
         "enabled": {
-          "name": "Yer paylaşımını bir kumandayla kontrol et",
+          "name": "Oyun içi yer paylaşımını bir kumandayla kontrol et",
           "description": "Oyun içi yer paylaşımını bir kumandayla aç ve taşı (açmak için Back+Start; taşımak/kaydırmak için LB+RB basılı tut). Xbox, PlayStation (DualSense/DualShock) ve Switch Pro kumandalarını destekler."
         },
         "backend": {
@@ -309,7 +309,7 @@
     "notification": {
       "title": {
         "common": "Ortak",
-        "toast": "Toast bildirimi",
+        "toast": "Windows bildirimi",
         "transport": "Taşıma",
         "chromium": "Chromium bildirimi",
         "watchdog": "Watchdog",
@@ -325,9 +325,9 @@
         "rare": "Nadir",
         "progress": "İlerleme",
         "playtime": "Oynama süresi",
-        "toast": "Windows Toast",
+        "toast": "Windows bildirimi",
         "platinum": "Platin",
-        "overlay": "Yer paylaşımı"
+        "overlay": "Oyun içi yer paylaşımı"
       },
       "option": {
         "transportMode": {
@@ -335,7 +335,7 @@
           "description": "Tek bir etkin bildirim sistemi seç",
           "value": {
             "chromium": "Chromium (stilli)",
-            "toast": "Windows Toast",
+            "toast": "Windows bildirimi",
             "none": "Devre dışı"
           }
         },
@@ -357,14 +357,14 @@
         },
         "platinum": {
           "name": "Platin (%100)",
-          "description": "Bir oyun %100 tamamlamaya ulaştığında özel bir toast gönderir"
+          "description": "Bir oyun %100 tamamlamaya ulaştığında özel bir Windows bildirimi gönderir"
         },
         "mode": {
           "name": "Bildirim türü",
-          "description": "Açılış bildirimlerinin nerede görüneceği: Windows toast, oyun içi yer paylaşımı veya her ikisi",
+          "description": "Açılış bildirimlerinin nerede görüneceği: Windows bildirimi, oyun içi yer paylaşımı veya her ikisi",
           "value": {
-            "toast": "Toast",
-            "overlay": "Yer paylaşımı",
+            "toast": "Windows bildirimi",
+            "overlay": "Oyun içi yer paylaşımı",
             "both": "Her ikisi"
           }
         },
@@ -382,11 +382,11 @@
         "overlayPresetShadps4Desc": "ShadPS4 (PlayStation 4) bildirimleri için kullanılan hazır ayar",
         "presetSameAsMain": "Ana ayarla aynı",
         "overlayPosition": "Konum",
-        "overlayPositionDesc": "Yer paylaşımı açılır penceresinin ekranda nerede görüneceği",
+        "overlayPositionDesc": "Oyun içi yer paylaşımı açılır penceresinin ekranda nerede görüneceği",
         "overlayScale": "Boyut",
-        "overlayScaleDesc": "Yer paylaşımı açılır penceresinin boyutu",
+        "overlayScaleDesc": "Oyun içi yer paylaşımı açılır penceresinin boyutu",
         "overlaySound": "Ses",
-        "overlaySoundDesc": "Yer paylaşımı açılır penceresi göründüğünde çalınan ses",
+        "overlaySoundDesc": "Oyun içi yer paylaşımı açılır penceresi göründüğünde çalınan ses",
         "overlayRandomSound": "Rastgele ses",
         "overlayRandomSoundDesc": "Her bildirim için yerleşik ve içe aktarılan listeden rastgele bir ses seçer.",
         "overlayPlaytimeScale": "Playtime ölçeği",
@@ -396,11 +396,11 @@
         "overlayVolume": "Ses düzeyi",
         "overlayVolumeDesc": "Bildirim seslerinin düzeyi — overlay açılır pencereleri %200’e kadar yükseltilebilir, özel toast sesleri %100 ile sınırlıdır.",
         "overlayDuration": "Süre",
-        "overlayDurationDesc": "Yer paylaşımı açılır penceresinin ekranda ne kadar kalacağı. Auto ön ayarın karar vermesini sağlar; bir değer ekranda kalma süresini sınırlar.",
+        "overlayDurationDesc": "Oyun içi yer paylaşımı açılır penceresinin ekranda ne kadar kalacağı. Auto ön ayarın karar vermesini sağlar; bir değer ekranda kalma süresini sınırlar.",
         "overlayDurationAuto": "Auto",
         "customiser": {
           "title": "Özel ön ayar",
-          "intro": "Kendi yer paylaşımı bildirim ön ayarını oluştur.",
+          "intro": "Kendi oyun içi yer paylaşımı bildirim ön ayarını oluştur.",
           "name": "Ad",
           "namePlaceholder": "Ön ayarım",
           "background": "Arka plan",
@@ -434,16 +434,16 @@
         },
         "reposition": "Açılır pencereyi yeniden konumlandır (istediğin yere sürükle)",
         "customToastAudio": {
-          "name": "Toast sesi",
-          "description": "Bir toast görüntülendiğinde çalınacak sesi belirtir",
+          "name": "Windows bildirimi sesi",
+          "description": "Bir Windows bildirimi görüntülendiğinde çalınacak sesi belirtir",
           "value": {
             "systemDefault": "Varsayılan",
             "muted": "Sessiz"
           }
         },
         "toastSouvenir": {
-          "name": "Toast içinde anı",
-          "description": "Anı ekran görüntüsünü toast içinde göster",
+          "name": "Windows bildiriminde anı",
+          "description": "Anı ekran görüntüsünü Windows bildirimi içinde göster",
           "value": {
             "top": "Üstte",
             "bottom": "Altta"
@@ -451,19 +451,19 @@
         },
         "groupToast": {
           "name": "Oyuna göre grupla",
-          "description": "Aynı oyunun toast'larını İşlem Merkezi içinde görsel olarak grupla"
+          "description": "Aynı oyunun Windows bildirimlerini İşlem Merkezi içinde görsel olarak grupla"
         },
         "useToast": {
-          "name": "Toast bildirimi",
-          "description": "Windows 8-10 toast bildirimi"
+          "name": "Windows bildirimi",
+          "description": "Windows 8-10 sistem bildirimi"
         },
         "useWinRT": {
           "name": "WinRT API",
-          "description": "PowerShell yerine daha hızlı toast için varsa WinRT kullan"
+          "description": "PowerShell yerine daha hızlı Windows bildirimleri için varsa WinRT kullan"
         },
         "useBalloon": {
           "name": "Balon ipucu",
-          "description": "Toast bildirimi başarısız olursa balon ipucuna geri dön"
+          "description": "Windows bildirimi başarısız olursa balon ipucuna geri dön"
         },
         "useWS": {
           "description": "Başarımı bağlı tüm istemcilere yayınla"
@@ -637,7 +637,7 @@
         "winNotifTitle": "Windows bildirim ayarları",
         "focusAssist": "Odak Yardımcısı",
         "notifActions": "Bildirimler ve eylemler",
-        "winNotifDesc": "Windows 10 >= 1903 : tam ekran uygulamalar için odak yardımcısı otomatik kuralı (varsayılan olarak yalnızca alarmlar) toast bildirimlerini engelleyebilir — toast'lar oyun içinde görünmüyorsa „Kapalı” olarak ayarla."
+        "winNotifDesc": "Windows 10 >= 1903 : tam ekran uygulamalar için odak yardımcısı otomatik kuralı (varsayılan olarak yalnızca alarmlar) Windows bildirimlerini engelleyebilir — oyun içinde görünmüyorsa „Kapalı” olarak ayarla."
       },
       "blacklistTitle": "AppID kara listesi",
       "blacklistButton": "Kara listeyi sıfırla",
@@ -680,7 +680,7 @@
     "languagePlaceholder": "Bir dil seçin...",
     "languageHint": "İlk kütüphane yüklemesi ancak bu seçimden sonra başlar.",
     "introTitle": "Nasıl çalışır?",
-    "introCopy": "Achievement Watcher, bilinen kaydetme klasörlerinizi ve oyun kitaplıklarınızı tarar, ardından Watchdog, kilit açma bildirimleri ve oyun içi arayüz için tepside çalışmaya devam eder.",
+    "introCopy": "Achievement Watcher, bilinen kaydetme klasörlerinizi ve oyun kitaplıklarınızı tarar, ardından Watchdog, kilit açma bildirimleri ve oyun içi yer paylaşımı için tepside çalışmaya devam eder.",
     "scanTitle": "Tarama",
     "scanCopy": "Steam, GOG, Epic, RPCS3/ShadPS4/Xenia ve Goldberg/GBE kurulumları başarım dosyalarından bulunur — örneğin %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, CODEX/RUNE kayıtları veya steam_settings içeren bir oyun klasörü.",
     "watchTitle": "İzleme",
@@ -724,7 +724,7 @@
     "show": "Göstermek",
     "hide": "Saklamak",
     "sourceHint": "Ayrıca meşru Steam oyunlarınızı da listeler (herkese açık profil gereklidir).",
-    "notificationsHint": "Kilit açma noktalarının göründüğü yer: Windows Toast, oyun içi arayüz veya her ikisi.",
+    "notificationsHint": "Kilit açma noktalarının göründüğü yer: Windows bildirimi, oyun içi yer paylaşımı veya her ikisi.",
     "playtimeHint": "Algılanan oyunların oynatma süresini otomatik olarak izler.",
     "autoFixHint": "Emülatör düzeltmesini (GBE Fork, başarılar, DLC) yeni taklit edilen oyunlara uygular.",
     "hiddenHint": "Kilidini açmadan önce gizli başarı adlarını ve açıklamalarını ortaya çıkarır.",
@@ -732,8 +732,8 @@
     "none": "Hiçbiri",
     "installed": "Yüklendi",
     "owned": "Sahip olunan",
-    "toast": "Toast",
-    "overlay": "Yer paylaşımı",
+    "toast": "Windows bildirimi",
+    "overlay": "Oyun içi yer paylaşımı",
     "both": "İkisi birden",
     "enabled": "Etkin",
     "disabled": "Devre dışı",

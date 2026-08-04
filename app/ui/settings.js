@@ -1445,14 +1445,14 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         .startsWith('fr');
       const texts = fr
         ? {
-            toast: { displayName: 'Succès débloqué', description: 'Test overlay — preset ' + preset },
+            toast: { displayName: 'Succès débloqué', description: 'Test de notification — preset ' + preset },
             rare: { displayName: 'Succès rare', description: 'Rare · ' + rarePct + ' % des joueurs' },
             progress: { displayName: 'Progression', description: '3 / 10' },
             playtime: { displayName: 'Hollow Knight', description: 'Vous avez joué pendant 42 minutes' },
             platinum: { displayName: 'Trophée Platine', description: '100 % complété' },
           }
         : {
-            toast: { displayName: 'Achievement Unlocked', description: 'Overlay test — ' + preset + ' preset' },
+            toast: { displayName: 'Achievement Unlocked', description: 'Notification test — ' + preset + ' preset' },
             rare: { displayName: 'Rare Achievement', description: 'Rare · ' + rarePct + '% of players' },
             progress: { displayName: 'Progress', description: '3 / 10' },
             playtime: { displayName: 'Hollow Knight', description: 'You played for 42 minutes' },

@@ -1,18 +1,18 @@
 # Notifications
 
-Achievement Watcher can announce unlocks with a native Windows toast, an in-game overlay, or both. Configure the transport under **Settings → Notification**.
+Achievement Watcher can announce unlocks with a native Windows notification (toast), an in-game overlay, or both. Configure the transport under **Settings → Notification**.
 
 ## Choose a delivery mode
 
 | Mode | Behavior |
 |---|---|
-| **Toast** | Uses the Windows notification system. Achievement and progress notifications use the achievement icon; playtime notifications can include game artwork and a progress bar. |
-| **Overlay** | Opens a styled popup above the running game. The main library window may stay closed while the background tracker handles it. |
-| **Both** | Sends the same event to the toast and overlay transports. |
+| **Windows notification** | Uses the Windows system notification (toast). Achievement and progress notifications use the achievement icon; playtime notifications can include game artwork and a progress bar. |
+| **In-game overlay** | Opens a styled popup above the running game. The main library window may stay closed while the background tracker handles it. |
+| **Both** | Sends the same event to both transports. |
 
 Use the built-in test buttons after changing the mode. A successful test confirms the display path; a real unlock still depends on the relevant game source being watched correctly.
 
-## Overlay presets
+## In-game overlay presets
 
 The app includes presets inspired by several console and PC notification styles. You can select a main preset and optional overrides for:
 
@@ -36,7 +36,7 @@ Custom presets live in the Achievement Watcher data directory and are preserved 
 ## Sounds, volume and duration
 
 - Import `.wav`, `.mp3` or `.ogg` files from the Notification settings.
-- Overlay volume ranges from 0% to 200%. Values above 100% apply an overlay-side boost; Windows toast playback is limited by the system audio path.
+- Overlay volume ranges from 0% to 200%. Values above 100% apply an overlay-side boost; Windows notification playback is limited by the system audio path.
 - Duration can follow the preset automatically or use a fixed cap.
 - Playtime notifications are silent by design.
 
@@ -54,10 +54,10 @@ Achievements with a global unlock rate below the configured rare threshold displ
 
 ## If a test or unlock does not appear
 
-1. Confirm the selected mode is **Toast**, **Overlay** or **Both**, not disabled.
+1. Confirm the selected mode is **Windows notification**, **In-game overlay** or **Both**, not disabled.
 2. Check that the background tracker is running.
 3. For overlays, select a valid preset and test again outside an exclusive fullscreen game.
-4. Check Windows notification settings for Achievement Watcher when toasts are missing.
+4. Check Windows notification settings for Achievement Watcher when notifications are missing.
 5. Open **Settings → Advanced → Diagnostics** and inspect the logs.
 
 Continue with [Troubleshooting](troubleshooting.md#notifications-do-not-appear) if the problem remains.

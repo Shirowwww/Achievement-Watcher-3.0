@@ -398,7 +398,7 @@
                         <span class="arrow"><i class="fas fa-chevron-right"></i></span>
                       </div>
                     </div>
-                    <div class="help" id="hwaccel-settings-help">Turn off GPU acceleration if the overlay or window misbehaves. Requires a restart.</div>
+                    <div class="help" id="hwaccel-settings-help">Turn off GPU acceleration if the in-game overlay or window misbehaves. Requires a restart.</div>
                   </li>
                 </ul>
               </div>
@@ -407,7 +407,7 @@
                 <div class="title"><i class="fas fa-gamepad"></i> <span id="controller-settings-title">Controller</span></div>
                 <ul>
                 <li class="hasHelper">
-                  <div class="left"><i class="fas fa-gamepad"></i> <span id="controller-enabled-label">Control the overlay with a controller</span></div>
+                  <div class="left"><i class="fas fa-gamepad"></i> <span id="controller-enabled-label">Control the in-game overlay with a controller</span></div>
                   <div class="right">
                     <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
                     <select autocomplete="off" id="option_controllerEnabled">
@@ -533,8 +533,8 @@
                   </li>
                   <li>
                     <p id="adv-winnotif-desc">
-                      Windows 10 &gt;= 1903 : the focus-assist auto-rule for fullscreen apps (alarms only by default) can suppress toast
-                      notifications — set it to "Off" if toasts don't appear in-game.
+                      Windows 10 &gt;= 1903 : the focus-assist auto-rule for fullscreen apps (alarms only by default) can suppress Windows
+                      notifications — set it to "Off" if they don't appear in-game.
                     </p>
                   </li>
                 </ul>
@@ -1333,7 +1333,7 @@
                   <div class="title"><span id="customiser-title">Custom preset</span></div>
                   <ul id="options-notify-customiser">
                     <li class="hasHelper" style="flex-wrap: wrap">
-                      <div class="left" style="width: 100%"><i class="fas fa-magic"></i> <span id="customiser-intro">Build your own overlay notification preset.</span></div>
+                      <div class="left" style="width: 100%"><i class="fas fa-magic"></i> <span id="customiser-intro">Build your own in-game overlay notification preset.</span></div>
                       <div style="display: flex; flex-wrap: wrap; gap: 12px 18px; width: 100%; padding: 8px 0">
                         <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-name">Name</span><input type="text" id="cust-name" maxlength="48" placeholder="My preset" /></label>
                         <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-bg">Background</span><input type="color" id="cust-bg" value="#16181d" /></label>
@@ -1802,8 +1802,8 @@
                     <label>
                       <span id="onboard-notification-mode-label">Notifications</span>
                       <select id="onboard-notification-mode">
-                        <option value="toast">Toast</option>
-                        <option value="overlay">Overlay</option>
+                        <option value="toast">Windows notification</option>
+                        <option value="overlay">In-game overlay</option>
                         <option value="both">Both</option>
                       </select>
                       <small class="onboard-field-hint" id="onboard-notification-mode-hint"></small>

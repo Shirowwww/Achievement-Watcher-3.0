@@ -82,7 +82,7 @@
     "title": "Impostazioni",
     "sideMenu": {
       "general": "Generale",
-      "overlay": "Overlay",
+      "overlay": "Overlay di gioco",
       "notification": "Notifiche",
       "souvenir": "Souvenir",
       "folder": "Cartelle",
@@ -126,8 +126,8 @@
         "description": "Legacy usa il «vecchio» sistema di notifiche"
       },
       "hotkey": {
-        "name": "Scorciatoia overlay",
-        "description": "Premi questa scorciatoia per mostrare l'overlay degli obiettivi durante il gioco."
+        "name": "Scorciatoia overlay di gioco",
+        "description": "Premi questa scorciatoia per mostrare l'overlay di gioco degli obiettivi durante il gioco."
       },
       "scale": "Dimensione notifica",
       "duration": "Durata animazione"
@@ -177,7 +177,7 @@
       },
       "hardwareAccel": {
         "name": "Disattiva l'accelerazione hardware",
-        "description": "Disattiva l'accelerazione GPU se l'overlay o la finestra si comportano male. Richiede un riavvio."
+        "description": "Disattiva l'accelerazione GPU se l'overlay di gioco o la finestra si comportano male. Richiede un riavvio."
       },
       "tray": {
         "name": "Riduci nella barra delle applicazioni",
@@ -190,7 +190,7 @@
       "controller": {
         "title": "Controller",
         "enabled": {
-          "name": "Controlla l'overlay con un controller",
+          "name": "Controlla l'overlay di gioco con un controller",
           "description": "Apri e sposta l'overlay di gioco con un gamepad (Back+Start per aprire; tieni premuto LB+RB per spostare/scorrere). Supporta Xbox, PlayStation (DualSense/DualShock) e Switch Pro."
         },
         "backend": {
@@ -309,12 +309,12 @@
     "notification": {
       "title": {
         "common": "Comune",
-        "toast": "Notifica toast",
+        "toast": "Notifica di Windows",
         "transport": "Trasporto",
         "chromium": "Notifica Chromium",
         "watchdog": "Watchdog",
         "test": "Test",
-        "overlay": "Overlay in gioco"
+        "overlay": "Overlay di gioco"
       },
       "info": {
         "toast": "Alcune funzioni sono disponibili solo in Windows 10",
@@ -325,9 +325,9 @@
         "rare": "Raro",
         "progress": "Progresso",
         "playtime": "Tempo di gioco",
-        "toast": "Toast di Windows",
+        "toast": "Notifica di Windows",
         "platinum": "Platino",
-        "overlay": "Overlay"
+        "overlay": "Overlay di gioco"
       },
       "option": {
         "transportMode": {
@@ -335,7 +335,7 @@
           "description": "Scegli un solo sistema di notifica attivo",
           "value": {
             "chromium": "Chromium (stilizzato)",
-            "toast": "Toast di Windows",
+            "toast": "Notifica di Windows",
             "none": "Disattivato"
           }
         },
@@ -357,19 +357,19 @@
         },
         "platinum": {
           "name": "Platino (100%)",
-          "description": "Mostra un toast dedicato quando un gioco raggiunge il 100% di completamento"
+          "description": "Mostra una notifica di Windows dedicata quando un gioco raggiunge il 100% di completamento"
         },
         "mode": {
           "name": "Tipo di notifica",
-          "description": "Dove appaiono le notifiche di sblocco: toast di Windows, overlay in gioco o entrambi",
+          "description": "Dove appaiono le notifiche di sblocco: notifica di Windows, overlay di gioco o entrambi",
           "value": {
-            "toast": "Toast",
-            "overlay": "Overlay",
+            "toast": "Notifica di Windows",
+            "overlay": "Overlay di gioco",
             "both": "Entrambi"
           }
         },
         "overlayPreset": "Preimpostazione",
-        "overlayPresetDesc": "Tema visivo del popup overlay in gioco",
+        "overlayPresetDesc": "Tema visivo del popup overlay di gioco in gioco",
         "overlayPresetRare": "Preset (raro)",
         "overlayPresetRareDesc": "Preset usato per gli obiettivi rari (10% dei giocatori o meno)",
         "overlayPresetPlatinum": "Preset (platino)",
@@ -382,11 +382,11 @@
         "overlayPresetShadps4Desc": "Preset usato per le notifiche ShadPS4 (PlayStation 4)",
         "presetSameAsMain": "Come il principale",
         "overlayPosition": "Posizione",
-        "overlayPositionDesc": "Dove appare il popup overlay sullo schermo",
+        "overlayPositionDesc": "Dove appare il popup overlay di gioco sullo schermo",
         "overlayScale": "Dimensione",
-        "overlayScaleDesc": "Dimensione del popup overlay",
+        "overlayScaleDesc": "Dimensione del popup overlay di gioco",
         "overlaySound": "Suono",
-        "overlaySoundDesc": "Suono riprodotto quando appare il popup overlay",
+        "overlaySoundDesc": "Suono riprodotto quando appare il popup overlay di gioco",
         "overlayRandomSound": "Suono casuale",
         "overlayRandomSoundDesc": "Sceglie un suono casuale tra quelli inclusi e importati per ogni notifica.",
         "overlayPlaytimeScale": "Scala playtime",
@@ -394,13 +394,13 @@
         "playtimeScaleSameAsMain": "Come principale",
         "overlaySoundImport": "Importa un suono personalizzato…",
         "overlayVolume": "Volume",
-        "overlayVolumeDesc": "Volume dei suoni di notifica — i popup overlay possono essere amplificati fino al 200%, mentre i suoni toast personalizzati sono limitati al 100%.",
+        "overlayVolumeDesc": "Volume dei suoni di notifica — i popup overlay di gioco possono essere amplificati fino al 200%, mentre i suoni toast personalizzati sono limitati al 100%.",
         "overlayDuration": "Durata",
-        "overlayDurationDesc": "Per quanto tempo il popup overlay resta sullo schermo. Auto lascia decidere alla preimpostazione; un valore limita il tempo di visualizzazione.",
+        "overlayDurationDesc": "Per quanto tempo il popup overlay di gioco resta sullo schermo. Auto lascia decidere alla preimpostazione; un valore limita il tempo di visualizzazione.",
         "overlayDurationAuto": "Auto",
         "customiser": {
           "title": "Preimpostazione personalizzata",
-          "intro": "Crea la tua preimpostazione di notifica overlay.",
+          "intro": "Crea la tua preimpostazione di notifica overlay di gioco.",
           "name": "Nome",
           "namePlaceholder": "La mia preimpostazione",
           "background": "Sfondo",
@@ -434,16 +434,16 @@
         },
         "reposition": "Riposiziona il popup (trascinalo dove vuoi)",
         "customToastAudio": {
-          "name": "Suono del toast",
-          "description": "Specifica il suono da riprodurre quando viene mostrato un toast",
+          "name": "Suono della notifica di Windows",
+          "description": "Specifica il suono da riprodurre quando viene mostrata una notifica di Windows",
           "value": {
             "systemDefault": "Predefinito",
             "muted": "Disattivato"
           }
         },
         "toastSouvenir": {
-          "name": "Souvenir nel toast",
-          "description": "Mostra lo screenshot souvenir all'interno del toast",
+          "name": "Souvenir nella notifica di Windows",
+          "description": "Mostra lo screenshot souvenir all'interno della notifica di Windows",
           "value": {
             "top": "In alto",
             "bottom": "In basso"
@@ -451,19 +451,19 @@
         },
         "groupToast": {
           "name": "Raggruppa per gioco",
-          "description": "Raggruppa visivamente i toast dello stesso gioco nel Centro notifiche"
+          "description": "Raggruppa visivamente le notifiche di Windows dello stesso gioco nel Centro notifiche"
         },
         "useToast": {
-          "name": "Notifica toast",
-          "description": "Notifica toast di Windows 8-10"
+          "name": "Notifica di Windows",
+          "description": "Notifica di sistema Windows 8-10"
         },
         "useWinRT": {
           "name": "API WinRT",
-          "description": "Usa WinRT se disponibile per toast più rapidi invece di PowerShell"
+          "description": "Usa WinRT se disponibile per notifiche di Windows più rapide invece di PowerShell"
         },
         "useBalloon": {
           "name": "Fumetto",
-          "description": "Ripiega sul fumetto se la notifica toast fallisce"
+          "description": "Ripiega sul fumetto se la notifica di Windows fallisce"
         },
         "useWS": {
           "description": "Trasmetti l'obiettivo a tutti i client connessi"
@@ -637,7 +637,7 @@
         "winNotifTitle": "Impostazioni notifiche di Windows",
         "focusAssist": "Assistente notifiche",
         "notifActions": "Notifiche e azioni",
-        "winNotifDesc": "Windows 10 >= 1903 : la regola automatica dell'assistente notifiche per le app a schermo intero (solo sveglie per impostazione predefinita) può sopprimere le notifiche toast — impostala su «Disattivato» se i toast non appaiono in gioco."
+        "winNotifDesc": "Windows 10 >= 1903 : la regola automatica dell'assistente notifiche per le app a schermo intero (solo sveglie per impostazione predefinita) può sopprimere le notifiche di Windows — impostala su «Disattivato» se non appaiono in gioco."
       },
       "blacklistTitle": "Lista nera AppID",
       "blacklistButton": "Reimposta lista nera",
@@ -724,7 +724,7 @@
     "show": "Spettacolo",
     "hide": "Nascondere",
     "sourceHint": "Elenca anche i tuoi giochi Steam legittimi (è richiesto un profilo pubblico).",
-    "notificationsHint": "Dove vengono visualizzati gli sblocchi: toast di Windows, overlay di gioco o entrambi.",
+    "notificationsHint": "Dove vengono visualizzati gli sblocchi: notifica di Windows, overlay di gioco o entrambi.",
     "playtimeHint": "Tiene traccia automaticamente del tempo di gioco per i giochi rilevati.",
     "autoFixHint": "Applica la correzione dell'emulatore (GBE Fork, risultati, DLC) ai nuovi giochi emulati.",
     "hiddenHint": "Rivela i nomi e le descrizioni degli obiettivi nascosti prima di sbloccarli.",
@@ -732,8 +732,8 @@
     "none": "Nessuno",
     "installed": "Installato",
     "owned": "Posseduto",
-    "toast": "Toast",
-    "overlay": "Overlay",
+    "toast": "Notifica di Windows",
+    "overlay": "Overlay di gioco",
     "both": "Entrambi",
     "enabled": "Attivato",
     "disabled": "Disattivato",

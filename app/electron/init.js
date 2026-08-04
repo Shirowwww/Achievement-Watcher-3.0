@@ -2188,7 +2188,7 @@ function shouldQuitApp() {
 }
 
 function parseArgs(args) {
-  let windowType = args['wintype'] || 'main'; // overlay (in-game) or main; notifications are Windows toasts
+  let windowType = args['wintype'] || 'main'; // overlay (in-game) or main; notifications are Windows system notifications
   let appid = args['appid']; // appid
   let source = args['source'] || 'steam'; // source: steam, epic, gog, luma
   let description = args['description']; // text

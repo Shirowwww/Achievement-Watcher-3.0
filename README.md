@@ -4,7 +4,7 @@
 
 ### All your PC achievements in one modern Windows library.
 
-Track achievements, rarity and playtime across launchers, local saves and supported emulators — with live Windows toasts or an in-game overlay.
+Track achievements, rarity and playtime across launchers, local saves and supported emulators — with live Windows notifications or an in-game overlay.
 
 [![Latest release](https://img.shields.io/github/v/release/Shirowwww/Achievement-Watcher-3.0?display_name=tag&sort=semver&style=flat-square)](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/Shirowwww/Achievement-Watcher-3.0/total?style=flat-square)](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases)
@@ -35,7 +35,7 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 | **More real sources** | Local Steam appcache, GOG Galaxy and Ubisoft Connect readers; Epic account connection; EA Desktop; Xbox PC (Game Pass / Microsoft Store) with account import; RPCS3, ShadPS4 and Xenia |
 | **Live tracking** | Tray-first background Watchdog, Xenia/ShadPS4/GOG/Ubisoft unlock monitoring, safer startup baselines and duplicate suppression |
 | **Better library** | Game and achievement search, installed-only filtering, blacklist restore, rarity tiers, progress achievements, smarter covers and executable detection |
-| **Notifications** | Native Windows toasts + in-game overlay, preset library, custom builder, custom sounds, 0–200% volume and separate rare/completion styles |
+| **Notifications** | Native Windows notifications + in-game overlay, preset library, custom builder, custom sounds, 0–200% volume and separate rare/completion styles |
 | **Controller and UI** | Full controller navigation, mouse Back/Forward, optional native overlay control, resizable interface, four themes and 18 complete UI languages |
 | **Goldberg / GBE tools** | Read-only diagnosis, `steam_settings` repair, matched runtime install, Steamless support, backups/restore and opt-in background setup |
 | **Local-first reliability** | Offline names and artwork, local schemas, platform-aware cache IDs, bounded caches, self-healing folders and fewer browser-dependent lookups |
@@ -66,9 +66,9 @@ repair, a supervised background monitor and a hardened automatic updater. See th
 | Installed-games-only filter | ✅ | ❌ | ❌ |
 | Automatic folder discovery/config | ✅ | ✅ Auto-config | ✅ Smart Find |
 | Official/local platform readers | ✅ Steam · GOG · Ubisoft · Epic · EA | ✅ Steam · GOG · Ubisoft · Epic · EA | ⚠️ Steam · GOG · Epic · Uplay (legacy) |
-| Native Windows toasts | ✅ | ✅ Native preset | ✅ |
+| Native Windows notifications | ✅ | ✅ Native preset | ✅ |
 | Animated in-game overlay | ✅ | ✅ | ✅ Chromium |
-| Toast + overlay together | ✅ | ❌ | ✅ |
+| Windows notification + in-game overlay | ✅ | ❌ | ✅ |
 | No-code custom preset builder | ✅ | ❌ | ❌ |
 | Separate rare/completion presets | ✅ | ✅ | ❌ Not documented |
 | Live RPCS3 / ShadPS4 / Xenia unlocks | ✅ | ✅ | ⚠️ RPCS3 only |
@@ -89,7 +89,7 @@ repair, a supervised background monitor and a hardened automatic updater. See th
 | Emulator rarity (Exophase global %) | ✅ | ✅ | ❌ |
 | Live Xbox unlock notifications | ✅ | ✅ | ❌ |
 
-This fork focuses on an all-in-one library, a quiet tray workflow, native toasts and deeper Goldberg/GBE repair. **Achievements** has a strong auto-configuration and animated-overlay workflow. **Achievement Watcher 2.x** remains the historical base with broad emulator compatibility and several legacy notification transports.
+This fork focuses on an all-in-one library, a quiet tray workflow, native Windows notifications and deeper Goldberg/GBE repair. **Achievements** has a strong auto-configuration and animated-overlay workflow. **Achievement Watcher 2.x** remains the historical base with broad emulator compatibility and several legacy notification transports.
 
 <sub>✅ = supported and documented · ⚠️ = partial, manual or a different workflow · ❌ = unavailable or not documented on the current public branch. Checked against the public READMEs and default branches on 3 August 2026.</sub>
 
@@ -131,7 +131,7 @@ Updating over an older build keeps settings, cache, playtime and achievement dat
 
 ## 🔔 Notifications
 
-Choose **Toast**, **Overlay** or **Both** under **Settings → Notification**.
+Choose **Windows notification**, **In-game overlay** or **Both** under **Settings → Notification**.
 
 - Presets for clean desktop, Steam, PlayStation, Xbox, rare and completion styles.
 - A no-code preset builder with live preview.
@@ -217,4 +217,4 @@ For a bug report, include the app version, Windows version, affected source and 
 
 Created by [Xan105](https://github.com/xan105/Achievement-Watcher), continued by [darktakayanagi](https://github.com/darktakayanagi/Achievement-Watcher), and maintained here by Shirowwww and project contributors.
 
-Licensed under [LGPL-3.0](LICENSE). See [third-party notices](THIRD_PARTY_NOTICES.md) for adapted components and attribution. This project is not affiliated with Valve, Sony, Microsoft, GOG, Epic Games, Electronic Arts or Ubisoft.
+Licensed under [LGPL-3.0](LICENSE). This project is not affiliated with Valve, Sony, Microsoft, GOG, Epic Games, Electronic Arts or Ubisoft.

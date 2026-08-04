@@ -13,7 +13,7 @@ User guides, troubleshooting and technical references for Achievement Watcher 3.
 | I want to… | Read |
 |---|---|
 | Install the app and find my games | [Getting started](getting-started.md) |
-| Configure toasts or the in-game overlay | [Notifications](notifications.md) |
+| Configure Windows notifications or the in-game overlay | [Notifications](notifications.md) |
 | Fix a missing game, locked achievement or playtime problem | [Troubleshooting](troubleshooting.md) |
 | Set up or repair Goldberg / GBE Fork | [Goldberg and GBE Fork setup](emulator-setup.md) |
 | Configure a compatible Ubisoft Uplay R2 game | [Goldberg Uplay R2 setup](uplay-r2.md) |
@@ -26,7 +26,7 @@ Installation, first launch, sources, watched folders, tray behavior, updates and
 
 ### [Notifications](notifications.md)
 
-Windows toasts, the in-game overlay, preset selection, the custom builder, sounds, volume, positions, per-game behavior and test paths.
+Windows notifications, the in-game overlay, preset selection, the custom builder, sounds, volume, positions, per-game behavior and test paths.
 
 ### [Troubleshooting](troubleshooting.md)
 

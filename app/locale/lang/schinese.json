@@ -82,7 +82,7 @@
     "title": "设置",
     "sideMenu": {
       "general": "常规",
-      "overlay": "叠加层",
+      "overlay": "游戏内叠加层",
       "notification": "通知",
       "souvenir": "纪念",
       "folder": "文件夹",
@@ -126,8 +126,8 @@
         "description": "Legacy 使用「旧」通知系统"
       },
       "hotkey": {
-        "name": "叠加层快捷键",
-        "description": "按下此快捷键可在游戏中显示成就叠加层。"
+        "name": "游戏内叠加层快捷键",
+        "description": "按下此快捷键可在游戏中显示游戏内成就叠加层。"
       },
       "scale": "通知大小",
       "duration": "动画时长"
@@ -177,7 +177,7 @@
       },
       "hardwareAccel": {
         "name": "禁用硬件加速",
-        "description": "如果叠加层或窗口出现异常，请关闭 GPU 加速。需要重启。"
+        "description": "如果游戏内叠加层或窗口出现异常，请关闭 GPU 加速。需要重启。"
       },
       "tray": {
         "name": "最小化到系统托盘",
@@ -190,8 +190,8 @@
       "controller": {
         "title": "手柄",
         "enabled": {
-          "name": "使用手柄控制悬浮层",
-          "description": "使用手柄开关并移动游戏内悬浮层（Back+Start 打开；按住 LB+RB 移动/滚动）。支持 Xbox、PlayStation（DualSense/DualShock）和 Switch Pro 手柄。"
+          "name": "使用手柄控制游戏内叠加层",
+          "description": "使用手柄开关并移动游戏内叠加层（Back+Start 打开；按住 LB+RB 移动/滚动）。支持 Xbox、PlayStation（DualSense/DualShock）和 Switch Pro 手柄。"
         },
         "backend": {
           "name": "手柄后端",
@@ -309,7 +309,7 @@
     "notification": {
       "title": {
         "common": "通用",
-        "toast": "Toast 通知",
+        "toast": "Windows 通知",
         "transport": "传输",
         "chromium": "Chromium 通知",
         "watchdog": "Watchdog",
@@ -325,9 +325,9 @@
         "rare": "稀有",
         "progress": "进度",
         "playtime": "游戏时长",
-        "toast": "Windows Toast",
+        "toast": "Windows 通知",
         "platinum": "白金",
-        "overlay": "叠加层"
+        "overlay": "游戏内叠加层"
       },
       "option": {
         "transportMode": {
@@ -335,7 +335,7 @@
           "description": "选择一个有效的通知系统",
           "value": {
             "chromium": "Chromium（带样式）",
-            "toast": "Windows Toast",
+            "toast": "Windows 通知",
             "none": "已禁用"
           }
         },
@@ -357,14 +357,14 @@
         },
         "platinum": {
           "name": "白金 (100%)",
-          "description": "当游戏达到 100% 完成度时触发专门的 toast"
+          "description": "当游戏达到 100% 完成度时触发专门的 Windows 通知"
         },
         "mode": {
           "name": "通知类型",
-          "description": "解锁通知的显示位置：Windows toast、游戏内叠加层，或两者",
+          "description": "解锁通知的显示位置：Windows 通知、游戏内叠加层，或两者",
           "value": {
-            "toast": "Toast",
-            "overlay": "叠加层",
+            "toast": "Windows 通知",
+            "overlay": "游戏内叠加层",
             "both": "两者"
           }
         },
@@ -382,11 +382,11 @@
         "overlayPresetShadps4Desc": "用于 ShadPS4（PlayStation 4）通知的预设",
         "presetSameAsMain": "与主预设相同",
         "overlayPosition": "位置",
-        "overlayPositionDesc": "叠加层弹窗在屏幕上的显示位置",
+        "overlayPositionDesc": "游戏内叠加层弹窗在屏幕上的显示位置",
         "overlayScale": "大小",
-        "overlayScaleDesc": "叠加层弹窗的大小",
+        "overlayScaleDesc": "游戏内叠加层弹窗的大小",
         "overlaySound": "声音",
-        "overlaySoundDesc": "叠加层弹窗出现时播放的声音",
+        "overlaySoundDesc": "游戏内叠加层弹窗出现时播放的声音",
         "overlayRandomSound": "随机音效",
         "overlayRandomSoundDesc": "每条通知从内置和导入的音效列表中随机选择。",
         "overlayPlaytimeScale": "Playtime 缩放",
@@ -396,11 +396,11 @@
         "overlayVolume": "音量",
         "overlayVolumeDesc": "通知声音音量 — 叠加弹窗最高可增强到 200%，自定义 Windows 通知声音上限为 100%。",
         "overlayDuration": "持续时间",
-        "overlayDurationDesc": "叠加层弹窗在屏幕上停留的时长。Auto 由预设决定；设置数值则限制屏幕停留时间。",
+        "overlayDurationDesc": "游戏内叠加层弹窗在屏幕上停留的时长。Auto 由预设决定；设置数值则限制屏幕停留时间。",
         "overlayDurationAuto": "Auto",
         "customiser": {
           "title": "自定义预设",
-          "intro": "创建你自己的叠加层通知预设。",
+          "intro": "创建你自己的游戏内叠加层通知预设。",
           "name": "名称",
           "namePlaceholder": "我的预设",
           "background": "背景",
@@ -434,16 +434,16 @@
         },
         "reposition": "重新定位弹窗（拖到你想要的位置）",
         "customToastAudio": {
-          "name": "Toast 声音",
-          "description": "指定显示 toast 时播放的声音",
+          "name": "Windows 通知声音",
+          "description": "指定显示 Windows 通知时播放的声音",
           "value": {
             "systemDefault": "默认",
             "muted": "已静音"
           }
         },
         "toastSouvenir": {
-          "name": "Toast 中的纪念",
-          "description": "在 toast 内显示纪念截图",
+          "name": "Windows 通知中的纪念",
+          "description": "在 Windows 通知内显示纪念截图",
           "value": {
             "top": "顶部",
             "bottom": "底部"
@@ -451,19 +451,19 @@
         },
         "groupToast": {
           "name": "按游戏分组",
-          "description": "在操作中心内按同一游戏对 toast 进行视觉分组"
+          "description": "在操作中心内按同一游戏对 Windows 通知进行视觉分组"
         },
         "useToast": {
-          "name": "Toast 通知",
-          "description": "Windows 8-10 toast 通知"
+          "name": "Windows 通知",
+          "description": "Windows 8-10 系统通知"
         },
         "useWinRT": {
           "name": "WinRT API",
-          "description": "如果可用，使用 WinRT 以获得比 PowerShell 更快的 toast"
+          "description": "如果可用，使用 WinRT 以获得比 PowerShell 更快的 Windows 通知"
         },
         "useBalloon": {
           "name": "气球提示",
-          "description": "当 toast 通知失败时回退到气球提示"
+          "description": "当 Windows 通知失败时回退到气球提示"
         },
         "useWS": {
           "description": "向所有已连接的客户端广播成就"
@@ -637,7 +637,7 @@
         "winNotifTitle": "Windows 通知设置",
         "focusAssist": "专注助手",
         "notifActions": "通知和操作",
-        "winNotifDesc": "Windows 10 >= 1903：针对全屏应用的专注助手自动规则（默认仅闹钟）可能会抑制 toast 通知 — 如果游戏内不出现 toast，请将其设为「关闭」。"
+        "winNotifDesc": "Windows 10 >= 1903：针对全屏应用的专注助手自动规则（默认仅闹钟）可能会抑制 Windows 通知 — 如果游戏内不出现，请将其设为「关闭」。"
       },
       "blacklistTitle": "AppID 黑名单",
       "blacklistButton": "重置黑名单",
@@ -724,7 +724,7 @@
     "show": "展示",
     "hide": "隐藏",
     "sourceHint": "还列出了您的合法 Steam 游戏（需要公开个人资料）。",
-    "notificationsHint": "解锁出现的位置：Windows toast、游戏内覆盖或两者。",
+    "notificationsHint": "解锁出现的位置：Windows 通知、游戏内叠加层或两者。",
     "playtimeHint": "自动跟踪检测到的游戏的游戏时间。",
     "autoFixHint": "将模拟器修复（GBE Fork、成就、DLC）应用于新的模拟游戏。",
     "hiddenHint": "在解锁之前显示隐藏的成就名称和描述。",
@@ -732,8 +732,8 @@
     "none": "无",
     "installed": "已安装",
     "owned": "拥有",
-    "toast": "Toast",
-    "overlay": "叠加层",
+    "toast": "Windows 通知",
+    "overlay": "游戏内叠加层",
     "both": "两者",
     "enabled": "已启用",
     "disabled": "已禁用",

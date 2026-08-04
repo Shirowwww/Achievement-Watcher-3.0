@@ -18,7 +18,7 @@ The first-run guide asks for the main choices needed to populate the library:
 - **Language** controls the interface and the preferred language for game metadata when the source provides it.
 - **Sources** enables launcher, local-save and emulator integrations.
 - **Folders** tells Achievement Watcher where to look for game libraries and achievement saves.
-- **Notifications** chooses Windows toasts, the in-game overlay, or both.
+- **Notifications** chooses Windows notifications (toast), the in-game overlay, or both.
 
 You can revisit every option later from **Settings**.
 
@@ -38,8 +38,8 @@ If a folder is rejected, select the directory that directly contains the support
 
 Open **Settings → Notification** and choose a delivery mode:
 
-- **Toast** uses native Windows notifications.
-- **Overlay** displays a styled popup over the running game.
+- **Windows notification** uses native Windows notifications.
+- **In-game overlay** displays a styled popup over the running game.
 - **Both** enables both transports.
 
 Use the test buttons before launching a game. Presets, sounds, volume, duration and position can all be changed later. See [Notifications](notifications.md) for details.

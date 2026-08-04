@@ -82,7 +82,7 @@
     "title": "Settings",
     "sideMenu": {
       "general": "General",
-      "overlay": "Overlay",
+      "overlay": "In-game overlay",
       "notification": "Notification",
       "souvenir": "Souvenir",
       "folder": "Folders",
@@ -126,8 +126,8 @@
         "description": "Legacy uses the 'old' notification system"
       },
       "hotkey": {
-        "name": "Overlay Hotkey",
-        "description": "Press this hotkey to show the achievements overlay while ingame."
+        "name": "In-game overlay hotkey",
+        "description": "Press this hotkey to show the in-game achievements overlay."
       },
       "scale": "Notification Scale",
       "duration": "Animation duration"
@@ -177,7 +177,7 @@
       },
       "hardwareAccel": {
         "name": "Disable hardware acceleration",
-        "description": "Turn off GPU acceleration if the overlay or window misbehaves. Requires a restart."
+        "description": "Turn off GPU acceleration if the in-game overlay or window misbehaves. Requires a restart."
       },
       "tray": {
         "name": "Close to System Tray",
@@ -190,7 +190,7 @@
       "controller": {
         "title": "Controller",
         "enabled": {
-          "name": "Control the overlay with a controller",
+          "name": "Control the in-game overlay with a controller",
           "description": "Toggle and move the in-game overlay with a gamepad (Back+Start to open; hold LB+RB to move/scroll). Supports Xbox, PlayStation (DualSense/DualShock) and Switch Pro controllers."
         },
         "backend": {
@@ -309,7 +309,7 @@
     "notification": {
       "title": {
         "common": "Common",
-        "toast": "Toast notification",
+        "toast": "Windows notification",
         "transport": "Transport",
         "chromium": "Chromium notification",
         "watchdog": "Watchdog",
@@ -325,9 +325,9 @@
         "rare": "Rare",
         "progress": "Progress",
         "playtime": "Playtime",
-        "toast": "Windows Toast",
+        "toast": "Windows notification",
         "platinum": "Platinum",
-        "overlay": "Overlay"
+        "overlay": "In-game overlay"
       },
       "option": {
         "transportMode": {
@@ -335,7 +335,7 @@
           "description": "Choose a single active notification system",
           "value": {
             "chromium": "Chromium (styled)",
-            "toast": "Windows Toast",
+            "toast": "Windows notification",
             "none": "Disabled"
           }
         },
@@ -357,14 +357,14 @@
         },
         "platinum": {
           "name": "Platinum (100%)",
-          "description": "Fire a dedicated toast when a game reaches 100% completion"
+          "description": "Fire a dedicated Windows notification when a game reaches 100% completion"
         },
         "mode": {
           "name": "Notification type",
-          "description": "Where unlock notifications appear: Windows toast, the in-game overlay, or both",
+          "description": "Where unlock notifications appear: Windows notification, in-game overlay, or both",
           "value": {
-            "toast": "Toast",
-            "overlay": "Overlay",
+            "toast": "Windows notification",
+            "overlay": "In-game overlay",
             "both": "Both"
           }
         },
@@ -382,11 +382,11 @@
         "overlayPresetShadps4Desc": "Preset used for ShadPS4 (PlayStation 4) notifications",
         "presetSameAsMain": "Same as main",
         "overlayPosition": "Position",
-        "overlayPositionDesc": "Where the overlay popup appears on screen",
+        "overlayPositionDesc": "Where the in-game overlay popup appears on screen",
         "overlayScale": "Scale",
-        "overlayScaleDesc": "Size of the overlay popup",
+        "overlayScaleDesc": "Size of the in-game overlay popup",
         "overlaySound": "Sound",
-        "overlaySoundDesc": "Sound played when the overlay popup appears",
+        "overlaySoundDesc": "Sound played when the in-game overlay popup appears",
         "overlayRandomSound": "Random sound",
         "overlayRandomSoundDesc": "Pick a random sound from the bundled and imported list for each notification popup.",
         "overlayPlaytimeScale": "Playtime scale",
@@ -394,13 +394,13 @@
         "playtimeScaleSameAsMain": "Same as main",
         "overlaySoundImport": "Import a custom sound…",
         "overlayVolume": "Volume",
-        "overlayVolumeDesc": "Loudness of notification sounds — overlay popups can be boosted up to 200%, custom toast sounds cap at 100%",
+        "overlayVolumeDesc": "Loudness of notification sounds — in-game overlay popups can be boosted up to 200%, custom toast sounds cap at 100%",
         "overlayDuration": "Duration",
-        "overlayDurationDesc": "How long the overlay popup stays on screen. Auto lets the preset decide; a value caps the on-screen time.",
+        "overlayDurationDesc": "How long the in-game overlay popup stays on screen. Auto lets the preset decide; a value caps the on-screen time.",
         "overlayDurationAuto": "Auto",
         "customiser": {
           "title": "Custom preset",
-          "intro": "Build your own overlay notification preset.",
+          "intro": "Build your own in-game overlay notification preset.",
           "name": "Name",
           "namePlaceholder": "My preset",
           "background": "Background",
@@ -434,16 +434,16 @@
         },
         "reposition": "Reposition the popup (drag it where you want)",
         "customToastAudio": {
-          "name": "Toast sound",
-          "description": "Specifies the sound to play when a toast is displayed",
+          "name": "Windows notification sound",
+          "description": "Specifies the sound to play when a Windows notification is displayed",
           "value": {
             "systemDefault": "Default",
             "muted": "Muted"
           }
         },
         "toastSouvenir": {
-          "name": "Toasted souvenir",
-          "description": "Display souvenir screenshot within the toast",
+          "name": "Windows notification souvenir",
+          "description": "Display souvenir screenshot within the Windows notification",
           "value": {
             "top": "Top",
             "bottom": "Bottom"
@@ -451,19 +451,19 @@
         },
         "groupToast": {
           "name": "Group by game",
-          "description": "Visually group toast from the same game within Action Center"
+          "description": "Visually group Windows notifications from the same game within Action Center"
         },
         "useToast": {
-          "name": "Toast notification",
-          "description": "Windows 8-10 toast notification"
+          "name": "Windows notification",
+          "description": "Windows 8-10 system notification"
         },
         "useWinRT": {
           "name": "WinRT API",
-          "description": "Use WinRT if available for faster toast instead of PowerShell"
+          "description": "Use WinRT if available for faster Windows notifications instead of PowerShell"
         },
         "useBalloon": {
           "name": "Balloon tooltip",
-          "description": "Fallback to balloon tooltip on toast notification failure"
+          "description": "Fallback to balloon tooltip when a Windows notification fails"
         },
         "useWS": {
           "description": "Broadcast achievement to all connected clients"
@@ -637,7 +637,7 @@
         "winNotifTitle": "Windows notification settings",
         "focusAssist": "Focus Assist",
         "notifActions": "Notifications & actions",
-        "winNotifDesc": "Windows 10 >= 1903: the focus-assist auto-rule for fullscreen apps (alarms only by default) can suppress toast notifications — set it to \"Off\" if toasts don't appear in-game."
+        "winNotifDesc": "Windows 10 >= 1903: the focus-assist auto-rule for fullscreen apps (alarms only by default) can suppress Windows notifications — set it to \"Off\" if they don't appear in-game."
       },
       "blacklistTitle": "AppID Blacklist",
       "blacklistButton": "Reset blacklist",
@@ -724,7 +724,7 @@
     "show": "Show",
     "hide": "Hide",
     "sourceHint": "Also lists your legitimate Steam games (public profile required).",
-    "notificationsHint": "Where unlocks appear: Windows toast, in-game overlay, or both.",
+    "notificationsHint": "Where unlocks appear: Windows notification, in-game overlay, or both.",
     "playtimeHint": "Automatically tracks playtime for detected games.",
     "autoFixHint": "Applies the emulator fix (GBE Fork, achievements, DLC) to new emulated games.",
     "hiddenHint": "Reveals hidden achievement names and descriptions before you unlock them.",
@@ -732,8 +732,8 @@
     "none": "None",
     "installed": "Installed",
     "owned": "Owned",
-    "toast": "Toast",
-    "overlay": "Overlay",
+    "toast": "Windows notification",
+    "overlay": "In-game overlay",
     "both": "Both",
     "enabled": "Enabled",
     "disabled": "Disabled",

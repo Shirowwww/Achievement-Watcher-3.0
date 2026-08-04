@@ -601,8 +601,8 @@ ipcRenderer.on('watchdog-status', (event, found) => {
   let watchdogStatus = shadow.querySelector('.status-dot');
   let watchdoglbl = shadow.querySelector('.status-text');
   watchdoglbl.textContent = fr
-    ? 'Watchdog arrêté ! (les overlays/notifications ne se déclencheront pas)'
-    : "Watchdog is not running! (overlay/notifications won't trigger.)";
+    ? 'Watchdog arrêté ! (overlays en jeu et notifications Windows ne se déclencheront pas)'
+    : "Watchdog is not running! (in-game overlay/Windows notifications won't trigger.)";
   watchdogStatus.classList.remove('status-green', 'status-orange');
   watchdogStatus.classList.add('status-red');
   let startBtn = shadow.querySelector('#start-watchdog');
@@ -614,8 +614,8 @@ ipcRenderer.on('watchdog-status', (event, found) => {
     watchdogStatus.classList.remove('status-orange', 'status-red');
     watchdogStatus.classList.add('status-green');
     watchdoglbl.textContent = fr
-      ? 'Watchdog actif (overlays et notifications fonctionnels)'
-      : 'Watchdog is running (overlay/notifications should work properly)';
+      ? 'Watchdog actif (overlays en jeu et notifications Windows fonctionnels)'
+      : 'Watchdog is running (in-game overlay/Windows notifications should work properly)';
     startBtn.textContent = '';
   }
 });

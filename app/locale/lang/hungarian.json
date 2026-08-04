@@ -82,7 +82,7 @@
     "title": "Beállítások",
     "sideMenu": {
       "general": "Általános",
-      "overlay": "Overlay",
+      "overlay": "Játékon belüli overlay",
       "notification": "Értesítés",
       "souvenir": "Emlék",
       "folder": "Mappák",
@@ -126,7 +126,7 @@
         "description": "A Legacy a „régi” értesítési rendszert használja"
       },
       "hotkey": {
-        "name": "Overlay gyorsbillentyű",
+        "name": "Játékon belüli overlay gyorsbillentyű",
         "description": "Nyomd meg ezt a gyorsbillentyűt a teljesítmény-overlay megjelenítéséhez játék közben."
       },
       "scale": "Értesítés mérete",
@@ -190,7 +190,7 @@
       "controller": {
         "title": "Kontroller",
         "enabled": {
-          "name": "Az overlay vezérlése kontrollerrel",
+          "name": "A játékon belüli overlay vezérlése kontrollerrel",
           "description": "Nyisd meg és mozgasd a játékbeli overlayt kontrollerrel (Back+Start a megnyitáshoz; tartsd az LB+RB-t a mozgatáshoz/görgetéshez). Támogatja az Xbox, PlayStation (DualSense/DualShock) és Switch Pro kontrollereket."
         },
         "backend": {
@@ -309,7 +309,7 @@
     "notification": {
       "title": {
         "common": "Közös",
-        "toast": "Toast értesítés",
+        "toast": "Windows-értesítés",
         "transport": "Átvitel",
         "chromium": "Chromium értesítés",
         "watchdog": "Watchdog",
@@ -325,9 +325,9 @@
         "rare": "Ritka",
         "progress": "Folyamat",
         "playtime": "Játékidő",
-        "toast": "Windows Toast",
+        "toast": "Windows-értesítés",
         "platinum": "Platina",
-        "overlay": "Overlay"
+        "overlay": "Játékon belüli overlay"
       },
       "option": {
         "transportMode": {
@@ -335,7 +335,7 @@
           "description": "Válassz egyetlen aktív értesítési rendszert",
           "value": {
             "chromium": "Chromium (stílusos)",
-            "toast": "Windows Toast",
+            "toast": "Windows-értesítés",
             "none": "Kikapcsolva"
           }
         },
@@ -357,14 +357,14 @@
         },
         "platinum": {
           "name": "Platina (100%)",
-          "description": "Külön toastot indít, amikor egy játék eléri a 100%-os teljesítést"
+          "description": "Külön Windows-értesítést indít, amikor egy játék eléri a 100%-os teljesítést"
         },
         "mode": {
           "name": "Értesítés típusa",
-          "description": "Hol jelennek meg a feloldási értesítések: Windows toast, játékon belüli overlay, vagy mindkettő",
+          "description": "Hol jelennek meg a feloldási értesítések: Windows-értesítés, játékon belüli overlay, vagy mindkettő",
           "value": {
-            "toast": "Toast",
-            "overlay": "Overlay",
+            "toast": "Windows-értesítés",
+            "overlay": "Játékon belüli overlay",
             "both": "Mindkettő"
           }
         },
@@ -434,16 +434,16 @@
         },
         "reposition": "Felugró ablak áthelyezése (húzd oda, ahová szeretnéd)",
         "customToastAudio": {
-          "name": "Toast hang",
-          "description": "Megadja a toast megjelenésekor lejátszandó hangot",
+          "name": "Windows-értesítés hangja",
+          "description": "Megadja a Windows-értesítés megjelenésekor lejátszandó hangot",
           "value": {
             "systemDefault": "Alapértelmezett",
             "muted": "Némítva"
           }
         },
         "toastSouvenir": {
-          "name": "Emlék a toastban",
-          "description": "Az emlék képernyőkép megjelenítése a toaston belül",
+          "name": "Emlék a Windows-értesítésben",
+          "description": "Az emlék képernyőkép megjelenítése a Windows-értesítésben",
           "value": {
             "top": "Fent",
             "bottom": "Lent"
@@ -451,19 +451,19 @@
         },
         "groupToast": {
           "name": "Csoportosítás játék szerint",
-          "description": "Az azonos játék toastjainak vizuális csoportosítása a Műveletközpontban"
+          "description": "Az azonos játék Windows-értesítéseinek vizuális csoportosítása a Műveletközpontban"
         },
         "useToast": {
-          "name": "Toast értesítés",
-          "description": "Windows 8-10 toast értesítés"
+          "name": "Windows-értesítés",
+          "description": "Windows 8-10 rendszerértesítés"
         },
         "useWinRT": {
           "name": "WinRT API",
-          "description": "WinRT használata, ha elérhető, gyorsabb toasthoz a PowerShell helyett"
+          "description": "WinRT használata, ha elérhető, gyorsabb Windows-értesítésekhez a PowerShell helyett"
         },
         "useBalloon": {
           "name": "Buboréksúgó",
-          "description": "Visszaesés buboréksúgóra a toast értesítés sikertelensége esetén"
+          "description": "Visszaesés buboréksúgóra a Windows-értesítés sikertelensége esetén"
         },
         "useWS": {
           "description": "A teljesítmény közvetítése minden csatlakozott klienshez"
@@ -637,7 +637,7 @@
         "winNotifTitle": "Windows értesítési beállítások",
         "focusAssist": "Koncentrációsegéd",
         "notifActions": "Értesítések és műveletek",
-        "winNotifDesc": "Windows 10 >= 1903 : a teljes képernyős alkalmazásokra vonatkozó koncentrációsegéd automatikus szabálya (alapból csak ébresztők) elnyomhatja a toast értesítéseket — állítsd „Ki” értékre, ha a toastok nem jelennek meg játék közben."
+        "winNotifDesc": "Windows 10 >= 1903 : a teljes képernyős alkalmazásokra vonatkozó koncentrációsegéd automatikus szabálya (alapból csak ébresztők) elnyomhatja a Windows-értesítéseket — állítsd „Ki” értékre, ha nem jelennek meg játék közben."
       },
       "blacklistTitle": "AppID feketelista",
       "blacklistButton": "Feketelista visszaállítása",
@@ -680,7 +680,7 @@
     "languagePlaceholder": "Válassz nyelvet...",
     "languageHint": "Az első könyvtárbetöltés csak e választás után indul el.",
     "introTitle": "Hogyan működik",
-    "introCopy": "Az Achievement Watcher átvizsgálja az ismert mentési mappákat és a játékkönyvtárakat, majd a Watchdog folyamatosan fut a tálcán a feloldási értesítésekért és a játékon belüli fedvényért.",
+    "introCopy": "Az Achievement Watcher átvizsgálja az ismert mentési mappákat és a játékkönyvtárakat, majd a Watchdog folyamatosan fut a tálcán a feloldási értesítésekért és a játékon belüli overlayért.",
     "scanTitle": "Vizsgálat",
     "scanCopy": "A Steam, GOG, Epic, RPCS3/ShadPS4/Xenia és Goldberg/GBE telepítések az eredményfájljaik alapján találhatók meg — például %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, CODEX/RUNE mentések vagy steam_settings mappát tartalmazó játékmappa.",
     "watchTitle": "Figyelés",
@@ -724,7 +724,7 @@
     "show": "Megjelenítés",
     "hide": "Elrejtés",
     "sourceHint": "Felsorolja a legális Steam-játékaidat is (nyilvános profil szükséges).",
-    "notificationsHint": "Hol jelennek meg a feloldások: Windows-pirító, játékon belüli fedvény vagy mindkettő.",
+    "notificationsHint": "Hol jelennek meg a feloldások: Windows-értesítés, játékon belüli overlay vagy mindkettő.",
     "playtimeHint": "Automatikusan követi az észlelt játékok lejátszási idejét.",
     "autoFixHint": "Alkalmazza az emulátorjavítást (GBE Fork, eredmények, DLC) az új emulált játékokra.",
     "hiddenHint": "Felfedi a rejtett jutalmak neveit és leírásait, mielőtt feloldaná őket.",
@@ -732,8 +732,8 @@
     "none": "Egyik sem",
     "installed": "Telepítve",
     "owned": "Tulajdonolt",
-    "toast": "Toast",
-    "overlay": "Overlay",
+    "toast": "Windows-értesítés",
+    "overlay": "Játékon belüli overlay",
     "both": "Mindkettő",
     "enabled": "Bekapcsolva",
     "disabled": "Kikapcsolva",

@@ -82,7 +82,7 @@
     "title": "Ustawienia",
     "sideMenu": {
       "general": "Ogólne",
-      "overlay": "Nakładka",
+      "overlay": "Nakładka w grze",
       "notification": "Powiadomienia",
       "souvenir": "Pamiątka",
       "folder": "Foldery",
@@ -126,7 +126,7 @@
         "description": "Legacy używa „starego” systemu powiadomień"
       },
       "hotkey": {
-        "name": "Skrót nakładki",
+        "name": "Skrót nakładki w grze",
         "description": "Naciśnij ten skrót, aby pokazać nakładkę osiągnięć podczas gry."
       },
       "scale": "Rozmiar powiadomienia",
@@ -190,7 +190,7 @@
       "controller": {
         "title": "Kontroler",
         "enabled": {
-          "name": "Sterowanie nakładką za pomocą kontrolera",
+          "name": "Sterowanie nakładką w grze za pomocą kontrolera",
           "description": "Otwieraj i przesuwaj nakładkę w grze kontrolerem (Back+Start, aby otworzyć; przytrzymaj LB+RB, aby przesuwać/przewijać). Obsługuje Xbox, PlayStation (DualSense/DualShock) i Switch Pro."
         },
         "backend": {
@@ -309,7 +309,7 @@
     "notification": {
       "title": {
         "common": "Wspólne",
-        "toast": "Powiadomienie toast",
+        "toast": "Powiadomienie systemu Windows",
         "transport": "Transport",
         "chromium": "Powiadomienie Chromium",
         "watchdog": "Watchdog",
@@ -325,9 +325,9 @@
         "rare": "Rzadkie",
         "progress": "Postęp",
         "playtime": "Czas gry",
-        "toast": "Toast Windows",
+        "toast": "Powiadomienie systemu Windows",
         "platinum": "Platyna",
-        "overlay": "Nakładka"
+        "overlay": "Nakładka w grze"
       },
       "option": {
         "transportMode": {
@@ -335,7 +335,7 @@
           "description": "Wybierz jeden aktywny system powiadomień",
           "value": {
             "chromium": "Chromium (stylizowane)",
-            "toast": "Toast Windows",
+            "toast": "Powiadomienie systemu Windows",
             "none": "Wyłączone"
           }
         },
@@ -357,14 +357,14 @@
         },
         "platinum": {
           "name": "Platyna (100%)",
-          "description": "Wyświetla dedykowany toast, gdy gra osiąga 100% ukończenia"
+          "description": "Wyświetla dedykowane powiadomienie systemu Windows, gdy gra osiąga 100% ukończenia"
         },
         "mode": {
           "name": "Typ powiadomienia",
-          "description": "Gdzie pojawiają się powiadomienia o odblokowaniu: toast Windows, nakładka w grze lub oba",
+          "description": "Gdzie pojawiają się powiadomienia o odblokowaniu: powiadomienie systemu Windows, nakładka w grze lub oba",
           "value": {
-            "toast": "Toast",
-            "overlay": "Nakładka",
+            "toast": "Powiadomienie systemu Windows",
+            "overlay": "Nakładka w grze",
             "both": "Oba"
           }
         },
@@ -434,16 +434,16 @@
         },
         "reposition": "Zmień położenie wyskakującego okna (przeciągnij je tam, gdzie chcesz)",
         "customToastAudio": {
-          "name": "Dźwięk toast",
-          "description": "Określa dźwięk odtwarzany przy wyświetlaniu toast",
+          "name": "Dźwięk powiadomienia systemu Windows",
+          "description": "Określa dźwięk odtwarzany podczas wyświetlania powiadomienia systemu Windows",
           "value": {
             "systemDefault": "Domyślny",
             "muted": "Wyciszony"
           }
         },
         "toastSouvenir": {
-          "name": "Pamiątka w toast",
-          "description": "Pokaż zrzut pamiątkowy wewnątrz toast",
+          "name": "Pamiątka w powiadomieniu systemu Windows",
+          "description": "Pokazuje zrzut pamiątkowy wewnątrz powiadomienia systemu Windows",
           "value": {
             "top": "Na górze",
             "bottom": "Na dole"
@@ -451,19 +451,19 @@
         },
         "groupToast": {
           "name": "Grupuj według gry",
-          "description": "Wizualnie grupuj toasty z tej samej gry w Centrum akcji"
+          "description": "Wizualnie grupuje powiadomienia systemu Windows tej samej gry w Centrum akcji"
         },
         "useToast": {
-          "name": "Powiadomienie toast",
-          "description": "Powiadomienie toast Windows 8-10"
+          "name": "Powiadomienie systemu Windows",
+          "description": "Powiadomienie systemu Windows 8-10"
         },
         "useWinRT": {
           "name": "API WinRT",
-          "description": "Użyj WinRT, jeśli dostępne, dla szybszych toastów zamiast PowerShell"
+          "description": "Używa WinRT, jeśli dostępny, do szybszych powiadomień systemu Windows zamiast PowerShell"
         },
         "useBalloon": {
           "name": "Dymek podpowiedzi",
-          "description": "Przełącz na dymek podpowiedzi, gdy powiadomienie toast zawiedzie"
+          "description": "Przechodzi do dymka pomocy, gdy powiadomienie systemu Windows zawiedzie"
         },
         "useWS": {
           "description": "Rozsyłaj osiągnięcie do wszystkich połączonych klientów"
@@ -637,7 +637,7 @@
         "winNotifTitle": "Ustawienia powiadomień Windows",
         "focusAssist": "Wspomaganie koncentracji",
         "notifActions": "Powiadomienia i akcje",
-        "winNotifDesc": "Windows 10 >= 1903 : automatyczna reguła wspomagania koncentracji dla aplikacji pełnoekranowych (domyślnie tylko alarmy) może blokować powiadomienia toast — ustaw ją na „Wyłączone”, jeśli toasty nie pojawiają się w grze."
+        "winNotifDesc": "Windows 10 >= 1903 : automatyczna reguła wspomagania koncentracji dla aplikacji pełnoekranowych (domyślnie tylko alarmy) może blokować powiadomienia systemu Windows — ustaw ją na „Wyłączone”, jeśli nie pojawiają się w grze."
       },
       "blacklistTitle": "Czarna lista AppID",
       "blacklistButton": "Resetuj czarną listę",
@@ -724,7 +724,7 @@
     "show": "Pokaż",
     "hide": "Ukryj",
     "sourceHint": "Wyświetla także listę Twoich legalnych gier Steam (wymagany profil publiczny).",
-    "notificationsHint": "Gdzie pojawiają się odblokowania: toast systemu Windows, nakładka w grze lub jedno i drugie.",
+    "notificationsHint": "Gdzie pojawiają się odblokowania: powiadomienie systemu Windows, nakładka w grze lub jedno i drugie.",
     "playtimeHint": "Automatycznie śledzi czas odtwarzania wykrytych gier.",
     "autoFixHint": "Stosuje poprawkę emulatora (GBE Fork, osiągnięcia, DLC) do nowych emulowanych gier.",
     "hiddenHint": "Ujawnia ukryte nazwy i opisy osiągnięć, zanim je odblokujesz.",
@@ -732,8 +732,8 @@
     "none": "Żadne",
     "installed": "Zainstalowany",
     "owned": "Posiadany",
-    "toast": "Toast",
-    "overlay": "Nakładka",
+    "toast": "Powiadomienie systemu Windows",
+    "overlay": "Nakładka w grze",
     "both": "Obydwa",
     "enabled": "Włączone",
     "disabled": "Wyłączone",

@@ -12,6 +12,10 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   reads as toasted bread), aligned onboarding labels with the wording used in
   Settings (Smart Find, Overlay, Enabled/Disabled), fixed capitalization in
   onboarding steps, and cleaned up English source punctuation.
+- Notification terminology is now explicit everywhere: "Toast" labels became
+  "Windows notification" (the native Windows system notification) and
+  "Overlay" labels became "In-game overlay" (the Steam-style popup), in every
+  bundled locale, the first-run guide, the settings test buttons and the docs.
 
 ## 3.5.2 - 2026-08-04
 

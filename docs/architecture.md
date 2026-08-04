@@ -12,7 +12,7 @@ Electron main process
 └── starts the Watchdog with ELECTRON_RUN_AS_NODE
     ├── watches processes and achievement files
     ├── tracks playtime
-    └── dispatches Windows toasts and overlay events
+    └── dispatches Windows notifications and overlay events
 ```
 
 Electron's bundled Node runtime runs both processes. The installed app does not ship a second Node or NW.js executable.

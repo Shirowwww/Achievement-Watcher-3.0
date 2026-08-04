@@ -82,7 +82,7 @@
     "title": "Nastavení",
     "sideMenu": {
       "general": "Obecné",
-      "overlay": "Overlay",
+      "overlay": "Overlay ve hře",
       "notification": "Oznámení",
       "souvenir": "Vzpomínka",
       "folder": "Složky",
@@ -126,7 +126,7 @@
         "description": "Legacy používá „starý“ systém oznámení"
       },
       "hotkey": {
-        "name": "Klávesová zkratka overlaye",
+        "name": "Klávesová zkratka overlaye ve hře",
         "description": "Stiskněte tuto zkratku pro zobrazení overlaye achievementů ve hře."
       },
       "scale": "Velikost oznámení",
@@ -190,7 +190,7 @@
       "controller": {
         "title": "Ovladač",
         "enabled": {
-          "name": "Ovládat překryv ovladačem",
+          "name": "Ovládat overlay ve hře ovladačem",
           "description": "Otevírejte a posouvejte herní překryv ovladačem (Back+Start pro otevření; podržte LB+RB pro posun/rolování). Podporuje Xbox, PlayStation (DualSense/DualShock) a Switch Pro."
         },
         "backend": {
@@ -309,7 +309,7 @@
     "notification": {
       "title": {
         "common": "Společné",
-        "toast": "Toast oznámení",
+        "toast": "Oznámení Windows",
         "transport": "Přenos",
         "chromium": "Oznámení Chromium",
         "watchdog": "Watchdog",
@@ -325,9 +325,9 @@
         "rare": "Vzácné",
         "progress": "Postup",
         "playtime": "Doba hraní",
-        "toast": "Windows Toast",
+        "toast": "Oznámení Windows",
         "platinum": "Platina",
-        "overlay": "Overlay"
+        "overlay": "Overlay ve hře"
       },
       "option": {
         "transportMode": {
@@ -335,7 +335,7 @@
           "description": "Vyberte jeden aktivní systém oznámení",
           "value": {
             "chromium": "Chromium (stylizované)",
-            "toast": "Windows Toast",
+            "toast": "Oznámení Windows",
             "none": "Vypnuto"
           }
         },
@@ -357,14 +357,14 @@
         },
         "platinum": {
           "name": "Platina (100 %)",
-          "description": "Spustí vyhrazený toast, když hra dosáhne 100% dokončení"
+          "description": "Spustí vyhrazené oznámení Windows, když hra dosáhne 100% dokončení"
         },
         "mode": {
           "name": "Typ oznámení",
-          "description": "Kde se zobrazují oznámení o odemčení: Windows toast, overlay ve hře nebo obojí",
+          "description": "Kde se zobrazují oznámení o odemčení: oznámení Windows, overlay ve hře nebo obojí",
           "value": {
-            "toast": "Toast",
-            "overlay": "Overlay",
+            "toast": "Oznámení Windows",
+            "overlay": "Overlay ve hře",
             "both": "Obojí"
           }
         },
@@ -434,16 +434,16 @@
         },
         "reposition": "Změnit umístění vyskakovacího okna (přetáhněte ho, kam chcete)",
         "customToastAudio": {
-          "name": "Zvuk toast",
-          "description": "Určuje zvuk přehraný při zobrazení toast",
+          "name": "Zvuk oznámení Windows",
+          "description": "Určuje zvuk přehraný při zobrazení oznámení Windows",
           "value": {
             "systemDefault": "Výchozí",
             "muted": "Ztlumeno"
           }
         },
         "toastSouvenir": {
-          "name": "Vzpomínka v toast",
-          "description": "Zobrazit vzpomínkový snímek uvnitř toast",
+          "name": "Vzpomínka v oznámení Windows",
+          "description": "Zobrazit vzpomínkový snímek uvnitř oznámení Windows",
           "value": {
             "top": "Nahoře",
             "bottom": "Dole"
@@ -451,19 +451,19 @@
         },
         "groupToast": {
           "name": "Seskupit podle hry",
-          "description": "Vizuálně seskupit toasty stejné hry v Centru akcí"
+          "description": "Vizuálně seskupit oznámení Windows stejné hry v Centru akcí"
         },
         "useToast": {
-          "name": "Toast oznámení",
-          "description": "Toast oznámení Windows 8-10"
+          "name": "Oznámení Windows",
+          "description": "Systémové oznámení Windows 8-10"
         },
         "useWinRT": {
           "name": "WinRT API",
-          "description": "Použít WinRT, pokud je dostupné, pro rychlejší toasty místo PowerShellu"
+          "description": "Použít WinRT, pokud je dostupné, pro rychlejší oznámení Windows místo PowerShellu"
         },
         "useBalloon": {
           "name": "Bublinová nápověda",
-          "description": "Při selhání toast oznámení přejít na bublinovou nápovědu"
+          "description": "Při selhání oznámení Windows přejít na bublinovou nápovědu"
         },
         "useWS": {
           "description": "Vysílat achievement všem připojeným klientům"
@@ -637,7 +637,7 @@
         "winNotifTitle": "Nastavení oznámení Windows",
         "focusAssist": "Asistent fokusu",
         "notifActions": "Oznámení a akce",
-        "winNotifDesc": "Windows 10 >= 1903 : automatické pravidlo soustředění pro celoobrazovkové aplikace (ve výchozím nastavení pouze budíky) může potlačit toast oznámení — nastavte na „Vypnuto“, pokud se toasty ve hře neobjevují."
+        "winNotifDesc": "Windows 10 >= 1903 : automatické pravidlo soustředění pro celoobrazovkové aplikace (ve výchozím nastavení pouze budíky) může potlačit oznámení Windows — nastavte na „Vypnuto“, pokud se ve hře neobjevují."
       },
       "blacklistTitle": "Černá listina AppID",
       "blacklistButton": "Resetovat černou listinu",
@@ -680,7 +680,7 @@
     "languagePlaceholder": "Vyberte jazyk...",
     "languageHint": "První načtení knihovny se spustí až po této volbě.",
     "introTitle": "Jak to funguje",
-    "introCopy": "Achievement Watcher prohledá známé složky pro ukládání a vaše herní knihovny, poté Watchdog stále běží v zásobníku pro odemknutí oznámení a překryvné vrstvy ve hře.",
+    "introCopy": "Achievement Watcher prohledá známé složky pro ukládání a vaše herní knihovny, poté Watchdog stále běží v zásobníku pro odemknutí oznámení a overlay ve hře.",
     "scanTitle": "Skenovat",
     "scanCopy": "Instalace Steam, GOG, Epic, RPCS3/ShadPS4/Xenia a Goldberg/GBE se vyhledávají podle souborů úspěchů — například %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, uložené pozice CODEX/RUNE nebo složka hry se steam_settings.",
     "watchTitle": "Sledovat",
@@ -724,7 +724,7 @@
     "show": "Zobrazit",
     "hide": "Skrýt",
     "sourceHint": "Také uvádí vaše legitimní hry Steam (vyžaduje veřejný profil).",
-    "notificationsHint": "Kde se objeví odemknutí: Windows toast, překryvná vrstva ve hře nebo obojí.",
+    "notificationsHint": "Kde se objeví odemknutí: oznámení Windows, overlay ve hře nebo obojí.",
     "playtimeHint": "Automaticky sleduje dobu hraní pro zjištěné hry.",
     "autoFixHint": "Použije opravu emulátoru (GBE Fork, achievementy, DLC) na nové emulované hry.",
     "hiddenHint": "Odhalí skryté názvy a popisy úspěchů, než je odemknete.",
@@ -732,8 +732,8 @@
     "none": "Žádné",
     "installed": "Instalováno",
     "owned": "Vlastněno",
-    "toast": "Toast",
-    "overlay": "Překryvná vrstva",
+    "toast": "Oznámení Windows",
+    "overlay": "Overlay ve hře",
     "both": "Obojí",
     "enabled": "Povoleno",
     "disabled": "Zakázáno",
