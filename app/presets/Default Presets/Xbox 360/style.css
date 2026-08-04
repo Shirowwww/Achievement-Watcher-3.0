@@ -342,3 +342,70 @@
   -moz-animation-fill-mode: forwards;
   animation-fill-mode: forwards;
 }
+
+/* --- AW deep pass: rarity + progress --- */
+.ach {
+  --aw-accent: #45ca3d;
+  --aw-accent-soft: #8fe88a;
+  --aw-glow: rgba(69, 202, 61, 0.5);
+}
+.ach.rarity-gold {
+  --aw-accent: #ffd24e;
+  --aw-accent-soft: #fff0a8;
+  --aw-glow: rgba(255, 216, 72, 0.55);
+}
+.ach.rarity-silver {
+  --aw-accent: #9fb2cc;
+  --aw-accent-soft: #eef4fb;
+  --aw-glow: rgba(195, 216, 242, 0.5);
+}
+.ach.rarity-bronze {
+  --aw-accent: #cd7f32;
+  --aw-accent-soft: #f0bd91;
+  --aw-glow: rgba(205, 111, 41, 0.5);
+}
+.ach.rarity-gold .icon,
+.ach.rarity-silver .icon,
+.ach.rarity-bronze .icon {
+  box-shadow: 0 0 14px var(--aw-glow);
+}
+.progress_line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  min-width: 0;
+}
+.progress_line[hidden] {
+  display: none;
+}
+.progress_track {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 70px;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.progress_meter {
+  display: block;
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--aw-accent) 0%, var(--aw-accent-soft) 100%);
+  box-shadow: 0 0 12px var(--aw-glow);
+  transition: width 0.35s ease;
+}
+.progress_label {
+  flex: 0 0 auto;
+  max-width: 110px;
+  overflow: hidden;
+  color: #f3f7ff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: right;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}

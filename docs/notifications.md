@@ -22,6 +22,11 @@ The app includes presets inspired by several console and PC notification styles.
 
 Choose **Same as main** when a separate style is not needed.
 
+All bundled presets, the included user presets and the custom preset builder consume the same
+rich payload: rare achievements tint the popup with a gold/silver/bronze tier (below 3%, 6% and
+10% global unlock rate) and progress notifications show a real progress bar with a
+`current/max - %` label, exactly like the Shirow preset.
+
 ## Create a custom preset
 
 The preset builder changes the background, text, accent color, opacity, font size, icon size and corner radius while showing a live preview. Select **Create preset** to save the result to the local preset library.

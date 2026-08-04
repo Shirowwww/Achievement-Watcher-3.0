@@ -3,6 +3,22 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- Every overlay notification preset now consumes the same payload richness as the Shirow preset:
+  rare achievements get a gold/silver/bronze tier (accent, glow and progress colors) and progress
+  notifications show a real progress bar with a `current/max - %` label. This covers all bundled
+  presets, the user presets and the custom preset builder. Presets that lacked it also gained
+  marquee scrolling for long titles/descriptions so text stays readable.
+
+### Fixed
+
+- Presets that previously required a full `displayName`/`description`/`iconPath` payload (Modern,
+  Neon Future, LAZ0RBOX, PS5 presets, Xbox 360, xqjan) now render whatever fields are present, so
+  progress-only and playtime notifications no longer skip their content.
+
 ## 3.5.1 - 2026-08-04
 
 ### Fixed

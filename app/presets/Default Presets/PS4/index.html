@@ -37,6 +37,10 @@
         <div class="text_wrap">
           <p class="title"></p>
           <span class="detail"></span>
+          <div class="progress_line" hidden>
+            <span class="progress_track"><span class="progress_meter"></span></span>
+            <span class="progress_label"></span>
+          </div>
         </div>
         <div class="ring-container">
           <div class="ringring"></div>
@@ -62,6 +66,49 @@
               });
             });
           }, safeDelay);
+        }
+
+        function applyRarityTier(rootEl, value) {
+          rootEl?.classList.remove("rarity-gold", "rarity-silver", "rarity-bronze");
+          if (value == null || value === "") return;
+          const percent = Number(value);
+          if (!Number.isFinite(percent) || percent < 0 || percent > 10) return;
+          if (percent < 3) rootEl.classList.add("rarity-gold");
+          else if (percent < 6) rootEl.classList.add("rarity-silver");
+          else rootEl.classList.add("rarity-bronze");
+        }
+
+        function normalizeProgress(data) {
+          const src = data?.progress || data || {};
+          const max = Number(src.max ?? src.progressMax);
+          if (!Number.isFinite(max) || max <= 1) return null;
+          const currentRaw = Number(src.current ?? src.progressCurrent);
+          const current = Math.max(
+            0,
+            Math.min(max, Number.isFinite(currentRaw) ? currentRaw : 0)
+          );
+          const percentRaw = Number(src.percent ?? src.progressPercent);
+          const percent = Number.isFinite(percentRaw)
+            ? Math.max(0, Math.min(100, Math.floor(percentRaw)))
+            : Math.max(0, Math.min(100, Math.floor((current / max) * 100)));
+          return { current, max, percent };
+        }
+
+        function applyProgress(data) {
+          const progress = normalizeProgress(data);
+          const line = document.querySelector(".progress_line");
+          const meter = document.querySelector(".progress_meter");
+          const label = document.querySelector(".progress_label");
+          if (!line || !meter || !label) return;
+          if (!progress) {
+            line.hidden = true;
+            meter.style.width = "0%";
+            label.textContent = "";
+            return;
+          }
+          line.hidden = false;
+          meter.style.width = `${progress.percent}%`;
+          label.textContent = `${progress.current}/${progress.max} - ${progress.percent}%`;
         }
 
         function toFileSrc(iconPath) {
@@ -152,17 +199,20 @@
           let scaleValue = 1;
           let iconSrc = "";
 
-          if (
-            notificationData &&
-            notificationData.displayName &&
-            notificationData.description &&
-            notificationData.iconPath
-          ) {
-            titleEl.textContent = notificationData.displayName;
-            detailEl.textContent = notificationData.description;
-            iconSrc = toFileSrc(notificationData.iconPath);
+          if (notificationData) {
+            if (notificationData.displayName != null) {
+              titleEl.textContent = notificationData.displayName;
+            }
+            if (notificationData.description != null) {
+              detailEl.textContent = notificationData.description;
+            }
+            if (notificationData.iconPath) {
+              iconSrc = toFileSrc(notificationData.iconPath);
+            }
             scaleValue = parseFloat(notificationData.scale || 1) || 1;
             ach.style.setProperty("--scale", scaleValue);
+            applyRarityTier(ach, notificationData.rarityPercent);
+            applyProgress(notificationData);
           }
           const startNotification = () => {
             if (seq !== notificationSeq) return;

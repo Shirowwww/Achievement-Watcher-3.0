@@ -221,6 +221,69 @@
     @keyframes hideText {
       to { opacity: 0; transform: translateY(0%) scale(0.6); }
     }
+
+    /* AW deep pass: rarity + progress */
+    .notification {
+      --aw-accent: #00aced;
+      --aw-accent-soft: #66d3ff;
+      --aw-glow: rgba(0, 172, 237, 0.5);
+    }
+    .notification.rarity-gold {
+      --aw-accent: #ffd24e;
+      --aw-accent-soft: #fff0a8;
+      --aw-glow: rgba(255, 216, 72, 0.55);
+    }
+    .notification.rarity-silver {
+      --aw-accent: #9fb2cc;
+      --aw-accent-soft: #eef4fb;
+      --aw-glow: rgba(195, 216, 242, 0.5);
+    }
+    .notification.rarity-bronze {
+      --aw-accent: #cd7f32;
+      --aw-accent-soft: #f0bd91;
+      --aw-glow: rgba(205, 111, 41, 0.5);
+    }
+    .progress_line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      min-width: 0;
+      width: 200px;
+    }
+    .progress_line[hidden] {
+      display: none;
+    }
+    .progress_track {
+      display: block;
+      flex: 1 1 auto;
+      min-width: 60px;
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.45);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+    .progress_meter {
+      display: block;
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--aw-accent) 0%, var(--aw-accent-soft) 100%);
+      box-shadow: 0 0 12px var(--aw-glow);
+      transition: width 0.35s ease;
+    }
+    .progress_label {
+      flex: 0 0 auto;
+      max-width: 110px;
+      overflow: hidden;
+      color: #f3f7ff;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      text-align: right;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
   </style>
 </head>
 <body>
@@ -236,6 +299,10 @@
     <div class="text">
       <div class="title"></div>
       <div class="desc"></div>
+      <div class="progress_line" hidden>
+        <span class="progress_track"><span class="progress_meter"></span></span>
+        <span class="progress_label"></span>
+      </div>
     </div>
   </div>
 <script>
@@ -252,15 +319,60 @@ window.addEventListener('DOMContentLoaded', () => {
       });
     }, safeDelay);
   }
+  function applyRarityTier(rootEl, value) {
+    rootEl?.classList.remove("rarity-gold", "rarity-silver", "rarity-bronze");
+    if (value == null || value === "") return;
+    const percent = Number(value);
+    if (!Number.isFinite(percent) || percent < 0 || percent > 10) return;
+    if (percent < 3) rootEl.classList.add("rarity-gold");
+    else if (percent < 6) rootEl.classList.add("rarity-silver");
+    else rootEl.classList.add("rarity-bronze");
+  }
+  function normalizeProgress(data) {
+    const src = data?.progress || data || {};
+    const max = Number(src.max ?? src.progressMax);
+    if (!Number.isFinite(max) || max <= 1) return null;
+    const currentRaw = Number(src.current ?? src.progressCurrent);
+    const current = Math.max(
+      0,
+      Math.min(max, Number.isFinite(currentRaw) ? currentRaw : 0)
+    );
+    const percentRaw = Number(src.percent ?? src.progressPercent);
+    const percent = Number.isFinite(percentRaw)
+      ? Math.max(0, Math.min(100, Math.floor(percentRaw)))
+      : Math.max(0, Math.min(100, Math.floor((current / max) * 100)));
+    return { current, max, percent };
+  }
+  function applyProgress(data) {
+    const progress = normalizeProgress(data);
+    const line = document.querySelector(".progress_line");
+    const meter = document.querySelector(".progress_meter");
+    const label = document.querySelector(".progress_label");
+    if (!line || !meter || !label) return;
+    if (!progress) {
+      line.hidden = true;
+      meter.style.width = "0%";
+      label.textContent = "";
+      return;
+    }
+    line.hidden = false;
+    meter.style.width = `${progress.percent}%`;
+    label.textContent = `${progress.current}/${progress.max} - ${progress.percent}%`;
+  }
   window.api?.onNotification?.((notificationData) => {
-    if (notificationData &&
-        notificationData.displayName &&
-        notificationData.description &&
-        notificationData.iconPath) {
-
-      document.querySelector(".title").textContent = notificationData.displayName;
-      document.querySelector(".desc").textContent = notificationData.description;
-      document.querySelector(".icon img").src = `file:///${notificationData.iconPath}`;
+    const notificationEl = document.querySelector(".notification");
+    if (notificationData) {
+      if (notificationData.displayName != null) {
+        document.querySelector(".title").textContent = notificationData.displayName;
+      }
+      if (notificationData.description != null) {
+        document.querySelector(".desc").textContent = notificationData.description;
+      }
+      if (notificationData.iconPath) {
+        document.querySelector(".icon img").src = `file:///${notificationData.iconPath}`;
+      }
+      applyRarityTier(notificationEl, notificationData.rarityPercent);
+      applyProgress(notificationData);
 
       const total = Math.max(0, Number(metaDur?.content || 10000));
       const timelineScale = Math.max(0.1, total / baseTotal);

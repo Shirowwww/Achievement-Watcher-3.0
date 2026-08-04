@@ -179,3 +179,66 @@
 @keyframes dock-fade { to{ opacity:0; } }
 
 body[data-scaled="true"] .dock{ transform-origin: center bottom; }
+
+/* --- AW deep pass: rarity + progress --- */
+.dock {
+  --aw-accent: #07a8ff;
+  --aw-accent-soft: #6fd0ff;
+  --aw-glow: rgba(7, 168, 255, 0.5);
+}
+.dock.rarity-gold {
+  --aw-accent: #ffd24e;
+  --aw-accent-soft: #fff0a8;
+  --aw-glow: rgba(255, 216, 72, 0.55);
+}
+.dock.rarity-silver {
+  --aw-accent: #9fb2cc;
+  --aw-accent-soft: #eef4fb;
+  --aw-glow: rgba(195, 216, 242, 0.5);
+}
+.dock.rarity-bronze {
+  --aw-accent: #cd7f32;
+  --aw-accent-soft: #f0bd91;
+  --aw-glow: rgba(205, 111, 41, 0.5);
+}
+.progress_line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  min-width: 0;
+  max-width: 240px;
+}
+.progress_line[hidden] {
+  display: none;
+}
+.progress_track {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 60px;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.progress_meter {
+  display: block;
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--aw-accent) 0%, var(--aw-accent-soft) 100%);
+  box-shadow: 0 0 12px var(--aw-glow);
+  transition: width 0.35s ease;
+}
+.progress_label {
+  flex: 0 0 auto;
+  max-width: 110px;
+  overflow: hidden;
+  color: #f3f7ff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: right;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
