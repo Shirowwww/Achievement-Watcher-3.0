@@ -147,6 +147,12 @@ published higher version.
 Do not claim auto-update success from source mode, an unpacked build, or a
 same-version asset replacement.
 
+### Validation log
+
+- **3.5.2 (2026-08-04):** maintainer confirmed the installed-app auto-update
+  from 3.5.1 to 3.5.2 (feed check, download, restart prompt and reported
+  version).
+
 ## Final handoff
 
 - Confirm `git status --short --branch` is clean and synchronized.
