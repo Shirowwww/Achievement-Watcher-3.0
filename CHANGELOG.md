@@ -19,6 +19,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - Malformed Tenoke inline progress values (e.g. `progress=12.5.3`) are ignored
   instead of writing `NaN` into the achievement baseline; the matching
   `[STATS]` value is used as fallback.
+- Watchdog baseline persistence rejects non-array save payloads and keeps an
+  immutable in-memory snapshot, so a bad save call can no longer wipe a valid
+  baseline and later mutations of the caller's array stay out of the cache.
 
 ## 3.5.2 - 2026-08-04
 

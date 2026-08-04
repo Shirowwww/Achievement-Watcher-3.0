@@ -25,20 +25,26 @@ module.exports.setCacheDir = (dir) => {
 
 module.exports.load = async (appID) => {
   // The in-memory baseline is always at least as fresh as the file: prefer it when present.
-  if (memoryCache.has(appID)) return memoryCache.get(appID).slice();
+  if (memoryCache.has(appID)) return snapshotOf(memoryCache.get(appID));
 
   try {
     const parsed = JSON.parse(await fs.readFile(path.join(cacheDir, `${appID}.db`), 'utf8'));
     const normalized = Array.isArray(parsed) ? parsed : [];
     memoryCache.set(appID, normalized);
-    return normalized.slice();
+    return snapshotOf(normalized);
   } catch {
     return [];
   }
 };
 
 module.exports.save = async (appID, achievements) => {
-  const normalized = Array.isArray(achievements) ? achievements : [];
+  if (!Array.isArray(achievements)) {
+    // Never let a bad call wipe a valid baseline (memory or disk) with an empty array.
+    throw new TypeError('track.save requires an achievements array');
+  }
+  // Snapshot now: the caller (watchdog.js) keeps using its own array after save, and the in-memory
+  // baseline must behave exactly like the serialized file — immutable once persisted.
+  const normalized = snapshotOf(achievements);
   memoryCache.set(appID, normalized);
 
   const filePath = path.join(cacheDir, `${appID}.db`);
@@ -52,6 +58,10 @@ module.exports.save = async (appID, achievements) => {
   });
   await pending;
 };
+
+function snapshotOf(entries) {
+  return entries.map((entry) => ({ ...entry }));
+}
 
 async function persist(filePath, achievements) {
   // The cache directory may not exist yet on a fresh install: create it (and any missing parents)

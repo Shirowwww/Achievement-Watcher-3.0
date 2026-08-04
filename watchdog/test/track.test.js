@@ -109,3 +109,34 @@ test('falls back to an in-place write when the atomic rename fails (Windows open
   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(root, 'data', '2592160.db'), 'utf8')), achievements);
   assert.equal(fs.existsSync(path.join(root, 'data', '2592160.db.tmp')), false, 'temp file should be cleaned up after the fallback');
 });
+
+test('save rejects a non-array payload and preserves the previous baseline', async (t) => {
+  const root = tempDir(t);
+  track.setCacheDir(path.join(root, 'data'));
+
+  const achievements = [{ name: 'Burning Chrome', Achieved: 1, UnlockTime: 1000 }];
+  await track.save('2592160', achievements);
+
+  await assert.rejects(track.save('2592160', null));
+  await assert.rejects(track.save('2592160', { name: 'not-an-array' }));
+
+  // Neither the memory baseline nor the on-disk baseline may be wiped by the bad call.
+  assert.deepEqual(await track.load('2592160'), achievements);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(root, 'data', '2592160.db'), 'utf8')), achievements);
+});
+
+test('the in-memory baseline is a snapshot, not a live reference to the caller array', async (t) => {
+  const root = tempDir(t);
+  track.setCacheDir(path.join(root, 'data'));
+
+  const achievements = [{ name: 'A', Achieved: 1, UnlockTime: 1000 }];
+  await track.save('7', achievements);
+
+  achievements[0].UnlockTime = 9999;
+  achievements.push({ name: 'B', Achieved: 1, UnlockTime: 2000 });
+
+  assert.deepEqual(await track.load('7'), [{ name: 'A', Achieved: 1, UnlockTime: 1000 }]);
+  const loaded = await track.load('7');
+  loaded[0].UnlockTime = 1234;
+  assert.deepEqual(await track.load('7'), [{ name: 'A', Achieved: 1, UnlockTime: 1000 }]);
+});
