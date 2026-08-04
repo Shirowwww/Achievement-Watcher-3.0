@@ -1,29 +1,31 @@
-# Achievement Watcher 3.4.3
+# Achievement Watcher 3.5.0
 
-Version 3.4.3 is a reliability and maintenance release: the background monitor and the automatic
-updater are hardened, the dependency tree is clean, and a batch of broken context-menu icons is fixed.
+Version 3.5.0 makes progress-type achievements work where they were stuck at 0%, and gives legacy
+Epic installs the same rich, correctly-rated data as official Epic games.
 
 ## Highlights
 
-- **Resilient background monitor.** The Watchdog is supervised with an exponential respawn backoff
-  (3 s → 60 s), a failed spawn can no longer leave it dead for the whole session, manual restarts
-  wait for the real process exit instead of a fixed delay, and uncaught exceptions restart it cleanly
-  instead of leaving it half-initialized.
-- **Self-healing automatic updates.** Failed update checks retry after 30 minutes and a healthy
-  install re-checks every 6 hours while it stays resident; errors surface as a tray notification,
-  overlapping prompts are ignored, and the dependency tree is pinned so `npm audit` reports zero
-  vulnerabilities.
-- **Restored game-list context-menu icons** (they referenced image files that no longer existed) and
-  removed the unused @1x/@4x icon scales.
-- **Leaner packages.** Dropped the unused `sound-play` dependency from the app and the Watchdog, and
-  removed stale local build output.
+- **Online-Fix stat support.** A sibling `Stats.ini` next to `achievements.ini` is now merged into
+  the parsed save, so progress-type achievements (kill counters, distances, …) resolve through the
+  local Goldberg/GBE schema instead of showing 0% forever.
+- **Better TENOKE stats.** `user_stats.ini` `[STATS]` values are cross-referenced onto same-key
+  achievements, and inline `progress=`/`value=` entries on the achievement itself are honored, so
+  Tenoke progress-type achievements display real progress.
+- **Epic appid detection.** Legacy NemirtingasEpicEmu installs (hex artifact ids) now resolve their
+  real Epic namespace and title through egdata.app, reuse the same cached, localized,
+  rarity-annotated schema as official Epic installs, and fetch their community rarity against the
+  correct product id instead of the artifact id.
+- **Progress no longer zeroed.** A save file without a `MaxProgress` no longer stamps `0` over the
+  schema's own `max_progress`, so progress bars and percentages keep their real target.
+- **Fixed update button label.** The "Download & Install" button shows its ampersand literally
+  instead of letting Windows swallow it as a keyboard mnemonic.
 
-See the [changelog](CHANGELOG.md#343---2026-08-03) for the full list of changes.
+See the [changelog](CHANGELOG.md#350---2026-08-04) for the full list of changes.
 
 ## Install
 
-Download `Achievement.Watcher.Setup.3.4.3.exe` from the
-[v3.4.3 release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/tag/v3.4.3).
+Download `Achievement.Watcher.Setup.3.5.0.exe` from the
+[v3.5.0 release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/tag/v3.5.0).
 
 The `.blockmap` and `latest.yml` assets are used by automatic updates. Existing settings and tracked
 data under `%APPDATA%\Achievement Watcher` are preserved when upgrading.

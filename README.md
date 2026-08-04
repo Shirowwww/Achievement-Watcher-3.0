@@ -40,7 +40,16 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 | **Goldberg / GBE tools** | Read-only diagnosis, `steam_settings` repair, matched runtime install, Steamless support, backups/restore and opt-in background setup |
 | **Local-first reliability** | Offline names and artwork, local schemas, platform-aware cache IDs, bounded caches, self-healing folders and fewer browser-dependent lookups |
 
-The 3.2.0 release adds dedicated detection and repair for compatible **Goldberg Uplay R2** installs; see the [3.2.0 changelog](CHANGELOG.md#320---2026-07-14) for the complete release scope. The 3.4.2 release reconciles Steam rarity across sources: Uplay R2, official Ubisoft Connect and Epic-with-a-Steam-release games now show the same Steam community percentages as native Steam games.
+Recent releases have focused on covering more games and making the library trustworthy: **3.5.0**
+adds Online-Fix `Stats.ini` and TENOKE `user_stats.ini` progress support, resolves legacy Epic
+(NemirtingasEpicEmu) installs to their real schema, titles and rarity, and stops achievement progress
+from being zeroed when a save file lacks a `MaxProgress`. **3.3.0** brought Xbox PC (Game Pass /
+Microsoft Store) import and live unlock notifications, user themes, per-emulator overlay presets,
+emulator rarity from Exophase, manual unlock, random sounds, per-platform metadata links and
+process-trail playtime. The **3.4.x** line added Steam community percentages for non-Steam sources,
+a settings search field, deeper Goldberg Uplay R2 diagnosis and repair, a supervised background
+monitor and a hardened automatic updater. See the [changelog](CHANGELOG.md) for the complete
+per-release scope.
 
 ---
 

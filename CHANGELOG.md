@@ -3,7 +3,7 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 3.5.0 - 2026-08-04
 
 ### Added
 
