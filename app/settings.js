@@ -62,9 +62,10 @@ module.exports.load = () => {
     if (typeof options.overlay.hotkey !== 'string') {
       options.overlay.hotkey = 'Ctrl+Shift+O';
     }
-    // Overlay (in-game) notification look — re-introduced as an OPTIONAL transport (toasts stay default).
+    // Overlay (in-game) notification look — re-introduced as an OPTIONAL transport. The overlay
+    // is now the default delivery mode (with the Shirow preset).
     if (typeof options.overlay.notificationPreset !== 'string') {
-      options.overlay.notificationPreset = 'Default';
+      options.overlay.notificationPreset = 'Shirow';
     }
     if (options.overlay.notificationPreset === 'Raposo') {
       options.overlay.notificationPreset = 'Shirow';
@@ -317,7 +318,7 @@ module.exports.load = () => {
 
     // Notification delivery mode: 'toast' (Windows toast), 'overlay' (in-game HTML/CSS preset), or 'both'.
     if (!['toast', 'overlay', 'both'].includes(options.notification_transport.mode)) {
-      options.notification_transport.mode = 'toast';
+      options.notification_transport.mode = 'overlay';
     }
     delete options.notification_transport.overlay;
 
@@ -408,7 +409,7 @@ module.exports.load = () => {
       },
       overlay: {
         hotkey: 'Ctrl+Shift+O',
-        notificationPreset: 'Default',
+        notificationPreset: 'Shirow',
         notificationPresetRare: '',
         notificationPresetPlatinum: '',
         notificationPresetXenia: '',
@@ -477,7 +478,7 @@ module.exports.load = () => {
         winRT: true,
         balloon: true,
         websocket: true,
-        mode: 'toast',
+        mode: 'overlay',
       },
       notification_advanced: {
         timeTreshold: 10,

@@ -238,7 +238,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       // Overlay (in-game) notification controls — enable lives in notification_transport, the look in
       // overlay.notification*. The preset dropdown is filled from the bundled preset library.
       const cfgOverlay = app.config.overlay || {};
-      $('#option_notifMode').val(app.config.notification_transport.mode || 'toast').change();
+      $('#option_notifMode').val(app.config.notification_transport.mode || 'overlay').change();
       $('#option_overlayPosition').val(cfgOverlay.notificationPosition || 'center-bottom').change();
       $('#option_overlayScale').val(String(cfgOverlay.notificationScale || 1)).change();
       $('#option_overlayRandomSound').val(String(cfgOverlay.randomSound === true)).change();
@@ -257,13 +257,13 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const presetsReady = ipcRenderer
         .invoke('list-presets')
         .then((presets) => {
-          const list = presets && presets.length ? presets : ['Default'];
+          const list = presets && presets.length ? presets : ['Shirow', 'Default'];
           const sel = $('#option_overlayPreset');
           sel.empty();
           list.forEach((name) => {
             sel.append($('<option>').attr('value', name).text(name));
           });
-          sel.val(cfgOverlay.notificationPreset || 'Default');
+          sel.val(cfgOverlay.notificationPreset || 'Shirow');
           // Per-type overrides: same preset list plus a "same as main" ('' value) first entry.
           for (const [id, value] of [
             ['#option_overlayPresetRare', cfgOverlay.notificationPresetRare || ''],
@@ -1430,7 +1430,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     }
     // Build overlay test payload for a given notification kind, using the current overlay settings.
     function overlayTestData(kind) {
-      const mainPreset = $('#option_overlayPreset').val() || 'Default';
+      const mainPreset = $('#option_overlayPreset').val() || 'Shirow';
       // Tests honor the per-type preset overrides so they render exactly like the real popups.
       const preset =
         kind === 'rare'
@@ -1485,14 +1485,14 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     }
     // Route a test through whichever transport(s) the user picked (toast / overlay / both).
     function fireNotificationTest(kind, btn, modeOverride) {
-      const mode = modeOverride || $('#option_notifMode').val() || 'toast';
+      const mode = modeOverride || $('#option_notifMode').val() || 'overlay';
       if (mode === 'toast' || mode === 'both') runNotificationTest.call(btn, kind + '-test');
       if (mode === 'overlay' || mode === 'both') ipcRenderer.send('spawn-overlay-notification', overlayTestData(kind));
     }
     // The first-run guide shares the exact same test path, while supplying its still-unsaved
     // notification transport choice. Keep the rendering and Watchdog protocol in one place.
     window.testAchievementWatcherNotification = function (mode, button) {
-      const transport = ['toast', 'overlay', 'both'].includes(mode) ? mode : 'toast';
+      const transport = ['toast', 'overlay', 'both'].includes(mode) ? mode : 'overlay';
       fireNotificationTest('toast', button, transport);
     };
     $('#notify_test').click(function () {
@@ -1665,7 +1665,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           const presets = await ipcRenderer.invoke('list-presets');
           const sel = $('#option_overlayPreset');
           sel.empty();
-          (presets && presets.length ? presets : ['Default']).forEach((n) => sel.append($('<option>').attr('value', n).text(n)));
+          (presets && presets.length ? presets : ['Shirow', 'Default']).forEach((n) => sel.append($('<option>').attr('value', n).text(n)));
           sel.val(res.name).change();
           status.text((status.attr('data-ok') || 'Created & selected:') + ' ' + res.name).css('color', '#6c6');
         } else {
@@ -1730,9 +1730,9 @@ function readNotificationSettings() {
   if ($('#option_groupToast').val() !== '') app.config.notification_toast.groupToast = boolifyValue($('#option_groupToast').val());
 
   // Overlay (in-game) notification — enable in notification_transport, look in overlay.notification*.
-  app.config.notification_transport.mode = $('#option_notifMode').val() || 'toast';
+  app.config.notification_transport.mode = $('#option_notifMode').val() || 'overlay';
   if (!app.config.overlay) app.config.overlay = {};
-  app.config.overlay.notificationPreset = $('#option_overlayPreset').val() || 'Default';
+  app.config.overlay.notificationPreset = $('#option_overlayPreset').val() || 'Shirow';
   app.config.overlay.notificationPresetRare = $('#option_overlayPresetRare').val() || '';
   app.config.overlay.notificationPresetPlatinum = $('#option_overlayPresetPlatinum').val() || '';
   app.config.overlay.notificationPresetXenia = $('#option_overlayPresetXenia').val() || '';

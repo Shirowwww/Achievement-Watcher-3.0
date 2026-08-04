@@ -420,7 +420,7 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     updateApiKeyState();
     populateMainSteamSelect(app.config.steam?.main || '0');
     $('#onboard-legit-steam').val(String(app.config.achievement_source?.legitSteam ?? 0));
-    $('#onboard-notification-mode').val(app.config.notification_transport?.mode || 'toast');
+    $('#onboard-notification-mode').val(app.config.notification_transport?.mode || 'overlay');
     $('#onboard-playtime').val(String(app.config.notification?.playtime ?? false));
     $('#onboard-auto-fix').val(String(app.config.emulator?.autoApplyNewGames ?? false));
     $('#onboard-hidden').val(String(app.config.achievement?.showHidden ?? false));
@@ -641,7 +641,7 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
       app.config.steam.apiKey = $('#onboard-api-key').val().trim();
       app.config.steam.main = $('#onboard-main-steam').val() || '0';
       app.config.achievement_source.legitSteam = parseInt($('#onboard-legit-steam').val(), 10) || 0;
-      app.config.notification_transport.mode = $('#onboard-notification-mode').val() || 'toast';
+      app.config.notification_transport.mode = $('#onboard-notification-mode').val() || 'overlay';
       app.config.notification.playtime = boolValue($('#onboard-playtime').val());
       app.config.emulator.autoApplyNewGames = boolValue($('#onboard-auto-fix').val());
       app.config.achievement.showHidden = boolValue($('#onboard-hidden').val());
@@ -770,7 +770,7 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
         debug.log('notification test is not ready yet');
         return;
       }
-      window.testAchievementWatcherNotification($('#onboard-notification-mode').val() || 'toast', this);
+      window.testAchievementWatcherNotification($('#onboard-notification-mode').val() || 'overlay', this);
     });
     $('#onboard-language').on('change', function () {
       if (!app.config.achievement) app.config.achievement = {};

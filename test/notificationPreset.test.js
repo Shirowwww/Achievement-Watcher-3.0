@@ -37,5 +37,5 @@ test('rare and platinum overrides win over the platform preset', () => {
 
 test('missing platform override falls back to main', () => {
   assert.equal(resolvePreset({ presets: { main: 'Default' }, source: 'Xenia Emulator' }), 'Default');
-  assert.equal(resolvePreset({}), 'Default');
+  assert.equal(resolvePreset({}), 'Shirow');
 });

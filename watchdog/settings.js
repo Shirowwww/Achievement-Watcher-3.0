@@ -199,7 +199,7 @@ module.exports.load = async (cfg_file) => {
     }
 
     if (!['toast', 'overlay', 'both'].includes(options.notification_transport.mode)) {
-      options.notification_transport.mode = 'toast';
+      options.notification_transport.mode = 'overlay';
       fixFile = true;
     }
     if (options.notification_transport.overlay !== undefined) {
@@ -347,7 +347,7 @@ module.exports.load = async (cfg_file) => {
         winRT: true,
         balloon: true,
         websocket: true,
-        mode: 'toast',
+        mode: 'overlay',
       },
       notification_advanced: {
         timeTreshold: 10,

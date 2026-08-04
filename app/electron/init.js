@@ -2221,9 +2221,9 @@ function parseArgs(args) {
 // animates, then calls window.api.closeNotificationWindow() (handled in ipc.js).
 // Toasts remain the default transport; this only runs when explicitly triggered.
 // Resolve a preset by name from the bundled library (Default Presets, then Users Presets),
-// falling back to "Default". Mirrors the reference project's preset folder lookup.
+// falling back to "Shirow". Mirrors the reference project's preset folder lookup.
 function resolvePresetFolder(presetName) {
-  const requestedRaw = String(presetName || 'Default');
+  const requestedRaw = String(presetName || 'Shirow');
   const requested = requestedRaw === 'Raposo' ? 'Shirow' : requestedRaw;
   const roots = [
     path.join(__dirname, '../presets/Default Presets'),
@@ -2586,7 +2586,7 @@ async function enqueueNotificationFromArgs(args) {
   // the source lets Xenia/RPCS3/ShadPS4 notifications use their own preset.
   const preset = require(path.join(__dirname, '../util/notificationPreset.js')).resolvePreset({
     presets: {
-      main: ov.notificationPreset || 'Default',
+      main: ov.notificationPreset || 'Shirow',
       rare: ov.notificationPresetRare || '',
       platinum: ov.notificationPresetPlatinum || '',
       xenia: ov.notificationPresetXenia || '',

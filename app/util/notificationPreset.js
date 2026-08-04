@@ -19,7 +19,7 @@ function sourcePlatform(source) {
 }
 
 function resolvePreset({ presets = {}, source = '', notificationType = '', rarityPercent = null } = {}) {
-  const main = presets.main || 'Default';
+  const main = presets.main || 'Shirow';
 
   if (notificationType === 'platinum' && presets.platinum) return presets.platinum;
 
