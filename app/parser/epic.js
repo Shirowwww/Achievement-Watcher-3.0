@@ -143,45 +143,45 @@ module.exports.getGameData = async (cfg) => {
   }
 
   if (!title) {
-  try {
-    if (!gameList) gameList = JSON.parse(await getEpicProductMapping());
-    const gameSlug = gameList[cfg.appID];
-    if (!gameSlug) throw !gameSlug; //return result;
-    title = await getGameTitleFromMapping(gameSlug);
-  } catch (err) {
-    //appid not found on mapping, either a new game or using custom appid
-    //lets assume its new and search for it on the epic games store
-    title = ipcRenderer.sendSync('get-title-from-epic-id', { appid: cfg.appID }) || 'Unknown game';
-  }
+    try {
+      if (!gameList) gameList = JSON.parse(await getEpicProductMapping());
+      const gameSlug = gameList[cfg.appID];
+      if (!gameSlug) throw !gameSlug; //return result;
+      title = await getGameTitleFromMapping(gameSlug);
+    } catch (err) {
+      //appid not found on mapping, either a new game or using custom appid
+      //lets assume its new and search for it on the epic games store
+      title = ipcRenderer.sendSync('get-title-from-epic-id', { appid: cfg.appID }) || 'Unknown game';
+    }
   }
   if (!title) return result;
 
   if (list.length === 0) {
-  try {
+    try {
       const achievements = await request.getJson(
-      `https://api.epicgames.dev/epic/achievements/v1/public/achievements/product/${cfg.appID}/locale/en-us?includeAchievements=true`
-    );
-    for (let achievement of achievements.achievements) {
-      list.push({
-        name: achievement.achievement.name,
-        default_value: 0,
-        displayName:
-          achievement.achievement.lockedDisplayName.length === 0
-            ? achievement.achievement.unlockedDisplayName
-            : achievement.achievement.lockedDisplayName,
-        hidden: achievement.achievement.hidden ? 1 : 0,
-        description: achievement.achievement.lockedDescription,
-        icon: achievement.achievement.unlockedIconLink,
-        icongray: achievement.achievement.lockedIconLink,
-      });
+        `https://api.epicgames.dev/epic/achievements/v1/public/achievements/product/${cfg.appID}/locale/en-us?includeAchievements=true`
+      );
+      for (let achievement of achievements.achievements) {
+        list.push({
+          name: achievement.achievement.name,
+          default_value: 0,
+          displayName:
+            achievement.achievement.lockedDisplayName.length === 0
+              ? achievement.achievement.unlockedDisplayName
+              : achievement.achievement.lockedDisplayName,
+          hidden: achievement.achievement.hidden ? 1 : 0,
+          description: achievement.achievement.lockedDescription,
+          icon: achievement.achievement.unlockedIconLink,
+          icongray: achievement.achievement.lockedIconLink,
+        });
+      }
+    } catch (err) {
+      // probably hidden achievements, lets try to get steam's data
+      if (err.code !== 404) debug.log(err);
+      if (!cfg.steamappid) return result;
+      const achs = await ipcRenderer.invoke('get-steam-data', { appid: cfg.steamappid, type: 'steamhunters' });
+      list = Array.isArray(achs?.achievements) ? achs.achievements : []; //guard: empty scrape must not throw and drop the game
     }
-  } catch (err) {
-    // probably hidden achievements, lets try to get steam's data
-    if (err.code !== 404) debug.log(err);
-    if (!cfg.steamappid) return result;
-    const achs = await ipcRenderer.invoke('get-steam-data', { appid: cfg.steamappid, type: 'steamhunters' });
-    list = Array.isArray(achs?.achievements) ? achs.achievements : []; //guard: empty scrape must not throw and drop the game
-  }
   }
 
   result = {
