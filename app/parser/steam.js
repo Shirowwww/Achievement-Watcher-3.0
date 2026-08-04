@@ -463,8 +463,11 @@ module.exports.getAchievementsFromFile = async (filePath) => {
         const raw = local.ACHIEVEMENTS[i]; // e.g. "{unlocked=true, time=1712253396}"
         const unlockedMatch = /unlocked\s*=\s*(true|false)/i.exec(raw);
         const timeMatch = /time\s*=\s*(\d+)/i.exec(raw);
-        // Older Tenoke saves can store progress inline on the achievement entry itself.
+        // Older Tenoke saves can store progress inline on the achievement entry itself. Only trust
+        // the value when it is a finite number (a malformed tail like "12.5.3" must not become NaN
+        // in the baseline — it would poison progress notifications for the rest of the session).
         const progressMatch = /(?:progress|value)\s*=\s*([\d.]+)/i.exec(raw);
+        const progressNum = progressMatch ? Number(progressMatch[1]) : NaN;
 
         const unlocked = unlockedMatch ? unlockedMatch[1].toLowerCase() === 'true' : false;
         const time = timeMatch ? Number(timeMatch[1]) : 0;
@@ -473,8 +476,8 @@ module.exports.getAchievementsFromFile = async (filePath) => {
           Achieved: unlocked ? '1' : '0',
           UnlockTime: time,
         };
-        if (progressMatch) {
-          result[key].CurProgress = Number(progressMatch[1]);
+        if (Number.isFinite(progressNum)) {
+          result[key].CurProgress = progressNum;
         } else if (key in tenokeStatValues) {
           result[key].CurProgress = tenokeStatValues[key];
         }

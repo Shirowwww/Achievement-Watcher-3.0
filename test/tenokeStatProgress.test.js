@@ -87,3 +87,20 @@ test('getAchievementsFromFile finds the STATS section regardless of its casing',
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+test('getAchievementsFromFile ignores a malformed inline TENOKE progress instead of writing NaN', async () => {
+  const tmp = mkTmp();
+  try {
+    fs.writeFileSync(
+      path.join(tmp, 'user_stats.ini'),
+      ['[STATS]', '"felinePriorities" = 12,', '', '[ACHIEVEMENTS]', '"felinePriorities" = {unlocked=false, time=0, progress=12.5.3}'].join('\r\n')
+    );
+
+    const root = await steam.getAchievementsFromFile(tmp);
+    // The malformed inline value must be rejected, and the same-key STATS value used instead.
+    assert.equal(root.felinePriorities.CurProgress, 12);
+    assert.equal(Number.isNaN(root.felinePriorities.CurProgress), false);
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+});

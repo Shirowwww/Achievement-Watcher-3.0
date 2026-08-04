@@ -16,6 +16,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   "Windows notification" (the native Windows system notification) and
   "Overlay" labels became "In-game overlay" (the Steam-style popup), in every
   bundled locale, the first-run guide, the settings test buttons and the docs.
+- Malformed Tenoke inline progress values (e.g. `progress=12.5.3`) are ignored
+  instead of writing `NaN` into the achievement baseline; the matching
+  `[STATS]` value is used as fallback.
 
 ## 3.5.2 - 2026-08-04
 
