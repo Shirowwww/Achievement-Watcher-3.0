@@ -15,7 +15,6 @@ module.exports.setUserDataPath = (p) => {
 
 module.exports.load = () => {
   let options;
-  console.log('Loading settings');
   try {
     options = ini.parse(fs.readFileSync(filename, 'utf8'));
 
