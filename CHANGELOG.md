@@ -58,6 +58,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   was misclassified as a SocialClub game and listed by its folder name next to the real games.
   SocialClub detection now only claims the real `Goldberg SocialClub Emu Saves` root (or a path
   under it) and folders with hard Rockstar profile evidence.
+- The Settings footer's "maintained by" link pointed at a non-existent `Shirowwww/Achievement-Watcher`
+  repository instead of this one.
 
 ## 3.5.3 - 2026-08-05
 
