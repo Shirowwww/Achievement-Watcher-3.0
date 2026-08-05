@@ -36,8 +36,30 @@ nsis:
   displayLanguageSelector: false
   warningsAsErrors: false
   deleteAppDataOnUninstall: false
-  installerSidebar: left.bmp
+  # The installer UI follows the Windows display language (mapped in
+  # build/installer.nsh). These languages match app/locale/lang/*.json.
+  installerLanguages:
+    - en_US
+    - fr_FR
+    - de_DE
+    - es_ES
+    - it_IT
+    - pt_PT
+    - pt_BR
+    - cs_CZ
+    - sk_SK
+    - hu_HU
+    - pl_PL
+    - ru_RU
+    - uk_UA
+    - tr_TR
+    - th_TH
+    - ja_JP
+    - zh_CN
+  installerSidebar: build/installerSidebar.bmp
+  installerHeader: build/installerHeader.bmp
   installerIcon: build/icon.ico
+  license: build/license.txt
   differentialPackage: true
 
 directories:

@@ -119,10 +119,11 @@ The main packaging files are:
 | Path | Purpose |
 |---|---|
 | `app/electron-builder.yml` | Product metadata, files, NSIS target and update provider |
-| `app/build/installer.nsh` | Installer shutdown and upgrade behavior |
+| `app/build/installer.nsh` | Installer language mapping, shutdown and upgrade behavior |
 | `app/build/afterPack.js` | Ensures the packaged Watchdog dependency tree is copied correctly |
 | `app/build/icon.ico` | Application and installer icon |
-| `app/build/left.bmp` | NSIS installer sidebar |
+| `app/build/installerSidebar.bmp` | NSIS installer welcome/finish sidebar (164 × 314) |
+| `app/build/installerHeader.bmp` | NSIS installer header image (150 × 57) |
 
 The Watchdog runs under Electron's bundled Node runtime through `ELECTRON_RUN_AS_NODE`. No separate portable Node or NW.js runtime is packaged.
 
