@@ -28,8 +28,15 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
 
     try {
       const english = JSON.parse(onboardingFs.readFileSync(path.join(appPath, 'locale/lang/english.json'), 'utf8')).onboarding || {};
-      const requested =
-        lang === 'english' ? english : JSON.parse(onboardingFs.readFileSync(path.join(appPath, `locale/lang/${lang}.json`), 'utf8')).onboarding || {};
+      let requested = english;
+      if (lang !== 'english') {
+        try {
+          requested = JSON.parse(onboardingFs.readFileSync(path.join(appPath, `locale/lang/${lang}.json`), 'utf8')).onboarding || {};
+        } catch (err) {
+          // A broken or missing per-language file degrades to English, exactly like locale/loader.js.
+          debug.log(err);
+        }
+      }
       const localized = merge(english, requested, {
         arrayMerge: (dest, src) => src,
         isEmpty: (a) => a === null || a === '',
@@ -42,182 +49,12 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     }
   }
 
-  function isFrench() {
-    return String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
-  }
-
   function text() {
-    const localized = localizedText();
-    if (localized) return localized;
-    return isFrench()
-      ? {
-          settingsLabel: 'Guide de démarrage',
-          settingsButton: 'Ouvrir le guide',
-          settingsHelp: 'Rouvre la configuration guidée : clé API, profil, dossiers, sources et notifications.',
-          eyebrow: 'Première configuration',
-          close: 'Fermer',
-          steps: ['Langue', 'Fonctionnement', 'Compte', 'Clé API', 'Jeux', 'Réglages'],
-          languageTitle: 'Choisir la langue',
-          languageCopy:
-            'Choisis la langue avant le premier scan. Les jeux, métadonnées, succès et caches Steam seront chargés dans cette langue dès le départ.',
-          language: 'Langue des jeux et de l’interface',
-          languagePlaceholder: 'Choisir une langue...',
-          languageHint: 'Le premier chargement de la bibliothèque ne commence qu’après ce choix.',
-          introTitle: 'Comment ça marche',
-          introCopy:
-            "Achievement Watcher scanne les dossiers de sauvegarde connus et tes bibliothèques de jeux, puis le Watchdog reste dans la zone de notification pour les notifications et l'overlay en jeu.",
-          scanTitle: 'Scanner',
-          scanCopy: 'Steam, GOG, Epic, émulateurs et dossiers Goldberg/GBE sont détectés à partir des fichiers de succès.',
-          watchTitle: 'Surveiller',
-          watchCopy: 'Le Watchdog observe les fichiers et les lancements de jeux pour afficher les déblocages pendant que tu joues.',
-          fixTitle: 'Réparer',
-          fixCopy: 'Pour les jeux Steam émulés, le clic droit peut ajouter GBE Fork, les schémas, les DLC et les fichiers de lancement.',
-          profileTitle: 'Profil',
-          profileCopy: "Choisis le pseudo affiché en haut de l'app et ajoute une photo locale si tu veux.",
-          username: 'Pseudo',
-          mainSteam: 'Compte Steam principal',
-          avatarPick: 'Choisir une photo',
-          avatarDefault: 'Par défaut',
-          avatarHint: 'Optionnel. Stocké localement sur ce PC.',
-          apiTitle: 'Clé API Web Steam',
-          apiCopy: 'Une clé améliore la récupération des données Steam. Tu peux laisser vide et la renseigner plus tard.',
-          apiWarning:
-            '⚠ IMPORTANT : sans clé API, le tout premier chargement de la bibliothèque sera TRÈS LENT — chaque jeu est récupéré en scrapant les pages Steam (plusieurs secondes par jeu). Avec une clé, c’est quasi instantané et plus précis. La fenêtre reste utilisable pendant le chargement, mais c’est vivement recommandé d’en mettre une.',
-          apiLabel: 'Clé API Web Steam',
-          apiLink: 'Obtenir une clé API Steam',
-          apiNote: 'Utilise la page officielle Steam. La clé est chiffrée avant enregistrement.',
-          foldersTitle: 'Ajouter les jeux sur disque',
-          foldersCopy:
-            'Utilise Recherche intelligente pour remplir automatiquement les dossiers connus. Sinon ajoute un dossier de sauvegarde/configuration pour les émulateurs, ou un dossier de bibliothèque qui contient plusieurs jeux installés.',
-          addSave: 'Dossier sauvegarde/config',
-          smartFind: 'Recherche intelligente',
-          addLibrary: 'Dossier de bibliothèque',
-          smartFindHint: 'recommandé',
-          addSaveHint: 'un émulateur/source',
-          addLibraryHint: 'plusieurs jeux installés',
-          saveList: 'Sauvegardes / configs',
-          libraryList: 'Bibliothèques de jeux',
-          emptyList: 'Rien ajouté pour cette session.',
-          settingsTitle: 'Réglages recommandés',
-          settingsCopy: 'Les interrupteurs les plus utiles au départ. Tout reste modifiable ensuite dans Paramètres.',
-          source: 'Afficher les jeux Steam',
-          notifications: 'Notifications',
-          playtime: 'Suivi du temps de jeu',
-          autoFix: 'Auto-fix des jeux émulés',
-          hidden: 'Succès cachés',
-          merge: 'Fusionner les doublons',
-          show: 'Montrer',
-          hide: 'Cacher',
-          sourceHint: 'Affiche aussi tes jeux Steam légitimes (profil public requis).',
-          notificationsHint: 'Où apparaissent les déblocages : notification Windows, overlay en jeu, ou les deux.',
-          playtimeHint: 'Suit automatiquement le temps de jeu des jeux détectés.',
-          autoFixHint: 'Applique le fix émulateur (GBE Fork, succès, DLC) aux nouveaux jeux émulés.',
-          hiddenHint: 'Révèle le nom et la description des succès cachés avant de les débloquer.',
-          mergeHint: 'Regroupe un même jeu trouvé dans plusieurs sources en une seule vignette.',
-          none: 'Aucun',
-          installed: 'Installés',
-          owned: 'Possédés',
-          toast: 'Notification Windows',
-          overlay: 'Overlay en jeu',
-          both: 'Les deux',
-          enabled: 'Activé',
-          disabled: 'Désactivé',
-          back: 'Retour',
-          next: 'Suivant',
-          finish: 'Terminer',
-          skip: 'Passer',
-          saving: 'Enregistrement...',
-          saved: 'Configuration enregistrée.',
-          languageRequired: 'Choisis une langue pour continuer.',
-          invalidFolder: 'Ce dossier ne ressemble pas à un dossier de succès pris en charge.',
-          smartRunning: 'Recherche en cours...',
-          smartDone: 'Recherche terminée.',
-          saveError: "Impossible d'enregistrer la configuration.",
-        }
-      : {
-          settingsLabel: 'First-run guide',
-          settingsButton: 'Open guide',
-          settingsHelp: 'Reopen the setup guide for API key, profile, folders, sources, and notifications.',
-          eyebrow: 'First setup',
-          close: 'Close',
-          steps: ['Language', 'How it works', 'Account', 'API key', 'Games', 'Settings'],
-          languageTitle: 'Choose language',
-          languageCopy:
-            'Choose the language before the first scan. Games, metadata, achievements, and Steam caches will load in this language from the start.',
-          language: 'Game and interface language',
-          languagePlaceholder: 'Choose a language...',
-          languageHint: 'The first library load starts only after this choice.',
-          introTitle: 'How it works',
-          introCopy:
-            'Achievement Watcher scans known save folders and your game libraries, then the Watchdog keeps running in the tray for unlock notifications and the in-game overlay.',
-          scanTitle: 'Scan',
-          scanCopy: 'Steam, GOG, Epic, emulators and Goldberg/GBE folders are detected from saved achievement files.',
-          watchTitle: 'Watch',
-          watchCopy: 'The background Watchdog watches files and game launches so unlocks appear while you play.',
-          fixTitle: 'Repair',
-          fixCopy: 'For emulated Steam games, the right-click fix can add GBE Fork, schemas, DLC data, and launch helpers.',
-          profileTitle: 'Profile',
-          profileCopy: 'Pick the name shown in the header and optionally set a local avatar.',
-          username: 'Display name',
-          mainSteam: 'Main Steam account',
-          avatarPick: 'Choose photo',
-          avatarDefault: 'Default',
-          avatarHint: 'Optional. Stored locally on this PC.',
-          apiTitle: 'Steam Web API key',
-          apiCopy: 'A key improves Steam metadata retrieval. You can leave it empty and add it later.',
-          apiWarning:
-            '⚠ IMPORTANT: without an API key, the very first library load will be VERY SLOW — each game is fetched by scraping the Steam pages (several seconds per game). With a key it is near-instant and more accurate. The window stays usable while it loads, but adding one is strongly recommended.',
-          apiLabel: 'Steam Web API key',
-          apiLink: 'Get a Steam Web API key',
-          apiNote: 'Use the official Steam page. The key is encrypted before saving.',
-          foldersTitle: 'Add games on disk',
-          foldersCopy:
-            'Use Smart find to add known folders automatically. Or add a save/config folder for emulator data, and a library folder when one folder contains several installed games.',
-          addSave: 'Save/config folder',
-          smartFind: 'Smart find folders',
-          addLibrary: 'Game library folder',
-          smartFindHint: 'recommended',
-          addSaveHint: 'one emulator/source',
-          addLibraryHint: 'many installed games',
-          saveList: 'Save / config folders',
-          libraryList: 'Game libraries',
-          emptyList: 'Nothing added this session.',
-          settingsTitle: 'Recommended settings',
-          settingsCopy: 'These are the main switches most users need first. Everything remains editable later in Settings.',
-          source: 'Display Steam games',
-          notifications: 'Notifications',
-          playtime: 'Playtime tracking',
-          autoFix: 'Auto-fix emulated games',
-          hidden: 'Hidden achievements',
-          merge: 'Merge duplicates',
-          show: 'Show',
-          hide: 'Hide',
-          sourceHint: 'Also lists your legitimate Steam games (public profile required).',
-          notificationsHint: 'Where unlocks appear: Windows notification, in-game overlay, or both.',
-          playtimeHint: 'Automatically tracks playtime for detected games.',
-          autoFixHint: 'Applies the emulator fix (GBE Fork, achievements, DLC) to new emulated games.',
-          hiddenHint: 'Reveals hidden achievement names and descriptions before you unlock them.',
-          mergeHint: 'Combines the same game found in several sources into a single tile.',
-          none: 'None',
-          installed: 'Installed',
-          owned: 'Owned',
-          toast: 'Windows notification',
-          overlay: 'In-game overlay',
-          both: 'Both',
-          enabled: 'Enabled',
-          disabled: 'Disabled',
-          back: 'Back',
-          next: 'Next',
-          finish: 'Finish',
-          skip: 'Skip',
-          saving: 'Saving...',
-          saved: 'Setup saved.',
-          languageRequired: 'Choose a language to continue.',
-          invalidFolder: 'That folder does not look like a supported achievement folder.',
-          smartRunning: 'Searching...',
-          smartDone: 'Search complete.',
-          saveError: 'Could not save setup.',
-        };
+    // localizedText() already degrades to English when a per-language file fails to
+    // load (same policy as locale/loader.js); only an unreadable English file returns
+    // null, and in that case the whole UI is broken anyway. Keep an object so callers
+    // never crash on that catastrophic path.
+    return localizedText() || {};
   }
 
   function boolValue(v) {

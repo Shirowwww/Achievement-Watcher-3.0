@@ -32,6 +32,12 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The first-run guide no longer relies on a duplicated, incomplete French/English fallback object
+  (it was missing two strings used by the API-key toggle and the notification test). A broken or
+  missing per-language file now degrades to English, matching the rest of the UI.
+
+### Fixed
+
 - Watched emulator save roots (SmartSteamEmu, CODEX, OnlineFix, GSE Saves, …) no longer appear as
   fake games in the library. Their numeric Steam AppID subfolders (e.g. `311210`) match the hex
   profile shape the Goldberg SocialClub parser uses to recognise game folders, so every such root
