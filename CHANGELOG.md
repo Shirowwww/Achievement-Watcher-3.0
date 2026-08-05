@@ -3,7 +3,7 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 3.6.0 - 2026-08-05
 
 ### Added
 
@@ -49,9 +49,6 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   folder, so shipped fixes and localization actually reach it without waiting for the next install.
 - The overlay escapes game-provided names/descriptions (no more raw HTML injection) and no longer
   renders a misleading "Progress: undefined / 1" when a schema declares a max without a current value.
-
-### Fixed
-
 - Watched emulator save roots (SmartSteamEmu, CODEX, OnlineFix, GSE Saves, …) no longer appear as
   fake games in the library. Their numeric Steam AppID subfolders (e.g. `311210`) match the hex
   profile shape the Goldberg SocialClub parser uses to recognise game folders, so every such root

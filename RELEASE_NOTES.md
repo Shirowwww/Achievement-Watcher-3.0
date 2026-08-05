@@ -1,38 +1,34 @@
-# Achievement Watcher 3.5.3
+# Achievement Watcher 3.6.0
 
-Maintenance release that fixes the four reported issues (toasts, data isolation, Ubisoft
-identity, Goldberg SocialClub) with real root-cause fixes instead of per-game patches.
+Localization and reliability release: the installer and in-game overlay are now fully localized,
+the overlay got a visual refresh, and several data-safety issues around the 3.5.3 migration
+(lost avatar, library that appeared to shrink) are fixed.
 
 ## Highlights
 
-- **Windows notifications actually appear.** The toast payload used the wrong AUMID key and the
-  fallback identity (classic Xbox app) no longer ships on Windows 11, so Windows silently
-  discarded every achievement toast while the controller still rumbled. Toasts now use an app id
-  that is verified to exist, appear under Achievement Watcher's own name, render the correct
-  timestamp/art/progress payload, and open the game page when clicked (even from a cold start).
-- **3.x data is isolated from the original 1.6.8.** Data now lives in
-  `%APPDATA%\Achievement Watcher 3.0`; the legacy folder is imported once (selectively, with hard
-  links for large caches), so uninstalling 1.6.8 can no longer wipe 3.x settings, caches or
-  playtime.
-- **Ubisoft Connect games are identified generically.** Storefront-only blocks ("Steam") are
-  merged per achievements spec instead of picked by file order, and the Steam release is resolved
-  from the installed Steam library, the catalog, or a confident name match — no per-game mapping
-  (Far Cry 4 / uplay-971 is resolved without any asset edit).
-- **New Goldberg SocialClub source.** `%APPDATA%\Goldberg SocialClub Emu Saves` is accepted in
-  Settings, auto-scanned and live-monitored. Games are discovered from their real profile layout
-  (hex profiles, Rockstar save/profile files) and labelled "Goldberg SocialClub". Note: Rockstar's
-  proprietary save files cannot be decoded by any local tracker yet; such games are listed
-  honestly until a sample of the save format can be confirmed.
-- **Game uninstall from the right-click menu** and the full translation/terminology cleanup are
-  included.
+- **Installer and overlay follow your Windows language.** The NSIS installer pages match all 18
+  bundled locales instead of defaulting to English, and the in-game overlay (Ctrl+Shift+O) now
+  localizes its headers, labels and achievement text too.
+- **In-game overlay refresh.** A stats bar (unlocked/total + completion %), instant search, status
+  filters, community-rarity badges, progress bars, and density/icon-size/accent/zoom options that
+  persist between sessions.
+- **Uninstaller asks before deleting your data.** The installer shows the LGPL license up front;
+  uninstalling now asks whether to also remove settings, cache and saved data (default: keep).
+- **Avatar and library no longer disappear after an upgrade.** A locally uploaded avatar and the
+  "show installed only" library filter both lived in browser storage that the one-time
+  `%APPDATA%\Achievement Watcher 3.0` migration never carries over on purpose. The avatar now
+  survives future upgrades, and the installed-only filter no longer silently hides most of a
+  migrated library (it was defaulting to ON on a fresh profile, hiding every game without a
+  confirmed install folder on disk).
+- **Cleaner discovery.** Empty Goldberg SocialClub profile folders and misclassified emulator save
+  roots no longer show up as fake game cards, and custom watched folders that don't match a known
+  emulator layout by name get a proper source label instead of none.
 
 ## Install
 
-Download `Achievement.Watcher.Setup.3.5.3.exe` from the
-[v3.5.3 release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/tag/v3.5.3).
+Download `Achievement.Watcher.Setup.3.6.0.exe` from the
+[v3.6.0 release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/tag/v3.6.0).
 
-The `.blockmap` and `latest.yml` assets are used by automatic updates. Upgrading preserves data:
-the first launch imports the legacy `%APPDATA%\Achievement Watcher` folder once into
-`%APPDATA%\Achievement Watcher 3.0` (copied/hard-linked, never moved or deleted).
+The `.blockmap` and `latest.yml` assets are used by automatic updates. Upgrading preserves data.
 
-See the [changelog](CHANGELOG.md#353---2026-08-05) for the full list of changes.
+See the [changelog](CHANGELOG.md#360---2026-08-05) for the full list of changes.
