@@ -525,12 +525,24 @@ module.exports.getAchievementsFromFile = async (filePath) => {
           const doc = emuIni.parseIni(fs.readFileSync(statsPath, 'utf8'));
           const values = emuIni.readIniSectionValues(doc, 'Stats');
           const resultKeys = new Set(Object.keys(result).map((k) => String(k).toUpperCase()));
+          const rawStatKeys = [];
           for (const [name, raw] of Object.entries(values)) {
             // readIniSectionValues lower-cases stat names while achievement keys keep the repack's
             // original casing, so the shadow guard must be case-insensitive.
             if (resultKeys.has(String(name).toUpperCase())) continue; // never shadow a real achievement entry
             const num = Number(raw);
-            if (Number.isFinite(num)) result[name] = num;
+            if (Number.isFinite(num)) {
+              result[name] = num;
+              rawStatKeys.push(name);
+            }
+          }
+          // These are raw stat values, not achievement records — they only exist so
+          // statProgress.js's applyLocalStatProgress can resolve progress-type achievements via the
+          // local GBE schema's operand1. Tag them non-enumerable so achievements.js can strip them
+          // out of `root` after that mapping runs, instead of the achievement-matching loop trying
+          // (and failing) to match a schema entry literally named e.g. "stat_1".
+          if (rawStatKeys.length > 0) {
+            Object.defineProperty(result, '__rawStatKeys', { value: rawStatKeys, enumerable: false, configurable: true });
           }
         } catch (e) {}
         break;

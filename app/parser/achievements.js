@@ -2064,6 +2064,20 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
         }
       }
 
+      if (root && typeof root === 'object' && Array.isArray(root.__rawStatKeys)) {
+        // Raw Stats.ini values merged in by steam.js purely to feed applyLocalStatProgress above —
+        // not real achievement records. Left in place they'd each fail schema matching below (e.g.
+        // a schema entry literally named "stat_1" never exists) and spam one warning per stat.
+        for (const key of root.__rawStatKeys) delete root[key];
+      }
+
+      if (game.achievement.list.length === 0 && root && typeof root === 'object' && Object.keys(root).length > 0) {
+        // No schema to match against at all (e.g. the game has no real Steam achievements) —
+        // iterating would just spam one ACH_NOT_FOUND_IN_SCHEMA warning per save entry.
+        debug.warn(`[${appid.appid}] Local save has ${Object.keys(root).length} achievement entr${Object.keys(root).length === 1 ? 'y' : 'ies'} but the schema has none — skipping match`);
+        root = {};
+      }
+
       for (let i in root) {
         if (Object.prototype.hasOwnProperty.call(root, i)) {
           try {
