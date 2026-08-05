@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  Manual achievement unlocks (ported from PSerban93/Achievements).
+  Manual achievement unlocks.
 
   Some saves don't carry unlock state for every achievement (or the schema does not match the save),
   so the app lets the user mark an achievement as manually unlocked. The override lives in a small

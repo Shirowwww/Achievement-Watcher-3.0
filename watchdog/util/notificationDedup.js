@@ -1,7 +1,6 @@
 'use strict';
 
-// Precise per-achievement notification de-duplication (ported from reference-Achievements'
-// recentAchievementNotificationKeys / buildKey / prune).
+// Precise per-achievement notification de-duplication (recentAchievementNotificationKeys / buildKey / prune).
 //
 // Why this exists on top of the existing global `tick` gate in watchdog.js:
 //   - node-watch can emit two 'update' events for a single save write, and some emulators rewrite

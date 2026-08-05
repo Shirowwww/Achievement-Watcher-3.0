@@ -11,9 +11,8 @@
 // (init.js `get-steamdb-launch` IPC, which reuses the SteamHunters scrape browser). This module is
 // the pure logic: parse the launch-options HTML and rank the candidates — unit-testable offline.
 //
-// Ported from PSerban93/Achievements (JokerVerse) utils/steamdb-launch-metadata.js — MIT-licensed;
-// see THIRD_PARTY_NOTICES.md. Playwright's page.evaluate scraping is replaced by node-html-parser over the
-// section HTML (no Playwright dependency).
+// Uses node-html-parser over the section HTML instead of a headless-browser scrape (no Playwright
+// dependency).
 
 const htmlParser = require('node-html-parser');
 

@@ -876,7 +876,7 @@ ipcMain.handle('epic:login', async () => {
 });
 
 // ---- Xbox PC "Connect Microsoft / Xbox Network" + library import -------------------------------
-// Ported from PSerban93/Achievements: OAuth against the public Xbox Live client id, XSTS session
+// OAuth against the public Xbox Live client id, XSTS session
 // stored encrypted, then an import that caches every PC title's achievements under steam_cache/xbox.
 let xboxLoginWindow = null;
 ipcMain.handle('xbox-pc:status', async () => {

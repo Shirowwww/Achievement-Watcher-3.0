@@ -11,8 +11,7 @@
 // icons, real unlock times) with no Steam mapping and no network — covers/rarity work offline too
 // (rarity is baked into gameplay.db and seeded into the shared rarity sidecar cache).
 //
-// Ported from PSerban93/Achievements (JokerVerse) utils/gog-galaxy-local.js — MIT-licensed; see
-// THIRD_PARTY_NOTICES.md. Adapted to Achievement Watcher's parser contract (scan / getGameData / getAchievements
+// Adapted to Achievement Watcher's parser contract (scan / getGameData / getAchievements
 // / initDebug); axios dropped for request-zero; the schema-file writer (ensureGogOfficialSchema) is
 // not needed here because the schema is served straight from the DB on every scan. SQLite access
 // uses the runtime's built-in node:sqlite (Electron 43 / Node ≥22.5) — no native dependency.

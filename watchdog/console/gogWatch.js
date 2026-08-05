@@ -8,9 +8,6 @@
 // galaxy-2.0.db). SQLite is read via the runtime's built-in node:sqlite (the watchdog runs under
 // Electron's Node 24) — no native dependency. Isolated from the Steam watch path like the other
 // console watchers: own discovery, own baseline cache, shared notify() only.
-//
-// DB layout knowledge ported from PSerban93/Achievements (JokerVerse) utils/gog-galaxy-local.js —
-// MIT-licensed; see THIRD_PARTY_NOTICES.md.
 
 const fs = require('fs');
 const path = require('path');

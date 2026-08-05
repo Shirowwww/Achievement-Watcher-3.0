@@ -10,8 +10,7 @@
 // the real namespace here, parser/epicOfficial.js's existing sandbox/public-product schema fetchers
 // give us the same rich, localized, rarity-annotated achievement list real Epic installs get.
 //
-// Ported from PSerban93/Achievements (JokerVerse) utils/epic-identity.js — MIT-licensed; see
-// THIRD_PARTY_NOTICES.md. Moved off axios onto the runtime's global fetch (no new dependency),
+// Moved off axios onto the runtime's global fetch (no new dependency),
 // matching parser/epicOfficial.js's convention.
 
 const EGDATA_API_BASE = 'https://api.egdata.app';

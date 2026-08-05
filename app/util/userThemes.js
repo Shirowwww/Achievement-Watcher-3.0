@@ -1,6 +1,6 @@
 'use strict';
 
-// User themes (ported from PSerban93/Achievements: "Move Themes code outside the app").
+// User themes.
 // Any *.css dropped into <userData>\themes appears in Settings > General > Theme. The CSS is
 // injected as-is on top of the built-in stylesheet, so it can override variables or any rule.
 

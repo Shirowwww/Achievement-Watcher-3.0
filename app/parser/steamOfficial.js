@@ -10,8 +10,7 @@
 // progress (statvalue-driven bars). Used by parser/steam.js as the local-first path for the legit
 // Steam source; the old steamcommunity/WebAPI round-trip remains the fallback.
 //
-// Ported from PSerban93/Achievements (JokerVerse) utils/steam-appcache.js — MIT-licensed; see
-// THIRD_PARTY_NOTICES.md. The binary KV reader (parseKVBinary) is kept byte-for-byte faithful.
+// The binary KV reader (parseKVBinary) is byte-for-byte faithful to Valve's appcache binary format.
 
 const fs = require('fs');
 const path = require('path');

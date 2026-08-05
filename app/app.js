@@ -2663,7 +2663,7 @@ var app = {
               );
             }
 
-            // Platform metadata links (ported from PSerban93/Achievements): non-Steam sources get a
+            // Platform metadata links: non-Steam sources get a
             // store/search page plus PCGamingWiki instead of Steam-only links.
             const linkGame = list.find((g) => g.appid == appid);
             const linkName = encodeURIComponent((linkGame && linkGame.name) || '');

@@ -1,6 +1,6 @@
 'use strict';
 
-// Generalized achievement-rarity aggregation (ported from reference-Achievements/achievement-rarity.js).
+// Generalized achievement-rarity aggregation.
 //
 // "Rarity" = the global unlock percentage of an achievement across all players. The renderer already
 // fetched this live from Steam/Epic on every game view (app/ui/game.js getGlobalStat), but it was

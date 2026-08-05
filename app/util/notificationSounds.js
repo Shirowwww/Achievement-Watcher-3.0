@@ -1,7 +1,7 @@
 'use strict';
 
-// Shared sound-file helpers for notification audio (ported format list from PSerban93/Achievements:
-// .wav/.mp3/.ogg now also accept .flac/.m4a/.aac, which Windows Media Foundation can play).
+// Shared sound-file helpers for notification audio: .wav/.mp3/.ogg now also accept .flac/.m4a/.aac,
+// which Windows Media Foundation can play.
 
 const fs = require('fs');
 const path = require('path');

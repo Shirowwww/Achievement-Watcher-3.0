@@ -9,9 +9,6 @@
 // Isolated from the Steam watch path like the other console watchers: own discovery, own baseline
 // cache, shared notify() only. The spool/zip readers are duplicated from app/parser/
 // ubisoftOfficial.js on purpose — the watchdog is packaged standalone and cannot require app/*.
-//
-// Format knowledge ported from PSerban93/Achievements (JokerVerse) utils/ubisoft-connect-local.js —
-// MIT-licensed; see THIRD_PARTY_NOTICES.md.
 
 const fs = require('fs');
 const path = require('path');

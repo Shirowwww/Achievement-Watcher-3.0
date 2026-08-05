@@ -1,6 +1,6 @@
 'use strict';
 
-// Overlay notification preset resolution (per-emulator presets ported from PSerban93/Achievements).
+// Overlay notification preset resolution.
 // Priority: platinum popup > rare unlock > platform preset (Xenia/RPCS3/ShadPS4) > main preset.
 
 const EMULATOR_PLATFORM_BY_SOURCE = {

@@ -13,9 +13,8 @@
 // So Epic-exclusive games (no Steam equivalent) get their real achievement set with rarity, offline
 // for the schema and public rarity, and live unlock state once connected.
 //
-// Ported from PSerban93/Achievements (JokerVerse) utils/epic-api.js + epic-official.js +
-// epic-local-installations.js — MIT-licensed; see THIRD_PARTY_NOTICES.md. Trimmed to the read paths AW needs and
-// moved off axios onto the runtime's global fetch (no new dependency).
+// Reads only the paths Achievement Watcher needs and uses the runtime's global fetch instead of
+// axios (no new dependency).
 
 const fs = require('fs');
 const path = require('path');

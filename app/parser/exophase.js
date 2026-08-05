@@ -6,11 +6,9 @@
 // schema scrape returned blank descriptions and (b) emulator platforms (RPCS3/Xenia/ShadPS4)
 // that have no localized descriptions at all.
 //
-// Ported from PSerban93/Achievements (JokerVerse) utils/exophase-scraper.js — MIT-licensed; see
-// THIRD_PARTY_NOTICES.md. Rewritten for Achievement Watcher: the upstream Playwright + cheerio stack is
-// replaced by a static request-zero fetch parsed with node-html-parser (Exophase serves the
-// award list as static HTML), with a puppeteer-extra + stealth fallback (both already bundled
-// for the SteamHunters scrape) when the static fetch is blocked. No new dependencies.
+// Uses a static request-zero fetch parsed with node-html-parser (Exophase serves the award list as
+// static HTML), with a puppeteer-extra + stealth fallback (both already bundled for the
+// SteamHunters scrape) when the static fetch is blocked. No new dependencies.
 //
 // This is a schema-enrichment source, not a save-file parser: there is no local directory to
 // scan and no unlock state to read, so the scan/getGameData/getAchievements parts of the parser

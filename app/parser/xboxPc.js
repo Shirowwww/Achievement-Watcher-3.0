@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  Xbox PC support (ported from PSerban93/Achievements utils/xbox-pc.js).
+  Xbox PC support.
 
   Flow:
   1. The user connects a Microsoft / Xbox Network account (Settings > Sources). The OAuth code is

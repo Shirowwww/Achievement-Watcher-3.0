@@ -11,8 +11,7 @@
 // This module is the pure logic — pull 17-digit SteamID64s out of the page HTML — so it stays
 // unit-testable offline.
 //
-// Ported from PSerban93/Achievements (JokerVerse) utils/update-top-owners.js — MIT-licensed; see
-// THIRD_PARTY_NOTICES.md. cheerio + Playwright are replaced by a regex sweep (no new dependency).
+// Uses a regex sweep instead of cheerio/Playwright (no new dependency).
 
 const PROFILE_HREF_RE = /\/profile\/(\d{17})\b/g;
 

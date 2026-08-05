@@ -1,7 +1,6 @@
 'use strict';
 
-// Process trail (ported from PSerban93/Achievements "Add Process Trail for background process after
-// boot"): when the Watchdog starts, games that were ALREADY running are seeded into the playtime
+// Process trail: when the Watchdog starts, games that were ALREADY running are seeded into the playtime
 // session list so their playtime is recorded on exit instead of being lost. Pure logic, unit-testable.
 
 // Case-insensitive match of a running process name against a game's stored binary, tolerating the

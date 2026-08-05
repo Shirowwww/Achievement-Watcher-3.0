@@ -16,9 +16,7 @@
 // assets/uplay-steam.json (productId → steam appid/name) supplies offline titles, Steam cover art
 // URLs and the Steam rarity bridge.
 //
-// Ported from PSerban93/Achievements (JokerVerse) utils/ubisoft-connect-local.js (+ the
-// match-uplay-steam asset) — MIT-licensed; see THIRD_PARTY_NOTICES.md. Adapted to Achievement Watcher's parser
-// contract; icons are extracted once into steam_cache/ubisoftOfficial/<appid>/img and served as
+// Adapted to Achievement Watcher's parser contract; icons are extracted once into steam_cache/ubisoftOfficial/<appid>/img and served as
 // local paths; rarity is seeded into the shared sidecar cache through the uplay↔steam name bridge.
 
 const fs = require('fs');

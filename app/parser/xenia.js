@@ -6,9 +6,8 @@
 // The XDBF container also embeds the achievement icons (PNG), which are extracted to the icon cache
 // and referenced via file:/// so the UI can render them.
 //
-// The XDBF/GPD binary parser below is ported from the reference Achievements project's
-// utils/xenia-gpd.js (MIT licensed — https://github.com/<reference>, see reference-Achievements/LICENSE)
-// and adapted to Achievement Watcher's scan/getGameData/getAchievements data model.
+// The XDBF/GPD binary parser below is adapted to Achievement Watcher's
+// scan/getGameData/getAchievements data model.
 
 const fs = require('fs');
 const fsp = fs.promises;
@@ -19,7 +18,7 @@ const binary = ['xenia.exe', 'xenia_canary.exe'];
 
 const cacheRoot = path.join(userDataDir(), 'icon_cache', 'xenia');
 
-// ---- XDBF / GPD low-level parser (ported, MIT) -----------------------------------------------
+// ---- XDBF / GPD low-level parser -------------------------------------------------------------
 
 const XDBF_HEADER_SIZE = 0x18;
 const ENTRY_SIZE = 0x12;
