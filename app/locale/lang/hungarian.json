@@ -577,6 +577,10 @@
       "importCache": {
         "name": "Értesítési gyorsítótár importálása",
         "description": "A Watchdog gyorsítótárának importálása újabb teljesítményforrásként"
+      },
+      "socialClub": {
+        "name": "Goldberg SocialClub",
+        "description": "Goldberg Social Club emulátor eredményeinek követése (%APPDATA%\\Goldberg SocialClub Emu Saves)."
       }
     },
     "guide": {

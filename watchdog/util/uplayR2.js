@@ -17,11 +17,13 @@
 
 const fs = require('fs');
 const path = require('path');
+const { userDataDir } = require('./userData.js');
 
-function gameIndexFiles(appData = process.env['APPDATA'] || '') {
+function gameIndexFiles() {
+  const root = userDataDir();
   return [
-    path.join(appData, 'Achievement Watcher', 'steam_cache', 'schema', 'gameIndex.json'),
-    path.join(appData, 'Achievement Watcher', 'cfg', 'gameIndex.json'),
+    path.join(root, 'steam_cache', 'schema', 'gameIndex.json'),
+    path.join(root, 'cfg', 'gameIndex.json'),
   ];
 }
 

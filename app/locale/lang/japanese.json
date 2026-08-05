@@ -577,6 +577,10 @@
       "importCache": {
         "name": "通知キャッシュをインポート",
         "description": "Watchdog のキャッシュを別の実績ソースとしてインポートします"
+      },
+      "socialClub": {
+        "name": "Goldberg SocialClub",
+        "description": "Goldberg Social Club エミュレーターの実績を追跡します (%APPDATA%\\Goldberg SocialClub Emu Saves)。"
       }
     },
     "guide": {

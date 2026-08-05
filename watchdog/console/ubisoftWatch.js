@@ -22,9 +22,9 @@ const debug = require('../util/log.js');
 const waitForFileStable = require('../util/waitForFileStable.js');
 const { notificationVolumePercent } = require('../util/notificationVolume.js');
 
-const APPDATA = process.env['APPDATA'] || '';
-const cacheDir = path.join(APPDATA, 'Achievement Watcher/steam_cache/console');
-const iconCacheRoot = path.join(APPDATA, 'Achievement Watcher/steam_cache/ubisoftOfficial');
+const { userDataDir } = require('../util/userData.js');
+const cacheDir = path.join(userDataDir(), 'steam_cache/console');
+const iconCacheRoot = path.join(userDataDir(), 'steam_cache/ubisoftOfficial');
 const SPOOL_ROOT = process.env['LOCALAPPDATA'] ? path.join(process.env['LOCALAPPDATA'], 'Ubisoft Game Launcher', 'spool') : '';
 const ACHIEVEMENTS_ROOT = process.env['ProgramData']
   ? path.join(process.env['ProgramData'], 'Ubisoft', 'Ubisoft Game Launcher', 'cache', 'achievements')
@@ -246,12 +246,28 @@ function loadSchema(appid, lang) {
   return { texts, iconFor };
 }
 
-// Product titles from the configurations index (best effort).
-function readTitles() {
+// The configurations index mixes the launcher's own name ("Steam", "Ubisoft Connect", …) into each
+// game block. Treat those as "no title" so a live toast never shows the launcher instead of the
+// game (same rule as app/parser/ubisoftOfficial.js, kept here because the watchdog is standalone).
+const LAUNCHER_TITLES = new Set([
+  'steam', 'uplay', 'ubisoft', 'ubisoft connect', 'epic', 'epic games', 'epic games launcher',
+  'ea', 'ea app', 'ea desktop', 'origin', 'rockstar', 'rockstar games', 'rockstar games launcher',
+  'rockstar launcher', 'social club', 'gog', 'galaxy',
+]);
+
+function cleanConfigTitle(value) {
+  const raw = String(value || '').trim().replace(/^['"]+|['"]+$/g, '').trim();
+  if (!raw) return '';
+  const key = raw.toLowerCase().replace(/[™®©]/g, '');
+  return LAUNCHER_TITLES.has(key) ? '' : raw;
+}
+
+// Product titles from the configurations index (best effort). Path injectable for tests.
+function readTitles(configurationsPath = CONFIGURATIONS_PATH) {
   const out = new Map(); // normalizedSpec is not needed here — map by product id prefix of archives
   let text = '';
   try {
-    text = fs.readFileSync(CONFIGURATIONS_PATH).toString('latin1').replace(/\0/g, '');
+    text = fs.readFileSync(configurationsPath).toString('latin1').replace(/\0/g, '');
   } catch {
     return out;
   }
@@ -259,18 +275,40 @@ function readTitles() {
   let match = null;
   while ((match = blockRegex.exec(text))) {
     const block = String(match[0] || '');
-    const spec = (block.match(/^\s*achievements:\s*([^\r\n]+)/m)?.[1] || '').trim().replace(/^"+|"+$/g, '');
+    const spec = (block.match(/^\s*achievements:\s*([^\r\n]+)/m)?.[1] || '').trim().replace(/^['"]+|['"]+$/g, '');
     if (!spec) continue;
     const title = (
+      block.match(/installer:\s*\r?\n\s+name:\s*([^\r\n]+)/m)?.[1] ||
       block.match(/^\s*game_identifier:\s*([^\r\n]+)/m)?.[1] ||
       block.match(/^\s*display_name:\s*([^\r\n]+)/m)?.[1] ||
       ''
-    )
-      .trim()
-      .replace(/^"+|"+$/g, '');
-    if (title) out.set(spec.toLowerCase(), title);
+    );
+    const cleaned = cleanConfigTitle(title);
+    if (cleaned) out.set(spec.toLowerCase(), cleaned);
   }
   return out;
+}
+
+// The app records the resolved game name (and Steam release) in gameIndex with the Ubisoft product
+// id; prefer that over the raw configurations block when it exists (issue #7). Files injectable
+// for tests.
+function indexedUplayName(uplayId, files = [
+  path.join(userDataDir(), 'steam_cache', 'schema', 'gameIndex.json'),
+  path.join(userDataDir(), 'cfg', 'gameIndex.json'),
+]) {
+  const key = String(uplayId || '');
+  if (!key) return '';
+  for (const file of files) {
+    try {
+      const list = JSON.parse(fs.readFileSync(file, 'utf8'));
+      if (!Array.isArray(list)) continue;
+      const found = list.find((g) => g && String(g.uplayId || '') === key);
+      if (found && found.name) return String(found.name);
+    } catch {
+      /* game index files are optional */
+    }
+  }
+  return '';
 }
 
 function discover() {
@@ -365,7 +403,7 @@ async function handleChange(target, ctx) {
               imageIntegration: '0',
               group: ctx.options.notification_toast.groupToast,
               cropIcon: true,
-              attribution: 'Achievement',
+              attribution: target.name,
             },
             prefetch: false, // icons are extracted to local files
             rumble: ctx.options.notification.rumble,
@@ -404,9 +442,10 @@ module.exports.start = async (ctx) => {
   const watchedDirs = new Set();
   for (const target of targets) {
     // resolve a display name: archive spec title match is complex — configurations titles are keyed
-    // by spec, so best effort: use any title whose spec starts with the product id, else generic.
+    // by spec, so best effort: gameIndex (the app's resolved identity) first, then any title whose
+    // spec starts with the product id, else a generic label. Never "Steam"/"Ubisoft Connect".
     const titleKey = Array.from(titles.keys()).find((k) => k.startsWith(`${target.appid}_`));
-    target.name = (titleKey && titles.get(titleKey)) || `Ubisoft ${target.appid}`;
+    target.name = indexedUplayName(target.appid) || (titleKey && titles.get(titleKey)) || `Ubisoft ${target.appid}`;
 
     // Seed the baseline up front so we never replay a back-catalogue of unlocks on launch.
     if (!cacheLoad(target.appid)) {
@@ -447,4 +486,13 @@ module.exports.stop = () => {
 };
 
 // Exposed for unit testing the pure readers.
-module.exports._internal = { readSpool, readZipEntries, parseLocTxt, loadSchema, discover };
+module.exports._internal = {
+  readSpool,
+  readZipEntries,
+  parseLocTxt,
+  loadSchema,
+  discover,
+  readTitles,
+  indexedUplayName,
+  cleanConfigTitle,
+};

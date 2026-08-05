@@ -577,6 +577,10 @@
       "importCache": {
         "name": "导入通知缓存",
         "description": "将 Watchdog 的缓存作为另一个成就来源导入"
+      },
+      "socialClub": {
+        "name": "Goldberg SocialClub",
+        "description": "跟踪 Goldberg Social Club 模拟器的成就（%APPDATA%\\Goldberg SocialClub Emu Saves）。"
       }
     },
     "guide": {

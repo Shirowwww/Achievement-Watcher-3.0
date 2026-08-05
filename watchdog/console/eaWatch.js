@@ -14,9 +14,9 @@ const debug = require('../util/log.js');
 const waitForFileStable = require('../util/waitForFileStable.js');
 const { notificationVolumePercent } = require('../util/notificationVolume.js');
 
-const APPDATA = process.env['APPDATA'] || '';
 const LOCALAPPDATA = process.env['LOCALAPPDATA'] || '';
-const cacheDir = path.join(APPDATA, 'Achievement Watcher/steam_cache/console');
+const { userDataDir } = require('../util/userData.js');
+const cacheDir = path.join(userDataDir(), 'steam_cache/console');
 const EA_LOGS_ROOT = LOCALAPPDATA ? path.join(LOCALAPPDATA, 'Electronic Arts', 'EA Desktop', 'Logs') : '';
 const EA_VERBOSE_LOG_NAME = 'EADesktopVerbose.log';
 const EA_VERBOSE_BAK_NAME = 'EADesktopVerbose.bak';

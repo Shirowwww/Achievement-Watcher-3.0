@@ -99,3 +99,16 @@ test('the watchdog watches the Uplay R2 save root', async () => {
   assert.equal(entry.options.uplayR2, true, 'the folder must be flagged so its ids get translated');
   assert.ok(entry.options.file.includes('achievements.json'));
 });
+
+test('the watchdog watches the Goldberg SocialClub save root', async () => {
+  const folders = await monitor.getFolders();
+  const entry = folders.find((f) => String(f.dir).includes('Goldberg SocialClub Emu Saves'));
+  assert.ok(entry, 'Goldberg SocialClub Emu Saves must be watched or SocialClub unlocks never notify live');
+  assert.equal(entry.options.socialClub, true, 'the folder must be flagged so game names resolve through the game index');
+  // Folders here are named after the GAME, not an AppID, so a numeric filter would match nothing.
+  assert.equal(typeof entry.options.filter, 'function', 'game-name folders must pass the traversal filter');
+  assert.ok(entry.options.file.includes('achievements.json'));
+  // Rockstar's own save blobs are rewritten constantly during play and nothing can decode them —
+  // watching them would wake the monitor for no possible result.
+  assert.ok(!entry.options.file.includes('cfg.dat'));
+});

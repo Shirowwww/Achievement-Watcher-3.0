@@ -7,6 +7,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { userDataDir } = require('./userDataPath.js');
 
 let storeFile = null;
 let cachePath = null;
@@ -18,7 +19,7 @@ function stamp(stat) {
 }
 
 function defaultFile() {
-  return path.join(process.env['APPDATA'] || '', 'Achievement Watcher', 'cfg', 'covers.db');
+  return path.join(userDataDir(), 'cfg', 'covers.db');
 }
 
 function setStoreFile(p) {

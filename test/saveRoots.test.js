@@ -32,8 +32,10 @@ test('default Steam emulator roots include concrete save folders copied from the
   const publicDir = path.join(tmp, 'Public');
   const programData = path.join(tmp, 'ProgramData');
   const uplayRoot = path.join(appdata, 'Goldberg UplayEmu Saves');
+  const socialClubRoot = path.join(appdata, 'Goldberg SocialClub Emu Saves');
   const lsxRoot = path.join(localappdata, 'anadius', 'LSX emu', 'achievement_watcher');
   fs.mkdirSync(uplayRoot, { recursive: true });
+  fs.mkdirSync(socialClubRoot, { recursive: true });
   fs.mkdirSync(lsxRoot, { recursive: true });
 
   await withEnv(
@@ -46,9 +48,24 @@ test('default Steam emulator roots include concrete save folders copied from the
     async () => {
       const roots = saveRoots.defaultSteamEmuSaveRoots({ existingOnly: true });
       assert.ok(roots.includes(uplayRoot));
+      assert.ok(roots.includes(socialClubRoot));
       assert.ok(roots.includes(lsxRoot));
     }
   );
+});
+
+test('userDir.check accepts Goldberg SocialClub roots, game folders and profile folders', async () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-socialclub-check-'));
+  const root = path.join(tmp, 'Goldberg SocialClub Emu Saves');
+  const gameDir = path.join(root, 'GTA V');
+  const profileDir = path.join(gameDir, '0F74F4C4');
+  fs.mkdirSync(path.join(profileDir, 'settings'), { recursive: true });
+  fs.writeFileSync(path.join(profileDir, 'local_save.txt'), '', 'utf8');
+  fs.writeFileSync(path.join(profileDir, 'settings', 'cfg.dat'), 'binary', 'utf8');
+
+  assert.equal(await userDir.check(root), true);
+  assert.equal(await userDir.check(gameDir), true);
+  assert.equal(await userDir.check(profileDir), true);
 });
 
 test('userDir.check accepts real appid save roots and rejects SteamID64-only roots', async () => {

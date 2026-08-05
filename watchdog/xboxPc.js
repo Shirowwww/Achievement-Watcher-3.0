@@ -17,7 +17,7 @@ const ACHIEVEMENTS_URL = 'https://achievements.xboxlive.com';
 const CONTRACT_VERSION = '4';
 
 function appDataRoot() {
-  return path.join(process.env['APPDATA'] || '', 'Achievement Watcher');
+  return require('./util/userData.js').userDataDir();
 }
 
 function authFile() {

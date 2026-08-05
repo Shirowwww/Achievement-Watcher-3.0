@@ -3,7 +3,7 @@
 const path = require('path');
 const fs = require('./util/fsAsync');
 
-let cacheDir = path.join(process.env['APPDATA'], 'Achievement Watcher', 'steam_cache', 'data');
+let cacheDir = path.join(require('./util/userData.js').userDataDir(), 'steam_cache', 'data');
 
 // In-memory baselines. track.save() can still fail for reasons other than a missing directory
 // (permissions, disk full, antivirus lock, ...). If the next scan then re-reads a stale or missing

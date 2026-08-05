@@ -136,6 +136,49 @@ test('trash-target safety gate rejects roots, files, save folders and missing pa
   }
 });
 
+test('cleanupSilentUninstaller removes a silent Inno uninstaller and its .dat, then the empty folder', () => {
+  const dir = tempDir();
+  try {
+    const exe = write(dir, 'unins000.exe');
+    write(dir, 'unins000.dat');
+    const local = { file: exe, kind: 'inno', silent: true };
+    uninstall.cleanupSilentUninstaller(local);
+    assert.strictEqual(fs.existsSync(exe), false);
+    assert.strictEqual(fs.existsSync(path.join(dir, 'unins000.dat')), false);
+    assert.strictEqual(fs.existsSync(dir), false);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('cleanupSilentUninstaller removes a silent NSIS uninstaller but keeps a non-empty folder', () => {
+  const dir = tempDir();
+  try {
+    const exe = write(dir, 'Uninstall.exe');
+    write(dir, 'leftover-save.dat');
+    const local = { file: exe, kind: 'nsis', silent: true };
+    uninstall.cleanupSilentUninstaller(local);
+    assert.strictEqual(fs.existsSync(exe), false);
+    assert.ok(fs.existsSync(dir));
+    assert.ok(fs.existsSync(path.join(dir, 'leftover-save.dat')));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('cleanupSilentUninstaller is a no-op for non-silent (generic) uninstallers and bad input', () => {
+  const dir = tempDir();
+  try {
+    const exe = write(dir, 'uninst.exe');
+    uninstall.cleanupSilentUninstaller({ file: exe, kind: 'generic', silent: false });
+    assert.ok(fs.existsSync(exe));
+    uninstall.cleanupSilentUninstaller(null);
+    uninstall.cleanupSilentUninstaller({});
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('registry helpers degrade gracefully without throwing', () => {
   const info = uninstall.getSteamUninstallInfo('480');
   assert.strictEqual(info.url, 'steam://uninstall/480');

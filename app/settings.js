@@ -185,6 +185,10 @@ module.exports.load = () => {
       options.achievement_source.steamEmu = true;
     }
 
+    if (typeof options.achievement_source.socialClub !== 'boolean') {
+      options.achievement_source.socialClub = true;
+    }
+
     if (typeof options.achievement_source.greenLuma !== 'boolean') {
       options.achievement_source.greenLuma = true;
     }
@@ -440,6 +444,7 @@ module.exports.load = () => {
       achievement_source: {
         legitSteam: 0,
         steamEmu: true,
+        socialClub: true,
         greenLuma: true,
         rpcs3: true,
         shadps4: true,

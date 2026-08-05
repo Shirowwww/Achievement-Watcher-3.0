@@ -577,6 +577,10 @@
       "importCache": {
         "name": "Importovat mezipaměť oznámení",
         "description": "Importovat mezipaměť Watchdogu jako další zdroj achievementů"
+      },
+      "socialClub": {
+        "name": "Goldberg SocialClub",
+        "description": "Sledovat úspěchy z emulátoru Goldberg Social Club (%APPDATA%\\Goldberg SocialClub Emu Saves)."
       }
     },
     "guide": {

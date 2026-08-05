@@ -9,7 +9,7 @@ const ws = require('ws');
 const moment = require('moment');
 const debug = new (require('./util/logger'))({
   console: true,
-  file: path.join(process.env['APPDATA'], 'Achievement Watcher/logs/websocket.log'),
+  file: path.join(require('./util/userData.js').userDataDir(), 'logs/websocket.log'),
 });
 
 const test = require('./notification-test.js');

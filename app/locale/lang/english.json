@@ -577,6 +577,10 @@
       "importCache": {
         "name": "Import notification cache",
         "description": "Import Watchdog's cache as another source of achievement"
+      },
+      "socialClub": {
+        "name": "Goldberg SocialClub",
+        "description": "Track achievements from the Goldberg Social Club emulator (%APPDATA%\\Goldberg SocialClub Emu Saves)."
       }
     },
     "guide": {

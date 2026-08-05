@@ -18,6 +18,7 @@ const shadps4 = require(path.join(appPath, 'shadps4.js'));
 const xenia = require(path.join(appPath, 'xenia.js'));
 const greenluma = require(path.join(appPath, 'greenluma.js'));
 const userDir = require(path.join(appPath, 'userDir.js'));
+const socialclub = require(path.join(appPath, 'socialclub.js'));
 const libraryDirs = require(path.join(appPath, 'libraryDirs.js'));
 const blacklist = require(path.join(appPath, 'blacklist.js'));
 const watchdog = require(path.join(appPath, 'watchdog.js'));
@@ -31,6 +32,7 @@ const apiCheckBypass = require(path.join(appPath, 'apiCheckBypass.js'));
 const crackFix = require(path.join(appPath, 'crackFix.js'));
 const genEmuConfig = require(path.join(appPath, 'genEmuConfig.js'));
 const gameIndex = require(path.join(appPath, 'gameIndex.js'));
+const { userDataDir } = require(path.join(appPath, '..', 'util', 'userDataPath.js'));
 const exeDetect = require(path.join(appPath, 'exeDetect.js'));
 const installState = require(path.join(appPath, 'installState.js'));
 const { applyLocalStatProgress } = require(path.join(appPath, 'statProgress.js'));
@@ -54,6 +56,7 @@ module.exports.initDebug = ({ isDev, userDataPath }) => {
   steam.initDebug({ isDev, userDataPath });
   exophase.initDebug({ isDev, userDataPath });
   uplay.initDebug({ isDev, userDataPath }); // was missing — left uplay's `debug` undefined (every UPLAY* game threw and was skipped)
+  socialclub.initDebug({ isDev, userDataPath });
   blacklist.initDebug({ isDev, userDataPath });
   debug = new (require('../util/logger'))({
     console: isDev || false,
@@ -971,6 +974,13 @@ async function discover(source, steamAccFilter) {
       if (scanned.length > 0) {
         data = data.concat(scanned);
         debug.log('-> emulator data added');
+      } else if (source.socialClub && socialclub.isSocialClubPath(dir.path)) {
+        // Goldberg SocialClub Emu Saves: game folders are named after the game, not a numeric AppID.
+        scanned = await socialclub.scan(dir.path);
+        if (scanned.length > 0) {
+          data = data.concat(scanned);
+          debug.log('-> Goldberg SocialClub data added');
+        }
       } else if (source.steamEmu) {
         scanned = await userDir.scan(dir.path);
         if (scanned.length > 0) {
@@ -984,6 +994,23 @@ async function discover(source, steamAccFilter) {
     }
   } catch (err) {
     debug.log(err);
+  }
+
+  //Goldberg SocialClub Emulator — %APPDATA%\Goldberg SocialClub Emu Saves is auto-scanned like the
+  //other known emulator roots, even when the user never added it to Settings.
+  if (source.socialClub) {
+    try {
+      const scRoot = socialclub.defaultRoot();
+      const scanned = scRoot ? await socialclub.scan(scRoot) : [];
+      const have = new Set(data.map((g) => `${g.source}:${g.appid}`));
+      const extra = scanned.filter((g) => !have.has(`${g.source}:${g.appid}`));
+      if (extra.length > 0) {
+        data = data.concat(extra);
+        debug.log(`-> Goldberg SocialClub (APPDATA) data added (${extra.length})`);
+      }
+    } catch (err) {
+      debug.error(err);
+    }
   }
 
   //ShadPS4 stores trophies in %APPDATA%/shadPS4 regardless of where the .exe lives — auto-scan that
@@ -1100,7 +1127,7 @@ async function discover(source, steamAccFilter) {
   if (source.xboxPc) {
     try {
       const xboxPc = require(path.join(appPath, 'xboxPc.js'));
-      xboxPc.setUserDataPath(_userDataPath || (process.env['APPDATA'] ? path.join(process.env['APPDATA'], 'Achievement Watcher') : ''));
+      xboxPc.setUserDataPath(_userDataPath || userDataDir());
       for (const titleId of xboxPc.listCachedTitles()) {
         data.push({ appid: titleId, source: xboxPc.XBOX_PC_SOURCE, data: { type: 'xboxPc' } });
       }
@@ -1391,6 +1418,8 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       game = await shadps4.getGameData(appid.data.path, option.achievement.lang);
     } else if (appid.data.type === 'xenia') {
       game = await xenia.getGameData(appid.data.path);
+    } else if (appid.data.type === 'socialclub') {
+      game = await socialclub.getGameData(appid, option.achievement.lang, option);
     } else if (appid.data.type === 'uplay' || appid.data.type === 'lumaplay') {
       game = await uplay.getGameData(appid.appid, option.achievement.lang);
       // If local image extraction yielded no header (e.g. Uplay configurations YAML doesn't carry
@@ -1420,7 +1449,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       game = await epic.getGameData({ appID: appid.appid, steamappid: appid.steamappid, lang: option.achievement.lang });
     } else if (appid.data.type === 'xboxPc') {
       const xboxPc = require(path.join(appPath, 'xboxPc.js'));
-      xboxPc.setUserDataPath(_userDataPath || (process.env['APPDATA'] ? path.join(process.env['APPDATA'], 'Achievement Watcher') : ''));
+      xboxPc.setUserDataPath(_userDataPath || userDataDir());
       game =
         (await xboxPc.getGameData(appid.appid, option.achievement.lang)) || {
           appid: appid.appid,
@@ -1864,7 +1893,15 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
             _seededGameDirs.add(gameDirKey);
             const iconHash =
               game.img && game.img.icon ? String(game.img.icon).split('/').pop().split('.')[0] : '';
-            gameIndex.upsert({ appid: appid.appid, name: game.name, binary: exeInfo.name, icon: iconHash, source: appid.source, uplayId: seedUplayId });
+            gameIndex.upsert({
+              appid: appid.appid,
+              name: game.name,
+              binary: exeInfo.name,
+              icon: iconHash,
+              source: appid.source,
+              steamappid: game.steamappid || undefined,
+              uplayId: seedUplayId,
+            });
             debug.log(`[${appid.appid}] auto-seeded playtime tracking: binary="${exeInfo.name}"`);
           } else if (/^[0-9]+$/.test(String(appid.appid))) {
             // No local exe found (obfuscated/renamed build, or a launcher-only install): fall back to
@@ -1877,7 +1914,15 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
               if (meta && meta.best_process_name) {
                 _seededGameDirs.add(gameDirKey);
                 const iconHash = game.img && game.img.icon ? String(game.img.icon).split('/').pop().split('.')[0] : '';
-                gameIndex.upsert({ appid: appid.appid, name: game.name, binary: meta.best_process_name, icon: iconHash, source: appid.source, uplayId: seedUplayId });
+                gameIndex.upsert({
+                  appid: appid.appid,
+                  name: game.name,
+                  binary: meta.best_process_name,
+                  icon: iconHash,
+                  source: appid.source,
+                  steamappid: game.steamappid || undefined,
+                  uplayId: seedUplayId,
+                });
                 debug.log(`[${appid.appid}] auto-seeded playtime tracking from SteamDB: binary="${meta.best_process_name}"`);
               }
             } catch (err) {
@@ -1887,6 +1932,56 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
         }
       } catch (err) {
         debug.log(`[${appid.appid}] playtime auto-seed failed: ${err}`);
+      }
+    }
+
+    // Goldberg SocialClub has no install folder (its data lives in %APPDATA%), but the Watchdog
+    // still needs a gameIndex entry (with the resolved Steam release) to attribute a live unlock
+    // under "Goldberg SocialClub Emu Saves\<Game>\<profile>\…" back to this game.
+    if (appid.data && appid.data.type === 'socialclub' && game.name && game.steamappid && /^[0-9]+$/.test(String(game.steamappid))) {
+      try {
+        let binary = '';
+        try {
+          const { ipcRenderer } = require('electron');
+          const meta = await ipcRenderer.invoke('get-steamdb-launch', game.steamappid);
+          if (meta && meta.best_process_name) binary = meta.best_process_name;
+        } catch {
+          /* binary is optional — the entry itself is what matters */
+        }
+        const iconHash = game.img && game.img.icon ? String(game.img.icon).split('/').pop().split('.')[0] : '';
+        gameIndex.upsert({
+          appid: appid.appid,
+          name: game.name,
+          binary,
+          icon: iconHash,
+          source: appid.source,
+          steamappid: game.steamappid,
+        });
+        debug.log(`[${appid.appid}] seeded SocialClub gameIndex (Steam ${game.steamappid}${binary ? `, binary="${binary}"` : ''})`);
+      } catch (err) {
+        debug.log(`[${appid.appid}] SocialClub gameIndex seed failed: ${err.message || err}`);
+      }
+    }
+
+    // Ubisoft Connect official entries also need a gameIndex row so the Watchdog's live spool
+    // watcher can attribute a <productId>.spool change back to the app's resolved game name and
+    // Steam release — including titles resolved generically from the configurations block or the
+    // local Steam library (issue #7).
+    if (appid.data && appid.data.type === 'ubisoftOfficial' && game.name && appid.data.uplayId) {
+      try {
+        const iconHash = game.img && game.img.icon ? String(game.img.icon).split('/').pop().split('.')[0] : '';
+        gameIndex.upsert({
+          appid: appid.appid,
+          name: game.name,
+          binary: '',
+          icon: iconHash,
+          source: appid.source,
+          steamappid: game.steamappid || undefined,
+          uplayId: String(appid.data.uplayId),
+        });
+        debug.log(`[${appid.appid}] seeded Ubisoft Connect gameIndex (${game.name}${game.steamappid ? `, Steam ${game.steamappid}` : ''})`);
+      } catch (err) {
+        debug.log(`[${appid.appid}] Ubisoft Connect gameIndex seed failed: ${err.message || err}`);
       }
     }
 
@@ -1922,6 +2017,8 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
           root = await shadps4.getAchievements(appid.data.path);
         } else if (appid.data.type === 'xenia') {
           root = await xenia.getAchievements(appid.data.path);
+        } else if (appid.data.type === 'socialclub') {
+          root = await socialclub.getAchievements(appid);
         } else if (appid.data.type === 'lumaplay') {
           root = uplay.getAchievementsFromLumaPlay(appid.data.root, appid.data.path);
         } else if (appid.data.type === 'ea') {

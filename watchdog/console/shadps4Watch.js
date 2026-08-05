@@ -17,7 +17,8 @@ const waitForFileStable = require('../util/waitForFileStable.js');
 const { notificationVolumePercent } = require('../util/notificationVolume.js');
 
 const APPDATA = process.env['APPDATA'] || '';
-const cacheDir = path.join(APPDATA, 'Achievement Watcher/steam_cache/console');
+const { userDataDir } = require('../util/userData.js');
+const cacheDir = path.join(userDataDir(), 'steam_cache/console');
 
 // Best-effort language → TROP_NN.XML suffix (Sony index). english/default is the suffix-less TROP.XML.
 const LANG_FILE = { japanese: '00', english: '01', french: '02', spanish: '03', german: '04', italian: '05', russian: '08', koreana: '09', schinese: '11', polish: '16', brazilian: '17', turkish: '19' };

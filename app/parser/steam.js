@@ -21,6 +21,7 @@ const fs = require('fs');
 const saveRoots = require(path.join(appPath, 'parser/saveRoots.js'));
 const uplayR2 = require(path.join(appPath, 'parser/uplayR2.js'));
 const emuIni = require(path.join(appPath, 'util/emuIni.js'));
+const { userDataDir } = require(path.join(appPath, 'util/userDataPath.js'));
 
 let listReady = true;
 let steamUsersList;
@@ -828,7 +829,7 @@ async function getSchemaAchievements(cfg) {
 async function getDataFromSteamStore(appID) {
   if (!appID || !(Number.isInteger(appID) && appID > 0)) throw 'ERR_INVALID_APPID';
 
-  const root = cacheRoot || path.join(process.env['APPDATA'] || '', 'Achievement Watcher');
+  const root = cacheRoot || userDataDir();
   const cacheFile = path.join(root, 'steam_cache/store', `${appID}.json`);
   const TTL = 7 * 24 * 60 * 60 * 1000;
   try {
@@ -1411,7 +1412,7 @@ const fetchIcon = (module.exports.fetchIcon = async (url, appID) => {
   let validUrl;
   let filePath;
   try {
-    const cache = path.join(process.env['APPDATA'], `Achievement Watcher/steam_cache/icon/${appID}`);
+    const cache = path.join(userDataDir(), `steam_cache/icon/${appID}`);
     let filename = path.parse(url).base;
     filePath = path.join(cache, filename);
     if (fs.existsSync(filePath)) return filePath;

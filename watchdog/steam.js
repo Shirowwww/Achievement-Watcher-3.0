@@ -7,6 +7,7 @@ const fs = require('fs');
 const request = require('request-zero');
 const steamLang = require('./steam.json');
 const htmlParser = require('node-html-parser');
+const { userDataDir } = require('./util/userData.js');
 
 // Coerce a possibly non-string schema name into a usable display title (issue #54): handles a plain
 // string, a { name } wrapper, a localized { english, … } map (prefers english), a number, and falls
@@ -29,7 +30,7 @@ module.exports.loadSteamData = async (appID, lang, key, binary = null) => {
     throw 'Unsupported API language code';
   }
 
-  const cache = path.join(process.env['APPDATA'], 'Achievement Watcher/steam_cache/schema', lang);
+  const cache = path.join(userDataDir(), 'steam_cache/schema', lang);
 
   try {
     let filePath = path.join(`${cache}`, `${appID}.db`);
@@ -57,7 +58,7 @@ module.exports.loadSteamData = async (appID, lang, key, binary = null) => {
 
 module.exports.fetchIcon = async (url, appID) => {
   try {
-    const cache = path.join(process.env['APPDATA'], `Achievement Watcher/steam_cache/icon/${appID}`);
+    const cache = path.join(userDataDir(), `steam_cache/icon/${appID}`);
 
     const filename = path.parse(urlParser.parse(url).pathname).base;
 
@@ -138,7 +139,7 @@ async function getSteamData(appID, lang, key) {
 async function findInAppList(appID) {
   if (!appID || !(Number.isInteger(appID) && appID > 0)) throw 'ERR_INVALID_APPID';
 
-  const cache = path.join(process.env['APPDATA'], 'Achievement Watcher/steam_cache/schema');
+  const cache = path.join(userDataDir(), 'steam_cache/schema');
   const filepath = path.join(cache, 'appList.json');
 
   try {

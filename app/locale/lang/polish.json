@@ -577,6 +577,10 @@
       "importCache": {
         "name": "Importuj pamięć podręczną powiadomień",
         "description": "Importuj pamięć podręczną Watchdoga jako kolejne źródło osiągnięć"
+      },
+      "socialClub": {
+        "name": "Goldberg SocialClub",
+        "description": "Śledź osiągnięcia z emulatora Goldberg Social Club (%APPDATA%\\Goldberg SocialClub Emu Saves)."
       }
     },
     "guide": {

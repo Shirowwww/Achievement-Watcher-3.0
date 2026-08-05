@@ -149,6 +149,12 @@ test('resolveGameRarityContext reconciles every source to the right rarity path'
     { kind: 'steam', appid: '3159330' }
   );
 
+  // Goldberg SocialClub uses a namespaced appid but the Steam schema of its resolved release.
+  assert.deepEqual(
+    rarity.resolveGameRarityContext(base({ appid: 'socialclub-gta-v', steamappid: '271590', source: 'Goldberg SocialClub' })),
+    { kind: 'steam', appid: '271590' }
+  );
+
   // Official Ubisoft Connect: namespaced appid + numeric ids → Steam↔id bridge.
   const ubi = rarity.resolveGameRarityContext(
     base({

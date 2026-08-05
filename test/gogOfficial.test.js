@@ -102,14 +102,14 @@ function buildGameplayDb(file, { retrieved = '1', mode = 'all_visible' } = {}) {
     assert.equal(isGameplayReady(gameplay), true);
 
     // schema mapping through the parser contract
-    gogOfficial.setUserDataPath(path.join(tmp, 'Achievement Watcher'));
+    gogOfficial.setUserDataPath(path.join(tmp, 'Achievement Watcher 3.0'));
     const appidEntry = {
       appid: '1423049311',
       source: 'GOG Galaxy',
       data: { type: 'gogOfficial', gameplayDbPath: gameplayDb, title: 'Cyberpunk 2077' },
     };
     // pre-seed the image cache so getGameData stays offline in tests
-    const imgCache = path.join(tmp, 'Achievement Watcher', 'steam_cache', 'gogOfficial');
+    const imgCache = path.join(tmp, 'Achievement Watcher 3.0', 'steam_cache', 'gogOfficial');
     fs.mkdirSync(imgCache, { recursive: true });
     fs.writeFileSync(path.join(imgCache, '1423049311.json'), JSON.stringify({ header: 'h', background: 'b', portrait: 'p', icon: 'i' }));
 
@@ -126,7 +126,7 @@ function buildGameplayDb(file, { retrieved = '1', mode = 'all_visible' } = {}) {
 
     // rarity sidecar seeded from the DB into the shared cache
     const sidecar = JSON.parse(
-      fs.readFileSync(path.join(tmp, 'Achievement Watcher', 'steam_cache', 'rarity', '1423049311.json'), 'utf8')
+      fs.readFileSync(path.join(tmp, 'Achievement Watcher 3.0', 'steam_cache', 'rarity', '1423049311.json'), 'utf8')
     );
     assert.equal(sidecar.achievements.length, 2);
     assert.deepEqual(sidecar.achievements[0], { name: 'TheFool', percent: 94 });

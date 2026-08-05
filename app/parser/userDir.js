@@ -128,6 +128,12 @@ module.exports.check = async (dirpath) => {
 
     const accepted_files = steam_emu_cfg_file_supported.concat(['rpcs3.exe', 'shadPS4.exe', 'shadps4.exe', 'xenia.exe', 'xenia_canary.exe']);
 
+    // Goldberg SocialClub Emu Saves keeps game folders named after the game (GTA V, RDR2, …) with
+    // hex profile subfolders — there is no numeric AppID and no emulator .ini to match. Accept the
+    // root, a game folder or a profile folder explicitly (issue #9).
+    const socialclub = require('./socialclub.js');
+    if (socialclub.isSocialClubPath(dirpath)) return (result = true);
+
     //check for appID folder(s). Some emulators use hex ids; reject obvious user-id/noise folders.
     let scan = await glob('*', { cwd: dirpath, onlyDirectories: true, deep: 1, suppressErrors: true });
     if (scan.some(isProbableAppIdFolderName)) return (result = true);

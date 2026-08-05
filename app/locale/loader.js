@@ -443,6 +443,10 @@ function translateUI(lang, locale, template) {
   selector.find("li:nth-child(8) .right select option[value='true']").text(clear(template.settings.common.enable));
   selector.find("li:nth-child(8) .right select option[value='false']").text(clear(template.settings.common.disable));
   selector.find('li:nth-child(8) .help').text(clear(template.settings.source.importCache.description));
+  selector.find('li:nth-child(9) .left span').text(clear(template.settings.source.socialClub.name));
+  selector.find("li:nth-child(9) .right select option[value='true']").text(clear(template.settings.common.enable));
+  selector.find("li:nth-child(9) .right select option[value='false']").text(clear(template.settings.common.disable));
+  selector.find('li:nth-child(9) .help').text(clear(template.settings.source.socialClub.description));
   $('#advanced-blacklist-title').text(clear(template.settings.advanced.blacklistTitle));
   $('#blacklist_reset span').text(clear(template.settings.advanced.blacklistButton));
   $('#blacklist-info').text(clear(template.settings.advanced.blacklistInfo));

@@ -16,8 +16,9 @@
 const fs = require('fs');
 const path = require('path');
 const { resolveEpicArtifactIdentity } = require('./epicIdentity.js');
+const { userDataDir } = require('./userDataPath.js');
 
-const CACHE_DIR = path.join(process.env['APPDATA'] || '', 'Achievement Watcher', 'steam_cache', 'rarity');
+const CACHE_DIR = path.join(userDataDir(), 'steam_cache', 'rarity');
 const DEFAULT_TTL_MS = 6 * 60 * 60 * 1000; // 6h — global unlock % drifts slowly, no need to refetch per view
 const DEFAULT_TIMEOUT_MS = 8000;
 
@@ -224,6 +225,8 @@ async function getSteamBridgeRarity(cacheId, steamAppId, names, options = {}) {
 //   - Uplay R2 keeps the Steam AppID directly and its schema already uses Steam API names;
 //   - official Ubisoft Connect / Lumaplay use a namespaced appid + native numeric ids, so they go
 //     through the Steam↔id bridge cache (seeded by the parser, refreshed by the renderer);
+//   - Goldberg SocialClub uses a namespaced appid but loads the Steam schema of its resolved Steam
+//     release, so the Steam percentages apply directly through game.steamappid;
 //   - Epic installs with a known Steam release borrow the Steam percentages.
 // Sources without a Steam counterpart keep their own rarity (Epic/GOG/console emulators) and EA
 // (which has none) resolves to null (the column stays hidden).
@@ -237,6 +240,11 @@ function resolveGameRarityContext(game, options = {}) {
 
   if (source === 'Xbox PC') return { kind: 'xbox' };
   if (emulatorSources.has(source)) return { kind: 'emulator', source };
+
+  // Goldberg SocialClub: namespaced appid, Steam schema loaded through the resolved release.
+  if (source === 'Goldberg SocialClub' && /^\d+$/.test(steamappid)) {
+    return { kind: 'steam', appid: steamappid };
+  }
 
   // Official Ubisoft Connect / Lumaplay: namespaced appid ("uplay-…"/"UPLAY…") whose schema names
   // are native numeric ids — the Steam percentages live in the bridge cache keyed on this appid.

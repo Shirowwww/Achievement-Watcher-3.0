@@ -10,6 +10,7 @@ const cases = [
   // [label, input, expected]
   ['legit Steam (steamAPI)', { dataType: 'steamAPI' }, true],
   ['RPCS3 emulator', { dataType: 'rpcs3' }, true],
+  ['Goldberg SocialClub save folder', { dataType: 'socialclub' }, true],
   ['ShadPS4 trophy residue, no game => phantom', { dataType: 'shadps4' }, false],
   ['ShadPS4 configured game with disk proof', { dataType: 'shadps4', trustedInstalled: true }, true],
   // gog/epic parsers scan Nemirtingas EMULATOR saves, not real launchers -> need disk proof.

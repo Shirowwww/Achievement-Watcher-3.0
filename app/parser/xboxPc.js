@@ -73,7 +73,7 @@ function getUserDataPath() {
     const { app } = require('@electron/remote');
     return app.getPath('userData');
   } catch {
-    return process.env['APPDATA'] ? path.join(process.env['APPDATA'], 'Achievement Watcher') : '';
+    return require('../util/userDataPath.js').userDataDir();
   }
 }
 

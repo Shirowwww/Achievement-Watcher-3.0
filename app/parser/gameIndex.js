@@ -5,11 +5,13 @@
   reads at startup to match running processes to game appids.
 
   Shape of an entry: { appid: string, name: string, binary: string, icon: string, source?: string,
-                       uplayId?: string }
+                       steamappid?: string, uplayId?: string }
     - binary is the executable filename (no path, e.g. "GameName.exe"), matched case-insensitively
     - icon is the Steam CDN icon hash (filename without extension)
     - source is the human-readable source label ("GBE Fork", "Xbox PC", ...) used by the Watchdog to
       pick per-platform notification presets and start source-specific polling (e.g. Xbox Network)
+    - steamappid is the Steam AppID a non-Steam source resolves to (Goldberg SocialClub), used by the
+      Watchdog to load the schema/cover for a namespaced appid
     - uplayId is the Ubisoft product id for a Goldberg Uplay R2 game. The emulator names its save
       folder with that id, not the Steam AppID, so the Watchdog needs the pair to attribute an unlock
       under "Goldberg UplayEmu Saves\<uplayId>" to this game. Carrying it here keeps the mapping table
@@ -58,8 +60,10 @@ module.exports.upsert = (entry) => {
       binary: String(entry.binary || ''),
       icon: String(entry.icon || ''),
       source: String(entry.source || ''),
+      steamappid: String(entry.steamappid || ''),
       uplayId: String(entry.uplayId || ''),
     };
+    if (!next.steamappid) delete next.steamappid;
     if (!next.uplayId) delete next.uplayId;
     const existing = list.find((g) => String(g.appid) === appid);
     if (existing) {
@@ -68,6 +72,7 @@ module.exports.upsert = (entry) => {
         existing.name === next.name &&
         existing.icon === next.icon &&
         String(existing.source || '') === next.source &&
+        String(existing.steamappid || '') === String(next.steamappid || '') &&
         String(existing.uplayId || '') === String(next.uplayId || '')
       ) {
         return;
@@ -76,6 +81,7 @@ module.exports.upsert = (entry) => {
       existing.name = next.name;
       existing.icon = next.icon;
       if (next.source) existing.source = next.source;
+      if (next.steamappid) existing.steamappid = next.steamappid;
       if (next.uplayId) existing.uplayId = next.uplayId;
     } else {
       list.push(next);

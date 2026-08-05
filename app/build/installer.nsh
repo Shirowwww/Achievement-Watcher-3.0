@@ -26,7 +26,9 @@ Var CMD_RESULT
 
 !macro customInstall
   ; Copy media, presets, view to your app's AppData
-  StrCpy $APPDATA_MYAPP "$APPDATA\Achievement Watcher"
+  ; 3.x uses its own folder: the legacy 1.6.8 uninstaller deletes "%APPDATA%\Achievement Watcher",
+  ; which used to wipe every 3.x setting and cache (issue #6).
+  StrCpy $APPDATA_MYAPP "$APPDATA\Achievement Watcher 3.0"
   DetailPrint "Keeping existing settings and cache in $APPDATA_MYAPP"
   CreateDirectory "$APPDATA_MYAPP"
 !macroend

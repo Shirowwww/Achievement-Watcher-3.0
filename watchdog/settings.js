@@ -69,6 +69,11 @@ module.exports.load = async (cfg_file) => {
       fixFile = true;
     }
 
+    if (typeof options.achievement_source.socialClub !== 'boolean') {
+      options.achievement_source.socialClub = true;
+      fixFile = true;
+    }
+
     if (typeof options.achievement_source.greenLuma !== 'boolean') {
       options.achievement_source.greenLuma = true;
       fixFile = true;
@@ -321,6 +326,7 @@ module.exports.load = async (cfg_file) => {
       achievement_source: {
         legitSteam: 0,
         steamEmu: true,
+        socialClub: true,
         greenLuma: true,
         rpcs3: true,
         lumaPlay: false,

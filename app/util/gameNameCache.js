@@ -16,8 +16,9 @@
 
 const fs = require('fs');
 const path = require('path');
+const { userDataDir } = require('./userDataPath.js');
 
-const CACHE_BASE = path.join(process.env['APPDATA'] || '', 'Achievement Watcher');
+const CACHE_BASE = userDataDir();
 
 // filePath -> { mtimeMs, size, value, index }
 const jsonArrayCache = new Map();

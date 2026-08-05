@@ -229,7 +229,11 @@ function listSpoolEntries(spoolRoot = DEFAULT_SPOOL_ROOT) {
 let configurationsCache = { path: '', mtimeMs: 0, blocks: [] };
 
 function normalizeQuotedText(value) {
-  return String(value || '').trim().replace(/^"+|"+$/g, '').trim();
+  // The index quotes values with either kind of quote ("Watch Dogs: Legion" / 'Watch Dogs: Legion').
+  return String(value || '')
+    .trim()
+    .replace(/^["']+|["']+$/g, '')
+    .trim();
 }
 
 function normalizeAchievementsSpec(value) {
@@ -239,6 +243,140 @@ function normalizeAchievementsSpec(value) {
   if (base.endsWith('.zip')) base = base.slice(0, -4);
   const prefixed = base.match(/^\d+_(.+)$/);
   return prefixed ? prefixed[1] : base;
+}
+
+// The configurations index mixes launcher metadata into each game block. `root.name` (and
+// sometimes `display_name`/`game_identifier`) can be the *launcher's* name ("Steam",
+// "Ubisoft Connect", …) rather than the game's — using it as the game title produced library
+// entries literally titled "Steam" with no cover (Far Cry 4, uplay-971). Treat known launcher
+// names as "no title" so the real title comes from the game's own fields, the generic Steam
+// name resolution, the mapping asset or the fallback.
+const LAUNCHER_TITLE_BLOCKLIST = new Set([
+  'steam',
+  'uplay',
+  'ubisoft',
+  'ubisoft connect',
+  'epic',
+  'epic games',
+  'epic games launcher',
+  'ea',
+  'ea app',
+  'ea desktop',
+  'origin',
+  'rockstar',
+  'rockstar games',
+  'rockstar games launcher',
+  'rockstar launcher',
+  'social club',
+  'gog',
+  'galaxy',
+]);
+
+function isLauncherTitle(value) {
+  const v = String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[™®©]/g, '');
+  return !v || LAUNCHER_TITLE_BLOCKLIST.has(v);
+}
+
+// `root.name` is very often an UNRESOLVED localization key rather than a name — real values seen in
+// the index include "l1", "NAME", "RELATED_GAMENAME_116", "THUMBIMAGE". Using one as a title puts
+// gibberish in the library; using one as a Steam search term produces a wrong match, which is worse.
+const PLACEHOLDER_TITLES = new Set(['name', 'gamename', 'title', 'displayname', 'null', 'none']);
+function isPlaceholderTitle(value) {
+  const v = String(value || '').trim();
+  if (!v) return true;
+  if (/^l\d+$/i.test(v)) return true; // localization slot ("l1")
+  if (PLACEHOLDER_TITLES.has(v.toLowerCase())) return true;
+  // SCREAMING_SNAKE placeholders. Plain all-caps titles ("UNO") have no underscore and are kept.
+  return /_/.test(v) && v === v.toUpperCase() && !/[a-z]/.test(v);
+}
+
+function cleanTitle(value) {
+  if (isLauncherTitle(value) || isPlaceholderTitle(value)) return '';
+  return String(value || '').trim();
+}
+
+// Turn an Ubisoft achievements spec (e.g. "971_spec", "FarCry4", "ACShadows_fr") into readable
+// words that can be matched against the Steam catalog. Short spec ids ("fc4", "uplay") and pure
+// numbers are too ambiguous to use as name candidates; longer camelCase specs ("FarCry4") become
+// "far cry 4" and are only ever auto-committed through the same high-confidence Steam matcher as
+// every other name lookup.
+function specToWords(value) {
+  const raw = String(value || '').trim().replace(/^['"]+|['"]+$/g, '').trim();
+  if (!raw) return [];
+  // Most specs are just a content hash ("e58f2672942d2a930e591c55f54f75c6"). Splitting one into
+  // "words" yields digit soup that a fuzzy catalog lookup can still match — to the WRONG game. Only
+  // specs that actually spell something out ("FarCry4") are usable as a name candidate.
+  const body = raw.replace(/\.(zip|bin)$/i, '').replace(/^\d+_/, '');
+  if (/^[0-9a-f]{16,}$/i.test(body)) return [];
+  const withoutPrefix = raw
+    .replace(/^\d+_/, '')
+    .replace(/_(?:spec|loc|pc|uplay|steam)$/i, '')
+    .replace(/^\d+$/, '');
+  const words = String(withoutPrefix)
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/([a-z])([0-9])/gi, '$1 $2')
+    .replace(/([0-9])([a-z])/gi, '$1 $2')
+    .replace(/[^A-Za-z0-9]+/g, ' ')
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w && (w.length > 1 || /^\d+$/.test(w)) && !/^(uplay|ubisoft|connect|spec|steam)$/.test(w));
+  return words;
+}
+
+// Candidate game titles for a configurations block, best first. Launcher names ("Steam", …) are
+// filtered out; the achievements spec is a last resort because it is often a short internal id.
+function buildNameCandidates(block) {
+  const candidates = [];
+  const push = (value) => {
+    const title = cleanTitle(value);
+    if (title && !candidates.includes(title)) candidates.push(title);
+  };
+  if (block) {
+    push(block.gameIdentifier);
+    push(block.displayName);
+    push(block.rootName);
+    // `sort_string` is deliberately NOT a candidate. It is a shelf-ordering key whose stem is the
+    // FRANCHISE, not the title ("Assassin's Creed 05.1" → "Assassin's Creed", "watch_dogs03" →
+    // "watch_dogs"), and a confident match on a franchise name resolves to the wrong game.
+    const specWords = specToWords(block.achievementsSpec);
+    if (specWords.length >= 2) push(specWords.join(' '));
+  }
+  return candidates;
+}
+
+// A title distributed on several stores gets SEVERAL configuration blocks sharing one achievements
+// spec: the real game block, plus one per storefront whose only name is the storefront itself
+// ("root: name: Steam"). Picking the first match is therefore a coin flip — that is how Far Cry 4
+// ended up in the library titled "Steam" with no cover (issue #7). Merge them instead and take the
+// first usable value for each field, so the storefront block can only ever fill gaps.
+function mergeConfigBlocks(blocks) {
+  const list = Array.isArray(blocks) ? blocks.filter(Boolean) : [];
+  if (!list.length) return null;
+
+  const firstUsable = (field) => {
+    for (const block of list) {
+      const value = cleanTitle(block[field]);
+      if (value) return value;
+    }
+    return '';
+  };
+
+  const merged = {
+    achievementsSpec: list[0].achievementsSpec,
+    normalizedAchievementsSpec: list[0].normalizedAchievementsSpec,
+    gameIdentifier: firstUsable('gameIdentifier'),
+    displayName: firstUsable('displayName'),
+    rootName: firstUsable('rootName'),
+    sortString: firstUsable('sortString'),
+    // Which storefronts this spec appeared under. Not a title, but it does say "this product is
+    // also sold on Steam", which is exactly the case the identity resolution has to handle.
+    storefronts: [...new Set(list.map((b) => String(b.rootName || '').trim().toLowerCase()).filter((n) => LAUNCHER_TITLE_BLOCKLIST.has(n)))],
+  };
+  merged.title = merged.gameIdentifier || merged.displayName || merged.rootName || '';
+  return merged;
 }
 
 function readConfigurationsIndex(configurationsPath = DEFAULT_CONFIGURATIONS_PATH) {
@@ -256,7 +394,11 @@ function readConfigurationsIndex(configurationsPath = DEFAULT_CONFIGURATIONS_PAT
 
   let text = '';
   try {
-    text = fs.readFileSync(filePath).toString('latin1').replace(/\0/g, '');
+    // The file is binary-framed with UTF-8 text payloads. Decoding it as latin1 mangled every
+    // accented character in a title ("Assassin's Creed® Mirage" → "Assassin's CreedÂ® Mirage");
+    // decoding as UTF-8 keeps titles correct and only produces replacement characters inside the
+    // binary framing between blocks, which this parser never reads.
+    text = fs.readFileSync(filePath).toString('utf8').replace(/\0/g, '');
   } catch {
     return [];
   }
@@ -270,11 +412,20 @@ function readConfigurationsIndex(configurationsPath = DEFAULT_CONFIGURATIONS_PAT
     if (!achievementsSpec) continue;
     const gameIdentifier = normalizeQuotedText(block.match(/^\s*game_identifier:\s*([^\r\n]+)/m)?.[1] || '');
     const displayName = normalizeQuotedText(block.match(/^\s*display_name:\s*([^\r\n]+)/m)?.[1] || '');
+    // `root.name` is frequently a localization key ("l1", "NAME", "RELATED_GAMENAME_116") or the
+    // storefront's own name, so it ranks below the installer's game_identifier and display_name.
     const rootName = normalizeQuotedText(block.match(/root:\s*[\s\S]*?\n\s+name:\s*([^\r\n]+)/m)?.[1] || '');
+    // sort_string is a shelf-ordering key ("Assassin's Creed 05.1"): a poor title, but a usable
+    // last-resort name candidate when every other field is a storefront name or a loc key.
+    const sortString = normalizeQuotedText(block.match(/^\s*sort_string:\s*([^\r\n]+)/m)?.[1] || '');
     blocks.push({
       achievementsSpec,
       normalizedAchievementsSpec: normalizeAchievementsSpec(achievementsSpec),
-      title: gameIdentifier || displayName || rootName || '',
+      gameIdentifier,
+      displayName,
+      rootName,
+      sortString,
+      title: cleanTitle(gameIdentifier) || cleanTitle(displayName) || cleanTitle(rootName) || '',
     });
   }
 
@@ -305,7 +456,7 @@ function resolveAchievementsArchive(appid, options = {}) {
   let best = null;
   for (const filePath of candidateFiles) {
     const normalizedSpec = normalizeAchievementsSpec(path.basename(filePath).slice(prefix.length));
-    const metadata = blocks.find((block) => block.normalizedAchievementsSpec === normalizedSpec) || null;
+    const metadata = mergeConfigBlocks(blocks.filter((block) => block.normalizedAchievementsSpec === normalizedSpec));
     let mtimeMs = 0;
     try {
       mtimeMs = fs.statSync(filePath).mtimeMs;
@@ -315,7 +466,7 @@ function resolveAchievementsArchive(appid, options = {}) {
       best = { archivePath: filePath, metadata, score, mtimeMs };
     }
   }
-  return { archivePath: best.archivePath, title: best.metadata?.title || '' };
+  return { archivePath: best.archivePath, title: best.metadata?.title || '', metadata: best.metadata || null };
 }
 
 // Minimal stored/deflate ZIP reader — the archives are plain ZIPs but carry no .zip extension, so
@@ -422,11 +573,10 @@ function normalizeSteamAchName(name) {
   return require('../util/rarity.js').normalizeSteamBridgeName(name);
 }
 
-// cacheId = the (namespaced) appid the UI reads rarity by; uplayId = the raw Ubisoft id used to
-// bridge to a Steam appid via the uplay-steam mapping.
-async function seedRarityFromSteam(cacheId, uplayId, ids) {
-  const mapping = getUplaySteamMapping().get(String(uplayId));
-  const steamAppId = mapping?.steam_appid != null ? String(mapping.steam_appid).trim() : '';
+// cacheId = the (namespaced) appid the UI reads rarity by; steamAppId = the Steam release the
+// Ubisoft product resolved to (asset, configurations name lookup or installed-library match).
+async function seedRarityFromSteam(cacheId, steamAppId, ids) {
+  steamAppId = String(steamAppId || '').trim();
   if (!/^\d+$/.test(steamAppId)) return;
   try {
     const rarity = require('../util/rarity.js');
@@ -434,6 +584,282 @@ async function seedRarityFromSteam(cacheId, uplayId, ids) {
   } catch (err) {
     debug.log(`[${cacheId}] ubisoft rarity bridge failed => ${err}`);
   }
+}
+
+// ---- generic product identity resolution ---------------------------------------------------------
+
+// Local Steam library scan (appmanifest_*.acf): a Steam purchase that launches Ubisoft Connect is
+// installed in the Steam library, so its ACF carries the REAL Steam appid and store name. Matching
+// the configurations candidates against those offline manifests resolves ANY future title with no
+// asset edit and no network (issue #7).
+const { readRegistryString } = require('../util/reg.js');
+
+function unescapeVdf(value) {
+  return String(value || '').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+}
+
+function parseSteamVdfLibraryFolders(text) {
+  const roots = [];
+  const re = /^\s*"path"\s+"([^"]+)"/gm;
+  let m = null;
+  while ((m = re.exec(String(text || '')))) roots.push(unescapeVdf(m[1]));
+  return roots;
+}
+
+function parseSteamAppManifest(text) {
+  const out = { appid: '', name: '', installDir: '' };
+  const re = /^\s*"(appid|name|installdir)"\s+"([^"]*)"/gm;
+  let m = null;
+  while ((m = re.exec(String(text || '')))) {
+    if (m[1] === 'appid') out.appid = unescapeVdf(m[2]);
+    else if (m[1] === 'name') out.name = unescapeVdf(m[2]);
+    else if (m[1] === 'installdir') out.installDir = unescapeVdf(m[2]);
+  }
+  return out;
+}
+
+let localSteamLibraryCache = { steamPath: '', mtimeMs: 0, scan: null };
+
+function normalizePathKey(value) {
+  return String(value || '')
+    .replace(/[\\/]+/g, '\\')
+    .replace(/\\+$/, '')
+    .toLowerCase();
+}
+
+// Where Ubisoft Connect installed a product. For a Steam purchase that launches Ubisoft Connect,
+// this points straight inside the Steam library (…\steamapps\common\Far Cry 4), which identifies
+// the Steam release WITHOUT going through any name at all — no asset row, no fuzzy match, no
+// network. This is the resolution path that survives titles nobody has mapped yet (issue #7).
+function ubisoftInstallDir(productId) {
+  const id = String(productId || '').trim();
+  if (!/^\d+$/.test(id)) return '';
+  for (const hive of ['HKLM', 'HKCU']) {
+    for (const root of ['Software/WOW6432Node/Ubisoft/Launcher/Installs', 'Software/Ubisoft/Launcher/Installs']) {
+      try {
+        const dir = readRegistryString(hive, `${root}/${id}`, 'InstallDir');
+        if (dir && String(dir).trim()) return String(dir).trim();
+      } catch {
+        /* key absent on this hive/bitness — try the next one */
+      }
+    }
+  }
+  return '';
+}
+
+// The Steam appid whose install folder contains (or equals) `installDir`.
+function matchSteamInstall(installDir, installs) {
+  const target = normalizePathKey(installDir);
+  if (!target) return '';
+  let best = '';
+  let bestLength = 0;
+  for (const entry of installs || []) {
+    const dir = normalizePathKey(entry.dir);
+    if (!dir) continue;
+    // Longest match wins so a nested library folder beats its parent.
+    if ((target === dir || target.startsWith(`${dir}\\`)) && dir.length > bestLength) {
+      best = entry.appid;
+      bestLength = dir.length;
+    }
+  }
+  return best;
+}
+
+async function loadLocalSteamInstalls(options = {}) {
+  const scan = await scanLocalSteamLibrary(options);
+  return scan.installs;
+}
+
+async function loadLocalSteamLibrary(options = {}) {
+  const scan = await scanLocalSteamLibrary(options);
+  return scan.names;
+}
+
+async function scanLocalSteamLibrary(options = {}) {
+  const explicitPath = String(options.steamPath || '').trim();
+  let steamPath = explicitPath;
+  if (!steamPath) {
+    try {
+      steamPath = readRegistryString('HKCU', 'Software/Valve/Steam', 'SteamPath');
+      if (!steamPath || !fs.existsSync(path.join(steamPath, 'steam.exe'))) {
+        steamPath = readRegistryString('HKLM', 'Software/WOW6432Node/Valve/Steam', 'InstallPath');
+      }
+    } catch {
+      steamPath = '';
+    }
+  }
+  const empty = { names: [], installs: [] };
+  if (!steamPath || !fs.existsSync(path.join(steamPath, 'steam.exe'))) return empty;
+
+  const libraryFile = path.join(steamPath, 'steamapps', 'libraryfolders.vdf');
+  let mtimeMs = 0;
+  try {
+    mtimeMs = fs.statSync(libraryFile).mtimeMs;
+  } catch {
+    /* a Steam install without libraryfolders.vdf still has its own steamapps root */
+  }
+  if (localSteamLibraryCache.steamPath === steamPath && localSteamLibraryCache.mtimeMs === mtimeMs && localSteamLibraryCache.scan) {
+    return localSteamLibraryCache.scan;
+  }
+
+  const roots = [path.join(steamPath, 'steamapps')];
+  try {
+    if (fs.existsSync(libraryFile)) {
+      roots.push(...parseSteamVdfLibraryFolders(fs.readFileSync(libraryFile, 'utf8')).map((r) => path.join(r, 'steamapps')));
+    }
+  } catch {
+    /* unreadable library file — the main steamapps root still works */
+  }
+
+  const names = [];
+  const installs = [];
+  const seen = new Set();
+  for (const root of roots) {
+    let files = [];
+    try {
+      files = fs.readdirSync(root).filter((f) => /^appmanifest_\d+\.acf$/i.test(f));
+    } catch {
+      continue;
+    }
+    for (const file of files) {
+      try {
+        const manifest = parseSteamAppManifest(fs.readFileSync(path.join(root, file), 'utf8'));
+        const appid = String(manifest.appid || '').trim();
+        if (!/^\d+$/.test(appid) || seen.has(appid)) continue;
+        seen.add(appid);
+        const name = String(manifest.name || '').trim();
+        const installDir = String(manifest.installDir || '').trim();
+        if (name) names.push({ appid, name });
+        if (installDir && installDir !== name) names.push({ appid, name: installDir });
+        if (installDir) installs.push({ appid, name: name || installDir, dir: path.join(root, 'common', installDir) });
+      } catch {
+        /* skip one corrupt manifest */
+      }
+    }
+  }
+
+  const scan = { names, installs };
+  localSteamLibraryCache = { steamPath, mtimeMs, scan };
+  return scan;
+}
+
+// One resolved identity per Ubisoft product (cache keyed by the raw product id). Resolution is a
+// chain, not a per-game patch:
+//
+//   installdir → the product's registered install folder sits inside a Steam library, which names
+//                the Steam release with no title involved at all (the strongest signal, and the one
+//                that works for a storefront block carrying no game name whatsoever),
+//   asset      → the bundled uplay↔steam mapping,
+//   library    → a confident name match against the installed Steam manifests,
+//   name       → a confident name match against the full Steam catalog.
+//
+// A Steam purchase that launches Ubisoft Connect (issue #7) is resolved by the first step for ANY
+// future title, with no asset edit and no network.
+let identityCache = new Map();
+
+async function resolveIdentity(entry, options = {}) {
+  const uplayId = String((entry && (entry.data && entry.data.uplayId)) || (entry && entry.appid) || '').trim();
+  const key = `uplay-${uplayId}`;
+  if (identityCache.has(key)) return identityCache.get(key);
+
+  const findAppidByName =
+    options.findAppidByName || ((name) => require('./steam.js').findAppidByName(name));
+  const localSteamLibrary =
+    typeof options.localSteamLibrary === 'function'
+      ? await options.localSteamLibrary()
+      : Array.isArray(options.localSteamLibrary)
+      ? options.localSteamLibrary
+      : await loadLocalSteamLibrary(options);
+  const localSteamInstalls =
+    typeof options.localSteamInstalls === 'function'
+      ? await options.localSteamInstalls()
+      : Array.isArray(options.localSteamInstalls)
+      ? options.localSteamInstalls
+      : await loadLocalSteamInstalls(options);
+  const readUbisoftInstallDir = options.ubisoftInstallDir || ubisoftInstallDir;
+  const block = (entry && entry.data && entry.data.configBlock) || {};
+  const candidates = buildNameCandidates(block);
+  const mapping = getUplaySteamMapping().get(uplayId);
+
+  let title = cleanTitle((entry && entry.data && entry.data.title) || '');
+  let steamAppId = '';
+  let steamName = '';
+  let method = '';
+
+  // 1) Path identity. Ubisoft Connect records where it installed the product; when that folder is
+  //    inside a Steam library, the owning appmanifest IS the answer. No name, no catalog, no guess.
+  try {
+    const installDir = readUbisoftInstallDir(uplayId);
+    const hit = installDir ? matchSteamInstall(installDir, localSteamInstalls) : '';
+    if (/^\d+$/.test(hit)) {
+      steamAppId = hit;
+      method = 'installdir';
+      const owner = localSteamInstalls.find((i) => i.appid === hit);
+      if (!title && owner && owner.name) title = owner.name;
+    }
+  } catch (err) {
+    debug.log(`[uplay-${uplayId}] install-dir lookup failed => ${err}`);
+  }
+
+  if (!/^\d+$/.test(steamAppId) && mapping?.steam_appid != null && /^\d+$/.test(String(mapping.steam_appid).trim())) {
+    steamAppId = String(mapping.steam_appid).trim();
+    steamName = mapping.steam_name ? String(mapping.steam_name).trim() : '';
+    method = 'asset';
+  }
+
+  if (!/^\d+$/.test(steamAppId)) {
+    // 3) The game is installed in the local Steam library: match the configurations candidates
+    //    against the appmanifest names/install dirs with the same high-confidence matcher the rest
+    //    of the app uses.
+    for (const candidate of candidates) {
+      const hit = localSteamLibrary.length
+        ? require('../util/fuzzyAppid.js').bestConfidentAppid(candidate, localSteamLibrary)
+        : null;
+      if (hit && /^\d+$/.test(String(hit))) {
+        steamAppId = String(hit).trim();
+        steamName = '';
+        method = 'library';
+        if (!title) title = candidate;
+        break;
+      }
+    }
+  }
+
+  if (!/^\d+$/.test(steamAppId)) {
+    // 4) Last resort: the full Steam catalog, by name.
+    for (const candidate of candidates) {
+      let sid = null;
+      try {
+        sid = await findAppidByName(candidate);
+      } catch {
+        /* name lookup is best-effort; the next candidate may still match */
+      }
+      const resolved = String(sid || '').trim();
+      if (/^\d+$/.test(resolved)) {
+        steamAppId = resolved;
+        steamName = '';
+        method = 'name';
+        if (!title) title = candidate;
+        break;
+      }
+    }
+  }
+
+  const result = {
+    // A resolved Steam release always outranks the mapping asset's own uplay label, which is often
+    // a regional variant ("Far Cry 4 RU"). `title` stays first: it is the game's own configurations
+    // entry, already stripped of storefront names.
+    title: title || steamName || mapping?.steam_name || mapping?.uplay_name || '',
+    steamAppId,
+    steamName,
+    method,
+  };
+  identityCache.set(key, result);
+  return result;
+}
+
+function resetIdentityCache() {
+  identityCache = new Map();
 }
 
 // ---- parser contract ----------------------------------------------------------------------------
@@ -476,6 +902,7 @@ module.exports.scan = () => {
         spoolFilePath: entry.spoolFilePath,
         userId: entry.userId,
         archivePath: archive.archivePath,
+        configBlock: archive.metadata || null,
         title: archive.title || mapping?.uplay_name || mapping?.steam_name || '',
       },
     });
@@ -529,11 +956,13 @@ module.exports.getGameData = async (appid, lang) => {
     };
   });
 
-  // borrow Steam store art through the uplay↔steam mapping (best-effort; delisted → placeholders).
-  // Keyed by the RAW Ubisoft id — the appid is now namespaced ("uplay-<id>") for cache safety.
+  // Resolve the real identity generically (configurations name → Steam catalog → name lookup) so a
+  // Steam-launched Ubisoft title never shows up as "Steam"/"Ubisoft <id>" and future titles get
+  // cover art without a per-game asset patch (issue #7).
+  const identity = await resolveIdentity(appid);
   const uplayId = data.uplayId || appid.appid;
-  const mapping = getUplaySteamMapping().get(String(uplayId));
-  const steamAppId = mapping?.steam_appid != null ? String(mapping.steam_appid).trim() : '';
+  const steamAppId = identity.steamAppId;
+  if (identity.method) debug.log(`[${appid.appid}] identity resolved via ${identity.method}${identity.steamAppId ? ` -> Steam ${identity.steamAppId}` : ''}`);
   const img = /^\d+$/.test(steamAppId)
     ? {
         header: `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${steamAppId}/header.jpg`,
@@ -545,10 +974,13 @@ module.exports.getGameData = async (appid, lang) => {
 
   // rarity: Steam global % bridged onto the numeric ids, cached under the (namespaced) appid so the
   // detail view reads it back by game.appid without colliding with a same-numbered Steam game.
-  await seedRarityFromSteam(appid.appid, uplayId, schema.ids);
+  await seedRarityFromSteam(appid.appid, steamAppId, schema.ids);
 
+  // A configurations entry can still resolve to a launcher name even after the scan-side filter
+  // (e.g. a stale user-data copy of the index). Never surface "Steam"/"Ubisoft Connect" as a title.
+  const title = cleanTitle(data.title);
   return {
-    name: data.title || mapping?.uplay_name || mapping?.steam_name || `Ubisoft ${uplayId}`,
+    name: title || identity.title || `Ubisoft ${uplayId}`,
     appid: appid.appid,
     steamappid: steamAppId || undefined,
     ubisoftProductId: String(uplayId),
@@ -575,4 +1007,19 @@ module.exports._internal = {
   resolveAchievementsArchive,
   collectSchemaData,
   normalizeSteamAchName,
+  isLauncherTitle,
+  isPlaceholderTitle,
+  cleanTitle,
+  specToWords,
+  buildNameCandidates,
+  resolveIdentity,
+  resetIdentityCache,
+  parseSteamVdfLibraryFolders,
+  parseSteamAppManifest,
+  loadLocalSteamLibrary,
+  loadLocalSteamInstalls,
+  mergeConfigBlocks,
+  ubisoftInstallDir,
+  matchSteamInstall,
+  readConfigurationsIndex,
 };

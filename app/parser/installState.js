@@ -23,7 +23,7 @@
 */
 
 // Sources whose every entry is, by construction, a real on-disk install.
-const TRUSTED_TYPES = new Set(['steamapi', 'rpcs3', 'xenia']);
+const TRUSTED_TYPES = new Set(['steamapi', 'rpcs3', 'xenia', 'socialclub']);
 
 function isInstalled({ dataType, hasResolvedExe, hasExeListExe, trustedInstalled } = {}) {
   const type = String(dataType || '').toLowerCase();

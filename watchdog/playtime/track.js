@@ -8,7 +8,9 @@ const loadRegedit = () => regeditPromise || (regeditPromise = import('regodit/pr
 
 module.exports = async (appID, time) => {
   const regedit = await loadRegedit();
-  const key = 'Software/Achievement Watcher/Playtime/Steam/' + appID;
+  // 3.x uses its own registry namespace so the legacy 1.6.8 uninstaller (which removes the old
+  // "Achievement Watcher" app key) cannot wipe playtime data either (issue #6).
+  const key = 'Software/Achievement Watcher 3.0/Playtime/Steam/' + appID;
 
   const current = +(await regedit.regQueryIntegerValue('HKCU', key, 'total')) || 0;
   await regedit.regWriteDwordValue('HKCU', key, 'total', current + time);

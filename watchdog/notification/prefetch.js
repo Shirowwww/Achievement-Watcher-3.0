@@ -49,7 +49,7 @@ module.exports = async (url, appID) => {
         if (fs.existsSync(localPath)) return localPath;
       } catch {}
     }
-    const cache = path.join(process.env['APPDATA'], `Achievement Watcher/steam_cache/icon/${appID}`);
+    const cache = path.join(require('../util/userData.js').userDataDir(), `steam_cache/icon/${appID}`);
     let filename = path.parse(url).base;
     filePath = path.join(cache, filename);
     if (fs.existsSync(filePath)) return filePath;

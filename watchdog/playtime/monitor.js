@@ -11,10 +11,11 @@ const TimeTrack = require('./track.js');
 const { findByReadingContentOfKnownConfigfilesIn } = require('./steam_appid_find.js');
 const { loadSteamData } = require('../steam.js');
 const { binaryMatchesProcess, buildSeededSessions } = require('./seed.js');
+const { userDataDir } = require('../util/userData.js');
 
 const debug = new (require('../util/logger'))({
   console: true,
-  file: path.join(process.env['APPDATA'], 'Achievement Watcher/logs/playtime.log'),
+  file: path.join(userDataDir(), 'logs/playtime.log'),
 });
 
 const appdataPath = process.env['APPDATA'];
@@ -38,7 +39,7 @@ let appidByDirCache;
 let ignoredAppidsCache = { mtimeMs: null, set: new Set() };
 
 const systemTempDir = os.tmpdir() || process.env['TEMP'] || process.env['TMP'];
-const userExclusionFile = path.join(appdataPath, 'Achievement Watcher/cfg/exclusion.db');
+const userExclusionFile = path.join(userDataDir(), 'cfg/exclusion.db');
 const builtinIgnoredAppids = new Set([
   '480', // Space War
   '753', // Steam Config
@@ -179,7 +180,7 @@ async function init() {
         game = gameIndex.find((g) => g.appid === appid);
         if (!game) {
           const settings = require('../settings.js');
-          const options = await settings.load(path.join(appdataPath, 'Achievement Watcher/cfg', 'options.ini'));
+          const options = await settings.load(path.join(userDataDir(), 'cfg', 'options.ini'));
           const lang = options.achievement.lang;
           const apikey = options.steam.apiKey;
           let d = await loadSteamData(appid, lang, apikey, process);
@@ -279,13 +280,13 @@ async function addToGameIndex(game) {
   if (isIgnoredAppid(game.appid)) return;
   let userOverride;
   try {
-    userOverride = JSON.parse(fs.readFileSync(path.join(appdataPath, 'Achievement Watcher/cfg', 'gameIndex.json'), 'utf8'));
+    userOverride = JSON.parse(fs.readFileSync(path.join(userDataDir(), 'cfg', 'gameIndex.json'), 'utf8'));
   } catch (err) {
     if (err.code === 'ENOENT') userOverride = [];
   }
   if (userOverride.find((g) => g.appid === game.appid)) return;
   userOverride.push(game);
-  fs.writeFileSync(path.join(appdataPath, 'Achievement Watcher/cfg', 'gameIndex.json'), JSON.stringify(userOverride), 'utf8');
+  fs.writeFileSync(path.join(userDataDir(), 'cfg', 'gameIndex.json'), JSON.stringify(userOverride), 'utf8');
   gameIndex.push(game);
   debug.log(`Added ${game.name} to GameIndex.json`);
 }
@@ -296,8 +297,8 @@ async function getGameIndex() {
   const { shouldArrayOfObjWithProperties } = (await import('@xan105/is')).assert;
 
   const filePath = {
-    cache: path.join(process.env['APPDATA'], 'Achievement Watcher/steam_cache/schema', 'gameIndex.json'),
-    user: path.join(process.env['APPDATA'], 'Achievement Watcher/cfg', 'gameIndex.json'),
+    cache: path.join(userDataDir(), 'steam_cache/schema', 'gameIndex.json'),
+    user: path.join(userDataDir(), 'cfg', 'gameIndex.json'),
   };
 
   let gameIndex = [],
@@ -328,7 +329,7 @@ async function getGameIndex() {
 }
 
 async function getSavedConfigs() {
-  const filepath = path.join(process.env['APPDATA'], 'Achievement Watcher/cfg', 'exeList.json');
+  const filepath = path.join(userDataDir(), 'cfg', 'exeList.json');
 
   try {
     if (fs.existsSync(filepath)) {

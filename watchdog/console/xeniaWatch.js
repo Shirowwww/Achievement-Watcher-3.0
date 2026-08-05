@@ -20,11 +20,11 @@ const debug = require('../util/log.js');
 const waitForFileStable = require('../util/waitForFileStable.js');
 const { notificationVolumePercent } = require('../util/notificationVolume.js');
 
-const APPDATA = process.env['APPDATA'] || '';
-const cacheDir = path.join(APPDATA, 'Achievement Watcher/steam_cache/console');
+const { userDataDir } = require('../util/userData.js');
+const cacheDir = path.join(userDataDir(), 'steam_cache/console');
 // Same icon cache the app parser extracts into — icons written by either side are shared.
-const iconCacheRoot = path.join(APPDATA, 'Achievement Watcher/icon_cache/xenia');
-const userDirFile = path.join(APPDATA, 'Achievement Watcher/cfg', 'userdir.db');
+const iconCacheRoot = path.join(userDataDir(), 'icon_cache/xenia');
+const userDirFile = path.join(userDataDir(), 'cfg', 'userdir.db');
 
 const XDBF_HEADER_SIZE = 0x18;
 const ENTRY_SIZE = 0x12;

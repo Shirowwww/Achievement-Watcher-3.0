@@ -27,7 +27,24 @@ function formatProgressValue(value) {
   return String(Math.round(n * 100) / 100);
 }
 
-module.exports = async (message, options) => {
+// URI a toast click hands back to the app. Empty when the main process could not register the
+// scheme (dev run, locked-down HKCU) — in that case the toast simply carries no activation, which
+// is honest: emitting one that resolves nowhere is how "click does nothing" bugs are born.
+//
+// The identifiers go in PATH SEGMENTS, not a query string: powertoast injects `launch` into the
+// toast XML verbatim, so a query string's "&" would produce malformed XML and Windows would reject
+// the whole notification. Percent-encoding each segment keeps the value safe as an XML attribute.
+function buildActivation(message) {
+  const scheme = String(process.env.AW_TOAST_PROTOCOL || '').trim();
+  if (!scheme || message.appid == null || message.appid === '') return null;
+  const segments = [encodeURIComponent(String(message.appid))];
+  if (message.achievementName) segments.push(encodeURIComponent(String(message.achievementName)));
+  return { launch: `${scheme}://game/${segments.join('/')}`, type: 'protocol' };
+}
+
+// Build the powertoast option object for one notification. Exported as a pure function so the
+// payload contract (aumid, uniqueID, …) is unit-testable without shelling out to PowerShell.
+function buildToastNotification(message, options) {
   // customAudio: '0' muted | '1' system default toast sound | '2' custom audio file.
   // Only '2' needs a file we play ourselves; '1' is far more reliable as the toast's own native
   // sound than shelling a WAV path through sound-play (the previous code silenced the toast for
@@ -40,8 +57,16 @@ module.exports = async (message, options) => {
     soundFile = toastAudio.getCustom();
   }
   let notification = {
-    appID: options.toast.appid,
-    timeStamp: message.time,
+    // powertoast expects `aumid`, not `appID`. The old key was silently ignored, so every toast was
+    // posted under powertoast's own default — the Microsoft Store's identity — instead of the app id
+    // this transport had carefully selected. Combined with that selected id being the classic Xbox
+    // app, which Windows 11 no longer ships, nothing was ever displayed while every call still
+    // resolved successfully: "the rumble fires but no toast appears" (issue #8). See
+    // util/toastIdentity.js for the identity selection itself.
+    aumid: options.toast.appid,
+    // powertoast reads `time` (Unix seconds) for displayTimestamp; the old `timeStamp` key was
+    // silently ignored, so every toast fell back to "now" instead of the unlock time.
+    time: message.time,
     title: message.achievementDisplayName,
     message: message.achievementDescription,
     // Playtime's `icon` is Steam's tiny img_icon_url (low-res, looks like an exe icon); prefer the
@@ -54,20 +79,25 @@ module.exports = async (message, options) => {
     cropIcon: options.toast.cropIcon,
   };
 
-  if (message.achievementName) {
-    notification.uniqueID = `${message.appid}:${message.achievementName}`;
-    notification.onClick = `ach:--appid ${message.appid} --name '${message.achievementName}'`;
-  } else {
-    notification.uniqueID = `${message.appid}`;
-  }
+  notification.uniqueID = message.achievementName ? `${message.appid}:${message.achievementName}` : `${message.appid}`;
+
+  // powertoast has no `onClick` option — clicks are configured through `activation`. Foreground
+  // activation is not usable here: it requires a COM toast-activator bound to our AUMID, which an
+  // unpackaged desktop app does not get for free, so the click would do nothing at all. Protocol
+  // activation just ShellExecutes the URI, which the main process registers on every launch and
+  // turns into "open this game" (see parseToastActivation in electron/init.js).
+  const activation = buildActivation(message);
+  if (activation) notification.activation = activation;
 
   if (options.toast.attribution) notification.attribution = options.toast.attribution;
 
   if (options.toast.imageIntegration != '0' && message.image) {
     if (options.toast.imageIntegration == '1') {
-      notification.headerImg = message.image;
+      // powertoast renders a hero image through `heroImg`; the old `headerImg` key was silently
+      // dropped from the XML, so playtime/platinum toasts never showed their game art.
+      notification.heroImg = message.image;
     } else if (options.toast.imageIntegration == '2') {
-      notification.footerImg = message.image;
+      notification.inlineImg = message.image;
     }
   }
 
@@ -78,10 +108,18 @@ module.exports = async (message, options) => {
   const progress = normalizeProgress(message.progress);
   if (progress) {
     notification.progress = {
-      percent: progress.percent,
-      footer: `${formatProgressValue(progress.current)}/${formatProgressValue(progress.max)}`,
+      // powertoast expects value 0–100 plus a status line; the previous {percent, footer} shape
+      // made every progress toast render an indeterminate bar with an empty status.
+      value: progress.percent,
+      status: `${formatProgressValue(progress.current)}/${formatProgressValue(progress.max)}`,
     };
   }
+
+  return { notification, soundFile };
+}
+
+module.exports = async (message, options) => {
+  const { notification, soundFile } = buildToastNotification(message, options);
   await toast(notification);
 
   if (soundFile) {
@@ -95,3 +133,6 @@ module.exports = async (message, options) => {
     });
   }
 };
+
+module.exports.buildToastNotification = buildToastNotification;
+module.exports.buildActivation = buildActivation;

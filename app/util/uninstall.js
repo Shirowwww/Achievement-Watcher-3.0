@@ -124,6 +124,37 @@ function findLocalUninstaller(gameDir) {
   return list[0] || null;
 }
 
+/**
+ * Best-effort cleanup after a silent Inno/NSIS uninstall (`local.silent === true`).
+ * The `_?=` argument that lets us wait on the process (instead of it copying itself
+ * to %TEMP% and detaching) is documented — for NSIS officially, for Inno by the same
+ * convention — to also stop the uninstaller from deleting itself. Without this, a
+ * leftover unins000.exe/.dat (or Uninstall.exe) sits in the game folder forever even
+ * though the "uninstall" reported success.
+ */
+function cleanupSilentUninstaller(local) {
+  if (!local || !local.silent || !local.file) return;
+  try {
+    if (fs.existsSync(local.file)) fs.unlinkSync(local.file);
+  } catch {
+    /* best-effort: file may still be locked briefly after exit */
+  }
+  if (local.kind === 'inno') {
+    try {
+      const dat = local.file.replace(/\.exe$/i, '.dat');
+      if (fs.existsSync(dat)) fs.unlinkSync(dat);
+    } catch {
+      /* best-effort */
+    }
+  }
+  try {
+    const dir = path.dirname(local.file);
+    if (fs.existsSync(dir) && fs.readdirSync(dir).length === 0) fs.rmdirSync(dir);
+  } catch {
+    /* folder not empty (uninstall left other files) or already gone — fine either way */
+  }
+}
+
 /** Steam browser-protocol URL that asks the Steam client to uninstall an appid. */
 function steamUninstallUrl(appid) {
   const id = String(appid == null ? '' : appid);
@@ -204,6 +235,7 @@ function isSafeTrashTarget(gameDir) {
 module.exports = {
   findUninstallers,
   findLocalUninstaller,
+  cleanupSilentUninstaller,
   steamUninstallUrl,
   getSteamPath,
   isSteamAppInstalled,

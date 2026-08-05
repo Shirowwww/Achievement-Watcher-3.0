@@ -577,6 +577,10 @@
       "importCache": {
         "name": "Importer le cache de notification",
         "description": "Importer le cache de Watchdog comme une autre source de succès"
+      },
+      "socialClub": {
+        "name": "Goldberg SocialClub",
+        "description": "Suivre les succès de l'émulateur Goldberg Social Club (%APPDATA%\\Goldberg SocialClub Emu Saves)."
       }
     },
     "guide": {

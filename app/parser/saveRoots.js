@@ -52,6 +52,7 @@ function defaultSteamEmuSaveRoots({ existingOnly = false, expandProgramDataSteam
     envPath('PUBLIC', 'Documents', 'EMPRESS'),
     envPath('APPDATA', 'Goldberg SteamEmu Saves'),
     envPath('APPDATA', 'Goldberg UplayEmu Saves'),
+    envPath('APPDATA', 'Goldberg SocialClub Emu Saves'),
     envPath('APPDATA', 'GSE Saves'),
     envPath('APPDATA', 'EMPRESS'),
     envPath('APPDATA', 'Steam', 'CODEX'),

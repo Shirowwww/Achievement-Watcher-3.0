@@ -394,6 +394,13 @@ function sourcePresentationFor(game) {
   if (sourceLower === 'gog') {
     return { img: getSourceImg('gog'), label: fr ? 'Succès GOG' : 'GOG achievements', kind: 'gog' };
   }
+  if (sourceLower === 'goldberg socialclub') {
+    return {
+      img: getSourceImg('Goldberg SocialClub'),
+      label: fr ? 'Succès Social Club' : 'Social Club achievements',
+      kind: 'socialclub',
+    };
+  }
   if (isUbisoft) {
     return { img: getSourceImg('ubisoft'), label: fr ? 'Succès Ubisoft Connect' : 'Ubisoft Connect achievements', kind: 'ubisoft' };
   }
@@ -662,6 +669,23 @@ ipcRenderer.on('achievement-unlock', (event, { appid, ach_data }) => {
     updateGameBox(appid, game.achievement.total > 0 ? Math.floor((game.achievement.unlocked / game.achievement.total) * 100) : 0);
   }
   updateGamePage(appid, ach_data);
+});
+
+// A Windows toast click activates the app with the game/achievement (see transport/toast.js);
+// open the corresponding library tile exactly like a mouse click on it.
+ipcRenderer.on('open-game', (event, { appid, achievement } = {}) => {
+  if (!appid) return;
+  const el = $('#game-list .game-box')
+    .filter(function () {
+      return String(this.dataset.appid) === String(appid);
+    })
+    .first();
+  if (el.length && typeof app.onGameBoxClick === 'function') {
+    debug.log(`[open-game] opening ${appid}${achievement ? ` (${achievement})` : ''}`);
+    app.onGameBoxClick(el, gameList);
+  } else {
+    debug.warn(`[open-game] no library tile for appid=${appid}`);
+  }
 });
 
 function updateGamePage(appid, ach_data) {
@@ -2622,7 +2646,7 @@ var app = {
                 icon: menuIcon('folder-open.png'),
                 label: $('#game-list').attr('data-ctx-iconcache') || `Open the game's icon cache folder`,
                 click() {
-                  remote.shell.openPath(path.join(process.env['APPDATA'], 'Achievement Watcher', 'steam_cache', 'icon', catalogAppid || `${appid}`));
+                  remote.shell.openPath(path.join(getUserDataPath(), 'steam_cache', 'icon', catalogAppid || `${appid}`));
                 },
               })
             );
@@ -2632,7 +2656,7 @@ var app = {
                 label: $('#game-list').attr('data-ctx-dbcache') || `Open the game's .db cache folder`,
                 click() {
                   remote.shell.showItemInFolder(
-                    path.join(process.env['APPDATA'], 'Achievement Watcher', 'steam_cache', 'schema', `${app.config.achievement.lang}`, `${catalogAppid || appid}.db`)
+                    path.join(getUserDataPath(), 'steam_cache', 'schema', `${app.config.achievement.lang}`, `${catalogAppid || appid}.db`)
                   );
                 },
               })
@@ -2910,8 +2934,15 @@ var app = {
                       });
                       // Refresh once the uninstaller process itself exits — covers
                       // uninstallers that leave an empty folder behind (the poll
-                      // above catches the folder-gone case even earlier).
-                      child.on('exit', () => setTimeout(() => app.onStart(), 1500));
+                      // above catches the folder-gone case even earlier). Silent
+                      // Inno/NSIS runs use `_?=` so we can wait on them, which also
+                      // stops them from deleting their own exe/.dat: clean that up
+                      // now that the process is done (skip on a non-zero exit — the
+                      // uninstall may not have actually finished).
+                      child.on('exit', (code) => {
+                        if (code === 0) uninstall.cleanupSilentUninstaller(local);
+                        setTimeout(() => app.onStart(), 1500);
+                      });
                       child.unref();
                       remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                         type: 'info',

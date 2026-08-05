@@ -577,6 +577,10 @@
       "importCache": {
         "name": "Bildirim önbelleğini içe aktar",
         "description": "Watchdog'un önbelleğini başka bir başarım kaynağı olarak içe aktar"
+      },
+      "socialClub": {
+        "name": "Goldberg SocialClub",
+        "description": "Goldberg Social Club emülatöründeki başarımları takip edin (%APPDATA%\\Goldberg SocialClub Emu Saves)."
       }
     },
     "guide": {

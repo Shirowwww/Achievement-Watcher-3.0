@@ -577,6 +577,10 @@
       "importCache": {
         "name": "Імпортувати кеш сповіщень",
         "description": "Імпортувати кеш Watchdog як ще одне джерело досягнень"
+      },
+      "socialClub": {
+        "name": "Goldberg SocialClub",
+        "description": "Відстежувати досягнення емулятора Goldberg Social Club (%APPDATA%\\Goldberg SocialClub Emu Saves)."
       }
     },
     "guide": {

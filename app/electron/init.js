@@ -2,8 +2,14 @@
 
 const path = require('path');
 const { app } = require('electron');
+const { APP_DATA_DIR_NAME } = require('../util/userDataPath.js');
+const { migrateLegacyUserData } = require('../util/migrateUserData.js');
 app.setName('Achievement Watcher');
-app.setPath('userData', path.join(app.getPath('appData'), app.getName()));
+// 3.x uses its own data directory. The original 1.6.8 app used %APPDATA%\Achievement Watcher and
+// its uninstaller deletes that whole folder — sharing it let an unrelated uninstall wipe every 3.x
+// setting and cache (issue #6). A one-time import below preserves existing data in the new home.
+app.setPath('userData', path.join(app.getPath('appData'), APP_DATA_DIR_NAME));
+migrateLegacyUserData(app.getPath('userData'));
 // Keep GPU acceleration enabled, but avoid Chromium background services AW does not use in tray mode.
 for (const sw of ['disable-extensions', 'disable-component-extensions-with-background-pages', 'disable-default-apps', 'disable-background-networking']) {
   app.commandLine.appendSwitch(sw);
@@ -157,6 +163,21 @@ try {
 if (manifest.config['disable-gpu'] || userDisableGpu || safeMode) app.disableHardwareAcceleration();
 if (manifest.config.appid) app.setAppUserModelId(manifest.config.appid);
 manifest.config.debug = process.env.NODE_ENV === 'development' || process.defaultApp || /[\\/]electron/.test(process.execPath);
+
+// Clicking a Windows toast can only reach an unpackaged desktop app through a registered URI
+// scheme (the alternative, foreground activation, needs a COM activator bound to our AUMID that we
+// do not ship). The scheme is (re)registered under HKCU on every launch so it always points at the
+// current executable — unlike the legacy "ach:" scheme, which 1.6.8 wrote into HKLM and left behind
+// pointing at its own, now uninstalled, exe.
+const TOAST_PROTOCOL = 'achievement-watcher';
+let toastProtocolReady = false;
+if (!manifest.config.debug) {
+  try {
+    toastProtocolReady = app.setAsDefaultProtocolClient(TOAST_PROTOCOL);
+  } catch {
+    /* protocol registration is best-effort: without it toasts still show, they just aren't clickable */
+  }
+}
 
 let puppeteerWindow = {};
 let MainWin = null;
@@ -658,20 +679,23 @@ ipcMain.on('stylize-background-for-appid', async (event, arg) => {
 ipcMain.on('fetch-source-img', async (event, arg) => {
   switch (arg) {
     case 'epic':
-      event.returnValue = path.join(process.env['APPDATA'], 'Achievement Watcher', 'Source', 'epic.svg');
+      event.returnValue = path.join(userData, 'Source', 'epic.svg');
       break;
     case 'gog':
-      event.returnValue = path.join(process.env['APPDATA'], 'Achievement Watcher', 'Source', 'gog.svg');
+      event.returnValue = path.join(userData, 'Source', 'gog.svg');
+      break;
+    case 'Goldberg SocialClub':
+      event.returnValue = path.join(userData, 'Source', 'socialclub.svg');
       break;
     case 'ubisoft':
-      event.returnValue = path.join(process.env['APPDATA'], 'Achievement Watcher', 'Source', 'ubisoft.svg');
+      event.returnValue = path.join(userData, 'Source', 'ubisoft.svg');
       break;
     case 'RPCS3 Emulator':
     case 'ShadPS4 Emulator':
-      event.returnValue = path.join(process.env['APPDATA'], 'Achievement Watcher', 'Source', 'playstation.svg');
+      event.returnValue = path.join(userData, 'Source', 'playstation.svg');
       break;
     case 'Xenia Emulator':
-      event.returnValue = path.join(process.env['APPDATA'], 'Achievement Watcher', 'Source', 'xbox.svg');
+      event.returnValue = path.join(userData, 'Source', 'xbox.svg');
       break;
     case 'Unconfigured':
       // Exe-detected-only entry (no Steam appid match) — use a generic file icon instead of the
@@ -680,7 +704,7 @@ ipcMain.on('fetch-source-img', async (event, arg) => {
       break;
     case 'steam':
     default:
-      event.returnValue = path.join(process.env['APPDATA'], 'Achievement Watcher', 'Source', 'steam.svg');
+      event.returnValue = path.join(userData, 'Source', 'steam.svg');
       break;
   }
 });
@@ -1033,7 +1057,19 @@ function launchWatchdog() {
   // is a lightweight event-driven node process (file watchers + WMI + toasts), so a 128 MB ceiling
   // bounds heap growth and makes the GC reclaim earlier without risking the occasional HTML-parse work.
   const nodeOpts = [process.env.NODE_OPTIONS, '--max-old-space-size=128'].filter(Boolean).join(' ');
-  const env = { ...process.env, ELECTRON_RUN_AS_NODE: '1', NODE_OPTIONS: nodeOpts };
+  const env = {
+    ...process.env,
+    ELECTRON_RUN_AS_NODE: '1',
+    NODE_OPTIONS: nodeOpts,
+    AW_USER_DATA: userData,
+    // The Watchdog's Windows toasts should appear under Achievement Watcher's own identity, not a
+    // borrowed Xbox app id. The app's AUMID is registered by the installer's Start Menu shortcut;
+    // the Watchdog checks it and falls back to the legacy ids when it is not registered (dev runs).
+    AW_AUMID: manifest.config.appid || '',
+    // URI scheme a toast click activates. Empty when registration failed (or in a dev run), in
+    // which case the Watchdog omits the activation instead of emitting one that goes nowhere.
+    AW_TOAST_PROTOCOL: toastProtocolReady ? TOAST_PROTOCOL : '',
+  };
 
   try {
     const child = spawn(process.execPath, ['watchdog.js'], {
@@ -2214,6 +2250,43 @@ function parseArgs(args) {
   }
 }
 
+// A toast click activates the app through the registered URI scheme, so the game arrives as a raw
+// argv entry ("achievement-watcher://game/480/ACH_WIN") rather than as flags. The identifiers are
+// path segments because the URI is embedded verbatim in the toast XML, where a query string's "&"
+// would make the notification malformed (see buildActivation in watchdog/notification/transport).
+function parseToastActivation(argv) {
+  for (const raw of Array.isArray(argv) ? argv : []) {
+    const value = String(raw || '');
+    if (!value.toLowerCase().startsWith(`${TOAST_PROTOCOL}://game/`)) continue;
+    try {
+      const url = new URL(value);
+      const [appid, achievement] = url.pathname.replace(/^\/+/, '').split('/').map((s) => decodeURIComponent(s || ''));
+      if (appid) return { appid, achievement: achievement || '' };
+    } catch {
+      /* malformed URI — ignore it rather than crash the launch path */
+    }
+  }
+  return null;
+}
+
+// Whether the app was already running (second-instance) or cold-started from the notification, wait
+// for the main window and ask the renderer to open the game page.
+function openGameFromLaunchArgs(args) {
+  if (!args || !args.appid) return;
+  const tryOpen = (attempt = 0) => {
+    if (MainWin && !MainWin.isDestroyed()) {
+      const openGame = () => {
+        MainWin.webContents.send('open-game', { appid: String(args.appid), achievement: String(args.achievement || '') });
+      };
+      if (MainWin.webContents.isLoading()) MainWin.webContents.once('did-finish-load', openGame);
+      else setTimeout(openGame, 300);
+      return;
+    }
+    if (attempt < 20) setTimeout(() => tryOpen(attempt + 1), 250); // window is still being created
+  };
+  tryOpen();
+}
+
 // --- Overlay notification (optional transport) — Wave 3 ----------------------
 // Spawns a frameless, transparent, click-through window that renders a notification
 // using a preset (preset = index.html + style.css, copied from the reference project).
@@ -3093,7 +3166,10 @@ try {
         }
       }, 15000);
       if (safeMode) startupArgs.hidden = false;
+      const startupToast = parseToastActivation(process.argv);
+      if (startupToast) startupArgs.hidden = false; // clicking a toast must surface the window
       parseArgs(startupArgs); // opens the window unless launched with --hidden
+      openGameFromLaunchArgs(startupToast || startupArgs); // toast activation on a cold start (issue #8)
     })
     .on('window-all-closed', function () {
       // Resident tray daemon: do NOT quit when the window closes — the tray + background monitor stay
@@ -3112,6 +3188,10 @@ try {
       const args = minimist(argv.slice(1));
       if ((args['wintype'] || 'main') === 'main') createMainWindow();
       else parseArgs(args);
+
+      // A toast click re-launches the exe with the achievement-watcher:// URI: surface the window
+      // and open the game page even when a first instance was already running.
+      openGameFromLaunchArgs(parseToastActivation(argv) || args);
     })
     .on('before-quit', function () {
       // Resident tray daemon: the monitor is our supervised child, so terminate it on a real quit

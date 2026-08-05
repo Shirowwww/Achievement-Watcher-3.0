@@ -577,6 +577,10 @@
       "importCache": {
         "name": "Importovať vyrovnávaciu pamäť upozornení",
         "description": "Importovať vyrovnávaciu pamäť Watchdogu ako ďalší zdroj achievementov"
+      },
+      "socialClub": {
+        "name": "Goldberg SocialClub",
+        "description": "Sledovať úspechy z emulátora Goldberg Social Club (%APPDATA%\\Goldberg SocialClub Emu Saves)."
       }
     },
     "guide": {

@@ -26,8 +26,9 @@ for (const signal of ['SIGTERM', 'SIGINT']) {
 }
 
 const debug = require('./util/log.js');
-const instance = new (require('single-instance'))('Achievement Watchdog');
-const os = require('os');
+// 3.x gets its own mutex: the legacy 1.6.8 watchdog used the same name, so running both apps at
+// once would have made one silently refuse to start (issue #6 isolation).
+const instance = new (require('single-instance'))('Achievement Watchdog 3.0');
 const { spawn, execFile } = require('child_process');
 const path = require('path');
 const watch = require('node-watch');
@@ -64,11 +65,13 @@ const GlobalHotkey = require('./util/globalHotkey.js');
 const { createOverlayControllerService } = require('./console/controller/overlay-controller-service.js');
 const humanizeDuration = require('humanize-duration');
 const { resolvePowerShell } = require('./util/powershell.js');
-const startApps = require('./util/startApps.js');
+const toastIdentity = require('./util/toastIdentity.js');
+const { userDataDir } = require('./util/userData.js');
+const { findIndexedSocialClubGame } = require('./util/socialClub.js');
 
 const cfg_file = {
-  option: path.join(process.env['APPDATA'], 'Achievement Watcher/cfg', 'options.ini'),
-  userDir: path.join(process.env['APPDATA'], 'Achievement Watcher/cfg', 'userdir.db'),
+  option: path.join(userDataDir(), 'cfg', 'options.ini'),
+  userDir: path.join(userDataDir(), 'cfg', 'userdir.db'),
 };
 
 const appRoot = path.join(__dirname, '../');
@@ -181,7 +184,7 @@ function readProgressSchemaFile(file) {
 }
 
 function findGeneratedProgressSchema(appID) {
-  const root = path.join(process.env['APPDATA'] || '', 'Achievement Watcher', 'Cache', 'gse_emu_config');
+  const root = path.join(userDataDir(), 'Cache', 'gse_emu_config');
   try {
     for (const tag of fs.readdirSync(root, { withFileTypes: true })) {
       if (!tag.isDirectory()) continue;
@@ -202,7 +205,7 @@ function findLocalProgressSchema(appID, game) {
   const candidates = [];
   if (game && game.steamSettings) candidates.push(path.join(game.steamSettings, 'achievements.json'));
   if (game && game.gameDir) candidates.push(path.join(game.gameDir, 'steam_settings', 'achievements.json'));
-  candidates.push(path.join(process.env['APPDATA'] || '', 'Achievement Watcher', 'Cache', 'gse_emu_config', 'latest', 'generate_emu_config', '_OUTPUT', String(appID), 'steam_settings', 'achievements.json'));
+  candidates.push(path.join(userDataDir(), 'Cache', 'gse_emu_config', 'latest', 'generate_emu_config', '_OUTPUT', String(appID), 'steam_settings', 'achievements.json'));
 
   for (const file of candidates) {
     const schema = readProgressSchemaFile(file);
@@ -219,8 +222,8 @@ function findLocalProgressSchema(appID, game) {
 
 function findIndexedGame(appID) {
   const files = [
-    path.join(process.env['APPDATA'] || '', 'Achievement Watcher', 'steam_cache', 'schema', 'gameIndex.json'),
-    path.join(process.env['APPDATA'] || '', 'Achievement Watcher', 'cfg', 'gameIndex.json'),
+    path.join(userDataDir(), 'steam_cache', 'schema', 'gameIndex.json'),
+    path.join(userDataDir(), 'cfg', 'gameIndex.json'),
   ];
   let indexed;
   for (const file of files) {
@@ -243,6 +246,7 @@ function mergeIndexedGameMetadata(game, appID) {
   if (!game.icon && indexed.icon) game.icon = indexed.icon;
   if (!game.name && indexed.name) game.name = indexed.name;
   if (!game.source && indexed.source) game.source = indexed.source;
+  if (!game.steamappid && indexed.steamappid) game.steamappid = indexed.steamappid;
   return game;
 }
 
@@ -383,13 +387,25 @@ function SpawnOverlayNotification(args) {
 }
 module.exports = { SpawnOverlayNotification };
 
+// Pick the AppUserModelID every toast is posted under (see util/toastIdentity.js for why the id has
+// to be checked for existence rather than for format), then apply what that choice implies.
+async function applyToastIdentity(self) {
+  const chosen = await toastIdentity.resolveToastIdentity(self.options, { log: debug });
+  self.toastID = chosen.id;
+
+  if (toastIdentity.requiresLocalImages(self.toastID) && !self.options.notification_advanced.iconPrefetch) {
+    self.options.notification_advanced.iconPrefetch = true;
+    debug.warn('[Toast] desktop app id: forcing iconPrefetch so toasts keep their achievement icon');
+  }
+}
+
 var app = {
   isRecording: false,
   cache: [],
   options: {},
   watcher: [],
   tick: 0,
-  toastID: 'Microsoft.XboxApp_8wekyb3d8bbwe!Microsoft.XboxApp',
+  toastID: toastIdentity.DEFAULT_TOAST_AUMID,
   start: async function () {
     try {
       let self = this;
@@ -444,36 +460,7 @@ var app = {
         });
       }
 
-      startApps
-        .has({ id: 'GamingOverlay' })
-        .then((hasXboxOverlay) => {
-          let win_ver = os.release().split('.');
-
-          if (self.options.notification_advanced.appID && self.options.notification_advanced.appID !== '') {
-            self.toastID = self.options.notification_advanced.appID;
-          } else if (win_ver[0] == '6' && (win_ver[1] == '3' || win_ver[1] == '2')) {
-            self.toastID = 'microsoft.XboxLIVEGames_8wekyb3d8bbwe!Microsoft.XboxLIVEGames';
-          } else if (hasXboxOverlay === true) {
-            self.toastID = 'Microsoft.XboxGamingOverlay_8wekyb3d8bbwe!App';
-          }
-
-          debug.log(`[Toast] will use appid: "${self.toastID}"`);
-        })
-        .then(() => {
-          return startApps.isValidAUMID(self.toastID);
-        })
-        .then((res) => {
-          if (!res) {
-            debug.warn('[Toast] which is not a valid AUMID !');
-            if (!self.options.notification_advanced.iconPrefetch) {
-              self.options.notification_advanced.iconPrefetch = true;
-              debug.warn('[Toast] Forcing iconPrefetch to true so you will have achievement icon');
-            }
-          } else {
-            debug.log('[Toast] which is a valid AUMID');
-          }
-        })
-        .catch(() => {});
+      applyToastIdentity(self).catch((err) => debug.error(`[Toast] identity resolution failed: ${err}`));
 
       try {
         self.watcher[0] = watch(cfg_file.option, function (evt, name) {
@@ -559,7 +546,7 @@ var app = {
         if (currentTime - fileLastModified > 1000) return;
 
         let filePath = path.parse(name);
-        if (!options.file.some((file) => file == filePath.base)) return;
+        if (options.file && !options.file.some((file) => file == filePath.base)) return;
 
         debug.log('achievement file change detected');
 
@@ -567,12 +554,29 @@ var app = {
         self.tick = moment().valueOf();
 
         let appID;
-        try {
-          appID = options.appid
-            ? options.appid
-            : filePath.dir.replace(/(\\stats$)|(\\SteamEmu$)|(\\SteamEmu\\UserStats$)/gi, '').match(/([0-9]+$)/g)[0];
-        } catch (err) {
-          throw "Unable to find game's appID";
+        if (options.socialClub) {
+          // Goldberg SocialClub folders are named after the GAME, not an AppID, so the only link
+          // back to a library entry is the game index the app writes. That entry also carries the
+          // Steam release the title resolved to, which is what actually has a schema and store art
+          // — the namespaced "socialclub-<slug>" id would fail every Steam lookup (issue #9).
+          const indexed = findIndexedSocialClubGame(dir, filePath.dir);
+          if (!indexed) {
+            throw 'Unable to find Goldberg SocialClub game for this save folder — run a library refresh so Achievement Watcher can map it';
+          }
+          const steamAppId = String(indexed.steamappid || '').trim();
+          if (!/^\d+$/.test(steamAppId)) {
+            throw `Goldberg SocialClub game "${indexed.name}" has no resolved Steam release — cannot load its achievement schema`;
+          }
+          debug.log(`[socialclub] save folder -> ${indexed.name} (${indexed.appid} -> Steam ${steamAppId})`);
+          appID = steamAppId;
+        } else {
+          try {
+            appID = options.appid
+              ? options.appid
+              : filePath.dir.replace(/(\\stats$)|(\\SteamEmu$)|(\\SteamEmu\\UserStats$)/gi, '').match(/([0-9]+$)/g)[0];
+          } catch (err) {
+            throw "Unable to find game's appID";
+          }
         }
 
         if (dir.includes('NemirtingasGalaxyEmu')) {
@@ -772,7 +776,8 @@ var app = {
                       const rareFr = (self.options.achievement.lang || '').toLowerCase().startsWith('fr');
                       const rounded = Math.round(rarePct * 10) / 10;
                       const isRare = Number.isFinite(rounded) && rounded >= 0 && rounded <= 10;
-                      const attribution = isRare ? (rareFr ? `Rare · ${rounded} %` : `Rare · ${rounded}%`) : rareFr ? 'Succès' : 'Achievement';
+                      const rarityLabel = rareFr ? `Rare ${rounded} %` : `Rare ${rounded}%`;
+                      const attribution = isRare ? `${game.name} · ${rarityLabel}` : game.name;
 
                       await notify(
                         {
@@ -784,8 +789,8 @@ var app = {
                           achievementDescription: ach.description,
                           rarityPercent: isRare ? rounded : null,
                           icon: ach.icon,
-                          gameIcon: steamLibraryImage(game.appid),
-                          image: steamHeaderImage(game.appid),
+                          gameIcon: steamLibraryImage(game.steamappid || game.appid),
+                          image: steamHeaderImage(game.steamappid || game.appid),
                           time: achievements[i].UnlockTime,
                           delay: j,
                         },
@@ -803,7 +808,7 @@ var app = {
                             balloonFallback: self.options.notification_transport.balloon,
                             customAudio: self.options.notification_toast.customToastAudio,
                             volume: notificationVolumePercent(self.options),
-                            imageIntegration: '1',
+                            imageIntegration: '0',
                             group: self.options.notification_toast.groupToast,
                             cropIcon: true,
                             attribution: attribution,
@@ -835,8 +840,8 @@ var app = {
                           achievementDisplayName: ach.displayName,
                           achievementDescription: ach.description,
                           icon: ach.icongray,
-                          gameIcon: steamLibraryImage(game.appid),
-                          image: steamHeaderImage(game.appid),
+                          gameIcon: steamLibraryImage(game.steamappid || game.appid),
+                          image: steamHeaderImage(game.steamappid || game.appid),
                           progress: {
                             // Float stat counters (e.g. distance) can carry long tails
                             // (3.3333333…); cap at 2 decimals for every transport at the source.
@@ -857,9 +862,10 @@ var app = {
                             winrt: self.options.notification_transport.winRT,
                             balloonFallback: self.options.notification_transport.balloon,
                             customAudio: '0',
-                            imageIntegration: '1',
+                            imageIntegration: '0',
                             group: self.options.notification_toast.groupToast,
                             cropIcon: true,
+                            attribution: game.name,
                           },
                           prefetch: self.options.notification_advanced.iconPrefetch,
                           rumble: false,
@@ -907,8 +913,8 @@ var app = {
                   achievementDisplayName: game.name,
                   achievementDescription: platinumDesc,
                   icon: platinumIcon || undefined,
-                  gameIcon: steamLibraryImage(game.appid),
-                  image: steamHeaderImage(game.appid),
+                  gameIcon: steamLibraryImage(game.steamappid || game.appid),
+                  image: steamHeaderImage(game.steamappid || game.appid),
                   time: moment().unix(),
                 },
                 {
@@ -928,7 +934,7 @@ var app = {
                     imageIntegration: '1',
                     group: self.options.notification_toast.groupToast,
                     cropIcon: true,
-                    attribution: platinumLabel,
+                    attribution: `${game.name} · ${platinumLabel}`,
                   },
                   prefetch: self.options.notification_advanced.iconPrefetch,
                   rumble: self.options.notification.rumble,
@@ -958,7 +964,19 @@ var app = {
         game = search;
         debug.log('from memory cache');
       } else {
-        game = await steam.loadSteamData(appID, self.options.achievement.lang, self.options.steam.apiKey);
+        // Namespaced appids (e.g. Goldberg SocialClub's "socialclub-<slug>") can't be looked up on
+        // Steam directly. The game index carries the resolved Steam release; load that schema and
+        // re-key the game to its namespaced appid so track/dedup stay consistent with the library.
+        const indexed = findIndexedGame(appID);
+        const steamAppId =
+          !/^[0-9]+$/.test(String(appID)) && indexed && /^[0-9]+$/.test(String(indexed.steamappid || ''))
+            ? String(indexed.steamappid)
+            : String(appID);
+        game = await steam.loadSteamData(steamAppId, self.options.achievement.lang, self.options.steam.apiKey);
+        if (steamAppId !== String(appID)) {
+          game.appid = String(appID);
+          if (indexed && indexed.steamappid) game.steamappid = indexed.steamappid;
+        }
         self.cache.push(game);
         debug.log('from file cache or remote');
       }
@@ -970,7 +988,7 @@ var app = {
   },
   steamAppIdForGogId: async function (appID) {
     try {
-      const cacheFile = path.join(process.env['APPDATA'], 'Achievement Watcher', 'steam_cache', 'gog.db');
+      const cacheFile = path.join(userDataDir(), 'steam_cache', 'gog.db');
       let cache = [];
 
       if (fs.existsSync(cacheFile)) {
@@ -990,7 +1008,7 @@ var app = {
   },
   steamAppIdForEpicId: async function (appID) {
     try {
-      const cacheFile = path.join(process.env['APPDATA'], 'Achievement Watcher', 'steam_cache', 'epic.db');
+      const cacheFile = path.join(userDataDir(), 'steam_cache', 'epic.db');
       let cache = [];
 
       if (fs.existsSync(cacheFile)) {
@@ -1071,8 +1089,8 @@ var app = {
                 achievementDisplayName: game.name || (fr ? 'Temps de jeu' : 'Playtime'),
                 achievementDescription: description,
                 icon: `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${game.appid}/${game.icon}.jpg`,
-                gameIcon: steamLibraryImage(game.appid),
-                image: steamHeaderImage(game.appid),
+                gameIcon: steamLibraryImage(game.steamappid || game.appid),
+                image: steamHeaderImage(game.steamappid || game.appid),
                 silent: true, // playtime overlay notifications never play a sound
               },
               {

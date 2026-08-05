@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const request = require('request-zero');
 
-const CACHE_DIR = path.join(process.env['APPDATA'] || '', 'Achievement Watcher', 'steam_cache', 'rarity');
+const CACHE_DIR = path.join(require('./userData.js').userDataDir(), 'steam_cache', 'rarity');
 const DEFAULT_TTL_MS = 6 * 60 * 60 * 1000; // matches app/util/rarity.js
 const SOURCE = 'steam-global-achievement-percentages';
 

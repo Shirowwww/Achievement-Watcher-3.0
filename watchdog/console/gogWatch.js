@@ -19,8 +19,8 @@ const moment = require('moment');
 const debug = require('../util/log.js');
 const { notificationVolumePercent } = require('../util/notificationVolume.js');
 
-const APPDATA = process.env['APPDATA'] || '';
-const cacheDir = path.join(APPDATA, 'Achievement Watcher/steam_cache/console');
+const { userDataDir } = require('../util/userData.js');
+const cacheDir = path.join(userDataDir(), 'steam_cache/console');
 const STORAGE_DB = path.join(process.env['ProgramData'] || 'C:\\ProgramData', 'GOG.com', 'Galaxy', 'storage', 'galaxy-2.0.db');
 const APPLICATIONS_ROOT = path.join(process.env['LOCALAPPDATA'] || '', 'GOG.com', 'Galaxy', 'Applications');
 

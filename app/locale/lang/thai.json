@@ -577,6 +577,10 @@
       "importCache": {
         "name": "นำเข้าแคชการแจ้งเตือน",
         "description": "นำเข้าแคชของ Watchdog เป็นอีกแหล่งของความสำเร็จ"
+      },
+      "socialClub": {
+        "name": "Goldberg SocialClub",
+        "description": "ติดตามความสำเร็จจาก Goldberg Social Club Emulator (%APPDATA%\\Goldberg SocialClub Emu Saves)"
       }
     },
     "guide": {
