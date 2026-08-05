@@ -131,7 +131,8 @@
       },
       "hotkey": {
         "name": "Scorciatoia overlay di gioco",
-        "description": "Premi questa scorciatoia per mostrare l'overlay di gioco degli obiettivi durante il gioco."
+        "description": "Premi questa scorciatoia mentre un gioco è in esecuzione per mostrare l'overlay di gioco degli obiettivi. Clicca sulla matita per modificarla, o sull'occhio per visualizzare in anteprima l'overlay senza avviare un gioco.",
+        "preview": "Anteprima dell'overlay"
       },
       "scale": "Dimensione notifica",
       "duration": "Durata animazione"
@@ -699,6 +700,8 @@
     "watchCopy": "Il Watchdog in background rileva l’eseguibile del gioco all’avvio, registra il tempo di gioco e monitora i file degli obiettivi per mostrare gli sblocchi mentre giochi.",
     "fixTitle": "Ripara",
     "fixCopy": "Per i giochi Steam emulati, la riparazione dal menu contestuale (o quella automatica) installa GBE Fork e scrive lo schema achievements.json, i dati DLC e gli strumenti di avvio nella cartella steam_settings del gioco.",
+    "overlayTitle": "Overlay di gioco",
+    "overlayCopy": "Un piccolo pannello degli obiettivi che puoi richiamare sopra il gioco con una scorciatoia (predefinita Ctrl+Shift+O). Modificabile in qualsiasi momento in Impostazioni > Generale, accanto al campo della scorciatoia.",
     "profileTitle": "Profilo",
     "profileCopy": "Scegli il nome mostrato nell'intestazione e, facoltativamente, imposta un avatar locale.",
     "username": "Nome da visualizzare",

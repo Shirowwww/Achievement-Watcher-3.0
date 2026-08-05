@@ -131,7 +131,8 @@
       },
       "hotkey": {
         "name": "In-Game-Overlay-Tastenkürzel",
-        "description": "Drücke dieses Tastenkürzel, um das In-Game-Overlay der Erfolge anzuzeigen."
+        "description": "Drücke dieses Tastenkürzel, während ein Spiel läuft, um das In-Game-Overlay der Erfolge anzuzeigen. Klicke auf den Stift, um es zu ändern, oder auf das Auge, um das Overlay ohne laufendes Spiel als Vorschau anzuzeigen.",
+        "preview": "Overlay-Vorschau anzeigen"
       },
       "scale": "Benachrichtigungsgröße",
       "duration": "Animationsdauer"
@@ -699,6 +700,8 @@
     "watchCopy": "Der Watchdog erkennt beim Start eines Spiels dessen ausführbare Datei, erfasst die Spielzeit und überwacht Erfolgsdateien, damit Freischaltungen während des Spielens erscheinen.",
     "fixTitle": "Reparieren",
     "fixCopy": "Bei emulierten Steam-Spielen installiert die Reparatur im Kontextmenü (oder die automatische Reparatur) GBE Fork und schreibt achievements.json, DLC-Daten und Starthilfen in den steam_settings-Ordner des Spiels.",
+    "overlayTitle": "In-Game-Overlay",
+    "overlayCopy": "Ein kleines Erfolgs-Panel, das du mit einem Tastenkürzel (Standard Ctrl+Shift+O) über dem Spiel einblenden kannst. Jederzeit änderbar unter Einstellungen > Allgemein, neben dem Tastenkürzel-Feld.",
     "profileTitle": "Profil",
     "profileCopy": "Wählen Sie den in der Kopfzeile angezeigten Namen und legen Sie optional einen lokalen Avatar fest.",
     "username": "Anzeigename",

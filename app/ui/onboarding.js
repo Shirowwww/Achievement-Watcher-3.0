@@ -148,6 +148,8 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     $('#onboard-card-watch-copy').text(t.watchCopy);
     $('#onboard-card-fix-title').text(t.fixTitle);
     $('#onboard-card-fix-copy').text(t.fixCopy);
+    $('#onboard-card-overlay-title').text(t.overlayTitle);
+    $('#onboard-card-overlay-copy').text(t.overlayCopy);
     $('#onboard-profile-title').text(t.profileTitle);
     $('#onboard-profile-copy').text(t.profileCopy);
     $('#onboard-username-label').text(t.username);

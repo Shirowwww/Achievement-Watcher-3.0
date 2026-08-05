@@ -131,7 +131,8 @@
       },
       "hotkey": {
         "name": "Klávesová skratka overlayu v hre",
-        "description": "Stlačte túto skratku na zobrazenie overlayu achievementov v hre."
+        "description": "Stlačte túto skratku, keď je hra spustená, na zobrazenie overlayu achievementov v hre. Kliknutím na ceruzku ju zmeníte, kliknutím na oko zobrazíte náhľad overlayu bez spustenia hry.",
+        "preview": "Náhľad overlayu"
       },
       "scale": "Veľkosť upozornenia",
       "duration": "Dĺžka animácie"
@@ -699,6 +700,8 @@
     "watchCopy": "Watchdog na pozadí pri spustení hry rozpozná jej spustiteľný súbor, sleduje herný čas a súbory úspechov, aby počas hrania zobrazoval odomknutia.",
     "fixTitle": "Opraviť",
     "fixCopy": "Pri emulovaných hrách Steam oprava z kontextovej ponuky (alebo automatická oprava) nainštaluje GBE Fork a zapíše schému achievements.json, údaje DLC a pomocné súbory na spustenie do priečinka steam_settings hry.",
+    "overlayTitle": "Overlay v hre",
+    "overlayCopy": "Malý panel achievementov, ktorý môžete vyvolať nad hrou pomocou skratky (predvolene Ctrl+Shift+O). Kedykoľvek ju môžete zmeniť v Nastavenia > Všeobecné, vedľa poľa skratky.",
     "profileTitle": "Profil",
     "profileCopy": "Vyberte meno zobrazené v hlavičke a voliteľne nastavte miestneho avatara.",
     "username": "Zobrazovaný názov",

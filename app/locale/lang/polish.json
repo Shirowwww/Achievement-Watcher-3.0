@@ -131,7 +131,8 @@
       },
       "hotkey": {
         "name": "Skrót nakładki w grze",
-        "description": "Naciśnij ten skrót, aby pokazać nakładkę osiągnięć podczas gry."
+        "description": "Naciśnij ten skrót, gdy gra jest uruchomiona, aby pokazać nakładkę osiągnięć w grze. Kliknij ołówek, aby go zmienić, lub oko, aby zobaczyć podgląd nakładki bez uruchamiania gry.",
+        "preview": "Podgląd nakładki"
       },
       "scale": "Rozmiar powiadomienia",
       "duration": "Czas trwania animacji"
@@ -699,6 +700,8 @@
     "watchCopy": "Działający w tle Watchdog wykrywa plik wykonywalny gry podczas uruchamiania, śledzi czas gry i obserwuje pliki osiągnięć, aby pokazywać odblokowania podczas grania.",
     "fixTitle": "Napraw",
     "fixCopy": "W emulowanych grach Steam naprawa z menu kontekstowego (lub naprawa automatyczna) instaluje GBE Fork i zapisuje schemat achievements.json, dane DLC oraz pliki pomocnicze uruchamiania w folderze steam_settings gry.",
+    "overlayTitle": "Nakładka w grze",
+    "overlayCopy": "Mały panel osiągnięć, który możesz wywołać nad grą za pomocą skrótu (domyślnie Ctrl+Shift+O). Możesz go zmienić w dowolnym momencie w Ustawienia > Ogólne, obok pola skrótu.",
     "profileTitle": "Profil",
     "profileCopy": "Wybierz nazwę wyświetlaną w nagłówku i opcjonalnie ustaw lokalnego awatara.",
     "username": "Nazwa wyświetlana",

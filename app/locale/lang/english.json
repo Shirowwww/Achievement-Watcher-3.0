@@ -131,7 +131,8 @@
       },
       "hotkey": {
         "name": "In-game overlay hotkey",
-        "description": "Press this hotkey to show the in-game achievements overlay."
+        "description": "Press this hotkey while a game is running to show the in-game achievements overlay. Click the pencil to change it, or the eye to preview the overlay without launching a game.",
+        "preview": "Preview the overlay"
       },
       "scale": "Notification Scale",
       "duration": "Animation duration"
@@ -699,6 +700,8 @@
     "watchCopy": "The background Watchdog detects the game's executable when it launches, tracks playtime, and watches achievement files so unlocks pop up while you play.",
     "fixTitle": "Repair",
     "fixCopy": "For emulated Steam games, the right-click fix (or the auto-fix) installs GBE Fork and writes the achievements.json schema, DLC data and launch helpers into the game's steam_settings folder.",
+    "overlayTitle": "In-game overlay",
+    "overlayCopy": "A small achievements panel you can bring up over the game with a hotkey (default Ctrl+Shift+O). Change it any time in Settings > General, next to the hotkey field.",
     "profileTitle": "Profile",
     "profileCopy": "Pick the name shown in the header and optionally set a local avatar.",
     "username": "Display name",

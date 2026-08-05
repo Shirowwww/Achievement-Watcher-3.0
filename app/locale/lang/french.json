@@ -311,7 +311,8 @@
       "duration": "Durée de l'animation",
       "hotkey": {
         "name": "Raccourci de l'overlay en jeu",
-        "description": "Appuyez sur ce raccourci pour afficher l'overlay en jeu des succès."
+        "description": "Appuyez sur ce raccourci pendant qu'un jeu est en cours pour afficher l'overlay en jeu des succès. Cliquez sur le crayon pour le modifier, ou sur l'œil pour prévisualiser l'overlay sans lancer de jeu.",
+        "preview": "Prévisualiser l'overlay"
       }
     },
     "notification": {
@@ -699,6 +700,8 @@
     "watchCopy": "Le Watchdog en arrière-plan détecte l'exécutable du jeu à son lancement, suit le temps de jeu et surveille les fichiers de succès pour afficher les déblocages pendant que tu joues.",
     "fixTitle": "Réparer",
     "fixCopy": "Pour les jeux Steam émulés, le fix du clic droit (ou l'auto-fix) installe GBE Fork et écrit le schéma achievements.json, les DLC et les fichiers de lancement dans le steam_settings du jeu.",
+    "overlayTitle": "Overlay en jeu",
+    "overlayCopy": "Un petit panneau de succès que vous pouvez afficher par-dessus le jeu avec un raccourci (Ctrl+Shift+O par défaut). Modifiable à tout moment dans Paramètres > Général, à côté du champ du raccourci.",
     "profileTitle": "Profil",
     "profileCopy": "Choisissez le nom affiché dans l’en-tête et définissez éventuellement un avatar local.",
     "username": "Nom d'affichage",

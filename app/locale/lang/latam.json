@@ -131,7 +131,8 @@
       },
       "hotkey": {
         "name": "Atajo del overlay en el juego",
-        "description": "Presiona este atajo para mostrar el overlay de logros en el juego."
+        "description": "Presiona este atajo mientras un juego está en ejecución para mostrar el overlay de logros en el juego. Haz clic en el lápiz para cambiarlo, o en el ojo para previsualizar el overlay sin iniciar un juego.",
+        "preview": "Previsualizar el overlay"
       },
       "scale": "Tamaño de la notificación",
       "duration": "Duración de la animación"
@@ -699,6 +700,8 @@
     "watchCopy": "El Watchdog en segundo plano detecta el ejecutable del juego al iniciarse, registra el tiempo de juego y supervisa los archivos de logros para mostrar los desbloqueos mientras juegas.",
     "fixTitle": "Reparar",
     "fixCopy": "En juegos de Steam emulados, la reparación del menú contextual (o la reparación automática) instala GBE Fork y escribe el esquema achievements.json, los datos de DLC y los auxiliares de inicio en la carpeta steam_settings del juego.",
+    "overlayTitle": "Overlay en el juego",
+    "overlayCopy": "Un pequeño panel de logros que puedes mostrar sobre el juego con un atajo (Ctrl+Shift+O por defecto). Puedes cambiarlo cuando quieras en Configuración > General, junto al campo del atajo.",
     "profileTitle": "Perfil",
     "profileCopy": "Elija el nombre que se muestra en el encabezado y, opcionalmente, establezca un avatar local.",
     "username": "Nombre para mostrar",

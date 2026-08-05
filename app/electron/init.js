@@ -2611,6 +2611,19 @@ ipcMain.on('spawn-overlay-notification', (event, data) => {
   enqueueNotification(data || {});
 });
 
+// Settings > Notifications "preview" button next to the hotkey field: opens the real in-game overlay
+// with a real game's achievement data so the look (and the configured hotkey binding) can be checked
+// without a game actually running. Toggles like the hotkey itself — a second click while it is open
+// closes it rather than stacking a duplicate window.
+ipcMain.on('overlay-preview', (event, appid) => {
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.close();
+    return;
+  }
+  if (!appid) return;
+  createOverlayWindow({ appid: String(appid), source: 'steam', action: 'open' });
+});
+
 function normalizeNotificationProgress(args) {
   const max = Number(args.progressMax);
   if (!Number.isFinite(max) || max <= 1) return null;

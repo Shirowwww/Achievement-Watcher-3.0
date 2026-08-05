@@ -131,7 +131,8 @@
       },
       "hotkey": {
         "name": "Atalho do overlay no jogo",
-        "description": "Prima este atalho para mostrar o overlay de proezas no jogo."
+        "description": "Prima este atalho enquanto um jogo estiver em execução para mostrar o overlay de proezas no jogo. Clique no lápis para o alterar, ou no olho para pré-visualizar o overlay sem iniciar um jogo.",
+        "preview": "Pré-visualizar o overlay"
       },
       "scale": "Tamanho da notificação",
       "duration": "Duração da animação"
@@ -699,6 +700,8 @@
     "watchCopy": "O Watchdog em segundo plano deteta o executável do jogo quando este inicia, regista o tempo de jogo e monitoriza os ficheiros de conquistas para mostrar os desbloqueios enquanto joga.",
     "fixTitle": "Reparar",
     "fixCopy": "Nos jogos Steam emulados, a reparação do menu de contexto (ou a reparação automática) instala o GBE Fork e grava o esquema achievements.json, os dados de DLC e os auxiliares de arranque na pasta steam_settings do jogo.",
+    "overlayTitle": "Overlay no jogo",
+    "overlayCopy": "Um pequeno painel de proezas que pode chamar sobre o jogo com um atalho (predefinição Ctrl+Shift+O). Pode alterá-lo a qualquer momento em Definições > Geral, junto ao campo do atalho.",
     "profileTitle": "Perfil",
     "profileCopy": "Escolha o nome mostrado no cabeçalho e, opcionalmente, defina um avatar local.",
     "username": "Nome de exibição",

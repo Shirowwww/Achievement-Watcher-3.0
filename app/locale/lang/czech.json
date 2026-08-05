@@ -131,7 +131,8 @@
       },
       "hotkey": {
         "name": "Klávesová zkratka overlaye ve hře",
-        "description": "Stiskněte tuto zkratku pro zobrazení overlaye achievementů ve hře."
+        "description": "Stiskněte tuto zkratku, když běží hra, pro zobrazení overlaye achievementů ve hře. Kliknutím na tužku ji změníte, kliknutím na oko zobrazíte náhled overlaye bez spuštění hry.",
+        "preview": "Náhled overlaye"
       },
       "scale": "Velikost oznámení",
       "duration": "Délka animace"
@@ -699,6 +700,8 @@
     "watchCopy": "Watchdog na pozadí při spuštění hry rozpozná její spustitelný soubor, sleduje herní čas a soubory úspěchů, aby během hraní zobrazoval odemčení.",
     "fixTitle": "Opravit",
     "fixCopy": "U emulovaných her Steam oprava z kontextové nabídky (nebo automatická oprava) nainstaluje GBE Fork a zapíše schéma achievements.json, data DLC a pomocné soubory pro spuštění do složky steam_settings hry.",
+    "overlayTitle": "Overlay ve hře",
+    "overlayCopy": "Malý panel achievementů, který můžete zobrazit nad hrou pomocí zkratky (výchozí Ctrl+Shift+O). Kdykoli ji můžete změnit v Nastavení > Obecné, vedle pole zkratky.",
     "profileTitle": "Profil",
     "profileCopy": "Vyberte jméno zobrazené v záhlaví a volitelně nastavte místního avatara.",
     "username": "Zobrazovaný název",

@@ -131,7 +131,8 @@
       },
       "hotkey": {
         "name": "Oyun içi yer paylaşımı kısayolu",
-        "description": "Oyun içindeyken başarım oyun içi yer paylaşımını göstermek için bu kısayola bas."
+        "description": "Bir oyun çalışırken bu kısayola basarak oyun içi başarım overlay'ini gösterebilirsin. Değiştirmek için kalem simgesine, oyun başlatmadan overlay'i önizlemek için göz simgesine tıkla.",
+        "preview": "Overlay'i önizle"
       },
       "scale": "Bildirim boyutu",
       "duration": "Animasyon süresi"
@@ -699,6 +700,8 @@
     "watchCopy": "Arka plandaki Watchdog oyun başlatıldığında çalıştırılabilir dosyayı algılar, oynama süresini kaydeder ve oyun sırasında kilit açma bildirimlerini göstermek için başarım dosyalarını izler.",
     "fixTitle": "Onarma",
     "fixCopy": "Emüle edilen Steam oyunlarında sağ tık onarımı (veya otomatik onarım) GBE Fork’u kurar ve achievements.json şemasını, DLC verilerini ve başlatma yardımcılarını oyunun steam_settings klasörüne yazar.",
+    "overlayTitle": "Oyun içi overlay",
+    "overlayCopy": "Bir kısayolla (varsayılan Ctrl+Shift+O) oyunun üzerinde açabileceğin küçük bir başarım paneli. İstediğin zaman Ayarlar > Genel bölümünde, kısayol alanının yanından değiştirebilirsin.",
     "profileTitle": "Profil",
     "profileCopy": "Başlıkta gösterilen adı seçin ve isteğe bağlı olarak yerel bir avatar ayarlayın.",
     "username": "Ekran adı",

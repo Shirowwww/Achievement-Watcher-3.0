@@ -383,6 +383,18 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#hotkey').text('...');
     });
 
+    // Opens the real in-game overlay on top of the desktop, using whichever game is currently open
+    // in the achievement detail view (or the first game in the library otherwise), so the hotkey and
+    // the overlay's look can be checked without having a game actually running. Clicking again closes
+    // it (same toggle the main process applies to the in-game hotkey).
+    $('#btn-hotkey-preview').click(function () {
+      const openAppid = $('#achievement .wrapper > .header').attr('data-appid');
+      const fallbackAppid = $('#game-list .game-box[data-appid]').first().data('appid');
+      const previewAppid = openAppid || fallbackAppid;
+      if (!previewAppid) return;
+      ipcRenderer.send('overlay-preview', String(previewAppid));
+    });
+
     // --- Debug tab: diagnostics shortcuts ---
     $('#open-logs').click(function () {
       try {

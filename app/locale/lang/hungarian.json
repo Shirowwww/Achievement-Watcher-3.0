@@ -131,7 +131,8 @@
       },
       "hotkey": {
         "name": "Játékon belüli overlay gyorsbillentyű",
-        "description": "Nyomd meg ezt a gyorsbillentyűt a teljesítmény-overlay megjelenítéséhez játék közben."
+        "description": "Nyomd meg ezt a gyorsbillentyűt, amíg fut egy játék, hogy megjelenítsd a játékon belüli teljesítmény-overlayt. Kattints a ceruzára a módosításhoz, vagy a szemre az overlay előnézetéhez játék indítása nélkül.",
+        "preview": "Overlay előnézete"
       },
       "scale": "Értesítés mérete",
       "duration": "Animáció időtartama"
@@ -699,6 +700,8 @@
     "watchCopy": "A háttérben futó Watchdog a játék indításakor felismeri a futtatható fájlt, méri a játékidőt és figyeli az eredményfájlokat, hogy játék közben megjelenjenek a feloldások.",
     "fixTitle": "Javítás",
     "fixCopy": "Emulált Steam-játékoknál a jobb kattintásos javítás (vagy az automatikus javítás) telepíti a GBE Forkot, és az achievements.json sémát, a DLC-adatokat és az indítási segédfájlokat a játék steam_settings mappájába írja.",
+    "overlayTitle": "Játékon belüli overlay",
+    "overlayCopy": "Egy kis teljesítmény-panel, amelyet egy gyorsbillentyűvel (alapértelmezett Ctrl+Shift+O) hívhatsz elő a játék fölé. Bármikor módosítható a Beállítások > Általános menüben, a gyorsbillentyű mező mellett.",
     "profileTitle": "Profil",
     "profileCopy": "Válassza ki a fejlécben látható nevet, és opcionálisan állítson be egy helyi avatart.",
     "username": "Megjelenítési név",

@@ -131,7 +131,8 @@
       },
       "hotkey": {
         "name": "游戏内叠加层快捷键",
-        "description": "按下此快捷键可在游戏中显示游戏内成就叠加层。"
+        "description": "在游戏运行时按下此快捷键即可显示游戏内成就叠加层。点击铅笔图标可更改快捷键，点击眼睛图标可在不启动游戏的情况下预览叠加层。",
+        "preview": "预览叠加层"
       },
       "scale": "通知大小",
       "duration": "动画时长"
@@ -699,6 +700,8 @@
     "watchCopy": "后台 Watchdog 会在游戏启动时检测其可执行文件，记录游戏时间并监控成就文件，以便在游玩时显示解锁通知。",
     "fixTitle": "修复",
     "fixCopy": "对于模拟的 Steam 游戏，右键修复（或自动修复）会安装 GBE Fork，并将 achievements.json 架构、DLC 数据和启动辅助文件写入游戏的 steam_settings 文件夹。",
+    "overlayTitle": "游戏内叠加层",
+    "overlayCopy": "一个可以通过快捷键（默认 Ctrl+Shift+O）呼出的小型成就面板，叠加显示在游戏画面上。可随时在 设置 > 常规 中快捷键字段旁边更改。",
     "profileTitle": "轮廓",
     "profileCopy": "选择标题中显示的名称，并可以选择设置本地头像。",
     "username": "显示名称",

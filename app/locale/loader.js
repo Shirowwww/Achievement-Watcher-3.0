@@ -155,6 +155,7 @@ function translateUI(lang, locale, template) {
   selector.find("li:nth-child(6) .right select option[value='false']").text(clear(template.settings.common.disable));
   selector.find('li:nth-child(7) .left span').text(clear(template.settings.overlay.hotkey.name));
   selector.find('li:nth-child(7) .help').text(clear(template.settings.overlay.hotkey.description));
+  selector.find('#btn-hotkey-preview').attr('title', clear(template.settings.overlay.hotkey.preview));
   if (template.settings.general.startup) {
     const startup = $('#option_startWithWindows').closest('li');
     startup.find('.left span').text(clear(template.settings.general.startup.name));

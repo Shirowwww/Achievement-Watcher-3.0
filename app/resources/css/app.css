@@ -2163,7 +2163,8 @@ main {
   min-width: 0;
 }
 
-#btn-hotkey-edit {
+#btn-hotkey-edit,
+#btn-hotkey-preview {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2173,7 +2174,8 @@ main {
   transition: background 0.15s ease, transform 0.1s ease;
 }
 
-#btn-hotkey-edit:hover {
+#btn-hotkey-edit:hover,
+#btn-hotkey-preview:hover {
   background: rgba(255, 255, 255, 0.12);
 }
 
@@ -2480,7 +2482,7 @@ main {
 
 .onboarding-cards {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -3102,7 +3104,8 @@ main {
 
 #dirlist > li .controls ul > li,
 #libdirlist > li .controls ul > li,
-#btn-hotkey-edit {
+#btn-hotkey-edit,
+#btn-hotkey-preview {
   display: inline-block;
   padding: 5px 10px;
   margin: auto 0;
@@ -3115,7 +3118,8 @@ main {
 }
 
 #defaultdir > li .controls ul > li,
-#btn-hotkey-edit {
+#btn-hotkey-edit,
+#btn-hotkey-preview {
   display: inline-block;
   width: 34px;
   box-sizing: border-box;
@@ -3125,7 +3129,8 @@ main {
 
 #dirlist > li .controls ul > li:hover,
 #libdirlist > li .controls ul > li:hover,
-#btn-hotkey-edit:hover {
+#btn-hotkey-edit:hover,
+#btn-hotkey-preview:hover {
   background-color: rgba(255, 255, 255, 0.2);
   color: #ffffff;
 }
@@ -5632,7 +5637,8 @@ body {
 #settings .arrow-list li .right .previous:focus-visible,
 #settings .arrow-list li .right .next:focus-visible,
 #settings .guide-panel summary:focus-visible,
-#btn-hotkey-edit:focus-visible {
+#btn-hotkey-edit:focus-visible,
+#btn-hotkey-preview:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 8px;

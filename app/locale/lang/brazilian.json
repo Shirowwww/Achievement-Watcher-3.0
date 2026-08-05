@@ -131,7 +131,8 @@
       },
       "hotkey": {
         "name": "Atalho do overlay no jogo",
-        "description": "Pressione este atalho para mostrar o overlay de conquistas no jogo."
+        "description": "Pressione este atalho enquanto um jogo estiver em execução para mostrar o overlay de conquistas no jogo. Clique no lápis para alterá-lo, ou no olho para pré-visualizar o overlay sem precisar iniciar um jogo.",
+        "preview": "Pré-visualizar o overlay"
       },
       "scale": "Tamanho da notificação",
       "duration": "Duração da animação"
@@ -699,6 +700,8 @@
     "watchCopy": "O Watchdog em segundo plano detecta o executável do jogo quando ele inicia, registra o tempo de jogo e monitora os arquivos de conquistas para mostrar os desbloqueios enquanto você joga.",
     "fixTitle": "Reparar",
     "fixCopy": "Para jogos Steam emulados, a correção do clique direito (ou a correção automática) instala o GBE Fork e grava o esquema achievements.json, os DLCs e os auxiliares de inicialização na pasta steam_settings do jogo.",
+    "overlayTitle": "Overlay no jogo",
+    "overlayCopy": "Um pequeno painel de conquistas que você pode abrir sobre o jogo com um atalho (padrão Ctrl+Shift+O). Altere-o a qualquer momento em Configurações > Geral, ao lado do campo de atalho.",
     "profileTitle": "Perfil",
     "profileCopy": "Escolha o nome mostrado no cabeçalho e, opcionalmente, defina um avatar local.",
     "username": "Nome de exibição",
