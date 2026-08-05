@@ -22,7 +22,7 @@ If a requirement is missing, diagnosis reports the limitation instead of writing
 Achievement Watcher does not download a Uplay R2 loader because there is no stable official release source for the compatible build. Place your own loader file in:
 
 ```text
-%APPDATA%\Achievement Watcher\cache\uplayR2
+%APPDATA%\Achievement Watcher 3.0\cache\uplayR2
 ```
 
 Supported file names are:
@@ -88,7 +88,7 @@ An empty or missing runtime save is expected until the game records an unlock. I
 2. Check for `NO_SCHEMA_JSON` or `ACHIEVEMENTS_DISABLED`. **A Ubisoft game update commonly causes both**: re-extracting the repack deletes `achievements_schema.json` and restores an INI with `Achievements = 0`. Achievement Watcher re-applies the setup automatically on the next scan when *Automatically fix newly detected games* is enabled; otherwise run **Apply emulator fix (Uplay R2)** again.
 3. Confirm the installed loader architecture matches the game.
 4. Set `Logging = 1` in the INI the diagnosis reported and check `upc_r2.log` next to the game executable — `Achievements disabled or achievements.json file not found!` confirms the emulator never armed achievements.
-5. Review `%APPDATA%\Achievement Watcher\logs\parser.log`.
+5. Review `%APPDATA%\Achievement Watcher 3.0\logs\parser.log`.
 
 For general schema/save distinctions, see the [Goldberg and GBE Fork guide](emulator-setup.md#schema-and-save-files-are-different).
 

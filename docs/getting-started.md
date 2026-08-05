@@ -57,10 +57,10 @@ Installed releases check the project's GitHub release feed for a newer version. 
 Installing a newer build over an older one replaces program files but preserves user data in:
 
 ```text
-%APPDATA%\Achievement Watcher
+%APPDATA%\Achievement Watcher 3.0
 ```
 
-This directory contains settings, watched folders, caches, playtime, logs, notification assets and local account data. Uninstalling does not remove it by default. Delete it manually only when you intentionally want a completely fresh profile.
+This directory contains settings, watched folders, caches, playtime, logs, notification assets and local account data. On the first launch after upgrading from a 3.0 build that shared the legacy folder, Achievement Watcher imports the old `%APPDATA%\Achievement Watcher` directory once — it copies configuration and caches (large write-once caches use NTFS hard links), never moves or deletes the legacy folder, and records a migration marker. Uninstalling does not remove the data directory by default. Delete it manually only when you intentionally want a completely fresh profile.
 
 ## Next steps
 

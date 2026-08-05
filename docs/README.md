@@ -22,7 +22,7 @@ User guides, troubleshooting and technical references for Achievement Watcher 3.
 
 ### [Getting started](getting-started.md)
 
-Installation, first launch, sources, watched folders, tray behavior, updates and the `%APPDATA%\Achievement Watcher` data directory.
+Installation, first launch, sources, watched folders, tray behavior, updates and the `%APPDATA%\Achievement Watcher 3.0` data directory.
 
 ### [Notifications](notifications.md)
 
@@ -63,10 +63,11 @@ Release history is maintained in [CHANGELOG.md](../CHANGELOG.md). [RELEASE_NOTES
 
 | Data | Default path |
 |---|---|
-| Settings, cache and user assets | `%APPDATA%\Achievement Watcher` |
-| Logs | `%APPDATA%\Achievement Watcher\logs` |
+| Settings, cache and user assets | `%APPDATA%\Achievement Watcher 3.0` |
+| Logs | `%APPDATA%\Achievement Watcher 3.0\logs` |
 | GBE Fork saves | `%APPDATA%\GSE Saves` |
 | Classic Goldberg saves | `%APPDATA%\Goldberg SteamEmu Saves` |
-| Uplay R2 loader cache | `%APPDATA%\Achievement Watcher\cache\uplayR2` |
+| Goldberg SocialClub saves | `%APPDATA%\Goldberg SocialClub Emu Saves` |
+| Uplay R2 loader cache | `%APPDATA%\Achievement Watcher 3.0\cache\uplayR2` |
 
 When reporting a problem, open **Settings → Advanced → Diagnostics**, reproduce the issue once and attach the relevant logs after removing private data.

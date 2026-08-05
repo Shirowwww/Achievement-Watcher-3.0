@@ -3,10 +3,18 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 3.5.3 - 2026-08-05
 
 ### Added
 
+- New Goldberg Social Club emulator source: `%APPDATA%\Goldberg SocialClub Emu Saves` is now
+  accepted in Settings, auto-scanned and monitored like the other emulator save roots. Games are
+  discovered by their real layout — hex profile folders and Rockstar save/profile files
+  (SGTA*/SRDR*, `settings\cfg.dat`, `SAVE\…`) as well as standard emulator achievement files —
+  resolved to their Steam release for title/cover/schema, and labelled "Goldberg SocialClub" in the
+  library and source filters, with a dedicated source toggle. When a profile only contains
+  Rockstar's proprietary save files (which no local tracker can decode), the game is still listed
+  honestly instead of being silently skipped.
 - Right-click uninstall from the game list: game tiles now offer an "Uninstall"
   submenu that can run the game's own uninstaller (Inno Setup/NSIS silent flags
   when detected), ask the Steam client to uninstall the game
@@ -16,6 +24,55 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Achievement Watcher 3.x no longer shares `%APPDATA%\Achievement Watcher` with the original
+  1.6.8 app. 3.x data now lives in `%APPDATA%\Achievement Watcher 3.0`; on the first launch after
+  this update the legacy directory is imported once (never moved or deleted) and playtime counters
+  are copied into a separate registry namespace, so uninstalling 1.6.8 can no longer wipe 3.x
+  configuration, caches or playtime. The import is selective and near-instant: settings and themes
+  are copied, the large write-once payloads (icon cache, GBE backups, downloaded tool caches) are
+  hard-linked so they cost no extra disk yet survive the legacy folder being deleted, and Chromium's
+  own profile — the bulk of the old directory, rebuilt on launch anyway — is skipped entirely. A new
+  directory that already exists because the Watchdog wrote a log into it is still imported. The
+  Watchdog also gets its own single-instance mutex, so both versions can run side by side.
+- Achievement toasts never appeared, from two stacked faults. powertoast reads the AUMID from its
+  `aumid` option, but every toast payload (achievement, progress, playtime, platinum and the
+  Settings tests) sent `appID`, so each toast was posted under powertoast's own fallback — the
+  Microsoft Store's identity — instead of the selected one; and the selected one was the classic
+  Xbox app, which Windows 11 no longer ships. Windows discards a toast whose app id no installed app
+  owns, silently, which is why the controller still rumbled and nothing was logged. The correct key
+  is used everywhere, the WinRT-off flag is forwarded the way powertoast expects it, and the app id
+  is now verified to exist against the Start Menu instead of being checked for shape only — the old
+  check also rejected Achievement Watcher's own (non-packaged) identity as "not a valid AUMID".
+- Toast identity and rendering were audited end to end. Notifications now appear under Achievement
+  Watcher's own name when the installer's Start Menu identity is registered (falling back to the
+  Xbox ids only in dev/portable runs), an app id that no installed app owns is reported in the log
+  instead of failing silently, and because a non-packaged app cannot load remote toast images the
+  icon prefetch is enabled automatically for it. The Settings test buttons resolve their app id and
+  build their payload through the exact same code as real unlocks, so a passing test can no longer
+  mean anything other than a working toast. Achievement/progress/rare toasts no longer embed the
+  game header image (playtime and platinum keep it), every achievement toast shows the game name in
+  the attribution line (with the rare percentage when applicable), and clicking a toast now opens
+  the corresponding game page in the library — including when the app was not running yet, through
+  an `achievement-watcher://` scheme re-registered at every launch (the legacy `ach:` scheme was
+  left behind by 1.6.8 pointing at its own, now uninstalled, executable). The payload was also
+  aligned with the powertoast contract: `time` (unlock timestamp), `heroImg` / `inlineImg` for the
+  game art and a real progress bar (`value` 0–100 + status) were previously sent under unsupported
+  keys (`timeStamp`, `headerImg`/`footerImg`, `{percent, footer}`) and silently dropped by the XML
+  builder.
+- Ubisoft Connect games can no longer end up titled "Steam" with no cover (Far Cry 4, uplay id 971).
+  A title sold on several storefronts gets several blocks in the Ubisoft configurations index that
+  share one achievements spec — the real game block, plus one per storefront whose only name is the
+  storefront itself — and the parser kept whichever came first, so the displayed title depended on
+  file order. Blocks sharing a spec are now merged with the real game name winning, storefront
+  names and unresolved localization keys (`l1`, `NAME`, `RELATED_GAMENAME_116`) are never used as
+  titles, and the index is decoded as UTF-8 instead of latin1 so accented titles stop rendering as
+  "Assassin's CreedÂ® Mirage". The Steam release is then resolved generically for ANY title, best
+  signal first: the product's registered install folder when it sits inside a Steam library (which
+  identifies a Steam purchase launching Ubisoft Connect with no name involved at all), then the
+  uplay↔Steam catalog, then a confident name match against the installed Steam manifests, then the
+  full catalog. Candidates that cannot identify a game — content-hash specs and franchise-level
+  sort keys — are no longer searched, because a confident match on those resolves to the wrong
+  game. No per-game asset mapping is needed for future releases.
 - Right-click context menus (game tiles and the avatar menu) now render their
   icons at the standard 16×16 size instead of the bundled 32×32 images, which
   looked oversized on normal and high-DPI displays.

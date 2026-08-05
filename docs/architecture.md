@@ -76,7 +76,7 @@ Current integrations include Steam, Goldberg/GBE-compatible saves, GOG, Epic, Ub
 
 ## Local data
 
-Packaged user data is stored below `%APPDATA%\Achievement Watcher`:
+Packaged user data is stored below `%APPDATA%\Achievement Watcher 3.0` (3.x keeps its own folder so the legacy 1.6.8 app and its uninstaller can never touch it; a one-time import copies the old `%APPDATA%\Achievement Watcher` data on first launch):
 
 | Directory | Contents |
 |---|---|

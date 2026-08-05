@@ -7,7 +7,7 @@ Start with the checks below. If a problem remains, include the app version, Wind
 Use **Settings → Advanced → Diagnostics** to open the log or data directory. The default log path is:
 
 ```text
-%APPDATA%\Achievement Watcher\logs
+%APPDATA%\Achievement Watcher 3.0\logs
 ```
 
 The most useful files are usually `Achievement Watcher.log`, `renderer.log`, `parser.log` and the Watchdog logs created for the affected source. Zip several files when the failure crosses scanning, UI and notification behavior.
@@ -85,7 +85,7 @@ Do not disable system-wide protection. Submit a false-positive report to the ant
 Use this only after backing up data you want to keep:
 
 1. Exit Achievement Watcher fully from the tray.
-2. Rename `%APPDATA%\Achievement Watcher` to `Achievement Watcher.backup`.
+2. Rename `%APPDATA%\Achievement Watcher 3.0` to `Achievement Watcher 3.0.backup`.
 3. Start the app and reproduce the issue with the new profile.
 
 If the issue disappears, restore only the data you need or attach the relevant configuration files to the report. Renaming is safer than deleting because it keeps a rollback path.

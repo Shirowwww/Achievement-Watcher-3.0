@@ -125,7 +125,7 @@ The optional Steam Web API key can improve some lookups, but local sources and c
 <sub>Sources, folders, notifications, appearance and diagnostics in one place</sub>
 </div>
 
-Updating over an older build keeps settings, cache, playtime and achievement data under `%APPDATA%\Achievement Watcher`. See [Getting started](docs/getting-started.md) for the full first-run and update guide.
+Updating over an older build keeps settings, cache, playtime and achievement data under `%APPDATA%\Achievement Watcher 3.0`. The first launch after upgrading imports the legacy `%APPDATA%\Achievement Watcher` folder once (copied, never moved), so the original 1.6.8 app and its uninstaller stay fully independent. See [Getting started](docs/getting-started.md) for the full first-run and update guide.
 
 ---
 
@@ -211,7 +211,7 @@ The installer and updater files are written to `app\dist`. See [BUILD.md](BUILD.
 - Sensitive settings and Epic account tokens are encrypted before local storage.
 - The project contains no game files and does not bypass online ownership checks.
 
-For a bug report, include the app version, Windows version, affected source and relevant files from `%APPDATA%\Achievement Watcher\logs`. The issue tracker cannot provide games, credentials or piracy support.
+For a bug report, include the app version, Windows version, affected source and relevant files from `%APPDATA%\Achievement Watcher 3.0\logs`. The issue tracker cannot provide games, credentials or piracy support.
 
 ## ⚖️ Credits and license
 
