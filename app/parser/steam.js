@@ -106,6 +106,11 @@ module.exports.scan = async (additionalSearch = []) => {
         game.source = 'CreamAPI';
       } else if (dirKeyLower.includes('steam')) {
         game.source = 'Steam';
+      } else {
+        // A custom watched folder (issue #12) that doesn't match any known emulator/scene layout by
+        // name still holds a real numeric-AppID save folder — leaving source unset let the game object
+        // downstream carry an undefined source instead of a readable label.
+        game.source = 'Steam-emulator';
       }
 
       data.push(game);

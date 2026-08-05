@@ -64,6 +64,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   folder (the emulator creates the shape before the game ever saves anything) is no longer listed
   as a game named after the raw folder; an empty profile folder is no longer treated as evidence of
   a real game.
+- A manually added custom save folder whose name doesn't match any known emulator/scene layout
+  (e.g. a folder the user renamed themselves) fell back to an unset library source instead of a
+  readable one once its numeric AppID subfolder was found.
 
 ## 3.5.3 - 2026-08-05
 
