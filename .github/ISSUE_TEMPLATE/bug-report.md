@@ -31,7 +31,7 @@ What should have happened?
 
 ## Logs and screenshots
 
-Attach screenshots or a zip of the relevant files from `%APPDATA%\Achievement Watcher\logs`. Logs can also be opened from **Settings → Advanced → Diagnostics**.
+Attach screenshots or a zip of the relevant files from `%APPDATA%\Achievement Watcher 3.0\logs`. Logs can also be opened from **Settings → Advanced → Diagnostics**.
 
 ## Additional context
 
