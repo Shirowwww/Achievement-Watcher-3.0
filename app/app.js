@@ -51,10 +51,10 @@ const toastAudio = require(path.join(appPath, 'util/toastAudio.js'));
 const coverStore = require(path.join(appPath, 'util/coverStore.js'));
 const uninstall = require(path.join(appPath, 'util/uninstall.js'));
 const { resolveGameRarityContext } = require(path.join(appPath, 'util/rarity.js'));
-// `escapeHtml` is declared once in ui/settings.js (which loads immediately before this script).
-// Classic <script>s share a single global lexical scope, so re-declaring `const escapeHtml` here
-// would throw "Identifier 'escapeHtml' has already been declared" and abort app.js entirely — it is
-// consumed from that shared scope, exactly like `path` / `appPath` / `remote`.
+// `t` and `escapeHtml` are declared once in ui/settings.js (which loads immediately before this
+// script). Classic <script>s share a single global lexical scope, so re-declaring them here would
+// throw "Identifier ... has already been declared" and abort app.js entirely — they are consumed
+// from that shared scope, exactly like `path` / `appPath` / `remote`.
 let debug = new (require(path.join(appPath, 'util/logger.js')))({
   console: isDev,
   file: path.join(userdatapath, `logs/${ipcRenderer.sendSync('get-app-name-sync')}.log`),
@@ -269,7 +269,6 @@ function applyCoverBackground(appid, value) {
 // Styled in-app text prompt (Electron disables window.prompt). Resolves to the trimmed value or null.
 function promptText(message, defaultValue = '', type = 'text') {
   return new Promise((resolve) => {
-    const fr = String(window.app?.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
     const isSteamGuard = /(steam.*(?:2fa|guard)|(?:2fa|guard).*code|two.?factor)/i.test(message);
     const overlay = document.createElement('div');
     overlay.className = 'aw-prompt-overlay';
@@ -285,13 +284,11 @@ function promptText(message, defaultValue = '', type = 'text') {
     const copy = document.createElement('div');
     const title = document.createElement('div');
     title.className = 'aw-prompt-title';
-    title.textContent = isSteamGuard ? 'Steam Guard' : fr ? 'Saisie requise' : 'Input required';
+    title.textContent = isSteamGuard ? 'Steam Guard' : t('input-required', 'Input required', 'Saisie requise');
     const label = document.createElement('div');
     label.className = 'aw-prompt-description';
     label.textContent = isSteamGuard
-      ? fr
-        ? 'Saisis le code reçu par e-mail pour confirmer la connexion Steam.'
-        : 'Enter the code sent by email to confirm the Steam login.'
+      ? t('enter-the-code-sent-by-email-to-confirm-the-steam-login', 'Enter the code sent by email to confirm the Steam login.', 'Saisis le code reçu par e-mail pour confirmer la connexion Steam.')
       : message;
     copy.append(title, label);
     heading.append(icon, copy);
@@ -303,7 +300,7 @@ function promptText(message, defaultValue = '', type = 'text') {
       input.maxLength = 10;
       input.autocomplete = 'one-time-code';
       input.spellcheck = false;
-      input.setAttribute('aria-label', fr ? 'Code Steam Guard' : 'Steam Guard code');
+      input.setAttribute('aria-label', t('steam-guard-code', 'Steam Guard code', 'Code Steam Guard'));
       input.addEventListener('input', () => {
         input.value = input.value.replace(/\s+/g, '').toUpperCase();
       });
@@ -312,10 +309,10 @@ function promptText(message, defaultValue = '', type = 'text') {
     row.className = 'aw-prompt-actions';
     const cancel = document.createElement('button');
     cancel.className = 'aw-prompt-button secondary';
-    cancel.textContent = fr ? 'Annuler' : 'Cancel';
+    cancel.textContent = t('cancel', 'Cancel', 'Annuler');
     const ok = document.createElement('button');
     ok.className = 'aw-prompt-button primary';
-    ok.textContent = fr ? 'Valider' : 'Confirm';
+    ok.textContent = t('confirm', 'Confirm', 'Valider');
     row.append(cancel, ok);
     box.append(heading, input, row);
     overlay.append(box);
@@ -357,7 +354,6 @@ function isLegitSteamLibraryGame(game) {
 }
 
 function sourcePresentationFor(game) {
-  const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
   const source = game && game.source;
   const sourceLower = String(source || '').toLowerCase();
   const system = String((game && game.system) || '').toLowerCase();
@@ -371,58 +367,53 @@ function sourcePresentationFor(game) {
     if (isUbisoft) {
       return {
         img: getSourceImg('ubisoft'),
-        label: fr ? 'Jeu Ubisoft — aucun succès trouvé' : 'Ubisoft game — no achievements found',
+        label: t('ubisoft-game-no-achievements-found', 'Ubisoft game — no achievements found', 'Jeu Ubisoft — aucun succès trouvé'),
         kind: 'ubisoft-empty',
       };
     }
     return {
       img: getSourceImg('Unconfigured'),
-      label: fr ? 'Aucun succès trouvé' : 'No achievements found',
+      label: t('no-achievements-found', 'No achievements found', 'Aucun succès trouvé'),
       kind: 'empty',
     };
   }
 
   if (system === 'playstation' || source === 'RPCS3 Emulator' || source === 'ShadPS4 Emulator') {
-    return { img: getSourceImg(source === 'ShadPS4 Emulator' ? source : 'RPCS3 Emulator'), label: fr ? 'Succès PlayStation' : 'PlayStation trophies', kind: 'playstation' };
+    return { img: getSourceImg(source === 'ShadPS4 Emulator' ? source : 'RPCS3 Emulator'), label: t('playstation-trophies', 'PlayStation trophies', 'Succès PlayStation'), kind: 'playstation' };
   }
   if (system === 'xbox' || source === 'Xenia Emulator') {
-    return { img: getSourceImg('Xenia Emulator'), label: fr ? 'Succès Xbox' : 'Xbox achievements', kind: 'xbox' };
+    return { img: getSourceImg('Xenia Emulator'), label: t('xbox-achievements', 'Xbox achievements', 'Succès Xbox'), kind: 'xbox' };
   }
   if (sourceLower === 'epic') {
-    return { img: getSourceImg('epic'), label: fr ? 'Succès Epic Games' : 'Epic Games achievements', kind: 'epic' };
+    return { img: getSourceImg('epic'), label: t('epic-games-achievements', 'Epic Games achievements', 'Succès Epic Games'), kind: 'epic' };
   }
   if (sourceLower === 'gog') {
-    return { img: getSourceImg('gog'), label: fr ? 'Succès GOG' : 'GOG achievements', kind: 'gog' };
+    return { img: getSourceImg('gog'), label: t('gog-achievements', 'GOG achievements', 'Succès GOG'), kind: 'gog' };
   }
   if (sourceLower === 'goldberg socialclub') {
     return {
       img: getSourceImg('Goldberg SocialClub'),
-      label: fr ? 'Succès Social Club' : 'Social Club achievements',
+      label: t('social-club-achievements', 'Social Club achievements', 'Succès Social Club'),
       kind: 'socialclub',
     };
   }
   if (isUbisoft) {
-    return { img: getSourceImg('ubisoft'), label: fr ? 'Succès Ubisoft Connect' : 'Ubisoft Connect achievements', kind: 'ubisoft' };
+    return { img: getSourceImg('ubisoft'), label: t('ubisoft-connect-achievements', 'Ubisoft Connect achievements', 'Succès Ubisoft Connect'), kind: 'ubisoft' };
   }
   if (system === 'ea' || sourceLower.includes('ea')) {
-    return { img: pathToFileURL(path.join(appPath, 'resources/img/achievement.svg')).href, label: fr ? 'Succès EA app' : 'EA app achievements', kind: 'ea' };
+    return { img: pathToFileURL(path.join(appPath, 'resources/img/achievement.svg')).href, label: t('ea-app-achievements', 'EA app achievements', 'Succès EA app'), kind: 'ea' };
   }
 
-  return { img: getSourceImg(source), label: fr ? 'Succès Steam' : 'Steam achievements', kind: 'steam' };
+  return { img: getSourceImg(source), label: t('steam-achievements', 'Steam achievements', 'Succès Steam'), kind: 'steam' };
 }
 
 function dllPresentationFor(game) {
-  const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
   const present = !!(game && game.hasSteamApiDll);
   return {
     present,
     label: present
-      ? fr
-        ? 'steam_api(64).dll détecté'
-        : 'steam_api(64).dll detected'
-      : fr
-        ? 'steam_api(64).dll introuvable'
-        : 'steam_api(64).dll not found',
+      ? t('steam-api-64-dll-detected', 'steam_api(64).dll detected', 'steam_api(64).dll détecté')
+      : t('steam-api-64-dll-not-found', 'steam_api(64).dll not found', 'steam_api(64).dll introuvable'),
   };
 }
 
@@ -589,40 +580,29 @@ function findLatestGbeBackup(game) {
   return [...unique.values()].sort((a, b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0))[0] || null;
 }
 
-function formatGbeBackupDetail(backup, game, fr) {
+function formatGbeBackupDetail(backup, game) {
   const lines = [];
-  if (game?.gameDir) lines.push(`${fr ? 'Jeu' : 'Game'}: ${game.gameDir}`);
-  if (backup?.backupDir) lines.push(`${fr ? 'Sauvegarde' : 'Backup'}: ${backup.backupDir}`);
+  if (game?.gameDir) lines.push(`${t('game', 'Game', 'Jeu')}: ${game.gameDir}`);
+  if (backup?.backupDir) lines.push(`${t('backup', 'Backup', 'Sauvegarde')}: ${backup.backupDir}`);
   if (backup?.createdAt) {
     const created = moment(backup.createdAt);
-    if (created.isValid()) lines.push(`${fr ? 'Créée' : 'Created'}: ${created.format('L LT')}`);
+    if (created.isValid()) lines.push(`${t('created', 'Created', 'Créée')}: ${created.format('L LT')}`);
   }
   if (backup?.manifest?.gameDir && game?.gameDir && normalizePathKey(backup.manifest.gameDir) !== normalizePathKey(game.gameDir)) {
-    lines.push(`${fr ? 'Dossier d’origine' : 'Original folder'}: ${backup.manifest.gameDir}`);
+    lines.push(`${t('original-folder', 'Original folder', 'Dossier d’origine')}: ${backup.manifest.gameDir}`);
   }
   if (backup?.source && backup.source !== 'manual') {
-    const source = backup.source === 'index' ? (fr ? 'historique AW' : 'AW history') : fr ? 'scan disque' : 'disk scan';
-    lines.push(fr ? `Trouvée automatiquement via ${source}.` : `Found automatically via ${source}.`);
+    const source = backup.source === 'index' ? (t('aw-history', 'AW history', 'historique AW')) : t('disk-scan', 'disk scan', 'scan disque');
+    lines.push(t('found-automatically-via-x', `Found automatically via ${source}.`, `Trouvée automatiquement via ${source}.`));
   }
   return lines.join('\n');
-}
-
-// Watchdog-status banner is localized here (it's set imperatively, not via the nth-child locale loader).
-function watchdogLangFr() {
-  try {
-    return String((app && app.config && app.config.achievement && app.config.achievement.lang) || '')
-      .toLowerCase()
-      .startsWith('fr');
-  } catch {
-    return false;
-  }
 }
 
 ipcRenderer.on('reset-watchdog-status', (event) => {
   let shadow = document.querySelector('title-bar').shadowRoot;
   let watchdogStatus = shadow.querySelector('.status-dot');
   let watchdoglbl = shadow.querySelector('.status-text');
-  watchdoglbl.textContent = watchdogLangFr() ? 'Vérification du Watchdog…' : 'Checking watchdog status...';
+  watchdoglbl.textContent = t('checking-watchdog-status', 'Checking watchdog status...', 'Vérification du Watchdog…');
   watchdogStatus.classList.remove('status-green', 'status-red');
   watchdogStatus.classList.add('status-orange');
   let startBtn = shadow.querySelector('#start-watchdog');
@@ -631,26 +611,23 @@ ipcRenderer.on('reset-watchdog-status', (event) => {
 });
 
 ipcRenderer.on('watchdog-status', (event, found) => {
-  const fr = watchdogLangFr();
   let shadow = document.querySelector('title-bar').shadowRoot;
   let watchdogStatus = shadow.querySelector('.status-dot');
   let watchdoglbl = shadow.querySelector('.status-text');
-  watchdoglbl.textContent = fr
-    ? 'Watchdog arrêté ! (overlays en jeu et notifications Windows ne se déclencheront pas)'
-    : "Watchdog is not running! (in-game overlay/Windows notifications won't trigger.)";
+  watchdoglbl.textContent = t(
+    'watchdog-stopped',
+    "Watchdog is not running! (in-game overlay/Windows notifications won't trigger.)",
+    'Watchdog arrêté ! (overlays en jeu et notifications Windows ne se déclencheront pas)'
+  );
   watchdogStatus.classList.remove('status-green', 'status-orange');
   watchdogStatus.classList.add('status-red');
   let startBtn = shadow.querySelector('#start-watchdog');
-  startBtn.innerHTML = fr
-    ? '<i class="fas fa-shield-alt"></i> Cliquez pour démarrer le Watchdog !'
-    : '<i class="fas fa-shield-alt"></i> Click to Start Watchdog!';
+  startBtn.innerHTML = t('i-class-fas-fa-shield-alt-i-click-to-start-watchdog', '<i class="fas fa-shield-alt"></i> Click to Start Watchdog!', '<i class="fas fa-shield-alt"></i> Cliquez pour démarrer le Watchdog !');
   if (found) {
     //let watchdogStatus = shadow.querySelector('.status-dot.status-orange');
     watchdogStatus.classList.remove('status-orange', 'status-red');
     watchdogStatus.classList.add('status-green');
-    watchdoglbl.textContent = fr
-      ? 'Watchdog actif (overlays en jeu et notifications Windows fonctionnels)'
-      : 'Watchdog is running (in-game overlay/Windows notifications should work properly)';
+    watchdoglbl.textContent = t('watchdog-is-running-in-game-overlay-windows-notifications-should', 'Watchdog is running (in-game overlay/Windows notifications should work properly)', 'Watchdog actif (overlays en jeu et notifications Windows fonctionnels)');
     startBtn.textContent = '';
   }
 });
@@ -741,7 +718,7 @@ var app = {
   args: getArgs(remote.process.argv),
   config: settings.load(),
   errorExit: function (err, message = 'An unexpected error has occured') {
-    remote.dialog.showMessageBoxSync({ type: 'error', title: 'Unexpected Error', message: `${message}`, detail: `${err}` });
+    remote.dialog.showMessageBoxSync({ type: 'error', title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'), message: `${message}`, detail: `${err}` });
     remote.app.quit();
   },
   onStart: function () {
@@ -1078,8 +1055,8 @@ var app = {
           let appid = parseInt($('#game-config .header').attr('title'));
           let cfg = await exeList.get(appid);
           let dialog = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-            title: 'Choose the game executable',
-            buttonLabel: 'Select',
+            title: t('choose-the-game-executable', 'Choose the game executable', 'Choisir l\'exécutable du jeu'),
+            buttonLabel: t('select', 'Select', 'Sélectionner'),
             defaultPath: cfg.exe,
             filters: [{ name: 'Executables', extensions: ['exe', 'bat'] }],
             properties: ['openFile', 'showHiddenFiles', 'dontAddToRecent'],
@@ -1176,8 +1153,6 @@ var app = {
           const catalogAppid = String(
             (ubisoftTools && ubisoftTools.steamAppid) || ctxGame?.steamappid || writableAppid || (/^[0-9]+$/.test(String(appid)) ? appid : '')
           );
-          const contextIsFrench = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
-
           const { Menu, MenuItem, nativeImage } = remote;
           // Native Windows menus render icons at their natural size; the bundled
           // icons are 32×32 and look oversized at typical DPI. Normalize every
@@ -1278,7 +1253,7 @@ var app = {
 
               const choice = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
                 type: report.ok && !repairError ? 'info' : 'warning',
-                title: `Goldberg/GBE diagnosis — ${game?.name || appid}`,
+                title: t('goldberg-diagnosis-title', `Goldberg/GBE diagnosis — ${game?.name || appid}`, `Diagnostic Goldberg/GBE — ${game?.name || appid}`),
                 message: report.ok ? 'Setup looks valid.' : 'Problems were detected.',
                 detail: lines.join('\n'),
                 buttons: !autoRepair && canRepair ? ['OK', 'Repair steam_settings (write schema + icons)...'] : ['OK'],
@@ -1292,8 +1267,8 @@ var app = {
                   const summary = await repairGoldbergSetup({ report, gameDir, game });
                   remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                     type: 'info',
-                    title: 'Repair complete',
-                    message: `Wrote ${summary.achievementsJson.length} achievements to ${summary.steamSettings}`,
+                    title: t('repair-complete', 'Repair complete', 'Réparation terminée'),
+                    message: t('repair-complete-message', `Wrote ${summary.achievementsJson.length} achievements to ${summary.steamSettings}`, `${summary.achievementsJson.length} succès écrits dans ${summary.steamSettings}`),
                     detail:
                       `icons: ${summary.icons.downloaded} downloaded, ${summary.icons.failed} failed, ${summary.icons.skipped} skipped` +
                       (summary.wroteAppId ? '\nsteam_appid.txt created' : '') +
@@ -1303,7 +1278,7 @@ var app = {
                     noLink: true,
                   });
                 } catch (err) {
-                  remote.dialog.showMessageBoxSync({ type: 'error', title: 'Repair failed', message: 'Could not write steam_settings.', detail: `${err}` });
+                  remote.dialog.showMessageBoxSync({ type: 'error', title: t('repair-failed', 'Repair failed', 'Échec de la réparation'), message: t('could-not-write-steam-settings', 'Could not write steam_settings.', 'Impossible d\'écrire steam_settings.'), detail: `${err}` });
                 }
               }
             }
@@ -1323,8 +1298,8 @@ var app = {
                 } catch (err) {
                   remote.dialog.showMessageBoxSync({
                     type: 'error',
-                    title: 'Unexpected Error',
-                    message: `Failed to add item to user blacklist`,
+                    title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
+                    message: t('blacklist-add-failed', 'Failed to add item to user blacklist', 'Échec de l’ajout à la liste noire'),
                     detail: `${err}`,
                   });
                 }
@@ -1341,15 +1316,15 @@ var app = {
             gameMenu.append(new MenuItem({ type: 'separator' }));
             const emulatorSourceMenu = new Menu();
             const emulatorSourceOptions = [
-              { value: null, labelEn: 'Automatic (detected)', labelFr: 'Automatique (détecté)' },
-              { value: 'steam', labelEn: 'Steam / GBE Fork', labelFr: 'Steam / GBE Fork' },
-              { value: 'ubisoft', labelEn: 'Ubisoft (Uplay R2)', labelFr: 'Ubisoft (Uplay R2)' },
+              { value: null, labelKey: 'emulator-source-auto', labelEn: 'Automatic (detected)', labelFr: 'Automatique (détecté)' },
+              { value: 'steam', labelKey: 'emulator-source-steam', labelEn: 'Steam / GBE Fork', labelFr: 'Steam / GBE Fork' },
+              { value: 'ubisoft', labelKey: 'emulator-source-ubisoft', labelEn: 'Ubisoft (Uplay R2)', labelFr: 'Ubisoft (Uplay R2)' },
             ];
             for (const opt of emulatorSourceOptions) {
               emulatorSourceMenu.append(
                 new MenuItem({
                   type: 'radio',
-                  label: contextIsFrench ? opt.labelFr : opt.labelEn,
+                  label: t(opt.labelKey, opt.labelEn, opt.labelFr),
                   checked: emulatorSourceForced === opt.value,
                   click() {
                     emulatorSourceOverride.set(appid, opt.value);
@@ -1360,7 +1335,7 @@ var app = {
             gameMenu.append(
               new MenuItem({
                 icon: menuIcon('file-text.png'),
-                label: contextIsFrench ? 'Source de l’émulateur' : 'Emulator source',
+                label: t('emulator-source', 'Emulator source', 'Source de l’émulateur'),
                 submenu: emulatorSourceMenu,
               })
             );
@@ -1370,7 +1345,7 @@ var app = {
             gameMenu.append(new MenuItem({ type: 'separator' }));
             gameMenu.append(
               new MenuItem({
-                label: contextIsFrench ? 'Lancer le jeu' : 'Launch game',
+                label: t('launch-game', 'Launch game', 'Lancer le jeu'),
                 async click() {
                   await app.onPlayButtonClick(self.find('.play-button'));
                 },
@@ -1378,7 +1353,7 @@ var app = {
             );
             gameMenu.append(
               new MenuItem({
-                label: contextIsFrench ? "Configurer l’exécutable…" : 'Configure executable…',
+                label: t('configure-executable', 'Configure executable…', 'Configurer l’exécutable…'),
                 async click() {
                   await app.onConfigButtonClick(self.find('.config-button'));
                 },
@@ -1449,8 +1424,8 @@ var app = {
                     } catch (err) {
                       remote.dialog.showMessageBoxSync({
                         type: 'error',
-                        title: 'Unexpected Error',
-                        message: `Failed to build icon cache`,
+                        title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
+                        message: t('icon-cache-build-failed', 'Failed to build icon cache', 'Échec de la construction du cache d’icônes'),
                         detail: `${err}`,
                       });
                     }
@@ -1471,8 +1446,8 @@ var app = {
                     const request = require('request-zero');
 
                     let dialog = await remote.dialog.showSaveDialog(remote.getCurrentWindow(), {
-                      title: 'Choose where to generate achievements.json',
-                      buttonLabel: 'Generate',
+                      title: t('choose-where-to-generate-achievements-json', 'Choose where to generate achievements.json', 'Choisir où générer achievements.json'),
+                      buttonLabel: t('generate', 'Generate', 'Générer'),
                       defaultPath: 'achievements.json',
                       properties: ['showHiddenFiles', 'dontAddToRecent'],
                     });
@@ -1518,8 +1493,8 @@ var app = {
                   } catch (err) {
                     remote.dialog.showMessageBoxSync({
                       type: 'error',
-                      title: 'Unexpected Error',
-                      message: `Failed to generate achievements.json`,
+                      title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
+                      message: t('generate-achievements-json-failed', 'Failed to generate achievements.json', 'Échec de la génération de achievements.json'),
                       detail: `${err}`,
                     });
                   }
@@ -1543,8 +1518,8 @@ var app = {
                     let gameDir = game?.gameDir && fs.existsSync(game.gameDir) ? game.gameDir : null;
                     if (!gameDir) {
                       const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-                        title: "Select the game's install folder (where the emulator .dll is)",
-                        buttonLabel: 'Diagnose',
+                        title: t('select-install-folder-emulator-dll', "Select the game's install folder (where the emulator .dll is)", "Sélectionne le dossier d'installation du jeu (où se trouve la .dll de l'émulateur)"),
+                        buttonLabel: t('diagnose', 'Diagnose', 'Diagnostiquer'),
                         properties: ['openDirectory', 'dontAddToRecent'],
                       });
                       if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
@@ -1552,7 +1527,7 @@ var app = {
                       }
                     await diagnoseGoldbergSetup({ game, gameDir });
                   } catch (err) {
-                    remote.dialog.showMessageBoxSync({ type: 'error', title: 'Diagnose failed', message: 'Could not diagnose the setup.', detail: `${err}` });
+                    remote.dialog.showMessageBoxSync({ type: 'error', title: t('diagnose-failed', 'Diagnose failed', 'Échec du diagnostic'), message: t('could-not-diagnose-the-setup', 'Could not diagnose the setup.', 'Impossible de diagnostiquer la configuration.'), detail: `${err}` });
                   }
                 },
               })
@@ -1566,10 +1541,9 @@ var app = {
                   label: $('#game-list').attr('data-ctx-backupgbe') || 'Back up GBE/Goldberg setup (steam_settings + steam_api(64).dll)…',
                   async click() {
                     try {
-                      const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
                       const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-                        title: fr ? 'Où sauvegarder GBE/Goldberg (steam_settings + steam_api) ?' : 'Where should AW save the GBE/Goldberg setup?',
-                        buttonLabel: fr ? 'Créer la sauvegarde' : 'Create backup',
+                        title: t('where-should-aw-save-the-gbe-goldberg-setup', 'Where should AW save the GBE/Goldberg setup?', 'Où sauvegarder GBE/Goldberg (steam_settings + steam_api) ?'),
+                        buttonLabel: t('create-backup', 'Create backup', 'Créer la sauvegarde'),
                         defaultPath: remote.app.getPath('documents'),
                         properties: ['openDirectory', 'createDirectory', 'dontAddToRecent'],
                       });
@@ -1587,25 +1561,20 @@ var app = {
                       });
                       const choice = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                         type: 'info',
-                        title: fr ? 'Sauvegarde GBE/Goldberg créée' : 'GBE/Goldberg backup created',
-                        message: fr
-                          ? `${result.files.length} élément(s) sauvegardé(s) : steam_settings + DLL Steam.`
-                          : `Backed up ${result.files.length} item(s): steam_settings + Steam DLLs.`,
-                        detail: formatGbeBackupDetail({ backupDir: result.backupDir, manifest: result.manifest, createdAt: result.manifest?.createdAt }, backupGame, fr),
-                        buttons: ['OK', fr ? 'Ouvrir la sauvegarde' : 'Open backup folder'],
+                        title: t('gbe-goldberg-backup-created', 'GBE/Goldberg backup created', 'Sauvegarde GBE/Goldberg créée'),
+                        message: t('backed-up-x-item-s-steam-settings-steam-dlls', `Backed up ${result.files.length} item(s): steam_settings + Steam DLLs.`, `${result.files.length} élément(s) sauvegardé(s) : steam_settings + DLL Steam.`),
+                        detail: formatGbeBackupDetail({ backupDir: result.backupDir, manifest: result.manifest, createdAt: result.manifest?.createdAt }, backupGame),
+                        buttons: ['OK', t('open-backup-folder', 'Open backup folder', 'Ouvrir la sauvegarde')],
                         defaultId: 0,
                         cancelId: 0,
                         noLink: true,
                       });
                       if (choice === 1) remote.shell.openPath(result.backupDir);
                     } catch (err) {
-                      const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
                       remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                         type: 'error',
-                        title: fr ? 'Échec de la sauvegarde GBE/Goldberg' : 'GBE/Goldberg backup failed',
-                        message: fr
-                          ? 'Impossible de sauvegarder steam_settings et les DLL Steam de ce jeu.'
-                          : 'Could not back up steam_settings and Steam DLLs for this game.',
+                        title: t('gbe-goldberg-backup-failed', 'GBE/Goldberg backup failed', 'Échec de la sauvegarde GBE/Goldberg'),
+                        message: t('could-not-back-up-steam-settings-and-steam-dlls-for-this-game', 'Could not back up steam_settings and Steam DLLs for this game.', 'Impossible de sauvegarder steam_settings et les DLL Steam de ce jeu.'),
                         detail: formatErr(err),
                       });
                     }
@@ -1621,13 +1590,12 @@ var app = {
                   icon: menuIcon('redo-alt.png'),
                   label: $('#game-list').attr('data-ctx-restoregbe') || 'Restore latest GBE/Goldberg backup…',
                   async click() {
-                    const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
                     try {
                       let backup = findLatestGbeBackup({ ...backupGame, appid });
                       if (!backup) {
                         const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-                          title: fr ? 'Aucune sauvegarde connue : choisir un dossier GBE/Goldberg' : 'No known backup: choose a GBE/Goldberg backup folder',
-                          buttonLabel: fr ? 'Restaurer ce dossier' : 'Restore this folder',
+                          title: t('no-known-backup-choose-a-gbe-goldberg-backup-folder', 'No known backup: choose a GBE/Goldberg backup folder', 'Aucune sauvegarde connue : choisir un dossier GBE/Goldberg'),
+                          buttonLabel: t('restore-this-folder', 'Restore this folder', 'Restaurer ce dossier'),
                           defaultPath: remote.app.getPath('documents'),
                           properties: ['openDirectory', 'dontAddToRecent'],
                         });
@@ -1639,12 +1607,10 @@ var app = {
                       }
                       const confirm = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                         type: 'warning',
-                        title: fr ? 'Restaurer la sauvegarde GBE/Goldberg ?' : 'Restore GBE/Goldberg backup?',
-                        message: fr
-                          ? 'AW va restaurer steam_settings et les DLL Steam sauvegardées pour ce jeu.'
-                          : 'AW will restore the saved steam_settings and Steam DLLs for this game.',
-                        detail: formatGbeBackupDetail(backup, backupGame, fr),
-                        buttons: [fr ? 'Annuler' : 'Cancel', fr ? 'Restaurer' : 'Restore'],
+                        title: t('restore-gbe-goldberg-backup', 'Restore GBE/Goldberg backup?', 'Restaurer la sauvegarde GBE/Goldberg ?'),
+                        message: t('aw-will-restore-the-saved-steam-settings-and-steam-dlls-for-this', 'AW will restore the saved steam_settings and Steam DLLs for this game.', 'AW va restaurer steam_settings et les DLL Steam sauvegardées pour ce jeu.'),
+                        detail: formatGbeBackupDetail(backup, backupGame),
+                        buttons: [t('cancel', 'Cancel', 'Annuler'), t('restore', 'Restore', 'Restaurer')],
                         defaultId: 1,
                         cancelId: 0,
                         noLink: true,
@@ -1662,18 +1628,16 @@ var app = {
                       });
                       remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                         type: 'info',
-                        title: fr ? 'Restauration GBE/Goldberg terminée' : 'GBE/Goldberg restore complete',
-                        message: fr ? `${result.files.length} élément(s) restauré(s).` : `Restored ${result.files.length} item(s).`,
-                        detail: formatGbeBackupDetail({ ...backup, manifest: result.manifest }, { ...backupGame, gameDir: result.gameDir }, fr),
+                        title: t('gbe-goldberg-restore-complete', 'GBE/Goldberg restore complete', 'Restauration GBE/Goldberg terminée'),
+                        message: t('restored-x-item-s', `Restored ${result.files.length} item(s).`, `${result.files.length} élément(s) restauré(s).`),
+                        detail: formatGbeBackupDetail({ ...backup, manifest: result.manifest }, { ...backupGame, gameDir: result.gameDir }),
                         noLink: true,
                       });
                     } catch (err) {
                       remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                         type: 'error',
-                        title: fr ? 'Échec de la restauration GBE/Goldberg' : 'GBE/Goldberg restore failed',
-                        message: fr
-                          ? 'Impossible de restaurer cette sauvegarde GBE/Goldberg.'
-                          : 'Could not restore this GBE/Goldberg backup.',
+                        title: t('gbe-goldberg-restore-failed', 'GBE/Goldberg restore failed', 'Échec de la restauration GBE/Goldberg'),
+                        message: t('could-not-restore-this-gbe-goldberg-backup', 'Could not restore this GBE/Goldberg backup.', 'Impossible de restaurer cette sauvegarde GBE/Goldberg.'),
                         detail: formatErr(err),
                       });
                     }
@@ -1695,7 +1659,6 @@ var app = {
                   icon: menuIcon('file-text.png'),
                   label: $('#game-list').attr('data-ctx-installgbe') || 'Apply emulator fix (GBE Fork)…',
                   async click() {
-                    const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
                     try {
                       // 1 — reuse the install folder discover() already found; only prompt when
                       // it's genuinely unknown (e.g. a manually-added custom-dir game).
@@ -1703,8 +1666,8 @@ var app = {
                       let gameDir = game?.gameDir && fs.existsSync(game.gameDir) ? game.gameDir : null;
                       if (!gameDir) {
                         const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-                          title: "Select the game's install folder (where steam_api(64).dll should go)",
-                          buttonLabel: 'Install here',
+                          title: t('select-install-folder-steam-api', "Select the game's install folder (where steam_api(64).dll should go)", "Sélectionne le dossier d'installation du jeu (où doit aller steam_api(64).dll)"),
+                          buttonLabel: t('install-here', 'Install here', 'Installer ici'),
                           properties: ['openDirectory', 'dontAddToRecent'],
                         });
                         if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
@@ -1714,19 +1677,15 @@ var app = {
                       // 1a — Create a portable restore point before any write step. CrakFiles remains
                       // the first actual fix applied, but the user can now undo the pre-fix
                       // steam_settings + steam_api(64).dll state from "Restore latest GBE/Goldberg backup".
-                      setGameBoxBusy(self, fr ? 'Sauvegarde avant fix…' : 'Backing up before fix…');
+                      setGameBoxBusy(self, t('backing-up-before-fix', 'Backing up before fix…', 'Sauvegarde avant fix…'));
                       const preFixBackup = createAutomaticGbeBackup({
                         appid,
                         gameDir,
                         steamSettings: game?.steamSettings,
                       });
                       const preFixBackupNote = preFixBackup && preFixBackup.backupDir
-                        ? fr
-                          ? `\n\nSauvegarde avant fix:\n${preFixBackup.backupDir}`
-                          : `\n\nBackup before fix:\n${preFixBackup.backupDir}`
-                        : fr
-                          ? '\n\nSauvegarde avant fix: aucun steam_settings / steam_api existant.'
-                          : '\n\nBackup before fix: no existing steam_settings / steam_api found.';
+                        ? t('n-nbackup-before-fix-nx', `\n\nBackup before fix:\n${preFixBackup.backupDir}`, `\n\nSauvegarde avant fix:\n${preFixBackup.backupDir}`)
+                        : t('n-nbackup-before-fix-no-existing-steam-settings-steam-api-found', '\n\nBackup before fix: no existing steam_settings / steam_api found.', '\n\nSauvegarde avant fix: aucun steam_settings / steam_api existant.');
 
                       // 1b — Community CrakFiles fix FIRST, same as the per-scan auto-apply
                       // (achievements.js autoApplyEmulatorFix STEP 1). On a CONFIDENT name match with an
@@ -1749,7 +1708,7 @@ var app = {
                             if (exe0 && exe0.full) arch = pe.exeArch(exe0.full);
                           } catch {}
                           const gameNameCandidates = [game?.name, path.basename(gameDir || ''), path.basename((exe0 && (exe0.full || exe0.name)) || '').replace(/\.exe$/i, '')].filter(Boolean);
-                          setGameBoxBusy(self, fr ? 'Recherche d’un crack communautaire…' : 'Checking community crack…');
+                          setGameBoxBusy(self, t('checking-community-crack', 'Checking community crack…', 'Recherche d’un crack communautaire…'));
                           const cf = await crackFix.applyBestFix({
                             cacheDir: path.join(getUserDataPath(), 'cache/crackfiles'),
                             gameName: game?.name || '',
@@ -1761,23 +1720,17 @@ var app = {
                           });
                           if (cf && cf.applied) {
                             crackApplied = true;
-                            crackNote = fr
-                              ? `\nCrack communautaire : « ${cf.entry?.name} » appliqué (${(cf.files || []).length} fichier(s))`
-                              : `\nCommunity crack: "${cf.entry?.name}" applied (${(cf.files || []).length} file(s))`;
+                            crackNote = t('ncommunity-crack-x-applied-x-file-s', `\nCommunity crack: "${cf.entry?.name}" applied (${(cf.files || []).length} file(s))`, `\nCrack communautaire : « ${cf.entry?.name} » appliqué (${(cf.files || []).length} fichier(s))`);
                             debug.log(`[${appid}] CrakFiles (manual emu fix): applied "${cf.entry?.name}" via "${cf.matchedName || game?.name}" (${(cf.files || []).length} file(s))`);
                           } else if (cf && cf.skipped && cf.reason === 'already-applied') {
                             crackApplied = true;
-                            crackNote = fr
-                              ? `\nCrack communautaire : « ${cf.entry?.name} » déjà appliqué`
-                              : `\nCommunity crack: "${cf.entry?.name}" already applied`;
+                            crackNote = t('ncommunity-crack-x-already-applied', `\nCommunity crack: "${cf.entry?.name}" already applied`, `\nCrack communautaire : « ${cf.entry?.name} » déjà appliqué`);
                             debug.log(`[${appid}] CrakFiles (manual emu fix): already applied "${cf.entry?.name}" via "${cf.matchedName || game?.name}"`);
                           } else if (cf && cf.reason === 'pixeldrain-unavailable') {
                             // A crack matched but pixeldrain rate-limited it (captcha/paid) — can't be
                             // auto-fetched. Note it so the user knows to grab it manually; the emulator
                             // install still proceeds below.
-                            crackNote = fr
-                              ? `\nCrack communautaire trouvé mais limité par pixeldrain (captcha requis) — à télécharger à la main : ${cf.href || ''}`
-                              : `\nCommunity crack found but pixeldrain-rate-limited (captcha required) — download it manually: ${cf.href || ''}`;
+                            crackNote = t('ncommunity-crack-found-but-pixeldrain-rate-limited-captcha-requi', `\nCommunity crack found but pixeldrain-rate-limited (captcha required) — download it manually: ${cf.href || ''}`, `\nCrack communautaire trouvé mais limité par pixeldrain (captcha requis) — à télécharger à la main : ${cf.href || ''}`);
                             debug.log(`[${appid}] CrakFiles (manual emu fix): pixeldrain-unavailable (${cf.availability}) ${cf.href || ''}`);
                           } else {
                             debug.log(`[${appid}] CrakFiles (manual emu fix): nothing applied (${cf && cf.reason})`);
@@ -1796,12 +1749,10 @@ var app = {
                           const labels = candidates.map((c) => `${c.name} (${c.appid})`);
                           const pick = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
                             type: 'question',
-                            title: fr ? "Identifier le jeu (AppID Steam)" : 'Identify the game (Steam AppID)',
-                            message: fr ? `Quel jeu est « ${game.name} » ?` : `Which game is "${game.name}"?`,
-                            detail: fr
-                              ? 'Choisis la correspondance pour écrire le bon steam_appid.txt (succès + DLC corrects), ou ignore.'
-                              : 'Pick the match to write the correct steam_appid.txt (correct achievements + DLCs), or skip.',
-                            buttons: [...labels, fr ? 'Ignorer' : 'Skip'],
+                            title: t('identify-game-title', 'Identify the game (Steam AppID)', 'Identifier le jeu (AppID Steam)'),
+                            message: t('which-game-is-x', `Which game is "${game.name}"?`, `Quel jeu est « ${game.name} » ?`),
+                            detail: t('pick-the-match-to-write-the-correct-steam-appid-txt-correct-achi', 'Pick the match to write the correct steam_appid.txt (correct achievements + DLCs), or skip.', 'Choisis la correspondance pour écrire le bon steam_appid.txt (succès + DLC corrects), ou ignore.'),
+                            buttons: [...labels, t('skip', 'Skip', 'Ignorer')],
                             defaultId: 0,
                             cancelId: labels.length,
                             noLink: true,
@@ -1813,7 +1764,7 @@ var app = {
                       // 2 — detect where the dll currently lives. Both arches are handled: an existing
                       // steam_api.dll and/or steam_api64.dll is replaced in place; a folder with
                       // neither (fresh manual install) gets a 64-bit dll by default.
-                      setGameBoxBusy(self, fr ? 'Préparation…' : 'Preparing…');
+                      setGameBoxBusy(self, t('preparing', 'Preparing…', 'Préparation…'));
                       const emu = goldberg.detectEmulator(gameDir);
                       const detectedRuntimeExe = exeDetect.detect(gameDir, game?.name || '', { dllPaths: emu.dll });
                       const dllDirs = gbeInstaller.runtimeDllDirs({
@@ -1844,16 +1795,16 @@ var app = {
                           let pass = emuCfg.loginPassword;
                           if (!user)
                             user = await promptText(
-                              fr ? 'Identifiant Steam (COMPTE JETABLE uniquement) :' : 'Steam username (THROWAWAY account only):',
+                              t('steam-username-throwaway-account-only', 'Steam username (THROWAWAY account only):', 'Identifiant Steam (COMPTE JETABLE uniquement) :'),
                               ''
                             );
                           if (!user) return '\nAdvanced data: login cancelled';
-                          if (!pass) pass = await promptText(fr ? 'Mot de passe Steam :' : 'Steam password:', '', 'password');
+                          if (!pass) pass = await promptText(t('steam-password', 'Steam password:', 'Mot de passe Steam :'), '', 'password');
                           if (!pass) return '\nAdvanced data: login cancelled';
                           login = { username: user, password: pass };
                         }
                         try {
-                          setGameBoxBusy(self, fr ? 'Données avancées (generate_emu_config)…' : 'Advanced data (generate_emu_config)…');
+                          setGameBoxBusy(self, t('advanced-data-generate-emu-config', 'Advanced data (generate_emu_config)…', 'Données avancées (generate_emu_config)…'));
                           const genEmu = require(path.join(appPath, 'parser/genEmuConfig.js'));
                           const tool = await genEmu.ensureGenerateEmuConfig({
                             cacheDir: path.join(getUserDataPath(), 'cache/gse_emu_config'),
@@ -1885,13 +1836,13 @@ var app = {
                         const hasSteamStub = !crackApplied && !!(detectedRuntimeExe && detectedRuntimeExe.full && pe.detectSteamStub(detectedRuntimeExe.full));
                         const shouldRunSteamless = !crackApplied && !!(detectedRuntimeExe && detectedRuntimeExe.full && (emuCfg.steamlessAutoUnpack || hasSteamStub));
                         if (shouldRunSteamless) {
-                          setGameBoxBusy(self, fr ? 'Téléchargement de Steamless…' : 'Downloading Steamless…');
+                          setGameBoxBusy(self, t('downloading-steamless', 'Downloading Steamless…', 'Téléchargement de Steamless…'));
                           const steamlessMod = require(path.join(appPath, 'parser/steamless.js'));
                           let stripped = false;
                           let reason = '';
                           try {
                             const cli = await steamlessMod.ensureSteamless({ cacheDir: path.join(getUserDataPath(), 'cache/steamless'), log: debug });
-                            setGameBoxBusy(self, fr ? 'Retrait du DRM…' : 'Removing DRM…');
+                            setGameBoxBusy(self, t('removing-drm', 'Removing DRM…', 'Retrait du DRM…'));
                             const r = await steamlessMod.stripDrm({ steamless: cli, exePath: detectedRuntimeExe.full, experimental: !!emuCfg.steamlessExperimental, log: debug });
                             stripped = !!(r && r.stripped);
                             reason = (r && r.reason) || '';
@@ -1900,11 +1851,11 @@ var app = {
                             debug.log(`[${appid}] Steamless failed => ${e}`);
                           }
                           if (stripped) {
-                            drmNote = fr ? `\nDRM : SteamStub retiré (${path.basename(detectedRuntimeExe.full)})` : `\nDRM: SteamStub removed (${path.basename(detectedRuntimeExe.full)})`;
+                            drmNote = t('ndrm-steamstub-removed-x', `\nDRM: SteamStub removed (${path.basename(detectedRuntimeExe.full)})`, `\nDRM : SteamStub retiré (${path.basename(detectedRuntimeExe.full)})`);
                           } else if (hasSteamStub) {
-                            drmNote = fr ? `\nDRM : SteamStub présent, Steamless a échoué (${reason}) ; la DLL seule risque de ne pas charger` : `\nDRM: SteamStub present, Steamless failed (${reason}); the plain DLL may not load`;
+                            drmNote = t('ndrm-steamstub-present-steamless-failed-x-the-plain-dll-may-not-', `\nDRM: SteamStub present, Steamless failed (${reason}); the plain DLL may not load`, `\nDRM : SteamStub présent, Steamless a échoué (${reason}) ; la DLL seule risque de ne pas charger`);
                           } else if (emuCfg.steamlessAutoUnpack) {
-                            drmNote = fr ? `\nDRM : ${reason === 'no-steamstub' ? 'pas de SteamStub' : reason}` : `\nDRM: ${reason === 'no-steamstub' ? 'no SteamStub' : reason}`;
+                            drmNote = t('ndrm-x', `\nDRM: ${reason === 'no-steamstub' ? 'no SteamStub' : reason}`, `\nDRM : ${reason === 'no-steamstub' ? 'pas de SteamStub' : reason}`);
                           }
                         }
                       } catch (e) {
@@ -1912,7 +1863,7 @@ var app = {
                       }
 
                       // Download/cache the GBE Fork build (steam_api DLLs).
-                      setGameBoxBusy(self, fr ? 'Téléchargement de GBE Fork…' : 'Downloading GBE Fork…');
+                      setGameBoxBusy(self, t('downloading-gbe-fork', 'Downloading GBE Fork…', 'Téléchargement de GBE Fork…'));
                       const cacheDir = path.join(getUserDataPath(), 'cache/gse_fork');
                       const dlls = await gbeInstaller.ensureEmulatorDlls({ cacheDir, force: forceUpdate, log: debug });
 
@@ -1931,7 +1882,7 @@ var app = {
 
                       {
                         // ── Standalone (replace steam_api dll) — the only emulator-apply path ──
-                        setGameBoxBusy(self, fr ? 'Installation de la DLL…' : 'Installing the DLL…');
+                        setGameBoxBusy(self, t('installing-the-dll', 'Installing the DLL…', 'Installation de la DLL…'));
                         const pe = require(path.join(appPath, 'util/pe.js'));
                         const missingArch = detectedRuntimeExe && detectedRuntimeExe.full ? pe.exeArch(detectedRuntimeExe.full) : 'x64';
                         const installResult = gbeInstaller.installDlls({
@@ -1954,7 +1905,7 @@ var app = {
                         if (emuCfg.apiCheckBypass && detectedRuntimeExe && detectedRuntimeExe.full) {
                           try {
                             const apiCheckBypass = require(path.join(appPath, 'parser/apiCheckBypass.js'));
-                            setGameBoxBusy(self, fr ? 'Contournement du contrôle API Steam…' : 'Steam API check bypass…');
+                            setGameBoxBusy(self, t('steam-api-check-bypass', 'Steam API check bypass…', 'Contournement du contrôle API Steam…'));
                             const bypassDlls = await apiCheckBypass.ensureBypassDlls({ cacheDir: path.join(getUserDataPath(), 'cache/api_check_bypass'), log: debug });
                             const rb = apiCheckBypass.applyBypass({ gameDir, exePath: detectedRuntimeExe.full, dlls: bypassDlls, log: debug });
                             debug.log(`[${writableAppid}] Steam API check bypass: ${rb.applied ? `applied (${rb.dll})` : `skipped (${rb.reason})`}`);
@@ -1962,7 +1913,7 @@ var app = {
                             debug.log(`[${writableAppid}] Steam API check bypass failed => ${e}`);
                           }
                         }
-                        setGameBoxBusy(self, fr ? 'Configuration (succès + DLC)…' : 'Configuring (achievements + DLCs)…');
+                        setGameBoxBusy(self, t('configuring-achievements-dlcs', 'Configuring (achievements + DLCs)…', 'Configuration (succès + DLC)…'));
                         let repairedDirs = 0;
                         const diagnosisLines = [];
                         const repairErrors = [];
@@ -1976,8 +1927,8 @@ var app = {
                         const installedDlls = [...new Set(installResult.perDir.flatMap((d) => d.wrote))].join(', ') || 'steam_api64.dll';
                         remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                           type: 'info',
-                          title: 'GBE Fork installed',
-                          message: `${installedDlls} installed to ${installResult.installed} location(s)`,
+                          title: t('gbe-fork-installed', 'GBE Fork installed', 'GBE Fork installé'),
+                          message: t('gbe-fork-installed-message', `${installedDlls} installed to ${installResult.installed} location(s)`, `${installedDlls} installée(s) dans ${installResult.installed} emplacement(s)`),
                           detail:
                             dllDirs.join('\n') +
                             `\n\nVersion: ${dlls.tag || 'unknown'}` +
@@ -1995,8 +1946,8 @@ var app = {
                     } catch (err) {
                       remote.dialog.showMessageBoxSync({
                         type: 'error',
-                        title: 'GBE Fork install failed',
-                        message: 'Could not download or install GBE Fork.',
+                        title: t('gbe-fork-install-failed', 'GBE Fork install failed', 'Échec de l\'installation de GBE Fork'),
+                        message: t('could-not-download-or-install-gbe-fork', 'Could not download or install GBE Fork.', 'Impossible de télécharger ou d\'installer GBE Fork.'),
                         detail: formatErr(err),
                       });
                     } finally {
@@ -2014,13 +1965,12 @@ var app = {
                   icon: menuIcon('file-text.png'),
                   label: $('#game-list').attr('data-ctx-removedrm') || 'Remove Steam DRM (Steamless)…',
                   async click() {
-                    const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
                     try {
                       const game = list.find((g) => g.appid == appid);
                       let gameDir = game?.gameDir && fs.existsSync(game.gameDir) ? game.gameDir : null;
                       if (!gameDir) {
                         const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-                          title: fr ? "Choisir le dossier d'installation du jeu" : "Select the game's install folder",
+                          title: t('select-game-install-folder', "Select the game's install folder", "Choisir le dossier d'installation du jeu"),
                           properties: ['openDirectory', 'dontAddToRecent'],
                         });
                         if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
@@ -2034,18 +1984,16 @@ var app = {
 
                       const confirm = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
                         type: 'question',
-                        title: fr ? 'Retirer le DRM Steam (Steamless)' : 'Remove Steam DRM (Steamless)',
+                        title: t('remove-steam-drm-steamless', 'Remove Steam DRM (Steamless)', 'Retirer le DRM Steam (Steamless)'),
                         message: exePath
-                          ? fr
-                            ? `Retirer le SteamStub de : ${path.basename(exePath)} ?`
-                            : `Remove SteamStub from: ${path.basename(exePath)}?`
-                          : fr
-                          ? 'Aucun exe détecté — en choisir un ?'
-                          : 'No exe detected — choose one?',
-                        detail: fr
-                          ? "Modifie l'exécutable du jeu (l'original est conservé en .steamstub.bak). Sans effet si le jeu n'a pas de DRM SteamStub."
-                          : 'Modifies the game executable (the original is kept as .steamstub.bak). No effect if the game has no SteamStub DRM.',
-                        buttons: fr ? ['Annuler', 'Choisir un .exe…', 'Retirer le DRM'] : ['Cancel', 'Choose an .exe…', 'Remove DRM'],
+                          ? t('remove-steamstub-from-x', `Remove SteamStub from: ${path.basename(exePath)}?`, `Retirer le SteamStub de : ${path.basename(exePath)} ?`)
+                          : t('no-exe-detected-choose-one', 'No exe detected — choose one?', 'Aucun exe détecté — en choisir un ?'),
+                        detail: t(
+                          'steamless-detail',
+                          'Modifies the game executable (the original is kept as .steamstub.bak). No effect if the game has no SteamStub DRM.',
+                          "Modifie l'exécutable du jeu (l'original est conservé en .steamstub.bak). Sans effet si le jeu n'a pas de DRM SteamStub."
+                        ),
+                        buttons: [t('cancel', 'Cancel', 'Annuler'), t('choose-an-exe', 'Choose an .exe…', 'Choisir un .exe…'), t('remove-drm', 'Remove DRM', 'Retirer le DRM')],
                         defaultId: exePath ? 2 : 1,
                         cancelId: 0,
                         noLink: true,
@@ -2053,7 +2001,7 @@ var app = {
                       if (confirm.response === 0) return;
                       if (confirm.response === 1) {
                         const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-                          title: fr ? "Choisir l'exécutable du jeu" : 'Select the game executable',
+                          title: t('select-game-executable', 'Select the game executable', "Choisir l'exécutable du jeu"),
                           defaultPath: gameDir,
                           filters: [{ name: 'Executable', extensions: ['exe'] }],
                           properties: ['openFile', 'dontAddToRecent'],
@@ -2063,29 +2011,23 @@ var app = {
                       }
                       if (!exePath) return;
 
-                      setGameBoxBusy(self, fr ? 'Téléchargement de Steamless…' : 'Downloading Steamless…');
+                      setGameBoxBusy(self, t('downloading-steamless', 'Downloading Steamless…', 'Téléchargement de Steamless…'));
                       const steamlessMod = require(path.join(appPath, 'parser/steamless.js'));
                       const cli = await steamlessMod.ensureSteamless({ cacheDir: path.join(getUserDataPath(), 'cache/steamless'), log: debug });
-                      setGameBoxBusy(self, fr ? 'Retrait du DRM…' : 'Removing DRM…');
+                      setGameBoxBusy(self, t('removing-drm', 'Removing DRM…', 'Retrait du DRM…'));
                       const result = await steamlessMod.stripDrm({ steamless: cli, exePath, log: debug });
 
                       remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                         type: result.stripped ? 'info' : 'warning',
-                        title: 'Steamless',
+                        title: t('steamless', 'Steamless'),
                         message: result.stripped
-                          ? fr
-                            ? 'DRM SteamStub retiré.'
-                            : 'SteamStub DRM removed.'
+                          ? t('steamstub-drm-removed', 'SteamStub DRM removed.', 'DRM SteamStub retiré.')
                           : result.reason === 'no-steamstub'
-                          ? fr
-                            ? 'Aucun DRM SteamStub détecté — exe inchangé.'
-                            : 'No SteamStub DRM detected — exe left unchanged.'
-                          : fr
-                          ? 'Échec du retrait du DRM.'
-                          : 'DRM removal failed.',
+                          ? t('no-steamstub-drm-detected-exe-left-unchanged', 'No SteamStub DRM detected — exe left unchanged.', 'Aucun DRM SteamStub détecté — exe inchangé.')
+                          : t('drm-removal-failed', 'DRM removal failed.', 'Échec du retrait du DRM.'),
                         detail:
                           path.basename(exePath) +
-                          (result.stripped ? `\n${fr ? 'Original conservé :' : 'Original kept as:'} ${path.basename(result.backup)}` : '') +
+                          (result.stripped ? `\n${t('original-kept-as', 'Original kept as:', 'Original conservé :')} ${path.basename(result.backup)}` : '') +
                           (result.reason && result.reason !== 'no-steamstub' && result.reason !== 'unpacked' ? `\n${result.reason}` : '') +
                           `\n\nSteamless ${cli.tag || ''}`,
                         noLink: true,
@@ -2093,8 +2035,8 @@ var app = {
                     } catch (err) {
                       remote.dialog.showMessageBoxSync({
                         type: 'error',
-                        title: fr ? 'Échec de Steamless' : 'Steamless failed',
-                        message: fr ? 'Impossible de retirer le DRM Steam.' : 'Could not remove the Steam DRM.',
+                        title: t('steamless-failed', 'Steamless failed', 'Échec de Steamless'),
+                        message: t('could-not-remove-the-steam-drm', 'Could not remove the Steam DRM.', 'Impossible de retirer le DRM Steam.'),
                         detail: `${err}`,
                       });
                     } finally {
@@ -2113,7 +2055,6 @@ var app = {
                   icon: menuIcon('file-text.png'),
                   label: $('#game-list').attr('data-ctx-crackfix') || 'Community fix (CrakFiles)…',
                   async click() {
-                    const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
                     // Hoisted so the catch's "pixeldrain captcha → apply a manually-downloaded file" flow
                     // can reach the resolved game / fix / install dir.
                     let game = null;
@@ -2124,21 +2065,21 @@ var app = {
                     try {
                       game = list.find((g) => g.appid == appid);
                       if (!game?.name) {
-                        remote.dialog.showMessageBoxSync({ type: 'info', title: 'CrakFiles', message: fr ? 'Nom de jeu inconnu.' : 'Unknown game name.' });
+                        remote.dialog.showMessageBoxSync({ type: 'info', title: t('crakfiles', 'CrakFiles'), message: t('unknown-game-name', 'Unknown game name.', 'Nom de jeu inconnu.') });
                         return;
                       }
                       const cacheDir = path.join(getUserDataPath(), 'cache/crackfiles');
-                      setGameBoxBusy(self, fr ? 'Recherche de fixes…' : 'Searching fixes…');
+                      setGameBoxBusy(self, t('searching-fixes', 'Searching fixes…', 'Recherche de fixes…'));
                       const cfList = await crackFix.fetchList({ cacheDir, log: debug });
                       clearGameBoxBusy(self);
                       const matches = crackFix.findFixes(cfList, game.name, { limit: 5 });
                       if (matches.length === 0) {
                         const c = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                           type: 'info',
-                          title: 'CrakFiles',
-                          message: fr ? `Aucun fix trouvé pour « ${game.name} ».` : `No fix found for "${game.name}".`,
-                          detail: fr ? 'La liste CrakFiles est communautaire et limitée.' : 'The CrakFiles list is community-maintained and limited.',
-                          buttons: ['OK', fr ? 'Ouvrir CrakFiles' : 'Open CrakFiles'],
+                          title: t('crakfiles', 'CrakFiles'),
+                          message: t('no-fix-found-for-x', `No fix found for "${game.name}".`, `Aucun fix trouvé pour « ${game.name} ».`),
+                          detail: t('the-crakfiles-list-is-community-maintained-and-limited', 'The CrakFiles list is community-maintained and limited.', 'La liste CrakFiles est communautaire et limitée.'),
+                          buttons: ['OK', t('open-crakfiles', 'Open CrakFiles', 'Ouvrir CrakFiles')],
                           defaultId: 0,
                           cancelId: 0,
                           noLink: true,
@@ -2162,18 +2103,23 @@ var app = {
                       const badges = (fix.badges || []).join(', ');
                       const choice = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
                         type: 'warning',
-                        title: 'CrakFiles',
-                        message: fr ? `Fix trouvé : ${top.name}` : `Fix found: ${top.name}`,
+                        title: t('crakfiles', 'CrakFiles'),
+                        message: t('fix-found-x', `Fix found: ${top.name}`, `Fix trouvé : ${top.name}`),
                         detail:
                           (fix.filename ? `${fix.filename}${badges ? ` [${badges}]` : ''}\n` : '') +
-                          (fr
-                            ? "\n⚠ Un crack communautaire peut écraser des fichiers du jeu (dont steam_api(64).dll). La détection des succès passe par l'émulateur — si le crack remplace steam_api, relance « Appliquer le fix émulateur » après. Les fichiers écrasés sont sauvegardés."
-                            : '\n⚠ A community crack may overwrite game files (incl. steam_api(64).dll). Achievement detection runs through the emulator — if the crack replaces steam_api, re-run "Apply emulator fix" afterwards. Overwritten files are backed up.'),
+                          t(
+                            'crackfix-overwrite-warning',
+                            '\n⚠ A community crack may overwrite game files (incl. steam_api(64).dll). Achievement detection runs through the emulator — if the crack replaces steam_api, re-run "Apply emulator fix" afterwards. Overwritten files are backed up.',
+                            "\n⚠ Un crack communautaire peut écraser des fichiers du jeu (dont steam_api(64).dll). La détection des succès passe par l'émulateur — si le crack remplace steam_api, relance « Appliquer le fix émulateur » après. Les fichiers écrasés sont sauvegardés."
+                          ),
                         // NB: Windows treats `&` in a button label as the Alt-mnemonic marker and hides
                         // it ("Download  apply"); double it so a literal ampersand shows.
-                        buttons: fr
-                          ? ['Annuler', 'Ouvrir la page de téléchargement', 'Ouvrir la source', 'Télécharger && appliquer']
-                          : ['Cancel', 'Open download page', 'Open source', 'Download && apply'],
+                        buttons: [
+                          t('cancel', 'Cancel', 'Annuler'),
+                          t('open-download-page', 'Open download page', 'Ouvrir la page de téléchargement'),
+                          t('open-source', 'Open source', 'Ouvrir la source'),
+                          t('download-apply', 'Download && apply', 'Télécharger && appliquer'),
+                        ],
                         defaultId: 1,
                         cancelId: 0,
                         noLink: true,
@@ -2192,7 +2138,7 @@ var app = {
                       gameDir = game.gameDir && fs.existsSync(game.gameDir) ? game.gameDir : null;
                       if (!gameDir) {
                         const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-                          title: fr ? "Dossier d'installation du jeu" : "Game install folder",
+                          title: t('game-install-folder', 'Game install folder', "Dossier d'installation du jeu"),
                           properties: ['openDirectory', 'dontAddToRecent'],
                         });
                         if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
@@ -2201,10 +2147,10 @@ var app = {
                       if (!crackFix.pixeldrainDirectUrl(fix.href)) {
                         const c = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                           type: 'info',
-                          title: 'CrakFiles',
-                          message: fr ? 'Ce lien ne peut pas être appliqué automatiquement.' : 'This link cannot be applied automatically.',
-                          detail: fr ? 'Ouvre la page de téléchargement et applique-le manuellement.' : 'Open the download page and apply it manually.',
-                          buttons: ['OK', fr ? 'Ouvrir' : 'Open'],
+                          title: t('crakfiles', 'CrakFiles'),
+                          message: t('this-link-cannot-be-applied-automatically', 'This link cannot be applied automatically.', 'Ce lien ne peut pas être appliqué automatiquement.'),
+                          detail: t('open-the-download-page-and-apply-it-manually', 'Open the download page and apply it manually.', 'Ouvre la page de téléchargement et applique-le manuellement.'),
+                          buttons: ['OK', t('open', 'Open', 'Ouvrir')],
                           defaultId: 1,
                           cancelId: 0,
                           noLink: true,
@@ -2212,18 +2158,16 @@ var app = {
                         if (c === 1 && fix.href) remote.shell.openExternal(fix.href);
                         return;
                       }
-                      setGameBoxBusy(self, fr ? 'Téléchargement du fix…' : 'Downloading fix…');
+                      setGameBoxBusy(self, t('downloading-fix', 'Downloading fix…', 'Téléchargement du fix…'));
                       const res = await crackFix.downloadAndApply({ fix, gameDir, cacheDir, entryName: top.name, proxyFallback: (app.config?.emulator || {}).pixeldrainProxyFallback !== false, log: debug });
                       remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                         type: 'info',
-                        title: 'CrakFiles',
-                        message: fr ? `${res.applied.length} fichier(s) appliqué(s).` : `Applied ${res.applied.length} file(s).`,
+                        title: t('crakfiles', 'CrakFiles'),
+                        message: t('applied-x-file-s', `Applied ${res.applied.length} file(s).`, `${res.applied.length} fichier(s) appliqué(s).`),
                         detail:
                           gameDir +
-                          (res.backupDir ? `\n${fr ? 'Sauvegarde :' : 'Backup:'} ${res.backupDir}` : '') +
-                          (fr
-                            ? '\n\nSi steam_api a été remplacé, relance « Appliquer le fix émulateur » pour garder la détection des succès.'
-                            : '\n\nIf steam_api was replaced, re-run "Apply emulator fix" to keep achievement detection.'),
+                          (res.backupDir ? `\n${t('backup', 'Backup:', 'Sauvegarde :')} ${res.backupDir}` : '') +
+                          (t('n-nif-steam-api-was-replaced-re-run-apply-emulator-fix-to-keep-a', '\n\nIf steam_api was replaced, re-run "Apply emulator fix" to keep achievement detection.', '\n\nSi steam_api a été remplacé, relance « Appliquer le fix émulateur » pour garder la détection des succès.')),
                         noLink: true,
                       });
                     } catch (err) {
@@ -2234,15 +2178,18 @@ var app = {
                         const href = err.href || fix?.href;
                         const choice = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
                           type: 'warning',
-                          title: 'CrakFiles',
-                          message: fr ? 'Captcha pixeldrain requis pour ce fichier.' : 'Pixeldrain captcha required for this file.',
-                          detail:
-                            (fr
-                              ? "Pixeldrain limite ce fichier (trop de téléchargements) : il faut résoudre un captcha dans le navigateur.\n\n1) Ouvre la page et télécharge le .rar.\n2) Reviens et sélectionne le fichier téléchargé — AW l'extraira et l'appliquera automatiquement (les fichiers écrasés sont sauvegardés)."
-                              : "Pixeldrain rate-limited this file (too many downloads): you must solve a captcha in the browser.\n\n1) Open the page and download the .rar.\n2) Come back and select the downloaded file — AW will extract and apply it automatically (overwritten files are backed up)."),
-                          buttons: fr
-                            ? ['Annuler', 'Ouvrir la page', 'Sélectionner le fichier téléchargé…']
-                            : ['Cancel', 'Open page', 'Select downloaded file…'],
+                          title: t('crakfiles', 'CrakFiles'),
+                          message: t('pixeldrain-captcha-required-for-this-file', 'Pixeldrain captcha required for this file.', 'Captcha pixeldrain requis pour ce fichier.'),
+                          detail: t(
+                            'pixeldrain-rate-limited',
+                            "Pixeldrain rate-limited this file (too many downloads): you must solve a captcha in the browser.\n\n1) Open the page and download the .rar.\n2) Come back and select the downloaded file — AW will extract and apply it automatically (overwritten files are backed up).",
+                            "Pixeldrain limite ce fichier (trop de téléchargements) : il faut résoudre un captcha dans le navigateur.\n\n1) Ouvre la page et télécharge le .rar.\n2) Reviens et sélectionne le fichier téléchargé — AW l'extraira et l'appliquera automatiquement (les fichiers écrasés sont sauvegardés)."
+                          ),
+                          buttons: [
+                            t('cancel', 'Cancel', 'Annuler'),
+                            t('open-page', 'Open page', 'Ouvrir la page'),
+                            t('select-downloaded-file', 'Select downloaded file…', 'Sélectionner le fichier téléchargé…'),
+                          ],
                           defaultId: 1,
                           cancelId: 0,
                           noLink: true,
@@ -2254,12 +2201,10 @@ var app = {
                           // them pick the file. Cancelling here just leaves the page open.
                           const after = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
                             type: 'info',
-                            title: 'CrakFiles',
-                            message: fr ? 'Une fois le téléchargement terminé…' : 'Once the download is finished…',
-                            detail: fr
-                              ? 'Sélectionne le fichier téléchargé (.rar/.zip/.7z) pour l’appliquer.'
-                              : 'Select the downloaded file (.rar/.zip/.7z) to apply it.',
-                            buttons: fr ? ['Annuler', 'Sélectionner le fichier…'] : ['Cancel', 'Select file…'],
+                            title: t('crakfiles', 'CrakFiles'),
+                            message: t('once-the-download-is-finished', 'Once the download is finished…', 'Une fois le téléchargement terminé…'),
+                            detail: t('select-the-downloaded-file-rar-zip-7z-to-apply-it', 'Select the downloaded file (.rar/.zip/.7z) to apply it.', 'Sélectionne le fichier téléchargé (.rar/.zip/.7z) pour l’appliquer.'),
+                            buttons: [t('cancel', 'Cancel', 'Annuler'), t('select-file', 'Select file…', 'Sélectionner le fichier…')],
                             defaultId: 1,
                             cancelId: 0,
                             noLink: true,
@@ -2268,11 +2213,11 @@ var app = {
                         }
                         // Pick + apply the locally-downloaded archive.
                         const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-                          title: fr ? 'Sélectionne le crack téléchargé' : 'Select the downloaded crack',
+                          title: t('select-the-downloaded-crack', 'Select the downloaded crack', 'Sélectionne le crack téléchargé'),
                           properties: ['openFile', 'dontAddToRecent'],
                           filters: [
-                            { name: fr ? 'Archives' : 'Archives', extensions: ['rar', 'zip', '7z'] },
-                            { name: fr ? 'Tous les fichiers' : 'All files', extensions: ['*'] },
+                            { name: t('archives', 'Archives', 'Archives'), extensions: ['rar', 'zip', '7z'] },
+                            { name: t('all-files', 'All files', 'Tous les fichiers'), extensions: ['*'] },
                           ],
                         });
                         if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
@@ -2281,14 +2226,14 @@ var app = {
                           (game?.gameDir && fs.existsSync(game.gameDir) ? game.gameDir : null);
                         if (!applyDir) {
                           const pd = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-                            title: fr ? "Dossier d'installation du jeu" : 'Game install folder',
+                            title: t('game-install-folder', 'Game install folder', "Dossier d'installation du jeu"),
                             properties: ['openDirectory', 'dontAddToRecent'],
                           });
                           if (pd.canceled || !pd.filePaths || pd.filePaths.length === 0) return;
                           applyDir = pd.filePaths[0];
                         }
                         try {
-                          setGameBoxBusy(self, fr ? 'Application du fichier…' : 'Applying file…');
+                          setGameBoxBusy(self, t('applying-file', 'Applying file…', 'Application du fichier…'));
                           const res = await crackFix.applyLocalArchive({
                             archivePath: picked.filePaths[0],
                             gameDir: applyDir,
@@ -2299,21 +2244,19 @@ var app = {
                           clearGameBoxBusy(self);
                           remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                             type: 'info',
-                            title: 'CrakFiles',
-                            message: fr ? `${res.applied.length} fichier(s) appliqué(s).` : `Applied ${res.applied.length} file(s).`,
+                            title: t('crakfiles', 'CrakFiles'),
+                            message: t('applied-x-file-s', `Applied ${res.applied.length} file(s).`, `${res.applied.length} fichier(s) appliqué(s).`),
                             detail:
                               applyDir +
-                              (res.backupDir ? `\n${fr ? 'Sauvegarde :' : 'Backup:'} ${res.backupDir}` : '') +
-                              (fr
-                                ? '\n\nSi steam_api a été remplacé, relance « Appliquer le fix émulateur » pour garder la détection des succès.'
-                                : '\n\nIf steam_api was replaced, re-run "Apply emulator fix" to keep achievement detection.'),
+                              (res.backupDir ? `\n${t('backup', 'Backup:', 'Sauvegarde :')} ${res.backupDir}` : '') +
+                              (t('n-nif-steam-api-was-replaced-re-run-apply-emulator-fix-to-keep-a', '\n\nIf steam_api was replaced, re-run "Apply emulator fix" to keep achievement detection.', '\n\nSi steam_api a été remplacé, relance « Appliquer le fix émulateur » pour garder la détection des succès.')),
                             noLink: true,
                           });
                         } catch (e2) {
-                          remote.dialog.showMessageBoxSync({ type: 'error', title: 'CrakFiles', message: fr ? 'Échec de l’application.' : 'Apply failed.', detail: formatErr(e2) });
+                          remote.dialog.showMessageBoxSync({ type: 'error', title: t('crakfiles', 'CrakFiles'), message: t('apply-failed', 'Apply failed.', 'Échec de l’application.'), detail: formatErr(e2) });
                         }
                       } else {
-                        remote.dialog.showMessageBoxSync({ type: 'error', title: 'CrakFiles', message: fr ? 'Échec.' : 'Failed.', detail: formatErr(err) });
+                        remote.dialog.showMessageBoxSync({ type: 'error', title: t('crakfiles', 'CrakFiles'), message: t('failed', 'Failed.', 'Échec.'), detail: formatErr(err) });
                       }
                     } finally {
                       clearGameBoxBusy(self);
@@ -2346,7 +2289,7 @@ var app = {
                   for (const issue of report.issues) lines.push(`[${issue.level}] ${issue.code}: ${issue.message}`);
                   remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                     type: report.ok ? 'info' : 'warning',
-                    title: `Uplay R2 diagnosis — ${game?.name || appid}`,
+                    title: t('uplay-r2-diagnosis-title', `Uplay R2 diagnosis — ${game?.name || appid}`, `Diagnostic Uplay R2 — ${game?.name || appid}`),
                     message: report.ok ? 'Setup looks valid.' : 'Problems were detected.',
                     detail: lines.join('\n'),
                     noLink: true,
@@ -2358,41 +2301,36 @@ var app = {
               emulatorMenu.append(
                 new MenuItem({
                   icon: menuIcon('file-text.png'),
-                  label: contextIsFrench
-                    ? 'Appliquer le correctif émulateur (Uplay R2)…'
-                    : $('#game-list').attr('data-ctx-installuplayr2') || 'Apply emulator fix (Uplay R2)…',
+                  label:
+                    $('#game-list').attr('data-ctx-installuplayr2') ||
+                    t('apply-emulator-fix-uplay-r2', 'Apply emulator fix (Uplay R2)…', 'Appliquer le correctif émulateur (Uplay R2)…'),
                   async click() {
-                    const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
                     try {
                       const game = list.find((g) => g.appid == appid);
                       let gameDir = game?.gameDir && fs.existsSync(game.gameDir) ? game.gameDir : null;
                       if (!gameDir) {
                         const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-                          title: "Select the game's install folder (where the Uplay R2 loader .dll should go)",
-                          buttonLabel: 'Install here',
+                          title: t('select-install-folder-uplay-r2-loader', "Select the game's install folder (where the Uplay R2 loader .dll should go)", "Sélectionne le dossier d'installation du jeu (où doit aller la .dll du loader Uplay R2)"),
+                          buttonLabel: t('install-here', 'Install here', 'Installer ici'),
                           properties: ['openDirectory', 'dontAddToRecent'],
                         });
                         if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
                         gameDir = picked.filePaths[0];
                       }
 
-                      setGameBoxBusy(self, fr ? 'Résolution du jeu Steam…' : 'Resolving the Steam equivalent…');
+                      setGameBoxBusy(self, t('resolving-the-steam-equivalent', 'Resolving the Steam equivalent…', 'Résolution du jeu Steam…'));
                       const mapping = uplayR2.resolveSteamMapping({ appid, name: game?.name, gameDir });
                       if (!mapping) {
                         remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                           type: 'warning',
-                          title: fr ? 'Jeu Steam introuvable' : 'No Steam equivalent found',
-                          message: fr
-                            ? "Ce jeu Ubisoft n'a pas de correspondance connue dans uplay-steam.json."
-                            : 'This Ubisoft game has no known match in uplay-steam.json.',
-                          detail: fr
-                            ? 'Le fix Uplay R2 a besoin de la version Steam du jeu pour récupérer le schéma des succès.'
-                            : 'The Uplay R2 fix needs the Steam version of the game to fetch the achievement schema.',
+                          title: t('no-steam-equivalent-found', 'No Steam equivalent found', 'Jeu Steam introuvable'),
+                          message: t('uplay-no-steam-match', 'This Ubisoft game has no known match in uplay-steam.json.', "Ce jeu Ubisoft n'a pas de correspondance connue dans uplay-steam.json."),
+                          detail: t('the-uplay-r2-fix-needs-the-steam-version-of-the-game-to-fetch-th', 'The Uplay R2 fix needs the Steam version of the game to fetch the achievement schema.', 'Le fix Uplay R2 a besoin de la version Steam du jeu pour récupérer le schéma des succès.'),
                         });
                         return;
                       }
 
-                      setGameBoxBusy(self, fr ? 'Récupération du schéma Steam…' : 'Fetching the Steam schema…');
+                      setGameBoxBusy(self, t('fetching-the-steam-schema', 'Fetching the Steam schema…', 'Récupération du schéma Steam…'));
                       let schema = null;
                       try {
                         schema = await steamParser.getGameData({
@@ -2409,13 +2347,9 @@ var app = {
                       if (!prefixInfo) {
                         remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                           type: 'warning',
-                          title: fr ? 'Jeu non pris en charge' : 'Unsupported game',
-                          message: fr
-                            ? 'Les noms de succès Steam de ce jeu ne suivent pas le format <préfixe><chiffres> requis.'
-                            : "This game's Steam achievement names don't follow the required <prefix><digits> pattern.",
-                          detail: fr
-                            ? 'Le mappage automatique vers Goldberg Uplay R2 ne peut pas être généré pour ce jeu.'
-                            : 'The automatic Goldberg Uplay R2 mapping cannot be generated for this game.',
+                          title: t('unsupported-game', 'Unsupported game', 'Jeu non pris en charge'),
+                          message: t('uplay-prefix-pattern-mismatch', "This game's Steam achievement names don't follow the required <prefix><digits> pattern.", 'Les noms de succès Steam de ce jeu ne suivent pas le format <préfixe><chiffres> requis.'),
+                          detail: t('the-automatic-goldberg-uplay-r2-mapping-cannot-be-generated-for-', 'The automatic Goldberg Uplay R2 mapping cannot be generated for this game.', 'Le mappage automatique vers Goldberg Uplay R2 ne peut pas être généré pour ce jeu.'),
                         });
                         return;
                       }
@@ -2428,17 +2362,15 @@ var app = {
                       const dllDirs = emu.dll.length > 0 ? [...new Set(emu.dll.map((f) => path.dirname(f)))] : [gameDir];
                       let installResult = { installed: 0, backedUp: 0 };
                       if (emu.dll.length === 0) {
-                        setGameBoxBusy(self, fr ? 'Installation de la DLL…' : 'Installing the DLL…');
+                        setGameBoxBusy(self, t('installing-the-dll', 'Installing the DLL…', 'Installation de la DLL…'));
                         const cacheDir = path.join(getUserDataPath(), 'cache/uplayR2');
                         const dlls = uplayR2Installer.ensureEmulatorDlls({ cacheDir });
                         if (!dlls.seeded) {
                           remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                             type: 'warning',
-                            title: fr ? 'DLL Uplay R2 manquantes' : 'Uplay R2 dll not seeded',
-                            message: fr ? 'Aucun fichier trouvé dans le cache Uplay R2.' : 'No files found in the Uplay R2 cache.',
-                            detail: fr
-                              ? `Copie une fois les fichiers uplay_r2_loader(64).dll / upc_r2_loader(64).dll dans :\n${cacheDir}`
-                              : `Copy the uplay_r2_loader(64).dll / upc_r2_loader(64).dll files into (one-time setup):\n${cacheDir}`,
+                            title: t('uplay-r2-dll-not-seeded', 'Uplay R2 dll not seeded', 'DLL Uplay R2 manquantes'),
+                            message: t('no-files-found-in-the-uplay-r2-cache', 'No files found in the Uplay R2 cache.', 'Aucun fichier trouvé dans le cache Uplay R2.'),
+                            detail: t('copy-the-uplay-r2-loader-64-dll-upc-r2-loader-64-dll-files-into-', `Copy the uplay_r2_loader(64).dll / upc_r2_loader(64).dll files into (one-time setup):\n${cacheDir}`, `Copie une fois les fichiers uplay_r2_loader(64).dll / upc_r2_loader(64).dll dans :\n${cacheDir}`),
                           });
                           remote.shell.openPath(cacheDir);
                           return;
@@ -2462,26 +2394,26 @@ var app = {
                         if (betterCached) {
                           const choice = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                             type: 'question',
-                            title: fr ? 'Mettre à jour le loader Uplay R2 ?' : 'Update the Uplay R2 loader?',
-                            message: fr
-                              ? "Ce jeu utilise un loader trop ancien pour rediriger les succès."
-                              : 'This game uses a loader too old to redirect achievements.',
-                            detail: fr
-                              ? "Le correctif fonctionne sans mise à jour : Achievement Watcher lit le dossier de sauvegarde de l'émulateur.\n\nMettre à jour le loader permet la redirection vers GSE Saves, mais remplace une DLL avec laquelle le jeu se lance actuellement (l'originale est conservée en .bak)."
-                              : "The fix works without updating: Achievement Watcher reads the emulator's own save folder.\n\nUpdating enables the redirect into GSE Saves, but replaces a DLL the game currently launches with (the original is kept as .bak).",
-                            buttons: fr ? ['Garder le loader actuel', 'Mettre à jour'] : ['Keep the current loader', 'Update'],
+                            title: t('update-the-uplay-r2-loader', 'Update the Uplay R2 loader?', 'Mettre à jour le loader Uplay R2 ?'),
+                            message: t('uplay-r2-old-loader-message', 'This game uses a loader too old to redirect achievements.', 'Ce jeu utilise un loader trop ancien pour rediriger les succès.'),
+                            detail: t(
+                              'uplay-r2-old-loader-detail',
+                              "The fix works without updating: Achievement Watcher reads the emulator's own save folder.\n\nUpdating enables the redirect into GSE Saves, but replaces a DLL the game currently launches with (the original is kept as .bak).",
+                              "Le correctif fonctionne sans mise à jour : Achievement Watcher lit le dossier de sauvegarde de l'émulateur.\n\nMettre à jour le loader permet la redirection vers GSE Saves, mais remplace une DLL avec laquelle le jeu se lance actuellement (l'originale est conservée en .bak)."
+                            ),
+                            buttons: [t('keep-current-loader', 'Keep the current loader', 'Garder le loader actuel'), t('update-loader', 'Update', 'Mettre à jour')],
                             defaultId: 0,
                             cancelId: 0,
                             noLink: true,
                           });
                           if (choice === 1) {
-                            setGameBoxBusy(self, fr ? 'Mise à jour de la DLL…' : 'Updating the DLL…');
+                            setGameBoxBusy(self, t('updating-the-dll', 'Updating the DLL…', 'Mise à jour de la DLL…'));
                             installResult = uplayR2Installer.installDlls({ dllDirs, dlls: cached, log: debug });
                           }
                         }
                       }
 
-                      setGameBoxBusy(self, fr ? 'Configuration (succès)…' : 'Configuring (achievements)…');
+                      setGameBoxBusy(self, t('configuring-achievements', 'Configuring (achievements)…', 'Configuration (succès)…'));
                       const targetDir = dllDirs[0];
                       const summary = uplayR2.repair({
                         dir: targetDir,
@@ -2494,8 +2426,12 @@ var app = {
 
                       remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                         type: 'info',
-                        title: 'Uplay R2 installed',
-                        message: `${installResult.installed > 0 ? `${installResult.installed} dll(s) installed` : 'loader already present'} — ${Object.keys(summary.achievementsSchemaJson).length} achievement(s) mapped`,
+                        title: t('uplay-r2-installed', 'Uplay R2 installed', 'Uplay R2 installé'),
+                        message: t(
+                          'uplay-r2-installed-message',
+                          `${installResult.installed > 0 ? `${installResult.installed} dll(s) installed` : 'loader already present'} — ${Object.keys(summary.achievementsSchemaJson).length} achievement(s) mapped`,
+                          `${installResult.installed > 0 ? `${installResult.installed} dll(s) installée(s)` : 'loader déjà présent'} — ${Object.keys(summary.achievementsSchemaJson).length} succès mappé(s)`
+                        ),
                         detail:
                           targetDir +
                           `\n\nSteam AppID: ${mapping.steam_appid} (${mapping.steam_name})` +
@@ -2509,8 +2445,8 @@ var app = {
                     } catch (err) {
                       remote.dialog.showMessageBoxSync({
                         type: 'error',
-                        title: 'Uplay R2 install failed',
-                        message: 'Could not install or configure Goldberg Uplay R2.',
+                        title: t('uplay-r2-install-failed', 'Uplay R2 install failed', 'Échec de l\'installation de Uplay R2'),
+                        message: t('could-not-install-or-configure-goldberg-uplay-r2', 'Could not install or configure Goldberg Uplay R2.', 'Impossible d\'installer ou de configurer Goldberg Uplay R2.'),
                         detail: formatErr(err),
                       });
                     } finally {
@@ -2523,17 +2459,17 @@ var app = {
               emulatorMenu.append(
                 new MenuItem({
                   icon: menuIcon('file-text.png'),
-                  label: contextIsFrench
-                    ? 'Diagnostiquer la configuration Uplay R2'
-                    : $('#game-list').attr('data-ctx-diagnoseuplayr2') || 'Diagnose Uplay R2 setup',
+                  label:
+                    $('#game-list').attr('data-ctx-diagnoseuplayr2') ||
+                    t('diagnose-uplay-r2-setup', 'Diagnose Uplay R2 setup', 'Diagnostiquer la configuration Uplay R2'),
                   async click() {
                     try {
                       const game = list.find((g) => g.appid == appid);
                       let gameDir = game?.gameDir && fs.existsSync(game.gameDir) ? game.gameDir : null;
                       if (!gameDir) {
                         const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-                          title: "Select the game's install folder (where the Uplay R2 loader .dll is)",
-                          buttonLabel: 'Diagnose',
+                          title: t('select-install-folder-uplay-r2-loader-diagnose', "Select the game's install folder (where the Uplay R2 loader .dll is)", "Sélectionne le dossier d'installation du jeu (où se trouve la .dll du loader Uplay R2)"),
+                          buttonLabel: t('diagnose', 'Diagnose', 'Diagnostiquer'),
                           properties: ['openDirectory', 'dontAddToRecent'],
                         });
                         if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
@@ -2541,7 +2477,7 @@ var app = {
                       }
                       await diagnoseUplayR2Setup({ game, gameDir });
                     } catch (err) {
-                      remote.dialog.showMessageBoxSync({ type: 'error', title: 'Diagnose failed', message: 'Could not diagnose the Uplay R2 setup.', detail: `${err}` });
+                      remote.dialog.showMessageBoxSync({ type: 'error', title: t('diagnose-failed', 'Diagnose failed', 'Échec du diagnostic'), message: t('could-not-diagnose-the-uplay-r2-setup', 'Could not diagnose the Uplay R2 setup.', 'Impossible de diagnostiquer la configuration Uplay R2.'), detail: `${err}` });
                     }
                   },
                 })
@@ -2550,7 +2486,7 @@ var app = {
               emulatorMenu.append(new MenuItem({ type: 'separator' }));
               emulatorMenu.append(
                 new MenuItem({
-                  label: contextIsFrench ? 'Actualiser les données du jeu' : 'Refresh game data',
+                  label: t('refresh-game-data', 'Refresh game data', 'Actualiser les données du jeu'),
                   click() {
                     app.onStart();
                   },
@@ -2559,7 +2495,7 @@ var app = {
               if (ubisoftTools.steamAppid) {
                 emulatorMenu.append(
                   new MenuItem({
-                    label: `${contextIsFrench ? 'Copier l’AppID Steam' : 'Copy Steam AppID'} (${ubisoftTools.steamAppid})`,
+                    label: `${t('copy-steam-appid', 'Copy Steam AppID', 'Copier l’AppID Steam')} (${ubisoftTools.steamAppid})`,
                     click() {
                       clipboard.writeText(ubisoftTools.steamAppid);
                     },
@@ -2569,7 +2505,7 @@ var app = {
               if (ubisoftTools.uplayId) {
                 emulatorMenu.append(
                   new MenuItem({
-                    label: `${contextIsFrench ? 'Copier l’ID produit Ubisoft' : 'Copy Ubisoft product ID'} (${ubisoftTools.uplayId})`,
+                    label: `${t('copy-ubisoft-product-id', 'Copy Ubisoft product ID', 'Copier l’ID produit Ubisoft')} (${ubisoftTools.uplayId})`,
                     click() {
                       clipboard.writeText(ubisoftTools.uplayId);
                     },
@@ -2584,7 +2520,7 @@ var app = {
                 folderMenu.append(
                   new MenuItem({
                     icon: menuIcon('folder-open.png'),
-                    label: contextIsFrench ? 'Ouvrir le dossier de configuration Uplay R2' : 'Open Uplay R2 configuration folder',
+                    label: t('open-uplay-r2-configuration-folder', 'Open Uplay R2 configuration folder', 'Ouvrir le dossier de configuration Uplay R2'),
                     click() {
                       remote.shell.openPath(ubisoftTools.runtimeDir);
                     },
@@ -2595,7 +2531,7 @@ var app = {
               if (ubisoftTools.configFile && fs.existsSync(ubisoftTools.configFile)) {
                 folderMenu.append(
                   new MenuItem({
-                    label: contextIsFrench ? 'Afficher le fichier de configuration Uplay R2' : 'Show Uplay R2 configuration file',
+                    label: t('show-uplay-r2-configuration-file', 'Show Uplay R2 configuration file', 'Afficher le fichier de configuration Uplay R2'),
                     click() {
                       remote.shell.showItemInFolder(ubisoftTools.configFile);
                     },
@@ -2606,7 +2542,7 @@ var app = {
               if (ubisoftTools.schemaFile && fs.existsSync(ubisoftTools.schemaFile)) {
                 folderMenu.append(
                   new MenuItem({
-                    label: contextIsFrench ? 'Afficher achievements_schema.json' : 'Show achievements_schema.json',
+                    label: t('show-achievements-schema-json', 'Show achievements_schema.json', 'Afficher achievements_schema.json'),
                     click() {
                       remote.shell.showItemInFolder(ubisoftTools.schemaFile);
                     },
@@ -2629,7 +2565,7 @@ var app = {
                 folderMenu.append(
                   new MenuItem({
                     icon: menuIcon('folder-open.png'),
-                    label: contextIsFrench ? 'Ouvrir les sauvegardes de succès Ubisoft' : 'Open Ubisoft achievement saves',
+                    label: t('open-ubisoft-achievement-saves', 'Open Ubisoft achievement saves', 'Ouvrir les sauvegardes de succès Ubisoft'),
                     click() {
                       fs.mkdirSync(liveSaveDir, { recursive: true });
                       remote.shell.openPath(liveSaveDir);
@@ -2810,7 +2746,6 @@ var app = {
 
           // ---- Uninstall (opt-in via Settings > General) ----
           if (app.config?.general?.uninstallContextMenu !== false) {
-            const uninstallFr = contextIsFrench;
             const uninstallCtx = $('#game-list');
             const uninstallGame = list.find((g) => g.appid == appid);
             const uninstallDir =
@@ -2830,17 +2765,19 @@ var app = {
                 uninstallMenu.append(
                   new MenuItem({
                     icon: menuIcon('steam.png'),
-                    label: uninstallCtx.attr('data-ctx-uninstall-steam') || (uninstallFr ? 'Désinstaller via Steam…' : 'Uninstall via Steam…'),
+                    label: uninstallCtx.attr('data-ctx-uninstall-steam') || (t('uninstall-via-steam', 'Uninstall via Steam…', 'Désinstaller via Steam…')),
                     async click() {
                       const gameName = list.find((g) => g.appid == appid)?.name || String(appid);
                       const confirm = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
                         type: 'warning',
-                        title: uninstallFr ? 'Désinstaller via Steam' : 'Uninstall via Steam',
-                        message: uninstallFr ? `Désinstaller « ${gameName} » via Steam ?` : `Uninstall "${gameName}" via Steam?`,
-                        detail: uninstallFr
-                          ? 'Steam supprimera les fichiers locaux du jeu. Tu pourras le réinstaller plus tard depuis ta bibliothèque.'
-                          : "Steam will remove the game's local files. You can reinstall it later from your library.",
-                        buttons: [uninstallFr ? 'Annuler' : 'Cancel', uninstallFr ? 'Désinstaller' : 'Uninstall'],
+                        title: t('uninstall-via-steam', 'Uninstall via Steam', 'Désinstaller via Steam'),
+                        message: t('uninstall-x-via-steam', `Uninstall "${gameName}" via Steam?`, `Désinstaller « ${gameName} » via Steam ?`),
+                        detail: t(
+                          'steam-uninstall-detail',
+                          "Steam will remove the game's local files. You can reinstall it later from your library.",
+                          'Steam supprimera les fichiers locaux du jeu. Tu pourras le réinstaller plus tard depuis ta bibliothèque.'
+                        ),
+                        buttons: [t('cancel', 'Cancel', 'Annuler'), t('uninstall', 'Uninstall', 'Désinstaller')],
                         defaultId: 1,
                         cancelId: 0,
                         noLink: true,
@@ -2851,18 +2788,16 @@ var app = {
                       } catch (err) {
                         remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                           type: 'error',
-                          title: uninstallFr ? 'Échec de la désinstallation Steam' : 'Steam uninstall failed',
-                          message: uninstallFr ? "Impossible d'ouvrir Steam pour désinstaller ce jeu." : 'Could not open Steam to uninstall this game.',
+                          title: t('steam-uninstall-failed', 'Steam uninstall failed', 'Échec de la désinstallation Steam'),
+                          message: t('steam-uninstall-open-failed', 'Could not open Steam to uninstall this game.', "Impossible d'ouvrir Steam pour désinstaller ce jeu."),
                           detail: formatErr(err),
                         });
                         return;
                       }
                       remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                         type: 'info',
-                        title: uninstallFr ? 'Steam ouvert' : 'Steam opened',
-                        message: uninstallFr
-                          ? 'Steam va gérer la désinstallation. La liste se rafraîchira automatiquement.'
-                          : 'Steam will handle the uninstall. The game list will refresh automatically.',
+                        title: t('steam-opened', 'Steam opened', 'Steam ouvert'),
+                        message: t('steam-will-handle-the-uninstall-the-game-list-will-refresh-autom', 'Steam will handle the uninstall. The game list will refresh automatically.', 'Steam va gérer la désinstallation. La liste se rafraîchira automatiquement.'),
                         noLink: true,
                       });
                       if (uninstallDir) {
@@ -2887,25 +2822,19 @@ var app = {
                 uninstallMenu.append(
                   new MenuItem({
                     icon: menuIcon('file-text.png'),
-                    label: uninstallCtx.attr('data-ctx-uninstall-run') || (uninstallFr ? 'Lancer le désinstalleur du jeu…' : 'Run game uninstaller…'),
+                    label: uninstallCtx.attr('data-ctx-uninstall-run') || (t('run-game-uninstaller', 'Run game uninstaller…', 'Lancer le désinstalleur du jeu…')),
                     async click() {
                       const gameName = list.find((g) => g.appid == appid)?.name || String(appid);
                       const confirm = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
                         type: 'warning',
-                        title: uninstallFr ? 'Désinstaller le jeu' : 'Uninstall game',
-                        message: uninstallFr
-                          ? `Désinstaller « ${gameName} » avec ${local.name} ?`
-                          : `Uninstall "${gameName}" with ${local.name}?`,
+                        title: t('uninstall-game', 'Uninstall game', 'Désinstaller le jeu'),
+                        message: t('uninstall-x-with-x', `Uninstall "${gameName}" with ${local.name}?`, `Désinstaller « ${gameName} » avec ${local.name} ?`),
                         detail:
                           uninstallDir +
                           (local.silent
-                            ? uninstallFr
-                              ? '\n\nLe désinstalleur s’exécutera en mode silencieux.'
-                              : '\n\nThe uninstaller will run in silent mode.'
-                            : uninstallFr
-                            ? '\n\nAucun mode silencieux fiable n’a été détecté : suis les invites du désinstalleur.'
-                            : '\n\nNo reliable silent mode was detected: follow the uninstaller prompts.'),
-                        buttons: [uninstallFr ? 'Annuler' : 'Cancel', uninstallFr ? 'Désinstaller' : 'Uninstall'],
+                            ? t('n-nthe-uninstaller-will-run-in-silent-mode', '\n\nThe uninstaller will run in silent mode.', '\n\nLe désinstalleur s’exécutera en mode silencieux.')
+                            : t('n-nno-reliable-silent-mode-was-detected-follow-the-uninstaller-p', '\n\nNo reliable silent mode was detected: follow the uninstaller prompts.', '\n\nAucun mode silencieux fiable n’a été détecté : suis les invites du désinstalleur.')),
+                        buttons: [t('cancel', 'Cancel', 'Annuler'), t('uninstall', 'Uninstall', 'Désinstaller')],
                         defaultId: 1,
                         cancelId: 0,
                         noLink: true,
@@ -2917,8 +2846,8 @@ var app = {
                       } catch (err) {
                         remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                           type: 'error',
-                          title: uninstallFr ? 'Échec du lancement' : 'Launch failed',
-                          message: uninstallFr ? 'Impossible de lancer le désinstalleur.' : 'Could not launch the uninstaller.',
+                          title: t('launch-failed', 'Launch failed', 'Échec du lancement'),
+                          message: t('could-not-launch-the-uninstaller', 'Could not launch the uninstaller.', 'Impossible de lancer le désinstalleur.'),
                           detail: formatErr(err),
                         });
                         return;
@@ -2927,8 +2856,8 @@ var app = {
                         debug.warn(`[uninstall] ${local.file} => ${formatErr(err)}`);
                         remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                           type: 'error',
-                          title: uninstallFr ? 'Échec du lancement' : 'Launch failed',
-                          message: uninstallFr ? 'Impossible de lancer le désinstalleur.' : 'Could not launch the uninstaller.',
+                          title: t('launch-failed', 'Launch failed', 'Échec du lancement'),
+                          message: t('could-not-launch-the-uninstaller', 'Could not launch the uninstaller.', 'Impossible de lancer le désinstalleur.'),
                           detail: formatErr(err),
                         });
                       });
@@ -2946,10 +2875,8 @@ var app = {
                       child.unref();
                       remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                         type: 'info',
-                        title: uninstallFr ? 'Désinstallation lancée' : 'Uninstall started',
-                        message: uninstallFr
-                          ? 'Le désinstalleur a été lancé. La liste se rafraîchira automatiquement.'
-                          : 'The uninstaller was started. The game list will refresh automatically.',
+                        title: t('uninstall-started', 'Uninstall started', 'Désinstallation lancée'),
+                        message: t('the-uninstaller-was-started-the-game-list-will-refresh-automatic', 'The uninstaller was started. The game list will refresh automatically.', 'Le désinstalleur a été lancé. La liste se rafraîchira automatiquement.'),
                         noLink: true,
                       });
                       pollUninstallCompletion({ appid, gameDir: uninstallDir, mode: 'local' });
@@ -2963,21 +2890,17 @@ var app = {
                     icon: menuIcon('folder-open.png'),
                     label:
                       uninstallCtx.attr('data-ctx-uninstall-delete') ||
-                      (uninstallFr ? 'Supprimer le dossier du jeu (Corbeille)…' : 'Delete game folder (Recycle Bin)…'),
+                      (t('delete-game-folder-recycle-bin', 'Delete game folder (Recycle Bin)…', 'Supprimer le dossier du jeu (Corbeille)…')),
                     async click() {
                       const gameName = list.find((g) => g.appid == appid)?.name || String(appid);
                       const confirm = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
                         type: 'warning',
-                        title: uninstallFr ? 'Supprimer le dossier du jeu' : 'Delete game folder',
-                        message: uninstallFr
-                          ? `Déplacer le dossier de « ${gameName} » vers la Corbeille ?`
-                          : `Move "${gameName}"'s folder to the Recycle Bin?`,
+                        title: t('delete-game-folder', 'Delete game folder', 'Supprimer le dossier du jeu'),
+                        message: t('move-x-s-folder-to-the-recycle-bin', `Move "${gameName}"'s folder to the Recycle Bin?`, `Déplacer le dossier de « ${gameName} » vers la Corbeille ?`),
                         detail:
                           uninstallDir +
-                          (uninstallFr
-                            ? '\n\nAucun désinstalleur n’a été trouvé dans ce dossier. Les fichiers seront déplacés vers la Corbeille (récupérables).'
-                            : '\n\nNo uninstaller was found in this folder. The files will be moved to the Recycle Bin (recoverable).'),
-                        buttons: [uninstallFr ? 'Annuler' : 'Cancel', uninstallFr ? 'Supprimer' : 'Delete'],
+                          (t('n-nno-uninstaller-was-found-in-this-folder-the-files-will-be-mov', '\n\nNo uninstaller was found in this folder. The files will be moved to the Recycle Bin (recoverable).', '\n\nAucun désinstalleur n’a été trouvé dans ce dossier. Les fichiers seront déplacés vers la Corbeille (récupérables).')),
+                        buttons: [t('cancel', 'Cancel', 'Annuler'), t('delete', 'Delete', 'Supprimer')],
                         defaultId: 1,
                         cancelId: 0,
                         noLink: true,
@@ -2988,8 +2911,8 @@ var app = {
                       } catch (err) {
                         remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                           type: 'error',
-                          title: uninstallFr ? 'Échec de la suppression' : 'Delete failed',
-                          message: uninstallFr ? 'Impossible de déplacer le dossier vers la Corbeille.' : 'Could not move the folder to the Recycle Bin.',
+                          title: t('delete-failed', 'Delete failed', 'Échec de la suppression'),
+                          message: t('could-not-move-the-folder-to-the-recycle-bin', 'Could not move the folder to the Recycle Bin.', 'Impossible de déplacer le dossier vers la Corbeille.'),
                           detail: formatErr(err),
                         });
                         return;
@@ -3007,7 +2930,7 @@ var app = {
               gameMenu.append(
                 new MenuItem({
                   icon: menuIcon('cross.png'),
-                  label: uninstallCtx.attr('data-ctx-uninstall-group') || (uninstallFr ? 'Désinstaller' : 'Uninstall'),
+                  label: uninstallCtx.attr('data-ctx-uninstall-group') || (t('uninstall', 'Uninstall', 'Désinstaller')),
                   submenu: uninstallMenu,
                 })
               );
@@ -3052,7 +2975,7 @@ var app = {
             const coverMenu = new Menu();
             coverMenu.append(
               new MenuItem({
-                label: contextIsFrench ? 'Retélécharger la jaquette' : 'Re-download cover',
+                label: t('re-download-cover', 'Re-download cover', 'Retélécharger la jaquette'),
                 async click() {
                   try {
                     coverStore.remove(appid);
@@ -3072,10 +2995,10 @@ var app = {
             );
             coverMenu.append(
               new MenuItem({
-                label: contextIsFrench ? 'Utiliser un autre AppID Steam…' : 'Use another Steam AppID…',
+                label: t('use-another-steam-appid', 'Use another Steam AppID…', 'Utiliser un autre AppID Steam…'),
                 async click() {
                   const alt = await promptText(
-                    contextIsFrench ? 'AppID Steam à utiliser pour la jaquette :' : 'Steam AppID to pull cover art from:',
+                    t('steam-appid-to-pull-cover-art-from', 'Steam AppID to pull cover art from:', 'AppID Steam à utiliser pour la jaquette :'),
                     /^[0-9]+$/.test(coverCacheAppid) ? coverCacheAppid : ''
                   );
                   if (!alt || !/^[0-9]+$/.test(alt)) return;
@@ -3083,7 +3006,7 @@ var app = {
                   if (!local)
                     local = await ipcRenderer.invoke('fetch-icon', `https://cdn.cloudflare.steamstatic.com/steam/apps/${alt}/library_600x900.jpg`, appid);
                   if (!local) {
-                    remote.dialog.showMessageBox({ type: 'warning', message: `No Steam cover art found for AppID ${alt}.` });
+                    remote.dialog.showMessageBox({ type: 'warning', message: t('no-steam-cover-art-for-appid', `No Steam cover art found for AppID ${alt}.`, `Aucune jaquette Steam trouvée pour l'AppID ${alt}.`) });
                     return;
                   }
                   coverStore.set(appid, local);
@@ -3094,10 +3017,10 @@ var app = {
             );
             coverMenu.append(
               new MenuItem({
-                label: contextIsFrench ? 'Choisir une image locale…' : 'Choose local image…',
+                label: t('choose-local-image', 'Choose local image…', 'Choisir une image locale…'),
                 click() {
                   const files = remote.dialog.showOpenDialogSync({
-                    title: 'Choose cover image',
+                    title: t('choose-cover-image', 'Choose cover image', 'Choisir une jaquette'),
                     properties: ['openFile'],
                     filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif'] }],
                   });
@@ -3115,7 +3038,7 @@ var app = {
                     applyCoverBackground(appid, url);
                   } catch (err) {
                     debug.warn(`[cover] local image failed => ${err}`);
-                    remote.dialog.showMessageBox({ type: 'error', message: `Could not set cover: ${err.message || err}` });
+                    remote.dialog.showMessageBox({ type: 'error', message: t('could-not-set-cover', `Could not set cover: ${err.message || err}`, `Impossible de définir la jaquette : ${err.message || err}`) });
                   }
                 },
               })
@@ -3124,7 +3047,7 @@ var app = {
               coverMenu.append(new MenuItem({ type: 'separator' }));
               coverMenu.append(
                 new MenuItem({
-                  label: contextIsFrench ? 'Réinitialiser la jaquette' : 'Reset cover to default',
+                  label: t('reset-cover-to-default', 'Reset cover to default', 'Réinitialiser la jaquette'),
                   async click() {
                     coverStore.remove(appid);
                     reloadCoverOverrides();
@@ -3150,8 +3073,8 @@ var app = {
         $('#game-list .isEmpty').show();
         remote.dialog.showMessageBoxSync({
           type: 'error',
-          title: 'Unexpected Error',
-          message: 'Game list generation failure',
+          title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
+          message: t('game-list-generation-failure', 'Game list generation failure', 'Échec de la génération de la liste des jeux'),
           detail: `${err}`,
         });
       })
@@ -3405,15 +3328,10 @@ var app = {
       if (game.achievement.list.length === 0) {
         $('#unlock').hide();
         $('#lock').show();
-        const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
-        const title = fr ? 'Aucun succès Steam trouvé' : 'No Steam achievements found';
+        const title = t('no-steam-achievements-found', 'No Steam achievements found', 'Aucun succès Steam trouvé');
         const detail = game.unconfigured
-          ? fr
-            ? "Ce dossier n'a pas encore de configuration Goldberg/GBE avec un AppID Steam fiable."
-            : 'This folder does not have a Goldberg/GBE setup with a reliable Steam AppID yet.'
-          : fr
-            ? "AW affiche le jeu, mais Steam ne fournit aucun schéma de succès pour cet AppID."
-            : 'AW can show the game, but Steam did not provide an achievement schema for this AppID.';
+          ? t('no-ach-unconfigured', 'This folder does not have a Goldberg/GBE setup with a reliable Steam AppID yet.', "Ce dossier n'a pas encore de configuration Goldberg/GBE avec un AppID Steam fiable.")
+          : t('no-ach-no-schema', 'AW can show the game, but Steam did not provide an achievement schema for this AppID.', 'AW affiche le jeu, mais Steam ne fournit aucun schéma de succès pour cet AppID.');
         lock.append(`
               <li>
                 <div class="notice empty-achievement-notice">
@@ -3528,8 +3446,8 @@ var app = {
     }
     if (!cfg?.exe || cfg.exe === '' || !fs.existsSync(cfg.exe)) {
       let dialog = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-        title: 'Choose the game executable',
-        buttonLabel: 'Select',
+        title: t('choose-the-game-executable', 'Choose the game executable', 'Choisir l\'exécutable du jeu'),
+        buttonLabel: t('select', 'Select', 'Sélectionner'),
         defaultPath: cfg?.exe || '',
         filters: [{ name: 'Executables', extensions: ['exe', 'bat'] }],
         properties: ['openFile', 'showHiddenFiles', 'dontAddToRecent'],
@@ -3551,8 +3469,8 @@ var app = {
         debug.error(`Failed to launch ${cfg.exe}: ${error}`);
         remote.dialog.showMessageBoxSync({
           type: 'error',
-          title: 'Launch failed',
-          message: 'Could not start the game.',
+          title: t('launch-failed', 'Launch failed', 'Échec du lancement'),
+          message: t('could-not-start-the-game', 'Could not start the game.', 'Impossible de démarrer le jeu.'),
           detail: `${error}`,
         });
       };
@@ -3657,7 +3575,6 @@ var app = {
       let fixAllRunning = false;
       $('#fix-all-games').on('click', async function () {
         if (fixAllRunning) return;
-        const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
         const result = $('#fix-all-result');
         // Only games with a live install dir, a usable appid/schema and an emulator signal —
         // never touch plain legit Steam installs.
@@ -3673,19 +3590,17 @@ var app = {
             fs.existsSync(g.gameDir)
         );
         if (targets.length === 0) {
-          result.text(fr ? 'Aucun jeu détecté avec un dossier d’installation connu à réparer.' : 'No detected game with a known install folder to fix.');
+          result.text(t('no-detected-game-with-a-known-install-folder-to-fix', 'No detected game with a known install folder to fix.', 'Aucun jeu détecté avec un dossier d’installation connu à réparer.'));
           return;
         }
         const confirm = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
           type: 'question',
-          buttons: [fr ? 'Réparer tous' : 'Fix all', fr ? 'Annuler' : 'Cancel'],
+          buttons: [t('fix-all', 'Fix all', 'Réparer tous'), t('cancel', 'Cancel', 'Annuler')],
           defaultId: 0,
           cancelId: 1,
           noLink: true,
-          title: fr ? 'Réparer tous les jeux' : 'Fix all games',
-          message: fr
-            ? `Appliquer le fix émulateur à ${targets.length} jeu(x) détecté(s) ? Les fichiers existants sont sauvegardés avant d’être écrasés.`
-            : `Apply the emulator fix to ${targets.length} detected game(s)? Existing files are backed up before being overwritten.`,
+          title: t('fix-all-games', 'Fix all games', 'Réparer tous les jeux'),
+          message: t('apply-the-emulator-fix-to-x-detected-game-s-existing-files-are-b', `Apply the emulator fix to ${targets.length} detected game(s)? Existing files are backed up before being overwritten.`, `Appliquer le fix émulateur à ${targets.length} jeu(x) détecté(s) ? Les fichiers existants sont sauvegardés avant d’être écrasés.`),
         });
         if (confirm.response !== 0) return;
 
@@ -3695,7 +3610,7 @@ var app = {
         let failed = 0;
         for (let i = 0; i < targets.length; i++) {
           const game = targets[i];
-          result.text((fr ? 'Réparation' : 'Fixing') + ` ${i + 1} / ${targets.length} — ${game.name}`);
+          result.text((t('fixing', 'Fixing', 'Réparation')) + ` ${i + 1} / ${targets.length} — ${game.name}`);
           try {
             const detectedEmu = goldberg.detectEmulator(game.gameDir);
             const detectedExe = exeDetect.detect(game.gameDir, game.name || '', { dllPaths: detectedEmu.dll });
@@ -3765,9 +3680,7 @@ var app = {
         }
         const skipped = targets.length - fixed - failed;
         result.text(
-          fr
-            ? `Terminé — ${fixed} jeu(x) réparé(s), ${skipped} ignoré(s), ${failed} en échec.`
-            : `Done — ${fixed} game(s) fixed, ${skipped} skipped, ${failed} failed.`
+          t('done-x-game-s-fixed-x-skipped-x-failed', `Done — ${fixed} game(s) fixed, ${skipped} skipped, ${failed} failed.`, `Terminé — ${fixed} jeu(x) réparé(s), ${skipped} ignoré(s), ${failed} en échec.`)
         );
         $(this).css('pointer-events', 'initial');
         fixAllRunning = false;

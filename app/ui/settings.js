@@ -9,6 +9,7 @@ const settingsFs = require('fs');
 const appPath = remote.app.getAppPath();
 const { escapeHtml } = require(path.join(appPath, 'util/escapeHtml.js'));
 const userThemes = require(path.join(appPath, 'util/userThemes.js'));
+const { t } = require(path.join(appPath, 'locale/t.js'));
 let listeningHotkey = false;
 let keysDown = new Set();
 let keys = '';
@@ -405,15 +406,15 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       try {
         const goldberg = require(path.join(appPath, 'parser/goldberg.js'));
         const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-          title: 'Select a game-library folder to scan',
-          buttonLabel: 'Scan',
+          title: t('select-a-game-library-folder-to-scan', 'Select a game-library folder to scan'),
+          buttonLabel: t('scan', 'Scan', 'Analyser'),
           properties: ['openDirectory', 'dontAddToRecent'],
         });
         if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
-        result.text('Scanning…');
+        result.text(t('scanning', 'Scanning…', 'Analyse…'));
         const found = goldberg.findCompatibleGames(picked.filePaths[0]);
         if (found.length === 0) {
-          result.text('No Goldberg / GBE Fork installs found in that folder.');
+          result.text(t('scan-no-gbe-installs', 'No Goldberg / GBE Fork installs found in that folder.', 'Aucune installation Goldberg / GBE Fork trouvée dans ce dossier.'));
           return;
         }
         const unconfigured = found.filter((g) => !g.hasSchema);
@@ -421,11 +422,11 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const detail = found
           .map((g) => `${g.appid || '?'} · ${emuLabel[g.emulator] || g.emulator} — ${g.hasSchema ? `${g.schemaCount} achievements` : 'MISSING achievements.json'}\n  ${g.steamSettings}`)
           .join('\n');
-        result.text(`Found ${found.length} install(s); ${unconfigured.length} missing their achievements.json schema.`);
+        result.text(t('scan-found-count', `Found ${found.length} install(s); ${unconfigured.length} missing their achievements.json schema.`, `${found.length} installation(s) trouvée(s) ; ${unconfigured.length} sans schéma achievements.json.`));
         remote.dialog.showMessageBox(remote.getCurrentWindow(), {
           type: unconfigured.length ? 'warning' : 'info',
-          title: 'Goldberg / GBE Fork scan',
-          message: `${found.length} install(s) found — ${unconfigured.length} unconfigured`,
+          title: t('goldberg-gbe-fork-scan', 'Goldberg / GBE Fork scan', 'Analyse Goldberg / GBE Fork'),
+          message: t('scan-found-message', `${found.length} install(s) found — ${unconfigured.length} unconfigured`, `${found.length} installation(s) trouvée(s) — ${unconfigured.length} non configurée(s)`),
           detail,
           buttons: ['OK'],
           noLink: true,
@@ -623,7 +624,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
             remote.dialog.showMessageBoxSync({
               type: 'error',
-              title: 'Unexpected Error',
+              title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
               message: err && err.isStartupSettingError ? 'Error while updating the startup setting.' : 'Error while saving settings.',
               detail: `${err}`,
             });
@@ -670,20 +671,12 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     $('#emulator-login-test').click(async function () {
       const button = $(this);
       const status = $('#emulator-login-test-status');
-      const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
-      const emuText = fr
-        ? {
-            missing: "Renseigne d'abord l'identifiant et le mot de passe Steam.",
-            running: "Connexion à Steam… Saisis le code Steam Guard s'il est demandé.",
-            success: 'Connexion Steam réussie. Le refresh token generate_emu_config a été sauvegardé.',
-            failed: 'Échec de la connexion Steam',
-          }
-        : {
-            missing: 'Enter the Steam username and password first.',
-            running: 'Connecting to Steam… Enter the Steam Guard code if requested.',
-            success: 'Steam login successful. The generate_emu_config refresh token was saved.',
-            failed: 'Steam login failed',
-          };
+      const emuText = {
+        missing: t('emu-login-missing', 'Enter the Steam username and password first.', "Renseigne d'abord l'identifiant et le mot de passe Steam."),
+        running: t('emu-login-running', 'Connecting to Steam… Enter the Steam Guard code if requested.', "Connexion à Steam… Saisis le code Steam Guard s'il est demandé."),
+        success: t('emu-login-success', 'Steam login successful. The generate_emu_config refresh token was saved.', 'Connexion Steam réussie. Le refresh token generate_emu_config a été sauvegardé.'),
+        failed: t('emu-login-failed', 'Steam login failed', 'Échec de la connexion Steam'),
+      };
       const username = $('#emulator-login-user').val().trim();
       const password = $('#emulator-login-pass').val();
       const setStatus = (text, cls = '') => status.removeClass('success error').addClass(cls).text(text || '');
@@ -732,27 +725,16 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     // Epic account connect: shows unlock state for installed Epic games (epic-official source).
     // The login window and encrypted token storage live in the main process (init.js epic:* IPC).
     (function wireEpicConnect() {
-      const fr = () => String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
       const T = () =>
-        fr()
-          ? {
-              connectedAs: (n) => `Connecté${n ? ' : ' + n : ''}`,
-              notConnected: 'Non connecté',
-              connecting: 'Ouverture de la fenêtre de connexion Epic…',
-              connected: 'Compte Epic connecté.',
-              cancelled: 'Connexion annulée.',
-              failed: 'Échec de la connexion Epic',
-              disconnected: 'Compte Epic déconnecté.',
-            }
-          : {
-              connectedAs: (n) => `Connected${n ? ': ' + n : ''}`,
-              notConnected: 'Not connected',
-              connecting: 'Opening the Epic sign-in window…',
-              connected: 'Epic account connected.',
-              cancelled: 'Sign-in cancelled.',
-              failed: 'Epic sign-in failed',
-              disconnected: 'Epic account disconnected.',
-            };
+        ({
+          connectedAs: (n) => t('epic-connected-as', `Connected${n ? ': ' + n : ''}`, `Connecté${n ? ' : ' + n : ''}`),
+          notConnected: t('epic-not-connected', 'Not connected', 'Non connecté'),
+          connecting: t('epic-connecting', 'Opening the Epic sign-in window…', 'Ouverture de la fenêtre de connexion Epic…'),
+          connected: t('epic-connected', 'Epic account connected.', 'Compte Epic connecté.'),
+          cancelled: t('epic-cancelled', 'Sign-in cancelled.', 'Connexion annulée.'),
+          failed: t('epic-failed', 'Epic sign-in failed', 'Échec de la connexion Epic'),
+          disconnected: t('epic-disconnected', 'Epic account disconnected.', 'Compte Epic déconnecté.'),
+        });
       const status = $('#epic-connect-status');
       const badge = $('#epic-connect-badge');
       const connectBtn = $('#epic-connect-btn');
@@ -760,15 +742,17 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const setStatus = (text, cls = '') => status.removeClass('success error running').addClass(cls).text(text || '');
 
       // Localize the static card labels here (kept out of loader.js's fragile nth-child i18n).
-      if (fr()) {
-        $('#epic-connect-title').text('Compte Epic Games');
-        $('#epic-connect-desc').text(
-          "Optionnel. Connecte ton compte Epic pour afficher les succès que tu as débloqués dans les jeux Epic installés. Les noms, descriptions et la rareté fonctionnent déjà sans connexion. Ton jeton Epic est stocké chiffré sur ce PC."
-        );
-        $('#epic-connect-btn-hint').text('ouvre la fenêtre de connexion Epic');
-        $('#epic-connect-badge-label').text('Connecté');
-        $('#epic-disconnect-btn-label').text('Déconnecter');
-      }
+      $('#epic-connect-title').text(t('epic-title', 'Epic Games account', 'Compte Epic Games'));
+      $('#epic-connect-desc').text(
+        t(
+          'epic-desc',
+          'Optional. Connect your Epic account to show which achievements you have unlocked in installed Epic games. Achievement names, descriptions and rarity already work without connecting. Your Epic token is stored encrypted on this PC.',
+          'Optionnel. Connecte ton compte Epic pour afficher les succès que tu as débloqués dans les jeux Epic installés. Les noms, descriptions et la rareté fonctionnent déjà sans connexion. Ton jeton Epic est stocké chiffré sur ce PC.'
+        )
+      );
+      $('#epic-connect-btn-hint').text(t('epic-btn-hint', 'opens the Epic sign-in window', 'ouvre la fenêtre de connexion Epic'));
+      $('#epic-connect-badge-label').text(t('connected', 'Connected', 'Connecté'));
+      $('#epic-disconnect-btn-label').text(t('disconnect', 'Disconnect', 'Déconnecter'));
 
       async function refresh() {
         let s = {};
@@ -778,12 +762,12 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         if (s.connected) {
           badge.show();
           disconnectBtn.show();
-          $('#epic-connect-btn-label').text(fr() ? 'Reconnecter' : 'Reconnect');
+          $('#epic-connect-btn-label').text(t('epic-reconnect', 'Reconnect', 'Reconnecter'));
           setStatus(T().connectedAs(s.displayName), 'success');
         } else {
           badge.hide();
           disconnectBtn.hide();
-          $('#epic-connect-btn-label').text(fr() ? 'Connecter le compte Epic' : 'Connect Epic account');
+          $('#epic-connect-btn-label').text(t('epic-connect', 'Connect Epic account', 'Connecter le compte Epic'));
           if (!status.hasClass('error')) setStatus(T().notConnected);
         }
       }
@@ -821,33 +805,20 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     // Xbox PC account card (Settings > Sources): connect Microsoft/Xbox Network, then import the
     // library. Import progress arrives as `xbox-pc:import-progress` IPC events.
     (function () {
-      const fr = () => String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
       const T = () =>
-        fr()
-          ? {
-              connectedAs: (n) => `Connecté${n ? ' : ' + n : ''}`,
-              notConnected: 'Non connecté',
-              connecting: 'Ouverture de la fenêtre de connexion Microsoft…',
-              connected: 'Compte Xbox connecté.',
-              cancelled: 'Connexion annulée.',
-              failed: 'Échec de la connexion Xbox',
-              disconnected: 'Compte Xbox déconnecté.',
-              importing: 'Importation de la bibliothèque Xbox…',
-              imported: (r) => `Importation terminée : ${r?.created || 0} créé(s), ${r?.updated || 0} mis à jour, ${r?.failed || 0} échec(s).`,
-              importFailed: 'Échec de l’importation Xbox',
-            }
-          : {
-              connectedAs: (n) => `Connected${n ? ': ' + n : ''}`,
-              notConnected: 'Not connected',
-              connecting: 'Opening the Microsoft sign-in window…',
-              connected: 'Xbox account connected.',
-              cancelled: 'Sign-in cancelled.',
-              failed: 'Xbox sign-in failed',
-              disconnected: 'Xbox account disconnected.',
-              importing: 'Importing the Xbox PC library…',
-              imported: (r) => `Import complete: ${r?.created || 0} created, ${r?.updated || 0} updated, ${r?.failed || 0} failed.`,
-              importFailed: 'Xbox library import failed',
-            };
+        ({
+          connectedAs: (n) => t('xbox-connected-as', `Connected${n ? ': ' + n : ''}`, `Connecté${n ? ' : ' + n : ''}`),
+          notConnected: t('xbox-not-connected', 'Not connected', 'Non connecté'),
+          connecting: t('xbox-connecting', 'Opening the Microsoft sign-in window…', 'Ouverture de la fenêtre de connexion Microsoft…'),
+          connected: t('xbox-connected', 'Xbox account connected.', 'Compte Xbox connecté.'),
+          cancelled: t('xbox-cancelled', 'Sign-in cancelled.', 'Connexion annulée.'),
+          failed: t('xbox-failed', 'Xbox sign-in failed', 'Échec de la connexion Xbox'),
+          disconnected: t('xbox-disconnected', 'Xbox account disconnected.', 'Compte Xbox déconnecté.'),
+          importing: t('xbox-importing', 'Importing the Xbox PC library…', 'Importation de la bibliothèque Xbox…'),
+          imported: (r) =>
+            t('xbox-imported', `Import complete: ${r?.created || 0} created, ${r?.updated || 0} updated, ${r?.failed || 0} failed.`, `Importation terminée : ${r?.created || 0} créé(s), ${r?.updated || 0} mis à jour, ${r?.failed || 0} échec(s).`),
+          importFailed: t('xbox-import-failed', 'Xbox library import failed', 'Échec de l’importation Xbox'),
+        });
       const status = $('#xbox-connect-status');
       const badge = $('#xbox-connect-badge');
       const connectBtn = $('#xbox-connect-btn');
@@ -855,16 +826,18 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const disconnectBtn = $('#xbox-disconnect-btn');
       const setStatus = (text, cls = '') => status.removeClass('success error running').addClass(cls).text(text || '');
 
-      if (fr()) {
-        $('#xbox-connect-title').text('Compte Xbox PC');
-        $('#xbox-connect-desc').text(
+      $('#xbox-connect-title').text(t('xbox-title', 'Xbox PC account', 'Compte Xbox PC'));
+      $('#xbox-connect-desc').text(
+        t(
+          'xbox-desc',
+          'Optional. Connect your Microsoft / Xbox Network account to import your Xbox PC library (Game Pass and Microsoft Store games): achievement names, descriptions, unlock state and rarity are fetched from Xbox Network and cached locally. Your session token is stored encrypted on this PC.',
           'Optionnel. Connecte ton compte Microsoft / Xbox Network pour importer ta bibliothèque Xbox PC (Game Pass et Microsoft Store) : noms, descriptions, état de déblocage et rareté sont récupérés depuis Xbox Network puis mis en cache localement. Ton jeton est stocké chiffré sur ce PC.'
-        );
-        $('#xbox-connect-btn-hint').text('ouvre la fenêtre de connexion Microsoft');
-        $('#xbox-import-btn-hint').text('récupère les succès depuis Xbox Network');
-        $('#xbox-connect-badge-label').text('Connecté');
-        $('#xbox-disconnect-btn-label').text('Déconnecter');
-      }
+        )
+      );
+      $('#xbox-connect-btn-hint').text(t('xbox-btn-hint', 'opens the Microsoft sign-in window', 'ouvre la fenêtre de connexion Microsoft'));
+      $('#xbox-import-btn-hint').text(t('xbox-import-btn-hint', 'fetch achievements from Xbox Network', 'récupère les succès depuis Xbox Network'));
+      $('#xbox-connect-badge-label').text(t('connected', 'Connected', 'Connecté'));
+      $('#xbox-disconnect-btn-label').text(t('disconnect', 'Disconnect', 'Déconnecter'));
 
       async function refresh() {
         let s = {};
@@ -875,13 +848,13 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           badge.show();
           importBtn.show();
           disconnectBtn.show();
-          $('#xbox-connect-btn-label').text(fr() ? 'Reconnecter' : 'Reconnect');
+          $('#xbox-connect-btn-label').text(t('xbox-reconnect', 'Reconnect', 'Reconnecter'));
           setStatus(T().connectedAs(s.gamertag), 'success');
         } else {
           badge.hide();
           importBtn.hide();
           disconnectBtn.hide();
-          $('#xbox-connect-btn-label').text(fr() ? 'Connecter le compte Xbox' : 'Connect Xbox account');
+          $('#xbox-connect-btn-label').text(t('xbox-connect', 'Connect Xbox account', 'Connecter le compte Xbox'));
           if (!status.hasClass('error')) setStatus(T().notConnected);
         }
       }
@@ -1061,11 +1034,15 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     // it and report the game count, so "added but nothing shows up" stops being a mystery.
     async function reportFolderScan(dir) {
       const result = $('#folder-action-result');
-      result.text(result.attr('data-running') || 'Scanning…');
+      result.text(result.attr('data-running') || t('scanning', 'Scanning…', 'Analyse…'));
       try {
         const found = await userDir.scan(dir);
         const count = Array.isArray(found) ? found.length : 0;
-        result.text(count > 0 ? `${result.attr('data-done') || 'Scan complete.'} (${count})` : result.attr('data-invalid') || 'No game found.');
+        result.text(
+          count > 0
+            ? `${result.attr('data-done') || t('scan-complete', 'Scan complete.', 'Analyse terminée.')} (${count})`
+            : result.attr('data-invalid') || t('no-game-found', 'No game found.', 'Aucun jeu trouvé.')
+        );
       } catch (err) {
         debug.log(err);
         result.text('');
@@ -1089,7 +1066,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
             debug.log('-> Invalid folder');
             remote.dialog.showMessageBoxSync({
               type: 'warning',
-              title: 'Invalid folder',
+              title: t('invalid-folder', 'Invalid folder', 'Dossier invalide'),
               message: $("#settings .content[data-view='folder'] > .controls .info p")
                 .html()
                 .replace(/\s{2,}/g, '')
@@ -1103,8 +1080,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       } catch (err) {
         remote.dialog.showMessageBoxSync({
           type: 'error',
-          title: 'Unexpected Error',
-          message: 'Error adding custom folder',
+          title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
+          message: t('error-adding-custom-folder', 'Error adding custom folder', 'Erreur lors de l\'ajout du dossier personnalisé'),
           detail: `${err}`,
         });
       }
@@ -1128,8 +1105,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       } catch (err) {
         remote.dialog.showMessageBoxSync({
           type: 'error',
-          title: 'Unexpected Error',
-          message: 'Error adding library folder',
+          title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
+          message: t('error-adding-library-folder', 'Error adding library folder', 'Erreur lors de l\'ajout du dossier de bibliothèque'),
           detail: `${err}`,
         });
       }
@@ -1145,7 +1122,6 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const self = $(this);
       const result = $('#generate-configs-result');
       self.css('pointer-events', 'none');
-      const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
       try {
         // 1) persist the folders currently listed in the UI so the scan uses them
         let userDirList = [];
@@ -1176,21 +1152,23 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         }
         const unconfigured = found.filter((g) => !g.hasSchema).length;
         const autoFixEnabled = app.config?.emulator?.autoApplyNewGames !== false;
-        const detail = fr
-          ? autoFixEnabled
-            ? "Le bouton lance un scan complet maintenant. Pendant ce scan, Achievement Watcher applique l'auto-fix GBE/Goldberg aux jeux détectés qui ont un dossier d'installation connu. Les réparations se font en arrière-plan : relance un scan si un jeu vient juste d'être corrigé et n'apparaît pas encore comme prêt."
-            : "Le bouton lance seulement un scan complet pour détecter les jeux. La réparation automatique est désactivée dans Configuration émulateur > Corriger automatiquement les nouveaux jeux détectés."
-          : autoFixEnabled
-            ? 'This starts a full scan now. During that scan, Achievement Watcher applies the GBE/Goldberg auto-fix to detected games with a known install folder. Repairs run in the background: scan again if a freshly fixed game does not show as ready yet.'
-            : 'This only starts a full detection scan. Automatic repair is disabled in Emulator configuration > Automatically fix newly detected games.';
+        const detail = autoFixEnabled
+          ? t(
+              'generate-configs-detail-auto-fix',
+              'This starts a full scan now. During that scan, Achievement Watcher applies the GBE/Goldberg auto-fix to detected games with a known install folder. Repairs run in the background: scan again if a freshly fixed game does not show as ready yet.',
+              "Le bouton lance un scan complet maintenant. Pendant ce scan, Achievement Watcher applique l'auto-fix GBE/Goldberg aux jeux détectés qui ont un dossier d'installation connu. Les réparations se font en arrière-plan : relance un scan si un jeu vient juste d'être corrigé et n'apparaît pas encore comme prêt."
+            )
+          : t(
+              'generate-configs-detail-scan-only',
+              'This only starts a full detection scan. Automatic repair is disabled in Emulator configuration > Automatically fix newly detected games.',
+              'Le bouton lance seulement un scan complet pour détecter les jeux. La réparation automatique est désactivée dans Configuration émulateur > Corriger automatiquement les nouveaux jeux détectés.'
+            );
         const choice = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
           type: autoFixEnabled ? 'info' : 'warning',
-          title: fr ? 'Génération des configs' : 'Generate configs',
-          message: fr
-            ? `${found.length} jeu(x) émulé(s) détecté(s) dans tes bibliothèques — ${unconfigured} sans achievements.json.`
-            : `${found.length} emulated game(s) found in your libraries — ${unconfigured} without achievements.json.`,
+          title: t('generate-configs', 'Generate configs', 'Génération des configs'),
+          message: t('x-emulated-game-s-found-in-your-libraries-x-without-achievements', `${found.length} emulated game(s) found in your libraries — ${unconfigured} without achievements.json.`, `${found.length} jeu(x) émulé(s) détecté(s) dans tes bibliothèques — ${unconfigured} sans achievements.json.`),
           detail,
-          buttons: [fr ? 'Lancer le scan' : 'Start scan', fr ? 'Annuler' : 'Cancel'],
+          buttons: [t('start-scan', 'Start scan', 'Lancer le scan'), t('cancel', 'Cancel', 'Annuler')],
           defaultId: 0,
           cancelId: 1,
           noLink: true,
@@ -1199,18 +1177,14 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
         // 3) full rescan — discovers the folders and applies the one-shot emulator fix to unconfigured games
         result.text(
-          fr
-            ? autoFixEnabled
-              ? `Scan lancé — ${unconfigured} jeu(x) sans schema seront réparés si leur dossier d'installation est reconnu.`
-              : "Scan lancé — réparation automatique désactivée, aucun fichier ne sera modifié."
-            : autoFixEnabled
-              ? `Scan started — ${unconfigured} game(s) without schema will be repaired if their install folder is recognized.`
-              : 'Scan started — automatic repair is disabled, no files will be changed.'
+          autoFixEnabled
+            ? t('scan-started-auto-fix', `Scan started — ${unconfigured} game(s) without schema will be repaired if their install folder is recognized.`, `Scan lancé — ${unconfigured} jeu(x) sans schema seront réparés si leur dossier d'installation est reconnu.`)
+            : t('scan-started-scan-only', 'Scan started — automatic repair is disabled, no files will be changed.', 'Scan lancé — réparation automatique désactivée, aucun fichier ne sera modifié.')
         );
         resetUI();
       } catch (err) {
-        result.text(fr ? `Génération impossible : ${err}` : `Generate configs failed: ${err}`);
-        remote.dialog.showMessageBoxSync({ type: 'error', title: 'Unexpected Error', message: 'Error generating configs', detail: `${err}` });
+        result.text(t('generate-configs-failed-x', `Generate configs failed: ${err}`, `Génération impossible : ${err}`));
+        remote.dialog.showMessageBoxSync({ type: 'error', title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'), message: t('error-generating-configs', 'Error generating configs', 'Erreur lors de la génération des configs'), detail: `${err}` });
       } finally {
         self.css('pointer-events', 'initial');
       }
@@ -1251,8 +1225,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         result.text('');
         remote.dialog.showMessageBoxSync({
           type: 'error',
-          title: 'Unexpected Error',
-          message: 'Error while auto-finding folder(s)',
+          title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
+          message: t('error-while-auto-finding-folder-s', 'Error while auto-finding folder(s)', 'Erreur lors de la recherche automatique de dossiers'),
           detail: `${err}`,
         });
       }
@@ -1336,8 +1310,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           self.css('pointer-events', 'initial');
           remote.dialog.showMessageBoxSync({
             type: 'error',
-            title: 'Unexpected Error',
-            message: 'Error while trying to reset user blacklist',
+            title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
+            message: t('error-while-trying-to-reset-user-blacklist', 'Error while trying to reset user blacklist', 'Erreur lors de la réinitialisation de la liste noire'),
             detail: `${err}`,
           });
         });
@@ -1369,9 +1343,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           dummy.close();
           remote.dialog.showMessageBoxSync({
             type: 'error',
-            title: 'WebSocket Connection Error',
-            message: 'Notification Test Failure.',
-            detail: 'Error in connection establishment: net::ERR_CONNECTION_REFUSED\nIs Watchdog Running ?',
+            title: t('websocket-connection-error', 'WebSocket Connection Error', 'Erreur de connexion WebSocket'),
+            message: t('notification-test-failure', 'Notification Test Failure.', 'Échec du test de notification.'),
+            detail: t('error-in-connection-establishment-net-err-connection-refused-nis', 'Error in connection establishment: net::ERR_CONNECTION_REFUSED\nIs Watchdog Running ?'),
           });
         };
 
@@ -1398,8 +1372,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
               dummy.close();
               remote.dialog.showMessageBoxSync({
                 type: 'error',
-                title: 'Unexpected Error',
-                message: 'Notification Test Failure.',
+                title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
+                message: t('notification-test-failure', 'Notification Test Failure.', 'Échec du test de notification.'),
                 detail: `${err}`,
               });
             }
@@ -1411,8 +1385,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
             dummy.close();
             remote.dialog.showMessageBoxSync({
               type: 'error',
-              title: 'Unexpected Error',
-              message: 'Notification Test Failure.',
+              title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
+              message: t('notification-test-failure', 'Notification Test Failure.', 'Échec du test de notification.'),
               detail: `${err}`,
             });
           }
@@ -1443,24 +1417,28 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           : mainPreset;
       const sound = $('#option_overlaySound').val() || '';
       const rarePct = kind === 'rare' ? randomRareRarity() : null;
-      const fr = String((window.app && window.app.config && window.app.config.achievement && window.app.config.achievement.lang) || '')
-        .toLowerCase()
-        .startsWith('fr');
-      const texts = fr
-        ? {
-            toast: { displayName: 'Succès débloqué', description: 'Test de notification — preset ' + preset },
-            rare: { displayName: 'Succès rare', description: 'Rare · ' + rarePct + ' % des joueurs' },
-            progress: { displayName: 'Progression', description: '3 / 10' },
-            playtime: { displayName: 'Hollow Knight', description: 'Vous avez joué pendant 42 minutes' },
-            platinum: { displayName: 'Trophée Platine', description: '100 % complété' },
-          }
-        : {
-            toast: { displayName: 'Achievement Unlocked', description: 'Notification test — ' + preset + ' preset' },
-            rare: { displayName: 'Rare Achievement', description: 'Rare · ' + rarePct + '% of players' },
-            progress: { displayName: 'Progress', description: '3 / 10' },
-            playtime: { displayName: 'Hollow Knight', description: 'You played for 42 minutes' },
-            platinum: { displayName: 'Platinum!', description: '100% completed' },
-          };
+      const texts = {
+        toast: {
+          displayName: t('test-toast-name', 'Achievement Unlocked', 'Succès débloqué'),
+          description: t('test-toast-desc', 'Notification test — ' + preset + ' preset', 'Test de notification — preset ' + preset),
+        },
+        rare: {
+          displayName: t('test-rare-name', 'Rare Achievement', 'Succès rare'),
+          description: t('test-rare-desc', 'Rare · ' + rarePct + '% of players', 'Rare · ' + rarePct + ' % des joueurs'),
+        },
+        progress: {
+          displayName: t('test-progress-name', 'Progress', 'Progression'),
+          description: t('test-progress-desc', '3 / 10', '3 / 10'),
+        },
+        playtime: {
+          displayName: t('test-playtime-name', 'Hollow Knight', 'Hollow Knight'),
+          description: t('test-playtime-desc', 'You played for 42 minutes', 'Vous avez joué pendant 42 minutes'),
+        },
+        platinum: {
+          displayName: t('test-platinum-name', 'Platinum!', 'Trophée Platine'),
+          description: t('test-platinum-desc', '100% completed', '100 % complété'),
+        },
+      };
       const volRaw = parseInt($('#option_overlayVolume').val(), 10);
       const durRaw = $('#option_overlayDuration').val();
       const durSec = durRaw === 'auto' || !durRaw ? 0 : parseInt(durRaw, 10) || 0;
@@ -1844,7 +1822,7 @@ function populateUserDirList(option) {
           debug.log('-> Invalid folder');
           remote.dialog.showMessageBoxSync({
             type: 'warning',
-            title: 'Invalid folder',
+            title: t('invalid-folder', 'Invalid folder', 'Dossier invalide'),
             message: $("#settings .content[data-view='folder'] > .controls .info p")
               .html()
               .replace(/\s{2,}/g, '')
@@ -1857,8 +1835,8 @@ function populateUserDirList(option) {
     } catch (err) {
       remote.dialog.showMessageBoxSync({
         type: 'error',
-        title: 'Unexpected Error',
-        message: 'Error editing custom folder',
+        title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
+        message: t('error-editing-custom-folder', 'Error editing custom folder', 'Erreur lors de la modification du dossier personnalisé'),
         detail: `${err}`,
       });
     }
@@ -1936,8 +1914,8 @@ function populateLibraryDirList(option) {
     } catch (err) {
       remote.dialog.showMessageBoxSync({
         type: 'error',
-        title: 'Unexpected Error',
-        message: 'Error editing library folder',
+        title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
+        message: t('error-editing-library-folder', 'Error editing library folder', 'Erreur lors de la modification du dossier de bibliothèque'),
         detail: `${err}`,
       });
     }

@@ -5,6 +5,25 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- The NSIS installer now follows the Windows display language for every page
+  and custom message, matching the 18 languages bundled in the app, instead of
+  always defaulting to English. It also ships a modern dark-blue
+  welcome/finish sidebar and header image that match the app theme.
+- The in-game overlay is now localized: the header columns, status labels and
+  empty/fallback messages follow the selected app language, and localized
+  achievement names/descriptions are used when available (previously the
+  overlay was hardcoded to English).
+- Imperative strings (message boxes, context/tray menus, toasts, busy labels)
+  now go through a translation helper instead of hardcoded French/English
+  ternaries. Existing behaviour is preserved (French fallback, English
+  otherwise) and each string can now be translated per locale by adding a
+  `dialogs.<key>` entry to `locale/lang/*.json`.
+- The installer now shows the LGPL licence before installing and, at
+  uninstall, asks whether to also delete the app's settings, cache and saved
+  data (default: keep — the legacy 1.6.8 data folder is never touched).
+
 ### Changed
 
 - The resident update check now runs hourly instead of every six hours, and a check that fires

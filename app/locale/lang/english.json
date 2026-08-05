@@ -760,5 +760,16 @@
     "smartRunning": "Searching...",
     "smartDone": "Search complete.",
     "saveError": "Could not save setup."
+  },
+  "overlay": {
+    "icon": "Icon",
+    "achievement": "Achievement",
+    "status": "Status",
+    "selectConfig": "Select a config!",
+    "locked": "Locked",
+    "unlocked": "Unlocked",
+    "progress": "Progress",
+    "hidden": "Hidden",
+    "na": "N/A"
   }
 }

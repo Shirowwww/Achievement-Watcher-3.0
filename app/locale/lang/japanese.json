@@ -760,5 +760,16 @@
     "smartRunning": "検索中...",
     "smartDone": "検索が完了しました。",
     "saveError": "設定を保存できませんでした。"
+  },
+  "overlay": {
+    "icon": "アイコン",
+    "achievement": "実績",
+    "status": "ステータス",
+    "selectConfig": "設定を選択してください！",
+    "locked": "ロック中",
+    "unlocked": "解除済み",
+    "progress": "進行状況",
+    "hidden": "非表示",
+    "na": "N/A"
   }
 }

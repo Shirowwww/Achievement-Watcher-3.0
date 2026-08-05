@@ -8,6 +8,7 @@ const { selectFileDialog } = require('./selectFileDialog.js');
 const { getSteamPath, getSteamUsers } = require('../../parser/steam.js');
 
 const appPath = remote.app.getAppPath();
+const { t } = require(path.join(appPath, 'locale/t.js'));
 
 // Native Windows menus render icons at their natural size; the bundled icons are
 // 32×32 and look oversized at typical DPI. Normalize to the standard 16×16 size.
@@ -27,7 +28,7 @@ function contextMenu(e, position = null) {
 
   menu.append(
     new MenuItem({
-      label: 'Squared',
+      label: t('avatar-squared', 'Squared', 'Carré'),
       type: 'checkbox',
       checked: !self.classList.contains('round'),
       click: function () {
@@ -42,7 +43,7 @@ function contextMenu(e, position = null) {
   menu.append(
     new MenuItem({
       icon: menuIcon('folder-open.png'),
-      label: 'Browse...',
+      label: t('avatar-browse', 'Browse...', 'Parcourir…'),
       click: function () {
         selectFileDialog.call(self);
       },
@@ -52,7 +53,7 @@ function contextMenu(e, position = null) {
   menu.append(
     new MenuItem({
       icon: menuIcon('redo-alt.png'),
-      label: 'Reset to default avatar',
+      label: t('avatar-reset-default', 'Reset to default avatar', 'Réinitialiser l’avatar par défaut'),
       click: function () {
         localStorage.removeItem('avatar');
         self.update();
@@ -66,7 +67,7 @@ function contextMenu(e, position = null) {
     menu.append(
       new MenuItem({
         icon: menuIcon('steam.png'),
-        label: 'Import from Steam...',
+        label: t('avatar-import-steam', 'Import from Steam...', 'Importer depuis Steam…'),
         click: function () {
           getSteamPath()
             .then((SteamPath) => {
@@ -82,8 +83,8 @@ function contextMenu(e, position = null) {
             .catch((err) => {
               remote.dialog.showMessageBoxSync({
                 type: 'error',
-                title: 'Error',
-                message: 'Failed to import from Steam.',
+                title: t('error', 'Error', 'Erreur'),
+                message: t('failed-to-import-from-steam', 'Failed to import from Steam.', 'Échec de l’importation depuis Steam.'),
                 detail: `${err}`,
               });
             });
@@ -108,8 +109,8 @@ function contextMenu(e, position = null) {
               .catch((err) => {
                 remote.dialog.showMessageBoxSync({
                   type: 'error',
-                  title: 'Error',
-                  message: `Failed to fetch ${self.steamUsers[i].name}'s avatar.`,
+                  title: t('error', 'Error', 'Erreur'),
+                  message: t('failed-to-fetch-avatar', `Failed to fetch ${self.steamUsers[i].name}'s avatar.`, `Échec de la récupération de l’avatar de ${self.steamUsers[i].name}.`),
                   detail: `${err}`,
                 });
               });

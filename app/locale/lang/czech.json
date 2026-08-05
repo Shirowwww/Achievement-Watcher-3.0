@@ -760,5 +760,16 @@
     "smartRunning": "Hledání...",
     "smartDone": "Hledání dokončeno.",
     "saveError": "Nastavení se nepodařilo uložit."
+  },
+  "overlay": {
+    "icon": "Ikona",
+    "achievement": "Úspěch",
+    "status": "Stav",
+    "selectConfig": "Vyberte konfiguraci!",
+    "locked": "Zamčeno",
+    "unlocked": "Odemčeno",
+    "progress": "Průběh",
+    "hidden": "Skryto",
+    "na": "N/A"
   }
 }

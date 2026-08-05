@@ -760,5 +760,16 @@
     "smartRunning": "Keresés...",
     "smartDone": "A keresés befejeződött.",
     "saveError": "Nem sikerült menteni a beállítást."
+  },
+  "overlay": {
+    "icon": "Ikon",
+    "achievement": "Teljesítmény",
+    "status": "Állapot",
+    "selectConfig": "Válassz konfigurációt!",
+    "locked": "Zárolva",
+    "unlocked": "Feloldva",
+    "progress": "Előrehaladás",
+    "hidden": "Rejtett",
+    "na": "N/A"
   }
 }

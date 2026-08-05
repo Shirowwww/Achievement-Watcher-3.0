@@ -760,5 +760,16 @@
     "smartRunning": "กำลังค้นหา...",
     "smartDone": "ค้นหาเสร็จสมบูรณ์",
     "saveError": "ไม่สามารถบันทึกการตั้งค่าได้"
+  },
+  "overlay": {
+    "icon": "ไอคอน",
+    "achievement": "ความสำเร็จ",
+    "status": "สถานะ",
+    "selectConfig": "เลือกการกำหนดค่า!",
+    "locked": "ล็อกแล้ว",
+    "unlocked": "ปลดล็อกแล้ว",
+    "progress": "ความคืบหน้า",
+    "hidden": "ซ่อน",
+    "na": "N/A"
   }
 }

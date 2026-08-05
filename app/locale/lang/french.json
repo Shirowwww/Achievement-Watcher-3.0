@@ -760,5 +760,16 @@
     "smartRunning": "Recherche...",
     "smartDone": "Recherche terminée.",
     "saveError": "Impossible d'enregistrer la configuration."
+  },
+  "overlay": {
+    "icon": "Icône",
+    "achievement": "Succès",
+    "status": "Statut",
+    "selectConfig": "Sélectionnez une configuration !",
+    "locked": "Verrouillé",
+    "unlocked": "Débloqué",
+    "progress": "Progression",
+    "hidden": "Masqué",
+    "na": "N/A"
   }
 }

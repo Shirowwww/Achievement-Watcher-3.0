@@ -65,15 +65,15 @@
       <table>
         <thead class="drag">
           <tr>
-            <th>Icon</th>
-            <th class="no-drag">Achievement</th>
-            <th class="no-drag">Status</th>
+            <th id="overlay-th-icon">Icon</th>
+            <th id="overlay-th-achievement" class="no-drag">Achievement</th>
+            <th id="overlay-th-status" class="no-drag">Status</th>
           </tr>
         </thead>
         <tbody id="overlayTableBody"></tbody>
         <tfoot>
           <tr id="noConfigMessageRow" style="display: none">
-            <td colspan="3" style="text-align: center; font-style: italic; color: #ccc">Select a config!</td>
+            <td id="overlay-empty" colspan="3" style="text-align: center; font-style: italic; color: #ccc">Select a config!</td>
           </tr>
         </tfoot>
       </table>
@@ -83,12 +83,34 @@
       let overlayLang = 'english';
       let currentConfigName = null;
       let isLoading = false;
+      const overlayStrings = {
+        icon: 'Icon',
+        achievement: 'Achievement',
+        status: 'Status',
+        selectConfig: 'Select a config!',
+        locked: 'Locked',
+        unlocked: 'Unlocked',
+        progress: 'Progress',
+        hidden: 'Hidden',
+        na: 'N/A',
+      };
       const headers = document.querySelectorAll('thead th');
       // Track sorting for status and achievement only
       let sortState = {
         status: null, // 1 = asc, -1 = desc, null = no sort
         achievement: null, // 1 = asc, -1 = desc, null = no sort
       };
+
+      function applyOverlayStrings() {
+        const iconHeader = document.getElementById('overlay-th-icon');
+        const achievementHeader = document.getElementById('overlay-th-achievement');
+        const statusHeader = document.getElementById('overlay-th-status');
+        const emptyRow = document.getElementById('overlay-empty');
+        if (iconHeader) iconHeader.textContent = overlayStrings.icon;
+        if (achievementHeader) achievementHeader.textContent = overlayStrings.achievement;
+        if (statusHeader) statusHeader.textContent = overlayStrings.status;
+        if (emptyRow) emptyRow.textContent = overlayStrings.selectConfig;
+      }
 
       function updateHeaderIndicators() {
         headers.forEach((header, i) => {
@@ -112,16 +134,21 @@
       }
 
       function getSafeLocalizedText(input, lang = 'english') {
-        if (!input) return 'Hidden';
-        if (typeof input === 'string') return input.trim() || 'Hidden';
+        if (!input) return overlayStrings.hidden;
+        if (typeof input === 'string') return input.trim() || overlayStrings.hidden;
         if (typeof input === 'object') {
-          return input[lang] || input.english || Object.values(input).find((v) => typeof v === 'string' && v.trim() !== '') || 'Hidden';
+          return (
+            input[lang] ||
+            input.english ||
+            Object.values(input).find((v) => typeof v === 'string' && v.trim() !== '') ||
+            overlayStrings.hidden
+          );
         }
-        return 'Hidden';
+        return overlayStrings.hidden;
       }
 
       function formatTimestamp(timestamp) {
-        if (!timestamp) return 'N/A';
+        if (!timestamp) return overlayStrings.na;
         const date = new Date(timestamp * 1000);
         return date.toLocaleString();
       }
@@ -204,24 +231,24 @@
           const icon = achievement.icon || iconGray;
 
           let imagePath = await window.api.fetchIcon(iconGray, game.appid);
-          let status = `<span style="color: red; font-weight: bold;">Locked</span>`;
+          let status = `<span style="color: red; font-weight: bold;">${overlayStrings.locked}</span>`;
           let earnedTimeText = '';
           let progressText = '';
 
           if (achievement.Achieved) {
             imagePath = await window.api.fetchIcon(icon, game.appid);
-            status = `<span style="color: green; font-weight: bold;">Unlocked</span>`;
+            status = `<span style="color: green; font-weight: bold;">${overlayStrings.unlocked}</span>`;
             earnedTimeText = `<br>${formatTimestamp(achievement.UnlockTime)}`;
           }
 
           if (typeof achievement.MaxProgress === 'number' && achievement.MaxProgress > 0) {
-            progressText = `<br><span style="font-size: 0.85em; color: #888;">Progress: ${
+            progressText = `<br><span style="font-size: 0.85em; color: #888;">${overlayStrings.progress}: ${
               achievement.Achieved ? achievement.MaxProgress : achievement.CurProgress
             } / ${achievement.MaxProgress}</span>`;
           }
 
           const row = document.createElement('tr');
-          row.innerHTML = `<td class="image"><img src="${imagePath}" alt="Icon" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11455/11455431.png';" /></td>
+          row.innerHTML = `<td class="image"><img src="${imagePath}" alt="${overlayStrings.icon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11455/11455431.png';" /></td>
                           <td class="displayName"><strong>${displayName}</strong><br><span class="description"><em>${description}</em>${progressText}</span></td>
                           <td class="status">${status} ${earnedTimeText}</td>
                         `;
@@ -231,6 +258,13 @@
         currentConfigName = game;
         isLoading = false;
       }
+
+      window.api.onOverlayLanguage((data) => {
+        if (!data) return;
+        if (data.lang) overlayLang = data.lang;
+        if (data.strings) Object.assign(overlayStrings, data.strings);
+        applyOverlayStrings();
+      });
 
       window.api.onOverlay((game) => {
         const tableBody = document.querySelector('#overlayTableBody');

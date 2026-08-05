@@ -49,7 +49,7 @@ function notifyUpdateError(message) {
     try {
       tray.displayBalloon({
         iconType: 'warning',
-        title: 'Achievement Watcher',
+        title: t('achievement-watcher', 'Achievement Watcher'),
         content: `Update check failed: ${message}`,
       });
     } catch {}
@@ -85,6 +85,40 @@ const fs = require('fs');
 const ipc = require(path.join(__dirname, 'ipc.js'));
 const notificationSounds = require(path.join(__dirname, '../util/notificationSounds.js'));
 const userThemes = require(path.join(__dirname, '../util/userThemes.js'));
+
+// Main-process counterpart of app/locale/t.js: imperative strings (dialogs,
+// tray menu, notifications) resolve from the selected locale's `dialogs`
+// section when a real translation exists, otherwise fall back to the legacy
+// English/French pair that used to be hardcoded.
+let mainLocaleCache = null;
+function t(key, english, french, params) {
+  const interpolate = (value) =>
+    params && typeof params === 'object'
+      ? String(value).replace(/\{(\w+)\}/g, (match, name) =>
+          Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : match
+        )
+      : value;
+  try {
+    const lang = String((configJS && configJS.achievement && configJS.achievement.lang) || 'english');
+    if (!mainLocaleCache || mainLocaleCache.lang !== lang) {
+      const englishData = JSON.parse(fs.readFileSync(path.join(__dirname, '../locale/lang/english.json'), 'utf8'));
+      let data = englishData;
+      if (lang !== 'english') {
+        const requested = JSON.parse(fs.readFileSync(path.join(__dirname, '../locale/lang', `${lang}.json`), 'utf8'));
+        const deepmerge = require('deepmerge');
+        data = deepmerge(englishData, requested, { arrayMerge: (dest, src) => src });
+      }
+      mainLocaleCache = { lang, data };
+    }
+    const dialogs = mainLocaleCache.data && mainLocaleCache.data.dialogs;
+    const value = dialogs && typeof dialogs[key] === 'string' ? dialogs[key] : null;
+    if (value && value.trim()) return interpolate(value);
+  } catch {}
+  const lang = String((configJS && configJS.achievement && configJS.achievement.lang) || '');
+  const fallback = lang.toLowerCase().startsWith('fr') && french ? french : english;
+  return interpolate(fallback || key);
+}
+
 const BASE_URL = 'https://www.steamgriddb.com/api/v2';
 const DEFAULT_API_KEY = '2a9d32ddd0bfe4e1191b4f6ff56fef60'; // bundled public fallback (rate-limited)
 const startupArgs = minimist(process.argv.slice(1));
@@ -764,7 +798,7 @@ ipcMain.handle('epic:login', async () => {
     epicLoginWindow = new BrowserWindow({
       width: 520,
       height: 760,
-      title: 'Connect Epic Games account',
+      title: t('connect-epic-games-account', 'Connect Epic Games account', 'Connecter le compte Epic Games'),
       parent: MainWin && !MainWin.isDestroyed() ? MainWin : undefined, // keep it above the app window
       autoHideMenuBar: true,
       show: false, // shown on ready-to-show so it never flashes an empty frame or opens behind
@@ -906,7 +940,7 @@ ipcMain.handle('xbox-pc:login', async () => {
     xboxLoginWindow = new BrowserWindow({
       width: 560,
       height: 760,
-      title: 'Connect Microsoft / Xbox Network',
+      title: t('connect-microsoft-xbox-network', 'Connect Microsoft / Xbox Network', 'Connecter Microsoft / Xbox Network'),
       parent: MainWin && !MainWin.isDestroyed() ? MainWin : undefined,
       autoHideMenuBar: true,
       show: false,
@@ -1159,13 +1193,10 @@ function notifyEmulatorFixed(game) {
   try {
     if (configJS && configJS.notification && configJS.notification.notify === false) return; // master notif switch
     if (!Notification.isSupported || !Notification.isSupported()) return;
-    const fr = String((configJS && configJS.achievement && configJS.achievement.lang) || '')
-      .toLowerCase()
-      .startsWith('fr');
     const name = (game && game.name) || `AppID ${game && game.appid}`;
     new Notification({
-      title: fr ? 'Correctif émulateur appliqué' : 'Emulator fix applied',
-      body: fr ? `${name} est prêt — succès activés.` : `${name} is ready — achievements enabled.`,
+      title: t('emulator-fix-applied', 'Emulator fix applied', 'Correctif émulateur appliqué'),
+      body: t('x-is-ready-achievements-enabled', `${name} is ready — achievements enabled.`, `${name} est prêt — succès activés.`),
       icon: path.join(__dirname, '../resources/icon/icon.png'),
     }).show();
     debug.log(`[bg-autofix] toast: emulator fix applied for ${name}`);
@@ -2651,13 +2682,10 @@ async function enqueueNotificationFromArgs(args) {
       ? notificationSounds.pickRandomSound([path.join(__dirname, '../sounds'), userSoundsDir()]) ||
         resolveNotificationSound(ov.notificationSound)
       : resolveNotificationSound(ov.notificationSound);
-  const langFr = String((cfg && cfg.achievement && cfg.achievement.lang) || '')
-    .toLowerCase()
-    .startsWith('fr');
   const displayName =
     (args.displayName != null && String(args.displayName).trim()) ||
     (args.gameDisplayName != null && String(args.gameDisplayName).trim()) ||
-    (langFr ? 'Succès débloqué' : 'Achievement Unlocked');
+    t('achievement-unlocked', 'Achievement Unlocked', 'Succès débloqué');
 
   const durSec = ov.notificationDuration === 'auto' || ov.notificationDuration == null ? 0 : Number(ov.notificationDuration) || 0;
   // Per-type and per-emulator preset overrides ('' = main preset): the watchdog only forwards
@@ -2927,7 +2955,7 @@ ipcMain.handle('list-user-themes', async () =>
 ipcMain.handle('import-sound', async () => {
   try {
     const res = await dialog.showOpenDialog({
-      title: 'Choose a notification sound',
+      title: t('choose-a-notification-sound', 'Choose a notification sound', 'Choisir un son de notification'),
       properties: ['openFile', 'dontAddToRecent'],
       filters: [{ name: 'Audio', extensions: ['wav', 'mp3', 'ogg', 'flac', 'm4a', 'aac'] }],
     });
@@ -3014,14 +3042,14 @@ function createTray() {
     tray.setToolTip('Achievement Watcher');
     const rebuildMenu = () => {
       const contextMenu = Menu.buildFromTemplate([
-        { label: 'Open Achievement Watcher', click: () => createMainWindow() },
+        { label: t('open-achievement-watcher', 'Open Achievement Watcher', 'Ouvrir Achievement Watcher'), click: () => createMainWindow() },
         {
-          label: 'Restart background monitor',
+          label: t('restart-background-monitor', 'Restart background monitor', 'Redémarrer le moniteur en arrière-plan'),
           click: () => restartWatchdog(),
         },
         { type: 'separator' },
         {
-          label: 'Quit',
+          label: t('quit', 'Quit', 'Quitter'),
           click: () => {
             app.isQuiting = true;
             app.quit();
@@ -3065,10 +3093,10 @@ try {
     try {
       const { response } = await dialog.showMessageBox({
         type: 'info',
-        title: 'Update Available',
-        message: `A new version (${info.version}) is available.`,
-        detail: 'Download and install it now?',
-        buttons: ['Download && Install', 'Later', 'Skip this version'],
+        title: t('update-available', 'Update Available', 'Mise à jour disponible'),
+        message: t('update-available-message', `A new version (${info.version}) is available.`, `Une nouvelle version (${info.version}) est disponible.`),
+        detail: t('download-and-install-it-now', 'Download and install it now?', 'La télécharger et l’installer maintenant ?'),
+        buttons: [t('download-install', 'Download && Install', 'Télécharger && installer'), t('later', 'Later', 'Plus tard'), t('skip-this-version', 'Skip this version', 'Ignorer cette version')],
         defaultId: 0,
         cancelId: 1,
       });
@@ -3101,10 +3129,10 @@ try {
     try {
       const { response } = await dialog.showMessageBox({
         type: 'info',
-        title: 'Update Ready',
-        message: `A new version (${info.version}) has been downloaded.`,
-        detail: `Would you like to install it now?`,
-        buttons: ['Yes', 'Later', 'Skip this version'],
+        title: t('update-ready', 'Update Ready', 'Mise à jour prête'),
+        message: t('update-ready-message', `A new version (${info.version}) has been downloaded.`, `Une nouvelle version (${info.version}) a été téléchargée.`),
+        detail: t('update-ready-detail', 'Would you like to install it now?', 'Voulez-vous l’installer maintenant ?'),
+        buttons: [t('yes', 'Yes', 'Oui'), t('later', 'Later', 'Plus tard'), t('skip-this-version', 'Skip this version', 'Ignorer cette version')],
         defaultId: 0,
         cancelId: 1,
       });

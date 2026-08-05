@@ -760,5 +760,16 @@
     "smartRunning": "Wyszukiwanie...",
     "smartDone": "Wyszukiwanie zakończone.",
     "saveError": "Nie udało się zapisać konfiguracji."
+  },
+  "overlay": {
+    "icon": "Ikona",
+    "achievement": "Osiągnięcie",
+    "status": "Status",
+    "selectConfig": "Wybierz konfigurację!",
+    "locked": "Zablokowane",
+    "unlocked": "Odblokowane",
+    "progress": "Postęp",
+    "hidden": "Ukryte",
+    "na": "N/D"
   }
 }

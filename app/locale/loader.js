@@ -33,6 +33,9 @@ module.exports.load = async (lang = 'english') => {
 
     if (template) {
       translateUI(lang, locale, template);
+      // Expose the merged locale so imperative strings (dialogs, menus) can be
+      // translated through the same files via locale/t.js.
+      window.appLocale = template;
     } else {
       throw 'Unexpected Error';
     }

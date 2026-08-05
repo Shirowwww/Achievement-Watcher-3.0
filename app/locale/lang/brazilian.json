@@ -760,5 +760,16 @@
     "smartRunning": "Procurando...",
     "smartDone": "Pesquisa concluída.",
     "saveError": "Não foi possível salvar a configuração."
+  },
+  "overlay": {
+    "icon": "Ícone",
+    "achievement": "Conquista",
+    "status": "Status",
+    "selectConfig": "Selecione uma configuração!",
+    "locked": "Bloqueado",
+    "unlocked": "Desbloqueado",
+    "progress": "Progresso",
+    "hidden": "Oculto",
+    "na": "N/D"
   }
 }

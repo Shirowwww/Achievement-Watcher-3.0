@@ -43,6 +43,7 @@ contextBridge.exposeInMainWorld('api', {
   updateConfig: (configData) => ipcRenderer.send('update-config', configData),
   toggleOverlay: (selectedConfig) => ipcRenderer.send('toggle-overlay', selectedConfig),
   onOverlay: (callback) => ipcRenderer.on('show-overlay', (event, config) => callback(config)),
+  onOverlayLanguage: (callback) => ipcRenderer.on('overlay-language', (event, data) => callback(data)),
 
   // Other functionalities
   savePreferences: (prefs) => ipcRenderer.invoke('save-preferences', prefs),

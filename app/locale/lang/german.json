@@ -760,5 +760,16 @@
     "smartRunning": "Suche...",
     "smartDone": "Suche abgeschlossen.",
     "saveError": "Das Setup konnte nicht gespeichert werden."
+  },
+  "overlay": {
+    "icon": "Symbol",
+    "achievement": "Erfolg",
+    "status": "Status",
+    "selectConfig": "Wähle eine Konfiguration!",
+    "locked": "Gesperrt",
+    "unlocked": "Entsperrt",
+    "progress": "Fortschritt",
+    "hidden": "Versteckt",
+    "na": "N/A"
   }
 }

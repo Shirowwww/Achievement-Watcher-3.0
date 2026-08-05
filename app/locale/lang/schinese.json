@@ -760,5 +760,16 @@
     "smartRunning": "正在寻找...",
     "smartDone": "搜索完成。",
     "saveError": "无法保存设置。"
+  },
+  "overlay": {
+    "icon": "图标",
+    "achievement": "成就",
+    "status": "状态",
+    "selectConfig": "请选择一个配置！",
+    "locked": "已锁定",
+    "unlocked": "已解锁",
+    "progress": "进度",
+    "hidden": "已隐藏",
+    "na": "不适用"
   }
 }

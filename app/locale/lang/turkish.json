@@ -760,5 +760,16 @@
     "smartRunning": "Arama...",
     "smartDone": "Arama tamamlandı.",
     "saveError": "Kurulum kaydedilemedi."
+  },
+  "overlay": {
+    "icon": "Simge",
+    "achievement": "Başarım",
+    "status": "Durum",
+    "selectConfig": "Bir yapılandırma seçin!",
+    "locked": "Kilitli",
+    "unlocked": "Kilidi açıldı",
+    "progress": "İlerleme",
+    "hidden": "Gizli",
+    "na": "Y/A"
   }
 }
