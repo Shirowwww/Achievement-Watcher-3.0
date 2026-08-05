@@ -60,6 +60,10 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   under it) and folders with hard Rockstar profile evidence.
 - The Settings footer's "maintained by" link pointed at a non-existent `Shirowwww/Achievement-Watcher`
   repository instead of this one.
+- A Goldberg SocialClub game folder whose only content is an empty, never-written-to hex profile
+  folder (the emulator creates the shape before the game ever saves anything) is no longer listed
+  as a game named after the raw folder; an empty profile folder is no longer treated as evidence of
+  a real game.
 
 ## 3.5.3 - 2026-08-05
 

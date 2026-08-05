@@ -55,6 +55,12 @@ function writeRockstarProfileFixture() {
     const emptyGame = path.join(ROOT, 'Empty Game');
     fs.mkdirSync(emptyGame, { recursive: true });
 
+    // Regression (issue #11): a hex profile folder that exists but holds NOTHING (no achievement
+    // file, no Rockstar save data — the emulator created the shape but the game was never played)
+    // must not be listed as a game named after the raw folder.
+    const emptyProfileGame = path.join(ROOT, 'GTA_DEF');
+    fs.mkdirSync(path.join(emptyProfileGame, '0F74F4C4'), { recursive: true });
+
     // Path validation: the root, a game folder and a profile folder are all accepted; unrelated
     // folders are not.
     assert.equal(socialclub.isSocialClubPath(ROOT), true);
@@ -85,9 +91,11 @@ function writeRockstarProfileFixture() {
     assert.equal(customFound[0].name, 'Custom RDR2 Saves');
 
     // Discovery from the root: one entry per game folder, namespaced appid, distinct source.
-    // The root "settings" folder is not a game.
+    // The root "settings" folder is not a game, and neither is a game folder whose only content is
+    // an empty hex profile folder (issue #11).
     const found = await socialclub.scan(ROOT);
     assert.equal(found.length, 2);
+    assert.ok(!found.some((g) => g.name === 'GTA_DEF'), 'an empty profile folder must not become a game card');
     const gta = found.find((g) => g.appid === 'socialclub-gta-v');
     assert.ok(gta, 'GTA V must be discovered');
     assert.equal(gta.name, 'GTA V');

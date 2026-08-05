@@ -195,9 +195,24 @@ function looksLikeProfileDir(dir) {
   return HEX_PROFILE_RE.test(base) && !/^\d{12,}$/.test(base);
 }
 
+// A hex-named profile folder that holds nothing at all (issue #11 — "GTA_DEF\0F74F4C4\", both levels
+// empty) is not evidence of a real SocialClub game: the emulator only creates that folder shape once
+// it has actually written something into it. Bounded depth keeps this cheap for a deep, populated tree.
+function isDirEmptyDeep(dir, depth = 3) {
+  let entries = [];
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return true;
+  }
+  if (entries.length === 0) return true;
+  if (depth <= 0) return false;
+  return entries.every((e) => (e.isFile() ? false : e.isDirectory() ? isDirEmptyDeep(path.join(dir, e.name), depth - 1) : true));
+}
+
 function looksLikeGameFolder(dir) {
   const entries = safeReaddir(dir);
-  return entries.some((e) => e.isDirectory() && looksLikeProfileDir(e.name));
+  return entries.some((e) => e.isDirectory() && looksLikeProfileDir(e.name) && !isDirEmptyDeep(path.join(dir, e.name)));
 }
 
 function looksLikeSocialClubGameFolder(dir) {
