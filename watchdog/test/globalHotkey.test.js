@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const { parseHotkey } = require('../util/globalHotkey.js');
 
 test('parseHotkey converts the default overlay shortcut', () => {
-  assert.deepEqual(parseHotkey('Ctrl+Shift+O'), { modifiers: 0x4000 | 0x0002 | 0x0004, keyCode: 0x4f });
+  assert.deepEqual(parseHotkey('Ctrl+Shift+K'), { modifiers: 0x4000 | 0x0002 | 0x0004, keyCode: 0x4b });
 });
 
 test('parseHotkey supports Windows, function and navigation keys', () => {

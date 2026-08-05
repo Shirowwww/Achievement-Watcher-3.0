@@ -9,6 +9,7 @@ const settingsFs = require('fs');
 const appPath = remote.app.getAppPath();
 const { escapeHtml } = require(path.join(appPath, 'util/escapeHtml.js'));
 const userThemes = require(path.join(appPath, 'util/userThemes.js'));
+const themeLayers = require(path.join(appPath, 'util/themeLayers.js'));
 const { t } = require(path.join(appPath, 'locale/t.js'));
 let listeningHotkey = false;
 let keysDown = new Set();
@@ -20,25 +21,25 @@ let settingsReady = false;
 let notifAutosaveTimer = null;
 const SETTINGS_SAVE_TIMEOUT_MS = 30000;
 
-// Apply a stored theme value: built-ins switch <html data-theme>, user themes inject their CSS.
+// Apply a stored theme value: built-ins switch <html data-theme>, user themes and
+// the Custom theme inject their CSS through the shared user-theme <style> element.
 function applyThemeValue(value) {
   const user = userThemes.parseValue(value);
-  if (user) {
-    ipcRenderer
-      .invoke('list-user-themes')
-      .then((themes) => {
-        const t = (themes || []).find((x) => x && x.name === user);
-        userThemes.applyCss(t && t.css ? t.css : '');
-      })
-      .catch(() => userThemes.applyCss(''));
+  if (user || value === 'custom') {
     document.documentElement.dataset.theme = 'default';
   } else {
-    userThemes.applyCss('');
     document.documentElement.dataset.theme = value || 'default';
   }
+  ipcRenderer
+    .invoke('get-theme-payload', value || 'default')
+    .then((payload) => {
+      const css = [payload && payload.appCss ? payload.appCss : '', payload && payload.userCss ? payload.userCss : ''].join('\n');
+      userThemes.applyCss(css);
+    })
+    .catch(() => userThemes.applyCss(''));
 }
 
-// Populate the theme dropdown: the four built-ins + any user theme found in <userData>\themes.
+// Populate the theme dropdown: the built-ins + Custom + any user theme in <userData>\themes.
 function populateThemeSelect() {
   const sel = $('#option_theme');
   const wanted = (app.config.general && app.config.general.theme) || 'default';
@@ -48,7 +49,11 @@ function populateThemeSelect() {
     ['oled', 'OLED Black'],
     ['dracula', 'Dracula'],
     ['graphite', 'Graphite'],
+    ['nord', 'Nord'],
+    ['gruvbox', 'Gruvbox'],
+    ['tokyonight', 'Tokyo Night'],
   ].forEach(([value, label]) => sel.append($('<option>').attr('value', value).text(label)));
+  sel.append($('<option>').attr('value', 'custom').text('Custom…'));
   ipcRenderer
     .invoke('list-user-themes')
     .then((themes) => {
@@ -170,6 +175,13 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       settingsReady = false; // suppress auto-save while we populate the form below
       listeningHotkey = false;
       keysDown.clear();
+      // Settings always opens on General with exactly one active tab. Clear every nav <li>
+      // (including the non-clickable .nav-group section labels) so a stray .active never
+      // paints the accent pill behind a group header.
+      $('#settingNav li').removeClass('active');
+      $('#settingNav li[data-view="general"]').addClass('active');
+      $('#settings .box section.content').removeClass('active');
+      $("#settings .box section.content[data-view='general']").addClass('active');
       $('#game-config').hide();
       $('#settings').show();
       $('#settings .box').fadeIn();
@@ -411,6 +423,46 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         debug.log(err);
       }
     });
+    async function runUpdateCheck(btn, label) {
+      if (btn.hasClass('busy')) return;
+      btn.addClass('busy');
+      const previousText = label.text();
+      label
+        .removeClass('update-ok update-error update-info')
+        .addClass('update-info')
+        .text(t('checking-for-updates', 'Checking…', 'Vérification…'));
+      try {
+        const result = await ipcRenderer.invoke('check-for-updates');
+        if (!result || !result.ok) {
+          const msg =
+            result && result.error === 'dev-build'
+              ? t('update-unavailable-dev', 'Unavailable in dev build', 'Indisponible en version dev')
+              : t('update-check-failed', 'Check failed', 'Échec de la vérification');
+          label.removeClass('update-info').addClass('update-error').text(msg);
+        } else if (result.status === 'available') {
+          label.removeClass('update-info').addClass('update-ok').text(t('update-available-short', 'Update available', 'Mise à jour disponible'));
+        } else if (result.status === 'uptodate') {
+          label.removeClass('update-info').addClass('update-ok').text(t('update-up-to-date-short', 'Up to date', 'À jour'));
+        } else {
+          label.removeClass('update-info').addClass('update-ok').text(previousText || t('update-checked', 'Check done', 'Vérifié'));
+        }
+      } catch (err) {
+        debug.log(err);
+        label.removeClass('update-info').addClass('update-error').text(t('update-check-failed', 'Check failed', 'Échec de la vérification'));
+      } finally {
+        btn.removeClass('busy');
+        setTimeout(() => {
+          label.removeClass('update-ok update-error update-info').text('');
+          if (previousText) label.text(previousText);
+        }, 4500);
+      }
+    }
+    $('#check-for-updates').click(function () {
+      runUpdateCheck($(this), $('#check-for-updates-label'));
+    });
+    $('#footer-check-updates').click(function () {
+      runUpdateCheck($(this), $('#footer-update-status'));
+    });
 
     // Scan a library folder for Goldberg/GBE installs and report which ones are missing their schema.
     $('#scan-gbe').click(async function () {
@@ -454,8 +506,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       self.css('pointer-events', 'none');
       $('#settings .box').fadeOut(() => {
         $('#settings').hide();
-        let elem = $('#settingNav li').first();
-        $('#settingNav li').removeClass('active');
+        let elem = $('#settingNav li[data-view]').first();
+        $('#settingNav li[data-view]').removeClass('active');
         elem.addClass('active');
         $('#settings .box section.content').removeClass('active');
         $("#settings .box section.content[data-view='" + elem.data('view') + "']").addClass('active');
@@ -463,6 +515,16 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         $('title-bar')[0].inSettings = false;
         // Cancel reverts an unsaved theme preview back to the persisted choice.
         applyThemeValue((app.config.general && app.config.general.theme) || 'default');
+        // The Custom theme editor saves live; restore the snapshot taken when it opened.
+        if (customThemeSnapshot) {
+          ipcRenderer
+            .invoke('save-custom-theme', customThemeSnapshot)
+            .then((payload) => {
+              if (payload && payload.appCss) userThemes.applyCss(payload.appCss);
+              ipcRenderer.send('theme-changed', 'custom');
+            })
+            .catch((err) => debug.log(`custom theme restore failed: ${err}`));
+        }
         // Games were un-blacklisted while Settings was open: refresh the library once, now.
         if (window.__awBlacklistDirty) {
           window.__awBlacklistDirty = false;
@@ -618,6 +680,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       withSettingsTimeout(Promise.all([userDir.save(userDirList), libraryDirs.save(libraryDirList), applyStartup]), 'Saving folders/startup')
         .then(() => withSettingsTimeout(settings.save(app.config), 'Writing options.ini'))
         .then(() => {
+          closeCustomThemeEditor();
+          ipcRenderer.send('theme-changed', $('#option_theme').val() || 'default');
           $('#settings .box').fadeOut(() => {
             self.css('pointer-events', 'initial');
             resetUI();
@@ -626,8 +690,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         .catch((err) => {
           $('#settings .box').fadeOut(() => {
             $('#settings').hide();
-            let elem = $('#settingNav li').first();
-            $('#settingNav li').removeClass('active');
+            let elem = $('#settingNav li[data-view]').first();
+            $('#settingNav li[data-view]').removeClass('active');
             elem.addClass('active');
             $('#settings .box section.content').removeClass('active');
             $("#settings .box section.content[data-view='" + elem.data('view') + "']").addClass('active');
@@ -928,10 +992,324 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     // dependency UI reliable for keyboard changes, programmatic population and the arrow buttons.
     $('#options-emulator select, #options-emulator2 select').on('change', updateEmulatorUi);
 
+    // ---- Custom theme editor (Settings > General > Custom…) -----------------
+    const CUSTOM_LAYER_META = [
+      {
+        id: 'bg',
+        icon: 'fa-desktop',
+        label: t('theme-layer-bg', 'Window background', 'Fond de la fenêtre'),
+        hint: t('theme-layer-bg-hint', 'Behind the whole app', "Derrière toute l'interface"),
+      },
+      {
+        id: 'header',
+        icon: 'fa-grip-lines',
+        label: t('theme-layer-header', 'Top bar', 'Barre du haut'),
+        hint: t('theme-layer-header-hint', 'The thin bar at the very top', 'La fine barre tout en haut'),
+      },
+      {
+        id: 'panel',
+        icon: 'fa-th-list',
+        label: t('theme-layer-panel', 'Library panel', 'Panneau de bibliothèque'),
+        hint: t('theme-layer-panel-hint', 'The big panel with the game list', 'Le grand panneau avec la liste des jeux'),
+      },
+      {
+        id: 'card',
+        icon: 'fa-clone',
+        label: t('theme-layer-card', 'Cards & rows', 'Cartes et lignes'),
+        hint: t('theme-layer-card-hint', 'Game tiles, achievement rows, dialogs', 'Tuiles de jeux, lignes de succès, dialogues'),
+      },
+      {
+        id: 'settings',
+        icon: 'fa-cog',
+        label: t('theme-layer-settings', 'Settings window', 'Fenêtre de réglages'),
+        hint: t('theme-layer-settings-hint', 'The window you are reading now', 'La fenêtre que tu lis actuellement'),
+      },
+      {
+        id: 'text',
+        icon: 'fa-font',
+        label: t('theme-layer-text', 'Text', 'Texte'),
+        hint: t('theme-layer-text-hint', 'Main text color', 'Couleur du texte principal'),
+      },
+      {
+        id: 'muted',
+        icon: 'fa-paragraph',
+        label: t('theme-layer-muted', 'Muted text', 'Texte atténué'),
+        hint: t('theme-layer-muted-hint', 'Secondary text and labels', 'Textes secondaires et libellés'),
+      },
+      {
+        id: 'border',
+        icon: 'fa-border-all',
+        label: t('theme-layer-border', 'Borders', 'Bordures'),
+        hint: t('theme-layer-border-hint', 'Lines around panels and controls', 'Lignes autour des panneaux et contrôles'),
+      },
+      {
+        id: 'accent',
+        icon: 'fa-palette',
+        label: t('theme-layer-accent', 'Accent', 'Accentuation'),
+        hint: t('theme-layer-accent-hint', 'Buttons, highlights, progress', 'Boutons, surlignages, progression'),
+      },
+    ];
+    const CUSTOM_FIT_LABELS = {
+      cover: t('theme-fit-cover', 'Cover', 'Couvrir'),
+      contain: t('theme-fit-contain', 'Contain', 'Contenir'),
+      repeat: t('theme-fit-repeat', 'Repeat', 'Répéter'),
+      fill: t('theme-fit-fill', 'Stretch', 'Étirer'),
+    };
+    const CUSTOM_EFFECT_LABELS = {
+      veil: t('theme-effect-veil', 'Colored veil', 'Voile coloré'),
+      blur: t('theme-effect-blur', 'Blur', 'Flou'),
+    };
+    const CUSTOM_IMAGE_LAYERS = themeLayers.IMAGE_LAYER_IDS;
+    let customThemeDraft = null;
+    let customThemeSnapshot = null;
+    let customThemeSaveTimer = null;
+
+    function customThemeFromDom() {
+      const draft = {};
+      for (const meta of CUSTOM_LAYER_META) {
+        const row = $(`#theme-customizer-layers .theme-layer-row[data-layer="${meta.id}"]`);
+        if (!row.length) continue;
+        const current = (customThemeDraft && customThemeDraft[meta.id]) || {};
+        const layer = { color: row.find('.theme-layer-color').val() || current.color || '#142236' };
+        if (CUSTOM_IMAGE_LAYERS.includes(meta.id)) {
+          layer.image = current.image || '';
+          layer.fit = row.find('.theme-layer-fit').val() || current.fit || 'cover';
+          layer.effect = {
+            enabled: row.find('.theme-layer-effect-enabled').is(':checked'),
+            type: row.find('.theme-layer-effect-type').val() === 'blur' ? 'blur' : 'veil',
+            color: row.find('.theme-layer-effect-color').val() || '#000000',
+            opacity: Number(row.find('.theme-layer-effect-opacity').val() || 40),
+            blur: Number(row.find('.theme-layer-effect-blur').val() || 8),
+            blurImage: (current.effect && current.effect.blurImage) || '',
+          };
+        }
+        draft[meta.id] = layer;
+      }
+      return draft;
+    }
+
+    function renderCustomThemeLayers(theme) {
+      customThemeDraft = theme;
+      const container = $('#theme-customizer-layers');
+      container.empty();
+      for (const meta of CUSTOM_LAYER_META) {
+        const layer = (theme && theme[meta.id]) || {};
+        const effect = layer.effect || {};
+        const row = $('<div>').addClass('theme-layer-row').attr('data-layer', meta.id);
+        const previewImage =
+          effect.enabled === true && effect.type === 'blur' && effect.blurImage ? effect.blurImage : layer.image || '';
+        const previewStyle =
+          `background-color:${layer.color || '#142236'};` +
+          (previewImage
+            ? `background-image:url('${require('url').pathToFileURL(previewImage).href.replace(/'/g, "\\'")}');`
+            : 'background-image:none;');
+        const preview = $('<div>').addClass('theme-layer-preview').attr('style', previewStyle);
+        const label = $('<div>')
+          .addClass('theme-layer-label')
+          .html(
+            `<i class="fas ${meta.icon}"></i><div class="theme-layer-label-text">` +
+              `<div class="theme-layer-name">${escapeHtml(meta.label)}</div>` +
+              `<div class="theme-layer-hint">${escapeHtml(meta.hint || '')}</div></div>`
+          );
+        const controls = $('<div>').addClass('theme-layer-controls');
+        controls.append($('<input>').attr('type', 'color').addClass('theme-layer-color').val(layer.color || '#142236'));
+        if (CUSTOM_IMAGE_LAYERS.includes(meta.id)) {
+          const pick = $('<button>')
+            .attr('type', 'button')
+            .addClass('theme-layer-image btn')
+            .text(t('theme-layer-choose-image', 'Image…', 'Image…'));
+          const clear = $('<button>')
+            .attr('type', 'button')
+            .addClass('theme-layer-clear-image')
+            .attr('title', t('theme-layer-remove-image', 'Remove image', "Retirer l'image"))
+            .text('×');
+          const filename = $('<span>').addClass('theme-layer-filename').text(layer.image ? path.basename(layer.image) : '');
+          const fit = $('<select>').addClass('theme-layer-fit');
+          for (const [value, labelText] of Object.entries(CUSTOM_FIT_LABELS)) {
+            fit.append($('<option>').attr('value', value).text(labelText));
+          }
+          fit.val(layer.fit || 'cover');
+          fit.prop('disabled', !layer.image);
+          clear.prop('disabled', !layer.image);
+          controls.append(pick, filename, clear, fit);
+
+          const effectToggle = $('<label>').addClass('theme-layer-effect-toggle');
+          effectToggle.append(
+            $('<input>').attr('type', 'checkbox').addClass('theme-layer-effect-enabled').prop('checked', effect.enabled === true)
+          );
+          effectToggle.append($('<span>').text(t('theme-effect-label', 'Effect', 'Effet')));
+
+          const effectPanel = $('<div>').addClass('theme-layer-effect' + (effect.enabled === true ? ' open' : ''));
+          const effectType = $('<select>').addClass('theme-layer-effect-type');
+          for (const [value, labelText] of Object.entries(CUSTOM_EFFECT_LABELS)) {
+            effectType.append($('<option>').attr('value', value).text(labelText));
+          }
+          effectType.val(effect.type === 'blur' ? 'blur' : 'veil');
+
+          const veilGroup = $('<div>').addClass('theme-layer-effect-group veil-group').toggle(effect.type !== 'blur');
+          veilGroup.append(
+            $('<label>').text(t('theme-effect-color-label', 'Color', 'Couleur')),
+            $('<input>').attr('type', 'color').addClass('theme-layer-effect-color').val(effect.color || '#000000')
+          );
+          veilGroup.append(
+            $('<label>').text(t('theme-effect-opacity-label', 'Opacity', 'Opacité')),
+            $('<input>')
+              .attr('type', 'range')
+              .attr('min', '0')
+              .attr('max', '100')
+              .addClass('theme-layer-effect-opacity')
+              .val(effect.opacity != null ? effect.opacity : 40),
+            $('<span>').addClass('theme-layer-effect-value').text((effect.opacity != null ? effect.opacity : 40) + '%')
+          );
+
+          const blurGroup = $('<div>').addClass('theme-layer-effect-group blur-group').toggle(effect.type === 'blur');
+          blurGroup.append(
+            $('<label>').text(t('theme-effect-blur-label', 'Intensity', 'Intensité')),
+            $('<input>')
+              .attr('type', 'range')
+              .attr('min', '0')
+              .attr('max', '40')
+              .addClass('theme-layer-effect-blur')
+              .val(effect.blur != null ? effect.blur : 8),
+            $('<span>').addClass('theme-layer-effect-value').text((effect.blur != null ? effect.blur : 8) + 'px')
+          );
+
+          effectPanel.append(effectType, veilGroup, blurGroup);
+          controls.append(effectToggle);
+          row.data('effectPanel', effectPanel);
+        }
+        row.append(preview, label, controls);
+        const effectPanelEl = row.data('effectPanel');
+        if (effectPanelEl) row.append(effectPanelEl);
+        // With an image, keep the image picker and its controls on one line in place of the
+        // color picker; removing the image brings the color picker back.
+        if (CUSTOM_IMAGE_LAYERS.includes(meta.id)) {
+          const hasImage = !!layer.image;
+          row.find('.theme-layer-color').toggle(!hasImage);
+          row.find('.theme-layer-image').show();
+          row.find('.theme-layer-filename, .theme-layer-clear-image, .theme-layer-fit').toggle(hasImage);
+        }
+        container.append(row);
+      }
+    }
+
+    function scheduleCustomThemeSave() {
+      clearTimeout(customThemeSaveTimer);
+      customThemeSaveTimer = setTimeout(async () => {
+        try {
+          const payload = await ipcRenderer.invoke('save-custom-theme', customThemeFromDom());
+          if (payload && payload.appCss) userThemes.applyCss(payload.appCss);
+          if (payload && payload.customTheme && customThemeDraft) {
+            // Keep the generated blur paths without re-rendering (avoids losing focus mid-drag).
+            for (const id of CUSTOM_IMAGE_LAYERS) {
+              const next = payload.customTheme[id];
+              if (next && next.effect && customThemeDraft[id]) customThemeDraft[id].effect.blurImage = next.effect.blurImage;
+            }
+          }
+          ipcRenderer.send('theme-changed', 'custom');
+        } catch (err) {
+          debug.log(`custom theme save failed: ${err}`);
+        }
+      }, 250);
+    }
+
+    function updateEffectPanel(row) {
+      const enabled = row.find('.theme-layer-effect-enabled').is(':checked');
+      row.find('.theme-layer-effect').toggleClass('open', enabled);
+      const isBlur = row.find('.theme-layer-effect-type').val() === 'blur';
+      row.find('.veil-group').toggle(enabled && !isBlur);
+      row.find('.blur-group').toggle(enabled && isBlur);
+    }
+
+    function openCustomThemeEditor() {
+      $('#theme-customizer').show();
+      ipcRenderer
+        .invoke('get-theme-payload', 'custom')
+        .then((payload) => {
+          const theme = payload && payload.customTheme ? payload.customTheme : themeLayers.defaultCustomTheme();
+          customThemeSnapshot = theme;
+          renderCustomThemeLayers(theme);
+        })
+        .catch((err) => debug.log(`custom theme load failed: ${err}`));
+    }
+
+    function closeCustomThemeEditor() {
+      $('#theme-customizer').hide();
+      clearTimeout(customThemeSaveTimer);
+      customThemeSnapshot = null;
+    }
+
+    $('#theme-customizer-layers').on('input change', '.theme-layer-color, .theme-layer-fit', () => scheduleCustomThemeSave());
+
+    // Keep the small per-row swatch in sync with the color picker immediately (the picker itself
+    // already reflects its own value natively; this mirrors it onto our custom preview box, which
+    // otherwise only gets its background from the initial render).
+    $('#theme-customizer-layers').on('input change', '.theme-layer-color', function () {
+      $(this).closest('.theme-layer-row').find('.theme-layer-preview').css('background-color', $(this).val());
+    });
+
+    $('#theme-customizer-layers').on('change', '.theme-layer-effect-enabled', function () {
+      updateEffectPanel($(this).closest('.theme-layer-row'));
+      scheduleCustomThemeSave();
+    });
+
+    $('#theme-customizer-layers').on('change', '.theme-layer-effect-type', function () {
+      updateEffectPanel($(this).closest('.theme-layer-row'));
+      scheduleCustomThemeSave();
+    });
+
+    $('#theme-customizer-layers').on('input', '.theme-layer-effect-color, .theme-layer-effect-opacity, .theme-layer-effect-blur', function () {
+      const row = $(this).closest('.theme-layer-row');
+      if ($(this).hasClass('theme-layer-effect-opacity')) {
+        row.find('.veil-group .theme-layer-effect-value').text($(this).val() + '%');
+      } else if ($(this).hasClass('theme-layer-effect-blur')) {
+        row.find('.blur-group .theme-layer-effect-value').text($(this).val() + 'px');
+      }
+      scheduleCustomThemeSave();
+    });
+
+    $('#theme-customizer-layers').on('click', '.theme-layer-image', async function () {
+      const layer = $(this).closest('.theme-layer-row').data('layer');
+      try {
+        const result = await ipcRenderer.invoke('pick-theme-image', layer);
+        if (result && result.ok) {
+          // Refresh the draft from the live DOM first so changing only the image never
+          // resets unsaved color/effect edits made in other rows.
+          const draft = customThemeFromDom();
+          if (draft[layer]) {
+            draft[layer].image = result.file;
+            renderCustomThemeLayers(draft);
+          }
+          scheduleCustomThemeSave();
+        }
+      } catch (err) {
+        debug.log(`theme image pick failed: ${err}`);
+      }
+    });
+
+    $('#theme-customizer-layers').on('click', '.theme-layer-clear-image', function () {
+      const layer = $(this).closest('.theme-layer-row').data('layer');
+      const draft = customThemeFromDom();
+      if (draft[layer] && draft[layer].image) {
+        draft[layer].image = '';
+        renderCustomThemeLayers(draft);
+        scheduleCustomThemeSave();
+      }
+    });
+
+    $('#theme-customizer-reset').on('click', function () {
+      renderCustomThemeLayers(themeLayers.defaultCustomTheme());
+      scheduleCustomThemeSave();
+    });
+
     // Live theme preview: applying on change lets the user see the theme before committing with OK;
     // Cancel restores whatever is saved in the config.
     $('#option_theme').on('change', function () {
-      applyThemeValue($(this).val() || 'default');
+      const value = $(this).val() || 'default';
+      applyThemeValue(value);
+      if (value === 'custom') openCustomThemeEditor();
+      else closeCustomThemeEditor();
+      ipcRenderer.send('theme-changed', value);
     });
 
     // Let the mouse wheel cycle the value displayed between the arrows. This is
@@ -948,12 +1326,12 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       self.attr('title', tooltip);
     });
 
-    $('#settingNav li').click(function () {
+    $('#settingNav li[data-view]').click(function () {
       let self = $(this);
       self.css('pointer-events', 'none');
       let view = self.data('view');
 
-      $('#settingNav li').removeClass('active');
+      $('#settingNav li[data-view]').removeClass('active');
       self.addClass('active');
 
       $('#settings .box section.content').removeClass('active');
@@ -978,7 +1356,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#settings').removeClass('searching no-search-result');
       $('#settings .box .content').removeClass('search-hidden');
       $('#settings .box .content .search-hidden').removeClass('search-hidden');
-      $('#settingNav li').removeClass('no-match').find('.nav-count').text('');
+      $('#settingNav li[data-view]').removeClass('no-match').find('.nav-count').text('');
     }
 
     function applySettingsSearch(rawQuery) {
@@ -1001,7 +1379,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       // Land the user on results rather than on an empty tab, but never yank them off a tab that
       // still has matches — that would fight their own typing.
       if (total > 0 && $('#settingNav li.active').hasClass('no-match')) {
-        $('#settingNav li:not(.no-match)').first().trigger('click');
+        $('#settingNav li[data-view]:not(.no-match)').first().trigger('click');
       }
     }
 
@@ -1249,6 +1627,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#btn-settings-save').css('pointer-events', 'initial');
     });
 
+    $('#blacklist-add-input').attr('placeholder', t('blacklist-add-placeholder', 'Steam App ID', 'ID d’app Steam'));
+    $('#blacklist-add-btn span').text(t('blacklist-add-button', 'Add', 'Ajouter'));
+
     // Blacklist manager: list the user's hidden games, each with a restore button. Restoring only
     // flags the library for refresh — the actual reload runs once, when Settings closes, instead of
     // yanking the whole UI on every click.
@@ -1290,6 +1671,19 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     }
     window.renderBlacklistManager = renderBlacklistManager;
 
+    $('#blacklist-add-btn').click(async function () {
+      const input = $('#blacklist-add-input');
+      const appid = String(input.val() || '').trim();
+      if (!/^\d+$/.test(appid)) return;
+      try {
+        await blacklist.add(appid, '');
+        input.val('');
+        await renderBlacklistManager();
+      } catch (err) {
+        debug.log(err);
+      }
+    });
+
     $('#blacklist_reset').click(function () {
       let self = $(this);
       self.css('pointer-events', 'none');
@@ -1310,8 +1704,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           $('#game-list .loading').show();
           $('#user-info').css('opacity', 0).css('pointer-events', 'none');
           $('#game-list .isEmpty').hide();
-          let elem = $('#settingNav li').first();
-          $('#settingNav li').removeClass('active');
+          let elem = $('#settingNav li[data-view]').first();
+          $('#settingNav li[data-view]').removeClass('active');
           elem.addClass('active');
           $('#settings .box section.content').removeClass('active');
           $("#settings .box section.content[data-view='" + elem.data('view') + "']").addClass('active');
@@ -1334,25 +1728,43 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     // customiser's own range inputs build presets and must NOT trigger a settings save).
     $("#settings .box section.content[data-view='notification']").on('change', 'select, #option_overlayVolume', autosaveNotifications);
 
-    // Shared by the three Notifications-tab test buttons (achievement/toast, progress, playtime):
+    // Shared by the five Notifications-tab test buttons (toast/rare/progress/playtime/platinum):
     // spawns a fullscreen dummy window so the toast is visible over it, then asks the watchdog
     // (over its existing websocket) to fire the given test notification.
-    function runNotificationTest(cmd) {
-      let self = $(this);
-      self.css('pointer-events', 'none');
+    //
+    // The dummy window is a single shared instance reused across calls (not one per click) so
+    // firing several tests back-to-back — the normal way to compare presets — reuses the same
+    // black backdrop instead of stacking fullscreen windows or making the tester wait out a
+    // previous test's ~7s display time before the next one can start.
+    let activeDummyWindow = null;
+    let activeDummyCloseTimer = null;
 
-      let dummy = new remote.BrowserWindow({ frame: false, backgroundColor: '#000000' });
-      dummy.on('closed', () => {
-        dummy = null;
-        self.css('pointer-events', 'initial');
-      });
-      dummy.setFullScreen(true);
+    function scheduleDummyClose(delayMs) {
+      clearTimeout(activeDummyCloseTimer);
+      activeDummyCloseTimer = setTimeout(() => {
+        if (activeDummyWindow && !activeDummyWindow.isDestroyed()) activeDummyWindow.close();
+      }, delayMs);
+    }
+
+    function runNotificationTest(cmd) {
+      if (!activeDummyWindow || activeDummyWindow.isDestroyed()) {
+        activeDummyWindow = new remote.BrowserWindow({ frame: false, backgroundColor: '#000000' });
+        activeDummyWindow.setFullScreen(true);
+        activeDummyWindow.on('closed', () => {
+          clearTimeout(activeDummyCloseTimer);
+          activeDummyWindow = null;
+        });
+      }
+      // Safety net: the dummy must never get stuck covering the whole screen. Whatever happens
+      // below (success, error, or the watchdog never answering at all — a dropped socket raises
+      // neither an error nor a message event), this fallback guarantees it closes eventually.
+      scheduleDummyClose(15000);
 
       setTimeout(() => {
         const ws = new WebSocket('ws://localhost:8082');
         ws.onerror = (err) => {
           ws.close();
-          dummy.close();
+          scheduleDummyClose(0);
           remote.dialog.showMessageBoxSync({
             type: 'error',
             title: t('websocket-connection-error', 'WebSocket Connection Error', 'Erreur de connexion WebSocket'),
@@ -1368,9 +1780,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
               if (res.cmd === cmd) {
                 if (res.success === true) {
                   ws.close();
-                  setTimeout(() => {
-                    dummy.close();
-                  }, 7000);
+                  scheduleDummyClose(7000);
                 } else if (res.success === false && res.error) {
                   throw res.error;
                 } else {
@@ -1381,7 +1791,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
               }
             } catch (err) {
               ws.close();
-              dummy.close();
+              scheduleDummyClose(0);
               remote.dialog.showMessageBoxSync({
                 type: 'error',
                 title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
@@ -1394,7 +1804,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
             ws.send(JSON.stringify({ cmd }));
           } catch (err) {
             ws.close();
-            dummy.close();
+            scheduleDummyClose(0);
             remote.dialog.showMessageBoxSync({
               type: 'error',
               title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),

@@ -121,6 +121,20 @@
     return Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : null;
   }
 
+  // Single source of truth for the rarity tiers shared by the game window and
+  // the in-game overlay. Matches the historical behavior: only achievements with
+  // a community unlock rate of 0–10% get a tier — gold <3%, silver <6%, bronze ≤10%.
+  function rarityTier(percent) {
+    if (percent === null || percent === undefined || percent === '') return null;
+    const raw = Number(percent);
+    if (!Number.isFinite(raw)) return null;
+    const p = Math.round(raw * 10) / 10;
+    if (p < 0 || p > 10) return null;
+    if (p < 3) return 'gold';
+    if (p < 6) return 'silver';
+    return 'bronze';
+  }
+
   function sortAchievements(list, sortState, getTitle) {
     const titleOf = typeof getTitle === 'function' ? getTitle : (a) => String((a && a.displayName) || '');
     return (list || []).slice().sort((a, b) => {
@@ -134,6 +148,24 @@
         const bTitle = titleOf(b).toLowerCase();
         if (aTitle < bTitle) return -1 * sortState.achievement;
         if (aTitle > bTitle) return 1 * sortState.achievement;
+      }
+      if (sortState && sortState.rarity) {
+        // Missing rarity always sorts last regardless of direction — there is nothing to compare it
+        // against, and burying unranked rows at the bottom beats scattering them through the list.
+        const aRarity = rarityPercent(a);
+        const bRarity = rarityPercent(b);
+        if (aRarity === null && bRarity === null) return 0;
+        if (aRarity === null) return 1;
+        if (bRarity === null) return -1;
+        if (aRarity !== bRarity) return (aRarity - bRarity) * sortState.rarity;
+      }
+      if (sortState && sortState.time) {
+        const aTime = a && a.Achieved && Number.isFinite(Number(a.UnlockTime)) ? Number(a.UnlockTime) : null;
+        const bTime = b && b.Achieved && Number.isFinite(Number(b.UnlockTime)) ? Number(b.UnlockTime) : null;
+        if (aTime === null && bTime === null) return 0;
+        if (aTime === null) return 1;
+        if (bTime === null) return -1;
+        if (aTime !== bTime) return (aTime - bTime) * sortState.time;
       }
       return 0;
     });
@@ -160,6 +192,7 @@
     formatTimestamp,
     progressInfo,
     rarityPercent,
+    rarityTier,
     sortAchievements,
     buildStats,
   };

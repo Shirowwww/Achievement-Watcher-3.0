@@ -581,7 +581,7 @@
       },
       "socialClub": {
         "name": "Goldberg SocialClub",
-        "description": "Śledź osiągnięcia z emulatora Goldberg Social Club (%APPDATA%\\Goldberg SocialClub Emu Saves)."
+        "description": "Śledź osiągnięcia z emulatora Goldberg Social Club"
       }
     },
     "guide": {
@@ -646,11 +646,7 @@
         "dataFolder": "Otwórz folder danych",
         "goldbergTitle": "Goldberg / GBE Fork",
         "goldbergDesc": "Skanuje folder biblioteki gier w poszukiwaniu instalacji Goldberg / GBE Fork i oznacza te, którym brakuje schematu steam_settings/achievements.json. Użyj menu prawego przycisku gry (Diagnozuj / Napraw), aby naprawić jedną.",
-        "scanFolder": "Skanuj folder…",
-        "winNotifTitle": "Ustawienia powiadomień Windows",
-        "focusAssist": "Wspomaganie koncentracji",
-        "notifActions": "Powiadomienia i akcje",
-        "winNotifDesc": "Windows 10 >= 1903 : automatyczna reguła wspomagania koncentracji dla aplikacji pełnoekranowych (domyślnie tylko alarmy) może blokować powiadomienia systemu Windows — ustaw ją na „Wyłączone”, jeśli nie pojawiają się w grze."
+        "scanFolder": "Skanuj folder…"
       },
       "blacklistTitle": "Czarna lista AppID",
       "blacklistButton": "Resetuj czarną listę",
@@ -701,7 +697,7 @@
     "fixTitle": "Napraw",
     "fixCopy": "W emulowanych grach Steam naprawa z menu kontekstowego (lub naprawa automatyczna) instaluje GBE Fork i zapisuje schemat achievements.json, dane DLC oraz pliki pomocnicze uruchamiania w folderze steam_settings gry.",
     "overlayTitle": "Nakładka w grze",
-    "overlayCopy": "Mały panel osiągnięć, który możesz wywołać nad grą za pomocą skrótu (domyślnie Ctrl+Shift+O). Możesz go zmienić w dowolnym momencie w Ustawienia > Ogólne, obok pola skrótu.",
+    "overlayCopy": "Mały panel osiągnięć, który możesz wywołać nad grą za pomocą skrótu (domyślnie Ctrl+Shift+K). Możesz go zmienić w dowolnym momencie w Ustawienia > Ogólne, obok pola skrótu.",
     "profileTitle": "Profil",
     "profileCopy": "Wybierz nazwę wyświetlaną w nagłówku i opcjonalnie ustaw lokalnego awatara.",
     "username": "Nazwa wyświetlana",
@@ -768,6 +764,8 @@
     "icon": "Ikona",
     "achievement": "Osiągnięcie",
     "status": "Status",
+    "rarityColumn": "Rzadkość",
+    "dateColumn": "Data",
     "selectConfig": "Wybierz konfigurację!",
     "locked": "Zablokowane",
     "unlocked": "Odblokowane",
@@ -792,11 +790,26 @@
     "iconMedium": "Średni",
     "iconLarge": "Duży",
     "settingsZoom": "Powiększenie",
+    "settingsOpacity": "Nieprzezroczystość",
     "settingsShowStats": "Pasek statystyk",
     "settingsShowProgress": "Paski postępu",
     "settingsShowRarity": "Rzadkość",
     "settingsShowDescriptions": "Opisy",
     "settingsReset": "Przywróć domyślne",
     "noResults": "Brak osiągnięć pasujących do wyszukiwania."
+  },
+  "dialogs": {
+    "game-config-title": "Konfiguracja pliku wykonywalnego",
+    "launch-args-label": "Argumenty uruchamiania:",
+    "game-config-placeholder": "…Kliknij EDYTUJ, aby wybrać plik wykonywalny…",
+    "game-config-unlink": "Odłącz plik wykonywalny",
+    "checking-for-updates": "Sprawdzanie…",
+    "update-unavailable-dev": "Niedostępne w wersji deweloperskiej",
+    "update-check-failed": "Sprawdzanie nie powiodło się",
+    "update-available-short": "Dostępna aktualizacja",
+    "update-up-to-date-short": "Aktualne",
+    "update-checked": "Sprawdzono",
+    "blacklist-add-placeholder": "Steam App ID",
+    "blacklist-add-button": "Dodaj"
   }
 }

@@ -581,7 +581,7 @@
       },
       "socialClub": {
         "name": "Goldberg SocialClub",
-        "description": "Traccia i successi dell'emulatore Goldberg Social Club (%APPDATA%\\Goldberg SocialClub Emu Saves)."
+        "description": "Traccia i successi dell'emulatore Goldberg Social Club"
       }
     },
     "guide": {
@@ -646,11 +646,7 @@
         "dataFolder": "Apri la cartella dei dati",
         "goldbergTitle": "Goldberg / GBE Fork",
         "goldbergDesc": "Analizza una cartella libreria di giochi alla ricerca di installazioni Goldberg / GBE Fork e segnala quelle a cui manca lo schema steam_settings/achievements.json. Usa il menu clic destro di un gioco (Diagnostica / Ripara) per correggerne una.",
-        "scanFolder": "Analizza una cartella…",
-        "winNotifTitle": "Impostazioni notifiche di Windows",
-        "focusAssist": "Assistente notifiche",
-        "notifActions": "Notifiche e azioni",
-        "winNotifDesc": "Windows 10 >= 1903 : la regola automatica dell'assistente notifiche per le app a schermo intero (solo sveglie per impostazione predefinita) può sopprimere le notifiche di Windows — impostala su «Disattivato» se non appaiono in gioco."
+        "scanFolder": "Analizza una cartella…"
       },
       "blacklistTitle": "Lista nera AppID",
       "blacklistButton": "Reimposta lista nera",
@@ -701,7 +697,7 @@
     "fixTitle": "Ripara",
     "fixCopy": "Per i giochi Steam emulati, la riparazione dal menu contestuale (o quella automatica) installa GBE Fork e scrive lo schema achievements.json, i dati DLC e gli strumenti di avvio nella cartella steam_settings del gioco.",
     "overlayTitle": "Overlay di gioco",
-    "overlayCopy": "Un piccolo pannello degli obiettivi che puoi richiamare sopra il gioco con una scorciatoia (predefinita Ctrl+Shift+O). Modificabile in qualsiasi momento in Impostazioni > Generale, accanto al campo della scorciatoia.",
+    "overlayCopy": "Un piccolo pannello degli obiettivi che puoi richiamare sopra il gioco con una scorciatoia (predefinita Ctrl+Shift+K). Modificabile in qualsiasi momento in Impostazioni > Generale, accanto al campo della scorciatoia.",
     "profileTitle": "Profilo",
     "profileCopy": "Scegli il nome mostrato nell'intestazione e, facoltativamente, imposta un avatar locale.",
     "username": "Nome da visualizzare",
@@ -768,6 +764,8 @@
     "icon": "Icona",
     "achievement": "Obiettivo",
     "status": "Stato",
+    "rarityColumn": "Rarità",
+    "dateColumn": "Data",
     "selectConfig": "Seleziona una configurazione!",
     "locked": "Bloccato",
     "unlocked": "Sbloccato",
@@ -792,11 +790,26 @@
     "iconMedium": "Media",
     "iconLarge": "Grande",
     "settingsZoom": "Zoom",
+    "settingsOpacity": "Opacità",
     "settingsShowStats": "Barra statistiche",
     "settingsShowProgress": "Barre di progresso",
     "settingsShowRarity": "Rarità",
     "settingsShowDescriptions": "Descrizioni",
     "settingsReset": "Ripristina",
     "noResults": "Nessun obiettivo corrisponde alla ricerca."
+  },
+  "dialogs": {
+    "game-config-title": "Configurazione dell'eseguibile",
+    "launch-args-label": "Argomenti di avvio:",
+    "game-config-placeholder": "…Clicca su MODIFICA per scegliere l’eseguibile…",
+    "game-config-unlink": "Scollega eseguibile",
+    "checking-for-updates": "Verifica in corso…",
+    "update-unavailable-dev": "Non disponibile nella build di sviluppo",
+    "update-check-failed": "Verifica non riuscita",
+    "update-available-short": "Aggiornamento disponibile",
+    "update-up-to-date-short": "Aggiornato",
+    "update-checked": "Verifica completata",
+    "blacklist-add-placeholder": "ID app Steam",
+    "blacklist-add-button": "Aggiungi"
   }
 }

@@ -174,7 +174,7 @@
       },
       "theme": {
         "name": "Thème",
-        "description": "Thème de couleurs de la fenêtre (aperçu immédiat, enregistré avec OK)."
+        "description": "Thème de couleurs de toute l'application et de l'overlay en jeu (aperçu immédiat, enregistré avec OK)."
       },
       "controller": {
         "title": "Manette",
@@ -581,7 +581,7 @@
       },
       "socialClub": {
         "name": "Goldberg SocialClub",
-        "description": "Suivre les succès de l'émulateur Goldberg Social Club (%APPDATA%\\Goldberg SocialClub Emu Saves)."
+        "description": "Suivre les succès de l'émulateur Goldberg Social Club"
       }
     },
     "guide": {
@@ -646,11 +646,7 @@
         "dataFolder": "Ouvrir le dossier des données",
         "goldbergTitle": "Goldberg / GBE Fork",
         "goldbergDesc": "Scanne un dossier de bibliothèque de jeux pour les installs Goldberg / GBE Fork et signale ceux à qui manque leur schéma steam_settings/achievements.json. Utilise le menu clic-droit d'un jeu (Diagnostiquer / Réparer) pour en corriger un.",
-        "scanFolder": "Scanner un dossier…",
-        "winNotifTitle": "Réglages des notifications Windows",
-        "focusAssist": "Assistant de concentration",
-        "notifActions": "Notifications et actions",
-        "winNotifDesc": "Windows 10 >= 1903 : la règle automatique d'assistant de concentration pour les apps plein écran (alarmes uniquement par défaut) peut bloquer les notifications Windows — mets-la sur « Désactivé » si elles n'apparaissent pas en jeu."
+        "scanFolder": "Scanner un dossier…"
       },
       "blacklistTitle": "Liste noire des AppID",
       "blacklistButton": "Réinitialiser la liste noire",
@@ -701,7 +697,7 @@
     "fixTitle": "Réparer",
     "fixCopy": "Pour les jeux Steam émulés, le fix du clic droit (ou l'auto-fix) installe GBE Fork et écrit le schéma achievements.json, les DLC et les fichiers de lancement dans le steam_settings du jeu.",
     "overlayTitle": "Overlay en jeu",
-    "overlayCopy": "Un petit panneau de succès que vous pouvez afficher par-dessus le jeu avec un raccourci (Ctrl+Shift+O par défaut). Modifiable à tout moment dans Paramètres > Général, à côté du champ du raccourci.",
+    "overlayCopy": "Un petit panneau de succès que vous pouvez afficher par-dessus le jeu avec un raccourci (Ctrl+Shift+K par défaut). Modifiable à tout moment dans Paramètres > Général, à côté du champ du raccourci.",
     "profileTitle": "Profil",
     "profileCopy": "Choisissez le nom affiché dans l’en-tête et définissez éventuellement un avatar local.",
     "username": "Nom d'affichage",
@@ -768,6 +764,8 @@
     "icon": "Icône",
     "achievement": "Succès",
     "status": "Statut",
+    "rarityColumn": "Rareté",
+    "dateColumn": "Date",
     "selectConfig": "Sélectionnez une configuration !",
     "locked": "Verrouillé",
     "unlocked": "Débloqué",
@@ -792,11 +790,26 @@
     "iconMedium": "Moyenne",
     "iconLarge": "Grande",
     "settingsZoom": "Zoom",
+    "settingsOpacity": "Opacité",
     "settingsShowStats": "Barre de statistiques",
     "settingsShowProgress": "Barres de progression",
     "settingsShowRarity": "Rareté",
     "settingsShowDescriptions": "Descriptions",
     "settingsReset": "Réinitialiser",
     "noResults": "Aucun succès ne correspond à votre recherche."
+  },
+  "dialogs": {
+    "game-config-title": "Configuration de l'exécutable",
+    "launch-args-label": "Arguments de lancement :",
+    "game-config-placeholder": "…Cliquez sur MODIFIER pour choisir l’exécutable…",
+    "game-config-unlink": "Dissocier l'exécutable",
+    "checking-for-updates": "Vérification…",
+    "update-unavailable-dev": "Indisponible en version dev",
+    "update-check-failed": "Échec de la vérification",
+    "update-available-short": "Mise à jour disponible",
+    "update-up-to-date-short": "À jour",
+    "update-checked": "Vérifié",
+    "blacklist-add-placeholder": "ID d'app Steam",
+    "blacklist-add-button": "Ajouter"
   }
 }

@@ -3,6 +3,75 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- Themes are truly global and layer-based: built-in themes (Steam Blue, OLED
+  Black, Dracula, Graphite, and the new Nord, Gruvbox and Tokyo Night) and the
+  "Custom…" theme recolor the whole app — window, library, game cards,
+  achievement rows, dialogs — and the in-game overlay follows the active theme
+  through a "Use app theme" toggle (off by default). Steam Blue stays the
+  default.
+- The Custom theme lets you pick a color and, per layer (window, header,
+  library panel, cards/rows, Settings window), an optional background image
+  with Cover / Contain / Repeat / Stretch fit and an optional veil or blur
+  effect. Images persist in the user-data folder; adding, replacing or
+  removing one never resets other layers' colors or effects.
+- The theme editor moved into its own "Theme" Settings section, with a live
+  preview swatch per row, ellipsized filenames, and a disabled "remove image"
+  button when no image is set.
+- Settings sidebar is grouped (General, Notifications, Game sources, Emulator,
+  Advanced) and always opens on General.
+- Discreet icon-only "Check for updates" button in the Settings footer with a
+  translated inline status (checking / up to date / update available / failed).
+- The overlay hotkey (Ctrl+Shift+K by default) toggles the overlay even with no
+  game running, follows the active game if it changes, and closes/resets when
+  the game exits.
+- The blacklist manager shows the game name with the App ID as a secondary
+  pill, and gained an add-by-AppID field with automatic name resolution.
+- Two new notification presets (Midnight, Sunset).
+
+### Fixed
+
+- The "Cards & rows" theme layer was leaking into Settings and the executable
+  configuration modal — header, sidebar, panels and controls all inherited the
+  card color instead of the dedicated Settings layer. Settings now uses its
+  own surface tokens, fully independent from cards.
+- Custom-theme background images were barely visible under opaque layer colors
+  and gradients; a layer with an image now shows through a dark scrim instead,
+  in both the main window and the overlay.
+- ~50 hardcoded hex colors (mostly blue) across the title bar, settings,
+  library, achievement list, search bars and dialogs were replaced with theme
+  variables, so every theme actually reaches the whole app instead of a few
+  containers.
+- Progress bars under game tiles and achievement rows now use fully opaque
+  theme-derived tracks and accent-colored fills, fixing translucent/white
+  artifacts on light or illustrated backgrounds.
+- The in-game overlay hides the whole progress block (title, value, bar and
+  reserved space) for single-step achievements (0/1, 1/1), matching the main
+  window.
+- The overlay hotkey now defaults to Ctrl+Shift+K on a fresh install; it was
+  silently defaulting to Ctrl+Shift+O in code while the UI already showed K.
+- The executable configuration modal is fully themed and localized (title,
+  launch arguments, placeholder, unlink tooltip) in all 18 bundled locales.
+- The "Clean" notification preset was missing its bundled font file.
+- The renderer could silently lose the whole UI when a top-level destructured
+  import collided between two classic scripts; the scope test now also tracks
+  destructured top-level bindings.
+- The achievement icon background and the Uplay achievement-page banner tint
+  were hardcoded navy blue regardless of the active theme; both now follow it.
+- A leftover `require` of the removed `util/toastAudio.js` could crash the
+  toast transport if a legacy `customAudio` value ever reached it.
+
+### Changed
+
+- Goldberg / GBE Fork scanning lives in Advanced with its own section; the
+  Windows notification settings block (superseded by the toast/overlay/both
+  transport picker) was removed, along with its now-dead i18n keys.
+- The installer no longer ships the Watchdog test suite or its manual
+  notification test script.
+
 ## 3.6.0 - 2026-08-05
 
 ### Added

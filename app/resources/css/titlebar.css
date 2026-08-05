@@ -67,11 +67,19 @@
   height: 30px;
   z-index: 999;
   display: flex;
-  color: #a8b5c5;
+  color: var(--text-muted, #a8b5c5);
   -webkit-app-region: drag;
   cursor: default;
-  background: rgba(10, 16, 24, 0.72);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  /* Header layer (theme-editor "Barre du haut"). Custom-property references so the shadow-DOM host
+     picks up --bg-glow / --aw-img-header / --aw-veil-header directly — a light-DOM rule targeting
+     the `title-bar` element can't win here since :host always outranks it in specificity. */
+  background-color: color-mix(in srgb, var(--bg-glow, #26384c) 72%, transparent);
+  background-image: linear-gradient(var(--aw-veil-header, transparent), var(--aw-veil-header, transparent)),
+    var(--aw-img-header, none);
+  background-size: cover, var(--aw-img-header-size, cover);
+  background-repeat: no-repeat, var(--aw-img-header-repeat, no-repeat);
+  background-position: center;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.04));
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.02), 0 10px 30px rgba(0, 0, 0, 0.18);
 }
 
@@ -94,14 +102,14 @@ ul#watchdog-status {
   -webkit-app-region: no-drag;
   line-height: 30px;
   z-index: 99;
-  color: #c9d4e2;
+  color: var(--text, #c9d4e2);
   font-family: 'Open-Sans', sans-serif;
   font-size: 13px;
   opacity: 0.9;
 }
 
 #watchdog-status .status-text {
-  color: #c9d4e2;
+  color: var(--text, #c9d4e2);
   font-family: 'Open-Sans', sans-serif;
   font-size: 13px;
   opacity: 0.88;

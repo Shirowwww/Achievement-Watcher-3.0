@@ -581,7 +581,7 @@
       },
       "socialClub": {
         "name": "Goldberg SocialClub",
-        "description": "Sledovať úspechy z emulátora Goldberg Social Club (%APPDATA%\\Goldberg SocialClub Emu Saves)."
+        "description": "Sledovať úspechy z emulátora Goldberg Social Club"
       }
     },
     "guide": {
@@ -646,11 +646,7 @@
         "dataFolder": "Otvoriť priečinok dát",
         "goldbergTitle": "Goldberg / GBE Fork",
         "goldbergDesc": "Prehľadá priečinok knižnice hier na inštalácie Goldberg / GBE Fork a označí tie, ktorým chýba schéma steam_settings/achievements.json. Na opravu jednej použite kontextovú ponuku hry (Diagnostikovať / Opraviť).",
-        "scanFolder": "Prehľadať priečinok…",
-        "winNotifTitle": "Nastavenia upozornení Windows",
-        "focusAssist": "Asistent sústredenia",
-        "notifActions": "Upozornenia a akcie",
-        "winNotifDesc": "Windows 10 >= 1903 : automatické pravidlo asistenta sústredenia pre celoobrazovkové aplikácie (predvolene iba budíky) môže potlačiť oznámenia Windows — nastavte na „Vypnuté“, ak sa v hre nezobrazujú."
+        "scanFolder": "Prehľadať priečinok…"
       },
       "blacklistTitle": "Čierna listina AppID",
       "blacklistButton": "Resetovať čiernu listinu",
@@ -701,7 +697,7 @@
     "fixTitle": "Opraviť",
     "fixCopy": "Pri emulovaných hrách Steam oprava z kontextovej ponuky (alebo automatická oprava) nainštaluje GBE Fork a zapíše schému achievements.json, údaje DLC a pomocné súbory na spustenie do priečinka steam_settings hry.",
     "overlayTitle": "Overlay v hre",
-    "overlayCopy": "Malý panel achievementov, ktorý môžete vyvolať nad hrou pomocou skratky (predvolene Ctrl+Shift+O). Kedykoľvek ju môžete zmeniť v Nastavenia > Všeobecné, vedľa poľa skratky.",
+    "overlayCopy": "Malý panel achievementov, ktorý môžete vyvolať nad hrou pomocou skratky (predvolene Ctrl+Shift+K). Kedykoľvek ju môžete zmeniť v Nastavenia > Všeobecné, vedľa poľa skratky.",
     "profileTitle": "Profil",
     "profileCopy": "Vyberte meno zobrazené v hlavičke a voliteľne nastavte miestneho avatara.",
     "username": "Zobrazovaný názov",
@@ -768,6 +764,8 @@
     "icon": "Ikona",
     "achievement": "Úspech",
     "status": "Stav",
+    "rarityColumn": "Vzácnosť",
+    "dateColumn": "Dátum",
     "selectConfig": "Vyberte konfiguráciu!",
     "locked": "Zamknuté",
     "unlocked": "Odomknuté",
@@ -792,11 +790,26 @@
     "iconMedium": "Stredná",
     "iconLarge": "Veľká",
     "settingsZoom": "Priblíženie",
+    "settingsOpacity": "Krytie",
     "settingsShowStats": "Lišta štatistík",
     "settingsShowProgress": "Priebehové lišty",
     "settingsShowRarity": "Vzácnosť",
     "settingsShowDescriptions": "Popisy",
     "settingsReset": "Obnoviť predvolené",
     "noResults": "Žiadne úspechy nezodpovedajú hľadaniu."
+  },
+  "dialogs": {
+    "game-config-title": "Nastavenie spustiteľného súboru",
+    "launch-args-label": "Argumenty spustenia:",
+    "game-config-placeholder": "…Kliknite na UPRAVIŤ a vyberte spustiteľný súbor…",
+    "game-config-unlink": "Odpojiť spustiteľný súbor",
+    "checking-for-updates": "Kontrola…",
+    "update-unavailable-dev": "Nedostupné v testovacej verzii",
+    "update-check-failed": "Kontrola zlyhala",
+    "update-available-short": "Aktualizácia je k dispozícii",
+    "update-up-to-date-short": "Aktuálne",
+    "update-checked": "Skontrolované",
+    "blacklist-add-placeholder": "Steam App ID",
+    "blacklist-add-button": "Pridať"
   }
 }

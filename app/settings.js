@@ -54,18 +54,20 @@ module.exports.load = () => {
       options.general.uninstallContextMenu = true;
     }
     // App color theme (Settings > General) — built-in variants applied via <html data-theme="...">,
-    // plus user themes loaded from <userData>\themes (stored as "user:<name>").
+    // plus the layer-based Custom theme ("custom") and user themes from <userData>\themes
+    // (stored as "user:<name>").
     if (
       typeof options.general.theme !== 'string' ||
-      (!['default', 'oled', 'dracula', 'graphite'].includes(options.general.theme) && !/^user:.+$/i.test(options.general.theme))
+      (!['default', 'oled', 'dracula', 'graphite', 'nord', 'gruvbox', 'tokyonight', 'custom'].includes(options.general.theme) &&
+        !/^user:.+$/i.test(options.general.theme))
     ) {
       options.general.theme = 'default';
     }
 
-    // overlay = the in-game achievement overlay (Ctrl+Shift+O). Notifications are Windows toasts
+    // overlay = the in-game achievement overlay (Ctrl+Shift+K). Notifications are Windows toasts
     // now, so the old per-notification look settings (position/preset/scale/duration) are gone.
     if (typeof options.overlay.hotkey !== 'string') {
-      options.overlay.hotkey = 'Ctrl+Shift+O';
+      options.overlay.hotkey = 'Ctrl+Shift+K';
     }
     // Overlay (in-game) notification look — re-introduced as an OPTIONAL transport. The overlay
     // is now the default delivery mode (with the Shirow preset).
@@ -418,7 +420,7 @@ module.exports.load = () => {
         theme: 'default',
       },
       overlay: {
-        hotkey: 'Ctrl+Shift+O',
+        hotkey: 'Ctrl+Shift+K',
         notificationPreset: 'Shirow',
         notificationPresetRare: '',
         notificationPresetPlatinum: '',

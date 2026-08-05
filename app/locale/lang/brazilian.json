@@ -581,7 +581,7 @@
       },
       "socialClub": {
         "name": "Goldberg SocialClub",
-        "description": "Rastrear conquistas do emulador Goldberg Social Club (%APPDATA%\\Goldberg SocialClub Emu Saves)."
+        "description": "Rastrear conquistas do emulador Goldberg Social Club"
       }
     },
     "guide": {
@@ -646,11 +646,7 @@
         "dataFolder": "Abrir a pasta de dados",
         "goldbergTitle": "Goldberg / GBE Fork",
         "goldbergDesc": "Analisa uma pasta de biblioteca de jogos em busca de instalações Goldberg / GBE Fork e sinaliza as que não têm o esquema steam_settings/achievements.json. Use o menu de clique direito de um jogo (Diagnosticar / Reparar) para corrigir uma.",
-        "scanFolder": "Analisar uma pasta…",
-        "winNotifTitle": "Configurações de notificações do Windows",
-        "focusAssist": "Assistente de foco",
-        "notifActions": "Notificações e ações",
-        "winNotifDesc": "Windows 10 >= 1903 : a regra automática do assistente de foco para apps em tela cheia (apenas alarmes por padrão) pode suprimir as notificações do Windows — defina-a como «Desativado» se elas não aparecerem no jogo."
+        "scanFolder": "Analisar uma pasta…"
       },
       "blacklistTitle": "Lista negra de AppID",
       "blacklistButton": "Redefinir lista negra",
@@ -701,7 +697,7 @@
     "fixTitle": "Reparar",
     "fixCopy": "Para jogos Steam emulados, a correção do clique direito (ou a correção automática) instala o GBE Fork e grava o esquema achievements.json, os DLCs e os auxiliares de inicialização na pasta steam_settings do jogo.",
     "overlayTitle": "Overlay no jogo",
-    "overlayCopy": "Um pequeno painel de conquistas que você pode abrir sobre o jogo com um atalho (padrão Ctrl+Shift+O). Altere-o a qualquer momento em Configurações > Geral, ao lado do campo de atalho.",
+    "overlayCopy": "Um pequeno painel de conquistas que você pode abrir sobre o jogo com um atalho (padrão Ctrl+Shift+K). Altere-o a qualquer momento em Configurações > Geral, ao lado do campo de atalho.",
     "profileTitle": "Perfil",
     "profileCopy": "Escolha o nome mostrado no cabeçalho e, opcionalmente, defina um avatar local.",
     "username": "Nome de exibição",
@@ -768,6 +764,8 @@
     "icon": "Ícone",
     "achievement": "Conquista",
     "status": "Status",
+    "rarityColumn": "Raridade",
+    "dateColumn": "Data",
     "selectConfig": "Selecione uma configuração!",
     "locked": "Bloqueado",
     "unlocked": "Desbloqueado",
@@ -792,11 +790,26 @@
     "iconMedium": "Médio",
     "iconLarge": "Grande",
     "settingsZoom": "Zoom",
+    "settingsOpacity": "Opacidade",
     "settingsShowStats": "Barra de estatísticas",
     "settingsShowProgress": "Barras de progresso",
     "settingsShowRarity": "Raridade",
     "settingsShowDescriptions": "Descrições",
     "settingsReset": "Restaurar padrões",
     "noResults": "Nenhuma conquista corresponde à sua pesquisa."
+  },
+  "dialogs": {
+    "game-config-title": "Configuração do executável",
+    "launch-args-label": "Argumentos de inicialização:",
+    "game-config-placeholder": "…Clique em EDITAR para escolher o executável…",
+    "game-config-unlink": "Desvincular executável",
+    "checking-for-updates": "Verificando…",
+    "update-unavailable-dev": "Indisponível em build de desenvolvimento",
+    "update-check-failed": "Falha na verificação",
+    "update-available-short": "Atualização disponível",
+    "update-up-to-date-short": "Atualizado",
+    "update-checked": "Verificação concluída",
+    "blacklist-add-placeholder": "ID do App Steam",
+    "blacklist-add-button": "Adicionar"
   }
 }

@@ -83,7 +83,8 @@ Packaged user data is stored below `%APPDATA%\Achievement Watcher 3.0` (3.x keep
 | `cfg/` | Settings, game index, executable mappings and exclusions |
 | `logs/` | Main, renderer, parser and Watchdog diagnostics |
 | `cache/` and `steam_cache/` | Downloaded tools, metadata and artwork caches |
-| `Media/`, `sounds/`, `presets/` | User-facing notification assets |
+| `Media/` | Legacy seed for custom Windows toast sounds (old registry entries point here; kept for upgrades) |
+| `sounds/`, `presets/` | Bundled notification sounds and overlay notification presets |
 
 Settings are stored in `cfg/options.ini`. Sensitive fields are encrypted before the file is written. Epic account tokens use a separate encrypted cache.
 

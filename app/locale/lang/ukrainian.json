@@ -581,7 +581,7 @@
       },
       "socialClub": {
         "name": "Goldberg SocialClub",
-        "description": "Відстежувати досягнення емулятора Goldberg Social Club (%APPDATA%\\Goldberg SocialClub Emu Saves)."
+        "description": "Відстежувати досягнення емулятора Goldberg Social Club"
       }
     },
     "guide": {
@@ -646,11 +646,7 @@
         "dataFolder": "Відкрити папку даних",
         "goldbergTitle": "Goldberg / GBE Fork",
         "goldbergDesc": "Сканує папку бібліотеки ігор на наявність установок Goldberg / GBE Fork і позначає ті, у яких відсутня схема steam_settings/achievements.json. Використовуйте контекстне меню гри (Діагностика / Відновити), щоб виправити одну.",
-        "scanFolder": "Сканувати папку…",
-        "winNotifTitle": "Налаштування сповіщень Windows",
-        "focusAssist": "Фокус уваги",
-        "notifActions": "Сповіщення та дії",
-        "winNotifDesc": "Windows 10 >= 1903 : автоправило помічника фокусування для повноекранних застосунків (за замовчуванням лише будильники) може блокувати сповіщення Windows — установіть «Вимк.», якщо вони не з'являються в грі."
+        "scanFolder": "Сканувати папку…"
       },
       "blacklistTitle": "Чорний список AppID",
       "blacklistButton": "Скинути чорний список",
@@ -701,7 +697,7 @@
     "fixTitle": "Виправлення",
     "fixCopy": "Для емульованих ігор Steam виправлення з контекстного меню (або автоматичне виправлення) встановлює GBE Fork і записує схему achievements.json, дані DLC та допоміжні файли запуску в папку steam_settings гри.",
     "overlayTitle": "Внутрішньоігровий оверлей",
-    "overlayCopy": "Невелика панель досягнень, яку можна викликати поверх гри гарячою клавішею (типово Ctrl+Shift+O). Змінити її можна будь-коли в Налаштування > Загальні, поруч із полем гарячої клавіші.",
+    "overlayCopy": "Невелика панель досягнень, яку можна викликати поверх гри гарячою клавішею (типово Ctrl+Shift+K). Змінити її можна будь-коли в Налаштування > Загальні, поруч із полем гарячої клавіші.",
     "profileTitle": "Профіль",
     "profileCopy": "Виберіть ім’я, яке відображається в заголовку, і за бажанням установіть локальний аватар.",
     "username": "Відображуване ім'я",
@@ -768,6 +764,8 @@
     "icon": "Значок",
     "achievement": "Досягнення",
     "status": "Статус",
+    "rarityColumn": "Рідкість",
+    "dateColumn": "Дата",
     "selectConfig": "Виберіть конфігурацію!",
     "locked": "Заблоковано",
     "unlocked": "Розблоковано",
@@ -792,11 +790,26 @@
     "iconMedium": "Середній",
     "iconLarge": "Великий",
     "settingsZoom": "Масштаб",
+    "settingsOpacity": "Непрозорість",
     "settingsShowStats": "Панель статистики",
     "settingsShowProgress": "Смуги прогресу",
     "settingsShowRarity": "Рідкість",
     "settingsShowDescriptions": "Описи",
     "settingsReset": "Скинути",
     "noResults": "Немає досягнень, що відповідають пошуку."
+  },
+  "dialogs": {
+    "game-config-title": "Налаштування виконуваного файлу",
+    "launch-args-label": "Аргументи запуску:",
+    "game-config-placeholder": "…Натисніть ЗМІНИТИ, щоб вибрати виконуваний файл…",
+    "game-config-unlink": "Від'єднати виконуваний файл",
+    "checking-for-updates": "Перевірка…",
+    "update-unavailable-dev": "Недоступно в розробницькій збірці",
+    "update-check-failed": "Помилка перевірки",
+    "update-available-short": "Доступне оновлення",
+    "update-up-to-date-short": "Актуальна версія",
+    "update-checked": "Перевірено",
+    "blacklist-add-placeholder": "Steam App ID",
+    "blacklist-add-button": "Додати"
   }
 }

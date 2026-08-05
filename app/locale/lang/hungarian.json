@@ -581,7 +581,7 @@
       },
       "socialClub": {
         "name": "Goldberg SocialClub",
-        "description": "Goldberg Social Club emulátor eredményeinek követése (%APPDATA%\\Goldberg SocialClub Emu Saves)."
+        "description": "Goldberg Social Club emulátor eredményeinek követése"
       }
     },
     "guide": {
@@ -646,11 +646,7 @@
         "dataFolder": "Adatmappa megnyitása",
         "goldbergTitle": "Goldberg / GBE Fork",
         "goldbergDesc": "Átvizsgál egy játékkönyvtár-mappát Goldberg / GBE Fork telepítések után, és megjelöli azokat, amelyekből hiányzik a steam_settings/achievements.json séma. Egy javításához használd a játék jobb gombos menüjét (Diagnosztizálás / Javítás).",
-        "scanFolder": "Mappa átvizsgálása…",
-        "winNotifTitle": "Windows értesítési beállítások",
-        "focusAssist": "Koncentrációsegéd",
-        "notifActions": "Értesítések és műveletek",
-        "winNotifDesc": "Windows 10 >= 1903 : a teljes képernyős alkalmazásokra vonatkozó koncentrációsegéd automatikus szabálya (alapból csak ébresztők) elnyomhatja a Windows-értesítéseket — állítsd „Ki” értékre, ha nem jelennek meg játék közben."
+        "scanFolder": "Mappa átvizsgálása…"
       },
       "blacklistTitle": "AppID feketelista",
       "blacklistButton": "Feketelista visszaállítása",
@@ -701,7 +697,7 @@
     "fixTitle": "Javítás",
     "fixCopy": "Emulált Steam-játékoknál a jobb kattintásos javítás (vagy az automatikus javítás) telepíti a GBE Forkot, és az achievements.json sémát, a DLC-adatokat és az indítási segédfájlokat a játék steam_settings mappájába írja.",
     "overlayTitle": "Játékon belüli overlay",
-    "overlayCopy": "Egy kis teljesítmény-panel, amelyet egy gyorsbillentyűvel (alapértelmezett Ctrl+Shift+O) hívhatsz elő a játék fölé. Bármikor módosítható a Beállítások > Általános menüben, a gyorsbillentyű mező mellett.",
+    "overlayCopy": "Egy kis teljesítmény-panel, amelyet egy gyorsbillentyűvel (alapértelmezett Ctrl+Shift+K) hívhatsz elő a játék fölé. Bármikor módosítható a Beállítások > Általános menüben, a gyorsbillentyű mező mellett.",
     "profileTitle": "Profil",
     "profileCopy": "Válassza ki a fejlécben látható nevet, és opcionálisan állítson be egy helyi avatart.",
     "username": "Megjelenítési név",
@@ -768,6 +764,8 @@
     "icon": "Ikon",
     "achievement": "Teljesítmény",
     "status": "Állapot",
+    "rarityColumn": "Ritkaság",
+    "dateColumn": "Dátum",
     "selectConfig": "Válassz konfigurációt!",
     "locked": "Zárolva",
     "unlocked": "Feloldva",
@@ -792,11 +790,26 @@
     "iconMedium": "Közepes",
     "iconLarge": "Nagy",
     "settingsZoom": "Nagyítás",
+    "settingsOpacity": "Átlátszóság",
     "settingsShowStats": "Statisztikasáv",
     "settingsShowProgress": "Előrehaladás-sávok",
     "settingsShowRarity": "Ritkaság",
     "settingsShowDescriptions": "Leírások",
     "settingsReset": "Alaphelyzet",
     "noResults": "Nincs a keresésnek megfelelő eredmény."
+  },
+  "dialogs": {
+    "game-config-title": "Futtatható fájl beállítása",
+    "launch-args-label": "Indítási argumentumok:",
+    "game-config-placeholder": "…Kattints a SZERKESZTÉS gombra a futtatható fájl kiválasztásához…",
+    "game-config-unlink": "Futtatható fájl leválasztása",
+    "checking-for-updates": "Ellenőrzés…",
+    "update-unavailable-dev": "Fejlesztői verzióban nem elérhető",
+    "update-check-failed": "Az ellenőrzés sikertelen",
+    "update-available-short": "Frissítés elérhető",
+    "update-up-to-date-short": "Naprakész",
+    "update-checked": "Ellenőrizve",
+    "blacklist-add-placeholder": "Steam App ID",
+    "blacklist-add-button": "Hozzáadás"
   }
 }

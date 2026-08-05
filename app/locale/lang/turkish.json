@@ -581,7 +581,7 @@
       },
       "socialClub": {
         "name": "Goldberg SocialClub",
-        "description": "Goldberg Social Club emülatöründeki başarımları takip edin (%APPDATA%\\Goldberg SocialClub Emu Saves)."
+        "description": "Goldberg Social Club emülatöründeki başarımları takip edin"
       }
     },
     "guide": {
@@ -646,11 +646,7 @@
         "dataFolder": "Veri klasörünü aç",
         "goldbergTitle": "Goldberg / GBE Fork",
         "goldbergDesc": "Bir oyun kütüphanesi klasörünü Goldberg / GBE Fork kurulumları için tarar ve steam_settings/achievements.json şeması eksik olanları işaretler. Birini düzeltmek için bir oyunun sağ tık menüsünü (Tanıla / Onar) kullan.",
-        "scanFolder": "Bir klasör tara…",
-        "winNotifTitle": "Windows bildirim ayarları",
-        "focusAssist": "Odak Yardımcısı",
-        "notifActions": "Bildirimler ve eylemler",
-        "winNotifDesc": "Windows 10 >= 1903 : tam ekran uygulamalar için odak yardımcısı otomatik kuralı (varsayılan olarak yalnızca alarmlar) Windows bildirimlerini engelleyebilir — oyun içinde görünmüyorsa „Kapalı” olarak ayarla."
+        "scanFolder": "Bir klasör tara…"
       },
       "blacklistTitle": "AppID kara listesi",
       "blacklistButton": "Kara listeyi sıfırla",
@@ -701,7 +697,7 @@
     "fixTitle": "Onarma",
     "fixCopy": "Emüle edilen Steam oyunlarında sağ tık onarımı (veya otomatik onarım) GBE Fork’u kurar ve achievements.json şemasını, DLC verilerini ve başlatma yardımcılarını oyunun steam_settings klasörüne yazar.",
     "overlayTitle": "Oyun içi overlay",
-    "overlayCopy": "Bir kısayolla (varsayılan Ctrl+Shift+O) oyunun üzerinde açabileceğin küçük bir başarım paneli. İstediğin zaman Ayarlar > Genel bölümünde, kısayol alanının yanından değiştirebilirsin.",
+    "overlayCopy": "Bir kısayolla (varsayılan Ctrl+Shift+K) oyunun üzerinde açabileceğin küçük bir başarım paneli. İstediğin zaman Ayarlar > Genel bölümünde, kısayol alanının yanından değiştirebilirsin.",
     "profileTitle": "Profil",
     "profileCopy": "Başlıkta gösterilen adı seçin ve isteğe bağlı olarak yerel bir avatar ayarlayın.",
     "username": "Ekran adı",
@@ -768,6 +764,8 @@
     "icon": "Simge",
     "achievement": "Başarım",
     "status": "Durum",
+    "rarityColumn": "Nadirlik",
+    "dateColumn": "Tarih",
     "selectConfig": "Bir yapılandırma seçin!",
     "locked": "Kilitli",
     "unlocked": "Kilidi açıldı",
@@ -792,11 +790,26 @@
     "iconMedium": "Orta",
     "iconLarge": "Büyük",
     "settingsZoom": "Yakınlaştırma",
+    "settingsOpacity": "Opaklık",
     "settingsShowStats": "İstatistik çubuğu",
     "settingsShowProgress": "İlerleme çubukları",
     "settingsShowRarity": "Nadirlik",
     "settingsShowDescriptions": "Açıklamalar",
     "settingsReset": "Sıfırla",
     "noResults": "Aramanızla eşleşen başarım yok."
+  },
+  "dialogs": {
+    "game-config-title": "Yürütülebilir dosya yapılandırması",
+    "launch-args-label": "Başlatma bağımsız değişkenleri:",
+    "game-config-placeholder": "…Yürütülebilir dosyayı seçmek için DÜZENLE’ye tıklayın…",
+    "game-config-unlink": "Yürütülebilir dosya bağlantısını kaldır",
+    "checking-for-updates": "Kontrol ediliyor…",
+    "update-unavailable-dev": "Geliştirici sürümünde kullanılamaz",
+    "update-check-failed": "Kontrol başarısız oldu",
+    "update-available-short": "Güncelleme mevcut",
+    "update-up-to-date-short": "Güncel",
+    "update-checked": "Kontrol edildi",
+    "blacklist-add-placeholder": "Steam App ID",
+    "blacklist-add-button": "Ekle"
   }
 }

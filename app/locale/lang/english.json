@@ -190,7 +190,7 @@
       },
       "theme": {
         "name": "Theme",
-        "description": "Color theme of the app window (previews immediately, saved with OK)."
+        "description": "Color theme of the whole app and the in-game overlay (previews immediately, saved with OK)."
       },
       "controller": {
         "title": "Controller",
@@ -581,7 +581,7 @@
       },
       "socialClub": {
         "name": "Goldberg SocialClub",
-        "description": "Track achievements from the Goldberg Social Club emulator (%APPDATA%\\Goldberg SocialClub Emu Saves)."
+        "description": "Track achievements from the Goldberg Social Club emulator"
       }
     },
     "guide": {
@@ -646,11 +646,7 @@
         "dataFolder": "Open data folder",
         "goldbergTitle": "Goldberg / GBE Fork",
         "goldbergDesc": "Scan a game-library folder for Goldberg / GBE Fork installs and flag the ones missing their steam_settings/achievements.json schema. Use a game's right-click menu (Diagnose / Repair) to fix one.",
-        "scanFolder": "Scan a folder…",
-        "winNotifTitle": "Windows notification settings",
-        "focusAssist": "Focus Assist",
-        "notifActions": "Notifications & actions",
-        "winNotifDesc": "Windows 10 >= 1903: the focus-assist auto-rule for fullscreen apps (alarms only by default) can suppress Windows notifications — set it to \"Off\" if they don't appear in-game."
+        "scanFolder": "Scan a folder…"
       },
       "blacklistTitle": "AppID Blacklist",
       "blacklistButton": "Reset blacklist",
@@ -701,7 +697,7 @@
     "fixTitle": "Repair",
     "fixCopy": "For emulated Steam games, the right-click fix (or the auto-fix) installs GBE Fork and writes the achievements.json schema, DLC data and launch helpers into the game's steam_settings folder.",
     "overlayTitle": "In-game overlay",
-    "overlayCopy": "A small achievements panel you can bring up over the game with a hotkey (default Ctrl+Shift+O). Change it any time in Settings > General, next to the hotkey field.",
+    "overlayCopy": "A small achievements panel you can bring up over the game with a hotkey (default Ctrl+Shift+K). Change it any time in Settings > General, next to the hotkey field.",
     "profileTitle": "Profile",
     "profileCopy": "Pick the name shown in the header and optionally set a local avatar.",
     "username": "Display name",
@@ -768,6 +764,8 @@
     "icon": "Icon",
     "achievement": "Achievement",
     "status": "Status",
+    "rarityColumn": "Rarity",
+    "dateColumn": "Date",
     "selectConfig": "Select a config!",
     "locked": "Locked",
     "unlocked": "Unlocked",
@@ -792,11 +790,26 @@
     "iconMedium": "Medium",
     "iconLarge": "Large",
     "settingsZoom": "Zoom",
+    "settingsOpacity": "Opacity",
     "settingsShowStats": "Stats bar",
     "settingsShowProgress": "Progress bars",
     "settingsShowRarity": "Rarity",
     "settingsShowDescriptions": "Descriptions",
     "settingsReset": "Reset defaults",
     "noResults": "No achievements match your search."
+  },
+  "dialogs": {
+    "game-config-title": "Executable configuration",
+    "launch-args-label": "Launch arguments:",
+    "game-config-placeholder": "…Click EDIT to choose the executable…",
+    "game-config-unlink": "Unlink executable",
+    "checking-for-updates": "Checking…",
+    "update-unavailable-dev": "Unavailable in dev build",
+    "update-check-failed": "Check failed",
+    "update-available-short": "Update available",
+    "update-up-to-date-short": "Up to date",
+    "update-checked": "Check done",
+    "blacklist-add-placeholder": "Steam App ID",
+    "blacklist-add-button": "Add"
   }
 }

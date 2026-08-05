@@ -19,6 +19,14 @@ function topLevelDeclarations(file) {
   for (const match of source.matchAll(/^(const|let|var)\s+([A-Za-z_$][\w$]*)\s*=/gm)) {
     names.add(match[2]);
   }
+  // Destructured top-level bindings share the same global lexical scope and can collide
+  // just like plain `const x` (this regressed with `pathToFileURL` in settings.js).
+  for (const match of source.matchAll(/^(?:const|let|var)\s*\{\s*([^}]+?)\s*\}\s*=/gm)) {
+    for (const part of match[1].split(',')) {
+      const id = /^([A-Za-z_$][\w$]*)/.exec(part.trim());
+      if (id) names.add(id[1]);
+    }
+  }
   return names;
 }
 

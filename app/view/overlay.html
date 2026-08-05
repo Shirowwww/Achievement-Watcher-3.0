@@ -7,7 +7,8 @@
       :root {
         --accent: #4aa3ff;
         --accent-rgb: 74, 163, 255;
-        --bg: rgba(10, 14, 20, 0.88);
+        --panel-alpha: 0.88;
+        --bg: rgba(10, 14, 20, var(--panel-alpha));
         --bg-soft: rgba(255, 255, 255, 0.045);
         --bg-hover: rgba(255, 255, 255, 0.075);
         --text: #eef2f7;
@@ -259,7 +260,7 @@
       /* ---- Column headers ---- */
       .overlay-cols {
         display: grid;
-        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-columns: auto minmax(0, 1fr) auto auto auto;
         align-items: center;
         gap: 10px;
         padding: 0 12px 6px;
@@ -538,7 +539,7 @@
         margin-bottom: 10px;
       }
 
-      .settings-section > label {
+      .settings-section > label:not(.settings-toggle) {
         display: block;
         margin-bottom: 5px;
         font-size: 10px;
@@ -755,6 +756,12 @@
           <button type="button" class="sort-btn" id="overlay-th-achievement">
             <span>Achievement</span><span class="arrow hidden" id="achievement-arrow">▲</span>
           </button>
+          <button type="button" class="sort-btn" id="overlay-th-rarity">
+            <span>Rarity</span><span class="arrow hidden" id="rarity-arrow">▲</span>
+          </button>
+          <button type="button" class="sort-btn" id="overlay-th-date">
+            <span>Date</span><span class="arrow hidden" id="date-arrow">▲</span>
+          </button>
           <button type="button" class="sort-btn" id="overlay-th-status">
             <span>Status</span><span class="arrow hidden" id="status-arrow">▲</span>
           </button>
@@ -819,10 +826,22 @@
         </div>
 
         <div class="settings-section">
+          <label id="settings-opacity-label">Opacity</label>
+          <select class="settings-select" id="opacity-select">
+            <option value="0.4">40%</option>
+            <option value="0.55">55%</option>
+            <option value="0.7">70%</option>
+            <option value="0.85">85%</option>
+            <option value="1">100%</option>
+          </select>
+        </div>
+
+        <div class="settings-section">
           <label class="settings-toggle" for="toggle-stats"><span id="toggle-stats-label">Stats bar</span><input type="checkbox" id="toggle-stats" /><span class="switch"></span></label>
           <label class="settings-toggle" for="toggle-progress"><span id="toggle-progress-label">Progress bars</span><input type="checkbox" id="toggle-progress" /><span class="switch"></span></label>
           <label class="settings-toggle" for="toggle-rarity"><span id="toggle-rarity-label">Rarity</span><input type="checkbox" id="toggle-rarity" /><span class="switch"></span></label>
           <label class="settings-toggle" for="toggle-descriptions"><span id="toggle-descriptions-label">Descriptions</span><input type="checkbox" id="toggle-descriptions" /><span class="switch"></span></label>
+          <label class="settings-toggle" for="toggle-use-theme"><span id="toggle-use-theme-label">Use app theme</span><input type="checkbox" id="toggle-use-theme" /><span class="switch"></span></label>
         </div>
 
         <button type="button" class="settings-reset" id="settings-reset">Reset defaults</button>
@@ -840,7 +859,7 @@
         let overlayLang = 'english';
         let currentGame = null;
         let isLoading = false;
-        let sortState = { status: null, achievement: null };
+        let sortState = { status: null, achievement: null, rarity: null, time: null };
         let filter = 'all';
         let query = '';
 
@@ -848,6 +867,8 @@
           icon: 'Icon',
           achievement: 'Achievement',
           status: 'Status',
+          rarityColumn: 'Rarity',
+          dateColumn: 'Date',
           selectConfig: 'Select a config!',
           locked: 'Locked',
           unlocked: 'Unlocked',
@@ -872,10 +893,12 @@
           iconMedium: 'Medium',
           iconLarge: 'Large',
           settingsZoom: 'Zoom',
+          settingsOpacity: 'Opacity',
           settingsShowStats: 'Stats bar',
           settingsShowProgress: 'Progress bars',
           settingsShowRarity: 'Rarity',
           settingsShowDescriptions: 'Descriptions',
+          settingsUseTheme: 'Use app theme',
           settingsReset: 'Reset defaults',
           noResults: 'No achievements match your search.',
         };
@@ -893,13 +916,44 @@
           density: 'cozy',
           iconSize: 44,
           zoom: 1,
+          opacity: 0.85,
           showStats: true,
           showProgress: true,
           showRarity: true,
           showDescriptions: true,
+          useAppTheme: false,
         };
 
         let settings = loadSettings();
+        let themePayload = null;
+        let themeStyleEl = null;
+
+        function applyThemeCss(css) {
+          if (!themeStyleEl) {
+            themeStyleEl = document.createElement('style');
+            themeStyleEl.id = 'aw-overlay-theme';
+            document.head.appendChild(themeStyleEl);
+          }
+          themeStyleEl.textContent = css || '';
+        }
+
+        function clearThemeCss() {
+          if (themeStyleEl) themeStyleEl.textContent = '';
+        }
+
+        function applyThemePayload(payload) {
+          themePayload = payload || null;
+          if (settings.useAppTheme) {
+            const css = [
+              (themePayload && themePayload.overlayCss) || '',
+              (themePayload && themePayload.userCss) || '',
+            ].join('\n');
+            applyThemeCss(css);
+          } else {
+            clearThemeCss();
+          }
+          applySettings();
+        }
 
         function loadSettings() {
           const base = Object.assign({}, DEFAULT_SETTINGS);
@@ -926,10 +980,13 @@
 
         function applySettings() {
           const root = document.documentElement;
-          root.style.setProperty('--accent', settings.accent);
-          root.style.setProperty('--accent-rgb', ACCENT_PRESETS[settings.accent] || hexToRgb(settings.accent));
+          const themeAccent = settings.useAppTheme && themePayload && themePayload.accent;
+          const accent = themeAccent && settings.accent === DEFAULT_SETTINGS.accent ? themeAccent : settings.accent;
+          root.style.setProperty('--accent', accent);
+          root.style.setProperty('--accent-rgb', ACCENT_PRESETS[accent] || hexToRgb(accent));
           root.style.setProperty('--icon-size', settings.iconSize + 'px');
           root.style.setProperty('--zoom', settings.zoom);
+          root.style.setProperty('--panel-alpha', settings.opacity);
           document.body.classList.remove('density-compact', 'density-cozy', 'density-spacious');
           document.body.classList.add('density-' + settings.density);
           document.body.classList.toggle('hide-stats', !settings.showStats);
@@ -938,10 +995,12 @@
           document.body.classList.toggle('hide-descriptions', !settings.showDescriptions);
 
           $('zoom-select').value = String(settings.zoom);
+          $('opacity-select').value = String(settings.opacity);
           $('toggle-stats').checked = settings.showStats;
           $('toggle-progress').checked = settings.showProgress;
           $('toggle-rarity').checked = settings.showRarity;
           $('toggle-descriptions').checked = settings.showDescriptions;
+          $('toggle-use-theme').checked = settings.useAppTheme;
           $('accent-custom').value = settings.accent;
 
           document.querySelectorAll('#density-seg button').forEach((b) => b.classList.toggle('active', b.dataset.density === settings.density));
@@ -969,14 +1028,18 @@
           $('icon-medium').textContent = overlayStrings.iconMedium;
           $('icon-large').textContent = overlayStrings.iconLarge;
           $('settings-zoom-label').textContent = overlayStrings.settingsZoom;
+          $('settings-opacity-label').textContent = overlayStrings.settingsOpacity;
           $('toggle-stats-label').textContent = overlayStrings.settingsShowStats;
           $('toggle-progress-label').textContent = overlayStrings.settingsShowProgress;
           $('toggle-rarity-label').textContent = overlayStrings.settingsShowRarity;
           $('toggle-descriptions-label').textContent = overlayStrings.settingsShowDescriptions;
+          $('toggle-use-theme-label').textContent = overlayStrings.settingsUseTheme;
           $('settings-reset').textContent = overlayStrings.settingsReset;
           $('overlay-settings-toggle').title = overlayStrings.settingsTitle;
           $('overlay-settings-toggle').setAttribute('aria-label', overlayStrings.settingsTitle);
           $('overlay-th-achievement').firstElementChild.textContent = overlayStrings.achievement;
+          $('overlay-th-rarity').firstElementChild.textContent = overlayStrings.rarityColumn;
+          $('overlay-th-date').firstElementChild.textContent = overlayStrings.dateColumn;
           $('overlay-th-status').firstElementChild.textContent = overlayStrings.status;
 
           const pills = document.querySelectorAll('.filter-pill');
@@ -1021,6 +1084,8 @@
             arrow.textContent = state === 1 ? '▲' : '▼';
           };
           setArrow('achievement-arrow', sortState.achievement);
+          setArrow('rarity-arrow', sortState.rarity);
+          setArrow('date-arrow', sortState.time);
           setArrow('status-arrow', sortState.status);
         }
 
@@ -1073,12 +1138,10 @@
             const row = document.createElement('div');
             row.className = 'overlay-row ' + (achieved ? 'is-unlocked' : 'is-locked');
 
-            const rarityHtml =
-              rarity === null
-                ? ''
-                : `<span class="rarity-badge ${rarity < 3 ? 'gold' : rarity < 6 ? 'silver' : 'bronze'}">★ ${rarity.toFixed(1)}%</span>`;
+            const tier = ui.rarityTier(rarity);
+            const rarityHtml = tier ? `<span class="rarity-badge ${tier}">★ ${rarity.toFixed(1)}%</span>` : '';
 
-            const progressHtml = progress.hasProgress
+            const progressHtml = progress.hasProgress && progress.max > 1
               ? `<div class="overlay-progress"><div class="progress-meta"><span>${ui.escapeHtml(overlayStrings.progress)}</span><span>${progress.current} / ${progress.max}</span></div>
                  <div class="progress-track"><div class="progress-fill" style="width:${progress.percent}%"></div></div></div>`
               : '';
@@ -1161,6 +1224,14 @@
           sortState.achievement = cycleSort(sortState.achievement);
           renderRows();
         });
+        $('overlay-th-rarity').addEventListener('click', () => {
+          sortState.rarity = cycleSort(sortState.rarity);
+          renderRows();
+        });
+        $('overlay-th-date').addEventListener('click', () => {
+          sortState.time = cycleSort(sortState.time);
+          renderRows();
+        });
         $('overlay-th-status').addEventListener('click', () => {
           sortState.status = cycleSort(sortState.status);
           renderRows();
@@ -1201,6 +1272,12 @@
           saveSettings();
         });
 
+        $('opacity-select').addEventListener('change', (e) => {
+          settings.opacity = Number(e.target.value);
+          applySettings();
+          saveSettings();
+        });
+
         $('toggle-stats').addEventListener('change', (e) => {
           settings.showStats = e.target.checked;
           applySettings();
@@ -1221,6 +1298,11 @@
           applySettings();
           saveSettings();
         });
+        $('toggle-use-theme').addEventListener('change', (e) => {
+          settings.useAppTheme = e.target.checked;
+          applyThemePayload(themePayload);
+          saveSettings();
+        });
 
         $('settings-reset').addEventListener('click', () => {
           settings = Object.assign({}, DEFAULT_SETTINGS);
@@ -1235,6 +1317,10 @@
           applyOverlayStrings();
         });
 
+        window.api.onOverlayTheme((data) => {
+          applyThemePayload(data);
+        });
+
         window.api.onOverlay((game) => {
           isLoading = false;
           loadTableData(game);
@@ -1246,6 +1332,12 @@
 
         applySettings();
         applyOverlayStrings();
+        window.api
+          .getThemePayload()
+          .then((payload) => {
+            applyThemePayload(payload);
+          })
+          .catch(() => {});
       })();
     </script>
   </body>

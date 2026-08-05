@@ -62,7 +62,7 @@ test('the header title binding still resolves to exactly one span', () => {
 
 test('each nav entry keeps exactly one span for its label and a non-span counter', () => {
   // loader.js: $("#settingNav li[data-view='…'] span").text(…) — a counter <span> would be clobbered.
-  const items = settings.querySelectorAll('#settingNav li');
+  const items = settings.querySelectorAll('#settingNav li[data-view]');
   assert.ok(items.length >= 7, 'the settings nav must list every tab');
   for (const item of items) {
     const view = item.getAttribute('data-view');
@@ -73,8 +73,16 @@ test('each nav entry keeps exactly one span for its label and a non-span counter
   }
 });
 
+test('the settings nav uses group headers to stay readable', () => {
+  const groups = settings.querySelectorAll('#settingNav li.nav-group');
+  assert.ok(groups.length >= 4, `the sidebar should group its tabs, got ${groups.length}`);
+  for (const group of groups) {
+    assert.strictEqual(group.querySelectorAll('span, .nav-count').length, 0, 'group headers are labels, not tabs');
+  }
+});
+
 test('every nav entry points at a real content section, and vice versa', () => {
-  const navViews = settings.querySelectorAll('#settingNav li').map((li) => li.getAttribute('data-view'));
+  const navViews = settings.querySelectorAll('#settingNav li[data-view]').map((li) => li.getAttribute('data-view'));
   const sectionViews = settings.querySelectorAll('.container > section.content').map((s) => s.getAttribute('data-view'));
   assert.deepStrictEqual(navViews.slice().sort(), sectionViews.slice().sort(), 'a tab with no section (or a section with no tab) is unreachable');
 });

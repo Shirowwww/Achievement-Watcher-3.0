@@ -252,7 +252,8 @@ body {
   overflow: hidden;
   border-radius: 999px;
   background: rgba(6, 12, 24, 0.48);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 
 .progress_meter {
@@ -261,7 +262,7 @@ body {
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, var(--bar-a) 0%, var(--bar-b) 58%, var(--bar-c) 100%);
-  box-shadow: 0 0 12px var(--glow);
+  box-shadow: 0 0 12px var(--glow), inset 0 1px 0 rgba(255, 255, 255, 0.14);
   transition: width 0.35s ease;
 }
 

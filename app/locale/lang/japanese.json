@@ -581,7 +581,7 @@
       },
       "socialClub": {
         "name": "Goldberg SocialClub",
-        "description": "Goldberg Social Club エミュレーターの実績を追跡します (%APPDATA%\\Goldberg SocialClub Emu Saves)。"
+        "description": "Goldberg Social Club エミュレーターの実績を追跡します。"
       }
     },
     "guide": {
@@ -646,11 +646,7 @@
         "dataFolder": "データフォルダーを開く",
         "goldbergTitle": "Goldberg / GBE Fork",
         "goldbergDesc": "ゲームライブラリフォルダーをスキャンして Goldberg / GBE Fork のインストールを探し、steam_settings/achievements.json スキーマが欠落しているものを示します。1 つを修正するには、ゲームの右クリックメニュー（診断 / 修復）を使用してください。",
-        "scanFolder": "フォルダーをスキャン…",
-        "winNotifTitle": "Windows 通知設定",
-        "focusAssist": "集中モード",
-        "notifActions": "通知とアクション",
-        "winNotifDesc": "Windows 10 >= 1903 : 全画面アプリのフォーカスアシスト自動ルール（既定ではアラームのみ）によって Windows 通知が抑制される場合があります — ゲーム内に表示されない場合は「オフ」に設定してください。"
+        "scanFolder": "フォルダーをスキャン…"
       },
       "blacklistTitle": "AppID ブラックリスト",
       "blacklistButton": "ブラックリストをリセット",
@@ -701,7 +697,7 @@
     "fixTitle": "修復",
     "fixCopy": "エミュレートされた Steam ゲームでは、右クリックの修復（または自動修復）が GBE Fork をインストールし、achievements.json スキーマ、DLC データ、起動補助ファイルをゲームの steam_settings フォルダーに書き込みます。",
     "overlayTitle": "ゲーム内オーバーレイ",
-    "overlayCopy": "ホットキー（デフォルトは Ctrl+Shift+O）でゲーム画面上に表示できる小さな実績パネルです。設定 > 一般のホットキー欄の隣でいつでも変更できます。",
+    "overlayCopy": "ホットキー（デフォルトは Ctrl+Shift+K）でゲーム画面上に表示できる小さな実績パネルです。設定 > 一般のホットキー欄の隣でいつでも変更できます。",
     "profileTitle": "プロフィール",
     "profileCopy": "ヘッダーに表示される名前を選択し、必要に応じてローカル アバターを設定します。",
     "username": "表示名",
@@ -768,6 +764,8 @@
     "icon": "アイコン",
     "achievement": "実績",
     "status": "ステータス",
+    "rarityColumn": "レア度",
+    "dateColumn": "日付",
     "selectConfig": "設定を選択してください！",
     "locked": "ロック中",
     "unlocked": "解除済み",
@@ -792,11 +790,26 @@
     "iconMedium": "中",
     "iconLarge": "大",
     "settingsZoom": "ズーム",
+    "settingsOpacity": "不透明度",
     "settingsShowStats": "統計バー",
     "settingsShowProgress": "進捗バー",
     "settingsShowRarity": "レア度",
     "settingsShowDescriptions": "説明",
     "settingsReset": "初期設定に戻す",
     "noResults": "検索に一致する実績がありません。"
+  },
+  "dialogs": {
+    "game-config-title": "実行ファイルの設定",
+    "launch-args-label": "起動引数:",
+    "game-config-placeholder": "…「編集」をクリックして実行ファイルを選択…",
+    "game-config-unlink": "実行ファイルの関連付けを解除",
+    "checking-for-updates": "確認中…",
+    "update-unavailable-dev": "開発版では利用できません",
+    "update-check-failed": "確認に失敗しました",
+    "update-available-short": "更新があります",
+    "update-up-to-date-short": "最新版です",
+    "update-checked": "確認済み",
+    "blacklist-add-placeholder": "Steam App ID",
+    "blacklist-add-button": "追加"
   }
 }

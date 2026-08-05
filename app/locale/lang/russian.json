@@ -581,7 +581,7 @@
       },
       "socialClub": {
         "name": "Goldberg SocialClub",
-        "description": "Отслеживать достижения эмулятора Goldberg Social Club (%APPDATA%\\Goldberg SocialClub Emu Saves)."
+        "description": "Отслеживать достижения эмулятора Goldberg Social Club"
       }
     },
     "guide": {
@@ -646,11 +646,7 @@
         "dataFolder": "Открыть папку данных",
         "goldbergTitle": "Goldberg / GBE Fork",
         "goldbergDesc": "Сканирует папку библиотеки игр на наличие установок Goldberg / GBE Fork и помечает те, у которых отсутствует схема steam_settings/achievements.json. Используйте контекстное меню игры (Диагностика / Восстановить), чтобы исправить одну.",
-        "scanFolder": "Сканировать папку…",
-        "winNotifTitle": "Настройки уведомлений Windows",
-        "focusAssist": "Фокус внимания",
-        "notifActions": "Уведомления и действия",
-        "winNotifDesc": "Windows 10 >= 1903 : автоправило помощника фокусировки для полноэкранных приложений (по умолчанию только будильники) может подавлять уведомления Windows — установите «Откл.», если они не появляются в игре."
+        "scanFolder": "Сканировать папку…"
       },
       "blacklistTitle": "Чёрный список AppID",
       "blacklistButton": "Сбросить чёрный список",
@@ -701,7 +697,7 @@
     "fixTitle": "Исправление",
     "fixCopy": "Для эмулируемых игр Steam исправление из контекстного меню (или автоматическое исправление) устанавливает GBE Fork и записывает схему achievements.json, данные DLC и вспомогательные файлы запуска в папку steam_settings игры.",
     "overlayTitle": "Внутриигровой оверлей",
-    "overlayCopy": "Небольшая панель достижений, которую можно вызвать поверх игры горячей клавишей (по умолчанию Ctrl+Shift+O). Изменить её можно в любой момент в Настройки > Общие, рядом с полем горячей клавиши.",
+    "overlayCopy": "Небольшая панель достижений, которую можно вызвать поверх игры горячей клавишей (по умолчанию Ctrl+Shift+K). Изменить её можно в любой момент в Настройки > Общие, рядом с полем горячей клавиши.",
     "profileTitle": "Профиль",
     "profileCopy": "Выберите имя, указанное в заголовке, и при необходимости установите локальный аватар.",
     "username": "Отображаемое имя",
@@ -768,6 +764,8 @@
     "icon": "Значок",
     "achievement": "Достижение",
     "status": "Статус",
+    "rarityColumn": "Редкость",
+    "dateColumn": "Дата",
     "selectConfig": "Выберите конфигурацию!",
     "locked": "Заблокировано",
     "unlocked": "Разблокировано",
@@ -792,11 +790,26 @@
     "iconMedium": "Средний",
     "iconLarge": "Большой",
     "settingsZoom": "Масштаб",
+    "settingsOpacity": "Непрозрачность",
     "settingsShowStats": "Панель статистики",
     "settingsShowProgress": "Полосы прогресса",
     "settingsShowRarity": "Редкость",
     "settingsShowDescriptions": "Описания",
     "settingsReset": "Сбросить",
     "noResults": "Нет достижений, соответствующих поиску."
+  },
+  "dialogs": {
+    "game-config-title": "Настройка исполняемого файла",
+    "launch-args-label": "Аргументы запуска:",
+    "game-config-placeholder": "…Нажмите ИЗМЕНИТЬ, чтобы выбрать исполняемый файл…",
+    "game-config-unlink": "Отвязать исполняемый файл",
+    "checking-for-updates": "Проверка…",
+    "update-unavailable-dev": "Недоступно в тестовой сборке",
+    "update-check-failed": "Ошибка проверки",
+    "update-available-short": "Доступно обновление",
+    "update-up-to-date-short": "Актуальная версия",
+    "update-checked": "Проверено",
+    "blacklist-add-placeholder": "Steam App ID",
+    "blacklist-add-button": "Добавить"
   }
 }

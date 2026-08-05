@@ -229,10 +229,11 @@ Var unDeleteAppData
 !macroend
 
 !macro customInstall
-  ; Copy media, presets, view to your app's AppData.
-  ; 3.x uses its own folder: the legacy 1.6.8 uninstaller deletes
-  ; "%APPDATA%\Achievement Watcher", which used to wipe every 3.x setting and
-  ; cache (issue #6).
+  ; The app copies Media/, presets/ and view/ from its own resources on first
+  ; launch (checkResources in electron/init.js), so the installer only needs
+  ; to create the folder. 3.x uses its own folder: the legacy 1.6.8 uninstaller
+  ; deletes "%APPDATA%\Achievement Watcher", which used to wipe every 3.x
+  ; setting and cache (issue #6).
   StrCpy $APPDATA_MYAPP "$APPDATA\Achievement Watcher 3.0"
   DetailPrint "$(AW_KEEP_DATA)"
   DetailPrint "$APPDATA_MYAPP"

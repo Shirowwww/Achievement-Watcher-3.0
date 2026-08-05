@@ -267,8 +267,11 @@ function RegisterOverlayHotkey(hotkey) {
 // Shared open/close path for the overlay of the currently running game — used by both the keyboard
 // hotkey and the controller "overlay.toggle" action so they stay in sync (overlayOpened tracks state).
 function toggleOverlayForRunningGame() {
-  if (!runningAppid) return;
-  SpawnOverlayNotification([`--wintype=overlay`, `--appid=${runningAppid}`, `--description=${overlayOpened ? 'close' : 'open'}`]);
+  // With a game running, the overlay follows it. Without one, the main process
+  // resolves the currently open (or first) game from the app window so the
+  // hotkey still toggles the overlay from anywhere.
+  const appid = runningAppid || '0';
+  SpawnOverlayNotification([`--wintype=overlay`, `--appid=${appid}`, `--description=${overlayOpened ? 'close' : 'open'}`]);
   overlayOpened = !overlayOpened;
   overlayControllerService?.notifyOverlayPresentationChanged(overlayOpened, 'overlay-toggled');
 }
@@ -1044,7 +1047,7 @@ var app = {
         monitor.on('disable-overlay', () => {
           runningAppid = null;
           overlayOpened = false;
-          SpawnOverlayNotification([`--wintype=overlay`, `--appid=0`]);
+          SpawnOverlayNotification([`--wintype=overlay`, `--appid=0`, `--description=close`]);
           overlayControllerService?.notifyOverlayPresentationChanged(false, 'game-exited');
         });
 

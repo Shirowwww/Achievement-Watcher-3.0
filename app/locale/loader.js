@@ -194,6 +194,7 @@ function translateUI(lang, locale, template) {
   if (template.settings.general.theme) {
     $('#theme-settings-label').text(clear(template.settings.general.theme.name));
     $('#theme-settings-help').text(clear(template.settings.general.theme.description));
+    $('#appearance-title').text(clear(template.settings.general.theme.name));
     // Theme names themselves are proper nouns and stay untranslated.
   }
   if (template.settings.general.uninstallMenu) {
@@ -484,10 +485,6 @@ function translateUI(lang, locale, template) {
     $('#adv-goldberg-title').text(clear(d.goldbergTitle));
     $('#adv-goldberg-desc').text(clear(d.goldbergDesc));
     $('#scan-gbe span').text(clear(d.scanFolder));
-    $('#adv-winnotif-title').text(clear(d.winNotifTitle));
-    $('#adv-focus-assist').text(clear(d.focusAssist));
-    $('#adv-notif-actions').text(clear(d.notifActions));
-    $('#adv-winnotif-desc').text(clear(d.winNotifDesc));
   }
   $('#steam-api-title').text(clear(template.settings.advanced.apiKey.title));
   $('#steam-api-description').text(clear(template.settings.advanced.apiKey.description));
@@ -513,9 +510,14 @@ function translateUI(lang, locale, template) {
   $("#settingNav li[data-view='notification'] span").text(clear(template.settings.sideMenu.notification));
   $("#settingNav li[data-view='folder'] span").text(clear(template.settings.sideMenu.folder));
   $("#settingNav li[data-view='source'] span").text(clear(template.settings.sideMenu.source));
-  const guideNav = (template.settings.guide && template.settings.guide.nav) || template.settings.sideMenu.guide || 'Guide';
-  $("#settingNav li[data-view='guide'] span").text(clear(guideNav));
+  if (template.settings.general.theme) $("#settingNav li[data-view='appearance'] span").text(clear(template.settings.general.theme.name));
   $("#settingNav li[data-view='advanced'] span").text(clear(template.settings.sideMenu.advanced));
+  // Sidebar group headers keep the flat list readable without adding new locale keys.
+  $('#nav-group-general').text(clear(template.settings.sideMenu.general));
+  $('#nav-group-notification').text(clear(template.settings.sideMenu.notification));
+  $('#nav-group-library').text(clear(template.settings.source.title || template.settings.sideMenu.source));
+  $('#nav-group-emulator').text(clear((template.settings.emulator && template.settings.emulator.nav) || template.settings.sideMenu.advanced));
+  $('#nav-group-advanced').text(clear(template.settings.sideMenu.advanced));
   $('#btn-settings-cancel').text(clear(template.settings.common.cancel));
   $('#btn-settings-save').text(clear(template.settings.common.save));
   $('#btn-game-config-cancel').text(clear(template.settings.common.cancel));

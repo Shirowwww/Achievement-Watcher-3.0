@@ -153,12 +153,17 @@
             <!-- Same rule as above for the <b> counters: the loader targets `li[data-view=…] span`. -->
             <nav id="settingNav">
               <ul>
+                <li class="nav-group" id="nav-group-general" data-nav-group="general"></li>
                 <li class="active" data-view="general"><i class="fas fa-tools"></i> <span></span><b class="nav-count"></b></li>
+                <li data-view="appearance"><i class="fas fa-palette"></i> <span id="appearance-nav-label"></span><b class="nav-count"></b></li>
+                <li class="nav-group" id="nav-group-notification" data-nav-group="notification"></li>
                 <li data-view="notification"><i class="fas fa-bell"></i> <span></span><b class="nav-count"></b></li>
+                <li class="nav-group" id="nav-group-library" data-nav-group="library"></li>
                 <li data-view="source"><i class="fas fa-file-import"></i> <span></span><b class="nav-count"></b></li>
                 <li data-view="folder"><i class="far fa-folder"></i> <span></span><b class="nav-count"></b></li>
+                <li class="nav-group" id="nav-group-emulator" data-nav-group="emulator"></li>
                 <li data-view="emulator"><i class="fas fa-microchip"></i> <span id="emulator-nav-label">Emulator</span><b class="nav-count"></b></li>
-                <li data-view="guide"><i class="fas fa-map-signs"></i> <span id="guide-nav-label">Guide</span><b class="nav-count"></b></li>
+                <li class="nav-group" id="nav-group-advanced" data-nav-group="advanced"></li>
                 <li data-view="advanced"><i class="fas fa-flask"></i> <span></span><b class="nav-count"></b></li>
               </ul>
             </nav>
@@ -359,6 +364,7 @@
                 </li>
                 </ul>
               </div>
+
             </section>
 
             <section class="content" data-view="advanced">
@@ -441,6 +447,10 @@
                     <ul id="blacklist-manager"></ul>
                     <div id="blacklist-empty" class="diag-line"></div>
                   </li>
+                  <li class="blacklist-add-row">
+                    <input type="text" id="blacklist-add-input" inputmode="numeric" placeholder="Steam App ID" autocomplete="off" spellcheck="false" />
+                    <button type="button" id="blacklist-add-btn" class="inline-action-btn"><i class="fas fa-plus"></i> <span>Add</span></button>
+                  </li>
                   <li class="actions-row">
                     <div id="blacklist_reset" class="btn"><i class="fas fa-file-medical-alt"></i> <span></span></div>
                     <div id="blacklist-info" class="help"></div>
@@ -487,22 +497,6 @@
               </div>
 
               <div class="arrow-list diag-list">
-                <div class="title"><i class="fas fa-heartbeat"></i> <span id="adv-diag-title">Diagnostics</span></div>
-                <ul>
-                  <li>
-                    <div id="diag-versions" class="diag-line"></div>
-                  </li>
-                  <li>
-                    <div id="diag-apikey" class="diag-line"><span id="diag-apikey-label">Steam Web API key :</span> <span></span></div>
-                  </li>
-                  <li class="actions-row">
-                    <div id="open-logs" class="btn"><i class="fas fa-folder-open"></i> <span>Open logs folder</span></div>
-                    <div id="open-userdata" class="btn"><i class="fas fa-folder-open"></i> <span>Open data folder</span></div>
-                  </li>
-                </ul>
-              </div>
-
-              <div class="arrow-list diag-list">
                 <div class="title"><i class="fas fa-puzzle-piece"></i> <span id="adv-goldberg-title">Goldberg / GBE Fork</span></div>
                 <ul>
                   <li>
@@ -521,24 +515,22 @@
               </div>
 
               <div class="arrow-list diag-list">
-                <div class="title"><i class="fas fa-bell"></i> <span id="adv-winnotif-title">Windows notification settings</span></div>
+                <div class="title"><i class="fas fa-heartbeat"></i> <span id="adv-diag-title">Diagnostics</span></div>
                 <ul>
-                  <li class="actions-row">
-                    <a href="ms-settings:quiethours" target="_blank" class="btn"
-                      ><i class="fas fa-moon fa-flip-horizontal"></i> <span id="adv-focus-assist">Focus Assist</span></a
-                    >
-                    <a href="ms-settings:notifications" target="_blank" class="btn"
-                      ><i class="fas fa-comment"></i> <span id="adv-notif-actions">Notifications &amp; actions</span></a
-                    >
+                  <li>
+                    <div id="diag-versions" class="diag-line"></div>
                   </li>
                   <li>
-                    <p id="adv-winnotif-desc">
-                      Windows 10 &gt;= 1903 : the focus-assist auto-rule for fullscreen apps (alarms only by default) can suppress Windows
-                      notifications — set it to "Off" if they don't appear in-game.
-                    </p>
+                    <div id="diag-apikey" class="diag-line"><span id="diag-apikey-label">Steam Web API key :</span> <span></span></div>
+                  </li>
+                  <li class="actions-row">
+                    <div id="open-logs" class="btn"><i class="fas fa-folder-open"></i> <span>Open logs folder</span></div>
+                    <div id="open-userdata" class="btn"><i class="fas fa-folder-open"></i> <span>Open data folder</span></div>
+                    <div id="check-for-updates" class="btn"><i class="fas fa-sync"></i> <span id="check-for-updates-label">Check for updates</span></div>
                   </li>
                 </ul>
               </div>
+
             </section>
 
             <section class="content" data-view="source">
@@ -683,7 +675,7 @@
                   </li>
 
                   <li class="hasHelper">
-                    <div class="left"><i class="fas fa-users"></i> <span></span></div>
+                    <div class="left"><i class="fas fa-star"></i> <span></span></div>
                     <div class="right">
                       <div class="previous">
                         <span class="arrow"><i class="fas fa-chevron-left"></i></span>
@@ -759,74 +751,6 @@
                   </button>
                   <span id="xbox-connect-status" aria-live="polite"></span>
                 </div>
-              </div>
-            </section>
-
-            <section class="content platform-guide-settings" data-view="guide">
-              <div class="platform-guide-head">
-                <div class="platform-guide-icon"><i class="fas fa-map-signs"></i></div>
-                <div>
-                  <div class="title" id="guide-title">Platform guide</div>
-                  <p id="guide-intro">
-                    What Achievement Watcher scans, which folders matter, and when generated emulator configs are useful.
-                  </p>
-                </div>
-              </div>
-
-              <div class="platform-guide-grid">
-                <details class="guide-panel" open>
-                  <summary><i class="fas fa-bolt"></i> <span id="guide-quick-title">First steps</span></summary>
-                  <ul id="guide-quick-list">
-                    <li>Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.</li>
-                    <li>Use library folders for installed games that have not produced achievement files yet.</li>
-                    <li>Watchdog only notifies new changes after the folder is known and the source is enabled.</li>
-                  </ul>
-                </details>
-
-                <details class="guide-panel" open>
-                  <summary><i class="fab fa-steam"></i> <span id="guide-steam-title">Steam emulators</span></summary>
-                  <ul id="guide-steam-list">
-                    <li>GBE / Goldberg saves are usually under %APPDATA%\GSE Saves or %APPDATA%\Goldberg SteamEmu Saves.</li>
-                    <li>CODEX / RUNE style saves often live under Public Documents\Steam\CODEX or Public Documents\Steam\RUNE.</li>
-                    <li>TENOKE, UniverseLAN, SmartSteamEmu, ALI213 and Hoodlum are detected from their config/save folders.</li>
-                  </ul>
-                </details>
-
-                <details class="guide-panel" open>
-                  <summary><i class="fas fa-microchip"></i> <span id="guide-emulator-title">Console emulators</span></summary>
-                  <ul id="guide-emulator-list">
-                    <li>RPCS3 achievements are read from dev_hdd0\home\...\trophy near the RPCS3 install.</li>
-                    <li>shadPS4 trophies are read from its app data game_data/trophy folders; leftover trophy data is not install proof.</li>
-                    <li>Xenia progress is read from Xbox profile files such as .gpd.</li>
-                  </ul>
-                </details>
-
-                <details class="guide-panel" open>
-                  <summary><i class="fas fa-store"></i> <span id="guide-sources-title">Launchers and sources</span></summary>
-                  <ul id="guide-sources-list">
-                    <li>Steam public profile mode lists installed or owned Steam games, but local unlocks still come from save files.</li>
-                    <li>GOG, Epic, Ubisoft Connect/LumaPlay and EA Desktop can be enabled separately in Sources.</li>
-                    <li>EA Desktop cracked installs are read from EADesktopVerbose.log and its backup logs.</li>
-                  </ul>
-                </details>
-
-                <details class="guide-panel" open>
-                  <summary><i class="fas fa-magic"></i> <span id="guide-config-title">Generated configs</span></summary>
-                  <ul id="guide-config-list">
-                    <li>The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.</li>
-                    <li>Simple mode is fast and uses Achievement Watcher's data; Advanced runs generate_emu_config for deeper Steam data.</li>
-                    <li>Advanced generation can take several minutes, especially with DLC/depot metadata.</li>
-                  </ul>
-                </details>
-
-                <details class="guide-panel" open>
-                  <summary><i class="fas fa-wrench"></i> <span id="guide-troubleshoot-title">Troubleshooting</span></summary>
-                  <ul id="guide-troubleshoot-list">
-                    <li>If a game is missing, rescan after adding folders, then check the source toggle and blacklist.</li>
-                    <li>If notifications are missing, check Windows Focus Assist and run the game/app with matching admin rights.</li>
-                    <li>Advanced > Diagnostics opens logs and data folders when you need to inspect what was scanned.</li>
-                  </ul>
-                </details>
               </div>
             </section>
 
@@ -1404,6 +1328,7 @@
                   </ul>
                 </div>
               </div>
+
             </section>
 
             <section class="content active" data-view="general">
@@ -1556,25 +1481,6 @@
                   </li>
 
                   <li class="hasHelper">
-                    <div class="left"><i class="fas fa-paint-brush"></i> <span id="theme-settings-label">Theme</span></div>
-                    <div class="right">
-                      <div class="previous">
-                        <span class="arrow"><i class="fas fa-chevron-left"></i></span>
-                      </div>
-                      <select autocomplete="off" id="option_theme">
-                        <option value="default" selected>Steam Blue</option>
-                        <option value="oled">OLED Black</option>
-                        <option value="dracula">Dracula</option>
-                        <option value="graphite">Graphite</option>
-                      </select>
-                      <div class="next">
-                        <span class="arrow"><i class="fas fa-chevron-right"></i></span>
-                      </div>
-                    </div>
-                    <div class="help" id="theme-settings-help">Color theme of the app window (previews immediately, saved with OK).</div>
-                  </li>
-
-                  <li class="hasHelper">
                     <div class="left"><i class="fas fa-trash-alt"></i> <span id="uninstall-settings-label">Uninstall from the game list</span></div>
                     <div class="right">
                       <div class="previous">
@@ -1595,6 +1501,121 @@
 
                 </ul>
               </div>
+
+              <div class="platform-guide-settings settings-card" id="guide-card">
+                <div class="platform-guide-head">
+                  <div class="platform-guide-icon"><i class="fas fa-map-signs"></i></div>
+                  <div>
+                    <div class="title" id="guide-title">Platform guide</div>
+                    <p id="guide-intro">
+                      What Achievement Watcher scans, which folders matter, and when generated emulator configs are useful.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="platform-guide-grid">
+                  <details class="guide-panel" open>
+                    <summary><i class="fas fa-bolt"></i> <span id="guide-quick-title">First steps</span></summary>
+                    <ul id="guide-quick-list">
+                      <li>Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.</li>
+                      <li>Use library folders for installed games that have not produced achievement files yet.</li>
+                      <li>Watchdog only notifies new changes after the folder is known and the source is enabled.</li>
+                    </ul>
+                  </details>
+
+                  <details class="guide-panel" open>
+                    <summary><i class="fab fa-steam"></i> <span id="guide-steam-title">Steam emulators</span></summary>
+                    <ul id="guide-steam-list">
+                      <li>GBE / Goldberg saves are usually under %APPDATA%\GSE Saves or %APPDATA%\Goldberg SteamEmu Saves.</li>
+                      <li>CODEX / RUNE style saves often live under Public Documents\Steam\CODEX or Public Documents\Steam\RUNE.</li>
+                      <li>TENOKE, UniverseLAN, SmartSteamEmu, ALI213 and Hoodlum are detected from their config/save folders.</li>
+                    </ul>
+                  </details>
+
+                  <details class="guide-panel" open>
+                    <summary><i class="fas fa-microchip"></i> <span id="guide-emulator-title">Console emulators</span></summary>
+                    <ul id="guide-emulator-list">
+                      <li>RPCS3 achievements are read from dev_hdd0\home\...\trophy near the RPCS3 install.</li>
+                      <li>shadPS4 trophies are read from its app data game_data/trophy folders; leftover trophy data is not install proof.</li>
+                      <li>Xenia progress is read from Xbox profile files such as .gpd.</li>
+                    </ul>
+                  </details>
+
+                  <details class="guide-panel" open>
+                    <summary><i class="fas fa-store"></i> <span id="guide-sources-title">Launchers and sources</span></summary>
+                    <ul id="guide-sources-list">
+                      <li>Steam public profile mode lists installed or owned Steam games, but local unlocks still come from save files.</li>
+                      <li>GOG, Epic, Ubisoft Connect/LumaPlay and EA Desktop can be enabled separately in Sources.</li>
+                      <li>EA Desktop cracked installs are read from EADesktopVerbose.log and its backup logs.</li>
+                    </ul>
+                  </details>
+
+                  <details class="guide-panel" open>
+                    <summary><i class="fas fa-magic"></i> <span id="guide-config-title">Generated configs</span></summary>
+                    <ul id="guide-config-list">
+                      <li>The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.</li>
+                      <li>Simple mode is fast and uses Achievement Watcher's data; Advanced runs generate_emu_config for deeper Steam data.</li>
+                      <li>Advanced generation can take several minutes, especially with DLC/depot metadata.</li>
+                    </ul>
+                  </details>
+
+                  <details class="guide-panel" open>
+                    <summary><i class="fas fa-wrench"></i> <span id="guide-troubleshoot-title">Troubleshooting</span></summary>
+                    <ul id="guide-troubleshoot-list">
+                      <li>If a game is missing, rescan after adding folders, then check the source toggle and blacklist.</li>
+                      <li>If notifications are missing, check Windows Focus Assist and run the game/app with matching admin rights.</li>
+                      <li>Advanced > Diagnostics opens logs and data folders when you need to inspect what was scanned.</li>
+                    </ul>
+                  </details>
+                </div>
+              </div>
+            </section>
+
+            <section class="content" data-view="appearance">
+              <div class="arrow-list">
+                <div class="title"><i class="fas fa-palette"></i> <span id="appearance-title">Theme</span></div>
+                <ul>
+                  <li class="hasHelper">
+                    <div class="left"><i class="fas fa-paint-brush"></i> <span id="theme-settings-label">Theme</span></div>
+                    <div class="right">
+                      <div class="previous">
+                        <span class="arrow"><i class="fas fa-chevron-left"></i></span>
+                      </div>
+                      <select autocomplete="off" id="option_theme">
+                        <option value="default" selected>Steam Blue</option>
+                        <option value="oled">OLED Black</option>
+                        <option value="dracula">Dracula</option>
+                        <option value="graphite">Graphite</option>
+                        <option value="nord">Nord</option>
+                        <option value="gruvbox">Gruvbox</option>
+                        <option value="tokyonight">Tokyo Night</option>
+                      </select>
+                      <div class="next">
+                        <span class="arrow"><i class="fas fa-chevron-right"></i></span>
+                      </div>
+                    </div>
+                    <div class="help" id="theme-settings-help">Color theme of the whole app and the in-game overlay (previews immediately, saved with OK).</div>
+                  </li>
+                </ul>
+              </div>
+
+              <div id="theme-customizer" class="settings-card" style="display:none">
+                <div class="emulator-login-heading">
+                  <div class="title"><i class="fas fa-palette"></i> <span id="theme-customizer-title">Custom theme</span></div>
+                  <span class="emulator-warning"><i class="fas fa-info-circle"></i> <span id="theme-customizer-hint">Per-layer preview</span></span>
+                </div>
+                <p id="theme-customizer-desc">
+                  Pick a color and, optionally, an image for each block of the interface. When an image is
+                  chosen, it shows on top of the color (the color becomes a light veil so text stays
+                  readable). Everything previews live and saves with OK — the in-game overlay follows too.
+                </p>
+                <div id="theme-customizer-layers"></div>
+                <div class="theme-customizer-actions">
+                  <button type="button" id="theme-customizer-reset" class="btn secondary">
+                    <i class="fas fa-undo"></i> <span>Reset all</span>
+                  </button>
+                </div>
+              </div>
             </section>
 
             <!-- Shown instead of a tab when a search matches nothing anywhere. -->
@@ -1611,6 +1632,10 @@
                 <a>maintained by</a>
                 <i class="fab fa-github"></i>
                 <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0" target="_blank">Shirowwww/achievement-watcher-3.0</a>
+                <button type="button" id="footer-check-updates" class="footer-update-btn" title="Check for updates" aria-label="Check for updates">
+                  <i class="fas fa-sync"></i>
+                </button>
+                <span id="footer-update-status" class="footer-update-status" aria-live="polite"></span>
               </p>
               <p>
                 <a>Fork</a>
@@ -1634,7 +1659,7 @@
       <section id="game-config">
         <div class="overlay"></div>
         <div class="box">
-          <div class="header"><i class="fas fa-cog"></i> Exe Config <span></span></div>
+          <div class="header"><i class="fas fa-cog"></i> <span id="game-config-title">Executable configuration</span><span></span></div>
           <div class="container">
             <section class="content active" data-view="exe-config">
               <div class="title">
@@ -1651,7 +1676,7 @@
                 </ul>
               </div>
               <div class="launch-args-row">
-                <label for="launch-args"><i class="fas fa-terminal"></i> Launch Args :</label>
+                <label for="launch-args" id="launch-args-label"><i class="fas fa-terminal"></i> Launch arguments:</label>
                 <input type="search" id="launch-args" />
               </div>
             </section>
@@ -1738,7 +1763,7 @@
                   <div>
                     <i class="fas fa-layer-group"></i>
                     <strong id="onboard-card-overlay-title">In-game overlay</strong>
-                    <span id="onboard-card-overlay-copy">A small achievements panel you can bring up over the game with a hotkey (default Ctrl+Shift+O). Change it any time in Settings &gt; General, next to the hotkey field.</span>
+                    <span id="onboard-card-overlay-copy">A small achievements panel you can bring up over the game with a hotkey (default Ctrl+Shift+K). Change it any time in Settings &gt; General, next to the hotkey field.</span>
                   </div>
                 </div>
               </section>

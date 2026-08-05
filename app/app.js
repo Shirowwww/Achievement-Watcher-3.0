@@ -47,7 +47,6 @@ progressMute.setUserDataPath(getUserDataPath());
 const emulatorSourceOverride = require(path.join(appPath, 'parser/emulatorSourceOverride.js'));
 emulatorSourceOverride.setUserDataPath(getUserDataPath());
 const l10n = require(path.join(appPath, 'locale/loader.js'));
-const toastAudio = require(path.join(appPath, 'util/toastAudio.js'));
 const coverStore = require(path.join(appPath, 'util/coverStore.js'));
 const uninstall = require(path.join(appPath, 'util/uninstall.js'));
 const { resolveGameRarityContext } = require(path.join(appPath, 'util/rarity.js'));
@@ -3111,7 +3110,7 @@ var app = {
       if (game.img.background) {
         ipcRenderer.invoke('fetch-icon', game.img.background, game.steamappid || game.appid).then((localPath) => {
           if (game.system === 'uplay' || game.img?.overlay === true) {
-            let gradient = `linear-gradient(to bottom right, rgba(0, 47, 75, .8), rgba(35, 54, 78, 0.9))`;
+            let gradient = `linear-gradient(to bottom right, color-mix(in srgb, var(--bg-base) 88%, black) 0%, color-mix(in srgb, var(--bg-glow) 78%, black) 100%)`;
             $('body').fadeIn().attr('style', `background: ${gradient}, url('${localPath}')`);
           } else {
             $('body').fadeIn().css('background', `url('${localPath}')`);
@@ -3531,18 +3530,32 @@ var app = {
     try {
       // Apply the saved app theme before anything renders (Settings > General > Theme).
       const savedTheme = app.config.general?.theme || 'default';
-      const savedUserTheme = userThemes.parseValue(savedTheme);
-      if (savedUserTheme) {
-        ipcRenderer
-          .invoke('list-user-themes')
-          .then((themes) => {
-            const t = (themes || []).find((x) => x && x.name === savedUserTheme);
-            userThemes.applyCss(t && t.css ? t.css : '');
-          })
-          .catch(() => userThemes.applyCss(''));
-        document.documentElement.dataset.theme = 'default';
-      } else {
-        document.documentElement.dataset.theme = savedTheme;
+      const isUserTheme = userThemes.parseValue(savedTheme) !== null;
+      document.documentElement.dataset.theme = isUserTheme || savedTheme === 'custom' ? 'default' : savedTheme;
+      userThemes.applyCss('');
+      ipcRenderer
+        .invoke('get-theme-payload')
+        .then((payload) => {
+          if (!payload) return;
+          const css = [payload.appCss || '', payload.userCss || ''].join('\n');
+          userThemes.applyCss(css);
+        })
+        .catch(() => userThemes.applyCss(''));
+
+      // Game executable configuration modal: localize the static strings that the
+      // i18n loader does not bind (title, launch arguments, placeholder, actions).
+      try {
+        $('#game-config-title').text(t('game-config-title', 'Executable configuration', "Configuration de l'exécutable"));
+        $('#launch-args-label').html(
+          `<i class="fas fa-terminal"></i> ${t('launch-args-label', 'Launch arguments:', 'Arguments de lancement :')}`
+        );
+        $('#game-config .constant').attr(
+          'data-placeholder',
+          t('game-config-placeholder', '…Click EDIT to choose the executable…', '…Cliquez sur MODIFIER pour choisir l’exécutable…')
+        );
+        $('#game-config .unlink').attr('title', t('game-config-unlink', 'Unlink executable', "Dissocier l'exécutable"));
+      } catch (err) {
+        debug.log(`game-config i18n failed: ${err}`);
       }
 
       // On a genuine first run, defer the initial library scan until the onboarding guide is done:

@@ -581,7 +581,7 @@
       },
       "socialClub": {
         "name": "Goldberg SocialClub",
-        "description": "跟踪 Goldberg Social Club 模拟器的成就（%APPDATA%\\Goldberg SocialClub Emu Saves）。"
+        "description": "跟踪 Goldberg Social Club 模拟器的成就。"
       }
     },
     "guide": {
@@ -646,11 +646,7 @@
         "dataFolder": "打开数据文件夹",
         "goldbergTitle": "Goldberg / GBE Fork",
         "goldbergDesc": "扫描游戏库文件夹中的 Goldberg / GBE Fork 安装，并标记缺少 steam_settings/achievements.json 架构的项目。使用游戏的右键菜单（诊断 / 修复）来修复其中一项。",
-        "scanFolder": "扫描文件夹…",
-        "winNotifTitle": "Windows 通知设置",
-        "focusAssist": "专注助手",
-        "notifActions": "通知和操作",
-        "winNotifDesc": "Windows 10 >= 1903：针对全屏应用的专注助手自动规则（默认仅闹钟）可能会抑制 Windows 通知 — 如果游戏内不出现，请将其设为「关闭」。"
+        "scanFolder": "扫描文件夹…"
       },
       "blacklistTitle": "AppID 黑名单",
       "blacklistButton": "重置黑名单",
@@ -701,7 +697,7 @@
     "fixTitle": "修复",
     "fixCopy": "对于模拟的 Steam 游戏，右键修复（或自动修复）会安装 GBE Fork，并将 achievements.json 架构、DLC 数据和启动辅助文件写入游戏的 steam_settings 文件夹。",
     "overlayTitle": "游戏内叠加层",
-    "overlayCopy": "一个可以通过快捷键（默认 Ctrl+Shift+O）呼出的小型成就面板，叠加显示在游戏画面上。可随时在 设置 > 常规 中快捷键字段旁边更改。",
+    "overlayCopy": "一个可以通过快捷键（默认 Ctrl+Shift+K）呼出的小型成就面板，叠加显示在游戏画面上。可随时在 设置 > 常规 中快捷键字段旁边更改。",
     "profileTitle": "轮廓",
     "profileCopy": "选择标题中显示的名称，并可以选择设置本地头像。",
     "username": "显示名称",
@@ -768,6 +764,8 @@
     "icon": "图标",
     "achievement": "成就",
     "status": "状态",
+    "rarityColumn": "稀有度",
+    "dateColumn": "日期",
     "selectConfig": "请选择一个配置！",
     "locked": "已锁定",
     "unlocked": "已解锁",
@@ -792,11 +790,26 @@
     "iconMedium": "中",
     "iconLarge": "大",
     "settingsZoom": "缩放",
+    "settingsOpacity": "不透明度",
     "settingsShowStats": "统计栏",
     "settingsShowProgress": "进度条",
     "settingsShowRarity": "稀有度",
     "settingsShowDescriptions": "描述",
     "settingsReset": "恢复默认",
     "noResults": "没有与搜索匹配的成就。"
+  },
+  "dialogs": {
+    "game-config-title": "可执行文件配置",
+    "launch-args-label": "启动参数:",
+    "game-config-placeholder": "…点击\"编辑\"选择可执行文件…",
+    "game-config-unlink": "取消关联可执行文件",
+    "checking-for-updates": "正在检查…",
+    "update-unavailable-dev": "开发版中不可用",
+    "update-check-failed": "检查失败",
+    "update-available-short": "有可用更新",
+    "update-up-to-date-short": "已是最新",
+    "update-checked": "已检查",
+    "blacklist-add-placeholder": "Steam App ID",
+    "blacklist-add-button": "添加"
   }
 }

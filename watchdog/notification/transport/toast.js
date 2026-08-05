@@ -51,11 +51,11 @@ function buildToastNotification(message, options) {
   // BOTH '1' and '2' — `customAudio == '0' || soundFile` is `(... ) ? true : false` — so any
   // configured sound left the toast silent and depended entirely on a sound-play call that can
   // fail quietly, which is why notifications were effectively muted, #34).
+  // '2' is no longer reachable from the UI (superseded by the sound picker in
+  // notificationSounds.js, which plays through soundPlayer directly) and its old Windows-registry
+  // lookup (util/toastAudio.js) is gone — leave soundFile unset so the existing fallback below
+  // plays the built-in achievement sound instead of throwing on a missing module.
   let soundFile;
-  if (options.toast.customAudio === '2') {
-    let toastAudio = require('../../util/toastAudio.js');
-    soundFile = toastAudio.getCustom();
-  }
   let notification = {
     // powertoast expects `aumid`, not `appID`. The old key was silently ignored, so every toast was
     // posted under powertoast's own default — the Microsoft Store's identity — instead of the app id

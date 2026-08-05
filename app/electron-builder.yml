@@ -80,6 +80,8 @@ extraFiles:
       - '**/*'
       - '!watchdog/_wip_/**'
       - '!watchdog/patches/**'
+      - '!watchdog/test/**'
+      - '!watchdog/notification-test.js'
 
   # NOTE: the portable node/ (Node 14) is gone since the A2 koffi migration — the monitor now runs
   # under Electron's own Node via ELECTRON_RUN_AS_NODE (see launchWatchdog in electron/init.js).

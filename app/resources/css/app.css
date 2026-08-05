@@ -40,26 +40,35 @@
   --text: #d9dfe4;                   /* primary text */
   --text-muted: #a8b5c5;
   --accent: #5b8dff;
-  --accent-soft: rgba(91, 141, 255, 0.18);
+  --accent-soft: color-mix(in srgb, var(--accent) 18%, transparent);
   --surface-elevated: #1f3042;
   --surface-sunken: #101a27;
+
+  /* Settings-modal-only surface tokens. Default to the same value as the card surface (so built-in
+     themes look exactly as before), but the custom theme engine (themeLayers.js) repoints these at
+     the dedicated "settings" layer instead of "card" — so a custom Cards/tiles color never bleeds
+     into the Settings UI, per the layer-independence contract. Every --set-* chrome token below reads
+     from these, not from --surface directly. */
+  --set-surface: var(--surface);
+  --set-surface-elevated: var(--surface-elevated);
+  --set-surface-sunken: var(--surface-sunken);
 
   /* Settings modal chrome — derived from the active theme tokens (via color-mix) so the whole panel,
      its controls and buttons follow OLED / Dracula / Graphite instead of staying locked to Steam blue.
      Change a theme's base tokens above and the Settings modal recolours with it. */
   --set-scrim: rgba(3, 8, 14, 0.76);
-  --set-modal-top: color-mix(in srgb, var(--surface-elevated) 88%, white 5%);
+  --set-modal-top: color-mix(in srgb, var(--set-surface-elevated) 88%, white 5%);
   --set-modal-bottom: var(--bg-base);
-  --set-header-bg: color-mix(in srgb, var(--surface-sunken) 82%, black);
-  --set-container-bg: color-mix(in srgb, var(--surface) 70%, transparent);
-  --set-content-bg: color-mix(in srgb, var(--surface-sunken) 76%, transparent);
-  --set-footer-bg: color-mix(in srgb, var(--surface-sunken) 45%, transparent);
+  --set-header-bg: color-mix(in srgb, var(--set-surface-sunken) 82%, black);
+  --set-container-bg: color-mix(in srgb, var(--set-surface) 70%, transparent);
+  --set-content-bg: color-mix(in srgb, var(--set-surface-sunken) 76%, transparent);
+  --set-footer-bg: color-mix(in srgb, var(--set-surface-sunken) 45%, transparent);
   --set-hairline: color-mix(in srgb, var(--border) 55%, transparent);
   --set-hairline-soft: color-mix(in srgb, var(--border) 30%, transparent);
-  --set-control-bg: color-mix(in srgb, var(--surface-sunken) 55%, transparent);
+  --set-control-bg: color-mix(in srgb, var(--set-surface-sunken) 55%, transparent);
   --set-control-border: color-mix(in srgb, var(--border) 50%, transparent);
   --set-row-hover: color-mix(in srgb, var(--accent) 8%, transparent);
-  --set-panel: color-mix(in srgb, var(--surface) 60%, transparent);
+  --set-panel: color-mix(in srgb, var(--set-surface) 60%, transparent);
   --set-title: color-mix(in srgb, var(--text) 88%, white);
   --set-icon: color-mix(in srgb, var(--accent) 42%, var(--text-muted));
   --set-divider: color-mix(in srgb, var(--border) 20%, transparent);
@@ -67,8 +76,8 @@
   --set-amber: #e5b263;
   --set-account-border: color-mix(in srgb, var(--set-amber) 22%, transparent);
   --set-account-bg: linear-gradient(135deg, color-mix(in srgb, var(--set-amber) 12%, transparent), var(--set-panel));
-  --set-btn-top: color-mix(in srgb, var(--surface) 78%, white 4%);
-  --set-btn-bottom: color-mix(in srgb, var(--surface) 92%, black 12%);
+  --set-btn-top: color-mix(in srgb, var(--set-surface) 78%, white 4%);
+  --set-btn-bottom: color-mix(in srgb, var(--set-surface) 92%, black 12%);
 }
 
 /* App themes (Settings > General). Dark variants only: the stylesheet's translucent white/black
@@ -114,6 +123,49 @@
   --accent-soft: rgba(111, 191, 115, 0.18);
   --surface-elevated: #212327;
   --surface-sunken: #101113;
+}
+/* Established community color schemes, ported with their canonical palettes. */
+:root[data-theme='nord'] {
+  --bg-base: #2e3440;
+  --bg-glow: #3b4252;
+  --bg-panel: #242933;
+  --bg-panel-translucent: #242933b5;
+  --surface: #3b4252;
+  --border: #4c566a;
+  --text: #eceff4;
+  --text-muted: #9099ab;
+  --accent: #88c0d0;
+  --accent-soft: rgba(136, 192, 208, 0.18);
+  --surface-elevated: #434c5e;
+  --surface-sunken: #262b35;
+}
+:root[data-theme='gruvbox'] {
+  --bg-base: #282828;
+  --bg-glow: #3c3836;
+  --bg-panel: #1d2021;
+  --bg-panel-translucent: #1d2021b5;
+  --surface: #3c3836;
+  --border: #504945;
+  --text: #ebdbb2;
+  --text-muted: #a89984;
+  --accent: #fe8019;
+  --accent-soft: rgba(254, 128, 25, 0.18);
+  --surface-elevated: #504945;
+  --surface-sunken: #1d2021;
+}
+:root[data-theme='tokyonight'] {
+  --bg-base: #1a1b26;
+  --bg-glow: #24283b;
+  --bg-panel: #16161e;
+  --bg-panel-translucent: #16161eb5;
+  --surface: #24283b;
+  --border: #3b4261;
+  --text: #c0caf5;
+  --text-muted: #565f89;
+  --accent: #7dcfff;
+  --accent-soft: rgba(125, 207, 255, 0.18);
+  --surface-elevated: #292e42;
+  --surface-sunken: #13141c;
 }
 
 html,
@@ -164,7 +216,7 @@ body {
 }
 
 title-bar {
-  background: rgba(10, 16, 24, 0.72);
+  background: color-mix(in srgb, var(--surface-sunken) 72%, transparent);
 }
 
 main {
@@ -179,6 +231,12 @@ main {
   position: relative;
   display: flex;
   flex-direction: column;
+  /* Single source of truth for the library panel's left/right inset (#game-list is
+     centered via `width: min(94%, 1540px); margin: 0 auto`, so its edge sits this far
+     from the viewport edge). #sort-box and #search-bar key off the same variable so the
+     header controls always line up with the panel below instead of drifting apart when
+     either one's width formula changes. */
+  --library-inset: calc((100% - min(94%, 1540px)) / 2);
 }
 
 #user-info {
@@ -254,7 +312,7 @@ main {
   margin: 11px 0 0;
   padding: 2px;
   box-sizing: border-box;
-  border: 1px solid rgba(160, 194, 234, 0.18);
+  border: 1px solid color-mix(in srgb, var(--border) 18%, transparent);
   border-radius: 999px;
   overflow: hidden;
   background: rgba(7, 16, 28, 0.64);
@@ -269,8 +327,13 @@ main {
   position: relative;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #628bf2 0%, #78a8fb 62%, #98c4ff 100%);
-  box-shadow: 0 0 10px rgba(91, 141, 255, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.38);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent) 78%, black 8%) 0%,
+    var(--accent) 62%,
+    color-mix(in srgb, var(--accent) 82%, white 18%) 100%
+  );
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 26%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.18);
   transition: width 0.45s cubic-bezier(0.22, 0.7, 0.25, 1);
 }
 
@@ -289,7 +352,7 @@ main {
 #sort-box {
   box-sizing: border-box;
   position: absolute;
-  right: calc((100% - 91.85%) / 2);
+  right: var(--library-inset);
   top: 104px;
   opacity: 0;
   pointer-events: none;
@@ -309,13 +372,13 @@ main {
   font-size: 15px;
   cursor: pointer;
   color: var(--text-muted);
-  background: rgba(17, 29, 44, 0.6);
-  border: 1px solid rgba(124, 154, 190, 0.12);
+  background: color-mix(in srgb, var(--surface-sunken) 60%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 12%, transparent);
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 #sort-box .installed-filter:hover {
   color: #fff;
-  border-color: rgba(153, 184, 222, 0.32);
+  border-color: color-mix(in srgb, var(--border) 32%, transparent);
   transform: translateY(-1px);
 }
 #sort-box .installed-filter:active {
@@ -324,7 +387,7 @@ main {
 #sort-box .installed-filter.active {
   color: #fff;
   background: var(--accent-soft);
-  border-color: rgba(91, 141, 255, 0.5);
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 /* Sort: a three-state segmented control — normal, reversed, then cleared. */
@@ -334,8 +397,8 @@ main {
   gap: 2px;
   padding: 3px;
   border-radius: 9px;
-  background: rgba(17, 29, 44, 0.6);
-  border: 1px solid rgba(124, 154, 190, 0.12);
+  background: color-mix(in srgb, var(--surface-sunken) 60%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 12%, transparent);
 }
 #sort-box .sort {
   display: flex;
@@ -356,7 +419,11 @@ main {
 }
 #sort-box .sort.active {
   color: #fff;
-  background: linear-gradient(180deg, rgba(91, 141, 255, 0.42), rgba(91, 141, 255, 0.26));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 42%, transparent),
+    color-mix(in srgb, var(--accent) 26%, transparent)
+  );
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
@@ -415,7 +482,7 @@ main {
   width: min(calc(94% - 24px), 1516px);
   height: 100%;
   border-radius: 0 0 18px 18px;
-  background: linear-gradient(180deg, rgba(18, 33, 51, 0.22), rgba(18, 33, 51, 0));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-panel) 22%, transparent), color-mix(in srgb, var(--bg-panel) 0%, transparent));
   transform: translateX(-50%);
   opacity: 0;
   transition: opacity 0.2s ease 0.12s;
@@ -427,11 +494,11 @@ main {
 
 #game-list {
   padding: 22px 24px;
-  background: rgba(15, 23, 35, 0.62);
+  background: color-mix(in srgb, var(--bg-panel) 62%, transparent);
   margin: 0 auto;
   width: 91.85%;
   flex: 1;
-  border: 1px solid rgba(124, 154, 190, 0.1);
+  border: 1px solid color-mix(in srgb, var(--border) 10%, transparent);
   border-radius: 14px;
   box-sizing: border-box;
   overflow-y: auto;
@@ -447,13 +514,13 @@ main {
   margin-block: 10px 2px;
 }
 #game-list::-webkit-scrollbar-thumb {
-  background: rgba(124, 154, 190, 0.28);
+  background: color-mix(in srgb, var(--border) 28%, transparent);
   border-radius: 10px;
   border: 3px solid transparent;
   background-clip: padding-box;
 }
 #game-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(124, 154, 190, 0.46);
+  background: color-mix(in srgb, var(--border) 46%, transparent);
   background-clip: padding-box;
 }
 #game-list::-webkit-scrollbar-corner {
@@ -473,7 +540,7 @@ main {
   padding: 10px 20px;
   border-radius: 12px;
   background: linear-gradient(180deg, #1d3044 0%, #172638 100%);
-  border: 1px solid rgba(124, 154, 190, 0.12);
+  border: 1px solid color-mix(in srgb, var(--border) 12%, transparent);
   box-shadow: 0 20px 44px rgba(0, 0, 0, 0.42);
 }
 
@@ -487,7 +554,7 @@ main {
   display: block;
   font-size: 34px;
   margin-bottom: 12px;
-  color: #6e7b88;
+  color: var(--text-muted);
 }
 #game-list .isEmpty .empty-title {
   display: block;
@@ -498,7 +565,7 @@ main {
 #game-list .isEmpty .empty-hint {
   font-size: 13px;
   line-height: 1.55;
-  color: #aab4bd;
+  color: var(--text-muted);
   margin-bottom: 16px;
 }
 #game-list .isEmpty .btn {
@@ -506,16 +573,16 @@ main {
   align-items: center;
   gap: 8px;
   padding: 9px 16px;
-  background: rgba(52, 75, 101, 0.88);
-  border: 1px solid rgba(135, 163, 196, 0.18);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 18%, transparent);
   border-radius: 7px;
   cursor: pointer;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
   transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
 }
 #game-list .isEmpty .btn:hover {
-  background: rgba(70, 96, 128, 0.96);
-  border-color: rgba(153, 184, 222, 0.34);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  border-color: color-mix(in srgb, var(--border) 34%, transparent);
 }
 #game-list .isEmpty .btn:active {
   transform: scale(0.96);
@@ -560,7 +627,7 @@ main {
 .loading .progressBar .meter {
   width: 0%;        /* updated by JS */
   height: 100%;
-  background: linear-gradient(to right, #4969af, #375db3);
+  background: linear-gradient(to right, color-mix(in srgb, var(--accent) 75%, black 10%), var(--accent));
   border-radius: inherit;
   transition: width 0.3s linear;
   display: block;
@@ -609,7 +676,7 @@ main {
   width: 230px;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid rgba(124, 154, 190, 0.1);
+  border: 1px solid color-mix(in srgb, var(--border) 10%, transparent);
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22), 0 3px 8px rgba(0, 0, 0, 0.25);
   cursor: pointer;
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
@@ -619,8 +686,8 @@ main {
 /* Hover "lift": the card rises and its shadow deepens, making the grid feel tactile. */
 #game-list ul > li .game-box:hover {
   transform: translateY(-4px);
-  border-color: rgba(120, 163, 236, 0.38);
-  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(91, 141, 255, 0.1);
+  border-color: color-mix(in srgb, var(--accent) 38%, transparent);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.42), 0 0 0 1px color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
 #game-list .game-box .header {
@@ -655,14 +722,14 @@ main {
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
-  color: #f1f6ff;
+  color: var(--text);
 }
 
 #game-list .game-box .info .progressBar {
   height: 16px;
   position: relative;
   background: linear-gradient(180deg, #0c1828 0%, #08121f 100%);
-  border: 1px solid rgba(118, 154, 220, 0.18);
+  border: 1px solid color-mix(in srgb, var(--border) 18%, transparent);
   border-radius: 8px;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(255, 255, 255, 0.04);
   overflow: hidden;
@@ -678,7 +745,7 @@ main {
   transition: 0.3s all linear;
   background-image: linear-gradient(90deg, #4f8bf7 0%, #5f75df 58%, #7f8cff 100%);
   border-radius: inherit;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 0 10px rgba(87, 126, 235, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 0 10px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 #game-list .game-box .info .progressBar > .meter:after {
@@ -815,13 +882,13 @@ main {
   margin-block: 10px;
 }
 #achievement::-webkit-scrollbar-thumb {
-  background: rgba(124, 154, 190, 0.28);
+  background: color-mix(in srgb, var(--border) 28%, transparent);
   border-radius: 10px;
   border: 3px solid transparent;
   background-clip: padding-box;
 }
 #achievement::-webkit-scrollbar-thumb:hover {
-  background: rgba(124, 154, 190, 0.46);
+  background: color-mix(in srgb, var(--border) 46%, transparent);
   background-clip: padding-box;
 }
 #achievement::-webkit-scrollbar-corner {
@@ -843,8 +910,8 @@ main {
 }
 
 #achievement .wrapper > .header .trophy {
-  background: rgba(17, 29, 44, 0.72);
-  border: 1px solid rgba(124, 154, 190, 0.1);
+  background: color-mix(in srgb, var(--surface-sunken) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 10%, transparent);
   padding: 10px 20px;
   border-radius: 8px;
   display: inline-block;
@@ -856,8 +923,8 @@ main {
 
 #achievement .wrapper > .header .playtime,
 #achievement .wrapper > .header .lastplayed {
-  background: rgba(17, 29, 44, 0.72);
-  border: 1px solid rgba(124, 154, 190, 0.1);
+  background: color-mix(in srgb, var(--surface-sunken) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 10%, transparent);
   padding: 10px 20px;
   border-radius: 8px;
   display: inline-block;
@@ -936,8 +1003,8 @@ main {
 }
 
 #achievement .wrapper > .header .stats {
-  background: rgba(17, 29, 44, 0.72);
-  border: 1px solid rgba(124, 154, 190, 0.1);
+  background: color-mix(in srgb, var(--surface-sunken) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 10%, transparent);
   padding: 10px 20px;
   border-radius: 8px;
   display: inline-block;
@@ -953,11 +1020,11 @@ main {
 
 #achievement .wrapper > .header .backButton {
   border-radius: 8px;
-  border: 1px solid rgba(103, 193, 245, 0.25);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
   display: inline-block;
   cursor: pointer;
-  color: #67c1f5;
-  background: rgba(103, 193, 245, 0.18);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
   padding: 1px 18px;
   font-size: 15px;
   line-height: 30px;
@@ -971,7 +1038,7 @@ main {
 #achievement .wrapper > .header .backButton:hover {
   color: #fff;
   border-color: transparent;
-  background: linear-gradient(-60deg, #417a9b 5%, #67c1f5 95%);
+  background: linear-gradient(-60deg, color-mix(in srgb, var(--accent) 70%, black 12%) 5%, var(--accent) 95%);
 }
 #achievement .wrapper > .header .backButton:active {
   transform: scale(0.97);
@@ -992,11 +1059,11 @@ main {
 #achievement .achievements .achievement-list > .header {
   font-family: 'Open-sans-bold';
   font-size: 20px;
-  border-bottom: 1px solid rgba(235, 244, 255, 0.35);
+  border-bottom: 1px solid var(--border);
   padding: 0 48px 10px 0;
   display: block;
   position: relative;
-  color: #eef5ff;
+  color: var(--text);
 }
 
 #achievement .achievements .achievement-list > .header .toggle {
@@ -1042,11 +1109,11 @@ main {
 
 #achievement .achievement-list ul > li {
   width: 100%;
-  background: rgba(17, 29, 44, 0.78);
+  background: color-mix(in srgb, var(--surface-sunken) 78%, transparent);
   padding: 12px 24px;
   box-sizing: border-box;
   border-radius: 7px;
-  border: 1px solid rgba(124, 154, 190, 0.07);
+  border: 1px solid color-mix(in srgb, var(--border) 7%, transparent);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
   transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
@@ -1054,8 +1121,8 @@ main {
 /* Gentle per-row feedback: the row lightens and its icon lifts slightly (reusing the .box transform
    transition), helping the eye track a row across to its time / global-% on the right. */
 #achievement .achievement-list ul > li:hover {
-  background: rgba(27, 45, 66, 0.94);
-  border-color: rgba(117, 154, 209, 0.22);
+  background: color-mix(in srgb, var(--surface-sunken) 94%, transparent);
+  border-color: color-mix(in srgb, var(--border) 22%, transparent);
   transform: translateX(2px);
 }
 #achievement .achievement-list ul > li:hover .box {
@@ -1074,9 +1141,9 @@ main {
   right: 42px;
   top: -9px;
   padding: 3px;
-  border: 1px solid rgba(124, 154, 190, 0.16);
+  border: 1px solid color-mix(in srgb, var(--border) 16%, transparent);
   border-radius: 9px;
-  background: rgba(17, 29, 44, 0.6);
+  background: color-mix(in srgb, var(--surface-sunken) 60%, transparent);
   backdrop-filter: blur(10px);
 }
 
@@ -1121,7 +1188,11 @@ main {
 
 .achievement-list > .header .sort-ach .sort.active {
   color: #fff;
-  background: linear-gradient(180deg, rgba(91, 141, 255, 0.42), rgba(91, 141, 255, 0.26));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 42%, transparent),
+    color-mix(in srgb, var(--accent) 26%, transparent)
+  );
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
   text-shadow: none;
 }
@@ -1208,12 +1279,12 @@ main {
 }
 
 .achievement .box .icon {
-  background-color: #1b293a;
+  background-color: var(--surface-sunken);
   background-repeat: no-repeat !important;
   background-size: contain !important;
   width: 64px;
   height: 64px;
-  border: solid rgba(124, 154, 190, 0.18) 1px;
+  border: solid color-mix(in srgb, var(--border) 18%, transparent) 1px;
   position: relative;
 }
 
@@ -1242,7 +1313,7 @@ main {
   font-family: 'Raleway';
   font-size: 15px;
   line-height: 1.25;
-  color: #f0f5fb;
+  color: var(--text);
   padding: 2px 0;
 }
 
@@ -1262,7 +1333,11 @@ main {
 .achievement .progressBar {
   height: 18px;
   position: relative;
-  background: linear-gradient(180deg, rgba(6, 14, 24, 0.78), rgba(11, 23, 38, 0.72));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface-sunken) 82%, var(--bg-base)),
+    var(--surface-sunken)
+  );
   padding: 1px;
   margin-top: 8px;
   font-family: 'Open-sans';
@@ -1271,9 +1346,9 @@ main {
   display: none;
   overflow: hidden;
   border-radius: 999px;
-  border: 1px solid rgba(159, 188, 224, 0.24);
+  border: 1px solid color-mix(in srgb, var(--border) 24%, transparent);
   box-sizing: border-box;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.42), 0 1px 0 rgba(255, 255, 255, 0.035);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 
 .achievement .progressBar > .meter {
@@ -1284,15 +1359,20 @@ main {
   overflow: hidden;
   transition: width 0.3s ease;
   border-radius: inherit;
-  background-image: linear-gradient(90deg, #628bf2 0%, #7aa9fb 62%, #99c3ff 100%);
-  box-shadow: 0 0 9px rgba(102, 148, 255, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.42);
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent) 70%, black 12%) 0%,
+    var(--accent) 55%,
+    color-mix(in srgb, var(--accent) 78%, white 10%) 100%
+  );
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 22%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
 
 .achievement .progressBar > .meter:after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0));
   pointer-events: none;
 }
 
@@ -1338,7 +1418,7 @@ main {
   margin: auto 0;
   width: 230px;
   max-width: 230px;
-  color: #dce7f5;
+  color: var(--text);
 }
 
 .achievement .stats .time,
@@ -1509,7 +1589,7 @@ main {
 }
 
 #achievement .achievement-list ul li > .notice.empty-achievement-notice {
-  color: #dce7f5;
+  color: var(--text);
 }
 
 #achievement .achievement-list ul li > .notice.empty-achievement-notice p:first-child {
@@ -1519,7 +1599,7 @@ main {
 #achievement .achievement-list ul li > .notice.empty-achievement-notice p:last-child {
   max-width: 720px;
   margin: 0 auto;
-  color: rgba(220, 231, 245, 0.72);
+  color: var(--text-muted);
   font-size: 15px;
   line-height: 1.35;
 }
@@ -1794,7 +1874,7 @@ main {
   font-family: 'Raleway-bold';
   color: var(--set-title);
   border-radius: 8px;
-  box-shadow: inset 3px 0 0 var(--accent);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
   pointer-events: none !important;
 }
 #settingNav li.active i {
@@ -1875,7 +1955,7 @@ main {
 #settings .box .notice {
   font-size: 12px;
   line-height: 1.3;
-  color: #cbd5e2;
+  color: var(--text-muted);
   min-width: 0;
 }
 
@@ -1890,6 +1970,62 @@ main {
 #settings .box a:hover {
   color: inherit;
   text-decoration: none;
+}
+
+.footer-update-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 8px;
+  padding: 2px 7px;
+  border: 1px solid var(--set-hairline-soft);
+  border-radius: 6px;
+  background: var(--set-control-bg);
+  color: var(--text-muted);
+  font-family: 'Open-Sans';
+  font-size: 10.5px;
+  cursor: pointer;
+  vertical-align: middle;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.footer-update-btn i {
+  font-size: 10px;
+}
+
+.footer-update-btn:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.footer-update-status {
+  margin-left: 6px;
+  font-size: 11px;
+  vertical-align: middle;
+  transition: color 0.15s ease;
+}
+
+.footer-update-status.update-info {
+  color: var(--text-muted);
+}
+
+.footer-update-status.update-ok {
+  color: color-mix(in srgb, var(--success) 90%, white 10%);
+}
+
+.footer-update-status.update-error {
+  color: var(--danger);
+}
+
+.footer-update-btn.busy i {
+  animation: aw-spin 0.9s linear infinite;
+}
+
+@keyframes aw-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 #settings .box .footer .buttons,
@@ -1908,7 +2044,7 @@ main {
   min-width: 88px;
   padding: 9px 16px;
   border-radius: 8px;
-  background: var(--surface);
+  background: var(--set-surface);
   border: 1px solid var(--set-control-border);
   margin: 0;
   font-family: 'Open-Sans-Bold';
@@ -1921,11 +2057,11 @@ main {
    closes the panel; the affirmative Save below now carries the emphasis instead. */
 #settings .box .footer .buttons div#btn-settings-cancel,
 #game-config .box .footer .buttons div#btn-game-config-cancel {
-  background: var(--surface);
+  background: var(--set-surface);
 }
 #settings .box .footer .buttons div#btn-settings-cancel:hover,
 #game-config .box .footer .buttons div#btn-game-config-cancel:hover {
-  background: color-mix(in srgb, var(--surface) 82%, white 10%);
+  background: color-mix(in srgb, var(--set-surface) 82%, white 10%);
   border-color: var(--set-hairline);
 }
 /* Save/Ok = primary, tinted with the active theme's accent so the main action always stands out
@@ -2144,7 +2280,7 @@ main {
 
 .arrow-list li .right select:focus-visible,
 #steamwebapikey:focus-visible {
-  outline: 2px solid rgba(91, 141, 255, 0.85);
+  outline: 2px solid color-mix(in srgb, var(--accent) 85%, transparent);
   outline-offset: 1px;
   border-radius: 5px;
 }
@@ -2194,9 +2330,9 @@ main {
 .icon-button,
 .text-button {
   font-family: 'Open-Sans';
-  border: 1px solid rgba(151, 181, 216, 0.14);
+  border: 1px solid color-mix(in srgb, var(--border) 14%, transparent);
   color: var(--text);
-  background: linear-gradient(180deg, rgba(50, 74, 103, 0.86), rgba(38, 58, 83, 0.86));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 86%, transparent), color-mix(in srgb, var(--surface) 86%, transparent));
   cursor: pointer;
 }
 
@@ -2213,12 +2349,12 @@ main {
 
 .inline-action-btn.secondary,
 .text-button {
-  background: rgba(45, 63, 84, 0.58);
+  background: color-mix(in srgb, var(--surface) 58%, transparent);
 }
 
 .inline-action-btn.primary {
-  border-color: rgba(132, 169, 255, 0.38);
-  background: linear-gradient(135deg, #5279e3, #4165c8);
+  border-color: color-mix(in srgb, var(--accent) 38%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 82%, white 6%), color-mix(in srgb, var(--accent) 78%, black 12%));
 }
 
 .inline-action-btn:hover,
@@ -2272,9 +2408,9 @@ main {
   max-height: calc(100vh - 78px);
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(158, 188, 224, 0.18);
+  border: 1px solid color-mix(in srgb, var(--border) 18%, transparent);
   border-radius: 18px;
-  background: rgba(31, 50, 73, 0.94);
+  background: color-mix(in srgb, var(--surface-sunken) 94%, transparent);
   box-shadow: 0 34px 90px rgba(0, 0, 0, 0.58), inset 0 1px 0 rgba(255, 255, 255, 0.07);
   overflow: hidden;
 }
@@ -2290,7 +2426,7 @@ main {
 
 .onboarding-header {
   justify-content: space-between;
-  border-bottom: 1px solid rgba(151, 181, 216, 0.1);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 10%, transparent);
 }
 
 .onboarding-brand {
@@ -2298,7 +2434,7 @@ main {
 }
 
 .onboarding-header .eyebrow {
-  color: #9db3cd;
+  color: var(--text-muted);
   font-family: 'Open-Sans';
   font-size: 12px;
   text-transform: uppercase;
@@ -2319,7 +2455,7 @@ main {
   justify-items: end;
   gap: 6px;
   margin-left: auto;
-  color: #b8c8dc;
+  color: var(--text-muted);
   font-family: 'Open-Sans-Bold';
   font-size: 11px;
   font-variant-numeric: tabular-nums;
@@ -2331,7 +2467,7 @@ main {
   height: 4px;
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(170, 195, 229, 0.14);
+  background: color-mix(in srgb, var(--border) 14%, transparent);
 }
 
 #onboarding-progress-fill {
@@ -2339,8 +2475,8 @@ main {
   width: 16.6667%;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #6f9cff, #98b7ff);
-  box-shadow: 0 0 12px rgba(121, 160, 255, 0.55);
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 82%, white 18%));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 55%, transparent);
   transition: width 0.2s ease;
 }
 
@@ -2367,9 +2503,9 @@ main {
   align-content: start;
   gap: 5px;
   padding: 6px;
-  border: 1px solid rgba(145, 175, 211, 0.08);
+  border: 1px solid color-mix(in srgb, var(--border) 8%, transparent);
   border-radius: 12px;
-  background: rgba(29, 48, 70, 0.42);
+  background: color-mix(in srgb, var(--surface-sunken) 42%, transparent);
 }
 
 .onboarding-steps button {
@@ -2381,7 +2517,7 @@ main {
   padding: 9px 11px;
   border: 1px solid transparent;
   border-radius: 9px;
-  color: #b4c1d2;
+  color: var(--text-muted);
   background: transparent;
   text-align: left;
   font-family: 'Open-Sans';
@@ -2390,14 +2526,14 @@ main {
 
 .onboarding-steps button i {
   width: 18px;
-  color: #8295ac;
+  color: var(--text-muted);
   text-align: center;
 }
 
 .onboarding-steps button.active {
   color: #fff;
-  background: rgba(86, 126, 219, 0.24);
-  border-color: rgba(115, 156, 255, 0.2);
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 20%, transparent);
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
@@ -2422,16 +2558,16 @@ main {
 .onboarding-api-toggle:focus-visible,
 .onboarding-test-button:focus-visible,
 .onboarding-link-row a:focus-visible {
-  outline: 2px solid #9cbaff;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 .onboarding-panel {
   min-height: 0;
   overflow: hidden;
-  border: 1px solid rgba(148, 178, 214, 0.11);
+  border: 1px solid color-mix(in srgb, var(--border) 11%, transparent);
   border-radius: 12px;
-  background: rgba(20, 36, 54, 0.62);
+  background: color-mix(in srgb, var(--surface-sunken) 62%, transparent);
 }
 
 .onboarding-step {
@@ -2461,8 +2597,8 @@ main {
   place-items: center;
   flex: 0 0 auto;
   border-radius: 10px;
-  color: #9cb8ff;
-  background: rgba(108, 145, 255, 0.14);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
 .step-heading h2 {
@@ -2474,7 +2610,7 @@ main {
 
 .step-heading p {
   margin: 6px 0 0;
-  color: #b5c4d6;
+  color: var(--text-muted);
   font-family: 'Open-Sans';
   font-size: 13px;
   line-height: 1.55;
@@ -2494,11 +2630,11 @@ main {
   padding: 16px;
   border: 1px solid var(--set-hairline-soft);
   border-radius: 10px;
-  background: rgba(39, 60, 84, 0.44);
+  background: color-mix(in srgb, var(--surface-sunken) 44%, transparent);
 }
 
 .onboarding-cards i {
-  color: #9cb8ff;
+  color: var(--accent);
   font-size: 22px;
 }
 
@@ -2510,7 +2646,7 @@ main {
 .onboarding-cards span,
 .onboarding-link-row span,
 .avatar-actions small {
-  color: #9caec3;
+  color: var(--text-muted);
   font-family: 'Open-Sans';
   font-size: 12px;
   line-height: 1.45;
@@ -2525,7 +2661,7 @@ main {
 .onboarding-step label {
   display: grid;
   gap: 7px;
-  color: #dbe6f4;
+  color: var(--text);
   font-family: 'Open-Sans-Bold';
   font-size: 12px;
 }
@@ -2535,7 +2671,7 @@ main {
 }
 
 .onboard-field-hint {
-  color: #9fb0c6;
+  color: var(--text-muted);
   font-family: 'Open-Sans';
   font-size: 11px;
   font-weight: normal;
@@ -2547,9 +2683,9 @@ main {
   min-height: 38px;
   box-sizing: border-box;
   padding: 8px 10px;
-  border: 1px solid rgba(144, 177, 218, 0.22);
+  border: 1px solid color-mix(in srgb, var(--border) 22%, transparent);
   border-radius: 9px;
-  color: #eef4fc;
+  color: var(--text);
   background: rgba(5, 12, 21, 0.56);
   font-family: 'Open-Sans';
 }
@@ -2577,10 +2713,10 @@ main {
 
 .onboarding-api-toggle,
 .onboarding-test-button {
-  border: 1px solid rgba(144, 177, 218, 0.22);
+  border: 1px solid color-mix(in srgb, var(--border) 22%, transparent);
   border-radius: 9px;
-  color: #dce8fb;
-  background: rgba(35, 56, 81, 0.66);
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface-sunken) 66%, transparent);
   font-family: 'Open-Sans-Bold';
   cursor: pointer;
 }
@@ -2592,8 +2728,8 @@ main {
 
 .onboarding-api-toggle[aria-pressed='true'] {
   color: #fff;
-  border-color: rgba(130, 167, 255, 0.56);
-  background: rgba(86, 126, 219, 0.3);
+  border-color: color-mix(in srgb, var(--accent) 56%, transparent);
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .onboarding-notification-field {
@@ -2611,8 +2747,8 @@ main {
 
 .onboarding-test-button:hover,
 .onboarding-api-toggle:hover {
-  border-color: rgba(156, 190, 243, 0.55);
-  background: rgba(70, 101, 145, 0.64);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--surface) 64%, transparent);
 }
 
 .avatar-picker {
@@ -2653,7 +2789,7 @@ main {
   align-items: center;
   gap: 8px;
   width: fit-content;
-  color: #bdd0ff;
+  color: var(--accent);
   font-family: 'Open-Sans-Bold';
   text-decoration: none;
 }
@@ -2689,7 +2825,7 @@ main {
 .onboarding-inline-status {
   min-height: 18px;
   margin-top: 10px;
-  color: #9caec3;
+  color: var(--text-muted);
   font-family: 'Open-Sans';
   font-size: 12px;
 }
@@ -2716,7 +2852,7 @@ main {
 
 .onboarding-lists .list-title {
   margin-bottom: 7px;
-  color: #eef4fc;
+  color: var(--text);
   font-family: 'Open-Sans-Bold';
   font-size: 12px;
 }
@@ -2738,7 +2874,7 @@ main {
   gap: 8px;
   padding: 4px 7px;
   border-radius: 7px;
-  color: #dce7f5;
+  color: var(--text);
   font-family: 'Open-Sans';
   font-size: 12px;
 }
@@ -2757,19 +2893,19 @@ main {
 .onboarding-lists li button {
   margin-left: auto;
   border: 0;
-  color: #9fb1c7;
+  color: var(--text-muted);
   background: transparent;
   cursor: pointer;
 }
 
 .onboarding-footer {
   justify-content: space-between;
-  border-top: 1px solid rgba(151, 181, 216, 0.1);
+  border-top: 1px solid color-mix(in srgb, var(--border) 10%, transparent);
 }
 
 #onboarding-status {
   min-height: 18px;
-  color: #9caec3;
+  color: var(--text-muted);
   font-family: 'Open-Sans';
   font-size: 12px;
 }
@@ -2833,13 +2969,13 @@ main {
 }
 
 #options-steam-api .disclaimer a {
-  color: #9fc3ff;
+  color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 #options-steam-api .disclaimer a:hover {
-  color: #c8dcff;
+  color: color-mix(in srgb, var(--accent) 78%, white 10%);
   text-decoration: underline;
 }
 
@@ -2860,7 +2996,7 @@ main {
   box-sizing: border-box;
   color: var(--text);
   background: rgba(8, 17, 28, 0.72);
-  border: 1px solid rgba(124, 154, 190, 0.35);
+  border: 1px solid color-mix(in srgb, var(--border) 35%, transparent);
   border-radius: 6px;
   font-family: 'Open-sans';
   font-size: 14px;
@@ -2868,7 +3004,7 @@ main {
 }
 
 #steamwebapikey:hover {
-  border-color: rgba(153, 184, 222, 0.55);
+  border-color: color-mix(in srgb, var(--border) 55%, transparent);
 }
 
 #steamwebapikey ~ span {
@@ -2965,11 +3101,14 @@ main {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 4px 0 2px;
 }
 
 #game-config .launch-args-row label {
   flex: 0 0 auto;
   white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 12.5px;
 }
 
 #game-config .launch-args-row input {
@@ -2977,6 +3116,19 @@ main {
   min-width: 0;
   height: 30px;
   box-sizing: border-box;
+  padding: 4px 10px;
+  border: 1px solid var(--set-control-border);
+  border-radius: 7px;
+  background: var(--set-control-bg);
+  color: var(--text);
+  font-family: 'Open-Sans';
+  font-size: 12.5px;
+  outline: none;
+}
+
+#game-config .launch-args-row input:focus {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 #game-config .box .footer {
@@ -3012,14 +3164,14 @@ main {
 }
 #defaultdir::-webkit-scrollbar-thumb,
 #dirlist::-webkit-scrollbar-thumb {
-  background: rgba(124, 154, 190, 0.28);
+  background: color-mix(in srgb, var(--border) 28%, transparent);
   border-radius: 10px;
   border: 3px solid transparent;
   background-clip: padding-box;
 }
 #defaultdir::-webkit-scrollbar-thumb:hover,
 #dirlist::-webkit-scrollbar-thumb:hover {
-  background: rgba(124, 154, 190, 0.46);
+  background: color-mix(in srgb, var(--border) 46%, transparent);
   background-clip: padding-box;
 }
 #defaultdir::-webkit-scrollbar-corner,
@@ -3077,8 +3229,8 @@ main {
   direction: rtl;
 }
 #game-config .constant:empty::before {
-  content: '...Please click the EDIT button to select an executable...';
-  color: #888;
+  content: attr(data-placeholder);
+  color: var(--text-muted);
   font-style: italic;
 }
 
@@ -3201,8 +3353,8 @@ main {
   gap: 6px;
   padding: 8px 13px;
   margin: 4px 8px 4px 0;
-  background: rgba(52, 75, 101, 0.88);
-  border: 1px solid rgba(135, 163, 196, 0.18);
+  background: color-mix(in srgb, var(--set-surface) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 18%, transparent);
   border-radius: 6px;
   cursor: pointer;
   text-align: center;
@@ -3222,8 +3374,8 @@ main {
 #settings .folder-actions .btn:hover,
 #settings .content[data-view='advanced'] .btn:hover,
 #settings .content[data-view='debug'] .btn:hover {
-  background: rgba(70, 96, 128, 0.96);
-  border-color: rgba(153, 184, 222, 0.34);
+  background: color-mix(in srgb, var(--set-surface) 96%, transparent);
+  border-color: color-mix(in srgb, var(--border) 34%, transparent);
 }
 
 #settings .folder-actions .btn:active,
@@ -3234,7 +3386,7 @@ main {
 
 #settings .content[data-view='souvenir'] .btn {
   padding: 3px 10px;
-  background: var(--surface);
+  background: var(--set-surface);
   border: solid var(--border) 1px;
   cursor: pointer;
   font-size: 14px;
@@ -3300,12 +3452,50 @@ main {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--text);
+  font-weight: 600;
 }
 #blacklist-manager li .appid {
   flex: 0 0 auto;
   color: var(--text-muted);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
+  padding: 1px 7px;
+  border: 1px solid var(--set-hairline-soft);
+  border-radius: 999px;
+  background: var(--set-control-bg);
+}
+
+#settings .blacklist-add-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px 2px;
+}
+
+#settings .blacklist-add-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 30px;
+  padding: 4px 9px;
+  border: 1px solid var(--set-control-border);
+  border-radius: 7px;
+  background: var(--set-control-bg);
+  color: var(--text);
+  font-family: 'Open-Sans';
+  font-size: 12.5px;
+  outline: none;
+}
+
+#settings .blacklist-add-row input:focus {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+#settings .blacklist-add-row .inline-action-btn {
+  min-height: 30px;
+  padding: 4px 12px;
+  white-space: nowrap;
 }
 
 #diag-apikey span {
@@ -3322,7 +3512,7 @@ main {
   top: 50%;
   transform: translateY(-50%);
   left: 12px;
-  color: #9fb2ca;
+  color: var(--text-muted);
   pointer-events: none;
 }
 #achievement .achievements #achievement-search input[type='search'] {
@@ -3330,7 +3520,7 @@ main {
   box-sizing: border-box;
   width: 100%;
   background: var(--bg-panel-translucent);
-  border: solid #24374c 1px;
+  border: solid var(--border) 1px;
   border-radius: 7px;
   padding: 8px 12px 8px 34px;
   color: var(--text);
@@ -3348,7 +3538,7 @@ main {
 #search-bar {
   position: absolute;
   top: 105px;
-  left: calc((100% - 91.85%) / 2);
+  left: var(--library-inset);
   z-index: 1;
   opacity: 0;
 }
@@ -3372,7 +3562,7 @@ main {
   left: 11px;
   z-index: 3;
   display: block;
-  color: #9fb2ca;
+  color: var(--text-muted);
   opacity: 1;
   pointer-events: none;
 }
@@ -3381,14 +3571,14 @@ main {
 #search-bar-float .wrapper:hover > i,
 #search-bar .wrapper:focus-within > i,
 #search-bar-float .wrapper:focus-within > i {
-  color: #eef5ff;
+  color: var(--text);
 }
 
 #search-bar input[type='search'] {
   outline: none;
   box-sizing: content-box;
   background: var(--bg-panel);
-  border: solid #24374c 1px;
+  border: solid var(--border) 1px;
   border-radius: 7px;
   padding: 6px 10px;
   transition: all 0.45s ease;
@@ -3405,7 +3595,7 @@ main {
   outline: none;
   box-sizing: content-box;
   background: var(--bg-panel);
-  border: solid #6f7f90 1px;
+  border: solid var(--border) 1px;
   border-radius: 7px;
   padding: 6px 10px;
   transition: all 0.45s ease;
@@ -3421,7 +3611,7 @@ main {
 #search-bar input[type='search']:focus,
 #search-bar input[type='search'].has {
   width: 105px;
-  border-color: rgba(91, 141, 255, 0.55);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
   box-shadow: 0 0 0 3px var(--accent-soft);
   padding-left: 32px;
   color: var(--text);
@@ -3431,7 +3621,7 @@ main {
 #search-bar-float input[type='search']:focus,
 #search-bar-float input[type='search'].has {
   width: 160px;
-  border-color: rgba(91, 141, 255, 0.55);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
   box-shadow: 0 12px 26px rgba(0, 0, 0, 0.3), 0 0 0 3px var(--accent-soft);
   padding-left: 32px;
   color: var(--text);
@@ -3562,9 +3752,9 @@ main {
   gap: 14px;
   margin-bottom: 16px;
   padding: 15px 17px;
-  border: 1px solid rgba(116, 157, 226, 0.2);
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
   border-radius: 12px;
-  background: linear-gradient(135deg, rgba(76, 116, 191, 0.17), rgba(32, 57, 82, 0.44));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 17%, transparent), color-mix(in srgb, var(--set-surface-sunken) 44%, transparent));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
 }
 #settings .emulator-hero-icon {
@@ -3573,10 +3763,10 @@ main {
   width: 44px;
   height: 44px;
   flex: 0 0 44px;
-  border: 1px solid rgba(130, 169, 244, 0.28);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
   border-radius: 11px;
   color: #a9c5ff;
-  background: rgba(69, 108, 183, 0.2);
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
   font-size: 20px;
 }
 #settings .emulator-hero .title {
@@ -3604,8 +3794,8 @@ main {
   gap: 8px;
   padding: 10px 14px;
   border-bottom: 1px solid var(--set-divider);
-  color: #dbe6f4;
-  background: rgba(11, 24, 38, 0.24);
+  color: var(--text);
+  background: color-mix(in srgb, var(--set-surface-sunken) 24%, transparent);
   font-family: 'Raleway-bold';
   font-size: 12px;
   letter-spacing: 0.045em;
@@ -3621,14 +3811,14 @@ main {
   min-height: 54px;
   margin: 0;
   padding: 9px 13px;
-  border-bottom: 1px solid rgba(145, 177, 215, 0.065);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 7%, transparent);
   transition: background 0.16s ease, opacity 0.16s ease;
 }
 #settings .emulator-list li.hasHelper:last-child {
   border-bottom: 0;
 }
 #settings .emulator-list li.hasHelper:hover {
-  background: rgba(105, 145, 204, 0.055);
+  background: color-mix(in srgb, var(--set-surface) 6%, transparent);
 }
 #settings .emulator-settings .emulator-list li .right {
   width: 236px;
@@ -3649,7 +3839,7 @@ main {
   color: #9de1bd;
 }
 #settings .emulator-list li.is-off .right select {
-  color: #aab7c7;
+  color: var(--text-muted);
 }
 #settings .emulator-list li.is-inactive {
   opacity: 0.42;
@@ -3663,7 +3853,7 @@ main {
   padding: 14px 16px 16px;
   border: 1px solid rgba(240, 183, 92, 0.2);
   border-radius: 12px;
-  background: linear-gradient(135deg, rgba(112, 77, 31, 0.14), rgba(29, 47, 67, 0.76));
+  background: var(--set-account-bg);
 }
 /* The Epic connect card sits under the Sources arrow-list — give it breathing room above. */
 #settings #epic-connect {
@@ -3701,7 +3891,7 @@ main {
 }
 #settings .emulator-login p {
   margin: 0 0 11px;
-  color: #a8b7c9;
+  color: var(--text-muted);
   font-size: 11.5px;
   line-height: 1.42;
 }
@@ -3713,29 +3903,29 @@ main {
 #settings .emulator-login label {
   display: block;
   margin: 0 0 5px;
-  color: #cbd7e5;
+  color: var(--text);
   font-size: 12px;
 }
 #settings .emulator-login label i {
   width: 16px;
-  color: #90acd0;
+  color: var(--text-muted);
 }
 #settings .emulator-login input {
   width: 100%;
   min-height: 36px;
   box-sizing: border-box;
   padding: 8px 10px;
-  border: 1px solid rgba(174, 202, 234, 0.18);
+  border: 1px solid color-mix(in srgb, var(--border) 18%, transparent);
   border-radius: 8px;
   outline: 0;
-  background: rgba(6, 14, 24, 0.46);
+  background: var(--set-control-bg);
   color: var(--text);
   font-size: 12.5px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 #settings .emulator-login input:focus {
-  border-color: rgba(108, 151, 238, 0.62);
-  box-shadow: 0 0 0 3px rgba(73, 119, 211, 0.11);
+  border-color: color-mix(in srgb, var(--accent) 62%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 11%, transparent);
 }
 #settings .emulator-login-actions {
   display: grid;
@@ -3753,10 +3943,10 @@ main {
   min-height: 48px;
   box-sizing: border-box;
   padding: 6px 11px 6px 7px;
-  border: 1px solid rgba(111, 155, 235, 0.28);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
   border-radius: 10px;
   color: #e9f1ff;
-  background: linear-gradient(135deg, rgba(69, 111, 195, 0.27), rgba(39, 68, 108, 0.3));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 27%, transparent), color-mix(in srgb, var(--set-surface-sunken) 30%, transparent));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 5px 16px rgba(0, 0, 0, 0.12);
   cursor: pointer;
   user-select: none;
@@ -3764,15 +3954,15 @@ main {
 }
 #settings .emulator-login-actions .btn:hover {
   transform: translateY(-1px);
-  border-color: rgba(128, 172, 250, 0.46);
-  background: linear-gradient(135deg, rgba(79, 126, 216, 0.36), rgba(43, 77, 124, 0.4));
+  border-color: color-mix(in srgb, var(--accent) 46%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 36%, transparent), color-mix(in srgb, var(--set-surface-sunken) 40%, transparent));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 20px rgba(0, 0, 0, 0.17);
 }
 #settings .emulator-login-actions .btn:active {
   transform: scale(0.985);
 }
 #settings .emulator-login-actions .btn:focus-visible {
-  outline: 2px solid rgba(107, 153, 245, 0.82);
+  outline: 2px solid color-mix(in srgb, var(--accent) 82%, transparent);
   outline-offset: 2px;
 }
 #settings .emulator-login-actions .btn.disabled {
@@ -3832,7 +4022,7 @@ main {
   border: 1px solid var(--set-hairline-soft);
   border-radius: 8px;
   color: var(--text-muted);
-  background: color-mix(in srgb, var(--surface-sunken) 30%, transparent);
+  background: color-mix(in srgb, var(--set-surface-sunken) 30%, transparent);
   font-size: 11.5px;
   line-height: 1.35;
   overflow-wrap: anywhere;
@@ -3857,8 +4047,8 @@ main {
   height: 7px;
   margin-right: 7px;
   border-radius: 50%;
-  background: #86aefa;
-  box-shadow: 0 0 0 3px rgba(92, 137, 226, 0.13);
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 13%, transparent);
   animation: emulator-status-pulse 1s ease-in-out infinite alternate;
 }
 @keyframes emulator-status-pulse {
@@ -3881,10 +4071,10 @@ main {
   width: min(430px, calc(100vw - 48px));
   box-sizing: border-box;
   padding: 20px;
-  border: 1px solid rgba(136, 170, 221, 0.2);
+  border: 1px solid color-mix(in srgb, var(--border) 20%, transparent);
   border-radius: 14px;
-  color: #eaf1fb;
-  background: linear-gradient(160deg, #21344b, #172536);
+  color: var(--text);
+  background: linear-gradient(160deg, var(--surface-elevated), var(--surface-sunken));
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.035);
   animation: aw-prompt-in 0.16s ease-out;
 }
@@ -3900,10 +4090,10 @@ main {
   width: 38px;
   height: 38px;
   flex: 0 0 38px;
-  border: 1px solid rgba(117, 158, 231, 0.25);
+  border: 1px solid color-mix(in srgb, var(--border) 25%, transparent);
   border-radius: 10px;
-  color: #a7c2f5;
-  background: rgba(65, 105, 181, 0.18);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 .aw-prompt-title {
   margin: 1px 0 4px;
@@ -3911,7 +4101,7 @@ main {
   font-size: 15px;
 }
 .aw-prompt-description {
-  color: #aebed1;
+  color: var(--text-muted);
   font-size: 12px;
   line-height: 1.42;
 }
@@ -3920,11 +4110,11 @@ main {
   min-height: 42px;
   box-sizing: border-box;
   padding: 9px 11px;
-  border: 1px solid rgba(145, 179, 224, 0.23);
+  border: 1px solid color-mix(in srgb, var(--border) 23%, transparent);
   border-radius: 9px;
   outline: 0;
-  color: #f4f8ff;
-  background: rgba(5, 13, 23, 0.58);
+  color: var(--text);
+  background: color-mix(in srgb, var(--bg-base) 58%, transparent);
   font-size: 14px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -3937,8 +4127,8 @@ main {
   text-transform: uppercase;
 }
 .aw-prompt-input:focus {
-  border-color: rgba(104, 150, 242, 0.7);
-  box-shadow: 0 0 0 3px rgba(76, 126, 226, 0.14);
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
 }
 .aw-prompt-actions {
   display: flex;
@@ -3952,7 +4142,7 @@ main {
   padding: 8px 14px;
   border: 1px solid transparent;
   border-radius: 9px;
-  color: #dbe6f4;
+  color: var(--text);
   cursor: pointer;
   font-family: 'Open-sans';
   font-size: 12.5px;
@@ -3961,13 +4151,13 @@ main {
 .aw-prompt-button:hover { filter: brightness(1.1); }
 .aw-prompt-button:active { transform: scale(0.97); }
 .aw-prompt-button.secondary {
-  border-color: rgba(146, 177, 215, 0.14);
-  background: rgba(64, 84, 108, 0.55);
+  border-color: color-mix(in srgb, var(--border) 14%, transparent);
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
 }
 .aw-prompt-button.primary {
-  border-color: rgba(132, 169, 255, 0.32);
+  border-color: color-mix(in srgb, var(--accent) 32%, transparent);
   color: #fff;
-  background: linear-gradient(135deg, #5279e3, #4165c8);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 82%, white 6%), color-mix(in srgb, var(--accent) 78%, black 12%));
 }
 @keyframes aw-prompt-fade { from { opacity: 0; } }
 @keyframes aw-prompt-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
@@ -3989,7 +4179,7 @@ main {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(27, 40, 56, 0.8);
+  background: color-mix(in srgb, var(--bg-base) 80%, transparent);
   display: none;
 }
 #wrap-dirlist .loading-overlay .wrap {
@@ -4015,8 +4205,9 @@ main {
   --text-muted: #94a5ba;
   --accent: #6c91ff;
   --accent-strong: #7aa7ff;
-  --accent-soft: rgba(108, 145, 255, 0.16);
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
   --success: #5fd49a;
+  --danger: #e07a5f;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 18px;
@@ -4025,15 +4216,15 @@ main {
 }
 
 body {
-  border-color: rgba(148, 173, 207, 0.18);
+  border-color: color-mix(in srgb, var(--text-muted) 18%, transparent);
   background:
-    radial-gradient(80% 95% at 18% 0%, rgba(92, 132, 194, 0.2), transparent 72%),
-    linear-gradient(145deg, #1b2c43, var(--bg-base));
+    radial-gradient(80% 95% at 18% 0%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 72%),
+    linear-gradient(145deg, color-mix(in srgb, var(--bg-panel) 70%, var(--bg-base)) 0%, var(--bg-base));
 }
 
 ::selection {
   color: #fff;
-  background: rgba(108, 145, 255, 0.55);
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
 /* Home / library */
@@ -4064,8 +4255,8 @@ body {
   margin: 0;
   padding: 5px 9px;
   color: #c8d4e3;
-  background: rgba(15, 26, 40, 0.46);
-  border: 1px solid rgba(143, 171, 207, 0.1);
+  background: color-mix(in srgb, var(--surface-sunken) 46%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 10%, transparent);
   border-radius: 999px;
   font-family: 'Open-Sans';
   font-size: 12px;
@@ -4078,10 +4269,10 @@ body {
 #game-list {
   width: min(94%, 1540px);
   padding: 24px clamp(18px, 3vw, 36px);
-  background: rgba(18, 33, 51, 0.62);
-  border-color: rgba(166, 195, 229, 0.15);
+  background: color-mix(in srgb, var(--bg-panel) 62%, transparent);
+  border-color: color-mix(in srgb, var(--border) 15%, transparent);
   border-radius: var(--radius-lg);
-  border-bottom-color: rgba(166, 195, 229, 0.07);
+  border-bottom-color: color-mix(in srgb, var(--border) 7%, transparent);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), 0 10px 26px rgba(3, 9, 17, 0.1);
   backdrop-filter: blur(14px) saturate(1.06);
 }
@@ -4099,8 +4290,8 @@ body {
 #game-list .game-box {
   width: 250px;
   border-radius: 14px;
-  background: rgba(37, 58, 82, 0.82);
-  border-color: rgba(174, 202, 234, 0.2);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  border-color: color-mix(in srgb, var(--border) 20%, transparent);
   box-shadow: 0 12px 28px rgba(3, 9, 17, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.045);
   backdrop-filter: blur(10px) saturate(1.04);
 }
@@ -4177,7 +4368,7 @@ body {
   height: 8px;
   margin: 0;
   cursor: help;
-  border: 2px solid rgba(12, 22, 35, 0.78);
+  border: 2px solid color-mix(in srgb, var(--surface-sunken) 78%, transparent);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
   transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
 }
@@ -4200,10 +4391,14 @@ body {
   flex: 0 0 17px;
   box-sizing: border-box;
   padding: 1px;
-  background: linear-gradient(180deg, rgba(6, 14, 24, 0.78), rgba(11, 23, 38, 0.7));
-  border-color: rgba(159, 188, 224, 0.24);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface-sunken) 82%, var(--bg-base)),
+    var(--surface-sunken)
+  );
+  border: 1px solid color-mix(in srgb, var(--border) 26%, transparent);
   border-radius: 999px;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.42), 0 1px 0 rgba(255, 255, 255, 0.035);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
   overflow: hidden;
 }
 
@@ -4211,8 +4406,13 @@ body {
   min-width: 0;
   box-sizing: border-box;
   border-radius: 999px;
-  background: linear-gradient(90deg, #628bf2 0%, #7aa9fb 62%, #99c3ff 100%);
-  box-shadow: 0 0 9px rgba(102, 148, 255, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.42);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent) 70%, black 12%) 0%,
+    var(--accent) 55%,
+    color-mix(in srgb, var(--accent) 78%, white 10%) 100%
+  );
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 22%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
 
 /* A real text node keeps the percentage crisp across both the light fill and dark track. */
@@ -4227,14 +4427,14 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text);
   font-family: 'Open-Sans-Bold', 'Open-Sans', sans-serif;
   font-size: 11.75px;
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
-  text-shadow: 0 0 1px rgba(3, 9, 17, 0.85), 0 0 2px rgba(3, 9, 17, 0.48), 0 1px 2px rgba(3, 9, 17, 0.68);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
   pointer-events: none;
 }
 
@@ -4246,7 +4446,7 @@ body {
   display: grid;
   place-items: center;
   padding: 0;
-  background: rgba(24, 39, 57, 0.56);
+  background: color-mix(in srgb, var(--surface-sunken) 56%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.17);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(10px);
@@ -4266,7 +4466,7 @@ body {
   place-items: center;
   padding: 0;
   font-size: 16px;
-  background: rgba(18, 31, 47, 0.62);
+  background: color-mix(in srgb, var(--surface-sunken) 62%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.13);
   opacity: 0.86;
   backdrop-filter: blur(9px);
@@ -4281,25 +4481,29 @@ body {
 }
 
 #sort-box {
-  right: 4%;
+  right: var(--library-inset);
 }
 
 #search-bar {
-  left: 4%;
+  left: var(--library-inset);
 }
 
 #sort-box .installed-filter,
 #sort-box .sort-group,
 #search-bar input[type='search'] {
-  background-color: rgba(29, 47, 69, 0.66);
-  border-color: rgba(171, 199, 231, 0.2);
+  background-color: color-mix(in srgb, var(--surface) 66%, transparent);
+  border-color: color-mix(in srgb, var(--border) 20%, transparent);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 20px rgba(0, 0, 0, 0.12);
   backdrop-filter: blur(12px);
 }
 
 /* Game detail */
 #achievement {
-  background: linear-gradient(180deg, rgba(7, 13, 21, 0.12), rgba(7, 13, 21, 0.5));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg-base) 12%, transparent),
+    color-mix(in srgb, var(--bg-base) 50%, transparent)
+  );
 }
 
 #achievement .wrapper {
@@ -4320,8 +4524,8 @@ body {
 #achievement .wrapper > .header .trophy,
 #achievement .wrapper > .header .playtime,
 #achievement .wrapper > .header .lastplayed {
-  background: rgba(12, 22, 34, 0.68);
-  border-color: rgba(153, 183, 219, 0.14);
+  background: color-mix(in srgb, var(--surface-sunken) 68%, transparent);
+  border-color: color-mix(in srgb, var(--border) 14%, transparent);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
   backdrop-filter: blur(10px);
@@ -4332,7 +4536,7 @@ body {
 }
 
 #achievement .achievements .achievement-list > .header {
-  border-bottom-color: rgba(174, 198, 227, 0.18);
+  border-bottom-color: color-mix(in srgb, var(--border) 18%, transparent);
   font-size: 18px;
   letter-spacing: -0.01em;
 }
@@ -4346,8 +4550,12 @@ body {
 #achievement .achievement-list ul > li {
   margin: 0;
   padding: 13px 18px;
-  background: linear-gradient(145deg, rgba(25, 41, 59, 0.9), rgba(15, 27, 42, 0.92));
-  border-color: rgba(148, 177, 214, 0.1);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--surface) 90%, transparent),
+    color-mix(in srgb, var(--surface-sunken) 92%, transparent)
+  );
+  border-color: color-mix(in srgb, var(--border) 10%, transparent);
   border-radius: 11px;
 }
 
@@ -4400,7 +4608,7 @@ body {
   min-width: 192px;
   padding: 7px;
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--surface-sunken) 58%, transparent);
+  background: color-mix(in srgb, var(--set-surface-sunken) 58%, transparent);
   border: 1px solid var(--set-hairline-soft);
   align-self: stretch;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
@@ -4449,7 +4657,36 @@ body {
   color: var(--set-title);
   background: linear-gradient(90deg, var(--accent-soft), color-mix(in srgb, var(--accent) 5%, transparent));
   border-color: color-mix(in srgb, var(--accent) 28%, transparent);
-  box-shadow: inset 3px 0 0 var(--accent), 0 10px 22px rgba(0, 0, 0, 0.13);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+}
+
+/* Sidebar group headers: keep the settings nav scannable without turning it into
+   a flat wall of items. They are labels, not destinations. */
+#settingNav li.nav-group {
+  min-height: 0;
+  height: auto;
+  margin-top: 14px;
+  padding: 1px 13px 0;
+  border: 0;
+  border-radius: 0;
+  color: color-mix(in srgb, var(--text-muted) 72%, transparent);
+  font-family: 'Open-Sans-Bold', 'Open-Sans', sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+#settingNav li.nav-group:first-child {
+  margin-top: 2px;
+}
+
+#settingNav li.nav-group:hover {
+  color: color-mix(in srgb, var(--text-muted) 72%, transparent);
+  background: transparent;
+  border-color: transparent;
+  transform: none;
 }
 
 #settings .box .content {
@@ -4720,7 +4957,7 @@ body {
 #settings .content[data-view='advanced'] .diag-list code {
   padding: 2px 5px;
   color: color-mix(in srgb, var(--accent) 55%, var(--text));
-  background: color-mix(in srgb, var(--surface-sunken) 60%, black);
+  background: color-mix(in srgb, var(--set-surface-sunken) 60%, black);
   border-radius: 5px;
   user-select: text;
 }
@@ -4854,7 +5091,7 @@ body {
   min-height: 38px;
   border-color: var(--set-control-border);
   border-radius: 9px;
-  background: color-mix(in srgb, var(--surface-sunken) 62%, black);
+  background: color-mix(in srgb, var(--set-surface-sunken) 62%, black);
   color: var(--text);
 }
 
@@ -4892,7 +5129,7 @@ body {
 }
 #settings .box .footer .buttons div#btn-settings-cancel:hover,
 #game-config .box .footer .buttons div#btn-game-config-cancel:hover {
-  background: color-mix(in srgb, var(--surface) 82%, white 10%);
+  background: color-mix(in srgb, var(--set-surface) 82%, white 10%);
   border-color: var(--set-hairline);
 }
 #settings .box .footer .buttons div#btn-settings-save:hover,
@@ -5022,7 +5259,7 @@ body {
   overflow: hidden;
   border: 1px solid var(--set-hairline-soft);
   border-radius: 9px;
-  background: color-mix(in srgb, var(--surface-sunken) 34%, transparent);
+  background: color-mix(in srgb, var(--set-surface-sunken) 34%, transparent);
   box-shadow: none;
 }
 
@@ -5349,7 +5586,7 @@ body {
   min-height: 32px;
   border: 1px solid var(--set-control-border);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--surface-sunken) 62%, black);
+  background: color-mix(in srgb, var(--set-surface-sunken) 62%, black);
   color: var(--text);
   font-size: 13px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -5611,7 +5848,7 @@ body {
 }
 
 #settings #cust-name::placeholder {
-  color: #8f9aaa;
+  color: var(--text-muted);
 }
 
 #settings .platform-guide-grid {
@@ -5802,4 +6039,275 @@ body {
   content: " ✓";
   color: #f5a623;
   font-weight: 700;
+}
+
+/* Custom theme editor (Settings > General > Theme > Custom…) */
+#theme-customizer {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border: 1px solid var(--set-hairline-soft);
+  border-radius: var(--radius-md);
+  background: var(--set-panel);
+}
+
+#theme-customizer .emulator-login-heading {
+  margin-bottom: 8px;
+}
+
+#theme-customizer-desc {
+  color: var(--text-muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+
+#theme-customizer-layers {
+  display: grid;
+  gap: 8px;
+}
+
+#theme-customizer .theme-layer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-height: 46px;
+  padding: 7px 10px;
+  border: 1px solid var(--set-hairline-soft);
+  border-radius: 9px;
+  background: var(--set-control-bg);
+}
+
+#theme-customizer .theme-layer-preview {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  margin-top: 4px;
+  width: 58px;
+  height: 38px;
+  border: 1px solid var(--set-hairline);
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+#theme-customizer .theme-layer-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+#theme-customizer .theme-layer-label > i {
+  flex: 0 0 auto;
+  width: 16px;
+  color: var(--text);
+  color: var(--set-icon);
+  text-align: center;
+}
+
+#theme-customizer .theme-layer-label-text {
+  min-width: 0;
+}
+
+#theme-customizer .theme-layer-name {
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+#theme-customizer .theme-layer-hint {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#theme-customizer .theme-layer-controls {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: nowrap;
+}
+
+#theme-customizer .theme-layer-color {
+  width: 32px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--set-control-border);
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#theme-customizer .theme-layer-color:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+#theme-customizer .theme-layer-image {
+  min-height: 26px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+#theme-customizer .theme-layer-clear-image {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+#theme-customizer .theme-layer-clear-image:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+#theme-customizer .theme-layer-clear-image:disabled {
+  opacity: 0.35;
+  cursor: default;
+  background: transparent;
+  border-color: transparent;
+}
+
+#theme-customizer .theme-layer-filename {
+  flex: 0 1 auto;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+#theme-customizer .theme-layer-fit {
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid var(--set-control-border);
+  border-radius: 6px;
+  background: var(--set-control-bg);
+  color: var(--text);
+  font-size: 12px;
+}
+
+#theme-customizer .theme-layer-fit:disabled {
+  opacity: 0.45;
+}
+
+#theme-customizer .theme-layer-effect-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 2px;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#theme-customizer .theme-layer-effect-toggle input {
+  accent-color: var(--accent);
+}
+
+#theme-customizer .theme-layer-effect {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding: 0 10px;
+  border-top: 1px dashed transparent;
+  transition: max-height 0.28s ease, opacity 0.22s ease, padding 0.28s ease, border-color 0.28s ease;
+}
+
+#theme-customizer .theme-layer-effect.open {
+  max-height: 140px;
+  opacity: 1;
+  padding: 8px 10px 4px;
+  border-top-color: var(--set-hairline-soft);
+}
+
+#theme-customizer .theme-layer-effect-type {
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--set-control-border);
+  border-radius: 6px;
+  background: var(--set-control-bg);
+  color: var(--text);
+  font-size: 12px;
+}
+
+#theme-customizer .theme-layer-effect-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+#theme-customizer .theme-layer-effect-group input[type='color'] {
+  width: 30px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--set-control-border);
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+}
+
+#theme-customizer .theme-layer-effect-group input[type='range'] {
+  width: 90px;
+  accent-color: var(--accent);
+}
+
+#theme-customizer .theme-layer-effect-value {
+  min-width: 34px;
+  color: var(--text);
+  font-size: 11px;
+  text-align: right;
+}
+
+#theme-customizer .theme-customizer-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+#theme-customizer .theme-customizer-actions .btn {
+  min-height: 30px;
+  padding: 4px 14px;
+  border-radius: 7px;
+  font-size: 12.5px;
+}
+
+@media (max-width: 900px) {
+  #theme-customizer .theme-layer-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  #theme-customizer .theme-layer-controls {
+    flex-wrap: wrap;
+  }
 }

@@ -4,6 +4,14 @@
 // [{name, percent}] shape produced by util/rarity.js, identical for Steam/Epic/GOG.
 function applyRarity(entries) {
   if (!Array.isArray(entries) || entries.length === 0) return;
+  let rarityTier = null;
+  try {
+    const remote = require('@electron/remote');
+    const path = require('path');
+    rarityTier = require(path.join(remote.app.getAppPath(), 'util/overlayUi.js')).rarityTier;
+  } catch {
+    return; // rarity is a non-essential enrichment
+  }
   for (const { name, percent: raw } of entries) {
     let percent = Math.round(raw * 10) / 10;
     if (percent > 100) percent = 100;
@@ -11,14 +19,13 @@ function applyRarity(entries) {
     const elem = $(`#achievement li .achievement[data-name="${name}"]`);
     elem.find('.stats .community span.data').text(percent);
 
-    if (percent >= 0 && percent <= 10) {
-      // Keep `rare` as the visual base (glow machinery + community color),
-      // then layer a tier color on top: gold <3%, silver <6%, bronze <=10%.
+    const tier = rarityTier(percent);
+    if (tier) {
       elem.addClass('rare');
       elem.removeClass('rarity-gold rarity-silver rarity-bronze');
-      if (percent < 3) elem.addClass('rarity-gold');
-      else if (percent < 6) elem.addClass('rarity-silver');
-      else elem.addClass('rarity-bronze');
+      elem.addClass('rarity-' + tier);
+    } else {
+      elem.removeClass('rare rarity-gold rarity-silver rarity-bronze');
     }
   }
   $('.achievement-list > .header .sort-ach .sort.percentage').addClass('show');

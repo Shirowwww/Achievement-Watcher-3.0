@@ -24,8 +24,12 @@ contextBridge.exposeInMainWorld('api', {
   // Resolve an achievement icon to a local file path (same IPC as the main window).
   fetchIcon: (icon, appid) => ipcRenderer.invoke('fetch-icon', icon, appid),
 
+  // Active app theme (built-in, user CSS, or Custom) resolved into overlay CSS.
+  getThemePayload: () => ipcRenderer.invoke('get-theme-payload'),
+
   // Push channels used by overlay.html: initial data, locale, and refresh requests.
   onOverlay: (callback) => ipcRenderer.on('show-overlay', (event, data) => callback(data)),
   onOverlayLanguage: (callback) => ipcRenderer.on('overlay-language', (event, data) => callback(data)),
+  onOverlayTheme: (callback) => ipcRenderer.on('overlay-theme', (event, data) => callback(data)),
   onRefreshAchievementsTable: (callback) => ipcRenderer.on('refresh-achievements-table', (event, data) => callback(data)),
 });

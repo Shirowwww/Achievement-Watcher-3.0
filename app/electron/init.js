@@ -8,7 +8,20 @@ app.setName('Achievement Watcher');
 // 3.x uses its own data directory. The original 1.6.8 app used %APPDATA%\Achievement Watcher and
 // its uninstaller deletes that whole folder — sharing it let an unrelated uninstall wipe every 3.x
 // setting and cache (issue #6). A one-time import below preserves existing data in the new home.
-app.setPath('userData', path.join(app.getPath('appData'), APP_DATA_DIR_NAME));
+// `--user-data-dir=<path>` overrides it (dev/testing, isolated profiles); Electron's own switch
+// arrives in argv before the app's modules load, so it is read manually here.
+const cliUserDataDir = (() => {
+  try {
+    const argv = process.argv.slice(1);
+    const eq = argv.find((a) => a.startsWith('--user-data-dir='));
+    if (eq) return eq.slice('--user-data-dir='.length);
+    const i = argv.indexOf('--user-data-dir');
+    return i >= 0 && argv[i + 1] ? argv[i + 1] : '';
+  } catch {
+    return '';
+  }
+})();
+app.setPath('userData', cliUserDataDir || path.join(app.getPath('appData'), APP_DATA_DIR_NAME));
 migrateLegacyUserData(app.getPath('userData'));
 // Keep GPU acceleration enabled, but avoid Chromium background services AW does not use in tray mode.
 for (const sw of ['disable-extensions', 'disable-component-extensions-with-background-pages', 'disable-default-apps', 'disable-background-networking']) {
@@ -26,9 +39,44 @@ const { autoUpdater } = require('electron-updater');
 // stays off so an update is only applied through the explicit prompt.
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
+// electron-updater's default Windows verifier only accepts a signature Windows itself trusts
+// (Get-AuthenticodeSignature Status "Valid"), which our self-signed release certificate (CN=Shirow,
+// not chained to a trusted root) can never satisfy — every update check failed with "not signed by
+// the application owner" even though the signer matched. This replacement keeps the same signer-name
+// check but drops the trusted-root requirement, which is the part a self-signed cert cannot pass.
+autoUpdater.verifyUpdateCodeSignature = (publisherNames, unescapedTempUpdateFile) =>
+  new Promise((resolve) => {
+    const tempUpdateFile = unescapedTempUpdateFile.replace(/'/g, "''");
+    const command = `Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress`;
+    execFile(
+      'powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-InputFormat', 'None', '-Command', command],
+      { timeout: 20 * 1000 },
+      (error, stdout, stderr) => {
+        if (error || stderr) {
+          debug.log(`[updater] signature check could not run: ${error || stderr}`);
+          resolve(null); // don't block installs on a broken powershell environment
+          return;
+        }
+        try {
+          const data = JSON.parse(stdout);
+          const subject = data && data.SignerCertificate && data.SignerCertificate.Subject;
+          if (subject && publisherNames.some((name) => subject.includes(`CN=${name}`))) {
+            resolve(null); // signer matches our publisher CN -> verified
+            return;
+          }
+          resolve(`installer is not signed by ${publisherNames.join(' | ')} (subject: ${subject || 'none'})`);
+        } catch (err) {
+          resolve(`signature check failed to parse: ${err.message}`);
+        }
+      }
+    );
+  });
 let updateCheckTimer = null;
 let updatePromptOpen = false;
 let updaterErrorNotified = false;
+let manualUpdateCheckPending = false; // set by the Settings "Check for updates" button so update-not-available can report back
+let manualUpdateResult = null; // 'available' | 'uptodate' | 'error' — surfaced to the Settings button
 const UPDATE_RECHECK_MS = 60 * 60 * 1000; // silent hourly re-check while the app stays resident
 const UPDATE_RETRY_MS = 30 * 60 * 1000; // slower retry after a failed check
 
@@ -44,6 +92,8 @@ function isVersionSkipped(version) {
 
 function notifyUpdateError(message) {
   debug.log(`[updater] ${message}`);
+  manualUpdateResult = 'error';
+  manualUpdateCheckPending = false;
   if (!updaterErrorNotified && tray) {
     updaterErrorNotified = true;
     try {
@@ -80,11 +130,12 @@ function scheduleUpdateCheck(delayMs) {
   }, delayMs);
 }
 const minimist = require('minimist');
-const { execSync, spawn } = require('child_process');
+const { execSync, execFile, spawn } = require('child_process');
 const fs = require('fs');
 const ipc = require(path.join(__dirname, 'ipc.js'));
 const notificationSounds = require(path.join(__dirname, '../util/notificationSounds.js'));
 const userThemes = require(path.join(__dirname, '../util/userThemes.js'));
+const themeLayers = require(path.join(__dirname, '../util/themeLayers.js'));
 const overlayLocale = require(path.join(__dirname, '../util/overlayLocale.js'));
 
 // Main-process counterpart of app/locale/t.js: imperative strings (dialogs,
@@ -131,6 +182,24 @@ function overlayLanguagePayload() {
     debug.log(`[overlay] language payload failed: ${err.message || err}`);
     return { lang, strings: {} };
   }
+}
+
+// Current theme resolved into CSS for the main window and the in-game overlay.
+// Built-in themes map one color per layer to the overlay; the Custom theme
+// injects per-layer colors/images into both windows; user CSS themes keep their
+// stylesheet on the main window and are also forwarded to the overlay so a
+// theme dropped into <userData>\themes can style the in-game list too.
+function currentThemePayload(nameOverride) {
+  const name = String(nameOverride || (configJS && configJS.general && configJS.general.theme) || 'default');
+  const user = userThemes.parseValue(name);
+  let userCss = '';
+  if (user) {
+    try {
+      const matches = userThemes.listUserThemes(userData).filter((t) => t.name === user);
+      if (matches.length > 0) userCss = userThemes.readThemeFile(matches[0].file);
+    } catch {}
+  }
+  return themeLayers.themePayload(userData, name, themeLayers.loadCustomTheme(userData), userCss);
 }
 
 const BASE_URL = 'https://www.steamgriddb.com/api/v2';
@@ -498,6 +567,43 @@ async function getSteamData(request) {
   return {};
 }
 
+// Sources whose art/rarity comes from the local console-emulator sidecar rather than a store page —
+// mirrors app.js's EMU_LOCAL_ICON_SOURCES (renderer-only, not reachable from the main process).
+const OVERLAY_EMULATOR_RARITY_SOURCES = new Set(['RPCS3 Emulator', 'ShadPS4 Emulator', 'Xenia Emulator']);
+
+// Merge the persisted community-rarity sidecar (populated by the main window's achievement detail
+// view — see util/rarity.js + ui/game.js's getGlobalStat) onto each achievement so the overlay's
+// rarity badges have something to show. Cache-only, no network: the overlay must open instantly
+// during gameplay, and by the time a player checks it the detail view has usually already warmed
+// the sidecar for that game.
+function attachOverlayRarity(game) {
+  try {
+    if (!game || !game.achievement || !Array.isArray(game.achievement.list)) return;
+    const rarity = require(path.join(__dirname, '../util/rarity.js'));
+    // Xbox PC caches rarity directly on each schema entry at import time (no sidecar file for it).
+    if (String(game.source || '') === 'Xbox PC') {
+      for (const a of game.achievement.list) {
+        if (a && a.rarityPct != null && Number.isFinite(Number(a.rarityPct))) a.rarityPercent = Number(a.rarityPct);
+      }
+      return;
+    }
+    const context = rarity.resolveGameRarityContext(game, { emulatorSources: OVERLAY_EMULATOR_RARITY_SOURCES });
+    if (!context) return;
+    const cacheId = context.kind === 'steam-bridge' ? context.cacheId : context.kind === 'emulator' ? game.appid : context.appid;
+    if (!cacheId) return;
+    const entries = rarity.readRarityCacheEntries(cacheId);
+    if (!Array.isArray(entries) || entries.length === 0) return;
+    const byName = new Map(entries.map((e) => [String(e && e.name), e && e.percent]));
+    for (const a of game.achievement.list) {
+      if (!a || !a.name) continue;
+      const percent = byName.get(String(a.name));
+      if (percent !== undefined) a.rarityPercent = percent;
+    }
+  } catch (err) {
+    debug.log(`[overlay] rarity attach failed: ${err.message || err}`);
+  }
+}
+
 async function closePuppeteer() {
   currentlyscraping.steamcommunity = false;
   currentlyscraping.steamhunters = false;
@@ -765,6 +871,29 @@ ipcMain.on('fetch-source-img', async (event, arg) => {
 
 ipcMain.handle('get-achievements', async (event, appid) => {
   return await getSteamData({ appid, type: 'steamhunters' });
+});
+
+// Settings > General "Check for updates" button. Feedback comes back through the same
+// dialog/balloon flow as the automatic hourly check (update-available prompt, or an
+// "up to date" / error balloon here for the cases that check normally leaves silent).
+ipcMain.handle('check-for-updates', async () => {
+  if (!app.isPackaged) return { ok: false, error: 'dev-build' };
+  if (updatePromptOpen) return { ok: false, error: 'prompt-open' };
+  manualUpdateCheckPending = true;
+  manualUpdateResult = null;
+  updaterErrorNotified = false; // let a still-failing check re-notify even if it already did once
+  try {
+    await autoUpdater.checkForUpdates();
+    // update-available / update-not-available fire right after the check resolves;
+    // give them a short window so the button can report a concrete outcome.
+    for (let i = 0; i < 20 && manualUpdateResult === null; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    }
+    return { ok: true, status: manualUpdateResult || 'unknown' };
+  } catch (err) {
+    notifyUpdateError(err && err.message ? err.message : String(err));
+    return { ok: false, error: err && err.message ? err.message : String(err) };
+  }
 });
 
 // ---- Epic "Connect account" OAuth flow ---------------------------------------------------------
@@ -2029,6 +2158,7 @@ function writeOverlayBounds(patch) {
   }
 }
 let overlayClickThrough = false;
+let overlayAppid = null;
 function persistInGameBounds() {
   if (overlayWindow && !overlayWindow.isDestroyed()) writeOverlayBounds({ inGame: overlayWindow.getBounds() });
 }
@@ -2149,6 +2279,26 @@ function unregisterOverlayShortcuts() {
   }
 }
 
+// When the overlay hotkey is pressed with no game running, the Watchdog sends
+// appid=0 + description=open. Resolve the game currently open in the app window
+// (or the first library tile) so the overlay still has something to show.
+async function resolveOverlayFallbackAppid() {
+  if (!MainWin || MainWin.isDestroyed() || MainWin.webContents.isDestroyed()) return null;
+  try {
+    const id = await MainWin.webContents.executeJavaScript(
+      `(() => {
+        const open = document.querySelector('#achievement .wrapper > .header');
+        const first = document.querySelector('#game-list .game-box[data-appid]');
+        return (open && open.dataset.appid) || (first && first.dataset.appid) || '';
+      })()`
+    );
+    return String(id || '').trim() || null;
+  } catch (err) {
+    debug.log(`[overlay] fallback appid lookup failed: ${err.message || err}`);
+    return null;
+  }
+}
+
 /**
  * @param {{appid: string, action:string}} info
  */
@@ -2156,7 +2306,7 @@ async function createOverlayWindow(info) {
   try {
     if (!info.action) info.action = 'open';
     if (overlayWindow && !overlayWindow.isDestroyed()) {
-      if (String(info.appid) === '0' || info.action == 'close') {
+      if (info.action === 'close') {
         overlayWindow.close();
         return;
       }
@@ -2164,13 +2314,33 @@ async function createOverlayWindow(info) {
         overlayWindow.webContents.send('refresh-achievements-table', String(info.appid));
         return;
       }
+      if (String(info.appid) === '0') return; // already showing a fallback overlay
+      if (overlayAppid && overlayAppid !== String(info.appid)) {
+        // The active game changed while the overlay was open: close the old one
+        // cleanly, then fall through and open the new game's achievements.
+        const old = overlayWindow;
+        overlayWindow = null;
+        await new Promise((resolve) => {
+          old.once('closed', resolve);
+          old.close();
+        });
+      } else {
+        return; // same game already shown
+      }
     }
-    if (String(info.appid) === '0' || info.action === 'refresh') return;
+    if (String(info.appid) === '0') {
+      const fallback = await resolveOverlayFallbackAppid();
+      if (!fallback) return;
+      info.appid = fallback;
+    }
+    if (info.action === 'refresh') return;
+    overlayAppid = String(info.appid);
     const { width, height } = require('electron').screen.getPrimaryDisplay().workAreaSize;
 
     await startEngines();
     await getCachedData(info);
     info.game = await achievementsJS.getSavedAchievementsForAppid(configJS, { appid: info.appid });
+    attachOverlayRarity(info.game);
 
     overlayWindow = new BrowserWindow({
       width: 450,
@@ -2181,7 +2351,9 @@ async function createOverlayWindow(info) {
       transparent: true,
       alwaysOnTop: true,
       skipTaskbar: true,
-      resizable: false,
+      resizable: true,
+      minWidth: 260,
+      minHeight: 200,
       focusable: true,
       hasShadow: false,
       fullscreenable: false,
@@ -2249,16 +2421,20 @@ async function createOverlayWindow(info) {
     overlayWindow.loadFile(path.join(__dirname, '../view/overlay.html'));
     overlayWindow.webContents.on('did-finish-load', () => {
       overlayWindow.webContents.send('overlay-language', overlayLanguagePayload());
+      overlayWindow.webContents.send('overlay-theme', currentThemePayload());
       overlayWindow.webContents.send('show-overlay', info.game);
       overlayWindow.showInactive();
       registerOverlayShortcuts(); // nudge / snap / click-through, active only while the overlay is open
     });
 
-    // Persist position after a drag (app-region move fires 'moved').
+    // Persist position/size after a drag (app-region move fires 'moved') or an edge/corner resize.
     overlayWindow.on('moved', persistInGameBounds);
+    overlayWindow.on('resize', persistInGameBounds);
 
     overlayWindow.on('closed', () => {
       overlayWindow = null;
+      overlayAppid = null;
+      overlayClickThrough = false;
       unregisterOverlayShortcuts();
     });
   } catch (e) {
@@ -2979,6 +3155,94 @@ ipcMain.handle('list-user-themes', async () =>
   userThemes.listUserThemes(userData).map((t) => ({ name: t.name, file: t.file, css: userThemes.readThemeFile(t.file) }))
 );
 
+// Resolve the active theme into CSS for the main window and the overlay.
+ipcMain.handle('get-theme-payload', (event, name) => currentThemePayload(name));
+
+// Persist the Custom theme (per-layer colors + optional images) and return the
+// fresh payload so the renderer can re-apply it live.
+async function prepareThemeBlurImages(theme) {
+  for (const id of themeLayers.IMAGE_LAYER_IDS) {
+    const layer = theme && theme[id];
+    if (!layer || !layer.effect || layer.effect.enabled !== true || layer.effect.type !== 'blur') continue;
+    if (!layer.image || !fs.existsSync(layer.image)) {
+      layer.effect.blurImage = '';
+      continue;
+    }
+    try {
+      const sharp = require('sharp');
+      const dir = themeLayers.themeImagesDir(userData);
+      fs.mkdirSync(dir, { recursive: true });
+      const ext = path.extname(layer.image).toLowerCase() || '.png';
+      const stem = path.basename(layer.image, ext).replace(/[^a-z0-9-_]/gi, '_').slice(0, 40) || 'image';
+      const sigma = Math.max(0.3, Math.min(12, layer.effect.blur / 5));
+      const dest = path.join(dir, `${id}-${stem}-blur-${layer.effect.blur}.png`);
+      await sharp(layer.image)
+        .resize({ width: 1920, withoutEnlargement: true })
+        .blur(sigma)
+        .png()
+        .toFile(dest);
+      layer.effect.blurImage = dest;
+    } catch (err) {
+      debug.log(`[theme-image] blur failed for ${id}: ${err.message || err}`);
+      layer.effect.blurImage = '';
+    }
+  }
+  return theme;
+}
+
+ipcMain.handle('save-custom-theme', async (event, theme) => {
+  const clean = themeLayers.saveCustomTheme(userData, theme);
+  await prepareThemeBlurImages(clean);
+  themeLayers.saveCustomTheme(userData, clean); // persist generated blur paths
+  return themeLayers.themePayload(userData, 'custom', clean, '');
+});
+
+// Pick a background image for one Custom-theme layer: copy the file into
+// <userData>/theme-images (stable location, survives source-file moves) and
+// return the stored absolute path. Returns null when the user cancels.
+ipcMain.handle('pick-theme-image', async (event, layer) => {
+  try {
+    const allowed = themeLayers.IMAGE_LAYER_IDS.includes(layer) ? layer : null;
+    if (!allowed) return { ok: false, error: 'invalid-layer' };
+    const res = await dialog.showOpenDialog({
+      title: t('choose-theme-image', 'Choose a background image', 'Choisir une image de fond'),
+      properties: ['openFile', 'dontAddToRecent'],
+      filters: [
+        { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif', 'svg'] },
+      ],
+    });
+    if (res.canceled || !res.filePaths || !res.filePaths.length) return { ok: false, canceled: true };
+    const src = res.filePaths[0];
+    const dir = themeLayers.themeImagesDir(userData);
+    fs.mkdirSync(dir, { recursive: true });
+    const ext = path.extname(src).toLowerCase() || '.png';
+    const stem = path.basename(src, ext).replace(/[^a-z0-9-_]/gi, '_').slice(0, 48) || 'image';
+    let dest = path.join(dir, `${layer}-${stem}${ext}`);
+    let i = 1;
+    while (fs.existsSync(dest)) {
+      dest = path.join(dir, `${layer}-${stem} (${i++})${ext}`);
+    }
+    fs.copyFileSync(src, dest);
+    debug.log(`[theme-image] ${layer} <- ${dest}`);
+    return { ok: true, layer, file: dest };
+  } catch (err) {
+    debug.log(`[theme-image] failed: ${err.message || err}`);
+    return { ok: false, error: String(err.message || err) };
+  }
+});
+
+// Forward a theme change (Settings > General, or the Custom theme editor) to an
+// already-open in-game overlay so it recolors without reopening.
+ipcMain.on('theme-changed', (event, name) => {
+  if (overlayWindow && !overlayWindow.isDestroyed() && !overlayWindow.webContents.isDestroyed()) {
+    try {
+      overlayWindow.webContents.send('overlay-theme', currentThemePayload(name));
+    } catch (err) {
+      debug.log(`[overlay-theme] broadcast failed: ${err.message || err}`);
+    }
+  }
+});
+
 // Import a custom notification sound: copy a user-picked audio file into <userData>/sounds and return
 // its (possibly de-duplicated) filename so the renderer can select it. Returns null on cancel/failure.
 ipcMain.handle('import-sound', async () => {
@@ -3105,6 +3369,8 @@ try {
   autoUpdater.on('checking-for-update', () => debug.log('[updater] checking for updates'));
   autoUpdater.on('update-available', async (info) => {
     debug.log(`[updater] update available: ${info.version}`);
+    manualUpdateResult = 'available';
+    manualUpdateCheckPending = false; // the dialog below already answers a manual check
     if (updatePromptOpen) {
       debug.log('[updater] a prompt is already open; ignoring duplicate update-available');
       return;
@@ -3141,7 +3407,20 @@ try {
       updatePromptOpen = false;
     }
   });
-  autoUpdater.on('update-not-available', (info) => debug.log(`[updater] current version is up to date (${info.version})`));
+  autoUpdater.on('update-not-available', (info) => {
+    debug.log(`[updater] current version is up to date (${info.version})`);
+    manualUpdateResult = 'uptodate';
+    if (manualUpdateCheckPending && tray) {
+      manualUpdateCheckPending = false;
+      try {
+        tray.displayBalloon({
+          iconType: 'info',
+          title: t('achievement-watcher', 'Achievement Watcher'),
+          content: t('up-to-date', `You are already using the latest version (${info.version}).`, `Vous utilisez déjà la dernière version (${info.version}).`),
+        });
+      } catch {}
+    }
+  });
   autoUpdater.on('error', (err) => notifyUpdateError(err && err.message ? err.message : String(err)));
   autoUpdater.on('update-downloaded', async (info) => {
     if (updatePromptOpen) {

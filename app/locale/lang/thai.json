@@ -581,7 +581,7 @@
       },
       "socialClub": {
         "name": "Goldberg SocialClub",
-        "description": "ติดตามความสำเร็จจาก Goldberg Social Club Emulator (%APPDATA%\\Goldberg SocialClub Emu Saves)"
+        "description": "ติดตามความสำเร็จจาก Goldberg Social Club Emulator"
       }
     },
     "guide": {
@@ -646,11 +646,7 @@
         "dataFolder": "เปิดโฟลเดอร์ข้อมูล",
         "goldbergTitle": "Goldberg / GBE Fork",
         "goldbergDesc": "สแกนโฟลเดอร์คลังเกมหาการติดตั้ง Goldberg / GBE Fork และทำเครื่องหมายรายการที่ขาดสคีมา steam_settings/achievements.json ใช้เมนูคลิกขวาของเกม (วินิจฉัย / ซ่อม) เพื่อแก้ไขรายการหนึ่ง",
-        "scanFolder": "สแกนโฟลเดอร์…",
-        "winNotifTitle": "การตั้งค่าการแจ้งเตือน Windows",
-        "focusAssist": "ตัวช่วยโฟกัส",
-        "notifActions": "การแจ้งเตือนและการดำเนินการ",
-        "winNotifDesc": "Windows 10 >= 1903 : กฎอัตโนมัติของตัวช่วยโฟกัสสำหรับแอปเต็มจอ (ค่าเริ่มต้นเป็นการปลุกเท่านั้น) อาจระงับการแจ้งเตือนของ Windows — ตั้งเป็น «ปิด» หากไม่ปรากฏในเกม"
+        "scanFolder": "สแกนโฟลเดอร์…"
       },
       "blacklistTitle": "บัญชีดำ AppID",
       "blacklistButton": "รีเซ็ตบัญชีดำ",
@@ -701,7 +697,7 @@
     "fixTitle": "ซ่อมแซม",
     "fixCopy": "สำหรับเกม Steam ที่ใช้อีมูเลเตอร์ การซ่อมแซมจากเมนูคลิกขวา (หรือการซ่อมแซมอัตโนมัติ) จะติดตั้ง GBE Fork และเขียนสคีมา achievements.json, ข้อมูล DLC และไฟล์ช่วยเปิดเกมลงในโฟลเดอร์ steam_settings ของเกม",
     "overlayTitle": "โอเวอร์เลย์ในเกม",
-    "overlayCopy": "แผงความสำเร็จขนาดเล็กที่คุณสามารถเรียกขึ้นมาทับหน้าเกมได้ด้วยปุ่มลัด (ค่าเริ่มต้น Ctrl+Shift+O) เปลี่ยนได้ทุกเมื่อในการตั้งค่า > ทั่วไป ข้างช่องปุ่มลัด",
+    "overlayCopy": "แผงความสำเร็จขนาดเล็กที่คุณสามารถเรียกขึ้นมาทับหน้าเกมได้ด้วยปุ่มลัด (ค่าเริ่มต้น Ctrl+Shift+K) เปลี่ยนได้ทุกเมื่อในการตั้งค่า > ทั่วไป ข้างช่องปุ่มลัด",
     "profileTitle": "ประวัติโดยย่อ",
     "profileCopy": "เลือกชื่อที่แสดงในส่วนหัวและเลือกตั้งค่าอวตารในเครื่องได้",
     "username": "ชื่อที่แสดง",
@@ -768,6 +764,8 @@
     "icon": "ไอคอน",
     "achievement": "ความสำเร็จ",
     "status": "สถานะ",
+    "rarityColumn": "ความหายาก",
+    "dateColumn": "วันที่",
     "selectConfig": "เลือกการกำหนดค่า!",
     "locked": "ล็อกแล้ว",
     "unlocked": "ปลดล็อกแล้ว",
@@ -792,11 +790,26 @@
     "iconMedium": "กลาง",
     "iconLarge": "ใหญ่",
     "settingsZoom": "ซูม",
+    "settingsOpacity": "ความทึบแสง",
     "settingsShowStats": "แถบสถิติ",
     "settingsShowProgress": "แถบความคืบหน้า",
     "settingsShowRarity": "ความหายาก",
     "settingsShowDescriptions": "คำอธิบาย",
     "settingsReset": "รีเซ็ตค่าเริ่มต้น",
     "noResults": "ไม่พบความสำเร็จที่ตรงกับการค้นหา"
+  },
+  "dialogs": {
+    "game-config-title": "ตั้งค่าไฟล์ปฏิบัติการ",
+    "launch-args-label": "อาร์กิวเมนต์การเรียกใช้:",
+    "game-config-placeholder": "…คลิก แก้ไข เพื่อเลือกไฟล์ปฏิบัติการ…",
+    "game-config-unlink": "ยกเลิกการเชื่อมโยงไฟล์ปฏิบัติการ",
+    "checking-for-updates": "กำลังตรวจสอบ…",
+    "update-unavailable-dev": "ไม่พร้อมใช้งานในเวอร์ชันพัฒนา",
+    "update-check-failed": "การตรวจสอบล้มเหลว",
+    "update-available-short": "มีการอัปเดต",
+    "update-up-to-date-short": "เป็นเวอร์ชันล่าสุด",
+    "update-checked": "ตรวจสอบแล้ว",
+    "blacklist-add-placeholder": "Steam App ID",
+    "blacklist-add-button": "เพิ่ม"
   }
 }
