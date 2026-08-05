@@ -4,288 +4,1249 @@
     <meta charset="UTF-8" />
     <title>Achievements Overlay</title>
     <style>
+      :root {
+        --accent: #4aa3ff;
+        --accent-rgb: 74, 163, 255;
+        --bg: rgba(10, 14, 20, 0.88);
+        --bg-soft: rgba(255, 255, 255, 0.045);
+        --bg-hover: rgba(255, 255, 255, 0.075);
+        --text: #eef2f7;
+        --muted: #8b96a5;
+        --border: rgba(255, 255, 255, 0.09);
+        --green: #2ecc71;
+        --red: #e74c3c;
+        --icon-size: 44px;
+        --row-pad: 8px 10px;
+        --radius: 14px;
+        --zoom: 1;
+        --desc-lines: 2;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       html,
       body {
         background: transparent;
-        border-radius: 10px;
         margin: 0;
         padding: 0;
         overflow: hidden;
         user-select: none;
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
       }
 
-      .scroll-container {
+      .overlay-panel {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        width: 100vw;
         max-height: 100vh;
-        overflow-y: auto;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-      }
-
-      .scroll-container::-webkit-scrollbar {
-        display: none;
-      }
-
-      table {
-        color: white;
-        border-collapse: collapse;
-        background-color: rgba(0, 0, 0, 0.6);
-        border-radius: 10px;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+        color: var(--text);
         overflow: hidden;
-        width: 100%;
+        zoom: var(--zoom);
       }
 
-      th {
+      /* ---- Header ---- */
+      .overlay-header {
+        flex: 0 0 auto;
+        border-bottom: 1px solid var(--border);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
+      }
+
+      .overlay-brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px 8px;
+        -webkit-app-region: drag;
+      }
+
+      .overlay-brand .trophy {
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 7px;
+        background: rgba(var(--accent-rgb), 0.18);
+        color: var(--accent);
+        font-size: 13px;
+      }
+
+      .overlay-brand .title {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .overlay-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: auto;
+        -webkit-app-region: no-drag;
+      }
+
+      .icon-btn {
+        display: grid;
+        place-items: center;
+        width: 26px;
+        height: 26px;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 120ms ease, color 120ms ease;
+      }
+
+      .icon-btn:hover,
+      .icon-btn.active {
+        background: var(--bg-hover);
+        color: var(--text);
+      }
+
+      /* ---- Search + filters ---- */
+      .overlay-tools {
+        padding: 0 12px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        -webkit-app-region: no-drag;
+      }
+
+      .overlay-search {
+        position: relative;
+      }
+
+      .overlay-search .search-icon {
+        position: absolute;
+        left: 9px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted);
+        font-size: 11px;
+        pointer-events: none;
+      }
+
+      .overlay-search input {
+        width: 100%;
+        height: 30px;
+        padding: 0 28px 0 26px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        background: var(--bg-soft);
+        color: var(--text);
+        font-size: 12px;
+        outline: none;
+        user-select: text;
+        transition: border-color 120ms ease, box-shadow 120ms ease;
+      }
+
+      .overlay-search input::placeholder {
+        color: var(--muted);
+      }
+
+      .overlay-search input:focus {
+        border-color: rgba(var(--accent-rgb), 0.65);
+        box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.16);
+      }
+
+      .overlay-search .clear {
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: none;
+        place-items: center;
+        width: 20px;
+        height: 20px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 12px;
+        cursor: pointer;
+      }
+
+      .overlay-search .clear:hover {
+        color: var(--text);
+        background: var(--bg-hover);
+      }
+
+      .overlay-search.has-text .clear {
+        display: grid;
+      }
+
+      .overlay-filters {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+      }
+
+      .filter-pill {
+        padding: 3px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 120ms ease;
+      }
+
+      .filter-pill:hover {
+        color: var(--text);
+        background: var(--bg-hover);
+      }
+
+      .filter-pill.active {
+        color: var(--accent);
+        border-color: rgba(var(--accent-rgb), 0.55);
+        background: rgba(var(--accent-rgb), 0.12);
+      }
+
+      /* ---- Stats bar ---- */
+      .overlay-stats {
+        padding: 0 12px 8px;
+        -webkit-app-region: no-drag;
+      }
+
+      .stats-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 5px;
+        font-size: 11px;
+      }
+
+      .stats-label {
+        color: var(--muted);
+      }
+
+      .stats-label b {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .stats-percent {
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .stats-track {
+        height: 4px;
+        border-radius: 999px;
+        background: var(--bg-soft);
+        overflow: hidden;
+      }
+
+      .stats-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.65), var(--accent));
+        transition: width 240ms ease;
+      }
+
+      /* ---- Column headers ---- */
+      .overlay-cols {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        padding: 0 12px 6px;
+        -webkit-app-region: no-drag;
+      }
+
+      .sort-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        cursor: pointer;
+      }
+
+      .sort-btn:hover {
+        color: var(--text);
+      }
+
+      .sort-btn .arrow {
+        color: var(--accent);
+        font-size: 11px;
+      }
+
+      .sort-btn .arrow.hidden {
+        visibility: hidden;
+      }
+
+      /* ---- Body ---- */
+      .overlay-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(var(--accent-rgb), 0.45) transparent;
+      }
+
+      .overlay-body::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .overlay-body::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: rgba(var(--accent-rgb), 0.35);
+      }
+
+      .overlay-body::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .overlay-row {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        padding: var(--row-pad);
+        border-bottom: 1px solid var(--border);
+        transition: background 120ms ease;
+      }
+
+      .overlay-row:last-child {
+        border-bottom: 0;
+      }
+
+      .overlay-row:hover {
+        background: var(--bg-hover);
+      }
+
+      .overlay-row.is-unlocked {
+        background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.07), transparent 55%);
+      }
+
+      .overlay-icon {
+        position: relative;
+      }
+
+      .overlay-icon img {
+        display: block;
+        width: var(--icon-size);
+        height: var(--icon-size);
+        border-radius: 10px;
+        object-fit: cover;
+        background: var(--bg-soft);
+      }
+
+      .overlay-row.is-locked .overlay-icon img {
+        filter: grayscale(0.85) brightness(0.75);
+        opacity: 0.72;
+      }
+
+      .overlay-row.is-unlocked .overlay-icon img {
+        box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.5), 0 0 14px rgba(var(--accent-rgb), 0.28);
+      }
+
+      .overlay-info {
+        min-width: 0;
+      }
+
+      .overlay-name {
+        font-size: 12.5px;
+        font-weight: 600;
+        line-height: 1.3;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .overlay-desc {
+        margin-top: 2px;
+        font-size: 11px;
+        line-height: 1.35;
+        color: var(--muted);
+        display: -webkit-box;
+        -webkit-line-clamp: var(--desc-lines);
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .overlay-progress {
+        margin-top: 6px;
+      }
+
+      .progress-meta {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 3px;
+        font-size: 10px;
+        color: var(--muted);
+      }
+
+      .progress-track {
+        height: 4px;
+        border-radius: 999px;
+        background: var(--bg-soft);
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: var(--accent);
+        transition: width 200ms ease;
+      }
+
+      .overlay-status {
+        text-align: right;
+        min-width: 74px;
+      }
+
+      .status-pill {
+        display: inline-block;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+      }
+
+      .status-pill.unlocked {
+        color: var(--green);
+        background: rgba(46, 204, 113, 0.14);
+        border: 1px solid rgba(46, 204, 113, 0.35);
+      }
+
+      .status-pill.locked {
+        color: var(--muted);
+        background: var(--bg-soft);
+        border: 1px solid var(--border);
+      }
+
+      .unlock-date {
+        margin-top: 4px;
+        font-size: 9.5px;
+        color: var(--muted);
         white-space: nowrap;
       }
 
-      th,
-      td {
-        padding: 8px;
-        border: 1px solid #555;
+      .rarity-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        margin-top: 5px;
+        padding: 2px 7px;
+        border-radius: 999px;
+        font-size: 9.5px;
+        font-weight: 600;
+        background: var(--bg-soft);
+        border: 1px solid var(--border);
+      }
+
+      .rarity-badge.gold {
+        color: #ffd75e;
+        border-color: rgba(255, 215, 94, 0.35);
+        background: rgba(255, 215, 94, 0.1);
+      }
+
+      .rarity-badge.silver {
+        color: #c9d4e3;
+        border-color: rgba(201, 212, 227, 0.3);
+        background: rgba(201, 212, 227, 0.08);
+      }
+
+      .rarity-badge.bronze {
+        color: #e0a06b;
+        border-color: rgba(224, 160, 107, 0.3);
+        background: rgba(224, 160, 107, 0.08);
+      }
+
+      /* ---- Empty state ---- */
+      .overlay-empty {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 34px 20px;
+        color: var(--muted);
         text-align: center;
       }
 
-      img {
-        width: 50px;
-        height: auto;
+      .overlay-empty.visible {
+        display: flex;
       }
 
-      .drag {
-        -webkit-app-region: drag;
+      .overlay-empty .empty-icon {
+        font-size: 26px;
+        opacity: 0.6;
       }
-      .no-drag {
+
+      .overlay-empty .empty-text {
+        font-size: 12px;
+        font-style: italic;
+      }
+
+      /* ---- Settings popover ---- */
+      .overlay-settings {
+        position: absolute;
+        top: 44px;
+        right: 10px;
+        z-index: 10;
+        width: 252px;
+        max-height: calc(100vh - 60px);
+        overflow-y: auto;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: rgba(16, 21, 29, 0.97);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+        display: none;
         -webkit-app-region: no-drag;
-        pointer-events: auto;
-        cursor: pointer; /* Optional: visually indicate interactivity */
+      }
+
+      .overlay-settings.open {
+        display: block;
+      }
+
+      .settings-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .settings-head .settings-title {
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .settings-section {
+        margin-bottom: 10px;
+      }
+
+      .settings-section > label {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--muted);
+      }
+
+      .settings-seg {
+        display: flex;
+        gap: 4px;
+      }
+
+      .settings-seg button {
+        flex: 1;
+        padding: 4px 0;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 10.5px;
+        cursor: pointer;
+        transition: all 120ms ease;
+      }
+
+      .settings-seg button:hover {
+        color: var(--text);
+        background: var(--bg-hover);
+      }
+
+      .settings-seg button.active {
+        color: var(--accent);
+        border-color: rgba(var(--accent-rgb), 0.55);
+        background: rgba(var(--accent-rgb), 0.12);
+      }
+
+      .settings-swatches {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .swatch {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: transform 120ms ease, border-color 120ms ease;
+      }
+
+      .swatch:hover {
+        transform: scale(1.12);
+      }
+
+      .swatch.active {
+        border-color: var(--text);
+      }
+
+      .swatch-custom {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .swatch-custom input {
+        position: absolute;
+        inset: -4px;
+        width: 28px;
+        height: 28px;
+        border: 0;
+        cursor: pointer;
+        opacity: 0;
+      }
+
+      .settings-select {
+        width: 100%;
+        height: 26px;
+        padding: 0 6px;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        background: var(--bg-soft);
+        color: var(--text);
+        font-size: 11px;
+        outline: none;
+      }
+
+      .settings-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 6px;
+        font-size: 11.5px;
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      .settings-toggle .switch {
+        position: relative;
+        flex: 0 0 auto;
+        width: 30px;
+        height: 17px;
+        border-radius: 999px;
+        background: var(--bg-hover);
+        border: 1px solid var(--border);
+        transition: background 140ms ease, border-color 140ms ease;
+      }
+
+      .settings-toggle .switch::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--muted);
+        transition: transform 140ms ease, background 140ms ease;
+      }
+
+      .settings-toggle input {
+        display: none;
+      }
+
+      .settings-toggle input:checked + .switch {
+        background: rgba(var(--accent-rgb), 0.25);
+        border-color: rgba(var(--accent-rgb), 0.6);
+      }
+
+      .settings-toggle input:checked + .switch::after {
+        transform: translateX(13px);
+        background: var(--accent);
+      }
+
+      .settings-reset {
+        width: 100%;
+        padding: 6px 0;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 120ms ease;
+      }
+
+      .settings-reset:hover {
+        color: var(--red);
+        border-color: rgba(231, 76, 60, 0.45);
+        background: rgba(231, 76, 60, 0.08);
+      }
+
+      /* ---- Density presets ---- */
+      .density-compact {
+        --row-pad: 5px 10px;
+        --desc-lines: 1;
+      }
+
+      .density-cozy {
+        --row-pad: 8px 10px;
+        --desc-lines: 2;
+      }
+
+      .density-spacious {
+        --row-pad: 12px 10px;
+        --desc-lines: 3;
+      }
+
+      /* Hidden pieces driven by settings */
+      body.hide-stats .overlay-stats,
+      body.hide-progress .overlay-progress,
+      body.hide-rarity .rarity-badge,
+      body.hide-descriptions .overlay-desc {
+        display: none !important;
       }
     </style>
   </head>
   <body>
-    <div class="scroll-container">
-      <table>
-        <thead class="drag">
-          <tr>
-            <th id="overlay-th-icon">Icon</th>
-            <th id="overlay-th-achievement" class="no-drag">Achievement</th>
-            <th id="overlay-th-status" class="no-drag">Status</th>
-          </tr>
-        </thead>
-        <tbody id="overlayTableBody"></tbody>
-        <tfoot>
-          <tr id="noConfigMessageRow" style="display: none">
-            <td id="overlay-empty" colspan="3" style="text-align: center; font-style: italic; color: #ccc">Select a config!</td>
-          </tr>
-        </tfoot>
-      </table>
+    <div class="overlay-panel" id="overlayPanel">
+      <header class="overlay-header">
+        <div class="overlay-brand">
+          <span class="trophy">🏆</span>
+          <span class="title" id="overlay-title">Achievements</span>
+          <div class="overlay-actions">
+            <button type="button" class="icon-btn" id="overlay-settings-toggle" title="Overlay options" aria-label="Overlay options">⚙</button>
+          </div>
+        </div>
+
+        <div class="overlay-tools">
+          <div class="overlay-search" id="overlay-search-box">
+            <span class="search-icon">⌕</span>
+            <input id="overlay-search" type="text" autocomplete="off" spellcheck="false" placeholder="Search achievements…" />
+            <button type="button" class="clear" id="overlay-search-clear" aria-label="Clear">×</button>
+          </div>
+          <div class="overlay-filters" id="overlay-filters" role="group">
+            <button type="button" class="filter-pill active" data-filter="all">All</button>
+            <button type="button" class="filter-pill" data-filter="unlocked">Unlocked</button>
+            <button type="button" class="filter-pill" data-filter="locked">Locked</button>
+            <button type="button" class="filter-pill" data-filter="progress">In progress</button>
+          </div>
+        </div>
+
+        <div class="overlay-stats" id="overlay-stats">
+          <div class="stats-row">
+            <span class="stats-label" id="overlay-stats-label"></span>
+            <span class="stats-percent" id="overlay-stats-percent"></span>
+          </div>
+          <div class="stats-track"><div class="stats-fill" id="overlay-stats-fill"></div></div>
+        </div>
+
+        <div class="overlay-cols">
+          <span></span>
+          <button type="button" class="sort-btn" id="overlay-th-achievement">
+            <span>Achievement</span><span class="arrow hidden" id="achievement-arrow">▲</span>
+          </button>
+          <button type="button" class="sort-btn" id="overlay-th-status">
+            <span>Status</span><span class="arrow hidden" id="status-arrow">▲</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="overlay-body" id="overlayBody">
+        <div id="overlayRows"></div>
+        <div class="overlay-empty" id="overlay-empty">
+          <span class="empty-icon">🏆</span>
+          <span class="empty-text" id="overlay-empty-text">Select a config!</span>
+        </div>
+      </div>
+
+      <div class="overlay-settings" id="overlay-settings">
+        <div class="settings-head">
+          <span class="settings-title" id="settings-title">Overlay options</span>
+          <button type="button" class="icon-btn" id="settings-close" aria-label="Close">×</button>
+        </div>
+
+        <div class="settings-section">
+          <label id="settings-theme-label">Accent</label>
+          <div class="settings-swatches" id="accent-swatches">
+            <button type="button" class="swatch" data-accent="#4aa3ff" style="background:#4aa3ff" title="Steam Blue"></button>
+            <button type="button" class="swatch" data-accent="#2ecc71" style="background:#2ecc71" title="Emerald"></button>
+            <button type="button" class="swatch" data-accent="#f1c40f" style="background:#f1c40f" title="Gold"></button>
+            <button type="button" class="swatch" data-accent="#e84393" style="background:#e84393" title="Magenta"></button>
+            <button type="button" class="swatch" data-accent="#fd9644" style="background:#fd9644" title="Orange"></button>
+            <button type="button" class="swatch swatch-custom" id="swatch-custom" style="background:conic-gradient(#f33,#ff3,#3f3,#3ff,#33f,#f3f,#f33)" title="Custom">
+              <input type="color" id="accent-custom" value="#4aa3ff" />
+            </button>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <label id="settings-density-label">Density</label>
+          <div class="settings-seg" id="density-seg">
+            <button type="button" data-density="compact" id="density-compact">Compact</button>
+            <button type="button" data-density="cozy" id="density-cozy">Cozy</button>
+            <button type="button" data-density="spacious" id="density-spacious">Spacious</button>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <label id="settings-iconsize-label">Icon size</label>
+          <div class="settings-seg" id="iconsize-seg">
+            <button type="button" data-iconsize="32" id="icon-small">Small</button>
+            <button type="button" data-iconsize="44" id="icon-medium">Medium</button>
+            <button type="button" data-iconsize="56" id="icon-large">Large</button>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <label id="settings-zoom-label">Zoom</label>
+          <select class="settings-select" id="zoom-select">
+            <option value="0.8">80%</option>
+            <option value="0.9">90%</option>
+            <option value="1">100%</option>
+            <option value="1.1">110%</option>
+            <option value="1.25">125%</option>
+          </select>
+        </div>
+
+        <div class="settings-section">
+          <label class="settings-toggle" for="toggle-stats"><span id="toggle-stats-label">Stats bar</span><input type="checkbox" id="toggle-stats" /><span class="switch"></span></label>
+          <label class="settings-toggle" for="toggle-progress"><span id="toggle-progress-label">Progress bars</span><input type="checkbox" id="toggle-progress" /><span class="switch"></span></label>
+          <label class="settings-toggle" for="toggle-rarity"><span id="toggle-rarity-label">Rarity</span><input type="checkbox" id="toggle-rarity" /><span class="switch"></span></label>
+          <label class="settings-toggle" for="toggle-descriptions"><span id="toggle-descriptions-label">Descriptions</span><input type="checkbox" id="toggle-descriptions" /><span class="switch"></span></label>
+        </div>
+
+        <button type="button" class="settings-reset" id="settings-reset">Reset defaults</button>
+      </div>
     </div>
 
+    <script src="../util/overlayUi.js"></script>
     <script>
-      let overlayLang = 'english';
-      let currentConfigName = null;
-      let isLoading = false;
-      const overlayStrings = {
-        icon: 'Icon',
-        achievement: 'Achievement',
-        status: 'Status',
-        selectConfig: 'Select a config!',
-        locked: 'Locked',
-        unlocked: 'Unlocked',
-        progress: 'Progress',
-        hidden: 'Hidden',
-        na: 'N/A',
-      };
-      const headers = document.querySelectorAll('thead th');
-      // Track sorting for status and achievement only
-      let sortState = {
-        status: null, // 1 = asc, -1 = desc, null = no sort
-        achievement: null, // 1 = asc, -1 = desc, null = no sort
-      };
+      (function () {
+        'use strict';
 
-      function applyOverlayStrings() {
-        const iconHeader = document.getElementById('overlay-th-icon');
-        const achievementHeader = document.getElementById('overlay-th-achievement');
-        const statusHeader = document.getElementById('overlay-th-status');
-        const emptyRow = document.getElementById('overlay-empty');
-        if (iconHeader) iconHeader.textContent = overlayStrings.icon;
-        if (achievementHeader) achievementHeader.textContent = overlayStrings.achievement;
-        if (statusHeader) statusHeader.textContent = overlayStrings.status;
-        if (emptyRow) emptyRow.textContent = overlayStrings.selectConfig;
-      }
+        const ui = window.OverlayUi;
+        const $ = (id) => document.getElementById(id);
 
-      function updateHeaderIndicators() {
-        headers.forEach((header, i) => {
-          const text = header.textContent.replace(/[↑↓]/g, '').trim();
-          header.textContent = text;
+        let overlayLang = 'english';
+        let currentGame = null;
+        let isLoading = false;
+        let sortState = { status: null, achievement: null };
+        let filter = 'all';
+        let query = '';
 
-          if (i === 1 && sortState.achievement) {
-            header.textContent += sortState.achievement === 1 ? ' ↑' : ' ↓';
-          }
+        const overlayStrings = {
+          icon: 'Icon',
+          achievement: 'Achievement',
+          status: 'Status',
+          selectConfig: 'Select a config!',
+          locked: 'Locked',
+          unlocked: 'Unlocked',
+          progress: 'Progress',
+          hidden: 'Hidden',
+          na: 'N/A',
+          title: 'Achievements',
+          search: 'Search achievements…',
+          filterAll: 'All',
+          filterUnlocked: 'Unlocked',
+          filterLocked: 'Locked',
+          filterProgress: 'In progress',
+          statsOf: 'of',
+          settingsTitle: 'Overlay options',
+          settingsTheme: 'Accent',
+          settingsDensity: 'Density',
+          densityCompact: 'Compact',
+          densityCozy: 'Cozy',
+          densitySpacious: 'Spacious',
+          settingsIconSize: 'Icon size',
+          iconSmall: 'Small',
+          iconMedium: 'Medium',
+          iconLarge: 'Large',
+          settingsZoom: 'Zoom',
+          settingsShowStats: 'Stats bar',
+          settingsShowProgress: 'Progress bars',
+          settingsShowRarity: 'Rarity',
+          settingsShowDescriptions: 'Descriptions',
+          settingsReset: 'Reset defaults',
+          noResults: 'No achievements match your search.',
+        };
 
-          if (i === 2 && sortState.status) {
-            header.textContent += sortState.status === 1 ? ' ↑' : ' ↓';
-          }
-        });
-      }
+        const SETTINGS_KEY = 'aw-overlay-settings-v1';
+        const ACCENT_PRESETS = {
+          '#4aa3ff': '74, 163, 255',
+          '#2ecc71': '46, 204, 113',
+          '#f1c40f': '241, 196, 15',
+          '#e84393': '232, 67, 147',
+          '#fd9644': '253, 150, 68',
+        };
+        const DEFAULT_SETTINGS = {
+          accent: '#4aa3ff',
+          density: 'cozy',
+          iconSize: 44,
+          zoom: 1,
+          showStats: true,
+          showProgress: true,
+          showRarity: true,
+          showDescriptions: true,
+        };
 
-      function cycleSortState(current) {
-        if (current === null) return 1;
-        if (current === 1) return -1;
-        return null;
-      }
+        let settings = loadSettings();
 
-      function getSafeLocalizedText(input, lang = 'english') {
-        if (!input) return overlayStrings.hidden;
-        if (typeof input === 'string') return input.trim() || overlayStrings.hidden;
-        if (typeof input === 'object') {
-          return (
-            input[lang] ||
-            input.english ||
-            Object.values(input).find((v) => typeof v === 'string' && v.trim() !== '') ||
-            overlayStrings.hidden
-          );
+        function loadSettings() {
+          const base = Object.assign({}, DEFAULT_SETTINGS);
+          try {
+            const stored = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+            Object.assign(base, stored);
+          } catch {}
+          return base;
         }
-        return overlayStrings.hidden;
-      }
 
-      function formatTimestamp(timestamp) {
-        if (!timestamp) return overlayStrings.na;
-        const date = new Date(timestamp * 1000);
-        return date.toLocaleString();
-      }
+        function saveSettings() {
+          try {
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+          } catch {}
+        }
 
-      function sortAchievements(l) {
-        return l.slice().sort((a, b) => {
-          // Enforce status sorting first if active
-          if (sortState.status) {
-            const aStatus = a.Achieved ? 'a' : 'b';
-            const bStatus = b.Achieved ? 'a' : 'b';
-            if (aStatus < bStatus) return -1 * sortState.status;
-            if (aStatus > bStatus) return 1 * sortState.status;
+        function hexToRgb(hex) {
+          const value = String(hex || '#4aa3ff').replace('#', '');
+          const full = value.length === 3 ? value.split('').map((c) => c + c).join('') : value;
+          const n = parseInt(full, 16);
+          if (!Number.isFinite(n)) return ACCENT_PRESETS['#4aa3ff'];
+          return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
+        }
+
+        function applySettings() {
+          const root = document.documentElement;
+          root.style.setProperty('--accent', settings.accent);
+          root.style.setProperty('--accent-rgb', ACCENT_PRESETS[settings.accent] || hexToRgb(settings.accent));
+          root.style.setProperty('--icon-size', settings.iconSize + 'px');
+          root.style.setProperty('--zoom', settings.zoom);
+          document.body.classList.remove('density-compact', 'density-cozy', 'density-spacious');
+          document.body.classList.add('density-' + settings.density);
+          document.body.classList.toggle('hide-stats', !settings.showStats);
+          document.body.classList.toggle('hide-progress', !settings.showProgress);
+          document.body.classList.toggle('hide-rarity', !settings.showRarity);
+          document.body.classList.toggle('hide-descriptions', !settings.showDescriptions);
+
+          $('zoom-select').value = String(settings.zoom);
+          $('toggle-stats').checked = settings.showStats;
+          $('toggle-progress').checked = settings.showProgress;
+          $('toggle-rarity').checked = settings.showRarity;
+          $('toggle-descriptions').checked = settings.showDescriptions;
+          $('accent-custom').value = settings.accent;
+
+          document.querySelectorAll('#density-seg button').forEach((b) => b.classList.toggle('active', b.dataset.density === settings.density));
+          document.querySelectorAll('#iconsize-seg button').forEach((b) => b.classList.toggle('active', Number(b.dataset.iconsize) === settings.iconSize));
+          document.querySelectorAll('.swatch[data-accent]').forEach((b) => b.classList.toggle('active', b.dataset.accent === settings.accent));
+          $('swatch-custom').classList.toggle('active', !ACCENT_PRESETS[settings.accent]);
+
+          updateStats();
+          renderRows();
+        }
+
+        function applyOverlayStrings() {
+          document.documentElement.lang = ui.toBcp47(overlayLang) || 'en';
+          $('overlay-title').textContent = overlayStrings.title;
+          $('overlay-search').placeholder = overlayStrings.search;
+          $('overlay-empty-text').textContent = overlayStrings.selectConfig;
+          $('settings-title').textContent = overlayStrings.settingsTitle;
+          $('settings-theme-label').textContent = overlayStrings.settingsTheme;
+          $('settings-density-label').textContent = overlayStrings.settingsDensity;
+          $('density-compact').textContent = overlayStrings.densityCompact;
+          $('density-cozy').textContent = overlayStrings.densityCozy;
+          $('density-spacious').textContent = overlayStrings.densitySpacious;
+          $('settings-iconsize-label').textContent = overlayStrings.settingsIconSize;
+          $('icon-small').textContent = overlayStrings.iconSmall;
+          $('icon-medium').textContent = overlayStrings.iconMedium;
+          $('icon-large').textContent = overlayStrings.iconLarge;
+          $('settings-zoom-label').textContent = overlayStrings.settingsZoom;
+          $('toggle-stats-label').textContent = overlayStrings.settingsShowStats;
+          $('toggle-progress-label').textContent = overlayStrings.settingsShowProgress;
+          $('toggle-rarity-label').textContent = overlayStrings.settingsShowRarity;
+          $('toggle-descriptions-label').textContent = overlayStrings.settingsShowDescriptions;
+          $('settings-reset').textContent = overlayStrings.settingsReset;
+          $('overlay-settings-toggle').title = overlayStrings.settingsTitle;
+          $('overlay-settings-toggle').setAttribute('aria-label', overlayStrings.settingsTitle);
+          $('overlay-th-achievement').firstElementChild.textContent = overlayStrings.achievement;
+          $('overlay-th-status').firstElementChild.textContent = overlayStrings.status;
+
+          const pills = document.querySelectorAll('.filter-pill');
+          const labels = { all: overlayStrings.filterAll, unlocked: overlayStrings.filterUnlocked, locked: overlayStrings.filterLocked, progress: overlayStrings.filterProgress };
+          pills.forEach((pill) => (pill.textContent = labels[pill.dataset.filter] || pill.textContent));
+
+          updateStats();
+          renderRows();
+        }
+
+        function updateStats() {
+          const achievements = currentGame ? currentGame.achievements || (currentGame.achievement && currentGame.achievement.list) : [];
+          const stats = ui.buildStats(achievements);
+          $('overlay-stats-label').innerHTML =
+            `<b>${stats.unlocked}</b> ${ui.escapeHtml(overlayStrings.statsOf)} <b>${stats.total}</b>` +
+            (stats.progress > 0 ? ` · <b>${stats.progress}</b> ${ui.escapeHtml(overlayStrings.filterProgress)}` : '');
+          $('overlay-stats-percent').textContent = stats.percent + '%';
+          $('overlay-stats-fill').style.width = stats.percent + '%';
+        }
+
+        function filteredAchievements() {
+          const achievements = currentGame ? currentGame.achievements || (currentGame.achievement && currentGame.achievement.list) : [];
+          if (!Array.isArray(achievements)) return [];
+          const q = query.trim().toLowerCase();
+          return achievements.filter((a) => {
+            if (!a || !a.name) return false;
+            if (filter === 'unlocked' && !a.Achieved) return false;
+            if (filter === 'locked' && a.Achieved) return false;
+            if (filter === 'progress' && (a.Achieved || !ui.progressInfo(a).hasProgress)) return false;
+            if (q) {
+              const haystack = `${ui.safeLocalizedText(a.displayName, overlayLang, '')} ${ui.safeLocalizedText(a.description, overlayLang, '')}`.toLowerCase();
+              if (!haystack.includes(q)) return false;
+            }
+            return true;
+          });
+        }
+
+        function updateSortIndicators() {
+          const setArrow = (id, state) => {
+            const arrow = $(id);
+            arrow.classList.toggle('hidden', !state);
+            arrow.textContent = state === 1 ? '▲' : '▼';
+          };
+          setArrow('achievement-arrow', sortState.achievement);
+          setArrow('status-arrow', sortState.status);
+        }
+
+        function cycleSort(current) {
+          if (current === null) return 1;
+          if (current === 1) return -1;
+          return null;
+        }
+
+        async function loadTableData(game) {
+          currentGame = game;
+          renderRows();
+        }
+
+        function renderRows() {
+          const container = $('overlayRows');
+          const empty = $('overlay-empty');
+          if (!currentGame) {
+            container.innerHTML = '';
+            $('overlay-empty-text').textContent = overlayStrings.selectConfig;
+            empty.classList.add('visible');
+            updateStats();
+            return;
           }
 
-          // Then achievement title sort
-          if (sortState.achievement) {
-            const aTitle = getSafeLocalizedText(a.displayName).toLowerCase();
-            const bTitle = getSafeLocalizedText(b.displayName).toLowerCase();
-            if (aTitle < bTitle) return -1 * sortState.achievement;
-            if (aTitle > bTitle) return 1 * sortState.achievement;
-          }
+          const achievements = filteredAchievements();
+          const sorted = ui.sortAchievements(achievements, sortState, (a) => ui.safeLocalizedText(a && a.displayName, overlayLang, ''));
+          container.innerHTML = '';
+          updateStats();
+          updateSortIndicators();
 
-          return 0;
+          if (sorted.length === 0) {
+            $('overlay-empty-text').textContent = overlayStrings.noResults || overlayStrings.selectConfig;
+            empty.classList.add('visible');
+            return;
+          }
+          empty.classList.remove('visible');
+
+          const seen = new Set();
+          sorted.forEach((achievement) => {
+            if (!achievement.name || seen.has(achievement.name)) return;
+            seen.add(achievement.name);
+
+            const displayName = ui.escapeHtml(ui.safeLocalizedText(achievement.displayName, overlayLang, overlayStrings.hidden));
+            const description = ui.escapeHtml(ui.safeLocalizedText(achievement.description, overlayLang, overlayStrings.hidden));
+            const achieved = !!achievement.Achieved;
+            const progress = ui.progressInfo(achievement);
+            const rarity = ui.rarityPercent(achievement);
+
+            const row = document.createElement('div');
+            row.className = 'overlay-row ' + (achieved ? 'is-unlocked' : 'is-locked');
+
+            const rarityHtml =
+              rarity === null
+                ? ''
+                : `<span class="rarity-badge ${rarity < 3 ? 'gold' : rarity < 6 ? 'silver' : 'bronze'}">★ ${rarity.toFixed(1)}%</span>`;
+
+            const progressHtml = progress.hasProgress
+              ? `<div class="overlay-progress"><div class="progress-meta"><span>${ui.escapeHtml(overlayStrings.progress)}</span><span>${progress.current} / ${progress.max}</span></div>
+                 <div class="progress-track"><div class="progress-fill" style="width:${progress.percent}%"></div></div></div>`
+              : '';
+
+            const dateHtml = achieved && achievement.UnlockTime ? `<div class="unlock-date">${ui.escapeHtml(ui.formatTimestamp(achievement.UnlockTime, overlayLang, overlayStrings.na))}</div>` : '';
+            const statusHtml = achieved
+              ? `<span class="status-pill unlocked">${ui.escapeHtml(overlayStrings.unlocked)}</span>${dateHtml}`
+              : `<span class="status-pill locked">${ui.escapeHtml(overlayStrings.locked)}</span>`;
+
+            row.innerHTML =
+              `<div class="overlay-icon"><img alt="${ui.escapeHtml(overlayStrings.icon)}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11455/11455431.png';" /></div>` +
+              `<div class="overlay-info"><div class="overlay-name" title="${displayName}">${displayName}</div>` +
+              `<div class="overlay-desc" title="${description}">${description}</div>${progressHtml}${rarityHtml}</div>` +
+              `<div class="overlay-status">${statusHtml}</div>`;
+
+            container.appendChild(row);
+
+            const iconGray = achievement.icon_gray || achievement.icongray;
+            const icon = achievement.icon || iconGray;
+            const img = row.querySelector('img');
+            window.api
+              .fetchIcon(achieved ? icon : iconGray, currentGame.appid)
+              .then((path) => {
+                if (path) img.src = path;
+              })
+              .catch(() => {});
+          });
+        }
+
+        function toggleSettings(open) {
+          const panel = $('overlay-settings');
+          const shouldOpen = open === undefined ? !panel.classList.contains('open') : open;
+          panel.classList.toggle('open', shouldOpen);
+          $('overlay-settings-toggle').classList.toggle('active', shouldOpen);
+        }
+
+        // ---- Events ----
+        $('overlay-settings-toggle').addEventListener('click', () => toggleSettings());
+        $('settings-close').addEventListener('click', () => toggleSettings(false));
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            if ($('overlay-settings').classList.contains('open')) toggleSettings(false);
+            else if (query) {
+              query = '';
+              $('overlay-search').value = '';
+              $('overlay-search-box').classList.remove('has-text');
+              renderRows();
+            }
+            return;
+          }
+          if (e.key === '/' && !$('overlay-settings').classList.contains('open')) {
+            e.preventDefault();
+            $('overlay-search').focus();
+          }
         });
-      }
 
-      async function loadTableData(game) {
-        if (!game || isLoading) return;
-        isLoading = true;
+        $('overlay-search').addEventListener('input', (e) => {
+          query = e.target.value;
+          $('overlay-search-box').classList.toggle('has-text', query.length > 0);
+          renderRows();
+        });
 
-        const tableBody = document.querySelector('#overlayTableBody');
-        const achievementsDataObj = game.achievements || game.achievement.list;
-        const lang = overlayLang;
+        $('overlay-search-clear').addEventListener('click', () => {
+          query = '';
+          $('overlay-search').value = '';
+          $('overlay-search-box').classList.remove('has-text');
+          renderRows();
+          $('overlay-search').focus();
+        });
 
-        if (!Array.isArray(achievementsDataObj)) {
+        document.querySelectorAll('.filter-pill').forEach((pill) => {
+          pill.addEventListener('click', () => {
+            filter = pill.dataset.filter;
+            document.querySelectorAll('.filter-pill').forEach((p) => p.classList.toggle('active', p === pill));
+            renderRows();
+          });
+        });
+
+        $('overlay-th-achievement').addEventListener('click', () => {
+          sortState.achievement = cycleSort(sortState.achievement);
+          renderRows();
+        });
+        $('overlay-th-status').addEventListener('click', () => {
+          sortState.status = cycleSort(sortState.status);
+          renderRows();
+        });
+
+        document.querySelectorAll('.swatch[data-accent]').forEach((swatch) => {
+          swatch.addEventListener('click', () => {
+            settings.accent = swatch.dataset.accent;
+            applySettings();
+            saveSettings();
+          });
+        });
+        $('accent-custom').addEventListener('input', (e) => {
+          settings.accent = e.target.value;
+          applySettings();
+          saveSettings();
+        });
+
+        document.querySelectorAll('#density-seg button').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            settings.density = btn.dataset.density;
+            applySettings();
+            saveSettings();
+          });
+        });
+
+        document.querySelectorAll('#iconsize-seg button').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            settings.iconSize = Number(btn.dataset.iconsize);
+            applySettings();
+            saveSettings();
+          });
+        });
+
+        $('zoom-select').addEventListener('change', (e) => {
+          settings.zoom = Number(e.target.value);
+          applySettings();
+          saveSettings();
+        });
+
+        $('toggle-stats').addEventListener('change', (e) => {
+          settings.showStats = e.target.checked;
+          applySettings();
+          saveSettings();
+        });
+        $('toggle-progress').addEventListener('change', (e) => {
+          settings.showProgress = e.target.checked;
+          applySettings();
+          saveSettings();
+        });
+        $('toggle-rarity').addEventListener('change', (e) => {
+          settings.showRarity = e.target.checked;
+          applySettings();
+          saveSettings();
+        });
+        $('toggle-descriptions').addEventListener('change', (e) => {
+          settings.showDescriptions = e.target.checked;
+          applySettings();
+          saveSettings();
+        });
+
+        $('settings-reset').addEventListener('click', () => {
+          settings = Object.assign({}, DEFAULT_SETTINGS);
+          applySettings();
+          saveSettings();
+        });
+
+        window.api.onOverlayLanguage((data) => {
+          if (!data) return;
+          if (data.lang) overlayLang = data.lang;
+          if (data.strings) Object.assign(overlayStrings, data.strings);
+          applyOverlayStrings();
+        });
+
+        window.api.onOverlay((game) => {
           isLoading = false;
-          return;
-        }
-
-        tableBody.innerHTML = '';
-        const uniqueAchievements = new Set();
-
-        headers.forEach((header, i) => {
-          const text = header.textContent.replace(/[↑↓]/g, '').trim();
-          header.textContent = text;
-
-          if (i === 1 && sortState.achievement) {
-            header.textContent += sortState.achievement === 1 ? ' ↑' : ' ↓';
-          }
-          if (i === 2 && sortState.status) {
-            header.textContent += sortState.status === 1 ? ' ↑' : ' ↓';
-          }
-
-          if (i === 1)
-            if (!headers[i].hasClick) {
-              headers[i].addEventListener('click', () => {
-                sortState.achievement = cycleSortState(sortState.achievement);
-                loadTableData(game);
-              });
-              headers[i].hasClick = true;
-            }
-          if (i === 2)
-            if (!headers[i].hasClick) {
-              headers[i].addEventListener('click', () => {
-                sortState.status = cycleSortState(sortState.status);
-                loadTableData(game);
-              });
-              headers[i].hasClick = true;
-            }
+          loadTableData(game);
         });
 
-        const sortedAchievements = sortAchievements(achievementsDataObj);
-        sortedAchievements.forEach(async (achievement) => {
-          if (!achievement.name || uniqueAchievements.has(achievement.name)) return;
-          uniqueAchievements.add(achievement.name);
-
-          const displayName = getSafeLocalizedText(achievement.displayName, lang);
-          const description = getSafeLocalizedText(achievement.description, lang);
-          const iconGray = achievement.icon_gray || achievement.icongray;
-          const icon = achievement.icon || iconGray;
-
-          let imagePath = await window.api.fetchIcon(iconGray, game.appid);
-          let status = `<span style="color: red; font-weight: bold;">${overlayStrings.locked}</span>`;
-          let earnedTimeText = '';
-          let progressText = '';
-
-          if (achievement.Achieved) {
-            imagePath = await window.api.fetchIcon(icon, game.appid);
-            status = `<span style="color: green; font-weight: bold;">${overlayStrings.unlocked}</span>`;
-            earnedTimeText = `<br>${formatTimestamp(achievement.UnlockTime)}`;
-          }
-
-          if (typeof achievement.MaxProgress === 'number' && achievement.MaxProgress > 0) {
-            progressText = `<br><span style="font-size: 0.85em; color: #888;">${overlayStrings.progress}: ${
-              achievement.Achieved ? achievement.MaxProgress : achievement.CurProgress
-            } / ${achievement.MaxProgress}</span>`;
-          }
-
-          const row = document.createElement('tr');
-          row.innerHTML = `<td class="image"><img src="${imagePath}" alt="${overlayStrings.icon}" onerror="this.onerror=null; this.src='https://cdn-icons-png.flaticon.com/512/11455/11455431.png';" /></td>
-                          <td class="displayName"><strong>${displayName}</strong><br><span class="description"><em>${description}</em>${progressText}</span></td>
-                          <td class="status">${status} ${earnedTimeText}</td>
-                        `;
-          tableBody.appendChild(row);
+        window.api.onRefreshAchievementsTable(() => {
+          if (currentGame) renderRows();
         });
 
-        currentConfigName = game;
-        isLoading = false;
-      }
-
-      window.api.onOverlayLanguage((data) => {
-        if (!data) return;
-        if (data.lang) overlayLang = data.lang;
-        if (data.strings) Object.assign(overlayStrings, data.strings);
+        applySettings();
         applyOverlayStrings();
-      });
-
-      window.api.onOverlay((game) => {
-        const tableBody = document.querySelector('#overlayTableBody');
-        const messageRow = document.getElementById('noConfigMessageRow');
-
-        if (!game) {
-          tableBody.innerHTML = '';
-          if (messageRow) messageRow.style.display = '';
-          currentConfigName = null;
-          return;
-        }
-
-        if (messageRow) messageRow.style.display = 'none';
-        loadTableData(game);
-      });
-
-      window.api.onRefreshAchievementsTable(() => {
-        if (currentConfigName) {
-          loadTableData(currentConfigName);
-        }
-      });
+      })();
     </script>
   </body>
 </html>

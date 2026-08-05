@@ -2244,8 +2244,9 @@ async function createOverlayWindow(info) {
     }
     overlayClickThrough = false; // each open starts interactive (drag/scroll), not click-through
 
-    overlayWindow.loadFile(path.join(manifest.config.debug ? '' : userData, 'view\\overlay.html'));
-    let selectedLanguage = 'english';
+    // Load the bundled overlay (same policy as the main window): a userData copy can be stale and
+    // would drift from the app's own view/overlay.html + util/overlayUi.js.
+    overlayWindow.loadFile(path.join(__dirname, '../view/overlay.html'));
     overlayWindow.webContents.on('did-finish-load', () => {
       overlayWindow.webContents.send('overlay-language', overlayLanguagePayload());
       overlayWindow.webContents.send('show-overlay', info.game);

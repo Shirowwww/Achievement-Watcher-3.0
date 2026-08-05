@@ -23,6 +23,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - The installer now shows the LGPL licence before installing and, at
   uninstall, asks whether to also delete the app's settings, cache and saved
   data (default: keep — the legacy 1.6.8 data folder is never touched).
+- The in-game achievement overlay got a visual refresh and is now
+  customizable: a stats bar (unlocked/total + completion %), instant search
+  and status filters, community-rarity badges when the source provides them,
+  progress bars, density/icon-size/accent/zoom options and show/hide toggles
+  persisted between sessions.
 
 ### Changed
 
@@ -40,6 +45,10 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   (so `window.api` was never exposed and the page script crashed), and the `overlay-language`
   channel had a renderer listener but nothing in the main process ever sent it — the list stayed
   empty/English even with a localized UI.
+- The overlay now loads the app's own `view/overlay.html` instead of a stale copy in the user-data
+  folder, so shipped fixes and localization actually reach it without waiting for the next install.
+- The overlay escapes game-provided names/descriptions (no more raw HTML injection) and no longer
+  renders a misleading "Progress: undefined / 1" when a schema declares a max without a current value.
 
 ### Fixed
 

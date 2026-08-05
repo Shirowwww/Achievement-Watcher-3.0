@@ -22,6 +22,30 @@ async function run() {
   assert.equal(english.strings.progress, 'Progress');
   assert.equal(english.strings.hidden, 'Hidden');
   assert.equal(english.strings.na, 'N/A');
+  assert.equal(english.strings.title, 'Achievements');
+  assert.equal(english.strings.search, 'Search achievements…');
+  assert.equal(english.strings.filterAll, 'All');
+  assert.equal(english.strings.filterUnlocked, 'Unlocked');
+  assert.equal(english.strings.filterLocked, 'Locked');
+  assert.equal(english.strings.filterProgress, 'In progress');
+  assert.equal(english.strings.statsOf, 'of');
+  assert.equal(english.strings.settingsTitle, 'Overlay options');
+  assert.equal(english.strings.settingsTheme, 'Accent');
+  assert.equal(english.strings.settingsDensity, 'Density');
+  assert.equal(english.strings.densityCompact, 'Compact');
+  assert.equal(english.strings.densityCozy, 'Cozy');
+  assert.equal(english.strings.densitySpacious, 'Spacious');
+  assert.equal(english.strings.settingsIconSize, 'Icon size');
+  assert.equal(english.strings.iconSmall, 'Small');
+  assert.equal(english.strings.iconMedium, 'Medium');
+  assert.equal(english.strings.iconLarge, 'Large');
+  assert.equal(english.strings.settingsZoom, 'Zoom');
+  assert.equal(english.strings.settingsShowStats, 'Stats bar');
+  assert.equal(english.strings.settingsShowProgress, 'Progress bars');
+  assert.equal(english.strings.settingsShowRarity, 'Rarity');
+  assert.equal(english.strings.settingsShowDescriptions, 'Descriptions');
+  assert.equal(english.strings.settingsReset, 'Reset defaults');
+  assert.equal(english.strings.noResults, 'No achievements match your search.');
 
   // A real locale overrides the overlay strings used by the in-game list.
   const french = loadOverlayLocale({ localeDir: repoLocaleDir, lang: 'french' });
@@ -35,6 +59,30 @@ async function run() {
   assert.equal(french.strings.progress, 'Progression');
   assert.equal(french.strings.hidden, 'Masqué');
   assert.equal(french.strings.na, 'N/A');
+  assert.equal(french.strings.title, 'Succès');
+  assert.equal(french.strings.search, 'Rechercher des succès…');
+  assert.equal(french.strings.filterAll, 'Tous');
+  assert.equal(french.strings.filterUnlocked, 'Débloqués');
+  assert.equal(french.strings.filterLocked, 'Verrouillés');
+  assert.equal(french.strings.filterProgress, 'En cours');
+  assert.equal(french.strings.statsOf, 'sur');
+  assert.equal(french.strings.settingsTitle, 'Options de l’overlay');
+  assert.equal(french.strings.settingsTheme, 'Accent');
+  assert.equal(french.strings.settingsDensity, 'Densité');
+  assert.equal(french.strings.densityCompact, 'Compact');
+  assert.equal(french.strings.densityCozy, 'Confortable');
+  assert.equal(french.strings.densitySpacious, 'Aéré');
+  assert.equal(french.strings.settingsIconSize, 'Taille des icônes');
+  assert.equal(french.strings.iconSmall, 'Petite');
+  assert.equal(french.strings.iconMedium, 'Moyenne');
+  assert.equal(french.strings.iconLarge, 'Grande');
+  assert.equal(french.strings.settingsZoom, 'Zoom');
+  assert.equal(french.strings.settingsShowStats, 'Barre de statistiques');
+  assert.equal(french.strings.settingsShowProgress, 'Barres de progression');
+  assert.equal(french.strings.settingsShowRarity, 'Rareté');
+  assert.equal(french.strings.settingsShowDescriptions, 'Descriptions');
+  assert.equal(french.strings.settingsReset, 'Réinitialiser');
+  assert.equal(french.strings.noResults, 'Aucun succès ne correspond à votre recherche.');
 
   // A missing per-language file degrades to English (same policy as the rest of the UI).
   const missing = loadOverlayLocale({ localeDir: repoLocaleDir, lang: 'klingon' });
