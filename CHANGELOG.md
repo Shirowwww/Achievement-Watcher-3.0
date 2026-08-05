@@ -11,6 +11,15 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   while an update prompt is open reschedules itself instead of stopping all future checks until
   the app restarts.
 
+### Fixed
+
+- Watched emulator save roots (SmartSteamEmu, CODEX, OnlineFix, GSE Saves, …) no longer appear as
+  fake games in the library. Their numeric Steam AppID subfolders (e.g. `311210`) match the hex
+  profile shape the Goldberg SocialClub parser uses to recognise game folders, so every such root
+  was misclassified as a SocialClub game and listed by its folder name next to the real games.
+  SocialClub detection now only claims the real `Goldberg SocialClub Emu Saves` root (or a path
+  under it) and folders with hard Rockstar profile evidence.
+
 ## 3.5.3 - 2026-08-05
 
 ### Added

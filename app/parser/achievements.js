@@ -1873,7 +1873,12 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     // The same exe detection also doubles as the "really installed" disk proof used by the
     // "show installed only" toggle (see game.installed below).
     let hasResolvedExe = false;
-    if (resolvedGameDir && game.name) {
+    // Goldberg SocialClub has its own dedicated seed below (it needs the resolved Steam release and
+    // has no install folder to run exe detection on). Without this guard the generic playtime seed
+    // ran exe detection on the emulator's SAVE directory and registered e.g. "SmartSteamEmu" as a
+    // real game when a non-SocialClub watched folder was misclassified (folder roots must never
+    // become gameIndex entries).
+    if (resolvedGameDir && game.name && !(appid.data && appid.data.type === 'socialclub')) {
       // Carry the Ubisoft product id into the watchdog's index. The emulator names its save folder
       // with that id, so without the pair the watchdog cannot tell which game an unlock under
       // "Goldberg UplayEmu Saves\<uplayId>" belongs to, and Uplay R2 games never fire a live

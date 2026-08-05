@@ -64,6 +64,26 @@ function writeRockstarProfileFixture() {
     assert.equal(socialclub.isSocialClubPath(path.join(tmp, 'Steam')), false);
     assert.equal(socialclub.isSocialClubPath(path.join(GAME_DIR, 'nope.txt')), false);
 
+    // Regression: watched Steam-emulator save roots (SmartSteamEmu, CODEX, OnlineFix, GSE Saves, …)
+    // contain numeric Steam AppID subfolders that look like hex profile ids (e.g. 311210). They must
+    // NOT be accepted/scanned as Goldberg SocialClub, or the folder itself shows up as a fake game
+    // in the library next to the real games.
+    const fakeSaveRoot = path.join(tmp, 'SmartSteamEmu');
+    fs.mkdirSync(path.join(fakeSaveRoot, '311210'), { recursive: true });
+    assert.equal(socialclub.isSocialClubPath(fakeSaveRoot), false);
+    assert.deepEqual(await socialclub.scan(fakeSaveRoot), []);
+
+    // A standalone folder with hard Rockstar profile evidence is still accepted outside the root,
+    // so a custom SocialClub save location keeps working.
+    const customRockstar = path.join(tmp, 'Custom RDR2 Saves');
+    fs.mkdirSync(path.join(customRockstar, 'settings'), { recursive: true });
+    fs.writeFileSync(path.join(customRockstar, 'local_save.txt'), '', 'utf8');
+    fs.writeFileSync(path.join(customRockstar, 'settings', 'cfg.dat'), Buffer.from([0, 1, 2, 3]));
+    assert.equal(socialclub.isSocialClubPath(customRockstar), true);
+    const customFound = await socialclub.scan(customRockstar);
+    assert.equal(customFound.length, 1);
+    assert.equal(customFound[0].name, 'Custom RDR2 Saves');
+
     // Discovery from the root: one entry per game folder, namespaced appid, distinct source.
     // The root "settings" folder is not a game.
     const found = await socialclub.scan(ROOT);

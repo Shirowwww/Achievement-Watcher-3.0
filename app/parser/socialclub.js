@@ -213,25 +213,40 @@ function hasAchievementFileDirect(dir) {
 }
 
 // Accept the SocialClub root, a game folder (contains hex profile subfolders), or a profile folder.
+//
+// The acceptance must be conservative OUTSIDE the SocialClub root. A folder that merely contains
+// hex-looking subfolders is not proof of SocialClub: Steam emulator save roots (SmartSteamEmu,
+// CODEX, OnlineFix, GSE Saves, …) are full of numeric Steam AppID folders such as 311210, which
+// also match the hex profile shape. Treating them as SocialClub made the library list the watched
+// folders themselves as fake games (issue: "folders appear next to the other games"). Only the
+// real root (or a path under it) and folders with hard Rockstar profile evidence qualify.
 function isSocialClubPath(dir) {
   if (!dir) return false;
-  if (isSocialClubRootName(dir)) return true;
-  // Any direct subfolder of the SocialClub root is a game folder by definition, even before the
-  // game creates its first hex profile (the emulator creates <Game>\<hex profile>\ on first run).
-  if (isSocialClubRootName(path.dirname(dir))) return true;
+  const resolved = path.resolve(String(dir));
+  const underRoot = resolved.split(/[\\/]+/).some((part) => ROOT_NAME_RE.test(part));
+  if (underRoot) {
+    try {
+      return fs.statSync(resolved).isDirectory();
+    } catch {
+      // The root itself or a future game folder directly under it is still a valid target before
+      // it exists; deeper non-existent paths (e.g. a file under a game folder) are not.
+      return isSocialClubRootName(resolved) || isSocialClubRootName(path.dirname(resolved));
+    }
+  }
   try {
-    if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) return false;
+    if (!fs.existsSync(resolved) || !fs.statSync(resolved).isDirectory()) return false;
   } catch {
     return false;
   }
-  if (looksLikeProfileDir(dir)) return true;
-  if (looksLikeSocialClubGameFolder(dir)) return true;
-  return hasAchievementFileDirect(dir);
+  return folderHasRockstarProfileData(resolved);
 }
 
 async function scan(dir) {
   const result = [];
   if (!dir || !fs.existsSync(dir)) return result;
+  // Never scan an unrelated save root as if it were Goldberg SocialClub — e.g. SmartSteamEmu,
+  // CODEX or OnlineFix would otherwise surface the folder itself as a fake game entry.
+  if (!isSocialClubPath(dir)) return result;
 
   const gameRoots = [];
   if (isSocialClubRootName(dir)) {
