@@ -32,27 +32,13 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 | Area | Main improvements since Achievement Watcher 2.x |
 |---|---|
 | **Modern foundation** | Electron 12 → 43, current Node runtime, refreshed dependencies, tighter renderer security and Windows 11 support without WMIC |
-| **More real sources** | Local Steam appcache, GOG Galaxy and Ubisoft Connect readers; Epic account connection; EA Desktop; Xbox PC (Game Pass / Microsoft Store) with account import; RPCS3, ShadPS4 and Xenia |
+| **More real sources** | Local Steam appcache, GOG Galaxy and Ubisoft Connect readers; Epic account connection; EA Desktop; Xbox PC (Game Pass / Microsoft Store) with account import; Goldberg SocialClub; RPCS3, ShadPS4 and Xenia |
+| **Goldberg / GBE / Uplay R2 tools** | Read-only diagnosis, `steam_settings` repair, matched GBE Fork runtime install, loader-version-aware Uplay R2 support, Steamless support, opt-in API-check bypass, backups/restore and opt-in background setup |
+| **Better library** | Game and achievement search, installed-only filtering, blacklist restore, rarity tiers, progress achievements, smarter covers, executable detection and right-click uninstall |
 | **Live tracking** | Tray-first background Watchdog, Xenia/ShadPS4/GOG/Ubisoft unlock monitoring, safer startup baselines and duplicate suppression |
-| **Better library** | Game and achievement search, installed-only filtering, blacklist restore, rarity tiers, progress achievements, smarter covers and executable detection |
 | **Notifications** | Native Windows notifications + in-game overlay, preset library, custom builder, custom sounds, 0–200% volume and separate rare/completion styles |
-| **Controller and UI** | Full controller navigation, mouse Back/Forward, optional native overlay control, resizable interface, four themes and 18 complete UI languages |
-| **Goldberg / GBE tools** | Read-only diagnosis, `steam_settings` repair, matched runtime install, Steamless support, backups/restore and opt-in background setup |
-| **Local-first reliability** | Offline names and artwork, local schemas, platform-aware cache IDs, bounded caches, self-healing folders and fewer browser-dependent lookups |
-
-Recent releases have focused on covering more games and making the library trustworthy: **3.5.0**
-adds Online-Fix `Stats.ini` and TENOKE `user_stats.ini` progress support, resolves legacy Epic
-(NemirtingasEpicEmu) installs to their real schema, titles and rarity, and stops achievement progress
-from being zeroed when a save file lacks a `MaxProgress`; **3.5.2** makes the in-game overlay the
-default notification delivery (Shirow preset), keeps Steam library paths out of emulator scans,
-cleans up Steam-sourced badges and adds optional self-signed signing for local builds; **3.5.1**
-fixes the Xbox / Microsoft login window staying open after the consent page is accepted. **3.3.0**
-brought Xbox PC (Game Pass / Microsoft Store) import and live unlock notifications, user themes,
-per-emulator overlay presets, emulator rarity from Exophase, manual unlock, random sounds,
-per-platform metadata links and process-trail playtime. The **3.4.x** line added Steam community
-percentages for non-Steam sources, a settings search field, deeper Goldberg Uplay R2 diagnosis and
-repair, a supervised background monitor and a hardened automatic updater. See the
-[changelog](CHANGELOG.md) for the complete per-release scope.
+| **Controller and UI** | Full controller navigation (XInput plus native PlayStation/Switch input), controller control of the in-game overlay, mouse Back/Forward, resizable interface, four themes and 18 complete UI languages |
+| **Local-first reliability** | Own data directory isolated from the original 1.6.8 app, offline names and artwork, local schemas, platform-aware cache IDs, bounded caches, self-healing folders and fewer browser-dependent lookups |
 
 ---
 
@@ -64,18 +50,22 @@ repair, a supervised background monitor and a hardened automatic updater. See th
 | Unified game dashboard | ✅ | ✅ | ✅ |
 | Game + achievement search | ✅ Both | ✅ Both | ✅ Both |
 | Installed-games-only filter | ✅ | ❌ | ❌ |
+| Right-click game uninstall | ✅ | ❌ | ❌ |
 | Automatic folder discovery/config | ✅ | ✅ Auto-config | ✅ Smart Find |
 | Official/local platform readers | ✅ Steam · GOG · Ubisoft · Epic · EA | ✅ Steam · GOG · Ubisoft · Epic · EA | ⚠️ Steam · GOG · Epic · Uplay (legacy) |
+| Steam-emulator tracking | ✅ | ✅ | ✅ |
+| Goldberg SocialClub (Rockstar/GTA) source | ✅ | ❌ | ❌ |
+| Goldberg Uplay R2 emulator support | ✅ Loader-version aware | ❌ | ❌ |
+| GBE runtime install + schema repair | ✅ Full | ⚠️ Auto-config/schema | ❌ Manual setup |
+| Backup and one-click restore | ✅ | ❌ | ❌ |
+| Integrated Steamless path | ✅ | ❌ | ❌ |
+| Opt-in Steam API ownership-check bypass | ✅ | ❌ | ❌ |
 | Native Windows notifications | ✅ | ✅ Native preset | ✅ |
 | Animated in-game overlay | ✅ | ✅ | ✅ Chromium |
 | Windows notification + in-game overlay | ✅ | ❌ | ✅ |
 | No-code custom preset builder | ✅ | ❌ | ❌ |
 | Separate rare/completion presets | ✅ | ✅ | ❌ Not documented |
 | Live RPCS3 / ShadPS4 / Xenia unlocks | ✅ | ✅ | ⚠️ RPCS3 only |
-| Steam-emulator tracking | ✅ | ✅ | ✅ |
-| GBE runtime install + schema repair | ✅ Full | ⚠️ Auto-config/schema | ❌ Manual setup |
-| Backup and one-click restore | ✅ | ❌ | ❌ |
-| Integrated Steamless path | ✅ | ❌ | ❌ |
 | Full controller UI navigation | ✅ | ✅ Full UI + overlay | ❌ Planned only |
 | Screenshot souvenirs | ✅ | ✅ | ✅ |
 | Multiple UI themes | ✅ 4 | ✅ 8 + user | ❌ |
@@ -91,7 +81,7 @@ repair, a supervised background monitor and a hardened automatic updater. See th
 
 This fork focuses on an all-in-one library, a quiet tray workflow, native Windows notifications and deeper Goldberg/GBE repair. **Achievements** has a strong auto-configuration and animated-overlay workflow. **Achievement Watcher 2.x** remains the historical base with broad emulator compatibility and several legacy notification transports.
 
-<sub>✅ = supported and documented · ⚠️ = partial, manual or a different workflow · ❌ = unavailable or not documented on the current public branch. Checked against the public READMEs and default branches on 3 August 2026.</sub>
+<sub>✅ = supported and documented · ⚠️ = partial, manual or a different workflow · ❌ = unavailable or not documented on the current public branch. Checked against the public READMEs, package manifests and source (main.js/preload.js/index.html/utils) on 5 August 2026.</sub>
 
 ---
 
