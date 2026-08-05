@@ -67,6 +67,17 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - A manually added custom save folder whose name doesn't match any known emulator/scene layout
   (e.g. a folder the user renamed themselves) fell back to an unset library source instead of a
   readable one once its numeric AppID subfolder was found.
+- A locally uploaded profile avatar, and most of the library, could be lost on the first launch
+  after upgrading to 3.5.3. The avatar lived only in the renderer's `localStorage`, which is
+  Chromium profile state and is deliberately never imported by the one-time migration into
+  `%APPDATA%\Achievement Watcher 3.0` (it's rebuilt on launch); the avatar now persists in a
+  migration-covered `cfg\avatar.txt` file instead, with a one-time carry-over from `localStorage`
+  for sessions that already had one set. Separately, the "show installed games only" library filter
+  also lives in that same Chromium storage and defaults to ON when unset — on a fresh post-migration
+  profile that silently hid every game without an on-disk-confirmed install (which is most of an
+  emulated/cracked library), even though the underlying watched folders and settings had migrated
+  correctly. The filter now only defaults to ON for a genuinely new install, not one carried over
+  from a previous version.
 
 ## 3.5.3 - 2026-08-05
 

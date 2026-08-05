@@ -6,6 +6,7 @@ const request = require('request-zero');
 
 const { selectFileDialog } = require('./selectFileDialog.js');
 const { getSteamPath, getSteamUsers } = require('../../parser/steam.js');
+const avatarStore = require('../../util/avatarStore.js');
 
 const appPath = remote.app.getAppPath();
 const { t } = require(path.join(appPath, 'locale/t.js'));
@@ -55,7 +56,7 @@ function contextMenu(e, position = null) {
       icon: menuIcon('redo-alt.png'),
       label: t('avatar-reset-default', 'Reset to default avatar', 'Réinitialiser l’avatar par défaut'),
       click: function () {
-        localStorage.removeItem('avatar');
+        avatarStore.clearAvatar();
         self.update();
       },
     })
@@ -103,7 +104,7 @@ function contextMenu(e, position = null) {
             request(self.steamUsers[i].profile.avatarFull, { encoding: 'base64' })
               .then((res) => {
                 const base64 = `data:${res.headers['content-type']};charset=utf-8;base64,${res.body}`;
-                localStorage.setItem('avatar', base64);
+                avatarStore.setAvatar(base64);
                 self.update();
               })
               .catch((err) => {

@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { readRegistryString } = require('../../util/reg');
+const avatarStore = require('../../util/avatarStore.js');
 const accountPictureModule = require('accountpicture-ms-extractor');
 const accountms = accountPictureModule.default || accountPictureModule;
 
@@ -28,7 +29,16 @@ async function getWindowsProfileAvatar() {
 }
 
 async function getAvatar() {
-  let avatar = localStorage.getItem('avatar');
+  let avatar = avatarStore.getAvatar();
+  if (!avatar) {
+    // One-time carry-over for a build that already had an avatar set in localStorage before this
+    // moved to a migration-safe file (or a session that hasn't restarted since the upgrade).
+    const legacy = localStorage.getItem('avatar');
+    if (legacy) {
+      avatarStore.setAvatar(legacy);
+      avatar = legacy;
+    }
+  }
   if (!avatar) avatar = await getWindowsProfileAvatar();
   return avatar;
 }

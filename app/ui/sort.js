@@ -192,8 +192,32 @@ window.restoreAchievementSorts = function () {
 // save folders and stale cache imports that have no live install). State persists in localStorage.
 // Filtering is purely CSS-driven (a class on the list <ul>), so it applies instantly to already
 // rendered tiles AND to tiles streamed in afterwards, with no rescan.
+//
+// localStorage lives in Chromium's profile, which the one-time %APPDATA%\Achievement Watcher 3.0
+// migration deliberately never imports (util/migrateUserData.js — it's regenerated on first launch).
+// For a genuinely new install that is the right call; but for a user migrated from an older version,
+// their fresh profile has no `showInstalledOnly` key either, and most of their real, previously
+// visible library has no on-disk-confirmed install (see achievements.js `installState.isInstalled`) —
+// so defaulting to ON silently hid almost their whole library (issue #10). Only default to ON when
+// there is no evidence this profile was just imported from a legacy install.
+let _migratedFromLegacyCache = null;
+function wasMigratedFromLegacy() {
+  if (_migratedFromLegacyCache !== null) return _migratedFromLegacyCache;
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const { ipcRenderer } = require('electron');
+    const userDataPath = ipcRenderer.sendSync('get-user-data-path-sync');
+    _migratedFromLegacyCache = fs.existsSync(path.join(userDataPath, 'cfg', 'migrated-from-legacy.json'));
+  } catch {
+    _migratedFromLegacyCache = false;
+  }
+  return _migratedFromLegacyCache;
+}
+
 function installedOnlyEnabled() {
-  return localStorage.showInstalledOnly === 'true' || typeof localStorage.showInstalledOnly === 'undefined';
+  if (typeof localStorage.showInstalledOnly === 'undefined') return !wasMigratedFromLegacy();
+  return localStorage.showInstalledOnly === 'true';
 }
 
 function updateInstalledEmptyState() {

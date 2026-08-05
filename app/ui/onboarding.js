@@ -3,6 +3,7 @@
 const onboardingFs = require('fs');
 const merge = require('deepmerge');
 const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avatar.js'));
+const onboardingAvatarStore = require(path.join(appPath, 'util/avatarStore.js'));
 const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
 
 (function ($, window, document) {
@@ -585,7 +586,7 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
         });
         if (!dialog.filePaths || dialog.filePaths.length === 0) return;
         const avatar = await onboardingAvatar.imageFileToBase64(dialog.filePaths[0]);
-        localStorage.setItem('avatar', avatar);
+        onboardingAvatarStore.setAvatar(avatar);
         await refreshAvatarPreview();
         const avatarEl = document.querySelector('user-avatar');
         if (avatarEl && typeof avatarEl.update === 'function') avatarEl.update();
@@ -594,7 +595,7 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
       }
     });
     $('#onboard-avatar-clear').on('click', async () => {
-      localStorage.removeItem('avatar');
+      onboardingAvatarStore.clearAvatar();
       await refreshAvatarPreview();
       const avatarEl = document.querySelector('user-avatar');
       if (avatarEl && typeof avatarEl.update === 'function') avatarEl.update();

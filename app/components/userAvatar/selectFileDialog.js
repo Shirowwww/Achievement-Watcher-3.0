@@ -2,6 +2,7 @@
 
 const remote = require('@electron/remote');
 const { imageFileToBase64 } = require('./avatar.js');
+const avatarStore = require('../../util/avatarStore.js');
 
 async function selectFileDialog() {
   const self = this;
@@ -16,7 +17,7 @@ async function selectFileDialog() {
     if (dialog.filePaths && dialog.filePaths.length > 0) {
       //if cancel will be 0
       const avatar = await imageFileToBase64(dialog.filePaths[0]);
-      localStorage.setItem('avatar', avatar);
+      avatarStore.setAvatar(avatar);
       self.update();
     }
   } catch (err) {
