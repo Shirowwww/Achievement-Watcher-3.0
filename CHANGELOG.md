@@ -35,6 +35,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - The first-run guide no longer relies on a duplicated, incomplete French/English fallback object
   (it was missing two strings used by the API-key toggle and the notification test). A broken or
   missing per-language file now degrades to English, matching the rest of the UI.
+- The in-game overlay list works again under the current Electron runtime and follows the
+  selected locale: its preload required app modules that fail in the sandboxed window context
+  (so `window.api` was never exposed and the page script crashed), and the `overlay-language`
+  channel had a renderer listener but nothing in the main process ever sent it — the list stayed
+  empty/English even with a localized UI.
 
 ### Fixed
 

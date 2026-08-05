@@ -85,6 +85,7 @@ const fs = require('fs');
 const ipc = require(path.join(__dirname, 'ipc.js'));
 const notificationSounds = require(path.join(__dirname, '../util/notificationSounds.js'));
 const userThemes = require(path.join(__dirname, '../util/userThemes.js'));
+const overlayLocale = require(path.join(__dirname, '../util/overlayLocale.js'));
 
 // Main-process counterpart of app/locale/t.js: imperative strings (dialogs,
 // tray menu, notifications) resolve from the selected locale's `dialogs`
@@ -117,6 +118,19 @@ function t(key, english, french, params) {
   const lang = String((configJS && configJS.achievement && configJS.achievement.lang) || '');
   const fallback = lang.toLowerCase().startsWith('fr') && french ? french : english;
   return interpolate(fallback || key);
+}
+
+// Payload for the in-game overlay's `overlay-language` channel. The overlay is
+// a separate renderer (app/view/overlay.html) and must be told which locale to
+// use each time it opens; the preload already exposes the listener.
+function overlayLanguagePayload() {
+  const lang = String((configJS && configJS.achievement && configJS.achievement.lang) || 'english');
+  try {
+    return overlayLocale.loadOverlayLocale({ localeDir: path.join(__dirname, '../locale/lang'), lang });
+  } catch (err) {
+    debug.log(`[overlay] language payload failed: ${err.message || err}`);
+    return { lang, strings: {} };
+  }
 }
 
 const BASE_URL = 'https://www.steamgriddb.com/api/v2';
@@ -2233,6 +2247,7 @@ async function createOverlayWindow(info) {
     overlayWindow.loadFile(path.join(manifest.config.debug ? '' : userData, 'view\\overlay.html'));
     let selectedLanguage = 'english';
     overlayWindow.webContents.on('did-finish-load', () => {
+      overlayWindow.webContents.send('overlay-language', overlayLanguagePayload());
       overlayWindow.webContents.send('show-overlay', info.game);
       overlayWindow.showInactive();
       registerOverlayShortcuts(); // nudge / snap / click-through, active only while the overlay is open
