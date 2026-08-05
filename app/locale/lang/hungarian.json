@@ -76,7 +76,11 @@
     "groupCover": "Borító",
     "manualUnlock": "Megjelölés kézzel feloldottként",
     "clearManualUnlock": "Kézi feloldás törlése",
-    "manualUnlocked": "Kézzel feloldva"
+    "manualUnlocked": "Kézzel feloldva",
+    "uninstallGroup": "Eltávolítás",
+    "uninstallViaSteam": "Eltávolítás Steam-mel…",
+    "runUninstaller": "Játék eltávolítójának futtatása…",
+    "deleteFolder": "Játékmappa törlése (Lomtár)…"
   },
   "settings": {
     "title": "Beállítások",
@@ -198,6 +202,10 @@
           "description": "Az Auto a legjobb elérhető beviteli backendet választja. Válaszd az XInputot a maximális kompatibilitásért, vagy a GameInputot újabb Windows-verziókon.",
           "auto": "Auto"
         }
+      },
+      "uninstallMenu": {
+        "name": "Eltávolítás a játéklistából",
+        "description": "Eltávolítási lehetőségeket ad a játékok jobb gombos menüjéhez (Steam-eltávolítás, játék eltávolítója, vagy mappa áthelyezése a Lomtárba)."
       }
     },
     "emulator": {

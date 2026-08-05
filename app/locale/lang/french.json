@@ -76,7 +76,11 @@
     "groupCover": "Jaquette",
     "manualUnlock": "Marquer comme débloqué manuellement",
     "clearManualUnlock": "Annuler le déblocage manuel",
-    "manualUnlocked": "Débloqué manuellement"
+    "manualUnlocked": "Débloqué manuellement",
+    "uninstallGroup": "Désinstaller",
+    "uninstallViaSteam": "Désinstaller via Steam…",
+    "runUninstaller": "Lancer le désinstalleur du jeu…",
+    "deleteFolder": "Supprimer le dossier du jeu (Corbeille)…"
   },
   "settings": {
     "title": "Paramètres",
@@ -183,6 +187,10 @@
           "description": "Auto choisit le meilleur backend d'entrée disponible. Choisissez XInput pour une compatibilité maximale, ou GameInput sur les versions récentes de Windows.",
           "auto": "Auto"
         }
+      },
+      "uninstallMenu": {
+        "name": "Désinstaller depuis la liste des jeux",
+        "description": "Ajoute des options de désinstallation au menu clic droit des jeux (désinstallation Steam, désinstalleur du jeu, ou déplacement du dossier vers la Corbeille)."
       }
     },
     "emulator": {

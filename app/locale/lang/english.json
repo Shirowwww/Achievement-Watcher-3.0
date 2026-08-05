@@ -76,7 +76,11 @@
     "groupCover": "Cover",
     "manualUnlock": "Mark as manually unlocked",
     "clearManualUnlock": "Clear manual unlock",
-    "manualUnlocked": "Manually unlocked"
+    "manualUnlocked": "Manually unlocked",
+    "uninstallGroup": "Uninstall",
+    "uninstallViaSteam": "Uninstall via Steam…",
+    "runUninstaller": "Run game uninstaller…",
+    "deleteFolder": "Delete game folder (Recycle Bin)…"
   },
   "settings": {
     "title": "Settings",
@@ -198,6 +202,10 @@
           "description": "Auto picks the best available input backend. Choose XInput for maximum compatibility, or GameInput on newer Windows builds.",
           "auto": "Auto"
         }
+      },
+      "uninstallMenu": {
+        "name": "Uninstall from the game list",
+        "description": "Adds Uninstall options to the right-click menu on game tiles (Steam uninstall, game uninstaller, or move folder to Recycle Bin)."
       }
     },
     "emulator": {

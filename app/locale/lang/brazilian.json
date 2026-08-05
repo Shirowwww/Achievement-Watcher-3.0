@@ -76,7 +76,11 @@
     "groupCover": "Capa",
     "manualUnlock": "Marcar como desbloqueado manualmente",
     "clearManualUnlock": "Cancelar desbloqueio manual",
-    "manualUnlocked": "Desbloqueado manualmente"
+    "manualUnlocked": "Desbloqueado manualmente",
+    "uninstallGroup": "Desinstalar",
+    "uninstallViaSteam": "Desinstalar via Steam…",
+    "runUninstaller": "Executar o desinstalador do jogo…",
+    "deleteFolder": "Excluir pasta do jogo (Lixeira)…"
   },
   "settings": {
     "title": "Configurações",
@@ -198,6 +202,10 @@
           "description": "Auto escolhe o melhor backend de entrada disponível. Escolha XInput para máxima compatibilidade ou GameInput em versões recentes do Windows.",
           "auto": "Auto"
         }
+      },
+      "uninstallMenu": {
+        "name": "Desinstalar pela lista de jogos",
+        "description": "Adiciona opções de desinstalação ao menu de botão direito dos jogos (desinstalação Steam, desinstalador do jogo ou mover a pasta para a Lixeira)."
       }
     },
     "emulator": {

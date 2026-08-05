@@ -9,6 +9,14 @@ const { getSteamPath, getSteamUsers } = require('../../parser/steam.js');
 
 const appPath = remote.app.getAppPath();
 
+// Native Windows menus render icons at their natural size; the bundled icons are
+// 32×32 and look oversized at typical DPI. Normalize to the standard 16×16 size.
+function menuIcon(name) {
+  const img = nativeImage.createFromPath(path.join(appPath, 'resources/img', name));
+  if (img.isEmpty()) return img;
+  return img.resize({ width: 16, height: 16, quality: 'best' });
+}
+
 function contextMenu(e, position = null) {
   e.preventDefault();
   const self = this;
@@ -33,7 +41,7 @@ function contextMenu(e, position = null) {
 
   menu.append(
     new MenuItem({
-      icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/folder-open.png')),
+      icon: menuIcon('folder-open.png'),
       label: 'Browse...',
       click: function () {
         selectFileDialog.call(self);
@@ -43,7 +51,7 @@ function contextMenu(e, position = null) {
 
   menu.append(
     new MenuItem({
-      icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/redo-alt.png')),
+      icon: menuIcon('redo-alt.png'),
       label: 'Reset to default avatar',
       click: function () {
         localStorage.removeItem('avatar');
@@ -57,7 +65,7 @@ function contextMenu(e, position = null) {
   if (self.steamUsers.length === 0) {
     menu.append(
       new MenuItem({
-        icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/steam.png')),
+        icon: menuIcon('steam.png'),
         label: 'Import from Steam...',
         click: function () {
           getSteamPath()
@@ -86,7 +94,7 @@ function contextMenu(e, position = null) {
     for (let i = 0; i < self.steamUsers.length; i++) {
       menu.append(
         new MenuItem({
-          icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/steam.png')),
+          icon: menuIcon('steam.png'),
           // A lone "&" in a native menu label is an accelerator marker (swallowed); double it so a
           // Steam name containing "&" renders literally.
           label: `Import ${String(self.steamUsers[i].name).replace(/&/g, '&&')}'s Steam avatar`,

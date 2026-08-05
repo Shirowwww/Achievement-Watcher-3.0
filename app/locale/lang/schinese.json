@@ -76,7 +76,11 @@
     "groupCover": "封面",
     "manualUnlock": "标记为手动解锁",
     "clearManualUnlock": "清除手动解锁",
-    "manualUnlocked": "已手动解锁"
+    "manualUnlocked": "已手动解锁",
+    "uninstallGroup": "卸载",
+    "uninstallViaSteam": "通过 Steam 卸载…",
+    "runUninstaller": "运行游戏卸载程序…",
+    "deleteFolder": "删除游戏文件夹（回收站）…"
   },
   "settings": {
     "title": "设置",
@@ -198,6 +202,10 @@
           "description": "自动会选择可用的最佳输入后端。追求最大兼容性请选 XInput，较新的 Windows 版本可选 GameInput。",
           "auto": "自动"
         }
+      },
+      "uninstallMenu": {
+        "name": "从游戏列表中卸载",
+        "description": "在游戏磁贴的右键菜单中添加卸载选项（通过 Steam 卸载、游戏卸载程序或将文件夹移至回收站）。"
       }
     },
     "emulator": {

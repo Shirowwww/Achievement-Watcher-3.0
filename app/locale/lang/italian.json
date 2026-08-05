@@ -76,7 +76,11 @@
     "groupCover": "Copertina",
     "manualUnlock": "Segna come sbloccato manualmente",
     "clearManualUnlock": "Annulla sblocco manuale",
-    "manualUnlocked": "Sbloccato manualmente"
+    "manualUnlocked": "Sbloccato manualmente",
+    "uninstallGroup": "Disinstalla",
+    "uninstallViaSteam": "Disinstalla tramite Steam…",
+    "runUninstaller": "Esegui il disinstallatore del gioco…",
+    "deleteFolder": "Elimina la cartella del gioco (Cestino)…"
   },
   "settings": {
     "title": "Impostazioni",
@@ -198,6 +202,10 @@
           "description": "Auto sceglie il miglior backend di input disponibile. Scegli XInput per la massima compatibilità o GameInput sulle versioni recenti di Windows.",
           "auto": "Auto"
         }
+      },
+      "uninstallMenu": {
+        "name": "Disinstalla dall'elenco dei giochi",
+        "description": "Aggiunge opzioni di disinstallazione al menu con il tasto destro sui giochi (disinstallazione Steam, disinstallatore del gioco o spostamento della cartella nel Cestino)."
       }
     },
     "emulator": {

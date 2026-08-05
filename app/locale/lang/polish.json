@@ -76,7 +76,11 @@
     "groupCover": "Okładka",
     "manualUnlock": "Oznacz jako odblokowane ręcznie",
     "clearManualUnlock": "Cofnij ręczne odblokowanie",
-    "manualUnlocked": "Odblokowane ręcznie"
+    "manualUnlocked": "Odblokowane ręcznie",
+    "uninstallGroup": "Odinstaluj",
+    "uninstallViaSteam": "Odinstaluj przez Steam…",
+    "runUninstaller": "Uruchom deinstalator gry…",
+    "deleteFolder": "Usuń folder gry (Kosz)…"
   },
   "settings": {
     "title": "Ustawienia",
@@ -198,6 +202,10 @@
           "description": "Auto wybiera najlepszy dostępny backend wejścia. Wybierz XInput dla maksymalnej zgodności lub GameInput w nowszych wersjach Windows.",
           "auto": "Auto"
         }
+      },
+      "uninstallMenu": {
+        "name": "Odinstaluj z listy gier",
+        "description": "Dodaje opcje odinstalowania do menu kontekstowego gier (odinstalowanie przez Steam, deinstalator gry lub przeniesienie folderu do Kosza)."
       }
     },
     "emulator": {

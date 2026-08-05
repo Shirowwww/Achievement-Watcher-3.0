@@ -76,7 +76,11 @@
     "groupCover": "カバー",
     "manualUnlock": "手動解除としてマーク",
     "clearManualUnlock": "手動解除をクリア",
-    "manualUnlocked": "手動で解除済み"
+    "manualUnlocked": "手動で解除済み",
+    "uninstallGroup": "アンインストール",
+    "uninstallViaSteam": "Steam でアンインストール…",
+    "runUninstaller": "ゲームのアンインストーラーを実行…",
+    "deleteFolder": "ゲームフォルダーを削除（ごみ箱）…"
   },
   "settings": {
     "title": "設定",
@@ -198,6 +202,10 @@
           "description": "Autoは利用可能な最適な入力バックエンドを選択します。最大限の互換性にはXInput、新しいWindowsではGameInputを選んでください。",
           "auto": "自動"
         }
+      },
+      "uninstallMenu": {
+        "name": "ゲーム一覧からアンインストール",
+        "description": "ゲームタイルの右クリックメニューにアンインストール項目を追加します（Steam アンインストール、ゲームのアンインストーラー、フォルダーをごみ箱へ移動）。"
       }
     },
     "emulator": {

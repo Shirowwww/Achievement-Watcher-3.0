@@ -98,6 +98,10 @@ function translateUI(lang, locale, template) {
     if (template.contextMenu.groupFolders) selector.attr('data-ctx-group-folders', clear(template.contextMenu.groupFolders));
     if (template.contextMenu.groupLinks) selector.attr('data-ctx-group-links', clear(template.contextMenu.groupLinks));
     if (template.contextMenu.groupCover) selector.attr('data-ctx-group-cover', clear(template.contextMenu.groupCover));
+    if (template.contextMenu.uninstallGroup) selector.attr('data-ctx-uninstall-group', clear(template.contextMenu.uninstallGroup));
+    if (template.contextMenu.uninstallViaSteam) selector.attr('data-ctx-uninstall-steam', clear(template.contextMenu.uninstallViaSteam));
+    if (template.contextMenu.runUninstaller) selector.attr('data-ctx-uninstall-run', clear(template.contextMenu.runUninstaller));
+    if (template.contextMenu.deleteFolder) selector.attr('data-ctx-uninstall-delete', clear(template.contextMenu.deleteFolder));
   }
   selector = $('#user-info .info .stats');
   selector.find('li:nth-child(1) span:eq(1)').text(clear(template.achievements));
@@ -187,6 +191,12 @@ function translateUI(lang, locale, template) {
     $('#theme-settings-label').text(clear(template.settings.general.theme.name));
     $('#theme-settings-help').text(clear(template.settings.general.theme.description));
     // Theme names themselves are proper nouns and stay untranslated.
+  }
+  if (template.settings.general.uninstallMenu) {
+    $('#uninstall-settings-label').text(clear(template.settings.general.uninstallMenu.name));
+    $('#uninstall-settings-help').text(clear(template.settings.general.uninstallMenu.description));
+    $("#option_uninstallContextMenu option[value='true']").text(clear(template.settings.common.enable));
+    $("#option_uninstallContextMenu option[value='false']").text(clear(template.settings.common.disable));
   }
   $('#general-options-title').text(clear(template.settings.general.sectionTitle));
 

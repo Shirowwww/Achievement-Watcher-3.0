@@ -5,8 +5,20 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- Right-click uninstall from the game list: game tiles now offer an "Uninstall"
+  submenu that can run the game's own uninstaller (Inno Setup/NSIS silent flags
+  when detected), ask the Steam client to uninstall the game
+  (`steam://uninstall/<appid>`), or move the game folder to the Recycle Bin when
+  no uninstaller exists. The feature is toggled from Settings > General
+  ("Uninstall from the game list") and every action asks for confirmation first.
+
 ### Fixed
 
+- Right-click context menus (game tiles and the avatar menu) now render their
+  icons at the standard 16×16 size instead of the bundled 32×32 images, which
+  looked oversized on normal and high-DPI displays.
 - Interface translations across the bundled locales: corrected false-friend
   terms ("Disabled" no longer reads as "disabled person", "Toast" no longer
   reads as toasted bread), aligned onboarding labels with the wording used in

@@ -76,7 +76,11 @@
     "groupCover": "Cover",
     "manualUnlock": "Als manuell freigeschaltet markieren",
     "clearManualUnlock": "Manuelle Freischaltung aufheben",
-    "manualUnlocked": "Manuell freigeschaltet"
+    "manualUnlocked": "Manuell freigeschaltet",
+    "uninstallGroup": "Deinstallieren",
+    "uninstallViaSteam": "Über Steam deinstallieren…",
+    "runUninstaller": "Spiel-Deinstallationsprogramm ausführen…",
+    "deleteFolder": "Spielordner löschen (Papierkorb)…"
   },
   "settings": {
     "title": "Einstellungen",
@@ -198,6 +202,10 @@
           "description": "Auto wählt das beste verfügbare Eingabe-Backend. Wähle XInput für maximale Kompatibilität oder GameInput auf neueren Windows-Versionen.",
           "auto": "Auto"
         }
+      },
+      "uninstallMenu": {
+        "name": "Aus der Spieleliste deinstallieren",
+        "description": "Fügt dem Rechtsklick-Menü der Spiele Deinstallationsoptionen hinzu (Steam-Deinstallation, Spiel-Deinstallationsprogramm oder Ordner in den Papierkorb verschieben)."
       }
     },
     "emulator": {

@@ -49,6 +49,7 @@ emulatorSourceOverride.setUserDataPath(getUserDataPath());
 const l10n = require(path.join(appPath, 'locale/loader.js'));
 const toastAudio = require(path.join(appPath, 'util/toastAudio.js'));
 const coverStore = require(path.join(appPath, 'util/coverStore.js'));
+const uninstall = require(path.join(appPath, 'util/uninstall.js'));
 const { resolveGameRarityContext } = require(path.join(appPath, 'util/rarity.js'));
 // `escapeHtml` is declared once in ui/settings.js (which loads immediately before this script).
 // Classic <script>s share a single global lexical scope, so re-declaring `const escapeHtml` here
@@ -188,6 +189,33 @@ function clearGameBoxBusy($box) {
   if (!$box || !$box.length) return;
   $box.removeClass('wait');
   $box.find('.loading-overlay .content').first().html('<i class="fas fa-spinner fa-spin"></i>');
+}
+
+// Tracks in-flight uninstall completions so the game list refreshes once the
+// uninstaller (or Steam) has actually removed the game. One poll per
+// (mode, appid, folder) so repeated right-click actions don't stack timers.
+const uninstallPolls = new Map();
+function pollUninstallCompletion({ appid, gameDir, mode } = {}) {
+  const key = `${mode}|${String(appid)}|${String(gameDir || '')}`;
+  if (uninstallPolls.has(key)) return;
+  const started = Date.now();
+  const timer = setInterval(() => {
+    const elapsed = Date.now() - started;
+    let done = false;
+    if (mode === 'local') {
+      done = gameDir ? !fs.existsSync(gameDir) : false;
+    } else if (mode === 'steam') {
+      const gameDirGone = gameDir ? !fs.existsSync(gameDir) : false;
+      const info = /^[0-9]+$/.test(String(appid)) ? uninstall.getSteamUninstallInfo(appid) : null;
+      done = gameDirGone || (info && info.installed === false);
+    }
+    if (done || elapsed >= 120000) {
+      clearInterval(timer);
+      uninstallPolls.delete(key);
+      if (done) setTimeout(() => app.onStart(), 800);
+    }
+  }, 3000);
+  uninstallPolls.set(key, timer);
 }
 
 // request-zero (and some native callbacks) reject with a plain { code, message } object rather than an
@@ -1127,6 +1155,14 @@ var app = {
           const contextIsFrench = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
 
           const { Menu, MenuItem, nativeImage } = remote;
+          // Native Windows menus render icons at their natural size; the bundled
+          // icons are 32×32 and look oversized at typical DPI. Normalize every
+          // context-menu icon to the standard 16×16 size.
+          const menuIcon = (name) => {
+            const img = nativeImage.createFromPath(path.join(appPath, 'resources/img', name));
+            if (img.isEmpty()) return img;
+            return img.resize({ width: 16, height: 16, quality: 'best' });
+          };
           const menu = new Menu();
           const gameMenu = new Menu();
           const emulatorMenu = new Menu();
@@ -1252,7 +1288,7 @@ var app = {
           };
           gameMenu.append(
             new MenuItem({
-              icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/cross.png')),
+              icon: menuIcon('cross.png'),
               label: $('#game-list').attr('data-contextMenu0'),
               click() {
                 try {
@@ -1299,7 +1335,7 @@ var app = {
             }
             gameMenu.append(
               new MenuItem({
-                icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/file-text.png')),
+                icon: menuIcon('file-text.png'),
                 label: contextIsFrench ? 'Source de l’émulateur' : 'Emulator source',
                 submenu: emulatorSourceMenu,
               })
@@ -1374,7 +1410,7 @@ var app = {
             if (app.config.notification_advanced.iconPrefetch) {
               emulatorMenu.append(
                 new MenuItem({
-                  icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/image.png')),
+                  icon: menuIcon('image.png'),
                   label: $('#game-list').attr('data-contextMenu1'),
                   async click() {
                     self.css('pointer-events', 'none');
@@ -1403,7 +1439,7 @@ var app = {
 
             emulatorMenu.append(
               new MenuItem({
-                icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/file-text.png')),
+                icon: menuIcon('file-text.png'),
                 label: $('#game-list').attr('data-ctx-genjson') || 'Generate achievements.json for Goldberg Emu',
                 async click() {
                   self.css('pointer-events', 'none');
@@ -1473,7 +1509,7 @@ var app = {
             emulatorMenu.append(new MenuItem({ type: 'separator' }));
             emulatorMenu.append(
               new MenuItem({
-                icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/file-text.png')),
+                icon: menuIcon('file-text.png'),
                 label: $('#game-list').attr('data-ctx-diagnose') || 'Diagnose Goldberg/GBE setup',
                 async click() {
                   try {
@@ -1502,7 +1538,7 @@ var app = {
             if (backupGame?.gameDir && fs.existsSync(backupGame.gameDir)) {
               emulatorMenu.append(
                 new MenuItem({
-                  icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/folder-open.png')),
+                  icon: menuIcon('folder-open.png'),
                   label: $('#game-list').attr('data-ctx-backupgbe') || 'Back up GBE/Goldberg setup (steam_settings + steam_api(64).dll)…',
                   async click() {
                     try {
@@ -1558,7 +1594,7 @@ var app = {
               // live install — the manual undo for a bad emulator fix / DLC edit / DRM strip.
               emulatorMenu.append(
                 new MenuItem({
-                  icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/redo-alt.png')),
+                  icon: menuIcon('redo-alt.png'),
                   label: $('#game-list').attr('data-ctx-restoregbe') || 'Restore latest GBE/Goldberg backup…',
                   async click() {
                     const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
@@ -1632,7 +1668,7 @@ var app = {
               emulatorMenu.append(new MenuItem({ type: 'separator' }));
               emulatorMenu.append(
                 new MenuItem({
-                  icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/file-text.png')),
+                  icon: menuIcon('file-text.png'),
                   label: $('#game-list').attr('data-ctx-installgbe') || 'Apply emulator fix (GBE Fork)…',
                   async click() {
                     const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
@@ -1951,7 +1987,7 @@ var app = {
               // as <exe>.steamstub.bak. Manual-only since it rewrites the game binary.
               emulatorMenu.append(
                 new MenuItem({
-                  icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/file-text.png')),
+                  icon: menuIcon('file-text.png'),
                   label: $('#game-list').attr('data-ctx-removedrm') || 'Remove Steam DRM (Steamless)…',
                   async click() {
                     const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
@@ -2050,7 +2086,7 @@ var app = {
               // backed up under <gameDir>/.aw-crackfix-backups/.
               emulatorMenu.append(
                 new MenuItem({
-                  icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/file-text.png')),
+                  icon: menuIcon('file-text.png'),
                   label: $('#game-list').attr('data-ctx-crackfix') || 'Community fix (CrakFiles)…',
                   async click() {
                     const fr = String(app.config?.achievement?.lang || '').toLowerCase().startsWith('fr');
@@ -2297,7 +2333,7 @@ var app = {
 
               emulatorMenu.append(
                 new MenuItem({
-                  icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/file-text.png')),
+                  icon: menuIcon('file-text.png'),
                   label: contextIsFrench
                     ? 'Appliquer le correctif émulateur (Uplay R2)…'
                     : $('#game-list').attr('data-ctx-installuplayr2') || 'Apply emulator fix (Uplay R2)…',
@@ -2462,7 +2498,7 @@ var app = {
 
               emulatorMenu.append(
                 new MenuItem({
-                  icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/file-text.png')),
+                  icon: menuIcon('file-text.png'),
                   label: contextIsFrench
                     ? 'Diagnostiquer la configuration Uplay R2'
                     : $('#game-list').attr('data-ctx-diagnoseuplayr2') || 'Diagnose Uplay R2 setup',
@@ -2523,7 +2559,7 @@ var app = {
               if (ubisoftTools.runtimeDir && fs.existsSync(ubisoftTools.runtimeDir)) {
                 folderMenu.append(
                   new MenuItem({
-                    icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/folder-open.png')),
+                    icon: menuIcon('folder-open.png'),
                     label: contextIsFrench ? 'Ouvrir le dossier de configuration Uplay R2' : 'Open Uplay R2 configuration folder',
                     click() {
                       remote.shell.openPath(ubisoftTools.runtimeDir);
@@ -2568,7 +2604,7 @@ var app = {
                   }) || ubisoftTools.saveDir;
                 folderMenu.append(
                   new MenuItem({
-                    icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/folder-open.png')),
+                    icon: menuIcon('folder-open.png'),
                     label: contextIsFrench ? 'Ouvrir les sauvegardes de succès Ubisoft' : 'Open Ubisoft achievement saves',
                     click() {
                       fs.mkdirSync(liveSaveDir, { recursive: true });
@@ -2583,7 +2619,7 @@ var app = {
 
             folderMenu.append(
               new MenuItem({
-                icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/folder-open.png')),
+                icon: menuIcon('folder-open.png'),
                 label: $('#game-list').attr('data-ctx-iconcache') || `Open the game's icon cache folder`,
                 click() {
                   remote.shell.openPath(path.join(process.env['APPDATA'], 'Achievement Watcher', 'steam_cache', 'icon', catalogAppid || `${appid}`));
@@ -2592,7 +2628,7 @@ var app = {
             );
             folderMenu.append(
               new MenuItem({
-                icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/folder-open.png')),
+                icon: menuIcon('folder-open.png'),
                 label: $('#game-list').attr('data-ctx-dbcache') || `Open the game's .db cache folder`,
                 click() {
                   remote.shell.showItemInFolder(
@@ -2608,7 +2644,7 @@ var app = {
             if (gameForDir?.gameDir && fs.existsSync(gameForDir.gameDir)) {
               folderMenu.append(
                 new MenuItem({
-                  icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/folder-open.png')),
+                  icon: menuIcon('folder-open.png'),
                   label: $('#game-list').attr('data-ctx-installloc') || `Open the game's install location`,
                   click() {
                     remote.shell.openPath(gameForDir.gameDir);
@@ -2622,7 +2658,7 @@ var app = {
             if (/^[0-9]+$/.test(catalogAppid)) {
               linkMenu.append(
                 new MenuItem({
-                  icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/globe.png')),
+                  icon: menuIcon('globe.png'),
                   label: 'Steam',
                   click() {
                     remote.shell.openExternal(`https://store.steampowered.com/app/${catalogAppid}/`);
@@ -2631,7 +2667,7 @@ var app = {
               );
               linkMenu.append(
                 new MenuItem({
-                  icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/globe.png')),
+                  icon: menuIcon('globe.png'),
                   label: 'SteamDB',
                   click() {
                     remote.shell.openExternal(`https://steamdb.info/app/${catalogAppid}/`);
@@ -2640,7 +2676,7 @@ var app = {
               );
               linkMenu.append(
                 new MenuItem({
-                  icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/globe.png')),
+                  icon: menuIcon('globe.png'),
                   label: 'PCGamingWiki',
                   click() {
                     remote.shell.openExternal(`https://pcgamingwiki.com/api/appid.php?appid=${catalogAppid}`);
@@ -2649,7 +2685,7 @@ var app = {
               );
               linkMenu.append(
                 new MenuItem({
-                  icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/globe.png')),
+                  icon: menuIcon('globe.png'),
                   label: 'SteamHunters',
                   click() {
                     remote.shell.openExternal(`https://steamhunters.com/apps/${catalogAppid}/achievements`);
@@ -2658,7 +2694,7 @@ var app = {
               );
               linkMenu.append(
                 new MenuItem({
-                  icon: nativeImage.createFromPath(path.join(appPath, 'resources/img/globe.png')),
+                  icon: menuIcon('globe.png'),
                   label: 'Steam Community',
                   click() {
                     remote.shell.openExternal(`https://steamcommunity.com/app/${catalogAppid}/guides/`);
@@ -2672,7 +2708,7 @@ var app = {
             const linkGame = list.find((g) => g.appid == appid);
             const linkName = encodeURIComponent((linkGame && linkGame.name) || '');
             const sourceLower = String((linkGame && linkGame.source) || '').toLowerCase();
-            const globeIcon = () => nativeImage.createFromPath(path.join(appPath, 'resources/img/globe.png'));
+            const globeIcon = () => menuIcon('globe.png');
             const hasLink = (label) => linkMenu.items.some((item) => item.label === label);
             const addPcgw = (label) => {
               if (hasLink(label)) return;
@@ -2745,6 +2781,205 @@ var app = {
                 );
                 addPcgw('PCGamingWiki');
               }
+            }
+          }
+
+          // ---- Uninstall (opt-in via Settings > General) ----
+          if (app.config?.general?.uninstallContextMenu !== false) {
+            const uninstallFr = contextIsFrench;
+            const uninstallCtx = $('#game-list');
+            const uninstallGame = list.find((g) => g.appid == appid);
+            const uninstallDir =
+              uninstallGame && uninstallGame.gameDir && fs.existsSync(uninstallGame.gameDir)
+                ? path.resolve(uninstallGame.gameDir)
+                : null;
+            const uninstallMenu = new Menu();
+            let uninstallEntries = 0;
+
+            // 1) Steam client uninstall (steam://uninstall/<appid>) — offered for real
+            //    Steam-owned games, or any numeric AppID the Steam client confirms as
+            //    installed (covers GreenLuma-style libraries too).
+            const steamUrl = uninstall.steamUninstallUrl(catalogAppid);
+            if (steamUrl) {
+              const steamInfo = uninstall.getSteamUninstallInfo(catalogAppid);
+              if (isLegitSteamOwned || steamInfo.installed === true) {
+                uninstallMenu.append(
+                  new MenuItem({
+                    icon: menuIcon('steam.png'),
+                    label: uninstallCtx.attr('data-ctx-uninstall-steam') || (uninstallFr ? 'Désinstaller via Steam…' : 'Uninstall via Steam…'),
+                    async click() {
+                      const gameName = list.find((g) => g.appid == appid)?.name || String(appid);
+                      const confirm = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+                        type: 'warning',
+                        title: uninstallFr ? 'Désinstaller via Steam' : 'Uninstall via Steam',
+                        message: uninstallFr ? `Désinstaller « ${gameName} » via Steam ?` : `Uninstall "${gameName}" via Steam?`,
+                        detail: uninstallFr
+                          ? 'Steam supprimera les fichiers locaux du jeu. Tu pourras le réinstaller plus tard depuis ta bibliothèque.'
+                          : "Steam will remove the game's local files. You can reinstall it later from your library.",
+                        buttons: [uninstallFr ? 'Annuler' : 'Cancel', uninstallFr ? 'Désinstaller' : 'Uninstall'],
+                        defaultId: 1,
+                        cancelId: 0,
+                        noLink: true,
+                      });
+                      if (confirm.response !== 1) return;
+                      try {
+                        await remote.shell.openExternal(steamUrl);
+                      } catch (err) {
+                        remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                          type: 'error',
+                          title: uninstallFr ? 'Échec de la désinstallation Steam' : 'Steam uninstall failed',
+                          message: uninstallFr ? "Impossible d'ouvrir Steam pour désinstaller ce jeu." : 'Could not open Steam to uninstall this game.',
+                          detail: formatErr(err),
+                        });
+                        return;
+                      }
+                      remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                        type: 'info',
+                        title: uninstallFr ? 'Steam ouvert' : 'Steam opened',
+                        message: uninstallFr
+                          ? 'Steam va gérer la désinstallation. La liste se rafraîchira automatiquement.'
+                          : 'Steam will handle the uninstall. The game list will refresh automatically.',
+                        noLink: true,
+                      });
+                      if (uninstallDir) {
+                        pollUninstallCompletion({ appid: catalogAppid, gameDir: uninstallDir, mode: 'steam' });
+                      } else {
+                        // No local folder to watch and the registry may be unavailable:
+                        // give Steam a moment, then refresh once.
+                        setTimeout(() => app.onStart(), 12000);
+                      }
+                    },
+                  })
+                );
+                uninstallEntries++;
+              }
+            }
+
+            // 2) Local uninstaller / folder removal — never for legit Steam games
+            //    (Steam owns those files and should be the one removing them).
+            if (uninstallDir && !isLegitSteamOwned) {
+              const local = uninstall.findLocalUninstaller(uninstallDir);
+              if (local) {
+                uninstallMenu.append(
+                  new MenuItem({
+                    icon: menuIcon('file-text.png'),
+                    label: uninstallCtx.attr('data-ctx-uninstall-run') || (uninstallFr ? 'Lancer le désinstalleur du jeu…' : 'Run game uninstaller…'),
+                    async click() {
+                      const gameName = list.find((g) => g.appid == appid)?.name || String(appid);
+                      const confirm = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+                        type: 'warning',
+                        title: uninstallFr ? 'Désinstaller le jeu' : 'Uninstall game',
+                        message: uninstallFr
+                          ? `Désinstaller « ${gameName} » avec ${local.name} ?`
+                          : `Uninstall "${gameName}" with ${local.name}?`,
+                        detail:
+                          uninstallDir +
+                          (local.silent
+                            ? uninstallFr
+                              ? '\n\nLe désinstalleur s’exécutera en mode silencieux.'
+                              : '\n\nThe uninstaller will run in silent mode.'
+                            : uninstallFr
+                            ? '\n\nAucun mode silencieux fiable n’a été détecté : suis les invites du désinstalleur.'
+                            : '\n\nNo reliable silent mode was detected: follow the uninstaller prompts.'),
+                        buttons: [uninstallFr ? 'Annuler' : 'Cancel', uninstallFr ? 'Désinstaller' : 'Uninstall'],
+                        defaultId: 1,
+                        cancelId: 0,
+                        noLink: true,
+                      });
+                      if (confirm.response !== 1) return;
+                      let child;
+                      try {
+                        child = spawn(local.file, local.args, { cwd: uninstallDir, detached: true, stdio: 'ignore' });
+                      } catch (err) {
+                        remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                          type: 'error',
+                          title: uninstallFr ? 'Échec du lancement' : 'Launch failed',
+                          message: uninstallFr ? 'Impossible de lancer le désinstalleur.' : 'Could not launch the uninstaller.',
+                          detail: formatErr(err),
+                        });
+                        return;
+                      }
+                      child.on('error', (err) => {
+                        debug.warn(`[uninstall] ${local.file} => ${formatErr(err)}`);
+                        remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                          type: 'error',
+                          title: uninstallFr ? 'Échec du lancement' : 'Launch failed',
+                          message: uninstallFr ? 'Impossible de lancer le désinstalleur.' : 'Could not launch the uninstaller.',
+                          detail: formatErr(err),
+                        });
+                      });
+                      // Refresh once the uninstaller process itself exits — covers
+                      // uninstallers that leave an empty folder behind (the poll
+                      // above catches the folder-gone case even earlier).
+                      child.on('exit', () => setTimeout(() => app.onStart(), 1500));
+                      child.unref();
+                      remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                        type: 'info',
+                        title: uninstallFr ? 'Désinstallation lancée' : 'Uninstall started',
+                        message: uninstallFr
+                          ? 'Le désinstalleur a été lancé. La liste se rafraîchira automatiquement.'
+                          : 'The uninstaller was started. The game list will refresh automatically.',
+                        noLink: true,
+                      });
+                      pollUninstallCompletion({ appid, gameDir: uninstallDir, mode: 'local' });
+                    },
+                  })
+                );
+                uninstallEntries++;
+              } else if (uninstall.isSafeTrashTarget(uninstallDir)) {
+                uninstallMenu.append(
+                  new MenuItem({
+                    icon: menuIcon('folder-open.png'),
+                    label:
+                      uninstallCtx.attr('data-ctx-uninstall-delete') ||
+                      (uninstallFr ? 'Supprimer le dossier du jeu (Corbeille)…' : 'Delete game folder (Recycle Bin)…'),
+                    async click() {
+                      const gameName = list.find((g) => g.appid == appid)?.name || String(appid);
+                      const confirm = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+                        type: 'warning',
+                        title: uninstallFr ? 'Supprimer le dossier du jeu' : 'Delete game folder',
+                        message: uninstallFr
+                          ? `Déplacer le dossier de « ${gameName} » vers la Corbeille ?`
+                          : `Move "${gameName}"'s folder to the Recycle Bin?`,
+                        detail:
+                          uninstallDir +
+                          (uninstallFr
+                            ? '\n\nAucun désinstalleur n’a été trouvé dans ce dossier. Les fichiers seront déplacés vers la Corbeille (récupérables).'
+                            : '\n\nNo uninstaller was found in this folder. The files will be moved to the Recycle Bin (recoverable).'),
+                        buttons: [uninstallFr ? 'Annuler' : 'Cancel', uninstallFr ? 'Supprimer' : 'Delete'],
+                        defaultId: 1,
+                        cancelId: 0,
+                        noLink: true,
+                      });
+                      if (confirm.response !== 1) return;
+                      try {
+                        await remote.shell.trashItem(uninstallDir);
+                      } catch (err) {
+                        remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                          type: 'error',
+                          title: uninstallFr ? 'Échec de la suppression' : 'Delete failed',
+                          message: uninstallFr ? 'Impossible de déplacer le dossier vers la Corbeille.' : 'Could not move the folder to the Recycle Bin.',
+                          detail: formatErr(err),
+                        });
+                        return;
+                      }
+                      app.onStart();
+                    },
+                  })
+                );
+                uninstallEntries++;
+              }
+            }
+
+            if (uninstallEntries > 0) {
+              gameMenu.append(new MenuItem({ type: 'separator' }));
+              gameMenu.append(
+                new MenuItem({
+                  icon: menuIcon('cross.png'),
+                  label: uninstallCtx.attr('data-ctx-uninstall-group') || (uninstallFr ? 'Désinstaller' : 'Uninstall'),
+                  submenu: uninstallMenu,
+                })
+              );
             }
           }
 

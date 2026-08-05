@@ -47,6 +47,12 @@ module.exports.load = () => {
     if (typeof options.general.closeToTray !== 'boolean') {
       options.general.closeToTray = true;
     }
+    // Right-click uninstall menu on game tiles (Settings > General). Default ON:
+    // the feature is discoverable out of the box, and every action still asks for
+    // confirmation before touching anything.
+    if (typeof options.general.uninstallContextMenu !== 'boolean') {
+      options.general.uninstallContextMenu = true;
+    }
     // App color theme (Settings > General) — built-in variants applied via <html data-theme="...">,
     // plus user themes loaded from <userData>\themes (stored as "user:<name>").
     if (
@@ -404,6 +410,7 @@ module.exports.load = () => {
         startWithWindows: true,
         disableHardwareAccel: false,
         closeToTray: true,
+        uninstallContextMenu: true,
         theme: 'default',
       },
       overlay: {

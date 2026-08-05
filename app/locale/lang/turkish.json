@@ -76,7 +76,11 @@
     "groupCover": "Kapak",
     "manualUnlock": "Manuel açılmış olarak işaretle",
     "clearManualUnlock": "Manuel açmayı kaldır",
-    "manualUnlocked": "Manuel açıldı"
+    "manualUnlocked": "Manuel açıldı",
+    "uninstallGroup": "Kaldır",
+    "uninstallViaSteam": "Steam üzerinden kaldır…",
+    "runUninstaller": "Oyun kaldırıcısını çalıştır…",
+    "deleteFolder": "Oyun klasörünü sil (Çöp Kutusu)…"
   },
   "settings": {
     "title": "Ayarlar",
@@ -198,6 +202,10 @@
           "description": "Auto mevcut en iyi giriş arka ucunu seçer. Maksimum uyumluluk için XInput, daha yeni Windows sürümlerinde GameInput seçin.",
           "auto": "Otomatik"
         }
+      },
+      "uninstallMenu": {
+        "name": "Oyun listesinden kaldır",
+        "description": "Oyun kutucuklarının sağ tık menüsüne kaldırma seçenekleri ekler (Steam kaldırma, oyun kaldırıcısı veya klasörü Çöp Kutusu'na taşıma)."
       }
     },
     "emulator": {

@@ -76,7 +76,11 @@
     "groupCover": "Obal",
     "manualUnlock": "Označiť ako ručne odomknuté",
     "clearManualUnlock": "Zrušiť ručné odomknutie",
-    "manualUnlocked": "Ručne odomknuté"
+    "manualUnlocked": "Ručne odomknuté",
+    "uninstallGroup": "Odinštalovať",
+    "uninstallViaSteam": "Odinštalovať cez Steam…",
+    "runUninstaller": "Spustiť odinštalátor hry…",
+    "deleteFolder": "Odstrániť priečinok hry (Kôš)…"
   },
   "settings": {
     "title": "Nastavenia",
@@ -198,6 +202,10 @@
           "description": "Auto zvolí najlepší dostupný vstupný backend. Zvoľte XInput pre maximálnu kompatibilitu alebo GameInput na novších verziách Windows.",
           "auto": "Auto"
         }
+      },
+      "uninstallMenu": {
+        "name": "Odinštalovať zo zoznamu hier",
+        "description": "Pridá možnosti odinštalovania do kontextovej ponuky hier (odinštalovanie cez Steam, odinštalátor hry alebo presun priečinka do Koša)."
       }
     },
     "emulator": {
