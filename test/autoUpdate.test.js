@@ -25,8 +25,8 @@ test('packaged builds check the GitHub feed, ask before downloading, then ask be
   assert.match(init, /autoUpdater\.quitAndInstall\(\)/);
 
   // The updater stays supervised while the app is resident: a failed check retries after a delay,
-  // a successful one re-checks every six hours, and errors surface in the tray instead of being
-  // silently logged away.
+  // a successful one re-checks hourly, and errors surface in the tray instead of being silently
+  // logged away. A check that fires while a prompt is open reschedules instead of dying.
   assert.match(init, /scheduleUpdateCheck\(8000\)/);
   assert.match(init, /UPDATE_RECHECK_MS/);
   assert.match(init, /UPDATE_RETRY_MS/);

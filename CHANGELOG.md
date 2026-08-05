@@ -3,6 +3,14 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Changed
+
+- The resident update check now runs hourly instead of every six hours, and a check that fires
+  while an update prompt is open reschedules itself instead of stopping all future checks until
+  the app restarts.
+
 ## 3.5.3 - 2026-08-05
 
 ### Added

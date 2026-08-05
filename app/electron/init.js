@@ -29,7 +29,7 @@ autoUpdater.autoInstallOnAppQuit = false;
 let updateCheckTimer = null;
 let updatePromptOpen = false;
 let updaterErrorNotified = false;
-const UPDATE_RECHECK_MS = 6 * 60 * 60 * 1000; // silent re-check while the app stays resident
+const UPDATE_RECHECK_MS = 60 * 60 * 1000; // silent hourly re-check while the app stays resident
 const UPDATE_RETRY_MS = 30 * 60 * 1000; // slower retry after a failed check
 
 function isVersionSkipped(version) {
@@ -60,7 +60,13 @@ function scheduleUpdateCheck(delayMs) {
   clearTimeout(updateCheckTimer);
   updateCheckTimer = setTimeout(() => {
     updateCheckTimer = null;
-    if (!app.isPackaged || updatePromptOpen) return;
+    if (!app.isPackaged) return;
+    if (updatePromptOpen) {
+      // Keep the chain alive: if a prompt is open when the timer fires, retry after
+      // the normal interval instead of silently dropping all future checks.
+      scheduleUpdateCheck(UPDATE_RECHECK_MS);
+      return;
+    }
     autoUpdater
       .checkForUpdates()
       .then(() => {
