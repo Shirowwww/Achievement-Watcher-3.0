@@ -6237,6 +6237,9 @@ body {
   min-width: 0;
   max-width: 100%;
   flex-wrap: nowrap;
+  /* Pin the controls to the right edge exactly like every other layer row, whatever
+     the label width or panel state — nothing may pull them toward the middle. */
+  margin-left: auto;
 }
 
 /* Only the filename may shrink inside the controls: the picker/buttons/selects keep
