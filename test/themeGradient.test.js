@@ -31,6 +31,14 @@ test('legacy gradient:true converts into a default dark fade', () => {
   assert.equal(clean.bg.gradient.angle, 180);
 });
 
+test('angle 0 is preserved (not coerced to 180) through sanitize and CSS', () => {
+  const clean = themeLayers.sanitizeCustomTheme({ bg: { color: '#123456', gradient: { enabled: true, from: '#111111', to: '#222222', angle: 0 } } });
+  assert.equal(clean.bg.gradient.angle, 0);
+  const theme = themeLayers.defaultCustomTheme();
+  theme.bg.gradient = clean.bg.gradient;
+  assert.match(themeLayers.buildCustomAppCss(theme), /--aw-grad-bg: linear-gradient\(0deg, #111111 0%, #222222 100%\)/);
+});
+
 test('buildCustomAppCss emits gradients for surface layers when enabled', () => {
   const theme = themeLayers.defaultCustomTheme();
   for (const id of ['bg', 'header', 'panel', 'card', 'settings']) {
