@@ -61,7 +61,18 @@ autoUpdater.verifyUpdateCodeSignature = (publisherNames, unescapedTempUpdateFile
         try {
           const data = JSON.parse(stdout);
           const subject = data && data.SignerCertificate && data.SignerCertificate.Subject;
-          if (subject && publisherNames.some((name) => subject.includes(`CN=${name}`))) {
+          // Releases are intentionally unsigned when no local certificate exists (see
+          // build/signing/). electron-updater still runs this verifier, and rejecting an
+          // unsigned file made every "Download && Install" fail with "App is not signed"
+          // (issue #17) even though latest.yml's SHA-512 already authenticates the file.
+          // Accept the missing-signature case explicitly and keep rejecting a signature
+          // that belongs to someone other than our publisher.
+          if (!subject) {
+            debug.log('[updater] update file carries no Authenticode signature — accepting (unsigned release)');
+            resolve(null);
+            return;
+          }
+          if (publisherNames.some((name) => subject.includes(`CN=${name}`))) {
             resolve(null); // signer matches our publisher CN -> verified
             return;
           }
