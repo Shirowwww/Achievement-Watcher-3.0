@@ -116,3 +116,12 @@ test('launcher-managed storefront roots are never probed as library folders', ()
     assert.ok(!saveRoots.GAME_LIBRARY_FOLDER_NAMES.includes(name), `"${name}" must never be auto-probed`);
   }
 });
+
+test('library-like folder names gate the Desktop subfolder scan', () => {
+  for (const name of ['Jeux', 'Games', 'Juegos', 'Spiele', 'Giochi', 'Games Library', 'GameLibrary', 'GOG Games', 'Epic Games', 'Repacks', 'Repack', 'Bibliothèque', 'Bibliotheque', 'My Games']) {
+    assert.equal(saveRoots.isLibraryLikeFolderName(name), true, `"${name}" must count as a library folder`);
+  }
+  for (const name of ['Desktop', 'Documents', 'Steam', 'Ubisoft Game Launcher', 'GOG Galaxy', 'Epic Games Launcher', 'Game', '']) {
+    assert.equal(saveRoots.isLibraryLikeFolderName(name), false, `"${name}" must not count as a library folder`);
+  }
+});

@@ -39,19 +39,36 @@ test('Goldberg install with steam_settings but no appid resolves by game name, b
   const gameDir = path.join(root, 'Real Game');
   const dolphinDir = path.join(root, 'Dolphin');
   const dolphinGbeDir = path.join(root, 'Dolphin-x64');
+  const legitEpicDir = path.join(root, 'Legit Epic Game');
+  const legitGogDir = path.join(root, 'Legit GOG Game');
+  const legitUbiDir = path.join(root, 'Legit Ubisoft Game');
+  const nestedGameDir = path.join(envRoot, 'Desktop', 'Jeux', 'Nested Game');
+  const nestedGamesDir = path.join(root, 'Games', 'Nested Under Games');
   const oldEnv = {
     APPDATA: process.env.APPDATA,
     LOCALAPPDATA: process.env.LOCALAPPDATA,
     PUBLIC: process.env.PUBLIC,
     PROGRAMDATA: process.env.PROGRAMDATA,
+    USERPROFILE: process.env.USERPROFILE,
   };
   process.env.APPDATA = path.join(envRoot, 'AppData');
   process.env.LOCALAPPDATA = path.join(envRoot, 'LocalAppData');
   process.env.PUBLIC = path.join(envRoot, 'Public');
   process.env.PROGRAMDATA = path.join(envRoot, 'ProgramData');
+  process.env.USERPROFILE = envRoot;
 
   writeBytes(path.join(gameDir, 'RealGame.exe'), 1024);
   fs.mkdirSync(path.join(gameDir, 'steam_settings'), { recursive: true });
+  writeBytes(path.join(legitEpicDir, 'LegitEpic.exe'), 1024);
+  fs.mkdirSync(path.join(legitEpicDir, '.egstore'), { recursive: true });
+  writeBytes(path.join(legitGogDir, 'LegitGog.exe'), 1024);
+  fs.writeFileSync(path.join(legitGogDir, 'goggame-1423049311.info'), 'name = "Legit GOG Game"');
+  writeBytes(path.join(legitUbiDir, 'LegitUbi.exe'), 1024);
+  fs.writeFileSync(path.join(legitUbiDir, 'uplay_install.state'), Buffer.from('Legit Ubisoft Game', 'utf8'));
+  fs.mkdirSync(nestedGameDir, { recursive: true });
+  writeBytes(path.join(nestedGameDir, 'NestedGame.exe'), 1024);
+  fs.mkdirSync(nestedGamesDir, { recursive: true });
+  writeBytes(path.join(nestedGamesDir, 'NestedUnderGames.exe'), 1024);
   writeBytes(path.join(dolphinDir, 'Dolphin.exe'), 1024);
   writeBytes(path.join(dolphinGbeDir, 'Dolphin.exe'), 1024);
   writeBytes(path.join(dolphinGbeDir, 'DolphinTool.exe'), 1024);
@@ -96,5 +113,10 @@ test('Goldberg install with steam_settings but no appid resolves by game name, b
   assert.ok(found.some((appid) => String(appid) === '999999'), 'the install should be promoted to the resolved Steam appid');
   assert.ok(!found.some((appid) => String(appid) === '222480'), 'a bare emulator/tool folder must not be promoted to a Steam game by name only');
   assert.ok(!found.some((appid) => String(appid) === '534680'), 'a Dolphin emulator folder with stale GBE files must still be ignored');
-  assert.ok(!found.some((appid) => String(appid).startsWith('local-')), 'Dolphin tool folders are skipped instead of surfaced as local games');
+  const locals = found.filter((appid) => String(appid).startsWith('local-'));
+  assert.equal(
+    locals.length,
+    2,
+    `only the nested games may be local entries — official Epic/GOG/Ubisoft games and Dolphin tools must be skipped (got: ${locals.join(', ')})`
+  );
 });

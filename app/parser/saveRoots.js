@@ -156,6 +156,17 @@ const GAME_LIBRARY_FOLDER_NAMES = [
   path.join('Program Files (x86)', 'Games'),
 ];
 
+// True when a folder name looks like a game library (a folder whose children are game installs),
+// e.g. "Jeux", "Games Library", "Repacks", "Bibliothèque". Used to peek into Desktop subfolders
+// safely: a Desktop\Jeux\<game> layout is scanned, while loose Desktop folders are not.
+function isLibraryLikeFolderName(name) {
+  const value = String(name || '').trim();
+  if (!value) return false;
+  const base = path.basename(value).toLowerCase();
+  if (GAME_LIBRARY_FOLDER_NAMES.some((candidate) => path.basename(candidate).toLowerCase() === base)) return true;
+  return /^(biblioth[eè]que|my ?games|jeux|game ?library|repacks?)$/i.test(base);
+}
+
 async function discoverLibraryRoots() {
   const roots = [];
 
@@ -188,4 +199,5 @@ module.exports = {
   expandKnownSteamSourceRoots,
   isSteamLikePath,
   GAME_LIBRARY_FOLDER_NAMES,
+  isLibraryLikeFolderName,
 };

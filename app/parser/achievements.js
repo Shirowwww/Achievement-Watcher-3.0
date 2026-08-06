@@ -20,6 +20,8 @@ const greenluma = require(path.join(appPath, 'greenluma.js'));
 const userDir = require(path.join(appPath, 'userDir.js'));
 const socialclub = require(path.join(appPath, 'socialclub.js'));
 const libraryDirs = require(path.join(appPath, 'libraryDirs.js'));
+const saveRoots = require(path.join(appPath, 'saveRoots.js'));
+const launcherDetect = require(path.join(appPath, 'launcherDetect.js'));
 const blacklist = require(path.join(appPath, 'blacklist.js'));
 const watchdog = require(path.join(appPath, 'watchdog.js'));
 const goldberg = require(path.join(appPath, 'goldberg.js'));
@@ -624,6 +626,13 @@ async function getFolderIndex() {
   if (_folderIndex) return _folderIndex;
   const index = [];
   const seen = new Set();
+  const addDir = (dir) => {
+    const key = dir.toLowerCase();
+    if (seen.has(key)) return;
+    if (_claimedDirs.has(key)) return; // already linked by appid — never name-match it
+    seen.add(key);
+    index.push({ dir, name: path.basename(dir) });
+  };
   for (const root of await goldbergScanRoots()) {
     let entries;
     try {
@@ -634,15 +643,28 @@ async function getFolderIndex() {
     for (const e of entries) {
       if (!e.isDirectory()) continue;
       const dir = path.join(root, e.name);
-      const key = dir.toLowerCase();
-      if (seen.has(key)) continue;
-      if (_claimedDirs.has(key)) continue; // already linked by appid — never name-match it
-      seen.add(key);
-      index.push({ dir, name: e.name });
+      addDir(dir);
+      // One safe extra level under Desktop: only descend into library-like subfolders
+      // (Desktop\Jeux\<game>), never loose Desktop folders.
+      if (desktopRoots().some((d) => d.toLowerCase() === root.toLowerCase()) && saveRoots.isLibraryLikeFolderName(e.name)) {
+        let children;
+        try {
+          children = fs.readdirSync(dir, { withFileTypes: true });
+        } catch {
+          continue;
+        }
+        for (const child of children) {
+          if (child.isDirectory()) addDir(path.join(dir, child.name));
+        }
+      }
     }
   }
   _folderIndex = index;
   return index;
+}
+
+function desktopRoots() {
+  return [process.env['USERPROFILE'] && path.join(process.env['USERPROFILE'], 'Desktop'), process.env['PUBLIC'] && path.join(process.env['PUBLIC'], 'Desktop')].filter(Boolean);
 }
 
 // Resolve a game's install folder purely by matching its name against the scan-root folder names.
@@ -824,16 +846,18 @@ async function scanInstalledGoldbergGames(data) {
 // Folders never worth descending into / treating as games (redist, engine, tool and launcher-data
 // folders that would otherwise surface utilities as "games"). steamapps is skipped because legit
 // Steam library games are handled by the Steam source.
-const UNCONFIG_SKIP_DIR = /^(_?CommonRedist|_?Redist|redist|DirectX|dx|dotnet|prerequisites|prereq|Installers|__Installer|steam_settings|steamapps|common|games|SaveConverter|tools|Extras|Updater|app|bin|backups|cache|httpcache|media|Patches|support|Redistributables|Binaries|Engine|plugins|Modding)$/i;
+const UNCONFIG_SKIP_DIR = /^(_?CommonRedist|_?Redist|redist|DirectX|dx|dotnet|prerequisites|prereq|Installers|__Installer|steam_settings|steamapps|common|SaveConverter|tools|Extras|Updater|app|bin|backups|cache|httpcache|media|Patches|support|Redistributables|Binaries|Engine|plugins|Modding)$/i;
 
 // Discover INSTALLED games that carry no usable appid (no steam_appid.txt / steam_settings), so they
 // can still be shown in the app (e.g. to right-click → Install GBE Fork). Two signals: a folder with
 // a replaced steam_api dll (emulated, just not configured), or a "leaf" folder holding a real game
 // .exe. Folders already claimed by an appid install (_claimedDirs) are skipped. Keyed by a stable
 // selector-safe synthetic id ("local-<crc>") since there is no appid. Reuses goldbergScanRoots() so
-// user-configured Folder-tab dirs aren't skipped, but drops the Desktop roots: the appid-based scan
-// can trust Desktop because it requires a strict marker (steam_api dll), while this scan matches on
-// "looks like a game exe" alone, which is too loose for a Desktop full of shortcuts/random folders.
+// user-configured Folder-tab dirs aren't skipped. The Desktop roots themselves are dropped: the
+// appid-based scan can trust Desktop because it requires a strict marker (steam_api dll), while
+// this scan matches on "looks like a game exe" alone, which is too loose for a Desktop full of
+// shortcuts/random folders. A library-like Desktop subfolder (Desktop\Jeux, Desktop\Games, …) is
+// still scanned like any other library root.
 async function scanUnconfiguredInstalls(linkedExes = []) {
   const out = [];
   // Folders that already host a game configured under a real appid (from exeList): never surface them
@@ -843,15 +867,6 @@ async function scanUnconfiguredInstalls(linkedExes = []) {
     const d = dir.toLowerCase();
     return linked.some((p) => p === d || p.startsWith(d + path.sep) || p.startsWith(d + '/'));
   };
-  const desktopDirs = [process.env['USERPROFILE'] && path.join(process.env['USERPROFILE'], 'Desktop'), process.env['PUBLIC'] && path.join(process.env['PUBLIC'], 'Desktop')]
-    .filter(Boolean)
-    .map((p) => p.toLowerCase());
-  const roots = (await goldbergScanRoots()).filter((r) => !desktopDirs.includes(r.toLowerCase()));
-
-  const hasDll = (entries) => entries.some((e) => e.isFile() && /^steam_api(64)?\.dll$/i.test(e.name));
-  const hasAppidMarker = (entries) =>
-    entries.some((e) => (e.isFile() && e.name.toLowerCase() === 'steam_appid.txt') || (e.isDirectory() && e.name.toLowerCase() === 'steam_settings'));
-
   const readEntries = (dir) => {
     try {
       return fs.readdirSync(dir, { withFileTypes: true });
@@ -859,12 +874,33 @@ async function scanUnconfiguredInstalls(linkedExes = []) {
       return null;
     }
   };
+  const desktopSet = new Set(desktopRoots().map((p) => p.toLowerCase()));
+  const roots = [];
+  for (const dir of await goldbergScanRoots()) {
+    if (desktopSet.has(dir.toLowerCase())) {
+      // The Desktop itself is never scanned for unconfigured installs (too many shortcuts/random
+      // folders), but a library-like subfolder (Desktop\Jeux, Desktop\Games, …) is a legitimate
+      // games root and gets scanned like any other library.
+      const entries = readEntries(dir);
+      if (!entries) continue;
+      for (const e of entries) {
+        if (e.isDirectory() && saveRoots.isLibraryLikeFolderName(e.name)) roots.push(path.join(dir, e.name));
+      }
+    } else {
+      roots.push(dir);
+    }
+  }
+
+  const hasDll = (entries) => entries.some((e) => e.isFile() && /^steam_api(64)?\.dll$/i.test(e.name));
+  const hasAppidMarker = (entries) =>
+    entries.some((e) => (e.isFile() && e.name.toLowerCase() === 'steam_appid.txt') || (e.isDirectory() && e.name.toLowerCase() === 'steam_settings'));
 
   const isGameFolder = (dir, entries) => (entries && hasDll(entries)) || !!exeDetect.shallowGameExe(dir);
 
   const emit = (dir, entries) => {
     if (_claimedDirs.has(dir.toLowerCase())) return;
     if (isKnownNonGameToolInstall(dir)) return;
+    if (launcherDetect.isOfficialLauncherInstall(dir)) return; // legit launcher game — never "Unconfigured"
     if (isLinkedSubtree(dir)) return; // this folder already hosts a real-appid game (avoid duplicate)
     const exe = exeDetect.detect(dir, path.basename(dir), {});
     if (!exe) return;
@@ -883,13 +919,19 @@ async function scanUnconfiguredInstalls(linkedExes = []) {
     if (depth > 4) return;
     if (_claimedDirs.has(dir.toLowerCase())) return;
     if (isKnownNonGameToolInstall(dir)) return;
+    if (launcherDetect.isOfficialLauncherInstall(dir)) return; // Ubisoft/GOG/Epic/MS legit install
     const entries = readEntries(dir);
     if (!entries) return;
     if (hasAppidMarker(entries)) return; // appid path handles this folder
     const subdirs = entries.filter((e) => e.isDirectory() && !UNCONFIG_SKIP_DIR.test(e.name));
     const childGameFolders = subdirs.filter((e) => {
       const cd = path.join(dir, e.name);
-      return !_claimedDirs.has(cd.toLowerCase()) && !isKnownNonGameToolInstall(cd) && isGameFolder(cd, readEntries(cd));
+      return (
+        !_claimedDirs.has(cd.toLowerCase()) &&
+        !isKnownNonGameToolInstall(cd) &&
+        !launcherDetect.isOfficialLauncherInstall(cd) &&
+        isGameFolder(cd, readEntries(cd))
+      );
     });
     if (isGameFolder(dir, entries) && childGameFolders.length === 0) {
       emit(dir, entries); // leaf game folder
@@ -2202,8 +2244,10 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     }
 
     // Flag whether this game is really installed, to drive the "show installed only" toggle.
-    // steamAPI/rpcs3 entries are always real installs; a legit Ubisoft Connect game counts only
-    // when the launcher's Installs registry confirms it (scanLegit lists OWNED games, not installed);
+    // rpcs3/xenia/socialclub entries are always real installs; steamAPI carries its own per-game
+    // Steam registry flag (scanLegit lists OWNED games too, so "owned" must not mean "installed");
+    // a legit Ubisoft Connect game counts only when the launcher's Installs registry confirms a
+    // folder that still exists on disk;
     // everything else (emulator save folders incl. Goldberg/GSE and the gog/epic Nemirtingas emus,
     // cache imports, greenluma, lumaplay) needs on-disk proof: a resolved install folder with a valid
     // exe. The exeList signal (a still-living configured launch exe) is OR'd in by the renderer after
@@ -2212,6 +2256,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       dataType,
       hasResolvedExe,
       trustedInstalled:
+        (appid.data && appid.data.installed === true) ||
         !!(appid.data && appid.data.trustedInstalled) ||
         (dataType === 'uplay' ? uplay.isInstalled(appid.appid) : false) ||
         (dataType === 'ubisoftOfficial' && appid.data && appid.data.uplayId ? uplay.isInstalled(appid.data.uplayId) : false),

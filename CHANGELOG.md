@@ -21,6 +21,10 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   missing from the product info now recover the real hashed capsule through SteamDB at load time
   (e.g. Yakuza 0 Director's Cut), and the library grid falls back to the header when no portrait
   exists instead of rendering a blank tile.
+- Legit launcher installs (Ubisoft Connect, GOG Galaxy, Epic Games, Microsoft Store) are no longer
+  surfaced as "Unconfigured" games or mis-promoted as Uplay R2 emulated installs, no matter which
+  folder they live in (custom library roots included). A genuine Uplay R2 crack (launcher markers
+  plus the emulator loader dll) is still detected and promoted as before.
 
 ### Changed
 
@@ -31,6 +35,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   Epic Games under Program Files) are deliberately NOT auto-added: they contain legit launcher
   games that the official sources already cover, and scanning them would surface duplicates as
   "Unconfigured" entries.
+- The unconfigured-install scan also looks inside library-like Desktop subfolders (e.g.
+  Desktop\Jeux\<game>, Desktop\Games\<game>) so nested installs are found, while loose Desktop
+  folders/shortcuts are still ignored. The name-based folder index follows the same rule.
 
 ## 3.6.1 - 2026-08-06
 
