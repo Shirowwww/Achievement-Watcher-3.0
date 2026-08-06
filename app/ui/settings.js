@@ -1132,12 +1132,16 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const gradStyle = grad.enabled === true
           ? `linear-gradient(${gradAngle}deg, ${grad.from || layer.color || '#1b2838'} 0%, ${grad.to || grad.from || layer.color || '#1b2838'} 100%)`
           : '';
+        const tintStyle =
+          grad.enabled === true
+            ? themeLayers.gradientTint({ color: layer.color || '#1b2838', gradient: { enabled: true } })
+            : '';
         const previewStyle =
           `background-color:${grad.enabled === true ? 'transparent' : (layer.color || '#1b2838')};` +
           (previewImage
-            ? `background-image:${gradStyle ? gradStyle + ',' : ''}url('${require('url').pathToFileURL(previewImage).href.replace(/'/g, "\\'")}');`
+            ? `background-image:${gradStyle ? (tintStyle ? tintStyle + ',' : '') + gradStyle + ',' : ''}url('${require('url').pathToFileURL(previewImage).href.replace(/'/g, "\\'")}');`
             : gradStyle
-            ? `background-image:${gradStyle};`
+            ? `background-image:${tintStyle ? tintStyle + ',' : ''}${gradStyle};`
             : 'background-image:none;');
         const preview = $('<div>').addClass('theme-layer-preview').attr('style', previewStyle);
         // Remember the resolved preview image (source or blur copy) so the live gradient
@@ -1359,7 +1363,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       // CSS drops the opaque color backdrop too), so the swatch must not keep the base color.
       preview.css('background-color', enabled ? 'transparent' : baseColor);
       const layers = [];
-      if (enabled) layers.push(`linear-gradient(${angle}deg, ${from} 0%, ${to} 100%)`);
+      if (enabled) {
+        layers.push(themeLayers.gradientTint({ color: baseColor, gradient: { enabled: true } }));
+        layers.push(`linear-gradient(${angle}deg, ${from} 0%, ${to} 100%)`);
+      }
       const imageSrc = row.data('previewImage') || '';
       if (imageSrc) layers.push(`url('${imageSrc.replace(/'/g, "\\'")}')`);
       preview.css('background-image', layers.length ? layers.join(',') : 'none');

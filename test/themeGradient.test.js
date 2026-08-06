@@ -78,18 +78,22 @@ test('enabled gradients replace the layer base color in generated CSS', () => {
   const bodyRule = css.slice(css.indexOf('body {'), css.indexOf('title-bar {'));
   assert.match(bodyRule, /background-color: transparent !important/);
   assert.doesNotMatch(bodyRule, /radial-gradient\(140% 90%/);
-  assert.match(bodyRule, /var\(--aw-grad-bg, none\), none, var\(--aw-img-bg/);
+  assert.match(bodyRule, /var\(--aw-grad-tint-bg, transparent\), var\(--aw-grad-bg, none\), none, var\(--aw-img-bg/);
+  // The tint softens the enabled gradient with a translucent veil of the layer's base color.
+  assert.match(css, /--aw-grad-tint-bg: linear-gradient\(rgba\(27, 40, 56, 0\.350\), rgba\(27, 40, 56, 0\.350\)\)/);
 
   // The settings modal drops its opaque base gradient when a per-layer gradient is enabled.
   const nextBody = css.indexOf('body {', css.indexOf('#settings .box'));
   const settingsRule = css.slice(css.indexOf('#settings .box'), nextBody);
   assert.match(settingsRule, /background-color: transparent/);
+  assert.match(settingsRule, /var\(--aw-grad-tint-settings, transparent\), var\(--aw-grad-settings, none\)/);
   assert.doesNotMatch(settingsRule, /linear-gradient\(180deg, var\(--set-modal-top\)/);
 
   // The overlay does the same: no base color behind the gradient.
   const overlay = themeLayers.buildCustomOverlayCss(theme);
   const panelRule = overlay.slice(overlay.indexOf('.overlay-panel {'), overlay.indexOf('.overlay-header {'));
   assert.match(panelRule, /background-color: transparent/);
+  assert.match(panelRule, /var\(--aw-grad-tint-bg, transparent\), var\(--aw-grad-bg, none\)/);
 });
 
 test('enabled gradients stay layered under images', () => {

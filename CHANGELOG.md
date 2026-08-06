@@ -36,7 +36,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 - An enabled per-layer gradient now replaces the layer's base color entirely, in the app and in the
   in-game overlay — previously the base color/backdrop was still painted over the gradient. Layer
-  images keep rendering above the gradient.
+  images keep rendering above the gradient. Enabled gradients are also softened by a translucent
+  veil of the layer's base color (35 %), so bright custom colors stay visible without dominating
+  the UI.
 - The watchdog status dot no longer pulses forever once the watchdog is running: the pulse only
   plays while the watchdog is starting/checking, which removes a steady ~100% GPU-core burn on
   some machines.
