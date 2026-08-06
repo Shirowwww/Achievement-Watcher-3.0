@@ -432,12 +432,12 @@ var app = {
         });
       }
       processPriority
-        .set('high priority')
+        .set('normal')
         .then(() => {
-          debug.log('Process priority set to HIGH');
+          debug.log('Process priority set to NORMAL (background daemon)');
         })
         .catch((err) => {
-          debug.error('Fail to set process priority to HIGH');
+          debug.error(`Fail to set process priority: ${err && err.message ? err.message : err}`);
         });
 
       debug.log('Loading Options ...');
