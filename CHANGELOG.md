@@ -95,6 +95,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- In the custom theme editor, a layer's base-color picker is hidden while its gradient is enabled
+  (the gradient replaces it) and reappears when the gradient is turned off.
 - The Windows "reduce motion" accessibility preference now disables decorative animations across
   the whole main window (status indicator, rare-achievement rays, spinners), not only in Settings.
 - The "Choose another cover…" gallery now uses the shared modal chrome and global theme tokens

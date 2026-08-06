@@ -1155,7 +1155,15 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
               `<div class="theme-layer-hint">${escapeHtml(meta.hint || '')}</div></div>`
           );
         const controls = $('<div>').addClass('theme-layer-controls');
-        controls.append($('<input>').attr('type', 'color').addClass('theme-layer-color').val(layer.color || '#1b2838'));
+        // The base color is only relevant while the gradient is off: an enabled gradient replaces
+        // it, so hide the picker instead of leaving a control that appears to do nothing.
+        controls.append(
+          $('<input>')
+            .attr('type', 'color')
+            .addClass('theme-layer-color')
+            .val(layer.color || '#1b2838')
+            .toggle(grad.enabled !== true)
+        );
         if (CUSTOM_IMAGE_LAYERS.includes(meta.id)) {
           const gradientToggle = $('<label>').addClass('theme-layer-effect-toggle');
           gradientToggle.append(
@@ -1267,7 +1275,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         // color picker; removing the image brings the color picker back.
         if (CUSTOM_IMAGE_LAYERS.includes(meta.id)) {
           const hasImage = !!layer.image;
-          row.find('.theme-layer-color').toggle(!hasImage);
+          // The base-color picker stays visible only when neither the image nor the gradient
+          // is active (both replace the base color visually).
+          row.find('.theme-layer-color').toggle(!hasImage && grad.enabled !== true);
           row.find('.theme-layer-image').show();
           row.find('.theme-layer-filename, .theme-layer-clear-image, .theme-layer-fit').toggle(hasImage);
         }
@@ -1376,6 +1386,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const row = $(this).closest('.theme-layer-row');
       const panel = row.find('.theme-layer-gradient-panel');
       panel.toggleClass('open', this.checked);
+      // Hide the base-color picker while the gradient is active (it is overridden anyway).
+      const hasImage = row.find('.theme-layer-fit').is(':visible');
+      row.find('.theme-layer-color').toggle(!this.checked && !hasImage);
       if (this.checked) {
         // A freshly enabled gradient follows the layer color unless the user already
         // picked custom colors for it (detected by comparing with the stored base color).
