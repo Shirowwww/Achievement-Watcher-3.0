@@ -289,6 +289,7 @@ module.exports.scan = () => {
         title: entry.title,
         gameDir: entry.installLocation && fs.existsSync(entry.installLocation) ? entry.installLocation : null,
         exe: entry.executablePath && fs.existsSync(entry.executablePath) ? entry.executablePath : null,
+        exeAuthoritative: true,
       },
     });
   }

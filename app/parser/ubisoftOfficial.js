@@ -1020,6 +1020,12 @@ module.exports.scan = () => {
       data: {
         type: 'ubisoftOfficial',
         uplayId: entry.appid,
+        // Registered install dir (registry InstallDir, verified on disk) — lets the launch panel
+        // auto-detect the executable instead of asking for one by hand.
+        gameDir: (() => {
+          const dir = ubisoftInstallDir(entry.appid);
+          return dir && fs.existsSync(dir) ? dir : null;
+        })(),
         // A registered install dir proves the product is really on disk, so "show installed only"
         // keeps it even when the folder scan couldn't resolve a gameDir/exe (e.g. a launcher-managed
         // install outside the configured library roots).

@@ -87,9 +87,20 @@ module.exports.reconcile = async (games) => {
   let changed = 0;
   try {
     const list = await getCurrentList();
-    if (list.length === 0) return 0;
 
     const byAppid = new Map((games || []).map((g) => [String(g.appid), g]));
+
+    // 0) Ensure every known install has a launch entry (the launch panel pre-fills these on every
+    // scan). Only games with an install folder or an authoritative launcher exe participate, so the
+    // db never grows with phantom/owned-only games.
+    const known = new Set(list.map((e) => String(e.appid)));
+    for (const g of games || []) {
+      if (known.has(String(g.appid))) continue;
+      if (!g.gameDir && !(g.exe && g.exeConfident)) continue;
+      list.push({ appid: String(g.appid), exe: '', args: '' });
+      known.add(String(g.appid));
+      changed++;
+    }
 
     // 1) Drop dead exe paths.
     for (const e of list) {
@@ -179,7 +190,9 @@ module.exports.reconcile = async (games) => {
       }
     }
 
-    // 3) Re-detect empty entries when we know the install folder.
+    // 3) Fill empty entries: launcher-provided exe first (Epic/GOG/EA/Xbox manifests are the exact
+    // command the launcher runs — zero guesswork), then conservative on-disk detection for every
+    // game whose install folder we know. Ambiguous folders stay empty for a manual pick.
     const taken = new Set(list.filter((e) => e.exe).map((e) => e.exe.toLowerCase()));
     const takenGameDirs = new Set();
     for (const e of list) {
@@ -193,11 +206,25 @@ module.exports.reconcile = async (games) => {
     for (const e of list) {
       if (e.exe) continue;
       const g = byAppid.get(String(e.appid));
-      if (!g || !g.gameDir) continue;
+      if (!g) continue;
+      if (
+        g.exe &&
+        g.exeConfident &&
+        fs.existsSync(g.exe) &&
+        !exeDetect.isKnownNonGameExe(path.basename(g.exe)) &&
+        !taken.has(g.exe.toLowerCase())
+      ) {
+        e.exe = g.exe;
+        taken.add(g.exe.toLowerCase());
+        if (g.gameDir) takenGameDirs.add(path.resolve(g.gameDir).toLowerCase());
+        changed++;
+        continue;
+      }
+      if (!g.gameDir) continue;
       const gameDirKey = path.resolve(g.gameDir).toLowerCase();
       if (takenGameDirs.has(gameDirKey)) continue;
       const emu = goldberg.detectEmulator(g.gameDir);
-      const res = exeDetect.detect(g.gameDir, g.name, { dllPaths: emu.dll, taken, takenGameDirs });
+      const res = exeDetect.detectConfident(g.gameDir, g.name, { dllPaths: emu.dll, taken, takenGameDirs });
       if (res && !taken.has(res.full.toLowerCase())) {
         e.exe = res.full;
         taken.add(res.full.toLowerCase());

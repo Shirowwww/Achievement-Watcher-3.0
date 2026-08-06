@@ -851,7 +851,9 @@ function autodetectGameExe(gameDir, gameName, taken) {
   if (!gameDir) return null;
   try {
     const emu = goldberg.detectEmulator(gameDir);
-    const exeInfo = exeDetect.detect(gameDir, gameName || '', { dllPaths: emu.dll, taken });
+    // Confidence-gated: only auto-launch a best guess when the name/folder/dll evidence is strong,
+    // otherwise the Play button asks for the exe manually (zero false-positive auto-assignment).
+    const exeInfo = exeDetect.detectConfident(gameDir, gameName || '', { dllPaths: emu.dll, taken });
     if (exeInfo?.full && fs.existsSync(exeInfo.full)) return exeInfo.full;
   } catch (err) {
     debug.log(err);
@@ -3637,7 +3639,10 @@ var app = {
     let cfg = await exeList.get(appid);
     if (!cfg?.exe || cfg.exe === '' || !fs.existsSync(cfg.exe)) {
       const game = gameList.find((g) => g.appid == appid);
-      let detected = autodetectGameExe(game?.gameDir, game?.name, await takenExePaths(appid));
+      let detected =
+        game && game.exe && game.exeConfident && fs.existsSync(game.exe)
+          ? game.exe
+          : autodetectGameExe(game?.gameDir, game?.name, await takenExePaths(appid));
       if (detected) {
         cfg.exe = detected;
         await exeList.add(cfg);
@@ -3694,7 +3699,10 @@ var app = {
     let cfg = await exeList.get(appid);
     if (!cfg?.exe || cfg.exe === '' || !fs.existsSync(cfg.exe)) {
       const game = gameList.find((g) => g.appid == appid);
-      let detected = autodetectGameExe(game?.gameDir, game?.name, await takenExePaths(appid));
+      let detected =
+        game && game.exe && game.exeConfident && fs.existsSync(game.exe)
+          ? game.exe
+          : autodetectGameExe(game?.gameDir, game?.name, await takenExePaths(appid));
       if (detected) {
         cfg.exe = detected;
         await exeList.add(cfg);

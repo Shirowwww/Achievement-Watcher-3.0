@@ -300,6 +300,15 @@ function listGameplayEntries(options = {}) {
   return out;
 }
 
+// Galaxy's PlayTaskLaunchParameters path is usually absolute, but may be relative to the install
+// dir on some setups. Resolve both, and only trust a path that actually exists on disk.
+function resolveInstalledExe(executablePath, installationPath) {
+  const raw = String(executablePath || '').trim().replace(/\//g, '\\');
+  if (!raw || !/\.exe$/i.test(raw)) return '';
+  const abs = path.win32.isAbsolute(raw) ? raw : installationPath ? path.join(installationPath, raw) : raw;
+  return fs.existsSync(abs) ? abs : '';
+}
+
 // ---- images (GOG public API, disk-cached) ------------------------------------------------------
 
 function absoluteUrl(u) {
@@ -401,6 +410,9 @@ module.exports.scan = async () => {
         title: entry.title,
         // feeds the shared playtime auto-seed / installed-on-disk machinery in achievements.js
         gameDir: entry.installationPath && fs.existsSync(entry.installationPath) ? entry.installationPath : null,
+        // Galaxy's own launch task = the exact exe the launcher runs — zero-guess launch path.
+        exe: resolveInstalledExe(entry.executablePath, entry.installationPath) || null,
+        exeAuthoritative: true,
       },
     });
   }

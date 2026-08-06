@@ -1185,7 +1185,31 @@ async function discover(source, steamAccFilter) {
   //Legit Steam
   if (source.legitSteam > 0) {
     try {
-      data = data.concat(await steam.scanLegit(source.legitSteam, steamAccFilter));
+      const legit = await steam.scanLegit(source.legitSteam, steamAccFilter);
+      // Attach the authoritative install folder from Steam's own library manifests so the Play
+      // button / launch panel can auto-detect the exe instead of asking for one by hand.
+      let localInstalls = new Map();
+      try {
+        localInstalls = await steam.scanLocalInstalls();
+      } catch (err) {
+        debug.log(`[steam] local install scan failed => ${err}`);
+      }
+      if (localInstalls.size > 0) {
+        let attached = 0;
+        for (const rec of legit) {
+          const local = localInstalls.get(String(rec.appid));
+          if (!local) continue;
+          rec.data = rec.data || {};
+          if (local.gameDir && fs.existsSync(local.gameDir)) {
+            rec.data.gameDir = local.gameDir;
+            // A live appmanifest is stronger proof than the registry flag: the folder exists.
+            rec.data.installed = true;
+            attached++;
+          }
+        }
+        if (attached > 0) debug.log(`[steam] linked ${attached} installed game(s) to their Steam install folders`);
+      }
+      data = data.concat(legit);
     } catch (err) {
       debug.error(err);
     }
@@ -1270,11 +1294,24 @@ async function discover(source, steamAccFilter) {
       const known = new Set(data.filter((g) => g.data && g.data.type === 'xboxPc').map((g) => String(g.appid)));
       for (const inst of installed) {
         if (inst.titleId && !known.has(String(inst.titleId))) {
+          const exeCandidate =
+            inst.executable && inst.installLocation
+              ? path.isAbsolute(inst.executable)
+                ? inst.executable
+                : path.join(inst.installLocation, inst.executable)
+              : '';
           data.push({
             appid: inst.titleId,
             name: inst.title,
             source: xboxPc.XBOX_PC_SOURCE,
-            data: { type: 'xboxPc', gameDir: inst.installLocation, executable: inst.executable, aumid: inst.aumid },
+            data: {
+              type: 'xboxPc',
+              gameDir: inst.installLocation,
+              executable: inst.executable,
+              exe: exeCandidate && fs.existsSync(exeCandidate) ? exeCandidate : null,
+              exeAuthoritative: !!(exeCandidate && fs.existsSync(exeCandidate)),
+              aumid: inst.aumid,
+            },
           });
           known.add(String(inst.titleId));
         }
@@ -1653,15 +1690,23 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     if (appid.data && appid.data.steamSettings) game.steamSettings = appid.data.steamSettings;
     let resolvedEmu = null;
     let resolvedExe = null;
+    let resolvedExeConfident = false;
     if (appid.data && appid.data.exe) {
       try {
         if (fs.existsSync(appid.data.exe)) {
+          // Launcher manifests/DBs (Epic, GOG Galaxy, EA logs, Xbox config) name the exact exe the
+          // launcher runs — that is authoritative. Unconfigured-scan hints are NOT authoritative:
+          // they go through the same conservative confidence gate as any other folder.
+          const authoritative = appid.data.exeAuthoritative === true;
           resolvedExe = {
             name: path.basename(appid.data.exe),
             full: appid.data.exe,
             size: fs.statSync(appid.data.exe).size,
             score: 0,
+            confident: authoritative,
+            confidence: authoritative ? 'authoritative' : 'hint',
           };
+          if (authoritative) resolvedExeConfident = true;
         }
       } catch {
         resolvedExe = null;
@@ -2028,6 +2073,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
           const exeInfo = resolvedExe || exeDetect.detect(resolvedGameDir, game.name, { dllPaths: emu.dll });
           resolvedExe = exeInfo || resolvedExe;
           hasResolvedExe = !!exeInfo;
+          if (!resolvedExeConfident && exeInfo && exeInfo.confident) resolvedExeConfident = true;
           if (exeInfo) {
             _seededGameDirs.add(gameDirKey);
             const iconHash =
@@ -2072,6 +2118,15 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       } catch (err) {
         debug.log(`[${appid.appid}] playtime auto-seed failed: ${err}`);
       }
+    }
+
+    // Surface the launch exe for the renderer's launch panel only when it is either supplied by
+    // the launcher itself (Epic/GOG/EA/Xbox manifests) or passed the conservative confidence gate.
+    // Ambiguous folders are deliberately NOT exposed here — reconcile() / Play will ask the user
+    // instead of guessing.
+    if (resolvedExe && resolvedExeConfident) {
+      game.exe = resolvedExe.full;
+      game.exeConfident = true;
     }
 
     // Goldberg SocialClub has no install folder (its data lives in %APPDATA%), but the Watchdog

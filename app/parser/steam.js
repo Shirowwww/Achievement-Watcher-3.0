@@ -643,6 +643,88 @@ const getSteamPath = (module.exports.getSteamPath = async () => {
   return steamPath;
 });
 
+// ---- installed-games map (libraryfolders.vdf + appmanifest_*.acf) --------------------------------
+
+// A Steam install's folder is authoritative: appmanifest_<appid>.acf names the installdir, and
+// libraryfolders.vdf names every library root. This powers the launch panel — a legit Steam game
+// now gets a real gameDir (and therefore exe detection) instead of asking the user to browse for
+// the executable manually.
+function unescapeSteamVdf(value) {
+  return String(value || '').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+}
+
+function parseSteamLibraryFoldersVdf(text) {
+  const roots = [];
+  const re = /^\s*"path"\s+"([^"]+)"/gm;
+  let m = null;
+  while ((m = re.exec(String(text || '')))) roots.push(unescapeSteamVdf(m[1]));
+  return roots;
+}
+
+function parseSteamAppManifestAcf(text) {
+  const out = { appid: '', name: '', installDir: '' };
+  const re = /^\s*"(appid|name|installdir)"\s+"([^"]*)"/gm;
+  let m = null;
+  while ((m = re.exec(String(text || '')))) {
+    if (m[1] === 'appid') out.appid = unescapeSteamVdf(m[2]);
+    else if (m[1] === 'name') out.name = unescapeSteamVdf(m[2]);
+    else if (m[1] === 'installdir') out.installDir = unescapeSteamVdf(m[2]);
+  }
+  return out;
+}
+
+// Map of appid -> { name, gameDir } for every app with an appmanifest on disk. Rebuilt on each
+// scan (a handful of small ACF files) so newly installed Steam games are picked up immediately.
+module.exports.scanLocalInstalls = async () => {
+  let steamPath;
+  try {
+    steamPath = await getSteamPath();
+  } catch {
+    return new Map();
+  }
+  if (!steamPath || !fs.existsSync(path.join(steamPath, 'steam.exe'))) return new Map();
+
+  const libraryFile = path.join(steamPath, 'steamapps', 'libraryfolders.vdf');
+
+  const roots = [path.join(steamPath, 'steamapps')];
+  try {
+    if (fs.existsSync(libraryFile)) {
+      roots.push(...parseSteamLibraryFoldersVdf(fs.readFileSync(libraryFile, 'utf8')).map((r) => path.join(r, 'steamapps')));
+    }
+  } catch {
+    /* unreadable library file — the main steamapps root still works */
+  }
+
+  const installs = new Map();
+  const seen = new Set();
+  for (const root of roots) {
+    let files = [];
+    try {
+      files = fs.readdirSync(root).filter((f) => /^appmanifest_\d+\.acf$/i.test(f));
+    } catch {
+      continue;
+    }
+    for (const file of files) {
+      try {
+        const manifest = parseSteamAppManifestAcf(fs.readFileSync(path.join(root, file), 'utf8'));
+        const appid = String(manifest.appid || '').trim();
+        if (!/^\d+$/.test(appid) || seen.has(appid)) continue;
+        const installDir = String(manifest.installDir || '').trim();
+        if (!installDir) continue;
+        seen.add(appid);
+        installs.set(appid, {
+          name: String(manifest.name || '').trim(),
+          gameDir: path.join(root, 'common', installDir),
+        });
+      } catch {
+        /* skip one corrupt manifest */
+      }
+    }
+  }
+
+  return installs;
+};
+
 const getSteamUsers = (module.exports.getSteamUsers = async (steamPath) => {
   let result = [];
 

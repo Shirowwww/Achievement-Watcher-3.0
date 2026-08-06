@@ -27,6 +27,7 @@ const EXE_EXCLUDE = [
   /reporter/i,
   /bugreport/i,
   /^setup/i,
+  /setup\.exe$/i, // room/wizard-style setup helpers (steamvr_room_setup.exe, game_setup.exe, …)
   /^install/i,
   /^vcredist/i,
   /^ue[0-9]_?prereq/i,
@@ -35,6 +36,8 @@ const EXE_EXCLUDE = [
   /^dotnet/i,
   /^oalinst/i,
   /^7za?$/i,
+  /^update(r)?\.exe$/i, // Updater.exe / Update.exe — companion tools, never the game itself
+  /media.?player\.exe$/i, // steamvr_media_player.exe & co — helper players, never the game
   /saveconverter/i, // Jackbox per-pack save tool
   /utility/i, // e.g. JackboxUtility.exe — companion tools, not the game
   /decompressor/i,
@@ -59,6 +62,7 @@ const KNOWN_NON_GAME_EXE = new Set([
   'streaming_client.exe', // Steam Remote Play client process
   'diskspd64.exe', // CrystalDiskMark's bundled benchmark tool
   'dolphin.exe', 'dolphintool.exe', // Dolphin emulator (also skipped by the tool-folder guard)
+  'dsptool.exe', // Dolphin's bundled DSP tool
   // archives / utilities
   '7zfm.exe', '7zg.exe', 'winrar.exe', 'winzip64.exe', 'winzip.exe', 'peazip.exe',
   'everything.exe', 'wiztree.exe', 'crystaldiskinfo.exe', 'crystaldiskmark.exe', 'crystaldiskmark9.exe',
@@ -104,6 +108,20 @@ const BONUS_ROOT_EXE_WITH_NESTED_DLL = 18; // root exe + nested steam_api belong
 const PENALTY_SOFT = 30;
 const PENALTY_DEPTH = 2;
 const PENALTY_SHADOWED_L_SUFFIX = 5; // foo-l.exe next to foo.exe is usually a launcher/helper variant
+
+// Confidence thresholds for auto-filling the launch panel. A detection is only "confident"
+// (and therefore auto-assigned to a game) when one of these holds:
+//   - the caller supplied an authoritative exe (launcher manifest/DB), or
+//   - there is exactly one plausible exe in the folder, or
+//   - the exe name matches the game name (or the install folder name) strongly, or
+//   - the exe sits next to the Steam emulator dll AND matches name/folder decently, or
+//   - the winner beats every other candidate by a clear margin AND matches decently.
+// Anything else is left for the user to pick manually — the launch panel must never guess.
+const CONFIDENCE = {
+  STRONG_NAME: 0.85,
+  DLL_NAME: 0.6,
+  CLEAR_WINNER_MARGIN: 40,
+};
 
 function normalize(s) {
   return String(s || '')
@@ -167,6 +185,49 @@ function collectCandidates(gameDir) {
   return candidates;
 }
 
+// Decide whether `best` is safe to auto-assign. `candidates` is the sorted, filtered list from
+// detect(); `gameDir` is used as a second name source (the folder name is authoritative for Steam
+// manifests and for library-root scans, so an exe matching the folder is strong evidence too).
+function confidenceFor(best, candidates, gameDir, gameName, opts = {}) {
+  if (opts.authoritative) return { confident: true, reason: 'authoritative' };
+
+  const base = best.name.replace(/\.exe$/i, '');
+  const gameSim = nameSimilarity(gameName || '', base);
+  const folderBase = path.basename(String(gameDir || ''));
+  const folderSim = nameSimilarity(folderBase, base);
+
+  // A strong name match alone is not enough when the winner is a nested helper that merely shares
+  // the product's brand (steamvr_tutorial.exe, steamvr_room_setup.exe, …). Require the candidate to
+  // sit near the root or next to the Steam dll — real game binaries are almost always there.
+  if ((gameSim >= CONFIDENCE.STRONG_NAME || folderSim >= CONFIDENCE.STRONG_NAME) && (best.depth <= 1 || best._dllBonus > 0)) {
+    return {
+      confident: true,
+      reason: gameSim >= CONFIDENCE.STRONG_NAME ? 'strong-name' : 'strong-folder-name',
+    };
+  }
+
+  if (best._dllBonus > 0 && gameSim >= CONFIDENCE.DLL_NAME) return { confident: true, reason: 'dll-and-name' };
+  if (best._dllBonus > 0 && folderSim >= CONFIDENCE.DLL_NAME) return { confident: true, reason: 'dll-and-folder-name' };
+
+  // A launcher/loader/helper/updater-style exe is never auto-assigned on its own — even when it is
+  // the only exe in the folder — unless the name evidence above said it is the game itself.
+  if (SOFT_PENALTY.some((r) => r.test(best.name))) return { confident: false, reason: 'soft-penalty' };
+
+  if (candidates.length === 1) return { confident: true, reason: 'single-candidate' };
+
+  const second = candidates.filter((c) => c !== best)[0] || null;
+  const margin = second ? best.score - second.score : Infinity;
+  if (
+    margin >= CONFIDENCE.CLEAR_WINNER_MARGIN &&
+    (gameSim >= CONFIDENCE.DLL_NAME || folderSim >= CONFIDENCE.DLL_NAME) &&
+    (best.depth <= 1 || best._dllBonus > 0)
+  ) {
+    return { confident: true, reason: 'clear-winner' };
+  }
+
+  return { confident: false, reason: 'ambiguous' };
+}
+
 /*
   Find the most likely game executable inside gameDir.
 
@@ -225,15 +286,32 @@ function detect(gameDir, gameName, opts = {}) {
       dllBonus = Math.max(dllBonus, BONUS_ROOT_EXE_WITH_NESTED_DLL);
     }
     c.score = sim * W_NAME + sizeFactor * W_SIZE + dllBonus - soft - c.depth * PENALTY_DEPTH;
+    c._sim = sim;
+    c._dllBonus = dllBonus;
   }
   candidates.sort((a, b) => b.score - a.score || a.depth - b.depth || b.size - a.size);
 
   for (const c of candidates) {
     if (!taken.has(c.full.toLowerCase())) {
-      return { name: c.name, full: c.full, size: c.size, score: c.score };
+      const confidence = confidenceFor(c, candidates, gameDir, gameName, opts);
+      return {
+        name: c.name,
+        full: c.full,
+        size: c.size,
+        score: c.score,
+        confident: confidence.confident,
+        confidence: confidence.reason,
+      };
     }
   }
   return null;
+}
+
+// Convenience wrapper for callers that must NOT guess: returns the best candidate only when the
+// confidence rules above say it is safe (or when opts.authoritative is set).
+function detectConfident(gameDir, gameName, opts = {}) {
+  const result = detect(gameDir, gameName, opts);
+  return result && result.confident ? result : null;
 }
 
 // Minimum name similarity for a folder to be accepted as a game's install dir (name-based fallback
@@ -277,4 +355,16 @@ function shallowGameExe(dir) {
   return null;
 }
 
-module.exports = { detect, shallowGameExe, nameSimilarity, bestFolderMatch, FOLDER_MATCH_THRESHOLD, EXE_EXCLUDE, SOFT_PENALTY, isKnownNonGameExe, KNOWN_NON_GAME_EXE };
+module.exports = {
+  detect,
+  detectConfident,
+  shallowGameExe,
+  nameSimilarity,
+  bestFolderMatch,
+  FOLDER_MATCH_THRESHOLD,
+  EXE_EXCLUDE,
+  SOFT_PENALTY,
+  isKnownNonGameExe,
+  KNOWN_NON_GAME_EXE,
+  CONFIDENCE,
+};

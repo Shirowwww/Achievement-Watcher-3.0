@@ -5,6 +5,15 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- The launch panel now auto-fills game executables after every scan: Steam installs are matched to
+  their `appmanifest`/`libraryfolders.vdf` folders, GOG Galaxy launch tasks, Epic manifests, EA
+  Desktop logs and Xbox configs provide the exact launcher exe, and every other known install folder
+  is detected with a conservative confidence gate (single plausible exe, strong name/folder match,
+  or Steam-dll adjacency). Ambiguous folders stay empty for a manual pick — no guessing — and a
+  manually configured exe is never overwritten.
+
 ### Fixed
 
 - Ubisoft Connect titles bought on Steam no longer need a per-game row in the uplay↔Steam mapping

@@ -483,6 +483,20 @@ module.exports.scan = async () => {
           logsRoot: entry.logsRoot,
           logFilePath: entry.logFilePath,
           binary: entry.processName || null,
+          gameDir: entry.installPath && fs.existsSync(entry.installPath) ? entry.installPath : null,
+          exe:
+            entry.exePath &&
+            (fs.existsSync(entry.exePath) ||
+              (entry.installPath && fs.existsSync(path.join(entry.installPath, entry.exePath))))
+              ? fs.existsSync(entry.exePath)
+                ? entry.exePath
+                : path.join(entry.installPath, entry.exePath)
+              : null,
+          exeAuthoritative: !!(
+            entry.exePath &&
+            (fs.existsSync(entry.exePath) ||
+              (entry.installPath && fs.existsSync(path.join(entry.installPath, entry.exePath))))
+          ),
         },
       });
     }
