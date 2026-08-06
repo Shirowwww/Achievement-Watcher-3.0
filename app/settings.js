@@ -392,15 +392,6 @@ module.exports.load = () => {
       options.steam = {};
     }
 
-    // Optional per-user SteamGridDB artwork key ([steamgriddb] apiKey, AES-encrypted on disk).
-    if (!options.steamgriddb || typeof options.steamgriddb !== 'object') options.steamgriddb = {};
-    if (typeof options.steamgriddb.apiKey === 'string' && options.steamgriddb.apiKey.includes(':')) {
-      try {
-        options.steamgriddb.apiKey = aes.decrypt(options.steamgriddb.apiKey);
-      } catch {
-        options.steamgriddb.apiKey = '';
-      }
-    }
   } catch (err) {
     console.log(`failed to load settings: ${err}`);
     options = {
@@ -503,7 +494,6 @@ module.exports.load = () => {
         hide: true,
       },
       steam: { main: '0' },
-      steamgriddb: {},
     };
 
     try {
@@ -547,20 +537,6 @@ module.exports.save = (config) => {
         } catch {}
       }
 
-      // Same treatment for the optional SteamGridDB key: encrypt provided keys, keep existing ones.
-      if (!options.steamgriddb) options.steamgriddb = {};
-      if (typeof options.steamgriddb.apiKey === 'string' && options.steamgriddb.apiKey.length > 0) {
-        options.steamgriddb.apiKey = aes.encrypt(config.steamgriddb.apiKey);
-      } else if (options.steamgriddb.apiKey === '') {
-        delete options.steamgriddb.apiKey;
-      } else {
-        try {
-          const existing = ini.parse(fs.readFileSync(filename, 'utf8'));
-          if (existing && existing.steamgriddb && existing.steamgriddb.apiKey) {
-            options.steamgriddb.apiKey = existing.steamgriddb.apiKey;
-          }
-        } catch {}
-      }
     } catch (err) {
       return reject(err);
     }

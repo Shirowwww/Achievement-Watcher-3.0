@@ -810,6 +810,11 @@
     "update-up-to-date-short": "已是最新",
     "update-checked": "已检查",
     "blacklist-add-placeholder": "Steam App ID",
-    "blacklist-add-button": "添加"
+    "blacklist-add-button": "添加",
+    "chooseAnotherCover": "选择其他封面…",
+    "chooseAnotherCoverTitle": "选择其他封面",
+    "coverPickerLoading": "正在加载封面…",
+    "noCoversFound": "未找到其他封面。",
+    "currentCover": "当前封面",
   }
 }

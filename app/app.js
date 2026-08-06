@@ -300,6 +300,138 @@ function applyCoverWithFallback(game, headerEl, imgName, tried) {
     });
 }
 
+// Cover gallery: right-click a game -> "Choose another cover…". Shows the SteamDB portrait (when
+// the appid resolves) plus SteamGridDB community grids; clicking one applies it as a per-game
+// cover override (cfg/covers.db), exactly like the other cover actions.
+function openCoverPicker(game, appid, coverCacheAppid) {
+  const portraitView = !!(app.config && app.config.achievement && app.config.achievement.thumbnailPortrait);
+  const img = (game && game.img) || {};
+  const currentUrl = portraitView ? img.portrait || img.header : img.header || img.portrait;
+  const overlay = document.createElement('div');
+  overlay.className = 'aw-prompt-overlay aw-cover-picker-overlay';
+  const box = document.createElement('div');
+  box.className = 'aw-prompt aw-cover-picker';
+  const head = document.createElement('div');
+  head.className = 'aw-prompt-heading';
+  const icon = document.createElement('div');
+  icon.className = 'aw-prompt-icon';
+  icon.innerHTML = '<i class="fas fa-images"></i>';
+  const titleWrap = document.createElement('div');
+  titleWrap.className = 'aw-prompt-title';
+  titleWrap.textContent = t('chooseAnotherCoverTitle', 'Choose another cover', 'Choisir une autre jaquette');
+  head.append(icon, titleWrap);
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'aw-prompt-button secondary aw-cover-picker-close';
+  closeBtn.textContent = '×';
+  closeBtn.title = t('cancel', 'Cancel', 'Annuler');
+  head.append(closeBtn);
+  const status = document.createElement('div');
+  status.className = 'aw-cover-picker-status';
+  status.textContent = t('coverPickerLoading', 'Loading covers…', 'Chargement des jaquettes…');
+  const grid = document.createElement('div');
+  grid.className = 'aw-cover-picker-grid';
+  const actions = document.createElement('div');
+  actions.className = 'aw-prompt-actions';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'aw-prompt-button secondary';
+  cancelBtn.textContent = t('cancel', 'Cancel', 'Annuler');
+  actions.append(cancelBtn);
+  box.append(head, status, grid, actions);
+  overlay.append(box);
+
+  const done = () => overlay.remove();
+  closeBtn.onclick = done;
+  cancelBtn.onclick = done;
+  overlay.onmousedown = (ev) => {
+    if (ev.target === overlay) done();
+  };
+  const onKey = (e) => {
+    if (e.key === 'Escape') {
+      done();
+      document.removeEventListener('keydown', onKey);
+    }
+  };
+  document.addEventListener('keydown', onKey);
+
+  // Show the modal immediately — even if the options fetch fails, the user sees the gallery with
+  // the "no covers" state instead of a dead right-click.
+  document.body.append(overlay);
+  if (!document.getElementById('aw-cover-picker-style')) {
+    const style = document.createElement('style');
+    style.id = 'aw-cover-picker-style';
+    style.textContent = `
+      .aw-cover-picker{width:min(960px,calc(100vw - 48px));max-height:88vh;overflow:auto}
+      .aw-cover-picker-close{margin-left:auto;min-width:34px;width:34px;padding:4px 0;font-size:16px;line-height:1}
+      .aw-cover-picker-status{color:var(--text-muted);font-size:13px;padding:18px 4px;text-align:center}
+      .aw-cover-picker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+      .aw-cover-picker-tile{position:relative;aspect-ratio:2/3;background-size:cover;background-position:center;border-radius:10px;cursor:pointer;border:1px solid color-mix(in srgb,var(--border) 22%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.04);transition:transform .12s ease,border-color .12s ease,box-shadow .12s ease}
+      .aw-cover-picker-tile:hover{border-color:color-mix(in srgb,var(--accent) 70%,transparent);transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.04)}
+      .aw-cover-picker-tile.aw-landscape{aspect-ratio:16/9}
+      .aw-cover-picker-source{position:absolute;left:6px;bottom:6px;background:rgba(4,10,18,.72);backdrop-filter:blur(3px);color:#fff;font-family:'Open-sans';font-size:11px;padding:2px 7px;border-radius:6px;border:1px solid rgba(255,255,255,.08)}
+    `;
+    document.head.append(style);
+  }
+
+  const addTile = (url, source) => {
+    const tile = document.createElement('div');
+    tile.className = 'aw-cover-picker-tile';
+    if (!portraitView) tile.classList.add('aw-landscape');
+    tile.style.backgroundImage = `url('${url}')`;
+    tile.title = url;
+    const tag = document.createElement('span');
+    tag.className = 'aw-cover-picker-source';
+    tag.textContent = source;
+    tile.append(tag);
+    tile.onclick = async () => {
+      try {
+        // fetch-icon can stall forever on some CDNs (request-zero's socket bug), which made the
+        // click look dead — nothing applied and no error was logged. Bound it, and on any failure
+        // fall back to the remote URL itself (the app's CSP allows https images).
+        const local = await Promise.race([
+          ipcRenderer.invoke('fetch-icon', url, coverCacheAppid),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('fetch-icon timeout')), 15000)),
+        ]).catch((err) => {
+          debug.warn(`[cover] picker download failed (${err.message || err}) — applying remote URL`);
+          return null;
+        });
+        const target = local && local !== url ? local : url;
+        coverStore.set(String(appid), target);
+        reloadCoverOverrides();
+        applyCoverBackground(String(appid), target);
+      } catch (err) {
+        debug.warn(`[cover] picker apply failed => ${err}`);
+      }
+      done();
+    };
+    grid.append(tile);
+  };
+
+  ipcRenderer
+    .invoke('get-cover-options', {
+      appid: coverCacheAppid,
+      name: game.name,
+      orientation: portraitView ? 'portrait' : 'landscape',
+      // Only a real Steam release should hit SteamDB — passing a non-Steam numeric id (GOG/Xbox)
+      // would scrape a page with no assets and stall the gallery for up to 45s.
+      steamAppid: /^\d+$/.test(String(game && game.steamappid || '')) ? String(game.steamappid) : '',
+    })
+    .then((opts = {}) => {
+      status.remove();
+      if (currentUrl) addTile(currentUrl, t('currentCover', 'Current', 'Actuelle'));
+      for (const url of Array.isArray(opts.steamdb) ? opts.steamdb : []) addTile(url, 'SteamDB');
+      for (const url of Array.isArray(opts.grids) ? opts.grids : []) addTile(url, 'SteamGridDB');
+      if (!grid.children.length) {
+        status.textContent = t('noCoversFound', 'No alternative covers found.', 'Aucune jaquette alternative trouvée.');
+        box.append(status);
+      }
+    })
+    .catch((err) => {
+      debug.warn(`[cover] picker options failed => ${err}`);
+      status.textContent = t('noCoversFound', 'No alternative covers found.', 'Aucune jaquette alternative trouvée.');
+    });
+
+}
+
 // Styled in-app text prompt (Electron disables window.prompt). Resolves to the trimmed value or null.
 function promptText(message, defaultValue = '', type = 'text') {
   return new Promise((resolve) => {
@@ -3024,6 +3156,14 @@ var app = {
                   } catch (err) {
                     debug.warn(`[cover] redownload failed => ${err}`);
                   }
+                },
+              })
+            );
+            coverMenu.append(
+              new MenuItem({
+                label: t('chooseAnotherCover', 'Choose another cover…', 'Choisir une autre jaquette…'),
+                click() {
+                  openCoverPicker(coverGame, appid, coverCacheAppid);
                 },
               })
             );

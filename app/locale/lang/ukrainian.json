@@ -810,6 +810,11 @@
     "update-up-to-date-short": "Актуальна версія",
     "update-checked": "Перевірено",
     "blacklist-add-placeholder": "Steam App ID",
-    "blacklist-add-button": "Додати"
+    "blacklist-add-button": "Додати",
+    "chooseAnotherCover": "Вибрати іншу обкладинку…",
+    "chooseAnotherCoverTitle": "Вибрати іншу обкладинку",
+    "coverPickerLoading": "Завантаження обкладинок…",
+    "noCoversFound": "Альтернативні обкладинки не знайдено.",
+    "currentCover": "Поточна",
   }
 }

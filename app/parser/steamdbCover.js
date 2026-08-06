@@ -72,10 +72,39 @@ function coverFromHtml(appid, html) {
   return null;
 }
 
+// Every library asset URL found on a SteamDB info page (deduplicated). The 600x900 portrait comes
+// first when present, then any wider library_capsule variants — callers filter by orientation.
+function coversFromHtml(appid, html) {
+  const source = String(html || '');
+  if (!source) return [];
+  const out = [];
+  const push = (value) => {
+    const url = normalizeSteamDbAssetUrl(appid, value);
+    if (url && !out.includes(url)) out.push(url);
+  };
+  try {
+    const root = htmlParser.parse(source);
+    for (const anchor of root.querySelectorAll('a')) {
+      const href = anchor.getAttribute('href') || '';
+      const text = anchor.text || '';
+      for (const candidate of [href, text]) {
+        if (isPortraitAsset(candidate)) push(candidate);
+      }
+    }
+  } catch {
+    /* malformed HTML -> raw sweep below */
+  }
+  const sweep = /https?:\/\/[^"'<\s]*(?:library_600x900\.jpg|library_capsule(?:_[a-z0-9]+)*\.jpg)|store_item_assets\/steam\/apps\/\d+\/[^"'<\s]*(?:library_600x900\.jpg|library_capsule(?:_[a-z0-9]+)*\.jpg)/gi;
+  let match;
+  while ((match = sweep.exec(source))) push(match[0]);
+  return out;
+}
+
 module.exports = {
   CDN_BASE,
   normalizeSteamDbAssetUrl,
   isPortraitAsset,
   isCapsuleAsset,
   coverFromHtml,
+  coversFromHtml,
 };

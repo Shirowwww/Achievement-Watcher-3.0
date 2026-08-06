@@ -810,6 +810,11 @@
     "update-up-to-date-short": "Naprakész",
     "update-checked": "Ellenőrizve",
     "blacklist-add-placeholder": "Steam App ID",
-    "blacklist-add-button": "Hozzáadás"
+    "blacklist-add-button": "Hozzáadás",
+    "chooseAnotherCover": "Másik borító választása…",
+    "chooseAnotherCoverTitle": "Másik borító választása",
+    "coverPickerLoading": "Borítók betöltése…",
+    "noCoversFound": "Nem található alternatív borító.",
+    "currentCover": "Jelenlegi",
   }
 }

@@ -7,6 +7,12 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Right-click → "Choose another cover…" opens a themed gallery with the current cover, the SteamDB
+  library assets and up to eight SteamGridDB community grids; clicking one applies it as the
+  per-game cover override. The gallery matches the library orientation (vertical 600×900 covers in
+  portrait view, wide 920×430 covers in landscape view).
+- SteamGridDB now uses the bundled public API key only (the optional per-user key handling was
+  removed).
 - Unconfigured installs are named from the exe's own FileDescription/ProductName when the folder
   name is meaningless (repacks that rename folders to "Game123" no longer show that garbage).
 - Cross-source duplicate merge ("merge duplicate games"): a Ubisoft Connect product mapped to an
@@ -24,6 +30,13 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The "Choose another cover…" gallery opens reliably again: a scope bug (wrong variable reference)
+  could abort it before the modal appeared, and the modal is now shown before the cover fetch so a
+  failed lookup always leaves a visible state.
+- The cover gallery never hangs: picking a cover is bounded by a 15s download timeout and falls
+  back to the remote URL when a CDN stalls (previously the click could silently do nothing).
+- SteamDB is only queried for real Steam releases — a non-Steam id (GOG/Xbox/local) no longer
+  triggers a pointless 45s SteamDB scrape that delayed the gallery.
 - Games without cover art are checked against the network again on every scan, as before — the
   temporary "fast-scan" skip that cached those lookups for a week was removed.
 - A stale "configure executable" entry pointing at a known non-game program (e.g. R.exe from IBM
@@ -62,6 +75,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- The cover gallery uses the app's shared modal style (same surfaces, blur backdrop, typography and
+  buttons as the executable-configuration dialog), with an explicit Cancel button.
 - Installed-game folder detection now merges smart-discovered library roots on every scan (common
   neutral folder names on all drives — Games/Jeux/Juegos/Spiele, Games Library/GameLibrary,
   Repacks, plus GOG Games and Epic Games as before) without requiring the user to add them in

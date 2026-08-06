@@ -810,6 +810,11 @@
     "update-up-to-date-short": "Actualizado",
     "update-checked": "Comprobación realizada",
     "blacklist-add-placeholder": "ID de App de Steam",
-    "blacklist-add-button": "Agregar"
+    "blacklist-add-button": "Agregar",
+    "chooseAnotherCover": "Elegir otra carátula…",
+    "chooseAnotherCoverTitle": "Elegir otra carátula",
+    "coverPickerLoading": "Cargando carátulas…",
+    "noCoversFound": "No se encontraron carátulas alternativas.",
+    "currentCover": "Actual",
   }
 }

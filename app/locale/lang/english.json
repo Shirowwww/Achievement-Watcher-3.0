@@ -810,6 +810,11 @@
     "update-up-to-date-short": "Up to date",
     "update-checked": "Check done",
     "blacklist-add-placeholder": "Steam App ID",
-    "blacklist-add-button": "Add"
+    "blacklist-add-button": "Add",
+    "chooseAnotherCover": "Choose another cover…",
+    "chooseAnotherCoverTitle": "Choose another cover",
+    "coverPickerLoading": "Loading covers…",
+    "noCoversFound": "No alternative covers found.",
+    "currentCover": "Current",
   }
 }

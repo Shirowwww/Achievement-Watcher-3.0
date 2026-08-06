@@ -810,6 +810,11 @@
     "update-up-to-date-short": "เป็นเวอร์ชันล่าสุด",
     "update-checked": "ตรวจสอบแล้ว",
     "blacklist-add-placeholder": "Steam App ID",
-    "blacklist-add-button": "เพิ่ม"
+    "blacklist-add-button": "เพิ่ม",
+    "chooseAnotherCover": "เลือกปกอื่น…",
+    "chooseAnotherCoverTitle": "เลือกปกอื่น",
+    "coverPickerLoading": "กำลังโหลดปก…",
+    "noCoversFound": "ไม่พบปกอื่น",
+    "currentCover": "ปกปัจจุบัน",
   }
 }

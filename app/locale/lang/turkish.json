@@ -810,6 +810,11 @@
     "update-up-to-date-short": "Güncel",
     "update-checked": "Kontrol edildi",
     "blacklist-add-placeholder": "Steam App ID",
-    "blacklist-add-button": "Ekle"
+    "blacklist-add-button": "Ekle",
+    "chooseAnotherCover": "Başka bir kapak seç…",
+    "chooseAnotherCoverTitle": "Başka bir kapak seç",
+    "coverPickerLoading": "Kapaklar yükleniyor…",
+    "noCoversFound": "Alternatif kapak bulunamadı.",
+    "currentCover": "Mevcut",
   }
 }

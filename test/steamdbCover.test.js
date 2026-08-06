@@ -55,3 +55,21 @@ test('normalizeSteamDbAssetUrl resolves bare filenames against the appid asset r
     'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1091500/library_600x900.jpg'
   );
 });
+
+test('coversFromHtml collects every library asset, portrait first and deduplicated', () => {
+  const html = [
+    '<a href="store_item_assets/steam/apps/620/c0ffee/library_capsule_french.jpg">capsule fr</a>',
+    '<a href="store_item_assets/steam/apps/620/c0ffee/library_600x900.jpg">portrait</a>',
+    '<a href="store_item_assets/steam/apps/620/c0ffee/library_capsule.jpg">capsule</a>',
+    '<a href="store_item_assets/steam/apps/620/c0ffee/library_600x900.jpg">dupe</a>',
+  ].join('');
+  const urls = cover.coversFromHtml('620', html);
+  assert.ok(urls.includes('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/620/c0ffee/library_600x900.jpg'));
+  assert.ok(urls.includes('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/620/c0ffee/library_capsule_french.jpg'));
+  assert.equal(urls.length, 3, 'duplicates are removed');
+});
+
+test('coversFromHtml returns an empty list when nothing matches', () => {
+  assert.deepEqual(cover.coversFromHtml('999', '<html><body><p>nothing</p></body></html>'), []);
+  assert.deepEqual(cover.coversFromHtml('999', ''), []);
+});

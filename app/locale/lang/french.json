@@ -810,6 +810,11 @@
     "update-up-to-date-short": "À jour",
     "update-checked": "Vérifié",
     "blacklist-add-placeholder": "ID d'app Steam",
-    "blacklist-add-button": "Ajouter"
+    "blacklist-add-button": "Ajouter",
+    "chooseAnotherCover": "Choisir une autre jaquette…",
+    "chooseAnotherCoverTitle": "Choisir une autre jaquette",
+    "coverPickerLoading": "Chargement des jaquettes…",
+    "noCoversFound": "Aucune jaquette alternative trouvée.",
+    "currentCover": "Actuelle",
   }
 }

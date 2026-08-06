@@ -810,6 +810,11 @@
     "update-up-to-date-short": "最新版です",
     "update-checked": "確認済み",
     "blacklist-add-placeholder": "Steam App ID",
-    "blacklist-add-button": "追加"
+    "blacklist-add-button": "追加",
+    "chooseAnotherCover": "別のカバーを選択…",
+    "chooseAnotherCoverTitle": "別のカバーを選択",
+    "coverPickerLoading": "カバーを読み込み中…",
+    "noCoversFound": "代替カバーが見つかりませんでした。",
+    "currentCover": "現在のカバー",
   }
 }

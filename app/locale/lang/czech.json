@@ -810,6 +810,11 @@
     "update-up-to-date-short": "Aktuální",
     "update-checked": "Zkontrolováno",
     "blacklist-add-placeholder": "Steam App ID",
-    "blacklist-add-button": "Přidat"
+    "blacklist-add-button": "Přidat",
+    "chooseAnotherCover": "Vybrat jiný obal…",
+    "chooseAnotherCoverTitle": "Vybrat jiný obal",
+    "coverPickerLoading": "Načítání obalů…",
+    "noCoversFound": "Nenašly se žádné alternativní obaly.",
+    "currentCover": "Aktuální",
   }
 }
