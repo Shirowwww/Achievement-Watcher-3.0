@@ -34,6 +34,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Playtime tracking now starts before the toast/controller services initialize COM security, so the
+  watchdog no longer loses it to an `RPC_E_TOO_LATE` failure at startup.
 - Gradients now size correctly when combined with a layer image (the gradient stretches over the
   whole layer, the image keeps its own fit/repeat), and enabling a fresh gradient follows the
   layer's color instead of falling back to a fixed default.

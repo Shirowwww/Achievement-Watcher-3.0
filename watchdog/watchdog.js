@@ -1040,17 +1040,11 @@ var app = {
   try {
     await instance.lock();
 
-    app.start().catch((err) => {
-      debug.log(err);
-    });
-
-    try {
-      websocket();
-    } catch (err) {
-      debug.error(err);
-    }
-
-    playtimeMonitor
+    // Start the process monitor BEFORE the toast/controller modules initialize COM security:
+    // wql-process-monitor's native sink calls CoInitializeSecurity(), which fails with
+    // RPC_E_TOO_LATE once another COM client (WinRT toasts, GameInput/XInput, ...) has already
+    // locked the security settings. Doing the subscription first keeps playtime tracking working.
+    const playtimeMonitorReady = playtimeMonitor
       .init()
       .then((monitor) => {
         debug.log('Playtime monitoring activated');
@@ -1135,6 +1129,18 @@ var app = {
       .catch((err) => {
         debug.error(err);
       });
+
+    await playtimeMonitorReady;
+
+    app.start().catch((err) => {
+      debug.log(err);
+    });
+
+    try {
+      websocket();
+    } catch (err) {
+      debug.error(err);
+    }
   } catch (err) {
     debug.error(err);
     process.exit();
