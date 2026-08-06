@@ -1078,6 +1078,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       blur: t('theme-effect-blur', 'Blur', 'Flou'),
     };
     const CUSTOM_IMAGE_LAYERS = themeLayers.IMAGE_LAYER_IDS;
+    function gradientAngleFromDom(row) {
+      const n = Number(row.find('.theme-layer-gradient-angle').val());
+      return Number.isFinite(n) ? n : 180;
+    }
     let customThemeDraft = null;
     let customThemeSnapshot = null;
     let customThemeSaveTimer = null;
@@ -1097,7 +1101,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
             enabled: row.find('.theme-layer-gradient-enabled').is(':checked'),
             from: row.find('.theme-layer-gradient-from').val() || grad.from || layer.color || current.color || '#1b2838',
             to: row.find('.theme-layer-gradient-to').val() || grad.to || grad.from || layer.color || current.color || '#1b2838',
-            angle: Number(row.find('.theme-layer-gradient-angle').val()) || 180,
+            angle: gradientAngleFromDom(row),
           };
           layer.effect = {
             enabled: row.find('.theme-layer-effect-enabled').is(':checked'),
@@ -1124,8 +1128,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const previewImage =
           effect.enabled === true && effect.type === 'blur' && effect.blurImage ? effect.blurImage : layer.image || '';
         const grad = (layer.gradient && typeof layer.gradient === 'object' ? layer.gradient : {});
+        const gradAngle = Number.isFinite(Number(grad.angle)) ? Number(grad.angle) : 180;
         const gradStyle = grad.enabled === true
-          ? `linear-gradient(${Number(grad.angle) || 180}deg, ${grad.from || layer.color || '#1b2838'} 0%, ${grad.to || grad.from || layer.color || '#1b2838'} 100%)`
+          ? `linear-gradient(${gradAngle}deg, ${grad.from || layer.color || '#1b2838'} 0%, ${grad.to || grad.from || layer.color || '#1b2838'} 100%)`
           : '';
         const previewStyle =
           `background-color:${layer.color || '#1b2838'};` +
@@ -1135,10 +1140,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
             ? `background-image:${gradStyle};`
             : 'background-image:none;');
         const preview = $('<div>').addClass('theme-layer-preview').attr('style', previewStyle);
-        if (previewImage) {
-          const href = require('url').pathToFileURL(previewImage).href.replace(/'/g, "\\'");
-          preview.attr('data-preview-image', href);
-        }
+        // Remember the resolved preview image (source or blur copy) so the live gradient
+        // refresh can rebuild the swatch exactly like the real renderer does.
+        row.data('previewImage', previewImage);
         const label = $('<div>')
           .addClass('theme-layer-label')
           .html(
@@ -1157,7 +1161,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           controls.append(gradientToggle);
 
           const gradientPanel = $('<div>').addClass('theme-layer-effect theme-layer-gradient-panel' + (grad.enabled === true ? ' open' : ''));
-          gradientPanel.data('gradient', grad);
+          gradientPanel.data('gradient', grad).data('baseColor', layer.color || '#1b2838');
           const angleLabels = {
             0: t('theme-gradient-angle-0', 'Bottom → Top', 'Bas → Haut'),
             45: t('theme-gradient-angle-45', 'Bottom-left → Top-right', 'Bas-gauche → Haut-droite'),
@@ -1181,10 +1185,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           angleGroup.append($('<label>').text(t('theme-gradient-direction', 'Direction', 'Direction')));
           angleGroup.append(angleSelect);
           gradientPanel.append(fromGroup, toGroup, angleGroup);
-          gradientToggle.find('input').on('change', function () {
-            gradientPanel.toggleClass('open', this.checked);
-          });
-          controls.append(gradientPanel);
+          // The gradient panel must live OUTSIDE the one-line controls row (which is a
+          // nowrap flex container): a flex child forced to 100% width would keep its
+          // space and overlap the other controls even while collapsed.
+          row.data('gradientPanel', gradientPanel);
 
           const pick = $('<button>')
             .attr('type', 'button')
@@ -1211,7 +1215,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           );
           effectToggle.append($('<span>').text(t('theme-effect-label', 'Effect', 'Effet')));
 
-          const effectPanel = $('<div>').addClass('theme-layer-effect' + (effect.enabled === true ? ' open' : ''));
+          const effectPanel = $('<div>').addClass('theme-layer-effect theme-layer-effect-panel' + (effect.enabled === true ? ' open' : ''));
           const effectType = $('<select>').addClass('theme-layer-effect-type');
           for (const [value, labelText] of Object.entries(CUSTOM_EFFECT_LABELS)) {
             effectType.append($('<option>').attr('value', value).text(labelText));
@@ -1251,6 +1255,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           row.data('effectPanel', effectPanel);
         }
         row.append(preview, label, controls);
+        const gradientPanelEl = row.data('gradientPanel');
+        if (gradientPanelEl) row.append(gradientPanelEl);
         const effectPanelEl = row.data('effectPanel');
         if (effectPanelEl) row.append(effectPanelEl);
         // With an image, keep the image picker and its controls on one line in place of the
@@ -1287,7 +1293,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
     function updateEffectPanel(row) {
       const enabled = row.find('.theme-layer-effect-enabled').is(':checked');
-      row.find('.theme-layer-effect').toggleClass('open', enabled);
+      row.find('.theme-layer-effect-panel').toggleClass('open', enabled);
       const isBlur = row.find('.theme-layer-effect-type').val() === 'blur';
       row.find('.veil-group').toggle(enabled && !isBlur);
       row.find('.blur-group').toggle(enabled && isBlur);
@@ -1347,24 +1353,26 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const enabled = row.find('.theme-layer-gradient-enabled').is(':checked');
       const from = row.find('.theme-layer-gradient-from').val() || baseColor;
       const to = row.find('.theme-layer-gradient-to').val() || from;
-      const angle = Number(row.find('.theme-layer-gradient-angle').val()) || 180;
+      const angle = gradientAngleFromDom(row);
       const preview = row.find('.theme-layer-preview');
       preview.css('background-color', baseColor);
       const layers = [];
       if (enabled) layers.push(`linear-gradient(${angle}deg, ${from} 0%, ${to} 100%)`);
-      const imageSrc = preview.attr('data-preview-image') || '';
+      const imageSrc = row.data('previewImage') || '';
       if (imageSrc) layers.push(`url('${imageSrc.replace(/'/g, "\\'")}')`);
       preview.css('background-image', layers.length ? layers.join(',') : 'none');
     }
 
     $('#theme-customizer-layers').on('change', '.theme-layer-gradient-enabled', function () {
       const row = $(this).closest('.theme-layer-row');
-      row.find('.theme-layer-gradient-panel').toggleClass('open', this.checked);
+      const panel = row.find('.theme-layer-gradient-panel');
+      panel.toggleClass('open', this.checked);
       if (this.checked) {
         // A freshly enabled gradient follows the layer color unless the user already
-        // picked custom colors for it.
-        const grad = row.find('.theme-layer-gradient-panel').data('gradient') || {};
-        if (!grad.from && !grad.to) {
+        // picked custom colors for it (detected by comparing with the stored base color).
+        const grad = panel.data('gradient') || {};
+        const base = panel.data('baseColor') || '#1b2838';
+        if ((!grad.from || grad.from === base) && (!grad.to || grad.to === base)) {
           const color = row.find('.theme-layer-color').val() || '#1b2838';
           row.find('.theme-layer-gradient-from').val(color);
           row.find('.theme-layer-gradient-to').val(color);

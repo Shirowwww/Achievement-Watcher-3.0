@@ -6273,7 +6273,6 @@ body {
 }
 
 #theme-customizer .theme-layer-effect {
-  flex: 1 1 100%;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -6288,6 +6287,24 @@ body {
 
 #theme-customizer .theme-layer-effect.open {
   max-height: 140px;
+  opacity: 1;
+  padding: 8px 10px 4px;
+  border-top-color: var(--set-hairline-soft);
+}
+
+/* The gradient panel lives below the one-line controls row, not inside it. A collapsed
+   gradient must take no space at all (display:none) or it would still sit in the row and
+   cover the other controls; only the effect panel uses the max-height animation above. */
+#theme-customizer .theme-layer-gradient-panel {
+  flex: none;
+  width: 100%;
+  box-sizing: border-box;
+  display: none;
+}
+
+#theme-customizer .theme-layer-gradient-panel.open {
+  display: flex;
+  max-height: none;
   opacity: 1;
   padding: 8px 10px 4px;
   border-top-color: var(--set-hairline-soft);

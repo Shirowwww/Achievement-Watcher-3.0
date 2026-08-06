@@ -290,7 +290,7 @@ function layerGradient(layer) {
   if (!layer || !layer.gradient || layer.gradient.enabled !== true) return 'none';
   const from = layer.gradient.from || layer.color || '#1b2838';
   const to = layer.gradient.to || from;
-  const angle = Number(layer.gradient.angle) || 180;
+  const angle = Number.isFinite(Number(layer.gradient.angle)) ? Number(layer.gradient.angle) : 180;
   return `linear-gradient(${angle}deg, ${from} 0%, ${to} 100%)`;
 }
 
