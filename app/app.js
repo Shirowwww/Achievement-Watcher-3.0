@@ -311,6 +311,9 @@ function openCoverPicker(game, appid, coverCacheAppid) {
   overlay.className = 'aw-prompt-overlay aw-cover-picker-overlay';
   const box = document.createElement('div');
   box.className = 'aw-prompt aw-cover-picker';
+  box.setAttribute('role', 'dialog');
+  box.setAttribute('aria-modal', 'true');
+  box.setAttribute('aria-label', t('chooseAnotherCoverTitle', 'Choose another cover', 'Choisir une autre jaquette'));
   const head = document.createElement('div');
   head.className = 'aw-prompt-heading';
   const icon = document.createElement('div');
@@ -327,6 +330,7 @@ function openCoverPicker(game, appid, coverCacheAppid) {
   head.append(closeBtn);
   const status = document.createElement('div');
   status.className = 'aw-cover-picker-status';
+  status.setAttribute('aria-live', 'polite');
   status.textContent = t('coverPickerLoading', 'Loading covers…', 'Chargement des jaquettes…');
   const grid = document.createElement('div');
   grid.className = 'aw-cover-picker-grid';
@@ -356,21 +360,6 @@ function openCoverPicker(game, appid, coverCacheAppid) {
   // Show the modal immediately — even if the options fetch fails, the user sees the gallery with
   // the "no covers" state instead of a dead right-click.
   document.body.append(overlay);
-  if (!document.getElementById('aw-cover-picker-style')) {
-    const style = document.createElement('style');
-    style.id = 'aw-cover-picker-style';
-    style.textContent = `
-      .aw-cover-picker{width:min(960px,calc(100vw - 48px));max-height:88vh;overflow:auto}
-      .aw-cover-picker-close{margin-left:auto;min-width:34px;width:34px;padding:4px 0;font-size:16px;line-height:1}
-      .aw-cover-picker-status{color:var(--text-muted);font-size:13px;padding:18px 4px;text-align:center}
-      .aw-cover-picker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
-      .aw-cover-picker-tile{position:relative;aspect-ratio:2/3;background-size:cover;background-position:center;border-radius:10px;cursor:pointer;border:1px solid color-mix(in srgb,var(--border) 22%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.04);transition:transform .12s ease,border-color .12s ease,box-shadow .12s ease}
-      .aw-cover-picker-tile:hover{border-color:color-mix(in srgb,var(--accent) 70%,transparent);transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.04)}
-      .aw-cover-picker-tile.aw-landscape{aspect-ratio:16/9}
-      .aw-cover-picker-source{position:absolute;left:6px;bottom:6px;background:rgba(4,10,18,.72);backdrop-filter:blur(3px);color:#fff;font-family:'Open-sans';font-size:11px;padding:2px 7px;border-radius:6px;border:1px solid rgba(255,255,255,.08)}
-    `;
-    document.head.append(style);
-  }
 
   const addTile = (url, source) => {
     const tile = document.createElement('div');
