@@ -590,7 +590,7 @@ async function seedRarityFromSteam(cacheId, steamAppId, ids) {
 // installed in the Steam library, so its ACF carries the REAL Steam appid and store name. Matching
 // the configurations candidates against those offline manifests resolves ANY future title with no
 // asset edit and no network (issue #7).
-const { readRegistryString } = require('../util/reg.js');
+const { readRegistryString, listRegistryAllSubkeys } = require('../util/reg.js');
 
 function unescapeVdf(value) {
   return String(value || '').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
@@ -755,6 +755,28 @@ async function scanLocalSteamLibrary(options = {}) {
 // future title, with no asset edit and no network.
 let identityCache = new Map();
 
+// Whether a Ubisoft product id has an InstallDir registered by Ubisoft Connect (HKLM/HKCU,
+// 32/64-bit views). Memoized for the session — the launcher rarely changes mid-run and discovery
+// asks once per product. Drives the "show installed only" filter for official Ubisoft entries.
+let _installedUbisoftProducts = null;
+function isUbisoftProductInstalled(productId) {
+  const id = String(productId || '').trim();
+  if (!/^\d+$/.test(id)) return false;
+  if (_installedUbisoftProducts) return _installedUbisoftProducts.has(id);
+  const installed = new Set();
+  for (const hive of ['HKLM', 'HKCU']) {
+    for (const root of ['Software/WOW6432Node/Ubisoft/Launcher/Installs', 'Software/Ubisoft/Launcher/Installs']) {
+      try {
+        for (const sub of listRegistryAllSubkeys(hive, root) || []) installed.add(String(sub));
+      } catch {
+        /* key absent on this hive/bitness — try the next one */
+      }
+    }
+  }
+  _installedUbisoftProducts = installed;
+  return installed.has(id);
+}
+
 async function resolveIdentity(entry, options = {}) {
   const uplayId = String((entry && (entry.data && entry.data.uplayId)) || (entry && entry.appid) || '').trim();
   const key = `uplay-${uplayId}`;
@@ -786,8 +808,9 @@ async function resolveIdentity(entry, options = {}) {
 
   // 1) Path identity. Ubisoft Connect records where it installed the product; when that folder is
   //    inside a Steam library, the owning appmanifest IS the answer. No name, no catalog, no guess.
+  let installDir = '';
   try {
-    const installDir = readUbisoftInstallDir(uplayId);
+    installDir = readUbisoftInstallDir(uplayId);
     const hit = installDir ? matchSteamInstall(installDir, localSteamInstalls) : '';
     if (/^\d+$/.test(hit)) {
       steamAppId = hit;
@@ -803,6 +826,45 @@ async function resolveIdentity(entry, options = {}) {
     steamAppId = String(mapping.steam_appid).trim();
     steamName = mapping.steam_name ? String(mapping.steam_name).trim() : '';
     method = 'asset';
+  }
+
+  // 2b) The installed product's own files: uplay_install.state embeds the canonical title, and the
+  // folder/install-state matching in uplayR2 resolves it against the mapping asset even when this
+  // product id has no direct row (storefront variants share one game but carry different ids, e.g.
+  // Assassin's Creed Black Flag Resynced = 65043 native + 66088 Steam).
+  if (!/^\d+$/.test(steamAppId) && installDir) {
+    try {
+      const uplayR2 = require('./uplayR2.js');
+      const mapped = uplayR2.resolveSteamMapping({ appid: `UPLAY${uplayId}`, gameDir: installDir });
+      if (mapped && /^\d+$/.test(String(mapped.steam_appid).trim())) {
+        steamAppId = String(mapped.steam_appid).trim();
+        steamName = mapped.steam_name ? String(mapped.steam_name).trim() : '';
+        method = 'uplay-install-state';
+        if (!title) title = steamName;
+      }
+    } catch (err) {
+      debug.log(`[uplay-${uplayId}] install-state mapping failed => ${err}`);
+    }
+  }
+
+  if (!/^\d+$/.test(steamAppId)) {
+    // 2c) The mapping asset is also searchable by title: a configurations name that matches a known
+    // Ubisoft release resolves to that release's Steam appid without touching the full catalog.
+    try {
+      const uplayR2 = require('./uplayR2.js');
+      for (const candidate of candidates) {
+        const mapped = uplayR2.resolveSteamMapping({ name: candidate });
+        if (mapped && /^\d+$/.test(String(mapped.steam_appid).trim())) {
+          steamAppId = String(mapped.steam_appid).trim();
+          steamName = mapped.steam_name ? String(mapped.steam_name).trim() : '';
+          method = 'uplay-name';
+          if (!title) title = candidate;
+          break;
+        }
+      }
+    } catch (err) {
+      debug.log(`[uplay-${uplayId}] mapping-by-name failed => ${err}`);
+    }
   }
 
   if (!/^\d+$/.test(steamAppId)) {
@@ -896,6 +958,10 @@ module.exports.scan = () => {
       data: {
         type: 'ubisoftOfficial',
         uplayId: entry.appid,
+        // A registered install dir proves the product is really on disk, so "show installed only"
+        // keeps it even when the folder scan couldn't resolve a gameDir/exe (e.g. a launcher-managed
+        // install outside the configured library roots).
+        trustedInstalled: isUbisoftProductInstalled(entry.appid),
         path: path.dirname(entry.spoolFilePath),
         spoolFilePath: entry.spoolFilePath,
         userId: entry.userId,
@@ -961,14 +1027,26 @@ module.exports.getGameData = async (appid, lang) => {
   const uplayId = data.uplayId || appid.appid;
   const steamAppId = identity.steamAppId;
   if (identity.method) debug.log(`[${appid.appid}] identity resolved via ${identity.method}${identity.steamAppId ? ` -> Steam ${identity.steamAppId}` : ''}`);
-  const img = /^\d+$/.test(steamAppId)
-    ? {
-        header: `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${steamAppId}/header.jpg`,
-        background: null,
-        portrait: `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${steamAppId}/library_600x900.jpg`,
-        icon: null,
-      }
-    : { header: null, background: null, portrait: null, icon: null };
+  let img = { header: null, background: null, portrait: null, icon: null };
+  if (/^\d+$/.test(steamAppId)) {
+    let portrait = `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${steamAppId}/library_600x900.jpg`;
+    // Modern Steam covers live under a hashed store_item_assets path that cannot be derived from the
+    // appid; the guessable URL 404s and the tile stays blank. Recover the real capsule from SteamDB
+    // (main-process stealth browser + 30-day disk cache), same as the Steam parser does.
+    try {
+      const { ipcRenderer } = require('electron');
+      const steamdbPortrait = await ipcRenderer.invoke('get-steamdb-cover', steamAppId).catch(() => null);
+      if (steamdbPortrait) portrait = steamdbPortrait;
+    } catch (err) {
+      debug.log(`[${appid.appid}] SteamDB cover fallback failed => ${err}`);
+    }
+    img = {
+      header: `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${steamAppId}/header.jpg`,
+      background: null,
+      portrait,
+      icon: null,
+    };
+  }
 
   // rarity: Steam global % bridged onto the numeric ids, cached under the (namespaced) appid so the
   // detail view reads it back by game.appid without colliding with a same-numbered Steam game.

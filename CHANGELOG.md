@@ -3,6 +3,35 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- A Ubisoft Connect game whose product id has no direct uplay→Steam mapping row no longer shows as
+  "Ubisoft <id>": storefront variants resolve through the installed product's own
+  `uplay_install.state` or a mapping-by-name fallback, and Assassin's Creed Black Flag Resynced
+  (Ubisoft product 66088, the Steam variant) is now mapped to its Steam release (3751950).
+- Ubisoft Connect games are kept by the "Show installed games only" filter when the launcher
+  registry proves they are installed — previously the Ubisoft 66088 entry disappeared as soon as
+  the filter was enabled.
+- Ubisoft games resolved to a modern Steam release get their real portrait via the SteamDB cover
+  fallback, so vertical (portrait) view no longer shows blank tiles for covers that live under a
+  hashed CDN path.
+- Steam games (including cracked/Goldberg installs) whose portrait is a dead guessable URL or
+  missing from the product info now recover the real hashed capsule through SteamDB at load time
+  (e.g. Yakuza 0 Director's Cut), and the library grid falls back to the header when no portrait
+  exists instead of rendering a blank tile.
+
+### Changed
+
+- Installed-game folder detection now merges smart-discovered library roots on every scan (common
+  neutral folder names on all drives — Games/Jeux/Juegos/Spiele, Games Library/GameLibrary,
+  Repacks, plus GOG Games and Epic Games as before) without requiring the user to add them in
+  Settings. Launcher-managed install roots (Ubisoft Game Launcher/games, GOG Galaxy, Origin/EA,
+  Epic Games under Program Files) are deliberately NOT auto-added: they contain legit launcher
+  games that the official sources already cover, and scanning them would surface duplicates as
+  "Unconfigured" entries.
+
 ## 3.6.1 - 2026-08-06
 
 ### Added

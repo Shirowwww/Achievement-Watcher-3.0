@@ -196,6 +196,14 @@ async function goldbergScanRoots() {
   } catch (err) {
     debug.log(`[goldberg-scan] could not read library folders: ${err}`);
   }
+  // Auto-discovered roots (known folder names on every fixed drive + safe storefront install
+  // folders) are merged in on every scan, so a game living in C:\GOG Games, D:\Games or the
+  // default Ubisoft/EA/Origin folders is found without the user having to add it in Settings.
+  try {
+    for (const dir of await libraryDirs.find()) add(dir);
+  } catch (err) {
+    debug.log(`[goldberg-scan] could not auto-discover library folders: ${err}`);
+  }
   if (process.env['USERPROFILE']) add(path.join(process.env['USERPROFILE'], 'Desktop'));
   if (process.env['PUBLIC']) add(path.join(process.env['PUBLIC'], 'Desktop'));
   try {
@@ -2205,7 +2213,8 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       hasResolvedExe,
       trustedInstalled:
         !!(appid.data && appid.data.trustedInstalled) ||
-        (dataType === 'uplay' ? uplay.isInstalled(appid.appid) : false),
+        (dataType === 'uplay' ? uplay.isInstalled(appid.appid) : false) ||
+        (dataType === 'ubisoftOfficial' && appid.data && appid.data.uplayId ? uplay.isInstalled(appid.data.uplayId) : false),
     });
 
     return game;

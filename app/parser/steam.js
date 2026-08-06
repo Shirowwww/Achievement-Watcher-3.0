@@ -733,11 +733,22 @@ async function getSteamDataFromSRV(appID, lang) {
   }
 
   // No library capsule in the product info (common for brand-new appids) — recover the real hashed
-  // cover from SteamDB before falling back to the 'portrait' placeholder (main process: stealth
-  // browser + 30-day disk cache). Only worth it for an actual game with a resolved name.
+  // cover from SteamDB (main process: stealth browser + 30-day disk cache). Only worth it for an
+  // actual game with a resolved name. When the product info DID return a portrait, verify it
+  // actually downloads: a dead guessable URL (modern titles live under hashed store_item_assets
+  // paths) would otherwise leave the tile blank while SteamDB knows the real capsule.
   let portrait = result.portrait;
   if (!portrait && result.name) {
     portrait = (await ipcRenderer.invoke('get-steamdb-cover', appID).catch(() => null)) || null;
+  } else if (/^https?:\/\//i.test(portrait || '') && result.name) {
+    try {
+      const local = await ipcRenderer.invoke('fetch-icon', portrait, appID).catch(() => null);
+      if (!local || local === portrait) {
+        portrait = (await ipcRenderer.invoke('get-steamdb-cover', appID).catch(() => null)) || null;
+      }
+    } catch {
+      /* keep the product-info URL; the renderer will retry it */
+    }
   }
 
   return {
@@ -747,7 +758,10 @@ async function getSteamDataFromSRV(appID, lang) {
     img: {
       header: result.header || 'header',
       background: result.background || 'page_bg_generated_v6b',
-      portrait: portrait || 'portrait',
+      // Never fall back to the literal "portrait" placeholder: it is truthy, so the portrait view
+      // would prefer it over the real header and render a blank tile. Null lets the grid use the
+      // header (or the alternate fallback) instead.
+      portrait: portrait || null,
       icon: result.icon,
     },
     achievement: {
@@ -1333,7 +1347,7 @@ async function GetMissingData(data, showHidden, lang, steamSettings) {
         updatedImgs = await ipcRenderer.invoke('get-steam-data', { appid: data.appid, type: 'common' });
         data.img.header = data.img.header || updatedImgs.header || 'header';
         data.img.background = data.img.background || updatedImgs.background || 'page_bg_generated_v6b';
-        data.img.portrait = data.img.portrait || updatedImgs.portrait || 'portrait';
+        data.img.portrait = data.img.portrait || updatedImgs.portrait || null;
         data.img.icon = data.img.icon || updatedImgs.icon;
       }
     }

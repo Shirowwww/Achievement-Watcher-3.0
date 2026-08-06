@@ -72,7 +72,8 @@ module.exports.getInstalledAppids = () => {
 
 // True when a uPlay appid (with or without the "UPLAY" prefix) is installed per the registry.
 module.exports.isInstalled = (appid) => {
-  const id = String(appid).replace(/^UPLAY/i, '');
+  // Accept every spelling the discovery layer produces: "UPLAY66088", "uplay-66088", raw "66088".
+  const id = String(appid).replace(/^uplay[-]?/i, '');
   return module.exports.getInstalledAppids().has(id);
 };
 

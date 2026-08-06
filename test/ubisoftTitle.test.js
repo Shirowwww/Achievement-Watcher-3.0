@@ -141,23 +141,43 @@ test('identity falls back to the local Steam library, then to the catalog, by na
     { appid: 'uplay-971', data: { uplayId: '971', title: '', configBlock: block } },
     { ubisoftInstallDir: () => '', localSteamInstalls: [], localSteamLibrary: [{ appid: 298110, name: 'Far Cry 4' }], findAppidByName: async () => null }
   );
-  assert.equal(fromLibrary.method, 'library');
+  // "Far Cry 4" also exists in the uplay->Steam mapping asset, which now wins before the generic
+  // Steam-library fuzzy match (it is the authoritative store-to-store mapping for Ubisoft titles).
+  assert.equal(fromLibrary.method, 'uplay-name');
   assert.equal(fromLibrary.steamAppId, '298110');
   assert.equal(fromLibrary.title, 'Far Cry 4');
 
+  // A title absent from the mapping asset still falls back to the installed Steam library.
+  ubi._internal.resetIdentityCache();
+  const localOnlyBlock = {
+    achievementsSpec: 'LocalOnlyGame',
+    normalizedAchievementsSpec: 'LocalOnlyGame',
+    gameIdentifier: 'Local Only Game',
+    displayName: '',
+    rootName: '',
+    sortString: '',
+    title: 'Local Only Game',
+  };
+  const fromLocalLibrary = await ubi._internal.resolveIdentity(
+    { appid: 'uplay-971', data: { uplayId: '971', title: '', configBlock: localOnlyBlock } },
+    { ubisoftInstallDir: () => '', localSteamInstalls: [], localSteamLibrary: [{ appid: 999, name: 'Local Only Game' }], findAppidByName: async () => null }
+  );
+  assert.equal(fromLocalLibrary.method, 'library');
+  assert.equal(fromLocalLibrary.steamAppId, '999');
+
   ubi._internal.resetIdentityCache();
   const fromCatalog = await ubi._internal.resolveIdentity(
-    { appid: 'uplay-971', data: { uplayId: '971', title: '', configBlock: block } },
+    { appid: 'uplay-971', data: { uplayId: '971', title: '', configBlock: localOnlyBlock } },
     {
       ubisoftInstallDir: () => '',
       localSteamInstalls: [],
       localSteamLibrary: [],
-      findAppidByName: async (name) => (String(name).toLowerCase().includes('far cry') ? '298110' : null),
+      findAppidByName: async (name) => (String(name).toLowerCase().includes('local only') ? '999' : null),
     }
   );
   assert.equal(fromCatalog.method, 'name');
-  assert.equal(fromCatalog.steamAppId, '298110');
-  assert.equal(fromCatalog.title, 'Far Cry 4');
+  assert.equal(fromCatalog.steamAppId, '999');
+  assert.equal(fromCatalog.title, 'Local Only Game');
 });
 
 test('the local Steam library reader understands the real VDF/ACF layout', async () => {

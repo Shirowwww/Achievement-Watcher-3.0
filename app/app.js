@@ -265,6 +265,41 @@ function applyCoverBackground(appid, value) {
   }
 }
 
+// Fetch a game's cover, and when the preferred art cannot be downloaded (dead hashed URL, missing
+// portrait, placeholder from a legacy schema) try the alternate (portrait <-> header) before giving
+// up and clearing the tile. fetch-icon returns the input URL unchanged on failure, so a result that
+// equals the requested URL means "couldn't get it".
+function applyCoverWithFallback(game, headerEl, imgName, tried) {
+  const img = (game && game.img) || {};
+  const fallback = (current) => {
+    if (current === img.portrait && img.header) return img.header;
+    if (current === img.header && img.portrait) return img.portrait;
+    return null;
+  };
+  if (!imgName || (tried && tried.has(imgName))) {
+    headerEl.css('background', 'none');
+    return;
+  }
+  tried = tried || new Set();
+  tried.add(imgName);
+  ipcRenderer
+    .invoke('fetch-icon', imgName, game.steamappid || game.appid)
+    .then((localPath) => {
+      if (localPath && localPath !== imgName) {
+        headerEl.css('background', `url('${localPath}')`);
+      } else {
+        const alt = fallback(imgName);
+        if (alt) applyCoverWithFallback(game, headerEl, alt, tried);
+        else headerEl.css('background', 'none');
+      }
+    })
+    .catch(() => {
+      const alt = fallback(imgName);
+      if (alt) applyCoverWithFallback(game, headerEl, alt, tried);
+      else headerEl.css('background', 'none');
+    });
+}
+
 // Styled in-app text prompt (Electron disables window.prompt). Resolves to the trimmed value or null.
 function promptText(message, defaultValue = '', type = 'text') {
   return new Promise((resolve) => {
@@ -925,15 +960,10 @@ var app = {
                 else headerEl.css('background', 'none');
                 return;
               }
-              if (!imgName) { headerEl.css('background', 'none'); return; } // no art: clear the loading.gif so the spinner doesn't run forever
-              ipcRenderer
-                .invoke('fetch-icon', imgName, game.steamappid || game.appid)
-                .then((localPath) => {
-                  if (localPath) {
-                    headerEl.css('background', `url('${localPath}')`);
-                  }
-                })
-                .catch((err) => debug.warn(`[${game.appid}] header icon fetch failed => ${err}`));
+              // No art: clear the loading.gif so the spinner doesn't run forever. Otherwise fetch
+              // with portrait<->header fallback, so a modern game whose portrait URL 404s (hashed
+              // CDN path) still shows its header, and vice-versa.
+              applyCoverWithFallback(game, headerEl, imgName);
             }, 0);
           }
         }

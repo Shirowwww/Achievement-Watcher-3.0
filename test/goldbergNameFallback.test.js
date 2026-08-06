@@ -63,6 +63,10 @@ test('Goldberg install with steam_settings but no appid resolves by game name, b
 
   achievements.initDebug({ isDev: false, userDataPath: userData });
   await libraryDirs.save([root]);
+  // Isolate the scan to the sandbox: the automatic smart-find (libraryDirs.find) would merge the
+  // developer machine's real game libraries into this discovery run.
+  const originalFind = libraryDirs.find;
+  libraryDirs.find = async () => [];
 
   const originalFindAppidByName = steam.findAppidByName;
   steam.findAppidByName = async (name) => {
@@ -73,6 +77,7 @@ test('Goldberg install with steam_settings but no appid resolves by game name, b
   };
   t.after(() => {
     steam.findAppidByName = originalFindAppidByName;
+    libraryDirs.find = originalFind;
     Module._load = originalLoad;
     for (const [key, value] of Object.entries(oldEnv)) {
       if (value == null) delete process.env[key];

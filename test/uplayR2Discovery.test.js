@@ -52,9 +52,14 @@ test('Ubisoft install without Steam markers is promoted through the Uplay R2 map
 
   achievements.initDebug({ isDev: false, userDataPath: userData });
   await libraryDirs.save([root]);
+  // Keep the scan isolated to the sandbox: the automatic smart-find (libraryDirs.find) would
+  // otherwise merge the developer machine's real game libraries into this discovery run.
+  const originalFind = libraryDirs.find;
+  libraryDirs.find = async () => [];
 
   t.after(() => {
     Module._load = originalLoad;
+    libraryDirs.find = originalFind;
     for (const [key, value] of Object.entries(oldEnv)) {
       if (value == null) delete process.env[key];
       else process.env[key] = value;

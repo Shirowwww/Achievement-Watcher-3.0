@@ -100,3 +100,19 @@ test('isSteamLikePath flags Steam library/install paths but keeps neutral game f
   assert.equal(saveRoots.isSteamLikePath('C:\\Games\\SteamWorld Dig 2'), false);
   assert.equal(saveRoots.isSteamLikePath(''), false);
 });
+
+test('library folder probes cover common neutral names and repack folders on every drive', () => {
+  for (const name of ['Games', 'Jeux', 'Juegos', 'Spiele', 'Games Library', 'GameLibrary', 'GOG Games', 'Epic Games', 'Repacks']) {
+    assert.ok(saveRoots.GAME_LIBRARY_FOLDER_NAMES.includes(name), `GAME_LIBRARY_FOLDER_NAMES must probe "${name}"`);
+  }
+});
+
+test('launcher-managed storefront roots are never probed as library folders', () => {
+  // These are the default install dirs of legit launchers: they hold real launcher games that the
+  // official sources already cover, and scanning them would surface duplicates as "Unconfigured".
+  // (The drive-root "Epic Games"/"GOG Games" probes are pre-existing custom-location checks and
+  // are covered by the previous test; the launcher dirs under Program Files must never appear.)
+  for (const name of ['Ubisoft Game Launcher', 'GOG Galaxy', 'Origin Games', 'EA Games']) {
+    assert.ok(!saveRoots.GAME_LIBRARY_FOLDER_NAMES.includes(name), `"${name}" must never be auto-probed`);
+  }
+});

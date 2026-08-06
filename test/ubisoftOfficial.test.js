@@ -156,6 +156,60 @@ function spoolRecord(achId, time) {
     assert.match(fc4Game.img.portrait, /298110.*library_600x900\.jpg/);
     assert.equal(fc4Game.achievement.list[0].displayName, 'A Worthy Opponent');
 
+    // ---- storefront-variant product ids resolve to the same Steam release (AC Black Flag Resynced
+    // ships as Ubisoft product 65043 native + 66088 Steam; both map to Steam 3751950).
+    ubi._internal.resetIdentityCache();
+    const bfIdentity = await ubi._internal.resolveIdentity(
+      { appid: 'uplay-66088', data: { uplayId: '66088', title: '', configBlock: null } },
+      { localSteamInstalls: [], localSteamLibrary: [], findAppidByName: async () => null }
+    );
+    assert.equal(bfIdentity.steamAppId, '3751950');
+    assert.equal(bfIdentity.method, 'asset');
+
+    // A product id absent from the asset still resolves when the install folder carries
+    // uplay_install.state with the canonical title ("uplay-install-state" path).
+    const bfInstallDir = path.join(tmp, 'Black Flag Resynced');
+    fs.mkdirSync(bfInstallDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(bfInstallDir, 'uplay_install.state'),
+      Buffer.from('Assassin\'s Creed Black Flag Resynced', 'utf8')
+    );
+    ubi._internal.resetIdentityCache();
+    const stateIdentity = await ubi._internal.resolveIdentity(
+      { appid: 'uplay-99999', data: { uplayId: '99999', title: '', configBlock: null } },
+      {
+        ubisoftInstallDir: () => bfInstallDir,
+        localSteamInstalls: [],
+        localSteamLibrary: [],
+        findAppidByName: async () => null,
+      }
+    );
+    assert.equal(stateIdentity.steamAppId, '3751950');
+    assert.equal(stateIdentity.method, 'uplay-install-state');
+
+    // Full contract for the friend's actual case: product 66088 displays the real title and Steam
+    // portrait instead of "Ubisoft 66088".
+    const bfSpoolDir = path.join(tmp, 'spool', 'user-guid-bf');
+    fs.mkdirSync(bfSpoolDir, { recursive: true });
+    const bfSpool = path.join(bfSpoolDir, '66088.spool');
+    fs.writeFileSync(bfSpool, Buffer.concat([spoolRecord(1, T1)]));
+    const bfZip = new AdmZip();
+    bfZip.addFile('en-US_loc.txt', Buffer.from('1\tAhoy\tSet sail\n', 'utf8'));
+    const bfArchive = path.join(achRoot, '66088_BlackFlagResynced');
+    fs.writeFileSync(bfArchive, bfZip.toBuffer());
+    ubi._internal.resetIdentityCache();
+    const bfGame = await ubi.getGameData(
+      {
+        appid: 'uplay-66088',
+        source: 'Ubisoft Connect',
+        data: { type: 'ubisoftOfficial', uplayId: '66088', spoolFilePath: bfSpool, archivePath: bfArchive, title: '', trustedInstalled: true },
+      },
+      'english'
+    );
+    assert.equal(bfGame.name, "Assassin's Creed Black Flag Resynced");
+    assert.equal(bfGame.steamappid, '3751950');
+    assert.match(bfGame.img.portrait, /3751950/);
+
     // ---- watchdog live watcher uses the same title rules: launcher names are filtered, the
     // game's own installer name wins, and the app's gameIndex identity is preferred.
     const localAppData = path.join(tmp, 'LocalAppData');
@@ -203,9 +257,10 @@ function spoolRecord(achId, time) {
 
     // ---- spool listing
     const entries = ubi._internal.listSpoolEntries(path.join(tmp, 'spool'));
-    assert.equal(entries.length, 2);
+    assert.equal(entries.length, 3);
     assert.ok(entries.some((e) => e.appid === '8006' && e.userId === 'user-guid-1'));
     assert.ok(entries.some((e) => e.appid === '971' && e.userId === 'user-guid-fc4'));
+    assert.ok(entries.some((e) => e.appid === '66088' && e.userId === 'user-guid-bf'));
 
     // ---- watchdog live-watcher readers share the same formats
     const wRecords = ubiWatch._internal.readSpool(spoolFile);

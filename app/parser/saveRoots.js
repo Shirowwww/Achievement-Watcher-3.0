@@ -144,8 +144,14 @@ function isSteamLikePath(p) {
 const GAME_LIBRARY_FOLDER_NAMES = [
   'Games',
   'Jeux',
+  'Juegos',
+  'Spiele',
+  'Giochi',
+  'Games Library',
+  'GameLibrary',
   'GOG Games',
   'Epic Games',
+  'Repacks',
   path.join('Program Files', 'Games'),
   path.join('Program Files (x86)', 'Games'),
 ];
@@ -181,4 +187,5 @@ module.exports = {
   discoverLibraryRoots,
   expandKnownSteamSourceRoots,
   isSteamLikePath,
+  GAME_LIBRARY_FOLDER_NAMES,
 };
