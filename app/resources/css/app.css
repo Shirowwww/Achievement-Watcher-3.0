@@ -5982,8 +5982,9 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #settings *,
-  #game-config * {
+  body *,
+  body *::before,
+  body *::after {
     transition: none !important;
     animation: none !important;
   }

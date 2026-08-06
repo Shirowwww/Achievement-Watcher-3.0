@@ -95,6 +95,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- The Windows "reduce motion" accessibility preference now disables decorative animations across
+  the whole main window (status indicator, rare-achievement rays, spinners), not only in Settings.
 - The "Choose another cover…" gallery now uses the shared modal chrome and global theme tokens
   (surfaces, borders, accent, fonts and radii) instead of its own inline styles, and exposes proper
   dialog/aria attributes.
