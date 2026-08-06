@@ -93,8 +93,12 @@ ipcMain.on('fetch-icon', async (event, url, appid) => {
   }
 });
 ipcMain.handle('fetch-icon', async (event, url, appid) => {
-  const p = await fetchIcon(url, appid);
-  return p ? pathToFileURL(p).href : null;
+  try {
+    const p = await fetchIcon(url, appid);
+    return p ? pathToFileURL(p).href : null;
+  } catch {
+    return null;
+  }
 });
 
 async function doCloseNotificationWindow(win) {
