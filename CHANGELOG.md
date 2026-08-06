@@ -94,6 +94,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- The custom theme editor and cover gallery are now responsive at small window sizes: every theme
+  layer row stacks on two clean lines (preview + label on top, controls right-aligned below) under
+  980 px, and the cover grid shrinks its tiles instead of overflowing.
 - In the custom theme editor, a layer's base-color picker is disabled while its gradient is enabled
   (the gradient replaces it) and re-enabled when the gradient is turned off; it stays in place so
   the row controls never shift.

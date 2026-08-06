@@ -6110,6 +6110,31 @@ body {
   }
 }
 
+/* Theme editor + cover picker: at narrow widths stack every layer row on two clean
+   lines (preview + label on top, controls right-aligned below) so all rows behave
+   exactly the same, and shrink the cover grid so it never overflows. */
+@media (max-width: 980px) {
+  #theme-customizer .theme-layer-row {
+    align-items: flex-start;
+    gap: 6px 12px;
+  }
+
+  #theme-customizer .theme-layer-label {
+    flex-basis: calc(100% - 70px);
+  }
+
+  #theme-customizer .theme-layer-controls {
+    flex-basis: 100%;
+    justify-content: flex-end;
+  }
+
+  .aw-cover-picker-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+  }
+}
+
+
 @media (max-height: 700px) {
   #settings .box .header,
   #game-config .box .header {
