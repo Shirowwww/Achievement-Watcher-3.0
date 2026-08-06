@@ -6266,6 +6266,12 @@ body {
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent);
 }
+#theme-customizer .theme-layer-color:disabled {
+  opacity: 0.4;
+  filter: grayscale(1);
+  cursor: not-allowed;
+  border-color: color-mix(in srgb, var(--set-control-border) 55%, transparent);
+}
 
 #theme-customizer .theme-layer-image {
   min-height: 26px;

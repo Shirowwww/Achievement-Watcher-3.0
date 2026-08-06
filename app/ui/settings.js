@@ -1132,16 +1132,12 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const gradStyle = grad.enabled === true
           ? `linear-gradient(${gradAngle}deg, ${grad.from || layer.color || '#1b2838'} 0%, ${grad.to || grad.from || layer.color || '#1b2838'} 100%)`
           : '';
-        const tintStyle =
-          grad.enabled === true
-            ? themeLayers.gradientTint({ color: layer.color || '#1b2838', gradient: { enabled: true } })
-            : '';
         const previewStyle =
           `background-color:${grad.enabled === true ? 'transparent' : (layer.color || '#1b2838')};` +
           (previewImage
-            ? `background-image:${gradStyle ? (tintStyle ? tintStyle + ',' : '') + gradStyle + ',' : ''}url('${require('url').pathToFileURL(previewImage).href.replace(/'/g, "\\'")}');`
+            ? `background-image:${gradStyle ? gradStyle + ',' : ''}url('${require('url').pathToFileURL(previewImage).href.replace(/'/g, "\\'")}');`
             : gradStyle
-            ? `background-image:${tintStyle ? tintStyle + ',' : ''}${gradStyle};`
+            ? `background-image:${gradStyle};`
             : 'background-image:none;');
         const preview = $('<div>').addClass('theme-layer-preview').attr('style', previewStyle);
         // Remember the resolved preview image (source or blur copy) so the live gradient
@@ -1155,15 +1151,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
               `<div class="theme-layer-hint">${escapeHtml(meta.hint || '')}</div></div>`
           );
         const controls = $('<div>').addClass('theme-layer-controls');
-        // The base color is only relevant while the gradient is off: an enabled gradient replaces
-        // it, so hide the picker instead of leaving a control that appears to do nothing.
-        controls.append(
-          $('<input>')
-            .attr('type', 'color')
-            .addClass('theme-layer-color')
-            .val(layer.color || '#1b2838')
-            .toggle(grad.enabled !== true)
-        );
+        controls.append($('<input>').attr('type', 'color').addClass('theme-layer-color').val(layer.color || '#1b2838'));
         if (CUSTOM_IMAGE_LAYERS.includes(meta.id)) {
           const gradientToggle = $('<label>').addClass('theme-layer-effect-toggle');
           gradientToggle.append(
@@ -1275,9 +1263,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         // color picker; removing the image brings the color picker back.
         if (CUSTOM_IMAGE_LAYERS.includes(meta.id)) {
           const hasImage = !!layer.image;
-          // The base-color picker stays visible only when neither the image nor the gradient
-          // is active (both replace the base color visually).
-          row.find('.theme-layer-color').toggle(!hasImage && grad.enabled !== true);
+          // An image replaces the color visually, so the picker is hidden; an enabled gradient
+          // just disables it (kept in place to avoid shifting the row controls).
+          row.find('.theme-layer-color').toggle(!hasImage).prop('disabled', grad.enabled === true);
           row.find('.theme-layer-image').show();
           row.find('.theme-layer-filename, .theme-layer-clear-image, .theme-layer-fit').toggle(hasImage);
         }
@@ -1373,10 +1361,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       // CSS drops the opaque color backdrop too), so the swatch must not keep the base color.
       preview.css('background-color', enabled ? 'transparent' : baseColor);
       const layers = [];
-      if (enabled) {
-        layers.push(themeLayers.gradientTint({ color: baseColor, gradient: { enabled: true } }));
-        layers.push(`linear-gradient(${angle}deg, ${from} 0%, ${to} 100%)`);
-      }
+      if (enabled) layers.push(`linear-gradient(${angle}deg, ${from} 0%, ${to} 100%)`);
       const imageSrc = row.data('previewImage') || '';
       if (imageSrc) layers.push(`url('${imageSrc.replace(/'/g, "\\'")}')`);
       preview.css('background-image', layers.length ? layers.join(',') : 'none');
@@ -1386,9 +1371,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const row = $(this).closest('.theme-layer-row');
       const panel = row.find('.theme-layer-gradient-panel');
       panel.toggleClass('open', this.checked);
-      // Hide the base-color picker while the gradient is active (it is overridden anyway).
-      const hasImage = row.find('.theme-layer-fit').is(':visible');
-      row.find('.theme-layer-color').toggle(!this.checked && !hasImage);
+      // Keep the picker in place (no layout shift) but disable it while the gradient replaces it.
+      row.find('.theme-layer-color').prop('disabled', this.checked);
       if (this.checked) {
         // A freshly enabled gradient follows the layer color unless the user already
         // picked custom colors for it (detected by comparing with the stored base color).

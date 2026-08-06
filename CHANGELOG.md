@@ -36,9 +36,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 - An enabled per-layer gradient now replaces the layer's base color entirely, in the app and in the
   in-game overlay — previously the base color/backdrop was still painted over the gradient. Layer
-  images keep rendering above the gradient. Enabled gradients are also softened by a translucent
-  veil of the layer's base color (35 %), so bright custom colors stay visible without dominating
-  the UI.
+  images keep rendering above the gradient. The base color is fully cut: no translucent tint of it
+  remains over the gradient.
 - The watchdog status dot no longer pulses forever once the watchdog is running: the pulse only
   plays while the watchdog is starting/checking, which removes a steady ~100% GPU-core burn on
   some machines.
@@ -95,8 +94,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- In the custom theme editor, a layer's base-color picker is hidden while its gradient is enabled
-  (the gradient replaces it) and reappears when the gradient is turned off.
+- In the custom theme editor, a layer's base-color picker is disabled while its gradient is enabled
+  (the gradient replaces it) and re-enabled when the gradient is turned off; it stays in place so
+  the row controls never shift.
 - The Windows "reduce motion" accessibility preference now disables decorative animations across
   the whole main window (status indicator, rare-achievement rays, spinners), not only in Settings.
 - The "Choose another cover…" gallery now uses the shared modal chrome and global theme tokens
