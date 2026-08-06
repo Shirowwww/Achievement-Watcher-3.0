@@ -43,6 +43,16 @@ module.exports = (option = {}) => {
 
   debug.log(`Websocket listening on port ${options.port}...`);
 
+  // A busy port (another app, or an orphaned Watchdog holding 8082) must not crash-loop the
+  // whole monitor: websocket broadcast is an optional transport, so log and keep running.
+  server.on('error', (err) => {
+    if (err && err.code === 'EADDRINUSE') {
+      debug.error(`Websocket server error: port ${options.port} is already in use — continuing without websocket broadcast`);
+      return;
+    }
+    debug.error(`Websocket server error: ${err}`);
+  });
+
   //Handle client authentication in the upgrade event (http->ws) of the http(s) server
   server.on('upgrade', function upgrade(request, socket, head) {
     if (options.auth) {

@@ -448,7 +448,7 @@ var app = {
       self.cfgOptionPath = cfg_file.option; // used to locate the per-game progress-mute store
       debug.log(self.options);
 
-      RegisterOverlayHotkey(self.options.overlay.hotkey);
+      RegisterOverlayHotkey((self.options.overlay && self.options.overlay.hotkey) || 'Ctrl+Shift+K');
       syncOverlayController();
 
       if ((await isWinRTAvailable()) === true && self.options.notification_transport.winRT === true) {

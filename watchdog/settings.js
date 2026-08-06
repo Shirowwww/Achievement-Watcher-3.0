@@ -57,6 +57,32 @@ module.exports.load = async (cfg_file) => {
       fixFile = true;
     }
 
+    // The overlay section is required by the watchdog boot path (hotkey registration, toast
+    // sound lookups). A hand-edited or partial options.ini without it must not crash the
+    // monitor on startup — apply the same defaults the app-side settings loader uses.
+    if (!options.overlay || typeof options.overlay !== 'object') {
+      options.overlay = {};
+      fixFile = true;
+    }
+    if (typeof options.overlay.hotkey !== 'string' || !options.overlay.hotkey) {
+      options.overlay.hotkey = 'Ctrl+Shift+K';
+      fixFile = true;
+    }
+    if (typeof options.overlay.notificationSound !== 'string') {
+      options.overlay.notificationSound = '';
+      fixFile = true;
+    }
+    if (typeof options.overlay.randomSound !== 'boolean') {
+      options.overlay.randomSound = false;
+      fixFile = true;
+    }
+    if (!Number.isFinite(Number(options.overlay.notificationVolume))) {
+      options.overlay.notificationVolume = 100;
+      fixFile = true;
+    } else {
+      options.overlay.notificationVolume = Math.max(0, Math.min(200, Number(options.overlay.notificationVolume)));
+    }
+
     //Source
 
     if (options.achievement_source.legitSteam != 0 && options.achievement_source.legitSteam != 1 && options.achievement_source.legitSteam != 2) {
@@ -322,6 +348,12 @@ module.exports.load = async (cfg_file) => {
         mergeDuplicate: true,
         timeMergeRecentFirst: false,
         hideZero: false,
+      },
+      overlay: {
+        hotkey: 'Ctrl+Shift+K',
+        notificationSound: '',
+        randomSound: false,
+        notificationVolume: 100,
       },
       achievement_source: {
         legitSteam: 0,

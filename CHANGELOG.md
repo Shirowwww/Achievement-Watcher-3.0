@@ -34,6 +34,17 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The playtime monitor no longer crashes the Watchdog when a muted-path entry is an unset
+  environment variable (e.g. `ProgramFiles(x86)` on 32-bit Windows); the path filter also uses
+  boundary-aware, separator-normalized matching instead of a raw prefix check.
+- The Watchdog no longer fails to start when `options.ini` has a missing or partial `[overlay]`
+  section: the hotkey and notification-sound defaults now match the app-side loader.
+- A busy WebSocket port no longer crash-loops the Watchdog — it logs the error and keeps
+  notifications working without the websocket broadcast.
+- The `fetch-icon` IPC handler now returns `null` on failure like its synchronous twin, instead
+  of surfacing an unhandled rejection to the renderer.
+- Removed dead Watchdog code: the never-called `getFoldersLuma` registry walker (which referenced
+  an undefined logger) and the stale `exeList.json` reader that nothing consumed.
 - An enabled per-layer gradient now replaces the layer's base color entirely, in the app and in the
   in-game overlay — previously the base color/backdrop was still painted over the gradient. Layer
   images keep rendering above the gradient. The base color is fully cut: no translucent tint of it

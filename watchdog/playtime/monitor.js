@@ -34,7 +34,6 @@ if (!blacklist || typeof blacklist !== 'object') blacklist = {};
 if (!Array.isArray(blacklist.ignore)) blacklist.ignore = [];
 if (!Array.isArray(blacklist.mute)) blacklist.mute = [];
 let gameIndex;
-let savedConfigs;
 let appidByDirCache;
 let ignoredAppidsCache = { mtimeMs: null, set: new Set() };
 
@@ -70,6 +69,21 @@ const filter = {
 
 function normalizeAppid(appid) {
   return String(appid || '').trim();
+}
+
+// Path-level noise filter for process creation events. The mute list mixes fixed
+// Windows roots and environment variables that can be absent on some systems
+// (e.g. ProgramFiles(x86) on 32-bit Windows), so an undefined entry must be
+// skipped instead of crashing the creation handler with a TypeError.
+function isMutedByPath(filepath, dirs) {
+  if (!filepath) return false;
+  const norm = (p) => String(p).replace(/[\\/]+/g, path.sep).toLowerCase();
+  const dir = norm(path.parse(filepath).dir);
+  return (Array.isArray(dirs) ? dirs : []).some((dirpath) => {
+    if (!dirpath) return false;
+    const root = norm(dirpath).replace(/[\\/]+$/, '');
+    return root !== '' && (dir === root || dir.startsWith(root + path.sep));
+  });
 }
 
 function getIgnoredAppids() {
@@ -114,7 +128,6 @@ async function init() {
   let nowPlaying = [];
   appidByDirCache = new Map();
   gameIndex = await getGameIndex();
-  await getSavedConfigs();
 
   // Process trail: games that were already running when the Watchdog started (e.g. the machine woke
   // from sleep with a game open, or the app restarted mid-session) are seeded as active sessions so
@@ -145,7 +158,7 @@ async function init() {
     //Mute event
     if (!filepath) return;
     if (isWallpaperEngineProcess(process, filepath)) return;
-    if (filter.mute.dir.some((dirpath) => path.parse(filepath).dir.toLowerCase().startsWith(dirpath.toLowerCase()))) return;
+    if (isMutedByPath(filepath, filter.mute.dir)) return;
     if (filter.mute.file.some((bin) => bin.toLowerCase() === process.toLowerCase())) return;
 
     const games = gameIndex.filter(
@@ -328,18 +341,4 @@ async function getGameIndex() {
   return mergeArrayOfObj(gameIndex, userOverride, 'appid').filter((game) => !isIgnoredAppid(game.appid));
 }
 
-async function getSavedConfigs() {
-  const filepath = path.join(userDataDir(), 'cfg', 'exeList.json');
-
-  try {
-    if (fs.existsSync(filepath)) {
-      savedConfigs = JSON.parse(fs.readFileSync(filepath, 'utf8'));
-      return;
-    }
-  } catch (e) {
-    debug.log(e);
-  }
-  savedConfigs = [];
-}
-
-module.exports = { init };
+module.exports = { init, isMutedByPath };
