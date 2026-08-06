@@ -124,6 +124,7 @@ The main packaging files are:
 | `app/build/icon.ico` | Application and installer icon |
 | `app/build/installerSidebar.bmp` | NSIS installer welcome/finish sidebar (164 × 314) |
 | `app/build/installerHeader.bmp` | NSIS installer header image (150 × 57) |
+| `app/build/generate-installer-images.ps1` | Regenerates both installer BMPs in the Steam Blue palette |
 
 The Watchdog runs under Electron's bundled Node runtime through `ELECTRON_RUN_AS_NODE`. No separate portable Node or NW.js runtime is packaged.
 

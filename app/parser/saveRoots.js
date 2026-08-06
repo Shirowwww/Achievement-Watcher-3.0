@@ -138,20 +138,116 @@ function isSteamLikePath(p) {
   return /(?:^|[\\/])(steam|steamapps|steamlibrary|steam library|steam games)(?:[\\/]|$)/i.test(normalized);
 }
 
-// Common game-library folder names probed on every fixed drive by Smart Find. `Program Files`
-// variants are only added under their Games subfolder so the scanner never treats the whole
-// Windows install (Steam, Office, …) as a game library.
+// Common game-library folder names in many languages, probed on every fixed drive by Smart Find
+// and used to recognise library-like subfolders (e.g. a "Jeux" folder on the Desktop). `Program
+// Files` variants are only added under their Games subfolder so the scanner never treats the whole
+// Windows install (Steam, Office, …) as a game library. Localised "games" words are included so a
+// user's own folder naming never hides installed games.
 const GAME_LIBRARY_FOLDER_NAMES = [
+  // English / neutral
   'Games',
-  'Jeux',
-  'Juegos',
-  'Spiele',
-  'Giochi',
   'Games Library',
   'GameLibrary',
+  'Game Library',
+  'Games Folder',
+  'Repacks',
+  'Repack',
+  // French
+  'Jeux',
+  'Bibliothèque de jeux',
+  'Bibliotheque de jeux',
+  'Bibliothèque',
+  'Bibliotheque',
+  // German
+  'Spiele',
+  'Spielbibliothek',
+  'Spielebibliothek',
+  // Spanish / Latam
+  'Juegos',
+  'Biblioteca de juegos',
+  // Italian
+  'Giochi',
+  'Libreria giochi',
+  'Biblioteca giochi',
+  // Portuguese
+  'Jogos',
+  'Biblioteca de jogos',
+  // Dutch
+  'Spellen',
+  'Spelletjes',
+  'Gamebibliotheek',
+  // Swedish
+  'Spel',
+  'Spelbibliotek',
+  // Danish
+  'Spil',
+  'Spilbibliotek',
+  // Norwegian
+  'Spill',
+  'Spillbibliotek',
+  // Finnish
+  'Pelit',
+  'Pelikirjasto',
+  // Polish
+  'Gry',
+  'Biblioteka gier',
+  // Czech / Slovak
+  'Hry',
+  'Knihovna her',
+  'Knižnica hier',
+  // Hungarian
+  'Játékok',
+  'Jatekkoenyvtar',
+  'Játékkönyvtár',
+  // Romanian
+  'Jocuri',
+  'Biblioteca de jocuri',
+  // Russian
+  'Игры',
+  'Библиотека игр',
+  // Ukrainian
+  'Ігри',
+  'Ігрова бібліотека',
+  // Bulgarian
+  'Игри',
+  // Greek
+  'Παιχνίδια',
+  'Βιβλιοθήκη παιχνιδιών',
+  // Turkish
+  'Oyunlar',
+  'Oyun Kütüphanesi',
+  // Arabic
+  'ألعاب',
+  'مكتبة الألعاب',
+  // Hebrew
+  'משחקים',
+  'ספריית משחקים',
+  // Japanese
+  'ゲーム',
+  'ゲームライブラリ',
+  // Korean
+  '게임',
+  '게임 라이브러리',
+  // Chinese (simplified + traditional)
+  '游戏',
+  '游戏库',
+  '遊戲',
+  '遊戲庫',
+  // Thai
+  'เกม',
+  'เกมส์',
+  // Vietnamese
+  'Trò chơi',
+  'Thư viện trò chơi',
+  // Indonesian
+  'Permainan',
+  'Perpustakaan Game',
+  // Hindi
+  'गेम',
+  'गेम्स',
+  // Storefront-neutral custom roots
   'GOG Games',
   'Epic Games',
-  'Repacks',
   path.join('Program Files', 'Games'),
   path.join('Program Files (x86)', 'Games'),
 ];
@@ -164,7 +260,25 @@ function isLibraryLikeFolderName(name) {
   if (!value) return false;
   const base = path.basename(value).toLowerCase();
   if (GAME_LIBRARY_FOLDER_NAMES.some((candidate) => path.basename(candidate).toLowerCase() === base)) return true;
-  return /^(biblioth[eè]que|my ?games|jeux|game ?library|repacks?)$/i.test(base);
+  return /^my ?games$/i.test(base);
+}
+
+// Per-user game-library candidates: portable/repack installs often live under the user profile
+// (%USERPROFILE%\Games, %USERPROFILE%\Jeux) or inside AppData (%APPDATA%/%LOCALAPPDATA%\Games).
+// Only library-like names are probed, never the raw AppData/LocalAppData roots themselves — those
+// hold application config and would produce false positives.
+function profileLibraryRoots() {
+  const roots = [];
+  const names = [];
+  for (const name of GAME_LIBRARY_FOLDER_NAMES) {
+    const base = path.basename(name);
+    if (base && !names.some((n) => n.toLowerCase() === base.toLowerCase())) names.push(base);
+  }
+  for (const base of [process.env['USERPROFILE'], process.env['APPDATA'], process.env['LOCALAPPDATA']]) {
+    if (!base) continue;
+    for (const name of names) addUnique(roots, path.join(base, name));
+  }
+  return roots;
 }
 
 async function discoverLibraryRoots() {
@@ -182,6 +296,7 @@ async function discoverLibraryRoots() {
       addUnique(roots, path.join(`${drive}\\`, name));
     }
   }
+  for (const root of profileLibraryRoots()) addUnique(roots, root);
 
   return roots.filter((p) => {
     try {
@@ -200,4 +315,5 @@ module.exports = {
   isSteamLikePath,
   GAME_LIBRARY_FOLDER_NAMES,
   isLibraryLikeFolderName,
+  profileLibraryRoots,
 };

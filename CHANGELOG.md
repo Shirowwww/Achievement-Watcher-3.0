@@ -38,6 +38,17 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - The unconfigured-install scan also looks inside library-like Desktop subfolders (e.g.
   Desktop\Jeux\<game>, Desktop\Games\<game>) so nested installs are found, while loose Desktop
   folders/shortcuts are still ignored. The name-based folder index follows the same rule.
+- Per-user game libraries are probed too: portable/repack installs under
+  %USERPROFILE%\Games/Jeux, %APPDATA%\Games/Jeux and %LOCALAPPDATA%\Games/Jeux (library-like
+  names only — the raw AppData roots are never scanned, so application config stays out of the
+  game list).
+- Library-folder name detection now understands localized names in many languages (Игры, Jogos,
+  游戏/遊戲, ゲーム, 게임, Hry, Gry, Oyunlar, Játékok, Jocuri, Spellen, Pelit, Trò chơi, …) for
+  drive-root probes, profile/AppData roots and the Desktop subfolder expansion.
+- The Windows installer now shows installation/uninstallation progress details by default, uses
+  refreshed Steam Blue header/sidebar artwork (also on the uninstaller), and explicitly creates
+  the Start Menu and desktop shortcuts. Installer images are generated from
+  `app/build/generate-installer-images.ps1`.
 
 ## 3.6.1 - 2026-08-06
 

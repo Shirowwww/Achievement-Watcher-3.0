@@ -59,6 +59,12 @@ nsis:
   installerSidebar: build/installerSidebar.bmp
   installerHeader: build/installerHeader.bmp
   installerIcon: build/icon.ico
+  uninstallerSidebar: build/installerSidebar.bmp
+  uninstallerHeader: build/installerHeader.bmp
+  uninstallerIcon: build/icon.ico
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: 'Achievement Watcher'
   license: build/license.txt
   differentialPackage: true
 

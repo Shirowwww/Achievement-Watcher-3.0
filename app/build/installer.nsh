@@ -12,6 +12,12 @@ Var unDeleteDataCheckbox
 Var unDeleteAppData
 
 !macro customHeader
+  ; electron-builder's template hides the progress details (ShowInstDetails nevershow). Show them
+  ; by default so users can follow exactly what the installer is doing — extraction, shortcuts,
+  ; the Watchdog stop step and the AppData folder creation. The user can still collapse the pane.
+  ShowInstDetails show
+  ShowUninstDetails show
+
   ; ---------------------------------------------------------------------------
   ; Localized strings used by the custom steps below. The list mirrors the
   ; languages bundled in the app (app/locale/lang/*.json).

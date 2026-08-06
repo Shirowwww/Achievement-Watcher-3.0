@@ -102,7 +102,48 @@ test('isSteamLikePath flags Steam library/install paths but keeps neutral game f
 });
 
 test('library folder probes cover common neutral names and repack folders on every drive', () => {
-  for (const name of ['Games', 'Jeux', 'Juegos', 'Spiele', 'Games Library', 'GameLibrary', 'GOG Games', 'Epic Games', 'Repacks']) {
+  for (const name of [
+    'Games',
+    'Games Library',
+    'GameLibrary',
+    'Repacks',
+    'Repack',
+    // Localised "games library" names across the bundled locales and beyond.
+    'Jeux',
+    'Bibliothèque de jeux',
+    'Spiele',
+    'Spielbibliothek',
+    'Juegos',
+    'Biblioteca de juegos',
+    'Giochi',
+    'Jogos',
+    'Spellen',
+    'Spel',
+    'Spil',
+    'Spill',
+    'Pelit',
+    'Gry',
+    'Hry',
+    'Játékok',
+    'Jocuri',
+    'Игры',
+    'Ігри',
+    'Игри',
+    'Παιχνίδια',
+    'Oyunlar',
+    'ألعاب',
+    'משחקים',
+    'ゲーム',
+    '게임',
+    '游戏',
+    '游戏库',
+    'เกม',
+    'Trò chơi',
+    'Permainan',
+    'गेम',
+    'GOG Games',
+    'Epic Games',
+  ]) {
     assert.ok(saveRoots.GAME_LIBRARY_FOLDER_NAMES.includes(name), `GAME_LIBRARY_FOLDER_NAMES must probe "${name}"`);
   }
 });
@@ -118,10 +159,75 @@ test('launcher-managed storefront roots are never probed as library folders', ()
 });
 
 test('library-like folder names gate the Desktop subfolder scan', () => {
-  for (const name of ['Jeux', 'Games', 'Juegos', 'Spiele', 'Giochi', 'Games Library', 'GameLibrary', 'GOG Games', 'Epic Games', 'Repacks', 'Repack', 'Bibliothèque', 'Bibliotheque', 'My Games']) {
+  for (const name of [
+    'Jeux',
+    'Games',
+    'Juegos',
+    'Spiele',
+    'Giochi',
+    'Games Library',
+    'GameLibrary',
+    'GOG Games',
+    'Epic Games',
+    'Repacks',
+    'Repack',
+    'Bibliothèque',
+    'Bibliotheque',
+    'My Games',
+    'Biblioteca de juegos',
+    'Spielbibliothek',
+    'Игры',
+    'Библиотека игр',
+    'Jogos',
+    'Játékok',
+    'Jocuri',
+    'Hry',
+    'Gry',
+    'Oyunlar',
+    '游戏',
+    '游戏库',
+    'ゲーム',
+    '게임',
+    'เกมส์',
+    'Trò chơi',
+    'Permainan',
+    'משחקים',
+  ]) {
     assert.equal(saveRoots.isLibraryLikeFolderName(name), true, `"${name}" must count as a library folder`);
   }
-  for (const name of ['Desktop', 'Documents', 'Steam', 'Ubisoft Game Launcher', 'GOG Galaxy', 'Epic Games Launcher', 'Game', '']) {
+  for (const name of ['Desktop', 'Documents', 'Steam', 'Ubisoft Game Launcher', 'GOG Galaxy', 'Epic Games Launcher', 'Game', 'Gamez', '']) {
     assert.equal(saveRoots.isLibraryLikeFolderName(name), false, `"${name}" must not count as a library folder`);
+  }
+});
+
+test('per-user game libraries under the profile and AppData are probed (never the raw roots)', () => {
+  const previous = {
+    USERPROFILE: process.env.USERPROFILE,
+    APPDATA: process.env.APPDATA,
+    LOCALAPPDATA: process.env.LOCALAPPDATA,
+  };
+  process.env.USERPROFILE = 'C:\\Users\\TestUser';
+  process.env.APPDATA = 'C:\\Users\\TestUser\\AppData\\Roaming';
+  process.env.LOCALAPPDATA = 'C:\\Users\\TestUser\\AppData\\Local';
+  try {
+    const roots = saveRoots.profileLibraryRoots();
+    for (const expected of [
+      'C:\\Users\\TestUser\\Games',
+      'C:\\Users\\TestUser\\Jeux',
+      'C:\\Users\\TestUser\\AppData\\Roaming\\Games',
+      'C:\\Users\\TestUser\\AppData\\Local\\Games',
+      'C:\\Users\\TestUser\\AppData\\Local\\Repacks',
+      'C:\\Users\\TestUser\\Игры',
+      'C:\\Users\\TestUser\\AppData\\Local\\Jogos',
+    ]) {
+      assert.ok(roots.includes(expected), `profile roots must include "${expected}"`);
+    }
+    assert.ok(!roots.some((r) => r === 'C:\\Users\\TestUser\\AppData\\Roaming'), 'the raw AppData root must never be probed');
+    assert.ok(!roots.some((r) => r === 'C:\\Users\\TestUser\\AppData\\Local'), 'the raw LocalAppData root must never be probed');
+  } finally {
+    for (const [key, value] of Object.entries(previous)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
   }
 });
