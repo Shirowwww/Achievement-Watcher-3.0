@@ -12,8 +12,6 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - Cross-source duplicate merge ("merge duplicate games"): a Ubisoft Connect product mapped to an
   already-listed Steam release (e.g. product 66088 → Steam 3751950) is merged into one tile with
   both unlock sources instead of showing twice.
-- Fast-scan mode (on by default): recent cover/description lookup results are reused instead of
-  re-querying the network on every scan for games that genuinely have no art.
 - SteamGridDB cover fallback (optional per-user API key, bundled public fallback otherwise), used
   when neither the guessable CDN path nor SteamDB has a portrait.
 - GOG Galaxy database reads now retry transient WAL lock failures ("unable to open database file")
@@ -26,6 +24,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Games without cover art are checked against the network again on every scan, as before — the
+  temporary "fast-scan" skip that cached those lookups for a week was removed.
+- A stale "configure executable" entry pointing at a known non-game program (e.g. R.exe from IBM
+  SPSS, Steam's streaming_client.exe, DiskSpd64, Dolphin) no longer marks a game as installed —
+  this is what made The Last of Us Part II appear installed after it was uninstalled.
 - The "download icons" emulator setting no longer falls back to a missing locale path (its label,
   description and option values were already fully translated under `settings.emulator`).
 - Well-known non-game executables (browsers, chat/office apps, system/driver tools, storefront

@@ -140,7 +140,7 @@ console.log(`No-false-match for bogus name -> ${bogus || '(none)'} ${bogus ? 'FA
 if (bogus) fail++;
 
 // --- Known non-game executables are never treated as game exes ---
-for (const name of ['firefox.exe', 'chrome.exe', 'msedge.exe', 'notepad.exe', 'winword.exe', 'Docker Desktop.exe', 'Cheat Engine.exe', 'epicgameslauncher.exe']) {
+for (const name of ['firefox.exe', 'chrome.exe', 'msedge.exe', 'notepad.exe', 'winword.exe', 'Docker Desktop.exe', 'Cheat Engine.exe', 'epicgameslauncher.exe', 'R.exe', 'streaming_client.exe', 'DiskSpd64.exe', 'dolphin.exe']) {
   const ok = exeDetect.isKnownNonGameExe(name);
   console.log(`known non-game exe ${name} -> ${ok ? 'OK' : 'FAIL'}`);
   if (!ok) fail++;

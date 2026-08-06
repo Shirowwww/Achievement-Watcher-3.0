@@ -370,7 +370,7 @@ module.exports.getGameData = async (cfg) => {
       needSaving = true;
     }
 
-    needSaving = needSaving || (await GetMissingData(result, cfg.showHidden, cfg.lang, cfg.steamSettings, !!cfg.fastScan));
+    needSaving = needSaving || (await GetMissingData(result, cfg.showHidden, cfg.lang, cfg.steamSettings));
     if (needSaving) {
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
       fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
@@ -1325,45 +1325,38 @@ async function findWorkingLink(appid, basename) {
 // `showHidden` is accepted for call-site compatibility but no longer gates hidden-description
 // backfill: the detail view reveals hidden descriptions on click regardless of the setting, so the
 // real text must always be fetched.
-async function GetMissingData(data, showHidden, lang, steamSettings, fastScan) {
+async function GetMissingData(data, showHidden, lang, steamSettings) {
   let updated = false;
   try {
     const { ipcRenderer } = require('electron');
     let updatedImgs, updatedDesc;
     if (Object.values(data.img).some((im) => !im)) {
-      // Fast-scan mode: when the missing art was already looked up recently, don't pay the
-      // network round-trip again on every scan for games that genuinely have no cover.
-      const IMG_RECHECK_MS = 7 * 24 * 60 * 60 * 1000;
-      const artTriedRecently = data.imgMissingCheckedAt && Date.now() - data.imgMissingCheckedAt < IMG_RECHECK_MS;
-      if (!(fastScan && artTriedRecently)) {
-        updated = true;
-        // Local-first: a GBE/Goldberg install often ships the store's own library-asset metadata in
-        // steam_settings/steam_misc/app_info/app_product_info.json. Resolve the real cover/header
-        // from that dump before the network lookup — it is authoritative for the install and still
-        // works for delisted games whose store page is gone.
-        if (steamSettings) {
-          try {
-            const steamAssets = require('../util/steamAssets.js');
-            for (const [purpose, key] of [
-              ['portrait', 'portrait'],
-              ['header', 'header'],
-            ]) {
-              if (data.img[key]) continue;
-              const local = steamAssets.resolveSteamProductAssetUrls({ appid: data.appid, configPath: steamSettings, purpose, language: lang });
-              if (local.ok) data.img[key] = local.urls[0];
-            }
-          } catch (err) {
-            debug.log(`[${data.appid}] local product-info asset lookup failed: ${err.message || err}`);
+      updated = true;
+      // Local-first: a GBE/Goldberg install often ships the store's own library-asset metadata in
+      // steam_settings/steam_misc/app_info/app_product_info.json. Resolve the real cover/header
+      // from that dump before the network lookup — it is authoritative for the install and still
+      // works for delisted games whose store page is gone.
+      if (steamSettings) {
+        try {
+          const steamAssets = require('../util/steamAssets.js');
+          for (const [purpose, key] of [
+            ['portrait', 'portrait'],
+            ['header', 'header'],
+          ]) {
+            if (data.img[key]) continue;
+            const local = steamAssets.resolveSteamProductAssetUrls({ appid: data.appid, configPath: steamSettings, purpose, language: lang });
+            if (local.ok) data.img[key] = local.urls[0];
           }
+        } catch (err) {
+          debug.log(`[${data.appid}] local product-info asset lookup failed: ${err.message || err}`);
         }
-        if (Object.values(data.img).some((im) => !im)) {
-          updatedImgs = await ipcRenderer.invoke('get-steam-data', { appid: data.appid, type: 'common' });
-          data.img.header = data.img.header || updatedImgs.header || 'header';
-          data.img.background = data.img.background || updatedImgs.background || 'page_bg_generated_v6b';
-          data.img.portrait = data.img.portrait || updatedImgs.portrait || null;
-          data.img.icon = data.img.icon || updatedImgs.icon;
-        }
-        data.imgMissingCheckedAt = Date.now();
+      }
+      if (Object.values(data.img).some((im) => !im)) {
+        updatedImgs = await ipcRenderer.invoke('get-steam-data', { appid: data.appid, type: 'common' });
+        data.img.header = data.img.header || updatedImgs.header || 'header';
+        data.img.background = data.img.background || updatedImgs.background || 'page_bg_generated_v6b';
+        data.img.portrait = data.img.portrait || updatedImgs.portrait || null;
+        data.img.icon = data.img.icon || updatedImgs.icon;
       }
     }
     // Backfill blank achievement descriptions from the supplemental source. That lookup isn't free

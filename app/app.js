@@ -1014,7 +1014,12 @@ var app = {
             // just dropped dead paths, so any non-empty exe here exists on disk.
             try {
               const entries = await exeList.list();
-              const withExe = new Set(entries.filter((e) => e.exe).map((e) => String(e.appid)));
+              // Known non-game executables (R.exe from SPSS, browser/office tools, …) must never
+              // count as an install proof — a stale "configure executable" pointing at one of those
+              // used to mark uninstalled games (e.g. The Last of Us Part II) as installed.
+              const withExe = new Set(
+                entries.filter((e) => e.exe && !exeDetect.isKnownNonGameExe(path.basename(e.exe))).map((e) => String(e.appid))
+              );
               for (const box of document.querySelectorAll('#game-list .game-box[data-installed="0"]')) {
                 if (withExe.has(String(box.dataset.appid))) box.dataset.installed = '1';
               }

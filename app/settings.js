@@ -159,11 +159,6 @@ module.exports.load = () => {
     if (typeof options.achievement.mergeDuplicate !== 'boolean') {
       options.achievement.mergeDuplicate = true;
     }
-    if (typeof options.achievement.fastScan !== 'boolean') {
-      // Fast-scan: reuse recent art/description lookups instead of re-checking the network for
-      // every game whose cover is genuinely missing. Warm-cache scans skip those round-trips.
-      options.achievement.fastScan = true;
-    }
 
     if (typeof options.achievement.timeMergeRecentFirst !== 'boolean') {
       options.achievement.timeMergeRecentFirst = false;
@@ -438,7 +433,6 @@ module.exports.load = () => {
         thumbnailPortrait: false,
         showHidden: false,
         mergeDuplicate: true,
-        fastScan: true,
         timeMergeRecentFirst: false,
         hideZero: false,
         goldbergDownloadIcons: false,

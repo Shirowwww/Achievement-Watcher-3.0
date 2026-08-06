@@ -55,6 +55,10 @@ const KNOWN_NON_GAME_EXE = new Set([
   'explorer.exe', 'cmd.exe', 'powershell.exe', 'pwsh.exe', 'regedit.exe', 'taskmgr.exe', 'msconfig.exe', 'control.exe', 'msiexec.exe',
   // dev tools
   'code.exe', 'git.exe', 'node.exe', 'npm.exe', 'npx.exe', 'python.exe', 'java.exe', 'javaw.exe',
+  'r.exe', // IBM SPSS Statistics' bundled R runtime (often picked up as a bogus "game" exe)
+  'streaming_client.exe', // Steam Remote Play client process
+  'diskspd64.exe', // CrystalDiskMark's bundled benchmark tool
+  'dolphin.exe', 'dolphintool.exe', // Dolphin emulator (also skipped by the tool-folder guard)
   // archives / utilities
   '7zfm.exe', '7zg.exe', 'winrar.exe', 'winzip64.exe', 'winzip.exe', 'peazip.exe',
   'everything.exe', 'wiztree.exe', 'crystaldiskinfo.exe', 'crystaldiskmark.exe', 'crystaldiskmark9.exe',
