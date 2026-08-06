@@ -3326,12 +3326,19 @@ var app = {
       // page/product info simply has no icon hash yet), which used to leave this box empty. Fall
       // back to the header/portrait art so there's always something recognizable to show.
       const headerIconSource = game.img.icon || game.img.header || game.img.portrait;
+      const iconEl = $('#achievement .wrapper > .header .title .icon');
+      // The icon element is shared across game pages. When this game has no artwork at all it must
+      // be reset to the neutral CSS surface — otherwise the previous game's icon stays behind,
+      // which reads as "this page belongs to another game" (issue #15).
+      const resetIconToPlaceholder = () => iconEl.css('background', '');
       if (headerIconSource) {
-        const iconEl = $('#achievement .wrapper > .header .title .icon');
         iconEl.css('background', `url('${pathToFileURL(path.join(appPath, 'resources/img/loading.gif')).href}')`);
         ipcRenderer.invoke('fetch-icon', headerIconSource, game.steamappid || game.appid).then((localPath) => {
           if (localPath) iconEl.css('background', `url('${localPath}')`);
-        });
+          else resetIconToPlaceholder();
+        }).catch(() => resetIconToPlaceholder());
+      } else {
+        resetIconToPlaceholder();
       }
 
       $('#achievement .wrapper > .header .title span').text(game.name);
