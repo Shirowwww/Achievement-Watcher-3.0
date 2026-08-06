@@ -1133,7 +1133,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           ? `linear-gradient(${gradAngle}deg, ${grad.from || layer.color || '#1b2838'} 0%, ${grad.to || grad.from || layer.color || '#1b2838'} 100%)`
           : '';
         const previewStyle =
-          `background-color:${layer.color || '#1b2838'};` +
+          `background-color:${grad.enabled === true ? 'transparent' : (layer.color || '#1b2838')};` +
           (previewImage
             ? `background-image:${gradStyle ? gradStyle + ',' : ''}url('${require('url').pathToFileURL(previewImage).href.replace(/'/g, "\\'")}');`
             : gradStyle
@@ -1355,7 +1355,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const to = row.find('.theme-layer-gradient-to').val() || from;
       const angle = gradientAngleFromDom(row);
       const preview = row.find('.theme-layer-preview');
-      preview.css('background-color', baseColor);
+      // An enabled gradient replaces the layer's base color entirely (the generated app/overlay
+      // CSS drops the opaque color backdrop too), so the swatch must not keep the base color.
+      preview.css('background-color', enabled ? 'transparent' : baseColor);
       const layers = [];
       if (enabled) layers.push(`linear-gradient(${angle}deg, ${from} 0%, ${to} 100%)`);
       const imageSrc = row.data('previewImage') || '';

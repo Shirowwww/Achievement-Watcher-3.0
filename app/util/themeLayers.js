@@ -294,6 +294,10 @@ function layerGradient(layer) {
   return `linear-gradient(${angle}deg, ${from} 0%, ${to} 100%)`;
 }
 
+function gradientEnabled(layer) {
+  return !!(layer && layer.gradient && layer.gradient.enabled === true);
+}
+
 function fitProps(fit) {
   if (fit === 'repeat') return 'size:auto; repeat:repeat';
   if (fit === 'contain') return 'size:contain; repeat:no-repeat';
@@ -341,6 +345,11 @@ function buildCustomAppCss(theme) {
   const border = clean.border.color;
   const accent = clean.accent.color;
   const accentRgb = hexToRgbTriplet(accent);
+  const bgGrad = gradientEnabled(clean.bg);
+  const headerGrad = gradientEnabled(clean.header);
+  const panelGrad = gradientEnabled(clean.panel);
+  const cardGrad = gradientEnabled(clean.card);
+  const settingsGrad = gradientEnabled(clean.settings);
 
   const rules = [
     ':root {',
@@ -367,15 +376,15 @@ function buildCustomAppCss(theme) {
     '}',
     '',
     'body {',
-    `  background-color: ${bg} !important;`,
-    `  background-image: ${veilLayer(clean.bg)}, radial-gradient(140% 90% at 50% -10%, ${header} 0%, ${bg} 60%), var(--aw-grad-bg, none), var(--aw-img-bg, none) !important;`,
-    '  background-size: auto, cover, 100% 100%, var(--aw-img-bg-size, cover) !important;',
+    `  background-color: ${bgGrad ? 'transparent' : bg} !important;`,
+    `  background-image: ${veilLayer(clean.bg)}, ${bgGrad ? 'var(--aw-grad-bg, none)' : `radial-gradient(140% 90% at 50% -10%, ${header} 0%, ${bg} 60%)`}, ${bgGrad ? 'none' : 'var(--aw-grad-bg, none)'}, var(--aw-img-bg, none) !important;`,
+    `  background-size: auto, 100% 100%, 100% 100%, var(--aw-img-bg-size, cover) !important;`,
     '  background-repeat: no-repeat, no-repeat, no-repeat, var(--aw-img-bg-repeat, no-repeat) !important;',
     '  background-position: center !important;',
     '}',
     '',
     'title-bar {',
-    `  background-color: color-mix(in srgb, ${header} 72%, transparent);`,
+    `  background-color: ${headerGrad ? 'transparent' : `color-mix(in srgb, ${header} 72%, transparent)`};`,
     `  background-image: ${veilLayer(clean.header)}, var(--aw-grad-header, none), var(--aw-img-header, none);`,
     '  background-size: auto, 100% 100%, var(--aw-img-header-size, cover);',
     '  background-repeat: no-repeat, no-repeat, var(--aw-img-header-repeat, no-repeat);',
@@ -383,7 +392,7 @@ function buildCustomAppCss(theme) {
     '}',
     '',
     `#game-list {
-  background-color: color-mix(in srgb, var(--bg-panel) 62%, transparent);
+  background-color: ${panelGrad ? 'transparent' : 'color-mix(in srgb, var(--bg-panel) 62%, transparent)'};
   background-image: ${veilLayer(clean.panel)}, var(--aw-grad-panel, none), var(--aw-img-panel, none);
   background-size: auto, 100% 100%, var(--aw-img-panel-size, cover);
   background-repeat: no-repeat, no-repeat, var(--aw-img-panel-repeat, no-repeat);
@@ -391,6 +400,7 @@ function buildCustomAppCss(theme) {
 }`,
     '',
     `#game-list .game-box .info {
+  ${cardGrad ? 'background-color: transparent;' : ''}
   background-image: ${veilLayer(clean.card)}, var(--aw-grad-card, none), var(--aw-img-card, none);
   background-size: auto, 100% 100%, var(--aw-img-card-size, cover);
   background-repeat: no-repeat, no-repeat, var(--aw-img-card-repeat, no-repeat);
@@ -401,12 +411,14 @@ function buildCustomAppCss(theme) {
 #game-config .box {
   --set-modal-top: var(--aw-settings-color);
   --set-modal-bottom: var(--aw-settings-color);
+  ${settingsGrad ? 'background-color: transparent;' : ''}
   /* Keep the box's color gradient as the bottom layer: without an image (and with
      no effect) the two upper layers are transparent/none, so the settings surface
-     must still render its chosen color instead of becoming transparent. */
-  background-image: ${veilLayer(clean.settings)}, var(--aw-grad-settings, none), var(--aw-img-settings, none), linear-gradient(180deg, var(--set-modal-top) 0%, var(--set-modal-bottom) 100%);
-  background-size: auto, 100% 100%, var(--aw-img-settings-size, cover), cover;
-  background-repeat: no-repeat, no-repeat, var(--aw-img-settings-repeat, no-repeat), no-repeat;
+     must still render its chosen color instead of becoming transparent. An enabled
+     per-layer gradient replaces that base color entirely. */
+  background-image: ${veilLayer(clean.settings)}, var(--aw-grad-settings, none), var(--aw-img-settings, none)${settingsGrad ? '' : ', linear-gradient(180deg, var(--set-modal-top) 0%, var(--set-modal-bottom) 100%)'};
+  background-size: auto, 100% 100%, var(--aw-img-settings-size, cover)${settingsGrad ? '' : ', cover'};
+  background-repeat: no-repeat, no-repeat, var(--aw-img-settings-repeat, no-repeat)${settingsGrad ? '' : ', no-repeat'};
   background-position: center;
 }`,
   ];
@@ -509,6 +521,7 @@ function buildOverlayCss(colors, imageTheme) {
     '}',
     '',
     `.overlay-panel {
+  ${gradientEnabled(images.bg) ? 'background-color: transparent;' : ''}
   background-image: ${veilLayer(images.bg)}, var(--aw-grad-bg, none), var(--aw-img-bg, none);
   background-size: auto, 100% 100%, var(--aw-img-bg-size, cover);
   background-repeat: no-repeat, no-repeat, var(--aw-img-bg-repeat, no-repeat);
@@ -516,7 +529,7 @@ function buildOverlayCss(colors, imageTheme) {
 }`,
     '',
     `.overlay-header {
-  background-color: color-mix(in srgb, var(--aw-theme-header) 70%, transparent);
+  background-color: ${gradientEnabled(images.header) ? 'transparent' : 'color-mix(in srgb, var(--aw-theme-header) 70%, transparent)'};
   background-image: ${veilLayer(images.header)}, var(--aw-grad-header, none), var(--aw-img-header, none);
   background-size: auto, 100% 100%, var(--aw-img-header-size, cover);
   background-repeat: no-repeat, no-repeat, var(--aw-img-header-repeat, no-repeat);
@@ -525,6 +538,7 @@ function buildOverlayCss(colors, imageTheme) {
     '',
     `.overlay-tools,
 .overlay-stats {
+  ${gradientEnabled(images.panel) ? 'background-color: transparent;' : ''}
   background-image: ${veilLayer(images.panel)}, var(--aw-grad-panel, none), var(--aw-img-panel, none);
   background-size: auto, 100% 100%, var(--aw-img-panel-size, cover);
   background-repeat: no-repeat, no-repeat, var(--aw-img-panel-repeat, no-repeat);
@@ -532,6 +546,7 @@ function buildOverlayCss(colors, imageTheme) {
 }`,
     '',
     `.overlay-row {
+  ${gradientEnabled(images.card) ? 'background-color: transparent;' : ''}
   background-image: ${veilLayer(images.card)}, var(--aw-grad-card, none), var(--aw-img-card, none);
   background-size: auto, 100% 100%, var(--aw-img-card-size, cover);
   background-repeat: no-repeat, no-repeat, var(--aw-img-card-repeat, no-repeat);
@@ -539,7 +554,7 @@ function buildOverlayCss(colors, imageTheme) {
 }`,
     '',
     `.overlay-row:hover {
-  background-color: var(--bg-hover);
+  background-color: ${gradientEnabled(images.card) ? 'transparent' : 'var(--bg-hover)'};
   background-image: ${veilLayer(images.card)}, var(--aw-grad-card, none), var(--aw-img-card, none);
   background-size: auto, 100% 100%, var(--aw-img-card-size, cover);
   background-repeat: no-repeat, no-repeat, var(--aw-img-card-repeat, no-repeat);

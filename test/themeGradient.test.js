@@ -65,3 +65,50 @@ test('buildCustomOverlayCss emits gradients for overlay surfaces', () => {
   assert.match(css, /--aw-grad-bg: linear-gradient\(45deg, #101820 0%, #000000 100%\)/);
   assert.match(css, /var\(--aw-grad-card, none\)/);
 });
+
+test('enabled gradients replace the layer base color in generated CSS', () => {
+  const theme = themeLayers.defaultCustomTheme();
+  theme.bg.gradient = { enabled: true, from: '#ff0000', to: '#00ff00', angle: 135 };
+  theme.settings.gradient = { enabled: true, from: '#111111', to: '#222222', angle: 90 };
+
+  const css = themeLayers.buildCustomAppCss(theme);
+
+  // The main window must drop both the opaque base color and the base radial backdrop
+  // so the custom gradient is the layer background, with the image (if any) on top.
+  const bodyRule = css.slice(css.indexOf('body {'), css.indexOf('title-bar {'));
+  assert.match(bodyRule, /background-color: transparent !important/);
+  assert.doesNotMatch(bodyRule, /radial-gradient\(140% 90%/);
+  assert.match(bodyRule, /var\(--aw-grad-bg, none\), none, var\(--aw-img-bg/);
+
+  // The settings modal drops its opaque base gradient when a per-layer gradient is enabled.
+  const nextBody = css.indexOf('body {', css.indexOf('#settings .box'));
+  const settingsRule = css.slice(css.indexOf('#settings .box'), nextBody);
+  assert.match(settingsRule, /background-color: transparent/);
+  assert.doesNotMatch(settingsRule, /linear-gradient\(180deg, var\(--set-modal-top\)/);
+
+  // The overlay does the same: no base color behind the gradient.
+  const overlay = themeLayers.buildCustomOverlayCss(theme);
+  const panelRule = overlay.slice(overlay.indexOf('.overlay-panel {'), overlay.indexOf('.overlay-header {'));
+  assert.match(panelRule, /background-color: transparent/);
+});
+
+test('enabled gradients stay layered under images', () => {
+  const tmp = require('node:fs').mkdtempSync(require('node:path').join(require('node:os').tmpdir(), 'aw-grad-img-'));
+  try {
+    const bgFile = require('node:path').join(tmp, 'bg.png');
+    require('node:fs').writeFileSync(bgFile, 'x');
+    const theme = themeLayers.defaultCustomTheme();
+    theme.bg.image = bgFile;
+    theme.bg.gradient = { enabled: true, from: '#ff0000', to: '#00ff00', angle: 90 };
+
+    const css = themeLayers.buildCustomAppCss(theme);
+    const firstBody = css.indexOf('body {');
+    const secondBody = css.indexOf('body {', firstBody + 1);
+    const imageOverride = css.slice(secondBody, css.indexOf('title-bar {', secondBody));
+    // The dark scrim keeps readability, but the enabled gradient is still emitted below the art.
+    assert.match(imageOverride, /var\(--aw-grad-bg, none\), var\(--aw-img-bg, none\)/);
+    assert.doesNotMatch(imageOverride, /radial-gradient\(140% 90%/);
+  } finally {
+    require('node:fs').rmSync(tmp, { recursive: true, force: true });
+  }
+});

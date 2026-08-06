@@ -34,6 +34,12 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- An enabled per-layer gradient now replaces the layer's base color entirely, in the app and in the
+  in-game overlay — previously the base color/backdrop was still painted over the gradient. Layer
+  images keep rendering above the gradient.
+- The watchdog status dot no longer pulses forever once the watchdog is running: the pulse only
+  plays while the watchdog is starting/checking, which removes a steady ~100% GPU-core burn on
+  some machines.
 - Playtime tracking now starts before the toast/controller services initialize COM security, so the
   watchdog no longer loses it to an `RPC_E_TOO_LATE` failure at startup.
 - Gradients now size correctly when combined with a layer image (the gradient stretches over the
@@ -87,8 +93,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- The cover gallery uses the app's shared modal style (same surfaces, blur backdrop, typography and
-  buttons as the executable-configuration dialog), with an explicit Cancel button.
+- The "Choose another cover…" gallery now uses the shared modal chrome and global theme tokens
+  (surfaces, borders, accent, fonts and radii) instead of its own inline styles, and exposes proper
+  dialog/aria attributes.
 - Installed-game folder detection now merges smart-discovered library roots on every scan (common
   neutral folder names on all drives — Games/Jeux/Juegos/Spiele, Games Library/GameLibrary,
   Repacks, plus GOG Games and Epic Games as before) without requiring the user to add them in
