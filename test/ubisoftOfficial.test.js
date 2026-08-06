@@ -116,15 +116,15 @@ function spoolRecord(achId, time) {
     assert.equal(unlocks['28'].earned_time, T2);
 
     // ---- end-to-end generic identity (issue #7): a Steam purchase that launches Ubisoft Connect
-    // has NO row in uplay-steam.json (product 971 was deliberately removed) — the game is resolved
+    // has NO row in uplay-steam.json (product 999997 is deliberately absent) — the game is resolved
     // through the configurations block's own name via the same Steam lookup the app uses.
     const fc4SpoolDir = path.join(tmp, 'spool', 'user-guid-fc4');
     fs.mkdirSync(fc4SpoolDir, { recursive: true });
-    const fc4Spool = path.join(fc4SpoolDir, '971.spool');
+    const fc4Spool = path.join(fc4SpoolDir, '999997.spool');
     fs.writeFileSync(fc4Spool, Buffer.concat([spoolRecord(11, T1)]));
     const fc4Zip = new AdmZip();
     fc4Zip.addFile('en-US_loc.txt', Buffer.from('11\tA Worthy Opponent\tDefeat the fortress', 'utf8'));
-    const fc4Archive = path.join(achRoot, '971_FarCry4');
+    const fc4Archive = path.join(achRoot, '999997_FarCry4');
     fs.writeFileSync(fc4Archive, fc4Zip.toBuffer());
     fs.writeFileSync(
       path.join(tmp, 'configurations'),
@@ -136,15 +136,15 @@ function spoolRecord(achId, time) {
         '  third_party_platform:',
         '    name: Steam',
         '  uplay:',
-        "    achievements: '971_FarCry4'",
+        "    achievements: '999997_FarCry4'",
         '',
       ].join('\n')
     );
     const fc4Block = ubi._internal.readConfigurationsIndex(path.join(tmp, 'configurations'))[0];
     const fc4Entry = {
-      appid: 'uplay-971',
+      appid: 'uplay-999997',
       source: 'Ubisoft Connect',
-      data: { type: 'ubisoftOfficial', uplayId: '971', spoolFilePath: fc4Spool, archivePath: fc4Archive, configBlock: fc4Block, title: 'Far Cry 4' },
+      data: { type: 'ubisoftOfficial', uplayId: '999997', spoolFilePath: fc4Spool, archivePath: fc4Archive, configBlock: fc4Block, title: 'Far Cry 4' },
     };
     ubi._internal.resetIdentityCache();
     await ubi._internal.resolveIdentity(fc4Entry, {
@@ -259,7 +259,7 @@ function spoolRecord(achId, time) {
     const entries = ubi._internal.listSpoolEntries(path.join(tmp, 'spool'));
     assert.equal(entries.length, 3);
     assert.ok(entries.some((e) => e.appid === '8006' && e.userId === 'user-guid-1'));
-    assert.ok(entries.some((e) => e.appid === '971' && e.userId === 'user-guid-fc4'));
+    assert.ok(entries.some((e) => e.appid === '999997' && e.userId === 'user-guid-fc4'));
     assert.ok(entries.some((e) => e.appid === '66088' && e.userId === 'user-guid-bf'));
 
     // ---- watchdog live-watcher readers share the same formats

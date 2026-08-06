@@ -138,7 +138,7 @@ test('identity falls back to the local Steam library, then to the catalog, by na
 
   ubi._internal.resetIdentityCache();
   const fromLibrary = await ubi._internal.resolveIdentity(
-    { appid: 'uplay-971', data: { uplayId: '971', title: '', configBlock: block } },
+    { appid: 'uplay-999998', data: { uplayId: '999998', title: '', configBlock: block } },
     { ubisoftInstallDir: () => '', localSteamInstalls: [], localSteamLibrary: [{ appid: 298110, name: 'Far Cry 4' }], findAppidByName: async () => null }
   );
   // "Far Cry 4" also exists in the uplay->Steam mapping asset, which now wins before the generic
@@ -159,7 +159,7 @@ test('identity falls back to the local Steam library, then to the catalog, by na
     title: 'Local Only Game',
   };
   const fromLocalLibrary = await ubi._internal.resolveIdentity(
-    { appid: 'uplay-971', data: { uplayId: '971', title: '', configBlock: localOnlyBlock } },
+    { appid: 'uplay-999998', data: { uplayId: '999998', title: '', configBlock: localOnlyBlock } },
     { ubisoftInstallDir: () => '', localSteamInstalls: [], localSteamLibrary: [{ appid: 999, name: 'Local Only Game' }], findAppidByName: async () => null }
   );
   assert.equal(fromLocalLibrary.method, 'library');
@@ -167,7 +167,7 @@ test('identity falls back to the local Steam library, then to the catalog, by na
 
   ubi._internal.resetIdentityCache();
   const fromCatalog = await ubi._internal.resolveIdentity(
-    { appid: 'uplay-971', data: { uplayId: '971', title: '', configBlock: localOnlyBlock } },
+    { appid: 'uplay-999998', data: { uplayId: '999998', title: '', configBlock: localOnlyBlock } },
     {
       ubisoftInstallDir: () => '',
       localSteamInstalls: [],
@@ -178,6 +178,20 @@ test('identity falls back to the local Steam library, then to the catalog, by na
   assert.equal(fromCatalog.method, 'name');
   assert.equal(fromCatalog.steamAppId, '999');
   assert.equal(fromCatalog.title, 'Local Only Game');
+});
+
+test('uplay 971 (Far Cry 4 Steam variant) resolves through the mapping asset', async () => {
+  // Regression (issue #14): 3.6.1 showed "Ubisoft 971" with an empty poster because the product id
+  // had no asset row and no install-dir signal on the reporter's machine. The asset row is the
+  // deterministic offline answer: title + Steam appid + cover art.
+  ubi._internal.resetIdentityCache();
+  const identity = await ubi._internal.resolveIdentity(
+    { appid: 'uplay-971', data: { uplayId: '971', title: '', configBlock: null } },
+    { ubisoftInstallDir: () => '', localSteamInstalls: [], localSteamLibrary: [], findAppidByName: async () => null }
+  );
+  assert.equal(identity.method, 'asset');
+  assert.equal(identity.steamAppId, '298110');
+  assert.equal(identity.title, 'Far Cry® 4');
 });
 
 test('the local Steam library reader understands the real VDF/ACF layout', async () => {

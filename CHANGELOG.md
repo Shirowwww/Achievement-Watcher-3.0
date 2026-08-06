@@ -34,6 +34,17 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- In-app updates no longer fail with "App is not signed" on intentionally unsigned releases: the
+  signature verifier now accepts a file with no Authenticode signature (the release feed's SHA-512
+  still authenticates it) and keeps rejecting only a signature that belongs to another publisher.
+- The game-page header icon is reset to a neutral placeholder when the opened game has no artwork —
+  it no longer keeps the previous game's icon, which made the page look like it belonged to
+  another title (issue #15).
+- A Steam purchase that launches Ubisoft Connect now resolves again when its registered install
+  folder is unavailable: the Steam-variant Far Cry 4 product id 971 was missing from the
+  uplay↔Steam mapping asset, so the entry degraded to "Ubisoft 971" with an empty poster
+  (issue #14). It now maps to Steam 298110 like the other Far Cry 4 variants, with regression
+  tests on the mapping and identity-resolution layers.
 - The playtime monitor no longer crashes the Watchdog when a muted-path entry is an unset
   environment variable (e.g. `ProgramFiles(x86)` on 32-bit Windows); the path filter also uses
   boundary-aware, separator-normalized matching instead of a raw prefix check.
