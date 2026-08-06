@@ -266,7 +266,7 @@ module.exports.start = async (ctx) => {
     }
     try {
       // WAL mode: an unlock may only touch gameplay.db-wal, so watch every gameplay.db* sibling.
-      const w = watch(target.gameplayDir, { recursive: false, filter: /gameplay\.db/i }, (evt) => {
+      const w = watch(target.gameplayDir, { recursive: false, filter: /gameplay\.db/i }, (evt, name) => {
         if (evt !== 'update') return;
         handleChange(target, ctx);
       });
