@@ -5,6 +5,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+## 3.7.0 - 2026-08-06
+
 ### Added
 
 - The custom theme editor has a per-layer "Gradient" editor (surface layers only): pick the two

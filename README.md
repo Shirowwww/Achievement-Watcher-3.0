@@ -34,10 +34,10 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 | **Modern foundation** | Electron 12 → 43, current Node runtime, refreshed dependencies, tighter renderer security and Windows 11 support without WMIC |
 | **More real sources** | Local Steam appcache, GOG Galaxy and Ubisoft Connect readers; Epic account connection; EA Desktop; Xbox PC (Game Pass / Microsoft Store) with account import; Goldberg SocialClub; RPCS3, ShadPS4 and Xenia |
 | **Goldberg / GBE / Uplay R2 tools** | Read-only diagnosis, `steam_settings` repair, matched GBE Fork runtime install, loader-version-aware Uplay R2 support, Steamless support, opt-in API-check bypass, backups/restore and opt-in background setup |
-| **Better library** | Game and achievement search, installed-only filtering, blacklist restore, rarity tiers, progress achievements, smarter covers, executable detection and right-click uninstall |
+| **Better library** | Game and achievement search, installed-only filtering, blacklist restore, rarity tiers, progress achievements, smarter covers with a per-game SteamDB/SteamGridDB cover gallery, executable detection and right-click uninstall |
 | **Live tracking** | Tray-first background Watchdog, Xenia/ShadPS4/GOG/Ubisoft unlock monitoring, safer startup baselines and duplicate suppression |
 | **Notifications** | Native Windows notifications + a customizable, localized in-game overlay (stats bar, instant search, status filters, rarity badges, progress bars, density/icon-size/accent/zoom), preset library, custom builder, custom sounds, 0–200% volume and separate rare/completion styles |
-| **Controller and UI** | Full controller navigation (XInput plus native PlayStation/Switch input), controller control of the in-game overlay, mouse Back/Forward, resizable interface, seven built-in themes plus a Custom theme with per-layer colors/images, 18 complete UI languages and a localized installer |
+| **Controller and UI** | Full controller navigation (XInput plus native PlayStation/Switch input), controller control of the in-game overlay, mouse Back/Forward, resizable interface, seven built-in themes plus a Custom theme with per-layer colors/images/gradients, 18 complete UI languages and a localized installer |
 | **Local-first reliability** | Own data directory isolated from the original 1.6.8 app, a migration-safe avatar and installed-only filter, offline names and artwork, local schemas, platform-aware cache IDs, bounded caches, self-healing folders and fewer browser-dependent lookups |
 
 ---

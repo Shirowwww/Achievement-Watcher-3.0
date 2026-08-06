@@ -1,35 +1,34 @@
-# Achievement Watcher 3.6.1
+# Achievement Watcher 3.7.0
 
-Theming release: themes now recolor the whole app instead of just Settings, three new
-built-in palettes join the lineup, and a batch of hardcoded colors and localization gaps
-found while auditing the theme system are fixed.
+Custom theme gradients, a cover-art gallery, smarter installed-game detection and a batch of
+stability fixes — including the in-app updater and a Far Cry 4 identity regression.
 
 ## Highlights
 
-- **Themes are truly global.** Built-in themes (now including new Nord, Gruvbox and Tokyo
-  Night palettes alongside Steam Blue, OLED Black, Dracula and Graphite) and the Custom
-  theme recolor the window, library, game cards, achievements and dialogs, and the in-game
-  overlay follows the active theme through a "Use app theme" toggle (off by default).
-- **Custom theme images.** Pick a color and, per layer (window, header, library panel,
-  cards/rows, Settings window), an optional background image with Cover/Contain/Repeat/
-  Stretch fit and a veil or blur effect. Adding, replacing or removing an image never resets
-  other layers' colors.
-- **Settings no longer inherits the card color.** The Settings window and the executable
-  configuration modal had been picking up the "Cards & tiles" layer's color instead of
-  their own; they're now fully independent.
-- **~50 hardcoded colors replaced with theme variables** across the title bar, achievement
-  icons, the Uplay achievement-page banner, search bars and dialogs, so every theme
-  actually reaches the whole app.
-- **More localized.** The executable configuration modal, the footer update-button status,
-  and the blacklist add-by-AppID field are now translated in all 18 bundled locales.
-- **Overlay hotkey defaults to Ctrl+Shift+K** and toggles the overlay even with no game
-  running; it was silently defaulting to Ctrl+Shift+O in code while the UI already showed K.
+- **Per-layer theme gradients.** The Custom theme editor now has a Gradient editor for surface
+  layers: pick two colors and a direction (0/45/90/135/180/270°) with a live preview, applied in
+  the app and the in-game overlay. Older single-toggle gradients import automatically as a dark
+  fade of the layer color.
+- **Cover picker gallery.** Right-click a game → "Choose another cover…" opens a themed gallery
+  with the current cover, SteamDB library assets and up to eight SteamGridDB community grids,
+  matching the library's portrait/landscape orientation.
+- **Cross-source duplicate merge.** A Ubisoft Connect product mapped to an already-listed Steam
+  release is merged into one tile with both unlock sources instead of showing twice (for example
+  the Steam-variant Far Cry 4 product 971 now resolves to Steam 298110 with its real cover).
+- **Smarter install detection.** Per-user game libraries, nested library-like folders and
+  launcher-managed installs are probed on every scan; unconfigured installs are named from the
+  exe's own FileDescription/ProductName; known non-game executables no longer mark games installed.
+- **Updater fixed for unsigned releases.** "Download && Install" no longer fails with
+  "App is not signed": the verifier accepts intentionally unsigned release files (still
+  authenticated by the feed's SHA-512) and only rejects signatures from another publisher.
+- **Game-page artwork fix.** The header icon is reset to a neutral placeholder when a game has no
+  artwork, so a page can never show the previous game's icon.
 
 ## Install
 
-Download `Achievement.Watcher.Setup.3.6.1.exe` from the
-[v3.6.1 release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/tag/v3.6.1).
+Download `Achievement.Watcher.Setup.3.7.0.exe` from the
+[v3.7.0 release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/tag/v3.7.0).
 
 The `.blockmap` and `latest.yml` assets are used by automatic updates. Upgrading preserves data.
 
-See the [changelog](CHANGELOG.md#361---2026-08-06) for the full list of changes.
+See the [changelog](CHANGELOG.md#370---2026-08-06) for the full list of changes.
