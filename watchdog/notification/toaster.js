@@ -5,6 +5,7 @@ const fs = require('fs');
 const toast = require('./transport/toast.js');
 const balloon = require('../util/powerballoon');
 const fetch = require('./prefetch.js');
+const notificationSound = require('../util/notificationSound.js');
 const { broadcast } = require('../websocket.js');
 
 const debug = require('../util/log.js');
@@ -35,6 +36,14 @@ const loadXinput = () =>
     return null;
   }));
 
+// Overlay sound settings (Son / Son aléatoire / Volume) shared by every notify() caller. The
+// watchdog sets this once options.ini is loaded (and on each settings reload), so console
+// watchers don't each have to forward the overlay block.
+let defaultOverlay = null;
+function setOverlayOptions(overlay) {
+  defaultOverlay = overlay || null;
+}
+
 module.exports = async (message, option = {}) => {
   try {
     // A playtime card is about the game, not an unlocked achievement. Force its title from the
@@ -52,6 +61,7 @@ module.exports = async (message, option = {}) => {
       },
       toast: {
         appid: option.toast.appid,
+        lang: option.lang || 'english',
         winrt: option.toast.winrt != null ? option.toast.winrt : true,
         balloonFallback: option.toast.balloonFallback || false,
         customAudio: option.toast.customAudio || '1',
@@ -65,6 +75,17 @@ module.exports = async (message, option = {}) => {
       rumble: option.rumble != null ? option.rumble : true,
       souvenir: option.souvenir || null,
     };
+
+    // Windows toasts use the same sound the user configured for overlay notifications: the
+    // picked file (or a fresh random pick when enabled), played at the configured volume.
+    // Playtime cards stay silent, matching the overlay. When no sound is configured, the
+    // toast keeps its native Windows sound behavior.
+    const overlay = option.overlay || defaultOverlay || {};
+    options.toast.soundFile = message.silent
+      ? ''
+      : overlay.randomSound === true
+        ? notificationSound.pickRandomSound() || notificationSound.resolveSoundFile(overlay.notificationSound)
+        : notificationSound.resolveSoundFile(overlay.notificationSound);
 
     if (options.notify) {
       if (options.transport.websocket) {
@@ -162,9 +183,10 @@ module.exports = async (message, option = {}) => {
           if (options.toast.balloonFallback) {
             debug.warn('Fallback to balloon-tooltip');
             try {
+              const fallbackStrings = require('../util/notifyStrings.js').forLang(options.toast.lang || 'english');
               let notification = {
                 title: message.achievementDisplayName,
-                message: message.achievementDescription || 'Achievement unlocked !', //description can not be empty for a balloon
+                message: message.achievementDescription || fallbackStrings.achievementUnlocked || 'Achievement unlocked !', //description can not be empty for a balloon
                 ico: path.resolve('./notification/icon/icon.ico'),
               };
 
@@ -203,3 +225,5 @@ module.exports = async (message, option = {}) => {
     debug.log(err);
   }
 };
+
+module.exports.setOverlayOptions = setOverlayOptions;

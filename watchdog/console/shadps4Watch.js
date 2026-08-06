@@ -15,6 +15,7 @@ const moment = require('moment');
 const debug = require('../util/log.js');
 const waitForFileStable = require('../util/waitForFileStable.js');
 const { notificationVolumePercent } = require('../util/notificationVolume.js');
+const notifyStrings = require('../util/notifyStrings.js');
 
 const APPDATA = process.env['APPDATA'] || '';
 const { userDataDir } = require('../util/userData.js');
@@ -220,7 +221,7 @@ async function handleChange(target, changedFile, ctx) {
               imageIntegration: '0',
               group: ctx.options.notification_toast.groupToast,
               cropIcon: true,
-              attribution: 'Trophy',
+              attribution: notifyStrings.forLang(ctx.options.achievement.lang).trophy,
             },
             prefetch: false, // icons are already local files
             rumble: ctx.options.notification.rumble,

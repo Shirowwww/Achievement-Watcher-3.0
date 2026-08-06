@@ -10,8 +10,10 @@
   isInstalled({ dataType, hasResolvedExe, hasExeListExe, trustedInstalled }) -> boolean
 
   A game counts as installed when ANY of:
-    (A) it comes from a source whose entries are always real installs: a legit Steam library
-        entry (steamAPI) or an RPCS3 emulator game folder, OR
+    (A) it comes from a source whose entries are always real installs: an RPCS3/Xenia emulator
+        game folder or a Social Club profile folder. A legit Steam entry (steamAPI) is NOT in
+        this set: scanLegit lists OWNED games too, so the caller must pass the per-game Steam
+        registry "Installed" flag as trustedInstalled, OR
     (B) the caller proved it installed by other means (trustedInstalled) — e.g. a legit Ubisoft
         Connect game found in the launcher's Installs registry, OR
     (C) we have on-disk proof: a resolved install folder with a valid game exe, or a still-living
@@ -22,8 +24,10 @@
   is NOT a trust signal — those go through the on-disk proof path like any other emulator save.
 */
 
-// Sources whose every entry is, by construction, a real on-disk install.
-const TRUSTED_TYPES = new Set(['steamapi', 'rpcs3', 'xenia', 'socialclub']);
+// Sources whose every entry is, by construction, a real on-disk install. steamAPI is deliberately
+// absent: its scan lists owned games as well as installed ones, so install proof comes from the
+// per-game Steam registry flag (passed as trustedInstalled by the caller).
+const TRUSTED_TYPES = new Set(['rpcs3', 'xenia', 'socialclub']);
 
 function isInstalled({ dataType, hasResolvedExe, hasExeListExe, trustedInstalled } = {}) {
   const type = String(dataType || '').toLowerCase();

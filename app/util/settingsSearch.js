@@ -13,10 +13,10 @@
   Rows a search can hide. Only the OUTERMOST match inside a tab counts as a row: settings rows are
   never nested in one another, so anything matching this inside another match is part of that row —
   a folder entry's edit/unlink buttons are `<li>`s inside the path row, and a guide panel's bullets
-  are `<li>`s inside the panel. Filtering them independently would strip a visible row of its
+  are `<li>`s inside the help panel. Filtering them independently would strip a visible row of its
   controls and leave containers standing empty.
 */
-const ROW_SELECTOR = 'li, .emulator-login, .emulator-hero, .guide-panel, .platform-guide-head';
+const ROW_SELECTOR = 'li, .emulator-login, .emulator-hero, .help-panel';
 
 // Blocks that should disappear once every row inside them is filtered out, so a filtered tab shows
 // matching sections instead of a column of empty headers.

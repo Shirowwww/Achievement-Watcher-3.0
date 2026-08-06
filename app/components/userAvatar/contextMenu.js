@@ -111,7 +111,7 @@ function contextMenu(e, position = null) {
                 remote.dialog.showMessageBoxSync({
                   type: 'error',
                   title: t('error', 'Error', 'Erreur'),
-                  message: t('failed-to-fetch-avatar', `Failed to fetch ${self.steamUsers[i].name}'s avatar.`, `Échec de la récupération de l’avatar de ${self.steamUsers[i].name}.`),
+                  message: t('failed-to-fetch-avatar', 'Failed to fetch {name}\'s avatar.', 'Échec de la récupération de l’avatar de {name}.', { name: self.steamUsers[i].name }),
                   detail: `${err}`,
                 });
               });

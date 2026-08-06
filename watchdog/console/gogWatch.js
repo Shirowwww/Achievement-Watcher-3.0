@@ -15,6 +15,7 @@ const watch = require('node-watch');
 const moment = require('moment');
 const debug = require('../util/log.js');
 const { notificationVolumePercent } = require('../util/notificationVolume.js');
+const notifyStrings = require('../util/notifyStrings.js');
 
 const { userDataDir } = require('../util/userData.js');
 const cacheDir = path.join(userDataDir(), 'steam_cache/console');
@@ -214,7 +215,7 @@ async function handleChange(target, ctx) {
               imageIntegration: '0',
               group: ctx.options.notification_toast.groupToast,
               cropIcon: true,
-              attribution: 'Achievement',
+              attribution: notifyStrings.forLang(ctx.options.achievement.lang).achievement,
             },
             prefetch: true, // icons are GOG CDN URLs
             rumble: ctx.options.notification.rumble,

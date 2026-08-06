@@ -13,6 +13,7 @@ const moment = require('moment');
 const debug = require('../util/log.js');
 const waitForFileStable = require('../util/waitForFileStable.js');
 const { notificationVolumePercent } = require('../util/notificationVolume.js');
+const notifyStrings = require('../util/notifyStrings.js');
 
 const LOCALAPPDATA = process.env['LOCALAPPDATA'] || '';
 const { userDataDir } = require('../util/userData.js');
@@ -294,7 +295,7 @@ async function handleChange(changedFile, ctx) {
                 imageIntegration: '0',
                 group: ctx.options.notification_toast.groupToast,
                 cropIcon: true,
-                attribution: (ctx.options.achievement.lang || '').toLowerCase().startsWith('fr') ? 'Succes EA' : 'EA Achievement',
+                attribution: notifyStrings.forLang(ctx.options.achievement.lang).eaAchievement,
               },
               prefetch: ctx.options.notification_advanced.iconPrefetch,
               rumble: ctx.options.notification.rumble,

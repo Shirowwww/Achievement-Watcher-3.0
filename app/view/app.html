@@ -162,7 +162,9 @@
                 <li data-view="source"><i class="fas fa-file-import"></i> <span></span><b class="nav-count"></b></li>
                 <li data-view="folder"><i class="far fa-folder"></i> <span></span><b class="nav-count"></b></li>
                 <li class="nav-group" id="nav-group-emulator" data-nav-group="emulator"></li>
-                <li data-view="emulator"><i class="fas fa-microchip"></i> <span id="emulator-nav-label">Emulator</span><b class="nav-count"></b></li>
+                <li data-view="emulator"><i class="fas fa-microchip"></i> <span id="emulator-nav-label">Steam emulator</span><b class="nav-count"></b></li>
+                <li class="nav-group" id="nav-group-help" data-nav-group="help"></li>
+                <li data-view="help"><i class="fas fa-question-circle"></i> <span id="help-nav-label">Help</span><b class="nav-count"></b></li>
                 <li class="nav-group" id="nav-group-advanced" data-nav-group="advanced"></li>
                 <li data-view="advanced"><i class="fas fa-flask"></i> <span></span><b class="nav-count"></b></li>
               </ul>
@@ -365,6 +367,55 @@
                 </ul>
               </div>
 
+            </section>
+
+            <section class="content" data-view="help">
+              <div class="help-card settings-card">
+                <div class="title"><i class="fas fa-question-circle"></i> <span id="help-title">Help &amp; tips</span></div>
+                <p class="help-intro" id="help-intro"></p>
+                <div class="help-grid">
+                  <details class="help-panel" open>
+                    <summary><i class="fas fa-bolt"></i> <span id="help-quick-title">First steps</span></summary>
+                    <ul id="help-quick-list"></ul>
+                  </details>
+                  <details class="help-panel">
+                    <summary><i class="fas fa-gamepad"></i> <span id="help-controller-title">Controller (gamepad)</span></summary>
+                    <ul id="help-controller-list"></ul>
+                  </details>
+                  <details class="help-panel">
+                    <summary><i class="fas fa-tv"></i> <span id="help-overlay-title">In-game overlay</span></summary>
+                    <ul id="help-overlay-list"></ul>
+                  </details>
+                  <details class="help-panel">
+                    <summary><i class="fas fa-palette"></i> <span id="help-themes-title">Custom themes</span></summary>
+                    <ul id="help-themes-list"></ul>
+                  </details>
+                  <details class="help-panel">
+                    <summary><i class="fas fa-keyboard"></i> <span id="help-shortcuts-title">Keyboard shortcuts</span></summary>
+                    <ul id="help-shortcuts-list"></ul>
+                  </details>
+                  <details class="help-panel">
+                    <summary><i class="fas fa-lightbulb"></i> <span id="help-tips-title">Tips &amp; tricks</span></summary>
+                    <ul id="help-tips-list"></ul>
+                  </details>
+                  <details class="help-panel">
+                    <summary><i class="fas fa-store"></i> <span id="help-sources-title">Launchers &amp; sources</span></summary>
+                    <ul id="help-sources-list"></ul>
+                  </details>
+                  <details class="help-panel">
+                    <summary><i class="fab fa-steam"></i> <span id="help-steam-title">Steam emulators</span></summary>
+                    <ul id="help-steam-list"></ul>
+                  </details>
+                  <details class="help-panel">
+                    <summary><i class="fas fa-microchip"></i> <span id="help-emulator-title">Console emulators</span></summary>
+                    <ul id="help-emulator-list"></ul>
+                  </details>
+                  <details class="help-panel">
+                    <summary><i class="fas fa-wrench"></i> <span id="help-troubleshoot-title">Troubleshooting</span></summary>
+                    <ul id="help-troubleshoot-list"></ul>
+                  </details>
+                </div>
+              </div>
             </section>
 
             <section class="content" data-view="advanced">
@@ -1117,7 +1168,7 @@
                     </li>
 
                     <li class="hasHelper">
-                      <div class="left"><i class="fas fa-playstation"></i> <span id="lbl-overlayPresetRpcs3"></span></div>
+                      <div class="left"><i class="fab fa-playstation"></i> <span id="lbl-overlayPresetRpcs3"></span></div>
                       <div class="right">
                         <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
                         <select autocomplete="off" class="dropdown" id="option_overlayPresetRpcs3"></select>
@@ -1159,6 +1210,41 @@
                       <div class="help"></div>
                     </li>
 
+                    <li class="hasHelper expand">
+                      <div class="left"><i class="fas fa-expand"></i> <span id="lbl-overlayScale"></span></div>
+                      <div class="right">
+                        <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
+                        <select autocomplete="off" class="dropdown" id="option_overlayScale">
+                          <option value="0.5">50%</option>
+                          <option value="0.75">75%</option>
+                          <option value="1" selected>100%</option>
+                          <option value="1.25">125%</option>
+                          <option value="1.5">150%</option>
+                          <option value="2">200%</option>
+                        </select>
+                        <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
+                      </div>
+                      <div class="help"></div>
+                    </li>
+
+                    <li class="hasHelper">
+                      <div class="left"><i class="fas fa-clock"></i> <span id="lbl-overlayDuration"></span></div>
+                      <div class="right">
+                        <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
+                        <select autocomplete="off" class="dropdown" id="option_overlayDuration">
+                          <option value="auto" selected></option>
+                          <option value="2">2s</option>
+                          <option value="3">3s</option>
+                          <option value="4">4s</option>
+                          <option value="5">5s</option>
+                          <option value="7">7s</option>
+                          <option value="10">10s</option>
+                        </select>
+                        <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
+                      </div>
+                      <div class="help"></div>
+                    </li>
+
                     <li class="hasHelper">
                       <div class="left">
                         <i class="fas fa-volume-up"></i> <span id="lbl-overlaySound"></span>
@@ -1185,47 +1271,11 @@
                       <div class="help"></div>
                     </li>
 
-                    <li class="hasHelper expand">
-                      <div class="left"><i class="fas fa-expand"></i> <span id="lbl-overlayScale"></span></div>
-                      <div class="right">
-                        <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
-                        <select autocomplete="off" class="dropdown" id="option_overlayScale">
-                          <option value="0.5">50%</option>
-                          <option value="0.75">75%</option>
-                          <option value="1" selected>100%</option>
-                          <option value="1.25">125%</option>
-                          <option value="1.5">150%</option>
-                          <option value="2">200%</option>
-                        </select>
-                        <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
-                      </div>
-                      <div class="help"></div>
-                    </li>
-
-                    <li class="hasHelper">
                     <li class="hasHelper">
                       <div class="left"><i class="fas fa-volume-up"></i> <span id="lbl-overlayVolume"></span></div>
                       <div class="right volume-slider">
                         <input type="range" id="option_overlayVolume" min="0" max="200" step="5" value="100" />
                         <span id="overlayVolume-value" class="volume-value">100%</span>
-                      </div>
-                      <div class="help"></div>
-                    </li>
-
-                    <li class="hasHelper">
-                      <div class="left"><i class="fas fa-clock"></i> <span id="lbl-overlayDuration"></span></div>
-                      <div class="right">
-                        <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
-                        <select autocomplete="off" class="dropdown" id="option_overlayDuration">
-                          <option value="auto" selected></option>
-                          <option value="2">2s</option>
-                          <option value="3">3s</option>
-                          <option value="4">4s</option>
-                          <option value="5">5s</option>
-                          <option value="7">7s</option>
-                          <option value="10">10s</option>
-                        </select>
-                        <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
                       </div>
                       <div class="help"></div>
                     </li>
@@ -1253,7 +1303,7 @@
                   </ul>
                 </div>
 
-                <div class="arrow-list">
+                <div class="arrow-list overlay-only-card">
                   <div class="title"><span id="customiser-title">Custom preset</span></div>
                   <ul id="options-notify-customiser">
                     <li class="hasHelper" style="flex-wrap: wrap">
@@ -1485,73 +1535,6 @@
                 </ul>
               </div>
 
-              <div class="platform-guide-settings settings-card" id="guide-card">
-                <div class="platform-guide-head">
-                  <div class="platform-guide-icon"><i class="fas fa-map-signs"></i></div>
-                  <div>
-                    <div class="title" id="guide-title">Platform guide</div>
-                    <p id="guide-intro">
-                      What Achievement Watcher scans, which folders matter, and when generated emulator configs are useful.
-                    </p>
-                  </div>
-                </div>
-
-                <div class="platform-guide-grid">
-                  <details class="guide-panel" open>
-                    <summary><i class="fas fa-bolt"></i> <span id="guide-quick-title">First steps</span></summary>
-                    <ul id="guide-quick-list">
-                      <li>Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.</li>
-                      <li>Use library folders for installed games that have not produced achievement files yet.</li>
-                      <li>Watchdog only notifies new changes after the folder is known and the source is enabled.</li>
-                    </ul>
-                  </details>
-
-                  <details class="guide-panel" open>
-                    <summary><i class="fab fa-steam"></i> <span id="guide-steam-title">Steam emulators</span></summary>
-                    <ul id="guide-steam-list">
-                      <li>GBE / Goldberg saves are usually under %APPDATA%\GSE Saves or %APPDATA%\Goldberg SteamEmu Saves.</li>
-                      <li>CODEX / RUNE style saves often live under Public Documents\Steam\CODEX or Public Documents\Steam\RUNE.</li>
-                      <li>TENOKE, UniverseLAN, SmartSteamEmu, ALI213 and Hoodlum are detected from their config/save folders.</li>
-                    </ul>
-                  </details>
-
-                  <details class="guide-panel" open>
-                    <summary><i class="fas fa-microchip"></i> <span id="guide-emulator-title">Console emulators</span></summary>
-                    <ul id="guide-emulator-list">
-                      <li>RPCS3 achievements are read from dev_hdd0\home\...\trophy near the RPCS3 install.</li>
-                      <li>shadPS4 trophies are read from its app data game_data/trophy folders; leftover trophy data is not install proof.</li>
-                      <li>Xenia progress is read from Xbox profile files such as .gpd.</li>
-                    </ul>
-                  </details>
-
-                  <details class="guide-panel" open>
-                    <summary><i class="fas fa-store"></i> <span id="guide-sources-title">Launchers and sources</span></summary>
-                    <ul id="guide-sources-list">
-                      <li>Steam public profile mode lists installed or owned Steam games, but local unlocks still come from save files.</li>
-                      <li>GOG, Epic, Ubisoft Connect/LumaPlay and EA Desktop can be enabled separately in Sources.</li>
-                      <li>EA Desktop cracked installs are read from EADesktopVerbose.log and its backup logs.</li>
-                    </ul>
-                  </details>
-
-                  <details class="guide-panel" open>
-                    <summary><i class="fas fa-magic"></i> <span id="guide-config-title">Generated configs</span></summary>
-                    <ul id="guide-config-list">
-                      <li>The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.</li>
-                      <li>Simple mode is fast and uses Achievement Watcher's data; Advanced runs generate_emu_config for deeper Steam data.</li>
-                      <li>Advanced generation can take several minutes, especially with DLC/depot metadata.</li>
-                    </ul>
-                  </details>
-
-                  <details class="guide-panel" open>
-                    <summary><i class="fas fa-wrench"></i> <span id="guide-troubleshoot-title">Troubleshooting</span></summary>
-                    <ul id="guide-troubleshoot-list">
-                      <li>If a game is missing, rescan after adding folders, then check the source toggle and blacklist.</li>
-                      <li>If notifications are missing, check Windows Focus Assist and run the game/app with matching admin rights.</li>
-                      <li>Advanced > Diagnostics opens logs and data folders when you need to inspect what was scanned.</li>
-                    </ul>
-                  </details>
-                </div>
-              </div>
             </section>
 
             <section class="content" data-view="appearance">
@@ -1588,9 +1571,9 @@
                   <span class="emulator-warning"><i class="fas fa-info-circle"></i> <span id="theme-customizer-hint">Per-layer preview</span></span>
                 </div>
                 <p id="theme-customizer-desc">
-                  Pick a color and, optionally, an image for each block of the interface. When an image is
-                  chosen, it shows on top of the color (the color becomes a light veil so text stays
-                  readable). Everything previews live and saves with OK — the in-game overlay follows too.
+                  Pick a color and, optionally, an image for each block. An image shows over the color
+                  (which becomes a light veil for readability). Everything previews live and saves with
+                  OK — the in-game overlay follows too.
                 </p>
                 <div id="theme-customizer-layers"></div>
                 <div class="theme-customizer-actions">

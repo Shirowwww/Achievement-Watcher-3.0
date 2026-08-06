@@ -14,6 +14,9 @@ contextBridge.exposeInMainWorld('customApi', {
   minimizeWindow: () => ipcRenderer.send('minimize-window'),
   maximizeWindow: () => ipcRenderer.send('maximize-window'),
   closeWindow: () => ipcRenderer.send('close-window'),
+  // Gamepad window control from the in-game overlay (move / resize).
+  moveWindowBy: (dx, dy) => ipcRenderer.send('overlay-move-by', { dx: Number(dx) || 0, dy: Number(dy) || 0 }),
+  resizeWindowBy: (dw, dh) => ipcRenderer.send('overlay-resize-by', { dw: Number(dw) || 0, dh: Number(dh) || 0 }),
 });
 
 ipcRenderer.on('set-window-scale', (event, scale) => {

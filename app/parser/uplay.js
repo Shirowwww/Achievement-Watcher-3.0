@@ -61,12 +61,28 @@ module.exports.scan = async () => {
 let _installedUplayAppids = null;
 module.exports.getInstalledAppids = () => {
   if (_installedUplayAppids) return _installedUplayAppids;
-  try {
-    const subs = listRegistryAllSubkeys('HKLM', 'SOFTWARE/WOW6432Node/Ubisoft/Launcher/Installs');
-    _installedUplayAppids = new Set((subs || []).map((s) => String(s)));
-  } catch (err) {
-    _installedUplayAppids = new Set();
+  const installed = new Set();
+  // A registry subkey alone is not proof of an install: Ubisoft Connect leaves entries
+  // behind after uninstalls (and for preloads/demos), so a stale key used to keep games
+  // like Assassin's Creed Mirage in the "installed" list forever. Only keep a product
+  // when its InstallDir value still points at a folder that exists on disk.
+  for (const hive of ['HKLM', 'HKCU']) {
+    for (const root of ['SOFTWARE/WOW6432Node/Ubisoft/Launcher/Installs', 'SOFTWARE/Ubisoft/Launcher/Installs']) {
+      try {
+        for (const sub of listRegistryAllSubkeys(hive, root) || []) {
+          try {
+            const dir = readRegistryString(hive, `${root}/${sub}`, 'InstallDir');
+            if (dir && fs.existsSync(dir)) installed.add(String(sub));
+          } catch {
+            /* one corrupt entry must not hide the others */
+          }
+        }
+      } catch {
+        /* key absent on this hive/bitness — try the next one */
+      }
+    }
   }
+  _installedUplayAppids = installed;
   return _installedUplayAppids;
 };
 

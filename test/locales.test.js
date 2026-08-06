@@ -34,6 +34,19 @@ test('all bundled locales have the complete English key set', () => {
     'settings.advanced.blacklistEmpty',
     'settings.advanced.blacklistRestore',
     'onboarding.invalidFolder',
+    'settings.general.theme.customTitle',
+    'settings.general.theme.resetAll',
+    'settings.emulator.loginPlaceholder',
+    'settings.advanced.checkUpdates',
+    'settings.notification.option.customiser.previewTitle',
+    'settings.search.clear',
+    'overlay.settingsUseTheme',
+    'overlay.clear',
+    'overlay.close',
+    'dialogs.setupLooksValid',
+    'dialogs.failedToSetAvatar',
+    'watchdog.achievementUnlocked',
+    'watchdog.rare',
   ];
 
   assert.strictEqual(files.length, 18);

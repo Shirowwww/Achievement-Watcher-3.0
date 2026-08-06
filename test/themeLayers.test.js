@@ -44,12 +44,14 @@ test('custom theme CSS covers app and overlay layers', () => {
   theme.bg.color = '#101820';
   theme.accent.color = '#ff8800';
   const bgFile = path.join(tmp, 'bg.png');
+  const bgVeilBlur = path.join(tmp, 'bg-veilblur.png');
   const cardBlur = path.join(tmp, 'card-blur.png');
   fs.writeFileSync(bgFile, 'x');
+  fs.writeFileSync(bgVeilBlur, 'x');
   fs.writeFileSync(cardBlur, 'x');
   theme.bg.image = bgFile;
   theme.card.image = path.join(tmp, 'card.png');
-  theme.bg.effect = { enabled: true, type: 'veil', color: '#102030', opacity: 50, blur: 8, blurImage: '' };
+  theme.bg.effect = { enabled: true, type: 'veil', color: '#102030', opacity: 50, blur: 8, blurImage: bgVeilBlur };
   theme.card.effect = { enabled: true, type: 'blur', color: '#000000', opacity: 40, blur: 12, blurImage: cardBlur };
 
   const appCss = themeLayers.buildCustomAppCss(theme);
@@ -59,9 +61,11 @@ test('custom theme CSS covers app and overlay layers', () => {
   assert.match(appCss, /#game-list \{/);
   assert.match(appCss, /#settings \.box/);
   // The color must not hide the image: images get a dark scrim instead of the opaque surface.
-  assert.match(appCss, /linear-gradient\(180deg, rgba\(0, 0, 0, 0\.28\), rgba\(0, 0, 0, 0\.55\)\), var\(--aw-img-bg/);
+  assert.match(appCss, /linear-gradient\(180deg, rgba\(0, 0, 0, 0\.28\), rgba\(0, 0, 0, 0\.55\)\), var\(--aw-grad-bg, none\), var\(--aw-img-bg/);
   assert.match(appCss, /background-color: rgba\(0, 0, 0, 0\.30\);/);
   assert.match(appCss, /--aw-veil-bg: rgba\(16, 32, 48, 0\.500\)/);
+  // The colored veil also renders the pre-blurred copy (light frosted blur), not the sharp source.
+  assert.match(appCss, /--aw-img-bg: url\('file:\/\/\/.*bg-veilblur\.png'\)/);
   assert.match(appCss, /--aw-img-card: url\('file:\/\/\/.*card-blur\.png'\)/);
 
   const overlayCss = themeLayers.buildCustomOverlayCss(theme);
@@ -72,6 +76,30 @@ test('custom theme CSS covers app and overlay layers', () => {
   assert.match(overlayCss, /\.overlay-panel \{\s*background-color: rgba\(0, 0, 0, 0\.25\)/);
   assert.match(overlayCss, /--aw-veil-bg: rgba\(16, 32, 48, 0\.500\)/);
   fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('custom theme defaults to the Steam Blue palette', () => {
+  const fresh = themeLayers.defaultCustomTheme();
+  assert.equal(fresh.bg.color, themeLayers.BUILTIN_COLORS.default.bg);
+  assert.equal(fresh.header.color, themeLayers.BUILTIN_COLORS.default.header);
+  assert.equal(fresh.panel.color, themeLayers.BUILTIN_COLORS.default.panel);
+  assert.equal(fresh.card.color, themeLayers.BUILTIN_COLORS.default.card);
+  assert.equal(fresh.settings.color, themeLayers.BUILTIN_COLORS.default.settings);
+  assert.equal(fresh.text.color, themeLayers.BUILTIN_COLORS.default.text);
+  assert.equal(fresh.muted.color, themeLayers.BUILTIN_COLORS.default.muted);
+  assert.equal(fresh.border.color, themeLayers.BUILTIN_COLORS.default.border);
+  assert.equal(fresh.accent.color, themeLayers.BUILTIN_COLORS.default.accent);
+
+  // A fresh theme generates the exact Steam Blue palette.
+  const freshCss = themeLayers.buildCustomAppCss(fresh);
+  assert.match(freshCss, /--bg-base: #1b2838/);
+  assert.match(freshCss, /--bg-glow: #26384c/);
+  assert.match(freshCss, /--bg-panel: #15202d/);
+  assert.match(freshCss, /--surface: #27374a/);
+  assert.match(freshCss, /--text: #d9dfe4/);
+  assert.match(freshCss, /--text-muted: #a8b5c5/);
+  assert.match(freshCss, /--border: #3e5065/);
+  assert.match(freshCss, /--accent: #5b8dff/);
 });
 
 test('built-in overlay CSS mirrors each theme', () => {

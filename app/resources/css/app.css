@@ -4741,6 +4741,35 @@ body {
   background: var(--set-row-hover);
 }
 
+/* Overlay-only notification settings collapse smoothly when the transport is set to
+   Windows toast: settings.js drives max-height from each row's real height to 0 (and
+   back), so the animation matches whatever the localized labels/help make the row. */
+#settings #options-notify-overlay > li,
+#settings .arrow-list.overlay-only-card {
+  overflow: hidden;
+  transition:
+    max-height 0.3s ease,
+    min-height 0.3s ease,
+    opacity 0.24s ease,
+    padding 0.3s ease,
+    border-width 0.3s ease,
+    margin 0.3s ease,
+    background 0.16s ease;
+}
+
+#settings #options-notify-overlay > li.overlay-setting-collapsed,
+#settings .arrow-list.overlay-only-card.overlay-setting-collapsed {
+  max-height: 0 !important;
+  min-height: 0 !important;
+  opacity: 0;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  border-width: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+  pointer-events: none;
+}
+
 #settings .arrow-list li.hasHelper {
   margin: 0;
   row-gap: 2px;
@@ -4983,56 +5012,25 @@ body {
   line-height: 1.45;
 }
 
-#settings .content[data-view='guide'] {
+#settings .content[data-view='help'] {
   overflow-y: auto;
 }
 
-#settings .platform-guide-head {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  margin-bottom: 16px;
-  padding: 15px 17px;
-  border: 1px solid var(--set-hairline-soft);
-  border-radius: 8px;
-  background: var(--set-panel);
-}
-
-#settings .platform-guide-icon {
-  flex: 0 0 auto;
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-  color: var(--accent);
-  background: var(--accent-soft);
-  border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
-}
-
-#settings .platform-guide-settings .platform-guide-head .title {
-  margin: 1px 0 6px;
-  padding: 0;
-  border: 0;
-  color: var(--set-title);
-  font-size: 16px;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-#settings .platform-guide-head p {
+#settings .help-intro {
   margin: 0;
+  margin-bottom: 14px;
   color: var(--text-muted);
+  font-size: 12.5px;
   line-height: 1.5;
 }
 
-#settings .platform-guide-grid {
+#settings .help-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 13px;
 }
 
-#settings .guide-panel {
+#settings .help-panel {
   min-width: 0;
   border: 1px solid var(--set-hairline-soft);
   border-radius: 8px;
@@ -5041,7 +5039,7 @@ body {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.018);
 }
 
-#settings .guide-panel summary {
+#settings .help-panel summary {
   min-height: 43px;
   box-sizing: border-box;
   display: flex;
@@ -5054,35 +5052,70 @@ body {
   font-weight: 700;
   cursor: pointer;
   list-style: none;
+  transition: background 150ms ease;
 }
 
-#settings .guide-panel summary::-webkit-details-marker {
+#settings .help-panel summary:hover {
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+#settings .help-panel summary::after {
+  content: '▾';
+  margin-left: auto;
+  color: var(--set-icon);
+  font-size: 11px;
+  transition: transform 160ms ease;
+}
+
+#settings .help-panel[open] summary::after {
+  transform: rotate(180deg);
+}
+
+#settings .help-panel[open] summary i {
+  color: var(--accent);
+}
+
+#settings .help-panel summary::-webkit-details-marker {
   display: none;
 }
 
-#settings .guide-panel summary i {
+#settings .help-panel summary i {
   width: 18px;
   text-align: center;
   color: var(--set-icon);
 }
 
-#settings .guide-panel[open] summary {
+#settings .help-panel[open] summary {
   border-bottom: 1px solid var(--set-divider);
   background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
-#settings .guide-panel ul {
+#settings .help-panel ul {
   margin: 0;
-  padding: 12px 15px 14px 30px;
+  padding: 14px 16px 16px;
+  list-style: none;
 }
 
-#settings .guide-panel li {
-  margin: 0 0 8px;
+#settings .help-panel li {
+  position: relative;
+  margin: 0 0 9px;
+  padding-left: 20px;
   color: var(--text-muted);
-  line-height: 1.45;
+  font-size: 12.5px;
+  line-height: 1.55;
 }
 
-#settings .guide-panel li:last-child {
+#settings .help-panel li::before {
+  content: '▸';
+  position: absolute;
+  left: 2px;
+  top: 0;
+  color: var(--accent);
+  opacity: 0.65;
+  font-size: 11px;
+}
+
+#settings .help-panel li:last-child {
   margin-bottom: 0;
 }
 
@@ -5158,8 +5191,7 @@ body {
    hairline runs the full card width (negative margins cancel the card's padding). */
 #settings .content .title,
 #settings .emulator-group-title,
-#settings .emulator-login-heading > .title,
-#settings .platform-guide-settings .platform-guide-head .title {
+#settings .emulator-login-heading > .title {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -5179,8 +5211,7 @@ body {
 
 /* Hero/inline headings are not card headers — no bleed, no rule. */
 #settings .emulator-hero .title,
-#settings .emulator-login-heading > .title,
-#settings .platform-guide-settings .platform-guide-head .title {
+#settings .emulator-login-heading > .title {
   margin: 0;
   padding: 0;
   border-bottom: 0;
@@ -5209,8 +5240,7 @@ body {
 }
 /* Inline headings live inside a hero/heading block, not at the top of a scrolling card. */
 #settings .emulator-hero .title,
-#settings .emulator-login-heading > .title,
-#settings .platform-guide-settings .platform-guide-head .title {
+#settings .emulator-login-heading > .title {
   position: static;
 }
 
@@ -5251,11 +5281,11 @@ body {
   box-shadow: none;
 }
 
-/* Data lists (folder paths, guide panels) keep a sunken inset so they read as content. */
+/* Data lists (folder paths, help panels) keep a sunken inset so they read as content. */
 #settings #defaultdir,
 #settings #dirlist,
 #settings #libdirlist,
-#settings .guide-panel {
+#settings .help-panel {
   overflow: hidden;
   border: 1px solid var(--set-hairline-soft);
   border-radius: 9px;
@@ -5350,7 +5380,7 @@ body {
 #settings #defaultdir > li .path,
 #settings #dirlist > li .path,
 #settings #libdirlist > li .path,
-#settings .guide-panel summary {
+#settings .help-panel summary {
   color: var(--text);
   font-size: 14px;
   font-weight: 400;
@@ -5364,7 +5394,7 @@ body {
 #settings #defaultdir > li .controls i,
 #settings #dirlist > li .controls i,
 #settings #libdirlist > li .controls i,
-#settings .guide-panel summary i {
+#settings .help-panel summary i {
   width: 20px;
   min-width: 20px;
   color: var(--set-icon);
@@ -5375,13 +5405,20 @@ body {
 #settings .emulator-list li .help,
 #settings .content[data-view='folder'] .disclaimer,
 #settings .folder-actions .info p,
-#settings .platform-guide-head p,
-#settings .guide-panel li,
+#settings .help-intro,
+#settings .help-panel li,
 #settings .emulator-hero p,
 #settings .emulator-login p {
   color: var(--text-muted);
   font-size: 12px;
   line-height: 1.3;
+}
+
+/* Help panels: brighter, airier reading than the generic muted list text. */
+#settings .help-panel li {
+  color: color-mix(in srgb, var(--text-muted) 80%, var(--text) 20%);
+  font-size: 12.5px;
+  line-height: 1.55;
 }
 
 #settings .arrow-list li .right,
@@ -5457,8 +5494,7 @@ body {
 
 #settings .emulator-hero,
 #settings .emulator-group,
-#settings .emulator-login,
-#settings .platform-guide-head {
+#settings .emulator-login {
   margin: 0 0 12px;
   border: 1px solid var(--set-hairline-soft);
   border-radius: 10px;
@@ -5488,15 +5524,13 @@ body {
   font-size: 16px;
 }
 
-#settings .emulator-hero .title,
-#settings .platform-guide-settings .platform-guide-head .title {
+#settings .emulator-hero .title {
   margin: 0 0 7px;
   padding: 0;
   border: 0;
 }
 
-#settings .emulator-hero p,
-#settings .platform-guide-head p {
+#settings .emulator-hero p {
   margin: 0;
   padding: 0;
 }
@@ -5851,17 +5885,17 @@ body {
   color: var(--text-muted);
 }
 
-#settings .platform-guide-grid {
+#settings .help-grid {
   grid-template-columns: 1fr;
   gap: 14px;
 }
 
-#settings .guide-panel summary {
+#settings .help-panel summary {
   min-height: 54px;
   padding: 14px 15px;
 }
 
-#settings .guide-panel[open] summary {
+#settings .help-panel[open] summary {
   background: transparent;
 }
 
@@ -5873,7 +5907,7 @@ body {
 #settings .btn:focus-visible,
 #settings .arrow-list li .right .previous:focus-visible,
 #settings .arrow-list li .right .next:focus-visible,
-#settings .guide-panel summary:focus-visible,
+#settings .help-panel summary:focus-visible,
 #btn-hotkey-edit:focus-visible,
 #btn-hotkey-preview:focus-visible {
   outline: 2px solid var(--accent);
@@ -5984,7 +6018,7 @@ body {
     width: 190px;
   }
 
-  #settings .platform-guide-grid {
+  #settings .help-grid {
     grid-template-columns: 1fr;
   }
 
@@ -6056,9 +6090,9 @@ body {
 
 #theme-customizer-desc {
   color: var(--text-muted);
-  font-size: 12.5px;
-  line-height: 1.5;
-  margin: 0 0 12px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  margin: 0 0 10px;
 }
 
 #theme-customizer-layers {
@@ -6132,10 +6166,22 @@ body {
   display: flex;
   align-items: center;
   gap: 7px;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
   min-width: 0;
   max-width: 100%;
   flex-wrap: nowrap;
+}
+
+/* Only the filename may shrink inside the controls: the picker/buttons/selects keep
+   their size, and a long image name is truncated with an ellipsis based on the space
+   left by the (localized) label — so the row never wraps or overflows. */
+#theme-customizer .theme-layer-color,
+#theme-customizer .theme-layer-custom-toggle,
+#theme-customizer .theme-layer-image,
+#theme-customizer .theme-layer-clear-image,
+#theme-customizer .theme-layer-fit,
+#theme-customizer .theme-layer-effect-toggle {
+  flex-shrink: 0;
 }
 
 #theme-customizer .theme-layer-color {
@@ -6188,6 +6234,7 @@ body {
 
 #theme-customizer .theme-layer-filename {
   flex: 0 1 auto;
+  min-width: 0;
   max-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;

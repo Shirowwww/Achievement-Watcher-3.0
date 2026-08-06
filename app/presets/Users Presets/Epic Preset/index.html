@@ -209,7 +209,7 @@
       window.api?.onNotification?.((payload) => {
        
         icon.src = fileUrl(payload?.iconPath || '');
-        titleInner.textContent = safe(payload?.displayName) || 'Achievement';
+        titleInner.textContent = safe(payload?.displayName) || safe(payload?.fallback?.achievement) || 'Achievement';
         const d = safe(payload?.description);
         descInner.textContent = d;
         if (descWrap) descWrap.style.display = d ? 'block' : 'none';

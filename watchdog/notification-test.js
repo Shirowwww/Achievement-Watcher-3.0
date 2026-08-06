@@ -8,6 +8,8 @@ const settings = require('./settings.js');
 const soundPlayer = require('./util/soundPlayer.js');
 const { mediaPlayerVolume } = require('./util/notificationVolume.js');
 const { buildToastNotification } = require('./notification/transport/toast.js');
+const notificationSound = require('./util/notificationSound.js');
+const notifyStrings = require('./util/notifyStrings.js');
 
 // xinput-ffi is ESM-only (koffi) since v2; load it lazily via dynamic import (cached by Node) only
 // when the test toast actually rumbles. Best-effort: a load failure (no XInput runtime) is swallowed.
@@ -36,7 +38,7 @@ async function applyToastAppSettings(payload, options) {
 // Build the exact message + toast options the Watchdog uses for each notification kind, so the
 // Settings test buttons exercise the same builder (and therefore the same payload) as real unlocks.
 function testMessageAndOptions(kind, options) {
-  const fr = (options.achievement.lang || '').toLowerCase().startsWith('fr');
+  const strings = notifyStrings.forLang(options.achievement.lang);
   const baseToast = {
     appid: toastIdentity.DEFAULT_TOAST_AUMID, // placeholder; applyToastAppSettings resolves the real one
     winrt: options.notification_transport.winRT,
@@ -67,15 +69,13 @@ function testMessageAndOptions(kind, options) {
       ];
       const tier = tiers[Math.floor(Math.random() * tiers.length)];
       const rarePct = Math.round((tier.min + Math.random() * (tier.max - tier.min)) * 10) / 10;
-      baseToast.attribution = `${TEST_GAME} · ${fr ? `Rare ${rarePct} %` : `Rare ${rarePct}%`}`;
+      baseToast.attribution = `${TEST_GAME} · ${notifyStrings.interpolate(strings.rare, { percent: rarePct })}`;
       return [
         {
           ...common,
           achievementName: 'RARE_TEST',
-          achievementDisplayName: fr ? 'Succès rare' : 'Rare Achievement',
-          achievementDescription: fr
-            ? `Seulement ${rarePct} % des joueurs l'ont débloqué.`
-            : `Only ${rarePct}% of players unlocked this.`,
+          achievementDisplayName: strings.rareAchievement,
+          achievementDescription: notifyStrings.interpolate(strings.rareDescription, { percent: rarePct }),
           icon: TEST_ICON,
           rarityPercent: rarePct,
         },
@@ -111,13 +111,13 @@ function testMessageAndOptions(kind, options) {
         { toast: baseToast },
       ];
     case 'platinum':
-      baseToast.attribution = `${TEST_GAME} · ${fr ? 'Trophée Platine' : 'Platinum'}`;
+      baseToast.attribution = `${TEST_GAME} · ${strings.platinumTitle}`;
       return [
         {
           ...common,
           notificationType: 'platinum',
           achievementDisplayName: TEST_GAME,
-          achievementDescription: fr ? 'Trophée platine débloqué — 100 % complété !' : 'Platinum unlocked — 100% completed!',
+          achievementDescription: strings.platinumDesc,
           icon: TEST_ICON,
         },
         { toast: baseToast },
@@ -129,10 +129,8 @@ function testMessageAndOptions(kind, options) {
         {
           ...common,
           achievementName: 'TOAST_TEST',
-          achievementDisplayName: fr ? 'Succès de test' : 'Test Achievement',
-          achievementDescription: fr
-            ? 'Ceci est une notification de test depuis Achievement Watcher.'
-            : 'This is a test notification from Achievement Watcher.',
+          achievementDisplayName: strings.testAchievement,
+          achievementDescription: strings.testDescription,
           icon: TEST_ICON,
         },
         { toast: baseToast },
@@ -144,6 +142,15 @@ async function runTest(kind, { rumble = true } = {}) {
   try {
     const options = await settings.load(cfg_file);
     const [message, toastOptions] = testMessageAndOptions(kind, options);
+    toastOptions.toast.lang = options.achievement && options.achievement.lang ? options.achievement.lang : 'english';
+    // Test toasts honor the configured overlay sound (Son / Son aléatoire), like real ones.
+    if (!message.silent) {
+      const ov = options.overlay || {};
+      toastOptions.toast.soundFile =
+        ov.randomSound === true
+          ? notificationSound.pickRandomSound() || notificationSound.resolveSoundFile(ov.notificationSound)
+          : notificationSound.resolveSoundFile(ov.notificationSound);
+    }
     const { notification, soundFile } = buildToastNotification(message, toastOptions);
     await applyToastAppSettings(notification, options);
 
@@ -160,7 +167,7 @@ async function runTest(kind, { rumble = true } = {}) {
       if (options.notification_transport.balloon) {
         await balloon({
           title: notification.title,
-          message: notification.message || 'Achievement unlocked !',
+          message: notification.message || notifyStrings.forLang(options.achievement.lang).achievementUnlocked || 'Achievement unlocked !',
           ico: './notification/icon/icon.ico',
         });
       } else {

@@ -29,15 +29,15 @@ const EFFECT_TYPES = ['veil', 'blur'];
 // has no stylesheet of its own.
 const BUILTIN_COLORS = {
   default: {
-    bg: '#142236',
-    header: '#233a57',
-    panel: '#192a40',
-    card: '#263b55',
-    settings: '#1b2c43',
-    text: '#e7edf6',
-    muted: '#94a5ba',
-    border: '#a6c3e5',
-    accent: '#6c91ff',
+    bg: '#1b2838',
+    header: '#26384c',
+    panel: '#15202d',
+    card: '#27374a',
+    settings: '#27374a',
+    text: '#d9dfe4',
+    muted: '#a8b5c5',
+    border: '#3e5065',
+    accent: '#5b8dff',
   },
   oled: {
     bg: '#000000',
@@ -138,6 +138,27 @@ function normalizeImage(value) {
   return typeof value === 'string' && value.trim() ? value.trim() : '';
 }
 
+const GRADIENT_ANGLES = [0, 45, 90, 135, 180, 270];
+
+function darkenHex(value, percent = 48) {
+  const rgb = hexToRgbTriplet(value).split(',').map((n) => Math.round(Number(n.trim()) * (1 - percent / 100)));
+  return `#${rgb.map((n) => n.toString(16).padStart(2, '0')).join('')}`;
+}
+
+// Per-layer gradient model: two user-chosen colors + a direction angle. A legacy `gradient: true`
+// (the first simple toggle) is converted into a default dark fade.
+function normalizeGradient(raw, baseColor) {
+  const legacy = raw === true;
+  const value = raw && typeof raw === 'object' ? raw : {};
+  const from = normalizeColor(value.from, baseColor);
+  return {
+    enabled: value.enabled === true || legacy,
+    from,
+    to: normalizeColor(value.to, legacy ? darkenHex(from, 48) : from),
+    angle: GRADIENT_ANGLES.includes(Number(value.angle)) ? Number(value.angle) : 180,
+  };
+}
+
 function clampInt(value, min, max, fallback) {
   const n = Number(value);
   return Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n))) : fallback;
@@ -158,7 +179,11 @@ function normalizeEffect(raw) {
 function defaultCustomTheme() {
   const theme = {};
   for (const id of LAYER_IDS) {
-    theme[id] = { color: BUILTIN_COLORS.default[id] || '#142236' };
+    const color = BUILTIN_COLORS.default[id] || '#1b2838';
+    theme[id] = {
+      color,
+      gradient: { enabled: false, from: color, to: darkenHex(color, 48), angle: 180 },
+    };
     if (IMAGE_LAYER_IDS.includes(id)) {
       theme[id].image = '';
       theme[id].fit = 'cover';
@@ -181,7 +206,12 @@ function sanitizeCustomTheme(raw) {
   for (const id of LAYER_IDS) {
     const layer = (raw && raw[id]) || {};
     const base = fallback[id] || {};
-    theme[id] = { color: normalizeColor(layer.color, base.color) };
+    theme[id] = {
+      color: normalizeColor(layer.color, base.color),
+      // The legacy `gradient: true` fade is derived from this layer's own color,
+      // never from the built-in fallback color.
+      gradient: normalizeGradient(layer.gradient, layer.color || base.color),
+    };
     if (IMAGE_LAYER_IDS.includes(id)) {
       theme[id].image = normalizeImage(layer.image);
       theme[id].fit = normalizeFit(layer.fit);
@@ -230,12 +260,14 @@ function imageUrl(filePath) {
   }
 }
 
-// The image actually rendered for a layer: a pre-blurred copy when the blur
-// effect is active (the blur is baked into the asset so the element's own
-// text/content stay crisp), otherwise the source image.
+// The image actually rendered for a layer: a pre-blurred copy when either the blur
+// or the colored-veil effect is active (the blur is baked into the asset so the
+// element's own text/content stay crisp), otherwise the source image. The veil uses
+// the same pipeline with a light fixed frosted blur, so images under a colored veil
+// look softer and more polished instead of flat/sharp.
 function effectiveImage(layer) {
   if (!layer) return '';
-  if (layer.effect && layer.effect.enabled === true && layer.effect.type === 'blur' && layer.effect.blurImage) {
+  if (layer.effect && layer.effect.enabled === true && layer.effect.blurImage) {
     return layer.effect.blurImage;
   }
   return layer.image || '';
@@ -252,6 +284,16 @@ function veilLayer(layer) {
   return `linear-gradient(${veilRgba(layer)}, ${veilRgba(layer)})`;
 }
 
+// Optional per-layer gradient: a subtle top-to-bottom depth fade of the chosen color. Used as an
+// extra background layer on surface layers (bg/header/panel/card/settings) when the toggle is on.
+function layerGradient(layer) {
+  if (!layer || !layer.gradient || layer.gradient.enabled !== true) return 'none';
+  const from = layer.gradient.from || layer.color || '#1b2838';
+  const to = layer.gradient.to || from;
+  const angle = Number(layer.gradient.angle) || 180;
+  return `linear-gradient(${angle}deg, ${from} 0%, ${to} 100%)`;
+}
+
 function fitProps(fit) {
   if (fit === 'repeat') return 'size:auto; repeat:repeat';
   if (fit === 'contain') return 'size:contain; repeat:no-repeat';
@@ -264,6 +306,7 @@ function layerVars(theme, prefix) {
   for (const id of LAYER_IDS) {
     const layer = theme[id] || {};
     lines.push(`  --${prefix}${id}: ${layer.color || '#142236'};`);
+    lines.push(`  --aw-grad-${id}: ${layerGradient(layer)};`);
   }
   for (const id of IMAGE_LAYER_IDS) {
     const layer = theme[id] || {};
@@ -325,32 +368,32 @@ function buildCustomAppCss(theme) {
     '',
     'body {',
     `  background-color: ${bg} !important;`,
-    `  background-image: ${veilLayer(clean.bg)}, radial-gradient(140% 90% at 50% -10%, ${header} 0%, ${bg} 60%), var(--aw-img-bg, none) !important;`,
-    '  background-size: cover, var(--aw-img-bg-size, cover) !important;',
-    '  background-repeat: no-repeat, var(--aw-img-bg-repeat, no-repeat) !important;',
+    `  background-image: ${veilLayer(clean.bg)}, radial-gradient(140% 90% at 50% -10%, ${header} 0%, ${bg} 60%), var(--aw-grad-bg, none), var(--aw-img-bg, none) !important;`,
+    '  background-size: auto, cover, 100% 100%, var(--aw-img-bg-size, cover) !important;',
+    '  background-repeat: no-repeat, no-repeat, no-repeat, var(--aw-img-bg-repeat, no-repeat) !important;',
     '  background-position: center !important;',
     '}',
     '',
     'title-bar {',
     `  background-color: color-mix(in srgb, ${header} 72%, transparent);`,
-    `  background-image: ${veilLayer(clean.header)}, var(--aw-img-header, none);`,
-    '  background-size: var(--aw-img-header-size, cover);',
-    '  background-repeat: var(--aw-img-header-repeat, no-repeat);',
+    `  background-image: ${veilLayer(clean.header)}, var(--aw-grad-header, none), var(--aw-img-header, none);`,
+    '  background-size: auto, 100% 100%, var(--aw-img-header-size, cover);',
+    '  background-repeat: no-repeat, no-repeat, var(--aw-img-header-repeat, no-repeat);',
     '  background-position: center;',
     '}',
     '',
     `#game-list {
   background-color: color-mix(in srgb, var(--bg-panel) 62%, transparent);
-  background-image: ${veilLayer(clean.panel)}, var(--aw-img-panel, none);
-  background-size: var(--aw-img-panel-size, cover);
-  background-repeat: var(--aw-img-panel-repeat, no-repeat);
+  background-image: ${veilLayer(clean.panel)}, var(--aw-grad-panel, none), var(--aw-img-panel, none);
+  background-size: auto, 100% 100%, var(--aw-img-panel-size, cover);
+  background-repeat: no-repeat, no-repeat, var(--aw-img-panel-repeat, no-repeat);
   background-position: center;
 }`,
     '',
     `#game-list .game-box .info {
-  background-image: ${veilLayer(clean.card)}, var(--aw-img-card, none);
-  background-size: var(--aw-img-card-size, cover);
-  background-repeat: var(--aw-img-card-repeat, no-repeat);
+  background-image: ${veilLayer(clean.card)}, var(--aw-grad-card, none), var(--aw-img-card, none);
+  background-size: auto, 100% 100%, var(--aw-img-card-size, cover);
+  background-repeat: no-repeat, no-repeat, var(--aw-img-card-repeat, no-repeat);
   background-position: center;
 }`,
     '',
@@ -358,9 +401,12 @@ function buildCustomAppCss(theme) {
 #game-config .box {
   --set-modal-top: var(--aw-settings-color);
   --set-modal-bottom: var(--aw-settings-color);
-  background-image: ${veilLayer(clean.settings)}, var(--aw-img-settings, none);
-  background-size: var(--aw-img-settings-size, cover);
-  background-repeat: var(--aw-img-settings-repeat, no-repeat);
+  /* Keep the box's color gradient as the bottom layer: without an image (and with
+     no effect) the two upper layers are transparent/none, so the settings surface
+     must still render its chosen color instead of becoming transparent. */
+  background-image: ${veilLayer(clean.settings)}, var(--aw-grad-settings, none), var(--aw-img-settings, none), linear-gradient(180deg, var(--set-modal-top) 0%, var(--set-modal-bottom) 100%);
+  background-size: auto, 100% 100%, var(--aw-img-settings-size, cover), cover;
+  background-repeat: no-repeat, no-repeat, var(--aw-img-settings-repeat, no-repeat), no-repeat;
   background-position: center;
 }`,
   ];
@@ -370,7 +416,9 @@ function buildCustomAppCss(theme) {
   if (clean.bg.image) {
     rules.push(`body {
   background-color: rgba(0, 0, 0, 0.25) !important;
-  background-image: ${veilLayer(clean.bg)}, linear-gradient(180deg, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.55)), var(--aw-img-bg, none) !important;
+  background-image: ${veilLayer(clean.bg)}, linear-gradient(180deg, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.55)), var(--aw-grad-bg, none), var(--aw-img-bg, none) !important;
+  background-size: auto, auto, 100% 100%, var(--aw-img-bg-size, cover) !important;
+  background-repeat: no-repeat, no-repeat, no-repeat, var(--aw-img-bg-repeat, no-repeat) !important;
 }`);
   }
   if (clean.header.image) {
@@ -389,16 +437,16 @@ function buildCustomAppCss(theme) {
 }
 
 #achievement .achievement-list ul > li {
-  background-image: ${veilLayer(clean.card)}, linear-gradient(145deg, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.42)), var(--aw-img-card, none);
-  background-size: auto, var(--aw-img-card-size, cover);
-  background-repeat: repeat, var(--aw-img-card-repeat, no-repeat);
+  background-image: ${veilLayer(clean.card)}, linear-gradient(145deg, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.42)), var(--aw-grad-card, none), var(--aw-img-card, none);
+  background-size: auto, auto, 100% 100%, var(--aw-img-card-size, cover);
+  background-repeat: repeat, no-repeat, no-repeat, var(--aw-img-card-repeat, no-repeat);
   background-position: 0 0, center;
 }
 
 #achievement .achievement-list ul > li:hover {
-  background-image: ${veilLayer(clean.card)}, linear-gradient(145deg, rgba(0, 0, 0, 0.26), rgba(0, 0, 0, 0.40)), var(--aw-img-card, none);
-  background-size: auto, var(--aw-img-card-size, cover);
-  background-repeat: repeat, var(--aw-img-card-repeat, no-repeat);
+  background-image: ${veilLayer(clean.card)}, linear-gradient(145deg, rgba(0, 0, 0, 0.26), rgba(0, 0, 0, 0.40)), var(--aw-grad-card, none), var(--aw-img-card, none);
+  background-size: auto, auto, 100% 100%, var(--aw-img-card-size, cover);
+  background-repeat: repeat, no-repeat, no-repeat, var(--aw-img-card-repeat, no-repeat);
   background-position: 0 0, center;
 }`);
   }
@@ -434,6 +482,7 @@ function buildOverlayCss(colors, imageTheme) {
     const layer = images[id];
     imgVars.push(`  --aw-img-${id}: ${layer && effectiveImage(layer) ? imageUrl(effectiveImage(layer)) : 'none'};`);
     imgVars.push(`  --aw-veil-${id}: ${layer ? veilRgba(layer) : 'transparent'};`);
+    imgVars.push(`  --aw-grad-${id}: ${layerGradient(layer)};`);
     const fit = layer && layer.fit ? fitProps(layer.fit) : fitProps('cover');
     imgVars.push(`  --aw-img-${id}-size: ${fit.split('; ')[0].replace('size:', '')};`);
     imgVars.push(`  --aw-img-${id}-repeat: ${fit.split('; ')[1].replace('repeat:', '')};`);
@@ -460,40 +509,40 @@ function buildOverlayCss(colors, imageTheme) {
     '}',
     '',
     `.overlay-panel {
-  background-image: ${veilLayer(images.bg)}, var(--aw-img-bg, none);
-  background-size: var(--aw-img-bg-size, cover);
-  background-repeat: var(--aw-img-bg-repeat, no-repeat);
+  background-image: ${veilLayer(images.bg)}, var(--aw-grad-bg, none), var(--aw-img-bg, none);
+  background-size: auto, 100% 100%, var(--aw-img-bg-size, cover);
+  background-repeat: no-repeat, no-repeat, var(--aw-img-bg-repeat, no-repeat);
   background-position: center;
 }`,
     '',
     `.overlay-header {
   background-color: color-mix(in srgb, var(--aw-theme-header) 70%, transparent);
-  background-image: ${veilLayer(images.header)}, var(--aw-img-header, none);
-  background-size: var(--aw-img-header-size, cover);
-  background-repeat: var(--aw-img-header-repeat, no-repeat);
+  background-image: ${veilLayer(images.header)}, var(--aw-grad-header, none), var(--aw-img-header, none);
+  background-size: auto, 100% 100%, var(--aw-img-header-size, cover);
+  background-repeat: no-repeat, no-repeat, var(--aw-img-header-repeat, no-repeat);
   background-position: center;
 }`,
     '',
     `.overlay-tools,
 .overlay-stats {
-  background-image: ${veilLayer(images.panel)}, var(--aw-img-panel, none);
-  background-size: var(--aw-img-panel-size, cover);
-  background-repeat: var(--aw-img-panel-repeat, no-repeat);
+  background-image: ${veilLayer(images.panel)}, var(--aw-grad-panel, none), var(--aw-img-panel, none);
+  background-size: auto, 100% 100%, var(--aw-img-panel-size, cover);
+  background-repeat: no-repeat, no-repeat, var(--aw-img-panel-repeat, no-repeat);
   background-position: center;
 }`,
     '',
     `.overlay-row {
-  background-image: ${veilLayer(images.card)}, var(--aw-img-card, none);
-  background-size: var(--aw-img-card-size, cover);
-  background-repeat: var(--aw-img-card-repeat, no-repeat);
+  background-image: ${veilLayer(images.card)}, var(--aw-grad-card, none), var(--aw-img-card, none);
+  background-size: auto, 100% 100%, var(--aw-img-card-size, cover);
+  background-repeat: no-repeat, no-repeat, var(--aw-img-card-repeat, no-repeat);
   background-position: center;
 }`,
     '',
     `.overlay-row:hover {
   background-color: var(--bg-hover);
-  background-image: ${veilLayer(images.card)}, var(--aw-img-card, none);
-  background-size: var(--aw-img-card-size, cover);
-  background-repeat: var(--aw-img-card-repeat, no-repeat);
+  background-image: ${veilLayer(images.card)}, var(--aw-grad-card, none), var(--aw-img-card, none);
+  background-size: auto, 100% 100%, var(--aw-img-card-size, cover);
+  background-repeat: no-repeat, no-repeat, var(--aw-img-card-repeat, no-repeat);
   background-position: center;
 }`,
   ];
@@ -503,6 +552,9 @@ function buildOverlayCss(colors, imageTheme) {
   if (images.bg && images.bg.image) {
     rules.push(`.overlay-panel {
   background-color: rgba(0, 0, 0, 0.25);
+  background-image: ${veilLayer(images.bg)}, var(--aw-grad-bg, none), var(--aw-img-bg, none);
+  background-size: auto, 100% 100%, var(--aw-img-bg-size, cover);
+  background-repeat: no-repeat, no-repeat, var(--aw-img-bg-repeat, no-repeat);
 }`);
   }
   if (images.header && images.header.image) {
@@ -519,10 +571,16 @@ function buildOverlayCss(colors, imageTheme) {
   if (images.card && images.card.image) {
     rules.push(`.overlay-row {
   background-color: rgba(0, 0, 0, 0.18);
+  background-image: ${veilLayer(images.card)}, var(--aw-grad-card, none), var(--aw-img-card, none);
+  background-size: auto, 100% 100%, var(--aw-img-card-size, cover);
+  background-repeat: no-repeat, no-repeat, var(--aw-img-card-repeat, no-repeat);
 }
 
 .overlay-row:hover {
   background-color: rgba(0, 0, 0, 0.28);
+  background-image: ${veilLayer(images.card)}, var(--aw-grad-card, none), var(--aw-img-card, none);
+  background-size: auto, 100% 100%, var(--aw-img-card-size, cover);
+  background-repeat: no-repeat, no-repeat, var(--aw-img-card-repeat, no-repeat);
 }`);
   }
 

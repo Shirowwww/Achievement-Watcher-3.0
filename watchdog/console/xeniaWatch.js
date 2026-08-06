@@ -19,6 +19,7 @@ const moment = require('moment');
 const debug = require('../util/log.js');
 const waitForFileStable = require('../util/waitForFileStable.js');
 const { notificationVolumePercent } = require('../util/notificationVolume.js');
+const notifyStrings = require('../util/notifyStrings.js');
 
 const { userDataDir } = require('../util/userData.js');
 const cacheDir = path.join(userDataDir(), 'steam_cache/console');
@@ -388,7 +389,7 @@ async function handleChange(target, ctx) {
               imageIntegration: '0',
               group: ctx.options.notification_toast.groupToast,
               cropIcon: true,
-              attribution: a.gamerscore > 0 ? `${a.gamerscore} G` : 'Achievement',
+              attribution: a.gamerscore > 0 ? `${a.gamerscore} G` : notifyStrings.forLang(ctx.options.achievement.lang).achievement,
             },
             prefetch: false, // icons are already local files
             rumble: ctx.options.notification.rumble,

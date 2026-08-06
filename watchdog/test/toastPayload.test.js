@@ -42,7 +42,8 @@ test('achievement toast payload carries the intended AUMID under the key powerto
   assert.strictEqual(notification.aumid, 'Microsoft.XboxApp_8wekyb3d8bbwe!Microsoft.XboxApp');
   assert.ok(!('appID' in notification), 'the legacy appID key must not be sent to powertoast');
   assert.strictEqual(notification.uniqueID, '480:ACH_WIN');
-  assert.strictEqual(notification.title, 'Winner');
+  assert.strictEqual(notification.title, 'Achievement Unlocked');
+  assert.strictEqual(notification.message, 'Winner\nWin one game.');
   assert.strictEqual(notification.icon, 'https://example.com/icon.jpg');
   assert.strictEqual(notification.time, 123456);
   assert.ok(!('timeStamp' in notification), 'the unsupported timeStamp key must not be sent to powertoast');

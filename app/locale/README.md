@@ -63,20 +63,24 @@ Prefer flexible layout and wrapping in the shared styles before adding a locale 
 Strings built imperatively in JavaScript (message boxes, tray/context menus,
 toasts, busy labels) go through the `t()` helper (`app/locale/t.js` in the
 renderer, its counterpart in `electron/init.js` for the main process) instead
-of hardcoding `fr ? '…' : '…'` ternaries. Each call carries an English
-fallback and, where one existed, the legacy French fallback, so behaviour is
-unchanged until a real translation is provided.
+of hardcoding `fr ? '…' : '…'` ternaries. Every `t()` slug lives under
+`dialogs` in `english.json` (the structural reference) and is translated in
+every bundled locale, per the parity rule above — e.g.
+`t('steamless-detail', …)` → `dialogs.steamless-detail`.
 
-To translate one of these strings, add the slug key under `dialogs` in
-`english.json` (as the reference) **and in every bundled locale** in the same
-change, per the parity rule above. The key is the first argument of the
-`t()` call, e.g. `t('steamless-detail', …)` → `dialogs.steamless-detail`.
 Values may contain `{name}` placeholders that `t()` substitutes from the
-optional fourth argument.
+optional fourth argument; the placeholder set must match the English value
+(the locale test enforces this). The English/French fallbacks still embedded
+in the `t()` calls are only a safety net for catastrophic locale failures —
+the locale files are the source of truth.
 
-The French fallbacks embedded in `t()` calls are a legacy convenience, not a
-translation source of truth: a `dialogs.<key>` entry in `french.json` always
-wins.
+## Watchdog strings
+
+The standalone Watchdog process cannot load the renderer locale files, so the
+small `watchdog` section of every locale is mirrored in `watchdog/locale.json`
+(same keys, generated from `app/locale/lang`). When adding or changing a
+`watchdog.*` key, update `watchdog/locale.json` too — the
+`test/watchdogLocale.test.js` suite enforces the mirror.
 
 ## Translation credits
 

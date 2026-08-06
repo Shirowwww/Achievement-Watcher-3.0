@@ -3,6 +3,7 @@
 const toast = require('../../util/powertoast');
 const soundPlayer = require('../../util/soundPlayer.js');
 const { mediaPlayerVolume } = require('../../util/notificationVolume.js');
+const notifyStrings = require('../../util/notifyStrings.js');
 
 const TOAST_QUEUE_SOUND_DELAY_MS = 5000;
 
@@ -45,6 +46,26 @@ function buildActivation(message) {
 // Build the powertoast option object for one notification. Exported as a pure function so the
 // payload contract (aumid, uniqueID, …) is unit-testable without shelling out to PowerShell.
 function buildToastNotification(message, options) {
+  const strings = notifyStrings.forLang(
+    String((options && (options.lang || (options.toast && options.toast.lang))) || 'english')
+  );
+  const type = String((message && message.notificationType) || '').toLowerCase();
+
+  // Prettier, more informative layout than a bare achievement-name title:
+  //   Achievement Unlocked            <- localized title (platinum keeps its own title)
+  //   <achievement name>              <- body line 1
+  //   <description>                   <- body line 2
+  //   <game name> · Rare x%           <- attribution
+  let title = message.achievementDisplayName;
+  let body = message.achievementDescription;
+  if (type === 'platinum') {
+    title = strings.platinumTitle || title;
+    body = [message.gameDisplayName, message.achievementDescription].filter(Boolean).join('\n');
+  } else if (type === 'achievement' || type === '') {
+    title = strings.achievementUnlocked || title;
+    body = [message.achievementDisplayName, message.achievementDescription].filter(Boolean).join('\n');
+  }
+
   // customAudio: '0' muted | '1' system default toast sound | '2' custom audio file.
   // Only '2' needs a file we play ourselves; '1' is far more reliable as the toast's own native
   // sound than shelling a WAV path through sound-play (the previous code silenced the toast for
@@ -55,7 +76,11 @@ function buildToastNotification(message, options) {
   // notificationSounds.js, which plays through soundPlayer directly) and its old Windows-registry
   // lookup (util/toastAudio.js) is gone — leave soundFile unset so the existing fallback below
   // plays the built-in achievement sound instead of throwing on a missing module.
-  let soundFile;
+  // Configured notification sound (Settings > Notifications > Son / Son aléatoire), resolved
+  // by toaster.js. When present, the toast itself is silenced and the file is played at the
+  // configured volume; otherwise the toast uses its native Windows sound behavior.
+  const soundFile = (options && options.toast && options.toast.soundFile) || '';
+  const hasCustomSound = !!soundFile;
   let notification = {
     // powertoast expects `aumid`, not `appID`. The old key was silently ignored, so every toast was
     // posted under powertoast's own default — the Microsoft Store's identity — instead of the app id
@@ -67,15 +92,15 @@ function buildToastNotification(message, options) {
     // powertoast reads `time` (Unix seconds) for displayTimestamp; the old `timeStamp` key was
     // silently ignored, so every toast fell back to "now" instead of the unlock time.
     time: message.time,
-    title: message.achievementDisplayName,
-    message: message.achievementDescription,
+    title,
+    message: body,
     // Playtime's `icon` is Steam's tiny img_icon_url (low-res, looks like an exe icon); prefer the
     // higher-res gameIcon (Steam library art) and fall back to it only when that's unavailable.
     icon: message.notificationType === 'playtime' ? message.gameIcon || message.icon : message.icon,
-    // Silence the toast only when muted, or when we have our own custom file to play.
-    silent: options.toast.customAudio === '0' || (options.toast.customAudio === '2' && !!soundFile) ? true : false,
-    // '1' and '2'-without-a-file fall back to a built-in notification sound.
-    audio: options.toast.customAudio === '2' && !soundFile ? 'ms-winsoundevent:Notification.Achievement' : null,
+    // Silence the toast when we play the configured sound ourselves, or when muted.
+    silent: hasCustomSound || options.toast.customAudio === '0' ? true : false,
+    // '2'-without-a-file falls back to a built-in notification sound.
+    audio: hasCustomSound ? null : options.toast.customAudio === '2' ? 'ms-winsoundevent:Notification.Achievement' : null,
     cropIcon: options.toast.cropIcon,
   };
 

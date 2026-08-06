@@ -7,6 +7,10 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- The custom theme editor has a per-layer "Gradient" editor (surface layers only): pick the two
+  colors and the direction (0/45/90/135/180/270°) freely, with a live preview, and the gradient is
+  applied in the app and the in-game overlay. The old single-toggle gradient is still imported
+  automatically as a dark fade of the layer color.
 - Right-click → "Choose another cover…" opens a themed gallery with the current cover, the SteamDB
   library assets and up to eight SteamGridDB community grids; clicking one applies it as the
   per-game cover override. The gallery matches the library orientation (vertical 600×900 covers in
@@ -30,6 +34,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Gradients now size correctly when combined with a layer image (the gradient stretches over the
+  whole layer, the image keeps its own fit/repeat), and enabling a fresh gradient follows the
+  layer's color instead of falling back to a fixed default.
 - "Merge duplicate games" now also drops a same-name Steam save phantom when a GOG Galaxy entry
   exists for the same game — Cyberpunk 2077 no longer appears twice (stale CODEX/Goldberg save +
   real GOG copy). Genuinely installed Steam copies are still kept.

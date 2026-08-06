@@ -53,11 +53,13 @@ function populateThemeSelect() {
     ['gruvbox', 'Gruvbox'],
     ['tokyonight', 'Tokyo Night'],
   ].forEach(([value, label]) => sel.append($('<option>').attr('value', value).text(label)));
-  sel.append($('<option>').attr('value', 'custom').text('Custom…'));
+  sel.append($('<option>').attr('value', 'custom').text(t('themeCustom', 'Custom…', 'Personnalisé…')));
   ipcRenderer
     .invoke('list-user-themes')
     .then((themes) => {
-      (themes || []).forEach((t) => sel.append($('<option>').attr('value', userThemes.valueFor(t.name)).text(`User: ${t.name}`)));
+      (themes || []).forEach((theme) =>
+        sel.append($('<option>').attr('value', userThemes.valueFor(theme.name)).text(`${t('themeUserPrefix', 'User: ', 'Utilisateur : ')}${theme.name}`))
+      );
       const matches = sel.find('option').filter(function () {
         return $(this).val() === wanted;
       });
@@ -485,11 +487,21 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const detail = found
           .map((g) => `${g.appid || '?'} · ${emuLabel[g.emulator] || g.emulator} — ${g.hasSchema ? `${g.schemaCount} achievements` : 'MISSING achievements.json'}\n  ${g.steamSettings}`)
           .join('\n');
-        result.text(t('scan-found-count', `Found ${found.length} install(s); ${unconfigured.length} missing their achievements.json schema.`, `${found.length} installation(s) trouvée(s) ; ${unconfigured.length} sans schéma achievements.json.`));
+        result.text(
+          t(
+            'scan-found-count',
+            'Found {found} install(s); {missing} missing their achievements.json schema.',
+            '{found} installation(s) trouvée(s) ; {missing} sans schéma achievements.json.',
+            { found: found.length, missing: unconfigured.length }
+          )
+        );
         remote.dialog.showMessageBox(remote.getCurrentWindow(), {
           type: unconfigured.length ? 'warning' : 'info',
           title: t('goldberg-gbe-fork-scan', 'Goldberg / GBE Fork scan', 'Analyse Goldberg / GBE Fork'),
-          message: t('scan-found-message', `${found.length} install(s) found — ${unconfigured.length} unconfigured`, `${found.length} installation(s) trouvée(s) — ${unconfigured.length} non configurée(s)`),
+          message: t('scan-found-message', '{found} install(s) found — {missing} unconfigured', '{found} installation(s) trouvée(s) — {missing} non configurée(s)', {
+            found: found.length,
+            missing: unconfigured.length,
+          }),
           detail,
           buttons: ['OK'],
           noLink: true,
@@ -700,7 +712,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
             remote.dialog.showMessageBoxSync({
               type: 'error',
               title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
-              message: err && err.isStartupSettingError ? 'Error while updating the startup setting.' : 'Error while saving settings.',
+              message:
+                err && err.isStartupSettingError
+                  ? t('errorUpdatingStartupSetting', 'Error while updating the startup setting.', 'Erreur lors de la mise à jour du paramètre de démarrage.')
+                  : t('errorSavingSettings', 'Error while saving settings.', 'Erreur lors de l’enregistrement des paramètres.'),
               detail: `${err}`,
             });
           });
@@ -802,7 +817,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     (function wireEpicConnect() {
       const T = () =>
         ({
-          connectedAs: (n) => t('epic-connected-as', `Connected${n ? ': ' + n : ''}`, `Connecté${n ? ' : ' + n : ''}`),
+          connectedAs: (n) => t('epic-connected-as', 'Connected{suffix}', 'Connecté{suffix}', { suffix: n ? ': ' + n : '' }),
           notConnected: t('epic-not-connected', 'Not connected', 'Non connecté'),
           connecting: t('epic-connecting', 'Opening the Epic sign-in window…', 'Ouverture de la fenêtre de connexion Epic…'),
           connected: t('epic-connected', 'Epic account connected.', 'Compte Epic connecté.'),
@@ -882,7 +897,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     (function () {
       const T = () =>
         ({
-          connectedAs: (n) => t('xbox-connected-as', `Connected${n ? ': ' + n : ''}`, `Connecté${n ? ' : ' + n : ''}`),
+          connectedAs: (n) => t('xbox-connected-as', 'Connected{suffix}', 'Connecté{suffix}', { suffix: n ? ': ' + n : '' }),
           notConnected: t('xbox-not-connected', 'Not connected', 'Non connecté'),
           connecting: t('xbox-connecting', 'Opening the Microsoft sign-in window…', 'Ouverture de la fenêtre de connexion Microsoft…'),
           connected: t('xbox-connected', 'Xbox account connected.', 'Compte Xbox connecté.'),
@@ -891,7 +906,11 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           disconnected: t('xbox-disconnected', 'Xbox account disconnected.', 'Compte Xbox déconnecté.'),
           importing: t('xbox-importing', 'Importing the Xbox PC library…', 'Importation de la bibliothèque Xbox…'),
           imported: (r) =>
-            t('xbox-imported', `Import complete: ${r?.created || 0} created, ${r?.updated || 0} updated, ${r?.failed || 0} failed.`, `Importation terminée : ${r?.created || 0} créé(s), ${r?.updated || 0} mis à jour, ${r?.failed || 0} échec(s).`),
+            t('xbox-imported', 'Import complete: {created} created, {updated} updated, {failed} failed.', 'Importation terminée : {created} créé(s), {updated} mis à jour, {failed} échec(s).', {
+              created: r?.created || 0,
+              updated: r?.updated || 0,
+              failed: r?.failed || 0,
+            }),
           importFailed: t('xbox-import-failed', 'Xbox library import failed', 'Échec de l’importation Xbox'),
         });
       const status = $('#xbox-connect-status');
@@ -1069,10 +1088,17 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const row = $(`#theme-customizer-layers .theme-layer-row[data-layer="${meta.id}"]`);
         if (!row.length) continue;
         const current = (customThemeDraft && customThemeDraft[meta.id]) || {};
-        const layer = { color: row.find('.theme-layer-color').val() || current.color || '#142236' };
+        const layer = { color: row.find('.theme-layer-color').val() || current.color || '#1b2838' };
         if (CUSTOM_IMAGE_LAYERS.includes(meta.id)) {
           layer.image = current.image || '';
           layer.fit = row.find('.theme-layer-fit').val() || current.fit || 'cover';
+          const grad = (current.gradient && typeof current.gradient === 'object' ? current.gradient : {});
+          layer.gradient = {
+            enabled: row.find('.theme-layer-gradient-enabled').is(':checked'),
+            from: row.find('.theme-layer-gradient-from').val() || grad.from || layer.color || current.color || '#1b2838',
+            to: row.find('.theme-layer-gradient-to').val() || grad.to || grad.from || layer.color || current.color || '#1b2838',
+            angle: Number(row.find('.theme-layer-gradient-angle').val()) || 180,
+          };
           layer.effect = {
             enabled: row.find('.theme-layer-effect-enabled').is(':checked'),
             type: row.find('.theme-layer-effect-type').val() === 'blur' ? 'blur' : 'veil',
@@ -1097,12 +1123,22 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const row = $('<div>').addClass('theme-layer-row').attr('data-layer', meta.id);
         const previewImage =
           effect.enabled === true && effect.type === 'blur' && effect.blurImage ? effect.blurImage : layer.image || '';
+        const grad = (layer.gradient && typeof layer.gradient === 'object' ? layer.gradient : {});
+        const gradStyle = grad.enabled === true
+          ? `linear-gradient(${Number(grad.angle) || 180}deg, ${grad.from || layer.color || '#1b2838'} 0%, ${grad.to || grad.from || layer.color || '#1b2838'} 100%)`
+          : '';
         const previewStyle =
-          `background-color:${layer.color || '#142236'};` +
+          `background-color:${layer.color || '#1b2838'};` +
           (previewImage
-            ? `background-image:url('${require('url').pathToFileURL(previewImage).href.replace(/'/g, "\\'")}');`
+            ? `background-image:${gradStyle ? gradStyle + ',' : ''}url('${require('url').pathToFileURL(previewImage).href.replace(/'/g, "\\'")}');`
+            : gradStyle
+            ? `background-image:${gradStyle};`
             : 'background-image:none;');
         const preview = $('<div>').addClass('theme-layer-preview').attr('style', previewStyle);
+        if (previewImage) {
+          const href = require('url').pathToFileURL(previewImage).href.replace(/'/g, "\\'");
+          preview.attr('data-preview-image', href);
+        }
         const label = $('<div>')
           .addClass('theme-layer-label')
           .html(
@@ -1111,8 +1147,45 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
               `<div class="theme-layer-hint">${escapeHtml(meta.hint || '')}</div></div>`
           );
         const controls = $('<div>').addClass('theme-layer-controls');
-        controls.append($('<input>').attr('type', 'color').addClass('theme-layer-color').val(layer.color || '#142236'));
+        controls.append($('<input>').attr('type', 'color').addClass('theme-layer-color').val(layer.color || '#1b2838'));
         if (CUSTOM_IMAGE_LAYERS.includes(meta.id)) {
+          const gradientToggle = $('<label>').addClass('theme-layer-effect-toggle');
+          gradientToggle.append(
+            $('<input>').attr('type', 'checkbox').addClass('theme-layer-gradient-enabled').prop('checked', grad.enabled === true)
+          );
+          gradientToggle.append($('<span>').text(t('theme-layer-gradient', 'Gradient', 'Dégradé')));
+          controls.append(gradientToggle);
+
+          const gradientPanel = $('<div>').addClass('theme-layer-effect theme-layer-gradient-panel' + (grad.enabled === true ? ' open' : ''));
+          gradientPanel.data('gradient', grad);
+          const angleLabels = {
+            0: t('theme-gradient-angle-0', 'Bottom → Top', 'Bas → Haut'),
+            45: t('theme-gradient-angle-45', 'Bottom-left → Top-right', 'Bas-gauche → Haut-droite'),
+            90: t('theme-gradient-angle-90', 'Left → Right', 'Gauche → Droite'),
+            135: t('theme-gradient-angle-135', 'Top-left → Bottom-right', 'Haut-gauche → Bas-droite'),
+            180: t('theme-gradient-angle-180', 'Top → Bottom', 'Haut → Bas'),
+            270: t('theme-gradient-angle-270', 'Top-right → Bottom-left', 'Haut-droite → Bas-gauche'),
+          };
+          const fromGroup = $('<div>').addClass('theme-layer-effect-group');
+          fromGroup.append($('<label>').text(t('theme-gradient-from', 'From', 'De')));
+          fromGroup.append($('<input>').attr('type', 'color').addClass('theme-layer-gradient-from').val(grad.from || layer.color || '#1b2838'));
+          const toGroup = $('<div>').addClass('theme-layer-effect-group');
+          toGroup.append($('<label>').text(t('theme-gradient-to', 'To', 'À')));
+          toGroup.append($('<input>').attr('type', 'color').addClass('theme-layer-gradient-to').val(grad.to || grad.from || layer.color || '#1b2838'));
+          const angleSelect = $('<select>').addClass('theme-layer-gradient-angle theme-layer-effect-type');
+          for (const [deg, labelText] of Object.entries(angleLabels)) {
+            angleSelect.append($('<option>').attr('value', deg).text(labelText));
+          }
+          angleSelect.val(String(grad.angle && angleLabels[grad.angle] ? grad.angle : 180));
+          const angleGroup = $('<div>').addClass('theme-layer-effect-group');
+          angleGroup.append($('<label>').text(t('theme-gradient-direction', 'Direction', 'Direction')));
+          angleGroup.append(angleSelect);
+          gradientPanel.append(fromGroup, toGroup, angleGroup);
+          gradientToggle.find('input').on('change', function () {
+            gradientPanel.toggleClass('open', this.checked);
+          });
+          controls.append(gradientPanel);
+
           const pick = $('<button>')
             .attr('type', 'button')
             .addClass('theme-layer-image btn')
@@ -1264,6 +1337,45 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       } else if ($(this).hasClass('theme-layer-effect-blur')) {
         row.find('.blur-group .theme-layer-effect-value').text($(this).val() + 'px');
       }
+      scheduleCustomThemeSave();
+    });
+
+    // Gradient editor: keep the collapsed panel, the layer preview and the saved theme
+    // in sync while the user picks the two colors and the direction.
+    function refreshGradientPreview(row) {
+      const baseColor = row.find('.theme-layer-color').val() || '#1b2838';
+      const enabled = row.find('.theme-layer-gradient-enabled').is(':checked');
+      const from = row.find('.theme-layer-gradient-from').val() || baseColor;
+      const to = row.find('.theme-layer-gradient-to').val() || from;
+      const angle = Number(row.find('.theme-layer-gradient-angle').val()) || 180;
+      const preview = row.find('.theme-layer-preview');
+      preview.css('background-color', baseColor);
+      const layers = [];
+      if (enabled) layers.push(`linear-gradient(${angle}deg, ${from} 0%, ${to} 100%)`);
+      const imageSrc = preview.attr('data-preview-image') || '';
+      if (imageSrc) layers.push(`url('${imageSrc.replace(/'/g, "\\'")}')`);
+      preview.css('background-image', layers.length ? layers.join(',') : 'none');
+    }
+
+    $('#theme-customizer-layers').on('change', '.theme-layer-gradient-enabled', function () {
+      const row = $(this).closest('.theme-layer-row');
+      row.find('.theme-layer-gradient-panel').toggleClass('open', this.checked);
+      if (this.checked) {
+        // A freshly enabled gradient follows the layer color unless the user already
+        // picked custom colors for it.
+        const grad = row.find('.theme-layer-gradient-panel').data('gradient') || {};
+        if (!grad.from && !grad.to) {
+          const color = row.find('.theme-layer-color').val() || '#1b2838';
+          row.find('.theme-layer-gradient-from').val(color);
+          row.find('.theme-layer-gradient-to').val(color);
+        }
+      }
+      refreshGradientPreview(row);
+      scheduleCustomThemeSave();
+    });
+
+    $('#theme-customizer-layers').on('input', '.theme-layer-gradient-from, .theme-layer-gradient-to, .theme-layer-gradient-angle', function () {
+      refreshGradientPreview($(this).closest('.theme-layer-row'));
       scheduleCustomThemeSave();
     });
 
@@ -1555,7 +1667,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const choice = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
           type: autoFixEnabled ? 'info' : 'warning',
           title: t('generate-configs', 'Generate configs', 'Génération des configs'),
-          message: t('x-emulated-game-s-found-in-your-libraries-x-without-achievements', `${found.length} emulated game(s) found in your libraries — ${unconfigured} without achievements.json.`, `${found.length} jeu(x) émulé(s) détecté(s) dans tes bibliothèques — ${unconfigured} sans achievements.json.`),
+          message: t('x-emulated-game-s-found-in-your-libraries-x-without-achievements', '{found} emulated game(s) found in your libraries — {missing} without achievements.json.', '{found} jeu(x) émulé(s) détecté(s) dans tes bibliothèques — {missing} sans achievements.json.', {
+            found: found.length,
+            missing: unconfigured,
+          }),
           detail,
           buttons: [t('start-scan', 'Start scan', 'Lancer le scan'), t('cancel', 'Cancel', 'Annuler')],
           defaultId: 0,
@@ -1567,12 +1682,12 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         // 3) full rescan — discovers the folders and applies the one-shot emulator fix to unconfigured games
         result.text(
           autoFixEnabled
-            ? t('scan-started-auto-fix', `Scan started — ${unconfigured} game(s) without schema will be repaired if their install folder is recognized.`, `Scan lancé — ${unconfigured} jeu(x) sans schema seront réparés si leur dossier d'installation est reconnu.`)
+            ? t('scan-started-auto-fix', 'Scan started — {count} game(s) without schema will be repaired if their install folder is recognized.', 'Scan lancé — {count} jeu(x) sans schema seront réparés si leur dossier d\'installation est reconnu.', { count: unconfigured })
             : t('scan-started-scan-only', 'Scan started — automatic repair is disabled, no files will be changed.', 'Scan lancé — réparation automatique désactivée, aucun fichier ne sera modifié.')
         );
         resetUI();
       } catch (err) {
-        result.text(t('generate-configs-failed-x', `Generate configs failed: ${err}`, `Génération impossible : ${err}`));
+        result.text(t('generate-configs-failed-x', 'Generate configs failed: {error}', 'Génération impossible : {error}', { error: err }));
         remote.dialog.showMessageBoxSync({ type: 'error', title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'), message: t('error-generating-configs', 'Error generating configs', 'Erreur lors de la génération des configs'), detail: `${err}` });
       } finally {
         self.css('pointer-events', 'initial');
@@ -1727,6 +1842,49 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     // customiser's own range inputs build presets and must NOT trigger a settings save).
     $("#settings .box section.content[data-view='notification']").on('change', 'select, #option_overlayVolume', autosaveNotifications);
 
+    // Overlay-only options (presets, position, sound, scale, duration…) and the custom-preset
+    // builder only make sense for in-game overlay notifications. Collapse them with a smooth
+    // height/opacity animation when the transport is Windows toast; restore them for
+    // overlay/both. Heights are measured per row so the animation matches whatever the
+    // localized labels/help make each row's real height.
+    function animateOverlaySettingCollapse(el, visible) {
+      const $el = $(el);
+      if (!$el.length) return;
+      const collapsed = $el.hasClass('overlay-setting-collapsed');
+      if (visible === !collapsed) return;
+      if (visible) {
+        $el.css('max-height', '0px');
+        $el.removeClass('overlay-setting-collapsed');
+        void $el[0].offsetHeight;
+        $el.css('max-height', $el[0].scrollHeight + 'px');
+        setTimeout(() => {
+          if (!$el.hasClass('overlay-setting-collapsed')) $el.css('max-height', '');
+        }, 320);
+      } else {
+        $el.css('max-height', '');
+        const height = $el[0].scrollHeight;
+        $el.css('max-height', height + 'px');
+        void $el[0].offsetHeight;
+        $el.addClass('overlay-setting-collapsed');
+        setTimeout(() => $el.css('max-height', ''), 320);
+      }
+    }
+
+    function updateOverlayOptionsVisibility() {
+      const mode = $('#option_notifMode').val() || 'overlay';
+      const visible = mode !== 'toast';
+      // Sound selection stays relevant for Windows toasts too (they now play the configured
+      // sound), so those rows are never collapsed with the rest of the overlay-only options.
+      const KEEP_VISIBLE_OVERLAY_IDS = new Set(['lbl-overlaySound', 'lbl-overlayRandomSound', 'lbl-overlayVolume']);
+      $('#options-notify-overlay > li:not(:first-child)').each(function () {
+        const labelId = $(this).find('[id^="lbl-overlay"]').first().attr('id') || '';
+        animateOverlaySettingCollapse(this, visible || KEEP_VISIBLE_OVERLAY_IDS.has(labelId));
+      });
+      animateOverlaySettingCollapse($('#options-notify-customiser').closest('.arrow-list')[0], visible);
+    }
+    $('#option_notifMode').on('change', updateOverlayOptionsVisibility);
+    updateOverlayOptionsVisibility();
+
     // Shared by the five Notifications-tab test buttons (toast/rare/progress/playtime/platinum):
     // spawns a fullscreen dummy window so the toast is visible over it, then asks the watchdog
     // (over its existing websocket) to fire the given test notification.
@@ -1757,7 +1915,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       // Safety net: the dummy must never get stuck covering the whole screen. Whatever happens
       // below (success, error, or the watchdog never answering at all — a dropped socket raises
       // neither an error nor a message event), this fallback guarantees it closes eventually.
-      scheduleDummyClose(15000);
+      scheduleDummyClose(6000);
 
       setTimeout(() => {
         const ws = new WebSocket('ws://localhost:8082');
@@ -1779,7 +1937,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
               if (res.cmd === cmd) {
                 if (res.success === true) {
                   ws.close();
-                  scheduleDummyClose(7000);
+                  // The toast stays visible after the black backdrop closes; don't keep the
+                  // tester's screen covered for the toast's full lifetime.
+                  scheduleDummyClose(1200);
                 } else if (res.success === false && res.error) {
                   throw res.error;
                 } else {
@@ -1812,7 +1972,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
             });
           }
         };
-      }, 500);
+      }, 200);
     }
 
     // Random rarity for the "rare" test: one of the three tiers presets style (gold <3%,
@@ -1841,11 +2001,11 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const texts = {
         toast: {
           displayName: t('test-toast-name', 'Achievement Unlocked', 'Succès débloqué'),
-          description: t('test-toast-desc', 'Notification test — ' + preset + ' preset', 'Test de notification — preset ' + preset),
+          description: t('test-toast-desc', 'Notification test — {preset} preset', 'Test de notification — preset {preset}', { preset }),
         },
         rare: {
           displayName: t('test-rare-name', 'Rare Achievement', 'Succès rare'),
-          description: t('test-rare-desc', 'Rare · ' + rarePct + '% of players', 'Rare · ' + rarePct + ' % des joueurs'),
+          description: t('test-rare-desc', 'Rare · {percent}% of players', 'Rare · {percent} % des joueurs', { percent: rarePct }),
         },
         progress: {
           displayName: t('test-progress-name', 'Progress', 'Progression'),
@@ -1867,6 +2027,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const gameIcon = path.join(appPath, 'resources/icon/icon.png');
       return Object.assign(
         {
+          // Test notifications may replace the current overlay immediately (and are never
+          // deduplicated), so the tester can chain preset previews without waiting.
+          test: true,
           preset,
           // A rare unlock is a normal achievement notification carrying a rarityPercent.
           notificationType: kind === 'toast' || kind === 'rare' ? 'achievement' : kind,

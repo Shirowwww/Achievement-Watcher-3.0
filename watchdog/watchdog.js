@@ -68,6 +68,7 @@ const { resolvePowerShell } = require('./util/powershell.js');
 const toastIdentity = require('./util/toastIdentity.js');
 const { userDataDir } = require('./util/userData.js');
 const { findIndexedSocialClubGame } = require('./util/socialClub.js');
+const notifyStrings = require('./util/notifyStrings.js');
 
 const cfg_file = {
   option: path.join(userDataDir(), 'cfg', 'options.ini'),
@@ -133,6 +134,7 @@ function startXboxPolling(game) {
           },
           {
             notify: app.options.notification.notify,
+            lang: app.options.achievement.lang,
             transport: {
               toast: app.options.notification_transport.mode !== 'overlay',
               websocket: app.options.notification_transport.mode !== 'toast',
@@ -440,6 +442,9 @@ var app = {
 
       debug.log('Loading Options ...');
       self.options = await settings.load(cfg_file.option);
+      // Windows toasts resolve their sound from the same overlay settings as the in-game
+      // overlay (Son / Son aléatoire / Volume); refresh on every settings reload too.
+      notify.setOverlayOptions(self.options.overlay || {});
       self.cfgOptionPath = cfg_file.option; // used to locate the per-game progress-mute store
       debug.log(self.options);
 
@@ -776,10 +781,12 @@ var app = {
                       // Use the same one-decimal rounding and <=10% cutoff as the achievement menu,
                       // then forward the percentage so overlay presets can apply the matching tier.
                       const rarePct = rarityMap.get(ach.name);
-                      const rareFr = (self.options.achievement.lang || '').toLowerCase().startsWith('fr');
                       const rounded = Math.round(rarePct * 10) / 10;
                       const isRare = Number.isFinite(rounded) && rounded >= 0 && rounded <= 10;
-                      const rarityLabel = rareFr ? `Rare ${rounded} %` : `Rare ${rounded}%`;
+                      const rarityLabel = notifyStrings.interpolate(
+                        notifyStrings.forLang(self.options.achievement.lang).rare,
+                        { percent: rounded }
+                      );
                       const attribution = isRare ? `${game.name} · ${rarityLabel}` : game.name;
 
                       await notify(
@@ -799,6 +806,7 @@ var app = {
                         },
                         {
                           notify: self.options.notification.notify,
+                          lang: self.options.achievement.lang,
                           transport: {
                             toast: app.options.notification_transport.mode !== 'overlay',
                             websocket: self.options.notification_transport.websocket || app.options.notification_transport.mode !== 'toast',
@@ -854,6 +862,7 @@ var app = {
                         },
                         {
                           notify: self.options.notification.notify,
+                          lang: self.options.achievement.lang,
                           transport: {
                             toast: app.options.notification_transport.mode !== 'overlay',
                             websocket: self.options.notification_transport.websocket || app.options.notification_transport.mode !== 'toast',
@@ -865,6 +874,7 @@ var app = {
                             winrt: self.options.notification_transport.winRT,
                             balloonFallback: self.options.notification_transport.balloon,
                             customAudio: '0',
+                            volume: notificationVolumePercent(self.options),
                             imageIntegration: '0',
                             group: self.options.notification_toast.groupToast,
                             cropIcon: true,
@@ -904,9 +914,9 @@ var app = {
               self.options.notification.platinum !== false
             ) {
               debug.log(`Platinum (100%): ${game.name}`);
-              const platinumFr = (self.options.achievement.lang || '').toLowerCase().startsWith('fr');
-              const platinumLabel = platinumFr ? 'Trophée Platine' : 'Platinum';
-              const platinumDesc = platinumFr ? 'Trophée platine débloqué — 100 % complété !' : 'Platinum unlocked — 100% completed!';
+              const wdStrings = notifyStrings.forLang(self.options.achievement.lang);
+              const platinumLabel = wdStrings.platinumTitle;
+              const platinumDesc = wdStrings.platinumDesc;
               await notify(
                 {
                   source: game.source,
@@ -922,6 +932,7 @@ var app = {
                 },
                 {
                   notify: self.options.notification.notify,
+                  lang: self.options.achievement.lang,
                   transport: {
                     toast: app.options.notification_transport.mode !== 'overlay',
                     websocket: self.options.notification_transport.websocket || app.options.notification_transport.mode !== 'toast',
@@ -1068,28 +1079,28 @@ var app = {
           }
           if (app.options.notification.playtime) {
             // Localize the playtime text here (the monitor stays language-agnostic and emits raw seconds).
-            const fr = (app.options.achievement.lang || '').toLowerCase().startsWith('fr');
+            const wdStrings = notifyStrings.forLang(app.options.achievement.lang);
+            const hdLang = notifyStrings.humanizeLocale(app.options.achievement.lang);
             let description;
             if (isExit) {
               const humanized =
                 playedSeconds < 60
-                  ? humanizeDuration(playedSeconds * 1000, { language: fr ? 'fr' : 'en', units: ['s'], round: true })
+                  ? humanizeDuration(playedSeconds * 1000, { language: hdLang, units: ['s'], round: true })
                   : humanizeDuration(playedSeconds * 1000, {
-                      language: fr ? 'fr' : 'en',
-                      conjunction: fr ? ' et ' : ' and ',
+                      language: hdLang,
                       units: ['h', 'm'],
                       round: true,
                     });
-              description = fr ? `Vous avez joué pendant ${humanized}` : `You played for ${humanized}`;
+              description = notifyStrings.interpolate(wdStrings.playedFor, { duration: humanized });
             } else {
-              description = fr ? 'Suivi du temps de jeu en cours' : 'Tracking playtime';
+              description = wdStrings.trackingPlaytime;
             }
             notify(
               {
                 notificationType: 'playtime',
                 appid: game.appid,
                 gameDisplayName: game.name,
-                achievementDisplayName: game.name || (fr ? 'Temps de jeu' : 'Playtime'),
+                achievementDisplayName: game.name || wdStrings.playtime,
                 achievementDescription: description,
                 icon: `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${game.appid}/${game.icon}.jpg`,
                 gameIcon: steamLibraryImage(game.steamappid || game.appid),
@@ -1098,6 +1109,7 @@ var app = {
               },
               {
                 notify: app.options.notification.notify,
+                lang: app.options.achievement.lang,
                 transport: {
                   toast: app.options.notification_transport.mode !== 'overlay',
                   websocket: app.options.notification_transport.mode !== 'toast',

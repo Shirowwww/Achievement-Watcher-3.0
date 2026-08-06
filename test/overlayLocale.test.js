@@ -46,6 +46,10 @@ async function run() {
   assert.equal(english.strings.settingsShowDescriptions, 'Descriptions');
   assert.equal(english.strings.settingsReset, 'Reset defaults');
   assert.equal(english.strings.noResults, 'No achievements match your search.');
+  assert.equal(english.strings.settingsUseTheme, 'Use app theme');
+  assert.equal(english.strings.clear, 'Clear');
+  assert.equal(english.strings.close, 'Close');
+  assert.equal(english.strings.accentCustom, 'Custom');
 
   // A real locale overrides the overlay strings used by the in-game list.
   const french = loadOverlayLocale({ localeDir: repoLocaleDir, lang: 'french' });
@@ -83,6 +87,10 @@ async function run() {
   assert.equal(french.strings.settingsShowDescriptions, 'Descriptions');
   assert.equal(french.strings.settingsReset, 'Réinitialiser');
   assert.equal(french.strings.noResults, 'Aucun succès ne correspond à votre recherche.');
+  assert.equal(french.strings.settingsUseTheme, 'Utiliser le thème de l’application');
+  assert.equal(french.strings.clear, 'Effacer');
+  assert.equal(french.strings.close, 'Fermer');
+  assert.equal(french.strings.accentCustom, 'Personnalisé');
 
   // A missing per-language file degrades to English (same policy as the rest of the UI).
   const missing = loadOverlayLocale({ localeDir: repoLocaleDir, lang: 'klingon' });

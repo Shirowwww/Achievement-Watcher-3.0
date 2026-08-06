@@ -178,7 +178,7 @@
       window.api?.onNotification?.((payload) => {
         // Content
         iconEl.src = fileUrl(payload?.iconPath || '');
-        title.textContent = safe(payload?.displayName) || 'Achievement Unlocked';
+        title.textContent = safe(payload?.displayName) || safe(payload?.fallback?.achievementUnlocked) || 'Achievement Unlocked';
         const d = safe(payload?.description);
         desc.textContent = d;
         desc.style.display = d ? 'inline' : 'none';

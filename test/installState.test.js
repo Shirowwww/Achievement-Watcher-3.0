@@ -8,7 +8,8 @@ const { isInstalled } = require(path.join(__dirname, '..', 'app', 'parser', 'ins
 
 const cases = [
   // [label, input, expected]
-  ['legit Steam (steamAPI)', { dataType: 'steamAPI' }, true],
+  ['legit Steam installed (registry flag)', { dataType: 'steamAPI', trustedInstalled: true }, true],
+  ['legit Steam owned but not installed => phantom', { dataType: 'steamAPI' }, false],
   ['RPCS3 emulator', { dataType: 'rpcs3' }, true],
   ['Goldberg SocialClub save folder', { dataType: 'socialclub' }, true],
   ['ShadPS4 trophy residue, no game => phantom', { dataType: 'shadps4' }, false],

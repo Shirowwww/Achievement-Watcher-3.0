@@ -361,6 +361,13 @@ function mergeConfigBlocks(blocks) {
     }
     return '';
   };
+  const firstRaw = (field) => {
+    for (const block of list) {
+      const value = String(block[field] || '').trim();
+      if (value) return value;
+    }
+    return '';
+  };
 
   const merged = {
     achievementsSpec: list[0].achievementsSpec,
@@ -764,9 +771,11 @@ async function scanLocalSteamLibrary(options = {}) {
 // future title, with no asset edit and no network.
 let identityCache = new Map();
 
-// Whether a Ubisoft product id has an InstallDir registered by Ubisoft Connect (HKLM/HKCU,
-// 32/64-bit views). Memoized for the session — the launcher rarely changes mid-run and discovery
-// asks once per product. Drives the "show installed only" filter for official Ubisoft entries.
+// Whether a Ubisoft product id is really on disk. Ubisoft Connect registers every product under
+// HKLM/HKCU Installs (32/64-bit views), but it also leaves stale subkeys behind after uninstalls,
+// so a bare registry key is NOT install proof (it kept owned-but-uninstalled titles such as
+// Assassin's Creed Mirage in the "installed" filter). Only a subkey whose InstallDir still exists
+// on disk counts. Memoized for the session — the launcher rarely changes mid-run.
 let _installedUbisoftProducts = null;
 function isUbisoftProductInstalled(productId) {
   const id = String(productId || '').trim();
@@ -776,7 +785,14 @@ function isUbisoftProductInstalled(productId) {
   for (const hive of ['HKLM', 'HKCU']) {
     for (const root of ['Software/WOW6432Node/Ubisoft/Launcher/Installs', 'Software/Ubisoft/Launcher/Installs']) {
       try {
-        for (const sub of listRegistryAllSubkeys(hive, root) || []) installed.add(String(sub));
+        for (const sub of listRegistryAllSubkeys(hive, root) || []) {
+          try {
+            const dir = readRegistryString(hive, `${root}/${sub}`, 'InstallDir');
+            if (dir && fs.existsSync(dir)) installed.add(String(sub));
+          } catch {
+            /* one corrupt entry must not hide the others */
+          }
+        }
       } catch {
         /* key absent on this hive/bitness — try the next one */
       }

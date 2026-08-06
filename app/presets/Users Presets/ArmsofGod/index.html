@@ -245,11 +245,11 @@
           const iconSrc = toFileSrc(payload?.iconPath || payload?.icon || "");
           const titleText = safeText(
             payload?.displayName || payload?.title,
-            "Achievement unlocked"
+            payload?.fallback?.achievementUnlocked || "Achievement unlocked"
           );
           const descText = safeText(
             payload?.description || payload?.desc,
-            "Unknown reward"
+            payload?.fallback?.unknownReward || "Unknown reward"
           );
 
           titleEl.textContent = titleText;

@@ -66,7 +66,10 @@ module.exports.load = () => {
 
     // overlay = the in-game achievement overlay (Ctrl+Shift+K). Notifications are Windows toasts
     // now, so the old per-notification look settings (position/preset/scale/duration) are gone.
+    // Legacy configs saved while the old buggy default was Ctrl+Shift+O are migrated back to K.
     if (typeof options.overlay.hotkey !== 'string') {
+      options.overlay.hotkey = 'Ctrl+Shift+K';
+    } else if (options.overlay.hotkey === 'Ctrl+Shift+O') {
       options.overlay.hotkey = 'Ctrl+Shift+K';
     }
     // Overlay (in-game) notification look — re-introduced as an OPTIONAL transport. The overlay

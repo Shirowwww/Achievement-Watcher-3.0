@@ -128,6 +128,8 @@ function translateUI(lang, locale, template) {
   $('#settings .box .header span').text(clear(template.settings.title));
   if (template.settings.search) {
     $('#settings-search-input').attr('placeholder', clear(template.settings.search.placeholder));
+    $('#settings-search-input').attr('aria-label', clear(template.settings.search.ariaLabel || template.settings.search.placeholder));
+    $('#settings-search-clear').attr('aria-label', clear(template.settings.search.clear));
     $('#settings-search-empty-text').text(clear(template.settings.search.empty));
   }
   selector = $('#options-ui');
@@ -190,11 +192,17 @@ function translateUI(lang, locale, template) {
     $('#controller-backend-label').text(clear(ctl.backend.name));
     $('#controller-backend-help').text(clear(ctl.backend.description));
     $("#option_controllerBackend option[value='auto']").text(clear(ctl.backend.auto));
+    if (ctl.backend.xinput) $("#option_controllerBackend option[value='xinput']").text(clear(ctl.backend.xinput));
+    if (ctl.backend.gameinput) $("#option_controllerBackend option[value='gameinput']").text(clear(ctl.backend.gameinput));
   }
   if (template.settings.general.theme) {
     $('#theme-settings-label').text(clear(template.settings.general.theme.name));
     $('#theme-settings-help').text(clear(template.settings.general.theme.description));
     $('#appearance-title').text(clear(template.settings.general.theme.name));
+    $('#theme-customizer-title').text(clear(template.settings.general.theme.customTitle));
+    $('#theme-customizer-hint').text(clear(template.settings.general.theme.customHint));
+    $('#theme-customizer-desc').text(clear(template.settings.general.theme.customDesc));
+    $('#theme-customizer-reset span').text(clear(template.settings.general.theme.resetAll));
     // Theme names themselves are proper nouns and stay untranslated.
   }
   if (template.settings.general.uninstallMenu) {
@@ -220,6 +228,7 @@ function translateUI(lang, locale, template) {
     if (emu.loginPass) $('#emulator-login-pass-label').text(clear(emu.loginPass));
     if (emu.loginTest) $('#emulator-login-test-label').text(clear(emu.loginTest));
     if (emu.loginTestHint) $('#emulator-login-test-hint').text(clear(emu.loginTestHint));
+    if (emu.loginPlaceholder) $('#emulator-login-user').attr('placeholder', clear(emu.loginPlaceholder));
     const bindEmuRow = (id, t) => {
       if (!t) return;
       const li = $('#' + id).closest('li');
@@ -240,34 +249,44 @@ function translateUI(lang, locale, template) {
     bindEmuRow('option_goldbergDownloadIcons', emu.goldbergIcons);
   }
 
-  // Platform guide section: static help, bound by stable ids so settings rows can move safely.
-  if (template.settings.guide) {
-    const guide = template.settings.guide;
-    const bindGuideText = (id, value) => {
+  // Help & tips section: static help, bound by stable ids so settings rows can move safely.
+  if (template.settings.help) {
+    const help = template.settings.help;
+    const bindHelpText = (id, value) => {
       if (value) $('#' + id).text(clear(value));
     };
-    const bindGuideList = (id, items) => {
+    const bindHelpList = (id, items) => {
       if (!Array.isArray(items)) return;
       const list = $('#' + id);
       if (!list.length) return;
       list.empty();
       items.forEach((item) => $('<li>').text(clear(item) || '').appendTo(list));
     };
-    bindGuideText('guide-nav-label', guide.nav);
-    bindGuideText('guide-title', guide.title);
-    bindGuideText('guide-intro', guide.intro);
-    bindGuideText('guide-quick-title', guide.quickTitle);
-    bindGuideText('guide-steam-title', guide.steamTitle);
-    bindGuideText('guide-emulator-title', guide.emulatorTitle);
-    bindGuideText('guide-sources-title', guide.sourcesTitle);
-    bindGuideText('guide-config-title', guide.configTitle);
-    bindGuideText('guide-troubleshoot-title', guide.troubleshootTitle);
-    bindGuideList('guide-quick-list', guide.quick);
-    bindGuideList('guide-steam-list', guide.steam);
-    bindGuideList('guide-emulator-list', guide.emulators);
-    bindGuideList('guide-sources-list', guide.sources);
-    bindGuideList('guide-config-list', guide.config);
-    bindGuideList('guide-troubleshoot-list', guide.troubleshoot);
+    bindHelpText('help-nav-label', help.nav);
+    bindHelpText('help-title', help.title);
+    bindHelpText('help-intro', help.intro);
+    bindHelpText('help-quick-title', help.quickTitle);
+    bindHelpText('help-steam-title', help.steamTitle);
+    bindHelpText('help-emulator-title', help.emulatorTitle);
+    bindHelpText('help-sources-title', help.sourcesTitle);
+    bindHelpText('help-controller-title', help.controllerTitle);
+    bindHelpText('help-overlay-title', help.overlayTitle);
+    bindHelpText('help-themes-title', help.themesTitle);
+    bindHelpText('help-config-title', help.configTitle);
+    bindHelpText('help-shortcuts-title', help.shortcutsTitle);
+    bindHelpText('help-tips-title', help.tipsTitle);
+    bindHelpText('help-troubleshoot-title', help.troubleshootTitle);
+    bindHelpList('help-quick-list', help.quick);
+    bindHelpList('help-steam-list', help.steam);
+    bindHelpList('help-emulator-list', help.emulators);
+    bindHelpList('help-sources-list', help.sources);
+    bindHelpList('help-controller-list', help.controller);
+    bindHelpList('help-overlay-list', help.overlay);
+    bindHelpList('help-themes-list', help.themes);
+    bindHelpList('help-config-list', help.config);
+    bindHelpList('help-shortcuts-list', help.shortcuts);
+    bindHelpList('help-tips-list', help.tips);
+    bindHelpList('help-troubleshoot-list', help.troubleshoot);
   }
 
   $('#options-notify .autosave-hint span').text(clear(template.settings.notification.info.autoSave));
@@ -386,6 +405,8 @@ function translateUI(lang, locale, template) {
     $('#cust-lbl-create').text(clear(c.create));
     $('#cust-name').attr('placeholder', clear(c.namePlaceholder));
     $('#cust-status').attr('data-err', clear(c.errName)).attr('data-ok', clear(c.created)).attr('data-fail', clear(c.failed));
+    if (c.previewTitle) $('#cust-preview-title').text(clear(c.previewTitle));
+    if (c.previewDetail) $('#cust-preview-detail').text(clear(c.previewDetail));
   }
   // Localize the 8 overlay position options + expose the dynamic "None" sound label as a data attr.
   $("#option_overlayPosition option[value='center-bottom']").text(clear(template.settings.notification.option.position.centerBottom));
@@ -470,6 +491,12 @@ function translateUI(lang, locale, template) {
     $('#fix-all-button').text(clear(template.settings.advanced.fixAll.button));
     $('#fix-all-help').text(clear(template.settings.advanced.fixAll.description));
   }
+  if (template.settings.advanced.checkUpdates) {
+    $('#check-for-updates-label').text(clear(template.settings.advanced.checkUpdates));
+    $('#footer-check-updates')
+      .attr('title', clear(template.settings.advanced.checkUpdates))
+      .attr('aria-label', clear(template.settings.advanced.checkUpdates));
+  }
   // Diagnostics block (merged into the Avancé tab) — stable ids.
   if (template.settings.advanced.diag) {
     const d = template.settings.advanced.diag;
@@ -513,7 +540,13 @@ function translateUI(lang, locale, template) {
   $('#nav-group-general').text(clear(template.settings.sideMenu.general));
   $('#nav-group-notification').text(clear(template.settings.sideMenu.notification));
   $('#nav-group-library').text(clear(template.settings.source.title || template.settings.sideMenu.source));
-  $('#nav-group-emulator').text(clear((template.settings.emulator && template.settings.emulator.nav) || template.settings.sideMenu.advanced));
+  $('#nav-group-emulator').text(
+    clear(
+      (template.settings.emulator && (template.settings.emulator.groupNav || template.settings.emulator.nav)) ||
+        template.settings.sideMenu.advanced
+    )
+  );
+  $('#nav-group-help').text(clear((template.settings.help && template.settings.help.nav) || 'Help'));
   $('#nav-group-advanced').text(clear(template.settings.sideMenu.advanced));
   $('#btn-settings-cancel').text(clear(template.settings.common.cancel));
   $('#btn-settings-save').text(clear(template.settings.common.save));

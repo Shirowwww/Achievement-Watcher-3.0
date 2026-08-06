@@ -44,7 +44,7 @@ Custom presets live in the Achievement Watcher data directory and are preserved 
 
 Choose a corner, edge or centered position from the Notification settings. The custom position can be moved with **Reposition** and is stored for later sessions.
 
-The in-game overlay also supports configured keyboard shortcuts for moving, snapping and click-through behavior. Controller overlay control is optional and can be enabled separately under the controller settings.
+The in-game overlay also supports configured keyboard shortcuts for moving, snapping and click-through behavior. Controller overlay control is optional: enable it under **Settings → General → Controller**, then **BACK+START** opens the overlay, **LB+X** toggles in-overlay navigation and **RB+Y** toggles window move/resize. The in-app **Help** menu lists the full controller cheatsheet.
 
 ## Per-game behavior
 

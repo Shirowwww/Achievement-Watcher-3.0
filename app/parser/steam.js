@@ -141,9 +141,11 @@ module.exports.scanLegit = async (listingType = 0, steamAccFilter = '0') => {
       });
 
       for (let stats of list) {
-        let isInstalled = true;
-        if (listingType == 1)
-          isInstalled = readRegistryInteger('HKCU', `Software/Valve/Steam/Apps/${stats.appID}`, 'Installed') === 1;
+        // Steam's own per-game registry flag: 1 when the game is on disk, missing/0 when it is
+        // merely owned. Capture it for every entry so "owned" mode never makes the installed
+        // filter trust a game that isn't actually installed (e.g. Assassin's Creed Mirage).
+        const installedFlag = readRegistryInteger('HKCU', `Software/Valve/Steam/Apps/${stats.appID}`, 'Installed') === 1;
+        const isInstalled = listingType == 1 ? installedFlag : true;
 
         let user = publicUsers.find((user) => user.user == stats.userID);
 
@@ -155,6 +157,7 @@ module.exports.scanLegit = async (listingType = 0, steamAccFilter = '0') => {
               type: 'steamAPI',
               userID: user,
               cachePath: steamCache,
+              installed: installedFlag,
             },
           });
         }

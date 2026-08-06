@@ -21,6 +21,10 @@ User guides, troubleshooting and technical references for Achievement Watcher 3.
 
 ## 🎮 User guides
 
+The app ships its own quick **Help** menu (the ❓ tab in Settings, before
+Advanced) with collapsible sections: first steps, detection, controller,
+overlay, themes, shortcuts and troubleshooting.
+
 ### [Getting started](getting-started.md)
 
 Installation, first launch, sources, watched folders, tray behavior, updates and the `%APPDATA%\Achievement Watcher 3.0` data directory.

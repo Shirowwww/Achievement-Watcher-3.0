@@ -1234,6 +1234,9 @@ function launchWatchdog() {
     ELECTRON_RUN_AS_NODE: '1',
     NODE_OPTIONS: nodeOpts,
     AW_USER_DATA: userData,
+    // Where the bundled notification sounds live, so the Watchdog's Windows toasts play the
+    // same sound files as the in-game overlay (user-imported sounds are under <userData>/sounds).
+    AW_SOUNDS_DIR: path.join(__dirname, '../sounds'),
     // The Watchdog's Windows toasts should appear under Achievement Watcher's own identity, not a
     // borrowed Xbox app id. The app's AUMID is registered by the installer's Start Menu shortcut;
     // the Watchdog checks it and falls back to the legacy ids when it is not registered (dev runs).
@@ -1328,7 +1331,7 @@ function notifyEmulatorFixed(game) {
     const name = (game && game.name) || `AppID ${game && game.appid}`;
     new Notification({
       title: t('emulator-fix-applied', 'Emulator fix applied', 'Correctif émulateur appliqué'),
-      body: t('x-is-ready-achievements-enabled', `${name} is ready — achievements enabled.`, `${name} est prêt — succès activés.`),
+      body: t('x-is-ready-achievements-enabled', '{name} is ready — achievements enabled.', '{name} est prêt — succès activés.', { name }),
       icon: path.join(__dirname, '../resources/icon/icon.png'),
     }).show();
     debug.log(`[bg-autofix] toast: emulator fix applied for ${name}`);
@@ -2706,6 +2709,29 @@ function computeNotificationBounds(position, w, h) {
   return { x: Math.max(ax, x), y: Math.max(ay, y) };
 }
 
+// Localized strings used by the notification preset windows (fallback titles/descriptions).
+// Reads the active locale JSON directly (the renderer loader is not available in the main
+// process); every bundled locale contains the same `watchdog` keys, so a missing per-language
+// file degrades to English exactly like the rest of the app.
+function loadNotificationStrings() {
+  try {
+    const lang = String((configJS && configJS.achievement && configJS.achievement.lang) || 'english');
+    const langDir = path.join(__dirname, '../locale/lang');
+    let data = JSON.parse(fs.readFileSync(path.join(langDir, 'english.json'), 'utf8'));
+    if (lang !== 'english') {
+      try {
+        data = JSON.parse(fs.readFileSync(path.join(langDir, `${lang}.json`), 'utf8'));
+      } catch (err) {
+        debug.log(`[overlay-notif] locale load failed (${lang}), using English: ${err.message || err}`);
+      }
+    }
+    return (data && data.watchdog) || {};
+  } catch (err) {
+    debug.log(`[overlay-notif] notification strings unavailable: ${err.message || err}`);
+    return {};
+  }
+}
+
 function createNotificationWindow(data = {}) {
   const presetFolder = resolvePresetFolder(data.preset);
   if (!presetFolder) {
@@ -2753,12 +2779,16 @@ function createNotificationWindow(data = {}) {
   if (!data.reposition) notif.setIgnoreMouseEvents(true, { forward: true });
   notif.loadFile(presetHtml);
 
+  // Localized fallback labels for presets that render a placeholder when the payload has no
+  // display name/description (e.g. the defensive `'Achievement Unlocked'` text in the themes).
+  const notifStrings = loadNotificationStrings();
+
   // Match the proven overlayWindow pattern: show inactively once content is loaded
   // (no reliance on 'ready-to-show', which the working in-game overlay also avoids).
   notif.webContents.on('did-finish-load', () => {
     if (notif.isDestroyed()) return;
     notif.webContents.send('show-notification', {
-      displayName: data.displayName != null ? data.displayName : 'Achievement Unlocked',
+      displayName: data.displayName != null ? data.displayName : notifStrings.achievementUnlocked || 'Achievement Unlocked',
       description: data.description != null ? data.description : '',
       rarityPercent: data.rarityPercent,
       notificationType: data.notificationType || '',
@@ -2777,6 +2807,12 @@ function createNotificationWindow(data = {}) {
       scale,
       // Forwarded so presets that support it can match their animation to the user's duration.
       durationMs: Number.isFinite(Number(data.durationMs)) ? Number(data.durationMs) : undefined,
+      fallback: {
+        achievementUnlocked: notifStrings.achievementUnlocked || 'Achievement Unlocked',
+        achievement: notifStrings.achievement || 'Achievement',
+        unknownOperation: notifStrings.unknownOperation || 'Unknown operation',
+        unknownReward: notifStrings.unknownReward || 'Unknown reward',
+      },
     });
     notif.showInactive();
     // Optional notification sound — played inside the (renderer) notification window. Volume is a
@@ -2848,6 +2884,7 @@ function createNotificationWindow(data = {}) {
 // window closes (each preset closes itself via window.api.closeNotificationWindow()).
 let notifQueue = [];
 let notifActive = false;
+let notifActiveWindow = null;
 
 // Guard against the same overlay notification rendering twice in quick succession. This matters when
 // the main app is open: the persistent process receives every Watchdog-forwarded notification, so a
@@ -2871,9 +2908,14 @@ function isDuplicateNotification(data) {
 
 function enqueueNotification(data) {
   data = data || {};
-  if (MainWin && isDuplicateNotification(data)) {
+  if (data.test !== true && MainWin && isDuplicateNotification(data)) {
     debug.log('[overlay-notif] duplicate suppressed (app open): ' + (data.displayName || ''));
     return;
+  }
+  // A Settings test replaces whatever is on screen right away instead of queuing
+  // behind it, so preset previews can be chained as fast as the tester clicks.
+  if (data.test === true && notifActiveWindow && !notifActiveWindow.isDestroyed()) {
+    notifActiveWindow.close();
   }
   notifQueue.push(data);
   processNotificationQueue();
@@ -2902,7 +2944,9 @@ function processNotificationQueue() {
     }
     return;
   }
+  notifActiveWindow = win;
   win.on('closed', () => {
+    if (notifActiveWindow === win) notifActiveWindow = null;
     notifActive = false;
     setTimeout(processNotificationQueue, 150);
   });
@@ -2923,6 +2967,21 @@ ipcMain.on('overlay-preview', (event, appid) => {
   }
   if (!appid) return;
   createOverlayWindow({ appid: String(appid), source: 'steam', action: 'open' });
+});
+
+// Gamepad window control from the overlay renderer (window-control toggle): move by a delta,
+// or resize by a delta (clamped so the panel never collapses or becomes unwieldy). Bounds are
+// persisted by the overlay's existing moved/resize listeners.
+ipcMain.on('overlay-move-by', (event, { dx = 0, dy = 0 } = {}) => {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  nudgeOverlay(Number(dx) || 0, Number(dy) || 0);
+});
+ipcMain.on('overlay-resize-by', (event, { dw = 0, dh = 0 } = {}) => {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  const b = overlayWindow.getBounds();
+  const width = Math.max(360, Math.min(1920, b.width + (Number(dw) || 0)));
+  const height = Math.max(240, Math.min(1080, b.height + (Number(dh) || 0)));
+  overlayWindow.setBounds({ x: b.x, y: b.y, width, height });
 });
 
 function normalizeNotificationProgress(args) {
@@ -3285,21 +3344,26 @@ ipcMain.handle('get-theme-payload', (event, name) => currentThemePayload(name));
 async function prepareThemeBlurImages(theme) {
   for (const id of themeLayers.IMAGE_LAYER_IDS) {
     const layer = theme && theme[id];
-    if (!layer || !layer.effect || layer.effect.enabled !== true || layer.effect.type !== 'blur') continue;
+    if (!layer || !layer.effect || layer.effect.enabled !== true) continue;
     if (!layer.image || !fs.existsSync(layer.image)) {
       layer.effect.blurImage = '';
       continue;
     }
+    // The blur effect follows the user's intensity slider; the colored veil renders the
+    // image through a light, fixed frosted blur so tinted images look soft and premium.
+    const isBlurEffect = layer.effect.type === 'blur';
+    const sigma = isBlurEffect ? Math.max(0.3, Math.min(12, layer.effect.blur / 5)) : 1.2;
     try {
       const sharp = require('sharp');
       const dir = themeLayers.themeImagesDir(userData);
       fs.mkdirSync(dir, { recursive: true });
       const ext = path.extname(layer.image).toLowerCase() || '.png';
       const stem = path.basename(layer.image, ext).replace(/[^a-z0-9-_]/gi, '_').slice(0, 40) || 'image';
-      const sigma = Math.max(0.3, Math.min(12, layer.effect.blur / 5));
-      const dest = path.join(dir, `${id}-${stem}-blur-${layer.effect.blur}.png`);
+      // Distinct suffix per effect so a blur copy and a veil copy never overwrite each other.
+      const suffix = isBlurEffect ? `blur-${layer.effect.blur}` : `veilblur-${sigma}`;
+      const dest = path.join(dir, `${id}-${stem}-${suffix}.png`);
       await sharp(layer.image)
-        .resize({ width: 1920, withoutEnlargement: true })
+        .resize({ width: 2560, withoutEnlargement: true })
         .blur(sigma)
         .png()
         .toFile(dest);
@@ -3511,7 +3575,7 @@ try {
       const { response } = await dialog.showMessageBox({
         type: 'info',
         title: t('update-available', 'Update Available', 'Mise à jour disponible'),
-        message: t('update-available-message', `A new version (${info.version}) is available.`, `Une nouvelle version (${info.version}) est disponible.`),
+        message: t('update-available-message', 'A new version ({version}) is available.', 'Une nouvelle version ({version}) est disponible.', { version: info.version }),
         detail: t('download-and-install-it-now', 'Download and install it now?', 'La télécharger et l’installer maintenant ?'),
         buttons: [t('download-install', 'Download && Install', 'Télécharger && installer'), t('later', 'Later', 'Plus tard'), t('skip-this-version', 'Skip this version', 'Ignorer cette version')],
         defaultId: 0,
@@ -3538,7 +3602,7 @@ try {
         tray.displayBalloon({
           iconType: 'info',
           title: t('achievement-watcher', 'Achievement Watcher'),
-          content: t('up-to-date', `You are already using the latest version (${info.version}).`, `Vous utilisez déjà la dernière version (${info.version}).`),
+          content: t('up-to-date', 'You are already using the latest version ({version}).', 'Vous utilisez déjà la dernière version ({version}).', { version: info.version }),
         });
       } catch {}
     }
@@ -3560,7 +3624,7 @@ try {
       const { response } = await dialog.showMessageBox({
         type: 'info',
         title: t('update-ready', 'Update Ready', 'Mise à jour prête'),
-        message: t('update-ready-message', `A new version (${info.version}) has been downloaded.`, `Une nouvelle version (${info.version}) a été téléchargée.`),
+        message: t('update-ready-message', 'A new version ({version}) has been downloaded.', 'Une nouvelle version ({version}) a été téléchargée.', { version: info.version }),
         detail: t('update-ready-detail', 'Would you like to install it now?', 'Voulez-vous l’installer maintenant ?'),
         buttons: [t('yes', 'Yes', 'Oui'), t('later', 'Later', 'Plus tard'), t('skip-this-version', 'Skip this version', 'Ignorer cette version')],
         defaultId: 0,
