@@ -553,7 +553,7 @@
       "generateConfigsHelp": "scan complet + auto-fix si activé"
     },
     "source": {
-      "title": "Sources de jeux",
+      "title": "Sources de jeu",
       "legitSteam": {
         "name": "Afficher les jeux Steam",
         "description": "Steam doit être installé et votre profil Steam doit être public.",

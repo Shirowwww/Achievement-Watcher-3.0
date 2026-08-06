@@ -540,12 +540,6 @@ function translateUI(lang, locale, template) {
   $('#nav-group-general').text(clear(template.settings.sideMenu.general));
   $('#nav-group-notification').text(clear(template.settings.sideMenu.notification));
   $('#nav-group-library').text(clear(template.settings.source.title || template.settings.sideMenu.source));
-  $('#nav-group-emulator').text(
-    clear(
-      (template.settings.emulator && (template.settings.emulator.groupNav || template.settings.emulator.nav)) ||
-        template.settings.sideMenu.advanced
-    )
-  );
   $('#nav-group-help').text(clear((template.settings.help && template.settings.help.nav) || 'Help'));
   $('#nav-group-advanced').text(clear(template.settings.sideMenu.advanced));
   $('#btn-settings-cancel').text(clear(template.settings.common.cancel));

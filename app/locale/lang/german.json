@@ -207,7 +207,7 @@
         "backend": {
           "name": "Controller-Backend",
           "description": "Auto wählt das beste verfügbare Eingabe-Backend. Wähle XInput für maximale Kompatibilität oder GameInput auf neueren Windows-Versionen.",
-          "auto": "Auto",
+          "auto": "Automatisch",
           "xinput": "XInput",
           "gameinput": "GameInput"
         }
@@ -393,11 +393,11 @@
         "overlayPresetRareDesc": "Preset für seltene Erfolge (höchstens 10 % der Spieler)",
         "overlayPresetPlatinum": "Preset (Platin)",
         "overlayPresetPlatinumDesc": "Preset für die Benachrichtigung bei 100 % Abschluss",
-        "overlayPresetXenia": "Preset (Xenia)",
+        "overlayPresetXenia": "Voreinstellung (Xenia)",
         "overlayPresetXeniaDesc": "Preset für Xenia-Benachrichtigungen (Xbox 360)",
-        "overlayPresetRpcs3": "Preset (RPCS3)",
+        "overlayPresetRpcs3": "Voreinstellung (RPCS3)",
         "overlayPresetRpcs3Desc": "Preset für RPCS3-Benachrichtigungen (PlayStation 3)",
-        "overlayPresetShadps4": "Preset (ShadPS4)",
+        "overlayPresetShadps4": "Voreinstellung (ShadPS4)",
         "overlayPresetShadps4Desc": "Preset für ShadPS4-Benachrichtigungen (PlayStation 4)",
         "presetSameAsMain": "Wie Haupt-Preset",
         "overlayPosition": "Position",
@@ -413,7 +413,7 @@
         "overlayVolumeDesc": "Lautstärke der Benachrichtigungstöne — In-Game-Overlay-Pop-ups können bis 200 % verstärkt werden, benutzerdefinierte Toast-Töne sind auf 100 % begrenzt.",
         "overlayDuration": "Dauer",
         "overlayDurationDesc": "Wie lange das In-Game-Overlay-Popup auf dem Bildschirm bleibt. Auto lässt die Vorlage entscheiden; ein Wert begrenzt die Anzeigezeit.",
-        "overlayDurationAuto": "Auto",
+        "overlayDurationAuto": "Automatisch",
         "customiser": {
           "title": "Eigene Vorlage",
           "intro": "Erstelle deine eigene In-Game-Overlay-Benachrichtigungs-Vorlage.",
@@ -636,34 +636,34 @@
     },
     "help": {
       "nav": "Hilfe",
-      "title": "Help & tips",
-      "intro": "Everything useful to know — detection, notifications, controller, overlay, themes and troubleshooting.",
-      "quickTitle": "First steps",
+      "title": "Hilfe & Tipps",
+      "intro": "Alles Wissenswerte — Erkennung, Benachrichtigungen, Controller, Overlay, Themes und Fehlerbehebung.",
+      "quickTitle": "Erste Schritte",
       "quick": [
         "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
         "The Watchdog runs in the background — it must be running for live notifications and playtime.",
         "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
         "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0."
       ],
-      "steamTitle": "Steam emulators",
+      "steamTitle": "Steam-Emulatoren",
       "steam": [
         "GBE / Goldberg saves are usually under %APPDATA%\\GSE Saves or %APPDATA%\\Goldberg SteamEmu Saves.",
         "CODEX / RUNE saves often live under Public Documents\\Steam\\CODEX or Public Documents\\Steam\\RUNE.",
         "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 and Hoodlum are detected from their config/save folders."
       ],
-      "emulatorTitle": "Console emulators",
+      "emulatorTitle": "Konsolen-Emulatoren",
       "emulators": [
         "RPCS3 trophies are read from dev_hdd0\\home\\...\\trophy near the RPCS3 install.",
         "shadPS4 trophies are read from its app data game_data/trophy folders; leftover data is not install proof.",
         "Xenia progress is read from Xbox profile files such as .gpd."
       ],
-      "sourcesTitle": "Launchers & sources",
+      "sourcesTitle": "Launcher & Quellen",
       "sources": [
         "Steam profile mode lists installed or owned games, but unlocks still come from local save files.",
         "GOG, Epic, Ubisoft Connect/LumaPlay and EA Desktop can be enabled separately in Sources.",
         "Owned Steam games count as installed only when Steam's registry confirms it."
       ],
-      "controllerTitle": "Controller (gamepad)",
+      "controllerTitle": "Controller (Gamepad)",
       "controller": [
         "Enable Settings > General > Controller first, then BACK+START opens the in-game overlay.",
         "LB+X toggles in-overlay navigation; RB+Y toggles window move/resize.",
@@ -671,7 +671,7 @@
         "Window mode: left stick moves, LB/RB resizes, D-pad also moves when navigation is off.",
         "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
       ],
-      "overlayTitle": "In-game overlay",
+      "overlayTitle": "In-Game-Overlay",
       "overlay": [
         "Open it with the overlay hotkey (Ctrl+Shift+K by default) or BACK+START on a controller.",
         "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
@@ -679,31 +679,31 @@
         "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
         "Every achievement with a known rate shows its rarity: gray for common, gold/silver/bronze for rare."
       ],
-      "themesTitle": "Custom themes",
+      "themesTitle": "Benutzerdefinierte Themes",
       "themes": [
         "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
         "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
         "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown."
       ],
-      "configTitle": "Generated configs",
+      "configTitle": "Generierte Konfigurationen",
       "config": [
         "The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.",
         "Simple mode is fast; Advanced runs generate_emu_config for deeper Steam data and can take minutes."
       ],
-      "shortcutsTitle": "Keyboard shortcuts",
+      "shortcutsTitle": "Tastenkürzel",
       "shortcuts": [
         "Ctrl+Shift+K (default): toggle the in-game overlay — configurable in Settings > General.",
         "Ctrl+Alt+Shift+Arrows move the overlay; Ctrl+Alt+Shift+1–5 snap it to a preset position.",
         "Ctrl+Alt+Shift+C toggles click-through; Ctrl+F focuses Settings search."
       ],
-      "tipsTitle": "Tips & tricks",
+      "tipsTitle": "Tipps & Tricks",
       "tips": [
         "Right-click a game tile for quick actions: emulator fix, achievements, Steam page, GBE Fork install, uninstall.",
         "Right-click a game and choose mute progress to stop progress popups without disabling unlocks.",
         "The emulator fix (Simple fast / Advanced complete) installs GBE Fork, the achievements schema, DLCs and launch helpers.",
         "Playtime is tracked while the game runs; progress and playtime notifications can be enabled in Notifications."
       ],
-      "troubleshootTitle": "Troubleshooting",
+      "troubleshootTitle": "Fehlerbehebung",
       "troubleshoot": [
         "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
         "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
@@ -886,7 +886,7 @@
     "settingsUseTheme": "App-Theme verwenden",
     "clear": "Leeren",
     "close": "Schließen",
-    "accentSteamBlue": "Steam Blue",
+    "accentSteamBlue": "Steam-Blau",
     "accentEmerald": "Smaragd",
     "accentGold": "Gold",
     "accentMagenta": "Magenta",

@@ -103,7 +103,7 @@
       "save": "Kaydet",
       "version": "Sürüm",
       "maintainedBy": "geliştiren",
-      "fork": "Fork",
+      "fork": "Çatal sürüm",
       "original": "Orijinal v1.6.8",
       "edit": "Düzenle"
     },
@@ -413,7 +413,7 @@
         "overlayVolumeDesc": "Bildirim seslerinin düzeyi — overlay açılır pencereleri %200’e kadar yükseltilebilir, özel toast sesleri %100 ile sınırlıdır.",
         "overlayDuration": "Süre",
         "overlayDurationDesc": "Oyun içi yer paylaşımı açılır penceresinin ekranda ne kadar kalacağı. Auto ön ayarın karar vermesini sağlar; bir değer ekranda kalma süresini sınırlar.",
-        "overlayDurationAuto": "Auto",
+        "overlayDurationAuto": "Otomatik",
         "customiser": {
           "title": "Özel ön ayar",
           "intro": "Kendi oyun içi yer paylaşımı bildirim ön ayarını oluştur.",
@@ -636,34 +636,34 @@
     },
     "help": {
       "nav": "Yardım",
-      "title": "Help & tips",
-      "intro": "Everything useful to know — detection, notifications, controller, overlay, themes and troubleshooting.",
-      "quickTitle": "First steps",
+      "title": "Yardım ve ipuçları",
+      "intro": "Bilmeniz gereken her şey — algılama, bildirimler, kumanda, overlay, temalar ve sorun giderme.",
+      "quickTitle": "İlk adımlar",
       "quick": [
         "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
         "The Watchdog runs in the background — it must be running for live notifications and playtime.",
         "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
         "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0."
       ],
-      "steamTitle": "Steam emulators",
+      "steamTitle": "Steam emülatörleri",
       "steam": [
         "GBE / Goldberg saves are usually under %APPDATA%\\GSE Saves or %APPDATA%\\Goldberg SteamEmu Saves.",
         "CODEX / RUNE saves often live under Public Documents\\Steam\\CODEX or Public Documents\\Steam\\RUNE.",
         "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 and Hoodlum are detected from their config/save folders."
       ],
-      "emulatorTitle": "Console emulators",
+      "emulatorTitle": "Konsol emülatörleri",
       "emulators": [
         "RPCS3 trophies are read from dev_hdd0\\home\\...\\trophy near the RPCS3 install.",
         "shadPS4 trophies are read from its app data game_data/trophy folders; leftover data is not install proof.",
         "Xenia progress is read from Xbox profile files such as .gpd."
       ],
-      "sourcesTitle": "Launchers & sources",
+      "sourcesTitle": "Başlatıcılar ve kaynaklar",
       "sources": [
         "Steam profile mode lists installed or owned games, but unlocks still come from local save files.",
         "GOG, Epic, Ubisoft Connect/LumaPlay and EA Desktop can be enabled separately in Sources.",
         "Owned Steam games count as installed only when Steam's registry confirms it."
       ],
-      "controllerTitle": "Controller (gamepad)",
+      "controllerTitle": "Kumanda (gamepad)",
       "controller": [
         "Enable Settings > General > Controller first, then BACK+START opens the in-game overlay.",
         "LB+X toggles in-overlay navigation; RB+Y toggles window move/resize.",
@@ -671,7 +671,7 @@
         "Window mode: left stick moves, LB/RB resizes, D-pad also moves when navigation is off.",
         "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
       ],
-      "overlayTitle": "In-game overlay",
+      "overlayTitle": "Oyun içi overlay",
       "overlay": [
         "Open it with the overlay hotkey (Ctrl+Shift+K by default) or BACK+START on a controller.",
         "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
@@ -679,31 +679,31 @@
         "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
         "Every achievement with a known rate shows its rarity: gray for common, gold/silver/bronze for rare."
       ],
-      "themesTitle": "Custom themes",
+      "themesTitle": "Özel temalar",
       "themes": [
         "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
         "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
         "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown."
       ],
-      "configTitle": "Generated configs",
+      "configTitle": "Oluşturulan yapılandırmalar",
       "config": [
         "The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.",
         "Simple mode is fast; Advanced runs generate_emu_config for deeper Steam data and can take minutes."
       ],
-      "shortcutsTitle": "Keyboard shortcuts",
+      "shortcutsTitle": "Klavye kısayolları",
       "shortcuts": [
         "Ctrl+Shift+K (default): toggle the in-game overlay — configurable in Settings > General.",
         "Ctrl+Alt+Shift+Arrows move the overlay; Ctrl+Alt+Shift+1–5 snap it to a preset position.",
         "Ctrl+Alt+Shift+C toggles click-through; Ctrl+F focuses Settings search."
       ],
-      "tipsTitle": "Tips & tricks",
+      "tipsTitle": "İpuçları ve püf noktaları",
       "tips": [
         "Right-click a game tile for quick actions: emulator fix, achievements, Steam page, GBE Fork install, uninstall.",
         "Right-click a game and choose mute progress to stop progress popups without disabling unlocks.",
         "The emulator fix (Simple fast / Advanced complete) installs GBE Fork, the achievements schema, DLCs and launch helpers.",
         "Playtime is tracked while the game runs; progress and playtime notifications can be enabled in Notifications."
       ],
-      "troubleshootTitle": "Troubleshooting",
+      "troubleshootTitle": "Sorun giderme",
       "troubleshoot": [
         "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
         "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
@@ -886,7 +886,7 @@
     "settingsUseTheme": "Uygulama temasını kullan",
     "clear": "Temizle",
     "close": "Kapat",
-    "accentSteamBlue": "Steam Blue",
+    "accentSteamBlue": "Steam Mavisi",
     "accentEmerald": "Zümrüt",
     "accentGold": "Altın",
     "accentMagenta": "Eflatun",
@@ -908,7 +908,7 @@
     "update-available-short": "Güncelleme mevcut",
     "update-up-to-date-short": "Güncel",
     "update-checked": "Kontrol edildi",
-    "blacklist-add-placeholder": "Steam App ID",
+    "blacklist-add-placeholder": "Steam Uygulama Kimliği",
     "blacklist-add-button": "Ekle",
     "setupLooksValid": "Kurulum geçerli görünüyor.",
     "problemsWereDetected": "Sorunlar algılandı.",

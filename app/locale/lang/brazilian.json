@@ -104,7 +104,7 @@
       "version": "Versão",
       "maintainedBy": "mantido por",
       "fork": "Fork",
-      "original": "Original v1.6.8",
+      "original": "Original 1.6.8",
       "edit": "Editar"
     },
     "search": {
@@ -207,7 +207,7 @@
         "backend": {
           "name": "Backend do controle",
           "description": "Auto escolhe o melhor backend de entrada disponível. Escolha XInput para máxima compatibilidade ou GameInput em versões recentes do Windows.",
-          "auto": "Auto",
+          "auto": "Automático",
           "xinput": "XInput",
           "gameinput": "GameInput"
         }
@@ -413,7 +413,7 @@
         "overlayVolumeDesc": "Volume dos sons de notificação — os pop-ups do overlay no jogo podem ser amplificados até 200%; os sons personalizados do toast são limitados a 100%.",
         "overlayDuration": "Duração",
         "overlayDurationDesc": "Por quanto tempo o popup overlay no jogo permanece na tela. Auto deixa a predefinição decidir; um valor limita o tempo na tela.",
-        "overlayDurationAuto": "Auto",
+        "overlayDurationAuto": "Automático",
         "customiser": {
           "title": "Predefinição personalizada",
           "intro": "Crie sua própria predefinição de notificação overlay no jogo.",
@@ -636,34 +636,34 @@
     },
     "help": {
       "nav": "Ajuda",
-      "title": "Help & tips",
-      "intro": "Everything useful to know — detection, notifications, controller, overlay, themes and troubleshooting.",
-      "quickTitle": "First steps",
+      "title": "Ajuda e dicas",
+      "intro": "Tudo o que você precisa saber — detecção, notificações, controle, overlay, temas e solução de problemas.",
+      "quickTitle": "Primeiros passos",
       "quick": [
         "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
         "The Watchdog runs in the background — it must be running for live notifications and playtime.",
         "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
         "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0."
       ],
-      "steamTitle": "Steam emulators",
+      "steamTitle": "Emuladores Steam",
       "steam": [
         "GBE / Goldberg saves are usually under %APPDATA%\\GSE Saves or %APPDATA%\\Goldberg SteamEmu Saves.",
         "CODEX / RUNE saves often live under Public Documents\\Steam\\CODEX or Public Documents\\Steam\\RUNE.",
         "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 and Hoodlum are detected from their config/save folders."
       ],
-      "emulatorTitle": "Console emulators",
+      "emulatorTitle": "Emuladores de console",
       "emulators": [
         "RPCS3 trophies are read from dev_hdd0\\home\\...\\trophy near the RPCS3 install.",
         "shadPS4 trophies are read from its app data game_data/trophy folders; leftover data is not install proof.",
         "Xenia progress is read from Xbox profile files such as .gpd."
       ],
-      "sourcesTitle": "Launchers & sources",
+      "sourcesTitle": "Launchers e fontes",
       "sources": [
         "Steam profile mode lists installed or owned games, but unlocks still come from local save files.",
         "GOG, Epic, Ubisoft Connect/LumaPlay and EA Desktop can be enabled separately in Sources.",
         "Owned Steam games count as installed only when Steam's registry confirms it."
       ],
-      "controllerTitle": "Controller (gamepad)",
+      "controllerTitle": "Controle (gamepad)",
       "controller": [
         "Enable Settings > General > Controller first, then BACK+START opens the in-game overlay.",
         "LB+X toggles in-overlay navigation; RB+Y toggles window move/resize.",
@@ -671,7 +671,7 @@
         "Window mode: left stick moves, LB/RB resizes, D-pad also moves when navigation is off.",
         "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
       ],
-      "overlayTitle": "In-game overlay",
+      "overlayTitle": "Overlay no jogo",
       "overlay": [
         "Open it with the overlay hotkey (Ctrl+Shift+K by default) or BACK+START on a controller.",
         "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
@@ -679,31 +679,31 @@
         "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
         "Every achievement with a known rate shows its rarity: gray for common, gold/silver/bronze for rare."
       ],
-      "themesTitle": "Custom themes",
+      "themesTitle": "Temas personalizados",
       "themes": [
         "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
         "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
         "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown."
       ],
-      "configTitle": "Generated configs",
+      "configTitle": "Configs geradas",
       "config": [
         "The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.",
         "Simple mode is fast; Advanced runs generate_emu_config for deeper Steam data and can take minutes."
       ],
-      "shortcutsTitle": "Keyboard shortcuts",
+      "shortcutsTitle": "Atalhos de teclado",
       "shortcuts": [
         "Ctrl+Shift+K (default): toggle the in-game overlay — configurable in Settings > General.",
         "Ctrl+Alt+Shift+Arrows move the overlay; Ctrl+Alt+Shift+1–5 snap it to a preset position.",
         "Ctrl+Alt+Shift+C toggles click-through; Ctrl+F focuses Settings search."
       ],
-      "tipsTitle": "Tips & tricks",
+      "tipsTitle": "Dicas e truques",
       "tips": [
         "Right-click a game tile for quick actions: emulator fix, achievements, Steam page, GBE Fork install, uninstall.",
         "Right-click a game and choose mute progress to stop progress popups without disabling unlocks.",
         "The emulator fix (Simple fast / Advanced complete) installs GBE Fork, the achievements schema, DLCs and launch helpers.",
         "Playtime is tracked while the game runs; progress and playtime notifications can be enabled in Notifications."
       ],
-      "troubleshootTitle": "Troubleshooting",
+      "troubleshootTitle": "Solução de problemas",
       "troubleshoot": [
         "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
         "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
@@ -886,7 +886,7 @@
     "settingsUseTheme": "Usar o tema do aplicativo",
     "clear": "Limpar",
     "close": "Fechar",
-    "accentSteamBlue": "Steam Blue",
+    "accentSteamBlue": "Azul Steam",
     "accentEmerald": "Esmeralda",
     "accentGold": "Ouro",
     "accentMagenta": "Magenta",
