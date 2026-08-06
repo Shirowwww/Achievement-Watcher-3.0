@@ -45,3 +45,53 @@ test('all bundled locales have the complete English key set', () => {
     }
   }
 });
+
+test('every template.* path referenced by the locale loader exists in the locale files', () => {
+  const loaderSrc = fs.readFileSync(path.join(__dirname, '..', 'app', 'locale', 'loader.js'), 'utf8');
+  const refs = new Set();
+  const re = /\btemplate\.([A-Za-z0-9_.]+)/g;
+  let match;
+  while ((match = re.exec(loaderSrc))) refs.add(match[1]);
+  assert.ok(refs.size > 50, 'the loader must reference a meaningful set of template paths');
+  const english = JSON.parse(fs.readFileSync(path.join(localeDir, 'english.json'), 'utf8'));
+  for (const ref of refs) {
+    assert.notStrictEqual(valueAt(english, ref), undefined, `template.${ref} must exist in english.json`);
+  }
+});
+
+test('every t() key used in the app resolves under dialogs in every bundled locale', () => {
+  function walk(dir, out = []) {
+    let entries;
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      return out;
+    }
+    for (const entry of entries) {
+      if (entry.name === 'node_modules' || entry.name === 'dist' || entry.name === '.git') continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full, out);
+      else if (/\.(js|html)$/.test(entry.name)) out.push(full);
+    }
+    return out;
+  }
+
+  const appDir = path.join(__dirname, '..', 'app');
+  const keys = new Set();
+  const re = /\bt\(\s*['"]([^'"]+)['"]/g;
+  for (const file of walk(appDir)) {
+    const source = fs.readFileSync(file, 'utf8');
+    let match;
+    while ((match = re.exec(source))) keys.add(match[1]);
+  }
+  assert.ok(keys.size > 100, 'the app must use a meaningful set of t() keys');
+
+  const files = fs.readdirSync(localeDir).filter((file) => file.endsWith('.json'));
+  for (const file of files) {
+    const locale = JSON.parse(fs.readFileSync(path.join(localeDir, file), 'utf8'));
+    const dialogs = locale.dialogs || {};
+    for (const key of keys) {
+      assert.ok(String(dialogs[key] || '').trim(), `${file}: dialogs.${key} must be translated`);
+    }
+  }
+});

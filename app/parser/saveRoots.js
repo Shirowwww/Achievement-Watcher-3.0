@@ -270,9 +270,17 @@ function isLibraryLikeFolderName(name) {
 function profileLibraryRoots() {
   const roots = [];
   const names = [];
+  const seen = new Set();
   for (const name of GAME_LIBRARY_FOLDER_NAMES) {
     const base = path.basename(name);
-    if (base && !names.some((n) => n.toLowerCase() === base.toLowerCase())) names.push(base);
+    // Storefront-managed names (GOG Games / Epic Games) are deliberately excluded here: those
+    // folders hold launcher data and stale uninstalled-game leftovers, not user-created libraries.
+    if (/^(gog games|epic games)$/i.test(base)) continue;
+    if (!base) continue;
+    const key = base.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    names.push(base);
   }
   for (const base of [process.env['USERPROFILE'], process.env['APPDATA'], process.env['LOCALAPPDATA']]) {
     if (!base) continue;
@@ -282,8 +290,6 @@ function profileLibraryRoots() {
 }
 
 async function discoverLibraryRoots() {
-  const roots = [];
-
   let drives = [];
   try {
     drives = await listDrive({ ignoreSystemDrive: false });
@@ -291,20 +297,25 @@ async function discoverLibraryRoots() {
     drives = [];
   }
 
+  const candidates = [];
   for (const drive of drives) {
     for (const name of GAME_LIBRARY_FOLDER_NAMES) {
-      addUnique(roots, path.join(`${drive}\\`, name));
+      candidates.push(path.join(`${drive}\\`, name));
     }
   }
-  for (const root of profileLibraryRoots()) addUnique(roots, root);
+  for (const root of profileLibraryRoots()) candidates.push(root);
 
-  return roots.filter((p) => {
-    try {
-      return !isSteamLikePath(p) && fs.existsSync(p) && fs.statSync(p).isDirectory();
-    } catch {
-      return false;
-    }
-  });
+  // Probe every drive/profile candidate in parallel — disk stats dominate this pass.
+  const results = await Promise.all(
+    candidates.map(async (p) => {
+      try {
+        return (await fs.promises.stat(p)).isDirectory() && !isSteamLikePath(p) ? p : null;
+      } catch {
+        return null;
+      }
+    })
+  );
+  return results.filter(Boolean);
 }
 
 module.exports = {

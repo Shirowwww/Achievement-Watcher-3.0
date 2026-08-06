@@ -1566,6 +1566,9 @@ async function blockHeavyResources(page, { keepImages = false } = {}) {
 // with no cover. SteamDB's app-info page lists the real asset links — scrape it (stealth browser: it
 // 403s plain requests) and cache the result for 30 days. Returns an absolute image URL or null.
 const steamdbCoverInFlight = new Map();
+// The stealth-browser scrape below must not run N pages at once during a cold first scan (each can
+// take up to 45s); serialize the browser work through one queue while cache hits stay instant.
+let steamdbCoverQueue = Promise.resolve();
 async function fetchSteamDbCover(appid) {
   const id = String(appid || '').trim();
   if (!/^\d+$/.test(id)) return null;
@@ -1581,7 +1584,7 @@ async function fetchSteamDbCover(appid) {
   }
   if (steamdbCoverInFlight.has(id)) return steamdbCoverInFlight.get(id);
 
-  const pending = (async () => {
+  const scrape = async () => {
     const steamdbCover = require(path.join(app.getAppPath(), 'parser/steamdbCover.js'));
     let page = null;
     try {
@@ -1618,7 +1621,9 @@ async function fetchSteamDbCover(appid) {
     } finally {
       if (page) await page.close().catch(() => {});
     }
-  })();
+  };
+  const pending = steamdbCoverQueue.then(scrape);
+  steamdbCoverQueue = pending.catch(() => {});
   steamdbCoverInFlight.set(id, pending);
   try {
     return await pending;
@@ -1629,6 +1634,84 @@ async function fetchSteamDbCover(appid) {
 
 ipcMain.handle('get-steamdb-cover', async (event, appid) => {
   return await fetchSteamDbCover(appid);
+});
+
+// SteamGridDB cover fallback: when neither the guessable CDN path nor SteamDB has a portrait,
+// SteamGridDB's community grids usually do. Optional per-user key (cfg/options.ini
+// [steamgriddb] apiKey) overrides the bundled public fallback; result is cached 30 days per name.
+const steamgriddbCoverDir = path.join(userData, 'steam_cache', 'steamgriddb_cover');
+const steamgriddbCoverInFlight = new Map();
+async function fetchSteamGridDbCover(gameName) {
+  const name = String(gameName || '').trim();
+  if (!name) return null;
+  const key = require('crypto').createHash('sha1').update(name.toLowerCase()).digest('hex');
+  const cacheFile = path.join(steamgriddbCoverDir, `${key}.json`);
+  try {
+    if (fs.existsSync(cacheFile) && Date.now() - fs.statSync(cacheFile).mtimeMs < 30 * 24 * 60 * 60 * 1000) {
+      const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+      return cached && cached.url ? cached.url : null;
+    }
+  } catch {
+    /* stale/corrupt -> refetch */
+  }
+  if (steamgriddbCoverInFlight.has(key)) return steamgriddbCoverInFlight.get(key);
+
+  const pending = (async () => {
+    try {
+      const apiKey = getSteamGridDbApiKey();
+      const searchRes = await fetch(`${BASE_URL}/search/autocomplete/${encodeURIComponent(name)}`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
+      if (!searchRes.ok) return null;
+      const search = await searchRes.json();
+      const games = Array.isArray(search.data) ? search.data : [];
+      // Prefer an exact title match, then a token-level match (all query words present, at most one
+      // extra word for edition tags). Never take an unrelated first result — a wrong cover is worse
+      // than no cover at all.
+      const queryTokens = name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(/\s+/).filter(Boolean);
+      const tokensOf = (g) => String((g && g.name) || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(/\s+/).filter(Boolean);
+      const exact = games.find((g) => String((g && g.name) || '').trim().toLowerCase() === name.toLowerCase());
+      let game = exact || (games.length === 1 ? games[0] : null);
+      if (!game && queryTokens.length) {
+        game = games.find((g) => {
+          const tokens = tokensOf(g);
+          if (!tokens.length) return false;
+          return queryTokens.every((t) => tokens.includes(t)) && tokens.length - queryTokens.length <= 1;
+        }) || null;
+      }
+      if (!game || !game.id) return null;
+      const gridsRes = await fetch(`${BASE_URL}/grids/game/${game.id}`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
+      if (!gridsRes.ok) return null;
+      const grids = await gridsRes.json();
+      const gridList = Array.isArray(grids.data) ? grids.data : [];
+      const grid = gridList.find((g) => Number(g.width) === 600 && Number(g.height) === 900) || gridList[0];
+      const url = grid && grid.url ? String(grid.url) : null;
+      if (url) {
+        try {
+          fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
+          fs.writeFileSync(cacheFile, JSON.stringify({ name, url }, null, 2));
+        } catch {
+          /* cache write failure is non-fatal */
+        }
+      }
+      return url;
+    } catch (err) {
+      debug.log(`[steamgriddb] cover lookup failed for "${name}": ${err.message || err}`);
+      return null;
+    }
+  })();
+  steamgriddbCoverInFlight.set(key, pending);
+  try {
+    return await pending;
+  } finally {
+    steamgriddbCoverInFlight.delete(key);
+  }
+}
+
+ipcMain.handle('get-steamgriddb-cover', async (event, gameName) => {
+  return await fetchSteamGridDbCover(gameName);
 });
 
 // Top-owners SteamID pool. Last-resort seed for the keyless schema/rarity scrape: when no SteamHunters
@@ -2912,10 +2995,7 @@ async function enqueueNotificationFromArgs(args) {
   enqueueNotification({
     preset,
     position: ov.notificationPosition || 'center-bottom',
-    scale:
-      notificationType === 'playtime' && Number(ov.playtimeNotificationScale) > 0
-        ? Number(ov.playtimeNotificationScale)
-        : ov.notificationScale || 1,
+    scale: ov.notificationScale || 1,
     volume: Number.isFinite(Number(ov.notificationVolume)) ? Number(ov.notificationVolume) : 100,
     durationMs: durSec > 0 ? durSec * 1000 : undefined,
     // Playtime notifications pass the game name in both fields. Keeping the dedicated game-name

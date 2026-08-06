@@ -139,5 +139,17 @@ const bogus = exeDetect.bestFolderMatch('Totally Unrelated Game 9000', folders);
 console.log(`No-false-match for bogus name -> ${bogus || '(none)'} ${bogus ? 'FAIL' : 'OK'}`);
 if (bogus) fail++;
 
+// --- Known non-game executables are never treated as game exes ---
+for (const name of ['firefox.exe', 'chrome.exe', 'msedge.exe', 'notepad.exe', 'winword.exe', 'Docker Desktop.exe', 'Cheat Engine.exe', 'epicgameslauncher.exe']) {
+  const ok = exeDetect.isKnownNonGameExe(name);
+  console.log(`known non-game exe ${name} -> ${ok ? 'OK' : 'FAIL'}`);
+  if (!ok) fail++;
+}
+for (const name of ['Game.exe', 'ACBlackFlag.exe', 'portal2.exe']) {
+  const ok = !exeDetect.isKnownNonGameExe(name);
+  console.log(`real game exe ${name} not blocked -> ${ok ? 'OK' : 'FAIL'}`);
+  if (!ok) fail++;
+}
+
 console.log(fail === 0 ? '\nALL CHECKS PASS.' : `\n${fail} failure(s).`);
 process.exit(fail === 0 ? 0 : 1);

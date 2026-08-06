@@ -172,6 +172,34 @@ function consolidateDiscoveryList(list) {
   return result;
 }
 
+// Cross-source duplicate merge (used when "merge duplicate games" is enabled): a Ubisoft Connect
+// product whose uplay->Steam mapping resolves to a Steam appid already in the list is the same
+// game (a Steam purchase that launches Ubisoft Connect, e.g. product 66088 -> Steam 3751950).
+// The Ubisoft discovery records are merged into the Steam entry so both unlock sources feed the
+// same tile. Pure record plumbing — no network.
+function mergeCrossSourceDuplicates(appidList) {
+  const byAppid = new Map((appidList || []).map((g) => [String(g.appid), g]));
+  const merged = [];
+  for (const g of appidList || []) {
+    const isUbisoft = g && g.data && (g.data.type === 'ubisoftOfficial' || g.data.type === 'uplay') && g.data.uplayId;
+    if (isUbisoft) {
+      try {
+        const mapping = uplayR2.resolveSteamMapping({ appid: `UPLAY${g.data.uplayId}` });
+        const target = mapping && byAppid.get(String(mapping.steam_appid));
+        if (target && target !== g) {
+          mergeDiscoveryRecord(target, g);
+          debug && debug.log(`[merge] ${g.appid} (${g.source}) merged into Steam ${mapping.steam_appid}`);
+          continue;
+        }
+      } catch {
+        /* no mapping — keep both entries */
+      }
+    }
+    merged.push(g);
+  }
+  return merged;
+}
+
 function getDiscoverySources(record, cachedList) {
   if (record && Array.isArray(record._sources) && record._sources.length > 0) return record._sources.map(cloneDiscoveryRecord).filter(Boolean);
   if (record && !record.data && cachedList) {
@@ -626,6 +654,7 @@ async function getFolderIndex() {
   if (_folderIndex) return _folderIndex;
   const index = [];
   const seen = new Set();
+  const desktopSet = new Set(desktopRoots().map((d) => d.toLowerCase()));
   const addDir = (dir) => {
     const key = dir.toLowerCase();
     if (seen.has(key)) return;
@@ -646,7 +675,7 @@ async function getFolderIndex() {
       addDir(dir);
       // One safe extra level under Desktop: only descend into library-like subfolders
       // (Desktop\Jeux\<game>), never loose Desktop folders.
-      if (desktopRoots().some((d) => d.toLowerCase() === root.toLowerCase()) && saveRoots.isLibraryLikeFolderName(e.name)) {
+      if (desktopSet.has(root.toLowerCase()) && saveRoots.isLibraryLikeFolderName(e.name)) {
         let children;
         try {
           children = fs.readdirSync(dir, { withFileTypes: true });
@@ -665,6 +694,13 @@ async function getFolderIndex() {
 
 function desktopRoots() {
   return [process.env['USERPROFILE'] && path.join(process.env['USERPROFILE'], 'Desktop'), process.env['PUBLIC'] && path.join(process.env['PUBLIC'], 'Desktop')].filter(Boolean);
+}
+
+// Display name for an unconfigured install: the exe's own product metadata wins, then the folder
+// name, then the exe basename for numeric/meaningless folder names.
+function unconfiguredDisplayName(folderName, exeName, productName) {
+  if (productName) return productName;
+  return /^[0-9]+$/.test(folderName) || folderName.length < 3 ? exeName.replace(/\.exe$/i, '') : folderName;
 }
 
 // Resolve a game's install folder purely by matching its name against the scan-root folder names.
@@ -904,14 +940,22 @@ async function scanUnconfiguredInstalls(linkedExes = []) {
     if (isLinkedSubtree(dir)) return; // this folder already hosts a real-appid game (avoid duplicate)
     const exe = exeDetect.detect(dir, path.basename(dir), {});
     if (!exe) return;
+    // Repacks often rename the folder ("Game123", "0xDEADBEEF"); the exe's own version resource
+    // (FileDescription/ProductName) is a much better display name.
+    // Some tools expose only a generic descriptor ("Installer", "Launcher", "Application") — those
+    // say nothing about the game, so fall back to the folder/exe name instead.
+    const rawProductName = (pe.readExeProductName(exe.full) || '').trim();
+    const productName = rawProductName && !/^(application|app|installer|setup|launcher|loader|program|game|update|updater|uninstall|uninstaller|config|configuration|service|daemon|tool|tools|client)$/i.test(rawProductName)
+      ? rawProductName
+      : '';
     const folderName = path.basename(dir);
-    const name = /^[0-9]+$/.test(folderName) || folderName.length < 3 ? exe.name.replace(/\.exe$/i, '') : folderName;
+    const name = unconfiguredDisplayName(folderName, exe.name, productName && productName.trim().length >= 3 ? productName.trim() : '');
     const id = 'local-' + (crc32(dir.toLowerCase()) >>> 0).toString(16);
     out.push({
       appid: id,
       name,
       source: 'Unconfigured',
-      data: { type: 'unconfigured', gameDir: dir, exe: exe.full, hasSteamApiDll: hasDll(entries || []) },
+      data: { type: 'unconfigured', gameDir: dir, exe: exe.full, hasSteamApiDll: hasDll(entries || []), productName: productName || '' },
     });
   };
 
@@ -964,6 +1008,7 @@ function unconfiguredNameCandidates(u) {
   };
   add(u && u.name);
   if (u && u.data) {
+    add(u.data.productName);
     add(path.basename(u.data.gameDir || ''));
     add(path.basename(u.data.exe || '').replace(/\.exe$/i, ''));
   }
@@ -1133,7 +1178,7 @@ async function discover(source, steamAccFilter) {
   //GOG Galaxy official (legit client data — schema, unlocks and rarity read from Galaxy's SQLite)
   if (source.gogOfficial) {
     try {
-      data = data.concat(gogOfficial.scan());
+      data = data.concat(await gogOfficial.scan());
     } catch (err) {
       debug.error(err);
     }
@@ -1516,6 +1561,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
         lang: option.achievement.lang,
         key: option.steam.apiKey,
         showHidden: !!(option.achievement && option.achievement.showHidden),
+        fastScan: !!(option.achievement && option.achievement.fastScan),
         // Known emulator config dir (Goldberg discover) — lets the schema fetch resolve cover art
         // from the local app_product_info.json dump before hitting the network.
         steamSettings: (appid.data && appid.data.steamSettings) || null,
@@ -2294,9 +2340,11 @@ module.exports.makeList = async (option, callbackProgress, onGame = () => {}) =>
 
     // Reuse the discovery phase if an identical scan ran within DISCOVER_TTL_MS (e.g. a settings-save
     // rescan moments after load). Per-game unlock state is still loaded fresh below.
-    const appidList = await discoverWithCache(option, option.steam.main);
+    let appidList = await discoverWithCache(option, option.steam.main);
     let finalList = appidList;
     if (option.achievement.mergeDuplicate) {
+      appidList = mergeCrossSourceDuplicates(appidList);
+
       const seen = new Map();
       const duplicates = new Set();
       const result = [];
@@ -2393,4 +2441,11 @@ module.exports.makeList = async (option, callbackProgress, onGame = () => {}) =>
     debug.error(err);
     throw err;
   }
+};
+
+// Exposed for unit tests.
+module.exports._internal = {
+  mergeCrossSourceDuplicates,
+  isOfficialLauncherInstall: (dir) => launcherDetect.isOfficialLauncherInstall(dir),
+  isLibraryLikeFolderName: (name) => saveRoots.isLibraryLikeFolderName(name),
 };

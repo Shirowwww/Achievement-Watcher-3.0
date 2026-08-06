@@ -41,6 +41,37 @@ const EXE_EXCLUDE = [
   /\bcli\b/i, // command-line tools (wabbajack-cli, lootcli, …)
 ];
 
+// Well-known NON-game executables. A library root is supposed to hold games, but users sometimes
+// point one at a folder that also (or only) contains applications — browsers, chat, office,
+// system/driver tools, launchers. Those must never surface as "Unconfigured" games.
+const KNOWN_NON_GAME_EXE = new Set([
+  // browsers
+  'chrome.exe', 'msedge.exe', 'firefox.exe', 'brave.exe', 'opera.exe', 'iexplore.exe', 'vivaldi.exe', 'chromium.exe',
+  // chat / media
+  'discord.exe', 'slack.exe', 'teams.exe', 'zoom.exe', 'skype.exe', 'whatsapp.exe', 'telegram.exe', 'signal.exe',
+  'spotify.exe', 'itunes.exe', 'vlc.exe', 'wmplayer.exe', 'mpc-hc.exe', 'mpv.exe', 'foobar2000.exe', 'audacity.exe', 'mp3tag.exe',
+  // office / system
+  'winword.exe', 'excel.exe', 'powerpnt.exe', 'outlook.exe', 'onenote.exe', 'notepad.exe', 'wordpad.exe',
+  'explorer.exe', 'cmd.exe', 'powershell.exe', 'pwsh.exe', 'regedit.exe', 'taskmgr.exe', 'msconfig.exe', 'control.exe', 'msiexec.exe',
+  // dev tools
+  'code.exe', 'git.exe', 'node.exe', 'npm.exe', 'npx.exe', 'python.exe', 'java.exe', 'javaw.exe',
+  // archives / utilities
+  '7zfm.exe', '7zg.exe', 'winrar.exe', 'winzip64.exe', 'winzip.exe', 'peazip.exe',
+  'everything.exe', 'wiztree.exe', 'crystaldiskinfo.exe', 'crystaldiskmark.exe', 'crystaldiskmark9.exe',
+  'hwmonitor.exe', 'cpuz.exe', 'cpuid cpu-z.exe', 'processhacker.exe', 'procexp64.exe', 'latencymon.exe',
+  'revo uninstaller pro.exe', 'cheat engine.exe', 'cheatengine-x86_64.exe', 'cheatengine-x86_32.exe',
+  // virtualization / system services
+  'docker desktop.exe', 'docker.exe', 'wsl.exe', 'vmware.exe', 'virtualbox.exe', 'vboxmanage.exe',
+  // storefront/launcher clients
+  'steam.exe', 'steamwebhelper.exe', 'epicgameslauncher.exe', 'goggalaxy.exe', 'ubisoftconnect.exe',
+  'origin.exe', 'eaapp.exe', 'battle.net.exe', 'riot client.exe', 'riotclient.exe',
+]);
+
+function isKnownNonGameExe(name) {
+  const value = String(name || '').toLowerCase();
+  return KNOWN_NON_GAME_EXE.has(value) || KNOWN_NON_GAME_EXE.has(value.replace(/\.exe$/i, ''));
+}
+
 // Soft-penalty: usually-not-the-game helpers that occasionally are. Penalize, don't exclude.
 const SOFT_PENALTY = [
   /loader/i,
@@ -116,6 +147,7 @@ function collectCandidates(gameDir) {
         walk(path.join(dir, e.name), depth + 1);
       } else if (e.isFile() && e.name.toLowerCase().endsWith('.exe')) {
         if (EXE_EXCLUDE.some((r) => r.test(e.name))) continue;
+        if (isKnownNonGameExe(e.name)) continue;
         const full = path.join(dir, e.name);
         let size;
         try {
@@ -234,10 +266,11 @@ function shallowGameExe(dir) {
   for (const e of entries) {
     if (!e.isFile() || !e.name.toLowerCase().endsWith('.exe')) continue;
     if (EXE_EXCLUDE.some((r) => r.test(e.name))) continue;
+    if (isKnownNonGameExe(e.name)) continue;
     if (SOFT_PENALTY.some((r) => r.test(e.name))) continue; // skip launcher/loader-style exes
     return e.name;
   }
   return null;
 }
 
-module.exports = { detect, shallowGameExe, nameSimilarity, bestFolderMatch, FOLDER_MATCH_THRESHOLD, EXE_EXCLUDE, SOFT_PENALTY };
+module.exports = { detect, shallowGameExe, nameSimilarity, bestFolderMatch, FOLDER_MATCH_THRESHOLD, EXE_EXCLUDE, SOFT_PENALTY, isKnownNonGameExe, KNOWN_NON_GAME_EXE };

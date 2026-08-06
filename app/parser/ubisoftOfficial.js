@@ -369,6 +369,9 @@ function mergeConfigBlocks(blocks) {
     displayName: firstUsable('displayName'),
     rootName: firstUsable('rootName'),
     sortString: firstUsable('sortString'),
+    backgroundImage: firstRaw('backgroundImage'),
+    logoImage: firstRaw('logoImage'),
+    iconImage: firstRaw('iconImage'),
     // Which storefronts this spec appeared under. Not a title, but it does say "this product is
     // also sold on Steam", which is exactly the case the identity resolution has to handle.
     storefronts: [...new Set(list.map((b) => String(b.rootName || '').trim().toLowerCase()).filter((n) => LAUNCHER_TITLE_BLOCKLIST.has(n)))],
@@ -416,6 +419,9 @@ function readConfigurationsIndex(configurationsPath = DEFAULT_CONFIGURATIONS_PAT
     // sort_string is a shelf-ordering key ("Assassin's Creed 05.1"): a poor title, but a usable
     // last-resort name candidate when every other field is a storefront name or a loc key.
     const sortString = normalizeQuotedText(block.match(/^\s*sort_string:\s*([^\r\n]+)/m)?.[1] || '');
+    const backgroundImage = normalizeQuotedText(block.match(/^\s*background_image:\s*([^\r\n]+)/m)?.[1] || '');
+    const logoImage = normalizeQuotedText(block.match(/^\s*logo_image:\s*([^\r\n]+)/m)?.[1] || '');
+    const iconImage = normalizeQuotedText(block.match(/^\s*icon_image:\s*([^\r\n]+)/m)?.[1] || '');
     blocks.push({
       achievementsSpec,
       normalizedAchievementsSpec: normalizeAchievementsSpec(achievementsSpec),
@@ -423,6 +429,9 @@ function readConfigurationsIndex(configurationsPath = DEFAULT_CONFIGURATIONS_PAT
       displayName,
       rootName,
       sortString,
+      backgroundImage,
+      logoImage,
+      iconImage,
       title: cleanTitle(gameIdentifier) || cleanTitle(displayName) || cleanTitle(rootName) || '',
     });
   }
@@ -1027,6 +1036,7 @@ module.exports.getGameData = async (appid, lang) => {
   const uplayId = data.uplayId || appid.appid;
   const steamAppId = identity.steamAppId;
   if (identity.method) debug.log(`[${appid.appid}] identity resolved via ${identity.method}${identity.steamAppId ? ` -> Steam ${identity.steamAppId}` : ''}`);
+  const displayTitle = cleanTitle(data.title) || identity.title || '';
   let img = { header: null, background: null, portrait: null, icon: null };
   if (/^\d+$/.test(steamAppId)) {
     let portrait = `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${steamAppId}/library_600x900.jpg`;
@@ -1037,6 +1047,10 @@ module.exports.getGameData = async (appid, lang) => {
       const { ipcRenderer } = require('electron');
       const steamdbPortrait = await ipcRenderer.invoke('get-steamdb-cover', steamAppId).catch(() => null);
       if (steamdbPortrait) portrait = steamdbPortrait;
+      else if (displayTitle) {
+        const sgdbPortrait = await ipcRenderer.invoke('get-steamgriddb-cover', displayTitle).catch(() => null);
+        if (sgdbPortrait) portrait = sgdbPortrait;
+      }
     } catch (err) {
       debug.log(`[${appid.appid}] SteamDB cover fallback failed => ${err}`);
     }
@@ -1046,6 +1060,48 @@ module.exports.getGameData = async (appid, lang) => {
       portrait,
       icon: null,
     };
+  } else {
+    // No Steam release to borrow art from: use the launcher's own cached images (header/background/
+    // icon) when the configurations index names them, then SteamGridDB by title as a last resort.
+    try {
+      const uplayPath =
+        readRegistryString('HKLM', 'Software/WOW6432Node/Ubisoft/Launcher', 'InstallDir') ||
+        readRegistryString('HKCU', 'Software/WOW6432Node/Ubisoft/Launcher', 'InstallDir') ||
+        readRegistryString('HKLM', 'Software/Ubisoft/Launcher', 'InstallDir');
+      const assetsRoot = uplayPath ? path.join(uplayPath, 'cache/assets') : '';
+      const gamesRoot = uplayPath ? path.join(uplayPath, 'data/games') : '';
+      const meta = data.configBlock || {};
+      if (assetsRoot) {
+        const imgDir = path.join(cacheRoot || '', 'steam_cache', 'ubisoftOfficial', String(appid.appid), 'img');
+        fs.mkdirSync(imgDir, { recursive: true });
+        const copyAsset = (name, sourceRoot, key) => {
+          if (!name) return '';
+          const src = path.join(sourceRoot, name);
+          if (!fs.existsSync(src)) return '';
+          const dest = path.join(imgDir, `${key}${path.extname(name) || '.jpg'}`);
+          try {
+            fs.copyFileSync(src, dest);
+            return dest.replace(/\\/g, '/');
+          } catch {
+            return '';
+          }
+        };
+        img.background = copyAsset(meta.backgroundImage, assetsRoot, 'background');
+        img.header = copyAsset(meta.logoImage, assetsRoot, 'header');
+        img.icon = copyAsset(meta.iconImage, gamesRoot, 'icon') || copyAsset(meta.iconImage, assetsRoot, 'icon');
+      }
+    } catch (err) {
+      debug.log(`[${appid.appid}] local Ubisoft cover extraction failed => ${err}`);
+    }
+    if (!img.portrait && displayTitle) {
+      try {
+        const { ipcRenderer } = require('electron');
+        const sgdbPortrait = await ipcRenderer.invoke('get-steamgriddb-cover', displayTitle).catch(() => null);
+        if (sgdbPortrait) img.portrait = sgdbPortrait;
+      } catch (err) {
+        debug.log(`[${appid.appid}] SteamGridDB cover fallback failed => ${err}`);
+      }
+    }
   }
 
   // rarity: Steam global % bridged onto the numeric ids, cached under the (namespaced) appid so the
@@ -1054,9 +1110,8 @@ module.exports.getGameData = async (appid, lang) => {
 
   // A configurations entry can still resolve to a launcher name even after the scan-side filter
   // (e.g. a stale user-data copy of the index). Never surface "Steam"/"Ubisoft Connect" as a title.
-  const title = cleanTitle(data.title);
   return {
-    name: title || identity.title || `Ubisoft ${uplayId}`,
+    name: displayTitle || `Ubisoft ${uplayId}`,
     appid: appid.appid,
     steamappid: steamAppId || undefined,
     ubisoftProductId: String(uplayId),

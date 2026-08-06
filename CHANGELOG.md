@@ -5,8 +5,35 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- Unconfigured installs are named from the exe's own FileDescription/ProductName when the folder
+  name is meaningless (repacks that rename folders to "Game123" no longer show that garbage).
+- Cross-source duplicate merge ("merge duplicate games"): a Ubisoft Connect product mapped to an
+  already-listed Steam release (e.g. product 66088 → Steam 3751950) is merged into one tile with
+  both unlock sources instead of showing twice.
+- Fast-scan mode (on by default): recent cover/description lookup results are reused instead of
+  re-querying the network on every scan for games that genuinely have no art.
+- SteamGridDB cover fallback (optional per-user API key, bundled public fallback otherwise), used
+  when neither the guessable CDN path nor SteamDB has a portrait.
+- GOG Galaxy database reads now retry transient WAL lock failures ("unable to open database file")
+  instead of dropping the whole source from a scan.
+- SteamDB cover scrapes are serialized through one queue, so a cold first scan no longer opens N
+  parallel browser pages that can each stall for 45s.
+- Local Ubisoft launcher cover extraction (header/background/icon) for products whose Steam release
+  cannot be resolved.
+- Drive/profile library probes now run in parallel.
+
 ### Fixed
 
+- The "download icons" emulator setting no longer falls back to a missing locale path (its label,
+  description and option values were already fully translated under `settings.emulator`).
+- Well-known non-game executables (browsers, chat/office apps, system/driver tools, storefront
+  launchers, …) are no longer offered as "Unconfigured" games even when a library folder happens to
+  contain them.
+- Windows uninstall-registry `InstallLocation` folders are no longer auto-scanned: the filter was
+  too loose and surfaced every installed application (browsers, drivers, Docker, …) as a game, plus
+  stale folders of uninstalled games. User-created library folders remain fully supported.
 - A Ubisoft Connect game whose product id has no direct uplay→Steam mapping row no longer shows as
   "Ubisoft <id>": storefront variants resolve through the installed product's own
   `uplay_install.state` or a mapping-by-name fallback, and Assassin's Creed Black Flag Resynced
@@ -21,6 +48,10 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   missing from the product info now recover the real hashed capsule through SteamDB at load time
   (e.g. Yakuza 0 Director's Cut), and the library grid falls back to the header when no portrait
   exists instead of rendering a blank tile.
+- SteamGridDB cover lookups require an exact or token-level title match — an unrelated first
+  autocomplete result is never used as a cover.
+- Generic executable descriptors ("Installer", "Launcher", "Application", …) are ignored when
+  naming an unconfigured install; the folder/exe name is used instead.
 - Legit launcher installs (Ubisoft Connect, GOG Galaxy, Epic Games, Microsoft Store) are no longer
   surfaced as "Unconfigured" games or mis-promoted as Uplay R2 emulated installs, no matter which
   folder they live in (custom library roots included). A genuine Uplay R2 crack (launcher markers
@@ -45,6 +76,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - Library-folder name detection now understands localized names in many languages (Игры, Jogos,
   游戏/遊戲, ゲーム, 게임, Hry, Gry, Oyunlar, Játékok, Jocuri, Spellen, Pelit, Trò chơi, …) for
   drive-root probes, profile/AppData roots and the Desktop subfolder expansion.
+
+### Removed
+
+- The dedicated "Playtime scale / size of playtime popups" option in the notification settings —
+  playtime popups now always use the main notification scale.
 - The Windows installer now shows installation/uninstallation progress details by default, uses
   refreshed Steam Blue header/sidebar artwork (also on the uninstaller), and explicitly creates
   the Start Menu and desktop shortcuts. Installer images are generated from

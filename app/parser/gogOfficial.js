@@ -73,6 +73,25 @@ function safeClose(db) {
   }
 }
 
+// Galaxy keeps its SQLite databases in WAL mode; while the client is writing, a read-only open can
+// transiently fail with "unable to open database file". Retry a few times with a short delay before
+// giving up, so a running Galaxy no longer makes the whole GOG source disappear from a scan.
+async function withRetry(fn, { label = 'database', attempts = 3, delayMs = 500 } = {}) {
+  let lastErr;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return fn();
+    } catch (err) {
+      lastErr = err;
+      if (attempt < attempts) {
+        debug.log(`GOG ${label} attempt ${attempt}/${attempts} failed (${err}) — retrying in ${delayMs}ms`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+  throw lastErr;
+}
+
 // ---- galaxy-2.0.db (product catalog) -----------------------------------------------------------
 
 function normalizeId(value) {
@@ -342,10 +361,10 @@ async function resolveGogImages(productId) {
 
 // One entry per installed-and-played GOG game. When several Galaxy users have gameplay data for the
 // same product, the most recently written gameplay.db wins (one tile per game).
-module.exports.scan = () => {
+module.exports.scan = async () => {
   let entries;
   try {
-    entries = listGameplayEntries();
+    entries = await withRetry(() => listGameplayEntries(), { label: 'galaxy scan' });
   } catch (err) {
     debug.log(`GOG official scan skipped => ${err}`);
     return [];
@@ -355,7 +374,7 @@ module.exports.scan = () => {
   for (const entry of entries) {
     let gameplay;
     try {
-      gameplay = readGogGameplayDb(entry.gameplayDbPath);
+      gameplay = await withRetry(() => readGogGameplayDb(entry.gameplayDbPath), { label: `gameplay ${entry.productId}` });
     } catch (err) {
       debug.log(`[${entry.productId}] unreadable gameplay.db (${entry.gameplayDbPath}) => ${err}`);
       continue;

@@ -237,7 +237,7 @@ function translateUI(lang, locale, template) {
     bindEmuRow('option_apiCheckBypass', emu.apiCheckBypass);
     bindEmuRow('option_createLaunchBat', emu.launchBat);
     bindEmuRow('option_checkUpdates', emu.checkUpdates);
-    bindEmuRow('option_goldbergDownloadIcons', emu.goldbergIcons || template.settings.general.goldbergIcons);
+    bindEmuRow('option_goldbergDownloadIcons', emu.goldbergIcons);
   }
 
   // Platform guide section: static help, bound by stable ids so settings rows can move safely.
@@ -338,12 +338,10 @@ function translateUI(lang, locale, template) {
   $('#lbl-overlayScale').text(clear(template.settings.notification.option.overlayScale));
   $('#lbl-overlaySound').text(clear(template.settings.notification.option.overlaySound));
   $('#lbl-overlayRandomSound').text(clear(template.settings.notification.option.overlayRandomSound));
-  $('#lbl-overlayPlaytimeScale').text(clear(template.settings.notification.option.overlayPlaytimeScale));
   $('#lbl-overlayVolume').text(clear(template.settings.notification.option.overlayVolume));
   $('#lbl-overlayDuration').text(clear(template.settings.notification.option.overlayDuration));
   $('#option_overlayRandomSound option[value="false"]').text(clear(template.settings.common.disable));
   $('#option_overlayRandomSound option[value="true"]').text(clear(template.settings.common.enable));
-  $('#option_overlayPlaytimeScale option[value="0"]').text(clear(template.settings.notification.option.playtimeScaleSameAsMain));
   if (template.settings.notification.option.overlaySoundImport) {
     $('#btn-import-sound').attr('title', clear(template.settings.notification.option.overlaySoundImport));
   }
@@ -360,7 +358,6 @@ function translateUI(lang, locale, template) {
   $('#lbl-overlaySound').closest('li').find('.help').text(clear(template.settings.notification.option.overlaySoundDesc));
   $('#lbl-overlayRandomSound').closest('li').find('.help').text(clear(template.settings.notification.option.overlayRandomSoundDesc));
   $('#lbl-overlayScale').closest('li').find('.help').text(clear(template.settings.notification.option.overlayScaleDesc));
-  $('#lbl-overlayPlaytimeScale').closest('li').find('.help').text(clear(template.settings.notification.option.overlayPlaytimeScaleDesc));
   $('#lbl-overlayVolume').closest('li').find('.help').text(clear(template.settings.notification.option.overlayVolumeDesc));
   $('#lbl-overlayDuration').closest('li').find('.help').text(clear(template.settings.notification.option.overlayDurationDesc));
   $("#option_overlayDuration option[value='auto']").text(clear(template.settings.notification.option.overlayDurationAuto));

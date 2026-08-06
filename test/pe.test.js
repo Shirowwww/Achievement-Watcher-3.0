@@ -55,6 +55,19 @@ try {
   assert.strictEqual(pe.detectSteamStub(path.join(temp, 'notpe.txt')), false, 'non-PE → false');
   assert.strictEqual(pe.detectSteamStub(path.join(temp, 'does-not-exist.exe')), false, 'missing file → false');
 
+  // readExeProductName parses the VS_VERSIONINFO resource of real PEs.
+  const realExes = [
+    process.env['WINDIR'] ? path.join(process.env['WINDIR'], 'System32', 'notepad.exe') : '',
+    process.env['WINDIR'] ? path.join(process.env['WINDIR'], 'explorer.exe') : '',
+    path.join(__dirname, '..', 'app', 'dist', 'win-unpacked', 'Achievement Watcher.exe'),
+  ].filter((p) => p && fs.existsSync(p));
+  for (const exe of realExes) {
+    const product = pe.readExeProductName(exe);
+    if (!product) throw new Error(`readExeProductName returned empty for ${exe}`);
+  }
+  assert.strictEqual(pe.readExeProductName(path.join(temp, 'notpe.txt')), '');
+  assert.strictEqual(pe.readExeProductName(path.join(temp, 'does-not-exist.exe')), '');
+
   console.log('PASS: pe util (exeArch machine type + SteamStub .bind detection)');
 } finally {
   fs.rmSync(temp, { recursive: true, force: true });
