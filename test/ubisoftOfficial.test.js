@@ -79,6 +79,7 @@ function spoolRecord(achId, time) {
 
     const resolved = ubi._internal.resolveAchievementsArchive('8006', { achievementsRoot: achRoot });
     assert.equal(resolved.archivePath, archivePath);
+    assert.equal(resolved.spec, '1758_ach.spec', 'the archive spec is kept for generic identity lookup');
 
     const schema = ubi._internal.collectSchemaData(archivePath);
     assert.deepEqual(schema.ids, ['1', '2']); // "01" is normalized, ids sorted numerically
@@ -155,6 +156,28 @@ function spoolRecord(achId, time) {
     assert.equal(fc4Game.steamappid, '298110');
     assert.match(fc4Game.img.portrait, /298110.*library_600x900\.jpg/);
     assert.equal(fc4Game.achievement.list[0].displayName, 'A Worthy Opponent');
+
+    // ---- generic identity WITHOUT a configurations block (issue #14): only the archive spec names
+    // the game ("971_FarCry4" → "far cry 4"). The app resolves it through the existing Steam
+    // lookups and displays the canonical Steam title, with NO uplay-steam.json row for product 971.
+    const fc4RawSpoolDir = path.join(tmp, 'spool', 'user-guid-fc4-raw');
+    fs.mkdirSync(fc4RawSpoolDir, { recursive: true });
+    const fc4RawSpool = path.join(fc4RawSpoolDir, '971.spool');
+    fs.writeFileSync(fc4RawSpool, Buffer.concat([spoolRecord(11, T1)]));
+    const fc4RawZip = new AdmZip();
+    fc4RawZip.addFile('en-US_loc.txt', Buffer.from('11\tA Worthy Opponent\tDefeat the fortress', 'utf8'));
+    const fc4RawArchive = path.join(achRoot, '971_FarCry4');
+    fs.writeFileSync(fc4RawArchive, fc4RawZip.toBuffer());
+    const fc4RawEntry = {
+      appid: 'uplay-971',
+      source: 'Ubisoft Connect',
+      data: { type: 'ubisoftOfficial', uplayId: '971', spoolFilePath: fc4RawSpool, archivePath: fc4RawArchive, spec: 'FarCry4', title: '' },
+    };
+    ubi._internal.resetIdentityCache();
+    const fc4SpecGame = await ubi.getGameData(fc4RawEntry, 'english');
+    assert.equal(fc4SpecGame.name, 'Far Cry® 4');
+    assert.equal(fc4SpecGame.steamappid, '298110');
+    assert.match(fc4SpecGame.img.portrait, /298110.*library_600x900\.jpg/);
 
     // ---- storefront-variant product ids resolve to the same Steam release (AC Black Flag Resynced
     // ships as Ubisoft product 65043 native + 66088 Steam; both map to Steam 3751950).
@@ -257,9 +280,10 @@ function spoolRecord(achId, time) {
 
     // ---- spool listing
     const entries = ubi._internal.listSpoolEntries(path.join(tmp, 'spool'));
-    assert.equal(entries.length, 3);
+    assert.equal(entries.length, 4);
     assert.ok(entries.some((e) => e.appid === '8006' && e.userId === 'user-guid-1'));
     assert.ok(entries.some((e) => e.appid === '999997' && e.userId === 'user-guid-fc4'));
+    assert.ok(entries.some((e) => e.appid === '971' && e.userId === 'user-guid-fc4-raw'));
     assert.ok(entries.some((e) => e.appid === '66088' && e.userId === 'user-guid-bf'));
 
     // ---- watchdog live-watcher readers share the same formats

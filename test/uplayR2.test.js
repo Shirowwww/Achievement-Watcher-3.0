@@ -69,11 +69,15 @@ process.env.APPDATA = path.join(temp, 'AppData');
     assert.strictEqual(byId.uplay_id, '4');
 
     // Regression (issue #14): the Steam variant of Far Cry 4 registers as Ubisoft product 971.
-    // It must resolve to Steam 298110 through the mapping asset even when the install folder
-    // registry key is missing and the configurations block carries only storefront names.
-    const fc4By971 = uplayR2.resolveSteamMapping({ appid: 'UPLAY971' });
+    // It deliberately has NO direct row in uplay-steam.json — the app resolves it by the archive
+    // spec name ("FarCry4" → "far cry 4") through the mapping's name tier, exactly like the other
+    // Far Cry 4 variants, when the install-folder registry key and configurations titles are
+    // unavailable. No per-game row may be reintroduced.
+    assert.strictEqual(uplayR2.resolveSteamMapping({ appid: 'UPLAY971' }), null);
+    const fc4By971 = uplayR2.resolveSteamMapping({ appid: 'UPLAY971', name: 'far cry 4' });
     assert.strictEqual(fc4By971.steam_appid, 298110);
     assert.strictEqual(fc4By971.steam_name, 'Far Cry® 4');
+    assert.notStrictEqual(fc4By971.uplay_id, '971', 'resolved by title, not by a 971-specific row');
 
     // Fuzzy name match should resolve to the same entry without an id.
     const byName = uplayR2.resolveSteamMapping({ name: "Assassin's Creed II" });

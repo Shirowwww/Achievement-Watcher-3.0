@@ -5,6 +5,16 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Fixed
+
+- Ubisoft Connect titles bought on Steam no longer need a per-game row in the uplay↔Steam mapping
+  asset: the cached achievements archive's own spec name (`971_FarCry4` → "far cry 4") is now a
+  resolution candidate when the registered install folder is unavailable and the configurations
+  index has no usable title. The game resolves through the same generic chain as before — mapping
+  asset by title, installed Steam library, then Steam catalog — and the Steam release's canonical
+  name wins for display. This replaces the 3.7.0 per-product id row for Far Cry 4 (uplay 971),
+  which has been removed (issues #7/#14).
+
 ## 3.7.0 - 2026-08-06
 
 ### Added

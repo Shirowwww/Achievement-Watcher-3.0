@@ -326,7 +326,7 @@ function specToWords(value) {
 
 // Candidate game titles for a configurations block, best first. Launcher names ("Steam", …) are
 // filtered out; the achievements spec is a last resort because it is often a short internal id.
-function buildNameCandidates(block) {
+function buildNameCandidates(block, archiveSpec = '') {
   const candidates = [];
   const push = (value) => {
     const title = cleanTitle(value);
@@ -341,6 +341,15 @@ function buildNameCandidates(block) {
     // "watch_dogs"), and a confident match on a franchise name resolves to the wrong game.
     const specWords = specToWords(block.achievementsSpec);
     if (specWords.length >= 2) push(specWords.join(' '));
+  }
+  // The achievements archive filename is the last offline signal that survives a missing
+  // configurations index: Ubisoft names those caches "<productId>_<spec>" and the spec often
+  // spells the title ("971_FarCry4" → "far cry 4"). It is a search candidate only — the resolved
+  // Steam release's own name wins for display (see resolveIdentity).
+  const archiveWords = specToWords(archiveSpec);
+  if (archiveWords.length >= 2) {
+    const name = archiveWords.join(' ');
+    if (!candidates.includes(name)) candidates.push(name);
   }
   return candidates;
 }
@@ -469,7 +478,8 @@ function resolveAchievementsArchive(appid, options = {}) {
   const blocks = readConfigurationsIndex(options.configurationsPath);
   let best = null;
   for (const filePath of candidateFiles) {
-    const normalizedSpec = normalizeAchievementsSpec(path.basename(filePath).slice(prefix.length));
+    const rawSpec = path.basename(filePath).slice(prefix.length);
+    const normalizedSpec = normalizeAchievementsSpec(rawSpec);
     const metadata = mergeConfigBlocks(blocks.filter((block) => block.normalizedAchievementsSpec === normalizedSpec));
     let mtimeMs = 0;
     try {
@@ -477,10 +487,10 @@ function resolveAchievementsArchive(appid, options = {}) {
     } catch {}
     const score = metadata ? 2 : 1;
     if (!best || score > best.score || (score === best.score && mtimeMs > best.mtimeMs)) {
-      best = { archivePath: filePath, metadata, score, mtimeMs };
+      best = { archivePath: filePath, spec: rawSpec, metadata, score, mtimeMs };
     }
   }
-  return { archivePath: best.archivePath, title: best.metadata?.title || '', metadata: best.metadata || null };
+  return { archivePath: best.archivePath, spec: best.spec || '', title: best.metadata?.title || '', metadata: best.metadata || null };
 }
 
 // Minimal stored/deflate ZIP reader — the archives are plain ZIPs but carry no .zip extension, so
@@ -764,11 +774,14 @@ async function scanLocalSteamLibrary(options = {}) {
 //                the Steam release with no title involved at all (the strongest signal, and the one
 //                that works for a storefront block carrying no game name whatsoever),
 //   asset      → the bundled uplay↔steam mapping,
+//   uplay-name → the mapping asset searched by title (the archive spec names the game even when
+//                the configurations index does not),
 //   library    → a confident name match against the installed Steam manifests,
 //   name       → a confident name match against the full Steam catalog.
 //
-// A Steam purchase that launches Ubisoft Connect (issue #7) is resolved by the first step for ANY
-// future title, with no asset edit and no network.
+// A Steam purchase that launches Ubisoft Connect (issues #7/#14) is resolved generically — by the
+// first step, or from the achievements archive's own spec ("971_FarCry4") through the library or
+// catalog — with no per-game asset edit.
 let identityCache = new Map();
 
 // Whether a Ubisoft product id is really on disk. Ubisoft Connect registers every product under
@@ -809,6 +822,8 @@ async function resolveIdentity(entry, options = {}) {
 
   const findAppidByName =
     options.findAppidByName || ((name) => require('./steam.js').findAppidByName(name));
+  const findAppNameByAppid =
+    options.findAppNameByAppid || ((appid) => require('./steam.js').getAppNameByAppid(appid));
   const localSteamLibrary =
     typeof options.localSteamLibrary === 'function'
       ? await options.localSteamLibrary()
@@ -823,7 +838,22 @@ async function resolveIdentity(entry, options = {}) {
       : await loadLocalSteamInstalls(options);
   const readUbisoftInstallDir = options.ubisoftInstallDir || ubisoftInstallDir;
   const block = (entry && entry.data && entry.data.configBlock) || {};
-  const candidates = buildNameCandidates(block);
+  // scan() stores the spec explicitly; entries built elsewhere (tests, cached records) can still
+  // carry it inside archivePath (".../971_FarCry4" → "FarCry4").
+  const archiveSpec =
+    String((entry && entry.data && entry.data.spec) || '').trim() ||
+    (entry && entry.data && entry.data.archivePath
+      ? path.basename(String(entry.data.archivePath)).replace(/^\d+_/, '')
+      : '');
+  const candidates = buildNameCandidates(block, archiveSpec);
+  // Names derived from the archive spec are searchable but not display-ready ("far cry 4"): a
+  // canonical Steam name (asset row, appmanifest, app-list lookup) wins for the title instead.
+  const specFallbacks = buildNameCandidates(null, archiveSpec);
+  const isSpecCandidate = (candidate) => specFallbacks.includes(candidate);
+  const useCandidateTitle = (candidate, canonical = '') => {
+    if (title) return;
+    title = !isSpecCandidate(candidate) || !canonical ? candidate : canonical;
+  };
   const mapping = getUplaySteamMapping().get(uplayId);
 
   let title = cleanTitle((entry && entry.data && entry.data.title) || '');
@@ -883,7 +913,7 @@ async function resolveIdentity(entry, options = {}) {
           steamAppId = String(mapped.steam_appid).trim();
           steamName = mapped.steam_name ? String(mapped.steam_name).trim() : '';
           method = 'uplay-name';
-          if (!title) title = candidate;
+          useCandidateTitle(candidate, steamName);
           break;
         }
       }
@@ -904,7 +934,8 @@ async function resolveIdentity(entry, options = {}) {
         steamAppId = String(hit).trim();
         steamName = '';
         method = 'library';
-        if (!title) title = candidate;
+        const owner = localSteamLibrary.find((i) => String(i.appid) === String(hit));
+        useCandidateTitle(candidate, owner && owner.name ? String(owner.name).trim() : '');
         break;
       }
     }
@@ -924,7 +955,13 @@ async function resolveIdentity(entry, options = {}) {
         steamAppId = resolved;
         steamName = '';
         method = 'name';
-        if (!title) title = candidate;
+        let appName = '';
+        try {
+          appName = String((await findAppNameByAppid(resolved)) || '').trim();
+        } catch {
+          /* name lookup is best-effort; the candidate remains the fallback */
+        }
+        useCandidateTitle(candidate, appName);
         break;
       }
     }
@@ -991,6 +1028,7 @@ module.exports.scan = () => {
         spoolFilePath: entry.spoolFilePath,
         userId: entry.userId,
         archivePath: archive.archivePath,
+        spec: archive.spec || '',
         configBlock: archive.metadata || null,
         title: archive.title || mapping?.uplay_name || mapping?.steam_name || '',
       },

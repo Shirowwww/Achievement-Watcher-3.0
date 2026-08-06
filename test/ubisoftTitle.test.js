@@ -180,18 +180,66 @@ test('identity falls back to the local Steam library, then to the catalog, by na
   assert.equal(fromCatalog.title, 'Local Only Game');
 });
 
-test('uplay 971 (Far Cry 4 Steam variant) resolves through the mapping asset', async () => {
+test('uplay 971 (Far Cry 4 Steam variant) resolves from the archive spec with no asset row', async () => {
   // Regression (issue #14): 3.6.1 showed "Ubisoft 971" with an empty poster because the product id
-  // had no asset row and no install-dir signal on the reporter's machine. The asset row is the
-  // deterministic offline answer: title + Steam appid + cover art.
+  // had no asset row and no install-dir signal on the reporter's machine. The generic answer is the
+  // achievements archive's own spec ("971_FarCry4"): it names the game, so the installed Steam
+  // library resolves it to Steam 298110 without a per-game mapping row.
   ubi._internal.resetIdentityCache();
   const identity = await ubi._internal.resolveIdentity(
-    { appid: 'uplay-971', data: { uplayId: '971', title: '', configBlock: null } },
-    { ubisoftInstallDir: () => '', localSteamInstalls: [], localSteamLibrary: [], findAppidByName: async () => null }
+    { appid: 'uplay-971', data: { uplayId: '971', title: '', configBlock: null, spec: 'FarCry4' } },
+    { ubisoftInstallDir: () => '', localSteamInstalls: [], localSteamLibrary: [{ appid: 298110, name: 'Far Cry 4' }], findAppidByName: async () => null }
   );
-  assert.equal(identity.method, 'asset');
+  // The mapping asset still answers by TITLE through its other Far Cry 4 rows — no 971 row needed.
+  assert.equal(identity.method, 'uplay-name');
   assert.equal(identity.steamAppId, '298110');
-  assert.equal(identity.title, 'Far Cry® 4');
+  assert.equal(identity.title, 'Far Cry® 4'); // canonical Steam name wins over the lower-case spec words
+});
+
+test('an asset-less Steam-variant product resolves from the archive spec via the local Steam library', async () => {
+  // A title with no uplay-steam.json rows at all (e.g. a hypothetical future Steam-variant release):
+  // the archive spec still names it, and the installed Steam library supplies the appid and title.
+  ubi._internal.resetIdentityCache();
+  const identity = await ubi._internal.resolveIdentity(
+    { appid: 'uplay-424242', data: { uplayId: '424242', title: '', configBlock: null, spec: 'HypotheticalGame' } },
+    { ubisoftInstallDir: () => '', localSteamInstalls: [], localSteamLibrary: [{ appid: 999, name: 'Hypothetical Game' }], findAppidByName: async () => null }
+  );
+  assert.equal(identity.method, 'library');
+  assert.equal(identity.steamAppId, '999');
+  assert.equal(identity.title, 'Hypothetical Game'); // manifest name, not "hypothetical game"
+});
+
+test('an asset-less Steam-variant product resolves via the Steam catalog', async () => {
+  ubi._internal.resetIdentityCache();
+  const identity = await ubi._internal.resolveIdentity(
+    { appid: 'uplay-424242', data: { uplayId: '424242', title: '', configBlock: null, spec: 'HypotheticalGame' } },
+    {
+      ubisoftInstallDir: () => '',
+      localSteamInstalls: [],
+      localSteamLibrary: [],
+      findAppidByName: async (name) => (String(name).toLowerCase().includes('hypothetical') ? '999' : null),
+      findAppNameByAppid: async (appid) => (appid === '999' ? 'Hypothetical Game' : ''),
+    }
+  );
+  assert.equal(identity.method, 'name');
+  assert.equal(identity.steamAppId, '999');
+  assert.equal(identity.title, 'Hypothetical Game');
+
+  // Without a canonical name the spec words still beat "Ubisoft <id>" as a last resort.
+  ubi._internal.resetIdentityCache();
+  const noCanonical = await ubi._internal.resolveIdentity(
+    { appid: 'uplay-424242', data: { uplayId: '424242', title: '', configBlock: null, spec: 'HypotheticalGame' } },
+    {
+      ubisoftInstallDir: () => '',
+      localSteamInstalls: [],
+      localSteamLibrary: [],
+      findAppidByName: async (name) => (String(name).toLowerCase().includes('hypothetical') ? '999' : null),
+      findAppNameByAppid: async () => '',
+    }
+  );
+  assert.equal(noCanonical.method, 'name');
+  assert.equal(noCanonical.steamAppId, '999');
+  assert.equal(noCanonical.title, 'hypothetical game');
 });
 
 test('the local Steam library reader understands the real VDF/ACF layout', async () => {

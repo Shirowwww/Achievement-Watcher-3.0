@@ -1074,6 +1074,17 @@ async function findInAppList(appID) {
   throw 'ERR_NAME_NOT_FOUND';
 }
 
+// Resolve an AppID back to its canonical store name (app-list cache first, then the store data
+// IPC). Returns '' when neither path is reachable; callers keep their own fallback name.
+const getAppNameByAppid = (module.exports.getAppNameByAppid = async (appid) => {
+  try {
+    const name = await findInAppList(Number(appid));
+    return name && String(name).trim() ? String(name).trim() : '';
+  } catch {
+    return '';
+  }
+});
+
 // Did the Steam app-list actually load? When it did not (offline, endpoint down and no cached copy
 // yet) EVERY appid misses it, so a miss carries no information and must not be cached as a negative.
 function appListUsable() {
