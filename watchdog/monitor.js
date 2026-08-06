@@ -459,35 +459,3 @@ module.exports.parse = async (filePath) => {
     throw err;
   }
 };
-
-module.exports.getFoldersLuma = async () => {
-  let data = [];
-
-  const regedit = await loadRegedit();
-  let users = await regedit.regListAllSubkeys('HKCU', 'SOFTWARE/LumaPlay');
-  if (!users) return data;
-
-  for (let user of users) {
-    try {
-      let appidList = await regedit.regListAllSubkeys('HKCU', `SOFTWARE/LumaPlay/${user}`);
-      if (!appidList) continue;
-
-      for (let appid of appidList) {
-        data.push({
-          dir: `SOFTWARE/LumaPlay/${user}/${appid}/Achievements`,
-          options: {
-            appid,
-            disableCheckIfProcessIsRunning: true,
-            disableCheckTimestamp: true,
-            recursive: false,
-            file: [files.achievement[1]],
-          },
-        });
-      }
-    } catch (err) {
-      debug.log(err);
-    }
-  }
-
-  return data;
-};
