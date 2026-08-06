@@ -30,6 +30,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- "Merge duplicate games" now also drops a same-name Steam save phantom when a GOG Galaxy entry
+  exists for the same game — Cyberpunk 2077 no longer appears twice (stale CODEX/Goldberg save +
+  real GOG copy). Genuinely installed Steam copies are still kept.
 - The "Choose another cover…" gallery opens reliably again: a scope bug (wrong variable reference)
   could abort it before the modal appeared, and the modal is now shown before the cover fetch so a
   failed lookup always leaves a visible state.

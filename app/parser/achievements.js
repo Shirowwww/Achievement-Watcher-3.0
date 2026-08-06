@@ -179,8 +179,32 @@ function consolidateDiscoveryList(list) {
 // same tile. Pure record plumbing — no network.
 function mergeCrossSourceDuplicates(appidList) {
   const byAppid = new Map((appidList || []).map((g) => [String(g.appid), g]));
+  const drop = new Set();
+  const gameNameCache = require(path.join(appPath, '..', 'util', 'gameNameCache.js'));
+  const cachedSteamName = (appid) => {
+    try {
+      const file = path.join(userDataDir(), 'steam_cache', 'schema', 'english', `${appid}.db`);
+      if (fs.existsSync(file)) {
+        const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+        if (data && typeof data.name === 'string' && data.name.trim()) return data.name.trim();
+      }
+    } catch {
+      /* schema cache missing/corrupt — try the app-name cache next */
+    }
+    return '';
+  };
+  // Numeric appids with a resolvable name act as Steam targets for cross-store dedupe. Save-only
+  // phantoms (leftover emulator saves) carry no name, so resolve it from the schema/app-name caches.
+  const steamTargets = (appidList || [])
+    .filter((g) => /^\d+$/.test(String(g.appid)))
+    .map((g) => ({
+      appid: g.appid,
+      name: g.name || cachedSteamName(String(g.appid)) || gameNameCache.lookupSteamDbName(String(g.appid)) || '',
+    }))
+    .filter((t) => t.name);
   const merged = [];
   for (const g of appidList || []) {
+    if (drop.has(String(g.appid))) continue;
     const isUbisoft = g && g.data && (g.data.type === 'ubisoftOfficial' || g.data.type === 'uplay') && g.data.uplayId;
     if (isUbisoft) {
       try {
@@ -193,6 +217,21 @@ function mergeCrossSourceDuplicates(appidList) {
         }
       } catch {
         /* no mapping — keep both entries */
+      }
+    }
+    // A leftover emulator save (no install folder/exe) for the same game as a GOG Galaxy entry is
+    // a phantom: drop it so the real GOG tile stays alone (e.g. Cyberpunk 2077 from a stale CODEX
+    // save duplicating the GOG copy). Genuinely installed Steam copies are kept.
+    if (g && g.data && g.data.type === 'gogOfficial' && g.data.title) {
+      try {
+        const hit = require('../util/fuzzyAppid.js').bestConfidentAppid(String(g.data.title), steamTargets);
+        const target = hit && byAppid.get(String(hit));
+        if (target && target !== g && target.data && target.data.type === 'file' && !target.data.gameDir && !target.data.exe) {
+          drop.add(String(target.appid));
+          debug && debug.log(`[merge] ${g.appid} (${g.source}) deduped phantom Steam ${target.appid} (${g.data.title})`);
+        }
+      } catch {
+        /* no confident match — keep both entries */
       }
     }
     merged.push(g);

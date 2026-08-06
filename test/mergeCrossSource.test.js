@@ -57,6 +57,39 @@ test('mergeDuplicate keeps an unmapped Ubisoft product separate', () => {
   assert.equal(merged[0].appid, 'uplay-999999');
 });
 
+test('a GOG game dedupes a same-name Steam save phantom (Cyberpunk case)', () => {
+  const gog = {
+    appid: '1423049311',
+    source: 'GOG Galaxy',
+    data: { type: 'gogOfficial', title: 'Cyberpunk 2077', gameplayDbPath: 'C:\\gog\\gameplay.db' },
+  };
+  const steamPhantom = {
+    appid: '1091500',
+    name: 'Cyberpunk 2077',
+    source: 'CODEX',
+    data: { type: 'file', path: 'C:\\Users\\Public\\Documents\\Steam\\CODEX\\1091500' },
+  };
+  const merged = achievements._internal.mergeCrossSourceDuplicates([gog, steamPhantom]);
+  assert.equal(merged.length, 1);
+  assert.equal(merged[0].appid, '1423049311');
+});
+
+test('a GOG game keeps a genuinely installed Steam copy', () => {
+  const gog = {
+    appid: '1423049311',
+    source: 'GOG Galaxy',
+    data: { type: 'gogOfficial', title: 'Cyberpunk 2077', gameplayDbPath: 'C:\\gog\\gameplay.db' },
+  };
+  const steamInstalled = {
+    appid: '1091500',
+    name: 'Cyberpunk 2077',
+    source: 'Steam',
+    data: { type: 'steamAPI', gameDir: 'C:\\Jeux\\Cyberpunk 2077', userID: 'x' },
+  };
+  const merged = achievements._internal.mergeCrossSourceDuplicates([gog, steamInstalled]);
+  assert.equal(merged.length, 2);
+});
+
 test('official launcher and library-name helpers are exposed for the scanner', () => {
   const os = require('node:os');
   const fs = require('node:fs');
