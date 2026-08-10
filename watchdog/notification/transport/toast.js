@@ -102,14 +102,18 @@ function buildToastNotification(message, options) {
     time: message.time,
     title,
     message: body,
-    // Playtime's `icon` is Steam's tiny img_icon_url (low-res, looks like an exe icon); prefer the
-    // higher-res gameIcon (Steam library art) and fall back to it only when that's unavailable.
-    icon: message.notificationType === 'playtime' ? message.gameIcon || message.icon : message.icon,
+    // Steam's `icon` is the square game logo intended for compact surfaces. `gameIcon` is portrait
+    // library artwork, which looks wrong in Windows' square app-logo slot; reserve the wide header
+    // for the playtime hero image below and use the portrait only as a last-resort fallback.
+    icon: type === 'playtime' ? message.icon || message.gameIcon : message.icon,
     // Silence the toast when we play the configured sound ourselves, or when muted.
     silent: hasCustomSound || options.toast.customAudio === '0' ? true : false,
     // '2'-without-a-file falls back to a built-in notification sound.
     audio: hasCustomSound ? null : options.toast.customAudio === '2' ? 'ms-winsoundevent:Notification.Achievement' : null,
-    cropIcon: options.toast.cropIcon,
+    // Artwork is intentionally square. Windows only makes this a circular avatar when cropIcon
+    // is true; that is a poor fit for achievement and game artwork, and the app exposes no shape
+    // preference to the user.
+    cropIcon: false,
   };
 
   notification.uniqueID = message.achievementName ? `${message.appid}:${message.achievementName}` : `${message.appid}`;
@@ -134,8 +138,11 @@ function buildToastNotification(message, options) {
 
   if (options.toast.attribution) notification.attribution = options.toast.attribution;
 
-  if (options.toast.imageIntegration != '0' && message.image) {
-    if (options.toast.imageIntegration == '1') {
+  // A playtime toast is a compact session summary, so its game header is always the prominent
+  // hero image above the text. Other notification kinds still honour the selected image mode.
+  const imageIntegration = type === 'playtime' ? '1' : options.toast.imageIntegration;
+  if (imageIntegration != '0' && message.image) {
+    if (imageIntegration == '1') {
       // powertoast renders a hero image through `heroImg`; the old `headerImg` key was silently
       // dropped from the XML, so playtime/platinum toasts never showed their game art.
       notification.heroImg = message.image;

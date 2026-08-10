@@ -276,6 +276,16 @@ function translateUI(lang, locale, template) {
     bindHelpText('help-shortcuts-title', help.shortcutsTitle);
     bindHelpText('help-tips-title', help.tipsTitle);
     bindHelpText('help-troubleshoot-title', help.troubleshootTitle);
+    const bindHelpAction = (id, value) => {
+      const action = $('#' + id);
+      const label = clear(value);
+      if (!action.length || !label) return;
+      action.find('span').text(label);
+      action.attr('title', label).attr('aria-label', label);
+    };
+    bindHelpAction('help-action-folder', template.settings.sideMenu.folder);
+    bindHelpAction('help-action-source', template.settings.sideMenu.source);
+    bindHelpAction('help-action-notification', template.settings.sideMenu.notification);
     bindHelpList('help-quick-list', help.quick);
     bindHelpList('help-steam-list', help.steam);
     bindHelpList('help-emulator-list', help.emulators);
@@ -440,6 +450,14 @@ function translateUI(lang, locale, template) {
   if (template.settings.folder.generateConfigs) $('#generate-configs-label').text(clear(template.settings.folder.generateConfigs));
   if (template.settings.folder.generateConfigsHelp) $('#generate-configs-help').text(clear(template.settings.folder.generateConfigsHelp));
   $('#folder-library-info').html(clear(template.settings.folder.libraryInfo.join('\n')).replace(/\n/g, '<br>'));
+  const folderRescan = template.dialogs;
+  if (folderRescan) {
+    $('#folder-rescan-title').text(clear(folderRescan['rescan-selected-folders']));
+    $('#folder-rescan-help').text(clear(folderRescan['rescan-selected-help']));
+    $('#folder-rescan-select-all span').text(clear(folderRescan['rescan-select-all']));
+    $('#folder-rescan-select-none span').text(clear(folderRescan['rescan-select-none']));
+    $('#folder-rescan-run span').text(clear(folderRescan['rescan-selected-folders']));
+  }
   selector = $('#options-source');
   $('#source-options-title').text(clear(template.settings.source.title));
   selector.find('li:nth-child(1) .left span').text(clear(template.settings.source.legitSteam.name));

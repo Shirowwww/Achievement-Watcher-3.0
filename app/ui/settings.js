@@ -10,6 +10,7 @@ const appPath = remote.app.getAppPath();
 const { escapeHtml } = require(path.join(appPath, 'util/escapeHtml.js'));
 const userThemes = require(path.join(appPath, 'util/userThemes.js'));
 const themeLayers = require(path.join(appPath, 'util/themeLayers.js'));
+const scanScopeTools = require(path.join(appPath, 'parser/scanScope.js'));
 const { t } = require(path.join(appPath, 'locale/t.js'));
 let listeningHotkey = false;
 let keysDown = new Set();
@@ -1469,6 +1470,13 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       self.css('pointer-events', 'initial');
     });
 
+    // The help screen points to the settings people most often need when a game or notification is
+    // missing. Reuse the normal sidebar action so it keeps the active state and scroll behaviour.
+    $('#settings [data-help-view]').click(function () {
+      const view = String($(this).data('help-view') || '');
+      $(`#settingNav li[data-view='${view}']`).trigger('click');
+    });
+
     /* ---- Settings search ---------------------------------------------------
        Seven tabs and roughly a hundred rows means the hardest part of changing a
        setting is remembering which tab owns it. Typing here filters the rows of
@@ -1711,6 +1719,130 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         self.css('pointer-events', 'initial');
       }
     });
+
+    // Rescan only the configured locations that the user selected. The parser receives this scope
+    // ephemerally: folder preferences stay intact, and the existing tiles outside the scope remain
+    // visible while their disks are deliberately left untouched.
+    let folderRescanBusy = false;
+    const folderRescanKey = scanScopeTools.directoryKey;
+    function getFolderRescanLocations() {
+      const locations = new Map();
+      const add = (value, kind) => {
+        const dir = String(value || '').trim();
+        const key = folderRescanKey(dir);
+        if (!key) return;
+        const record = locations.get(key) || { path: dir, user: false, library: false };
+        record[kind] = true;
+        locations.set(key, record);
+      };
+      $('#settings #dirlist > li').each(function () {
+        add($(this).find('.path span').text(), 'user');
+      });
+      $('#settings #libdirlist > li').each(function () {
+        add($(this).find('.path span').text(), 'library');
+      });
+      return [...locations.values()];
+    }
+    function updateFolderRescanControls() {
+      const inputs = $('#folder-rescan-list input[type="checkbox"]');
+      const hasSelection = inputs.filter(':checked').length > 0;
+      $('#folder-rescan-select-all').prop('disabled', folderRescanBusy || inputs.length === 0);
+      $('#folder-rescan-select-none').prop('disabled', folderRescanBusy || inputs.length === 0);
+      $('#folder-rescan-run').prop('disabled', folderRescanBusy || !hasSelection);
+    }
+    function renderFolderRescanLocations() {
+      const list = $('#folder-rescan-list');
+      const selected = new Set(
+        list
+          .find('input[type="checkbox"]:checked')
+          .map(function () {
+            return String($(this).attr('data-folder-key') || '');
+          })
+          .get()
+      );
+      const keepSelection = list.children().length > 0;
+      const locations = getFolderRescanLocations();
+      list.empty();
+      if (locations.length === 0) {
+        $('#folder-rescan-result').text(t('rescan-no-folders', 'Add a folder before rescanning.', 'Ajoute un dossier avant de relancer une analyse.'));
+        updateFolderRescanControls();
+        return;
+      }
+      for (const location of locations) {
+        const key = folderRescanKey(location.path);
+        const icon = location.user && location.library ? 'fa-layer-group' : location.library ? 'fa-folder-open' : 'fa-save';
+        const row = $('<li>').addClass('folder-rescan-location');
+        const label = $('<label>');
+        const input = $('<input>', { type: 'checkbox' })
+          .attr('data-folder-key', key)
+          .attr('data-user', location.user ? 'true' : 'false')
+          .attr('data-library', location.library ? 'true' : 'false')
+          .attr('aria-label', location.path)
+          .prop('checked', keepSelection ? selected.has(key) : true);
+        label.append(input, $('<i>').addClass(`fas ${icon}`), $('<span>').attr('title', location.path).text(location.path));
+        row.append(label).appendTo(list);
+      }
+      if (!keepSelection) $('#folder-rescan-result').empty();
+      updateFolderRescanControls();
+    }
+    function selectedFolderRescanScope() {
+      const scope = { userDirs: [], libraryDirs: [] };
+      $('#folder-rescan-list input[type="checkbox"]:checked').each(function () {
+        const path = $(this).siblings('span').text();
+        if ($(this).attr('data-user') === 'true') scope.userDirs.push(path);
+        if ($(this).attr('data-library') === 'true') scope.libraryDirs.push(path);
+      });
+      return scope;
+    }
+    function saveCurrentFolderLists() {
+      const userDirList = [];
+      const libraryDirList = [];
+      $('#settings #dirlist > li').each(function () {
+        userDirList.push({ path: $(this).find('.path span').text(), notify: true });
+      });
+      $('#settings #libdirlist > li').each(function () {
+        libraryDirList.push($(this).find('.path span').text());
+      });
+      settings.setUserDataPath(ipcRenderer.sendSync('get-user-data-path-sync'));
+      return withSettingsTimeout(Promise.all([userDir.save(userDirList), libraryDirs.save(libraryDirList)]), 'Saving folders for selected rescan');
+    }
+    $('#folder-rescan-list').on('change', 'input[type="checkbox"]', function () {
+      $('#folder-rescan-result').empty();
+      updateFolderRescanControls();
+    });
+    $('#folder-rescan-select-all').click(function () {
+      $('#folder-rescan-list input[type="checkbox"]').prop('checked', true).trigger('change');
+    });
+    $('#folder-rescan-select-none').click(function () {
+      $('#folder-rescan-list input[type="checkbox"]').prop('checked', false).trigger('change');
+    });
+    $('#folder-rescan-run').click(async function () {
+      if (folderRescanBusy) return;
+      const scope = selectedFolderRescanScope();
+      const count = scope.userDirs.length + scope.libraryDirs.filter((dir) => !scope.userDirs.some((userDir) => folderRescanKey(userDir) === folderRescanKey(dir))).length;
+      const result = $('#folder-rescan-result');
+      if (count === 0) {
+        result.text(t('rescan-no-selection', 'Select at least one folder.', 'Sélectionne au moins un dossier.'));
+        updateFolderRescanControls();
+        return;
+      }
+      folderRescanBusy = true;
+      updateFolderRescanControls();
+      result.text(t('rescan-started', 'Rescanning {count} selected folder(s)…', 'Analyse des {count} dossier(s) sélectionné(s)…', { count }));
+      try {
+        await saveCurrentFolderLists();
+        await app.onStart({ scanScope: scope });
+        result.text(t('rescan-complete', 'Selected folders rescanned.', 'Dossiers sélectionnés analysés.'));
+      } catch (err) {
+        debug.log(err);
+        result.text(t('rescan-failed', 'Selected-folder scan failed: {error}', 'Échec de l’analyse des dossiers sélectionnés : {error}', { error: err && err.message ? err.message : err }));
+      } finally {
+        folderRescanBusy = false;
+        updateFolderRescanControls();
+      }
+    });
+    $(document).on('folder-rescan-locations-changed', renderFolderRescanLocations);
+    renderFolderRescanLocations();
 
     $('#smartFind').click(async function () {
       let self = $(this);
@@ -2405,12 +2537,15 @@ function populateUserDirList(option) {
 
   let elem = options.reverse ? $('#settings #dirlist > li').last() : $('#settings #dirlist > li').first();
 
+  $(document).trigger('folder-rescan-locations-changed');
+
   if (elem.find('.path span').width() >= 350 || options.dir.length > 42) {
     elem.find('.path').addClass('overflow');
   }
 
   elem.find('.controls .trash').click(function () {
     elem.remove();
+    $(document).trigger('folder-rescan-locations-changed');
   });
   elem.find('.controls .edit').click(async function () {
     let path = elem.find('.path span').text();
@@ -2430,6 +2565,7 @@ function populateUserDirList(option) {
           if (elem.find('.path span').width() >= 350) {
             elem.find('.path').addClass('overflow');
           }
+          $(document).trigger('folder-rescan-locations-changed');
           debug.log('-> Edited');
         } else {
           debug.log('-> Invalid folder');
@@ -2497,12 +2633,15 @@ function populateLibraryDirList(option) {
 
   let elem = options.reverse ? $('#settings #libdirlist > li').last() : $('#settings #libdirlist > li').first();
 
+  $(document).trigger('folder-rescan-locations-changed');
+
   if (elem.find('.path span').width() >= 350 || options.dir.length > 42) {
     elem.find('.path').addClass('overflow');
   }
 
   elem.find('.controls .trash').click(function () {
     elem.remove();
+    $(document).trigger('folder-rescan-locations-changed');
   });
   elem.find('.controls .edit').click(function () {
     let dirPath = elem.find('.path span').text();
@@ -2520,6 +2659,7 @@ function populateLibraryDirList(option) {
         if (elem.find('.path span').width() >= 350) {
           elem.find('.path').addClass('overflow');
         }
+        $(document).trigger('folder-rescan-locations-changed');
         debug.log('-> Edited');
       } else {
         debug.log('Editing library folder: User Cancel');

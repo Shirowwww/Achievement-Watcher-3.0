@@ -294,7 +294,6 @@ async function handleChange(changedFile, ctx) {
                 volume: notificationVolumePercent(ctx.options),
                 imageIntegration: '0',
                 group: ctx.options.notification_toast.groupToast,
-                cropIcon: true,
                 attribution: notifyStrings.forLang(ctx.options.achievement.lang).eaAchievement,
               },
               prefetch: ctx.options.notification_advanced.iconPrefetch,

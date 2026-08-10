@@ -214,7 +214,6 @@ async function handleChange(target, ctx) {
               volume: notificationVolumePercent(ctx.options),
               imageIntegration: '0',
               group: ctx.options.notification_toast.groupToast,
-              cropIcon: true,
               attribution: notifyStrings.forLang(ctx.options.achievement.lang).achievement,
             },
             prefetch: true, // icons are GOG CDN URLs

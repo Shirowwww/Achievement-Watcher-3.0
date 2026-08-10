@@ -388,7 +388,6 @@ async function handleChange(target, ctx) {
               volume: notificationVolumePercent(ctx.options),
               imageIntegration: '0',
               group: ctx.options.notification_toast.groupToast,
-              cropIcon: true,
               attribution: a.gamerscore > 0 ? `${a.gamerscore} G` : notifyStrings.forLang(ctx.options.achievement.lang).achievement,
             },
             prefetch: false, // icons are already local files

@@ -46,6 +46,7 @@ test('achievement toast payload carries the intended AUMID under the key powerto
   assert.strictEqual(notification.title, 'Achievement Unlocked');
   assert.strictEqual(notification.message, 'Winner\nWin one game.');
   assert.strictEqual(notification.icon, 'https://example.com/icon.jpg');
+  assert.strictEqual(notification.cropIcon, false, 'achievement artwork must remain square');
   assert.strictEqual(notification.time, 123456);
   assert.ok(!('timeStamp' in notification), 'the unsupported timeStamp key must not be sent to powertoast');
   assert.deepEqual(notification.activation, {
@@ -87,7 +88,7 @@ test('a grouped toast never hands powertoast a group it will reject', async () =
 // Windows will not show a toast while Do Not Disturb is on unless it is marked urgent, which is why
 // an in-game unlock can go unseen (issue #18). Opt-in, and pointedly not for the notifications that
 // are not worth breaking a focused session for.
-test('urgent unlocks are marked only when enabled, and never for playtime or progress', () => {
+test('urgent unlocks are marked only when enabled, render correctly, and never apply to playtime or progress', async () => {
   const build = (message) => {
     const { notification } = buildToastNotification(message, toastOptions());
     return notification.scenario;
@@ -103,6 +104,12 @@ test('urgent unlocks are marked only when enabled, and never for playtime or pro
   assert.strictEqual(build({ ...unlock, notificationType: 'playtime' }), undefined);
   assert.strictEqual(build({ ...unlock, notificationType: 'progress' }), undefined);
 
+  // This is the payload Windows receives. Keeping the XML assertion here catches a future
+  // powertoast change that accepts the JS option but drops the urgent scenario when rendering.
+  const { toXmlString } = await import('powertoast');
+  const { notification } = buildToastNotification(unlock, toastOptions());
+  assert.match(toXmlString(notification), /scenario="urgent"/);
+
   // powertoast validates the scenario against its own list; an unknown one is silently dropped,
   // which would make this setting a no-op without anything failing.
   toastTransport.setUrgentUnlocks(false);
@@ -116,7 +123,7 @@ test('winrt=false is forwarded as disableWinRT on the payload', () => {
   assert.strictEqual(notification.disableWinRT, true);
 });
 
-test('playtime payload prefers the high-res game icon', () => {
+test('playtime payload uses its square game logo and always promotes its header image', () => {
   const { notification } = buildToastNotification(
     {
       notificationType: 'playtime',
@@ -128,11 +135,25 @@ test('playtime payload prefers the high-res game icon', () => {
       gameIcon: 'https://example.com/library.jpg',
       image: 'https://example.com/header.jpg',
     },
-    toastOptions({ imageIntegration: '1' })
+    // Playtime is a session card: it gets a hero header even if ordinary toast images are off.
+    toastOptions({ imageIntegration: '0' })
   );
-  assert.strictEqual(notification.icon, 'https://example.com/library.jpg');
+  assert.strictEqual(notification.icon, 'https://example.com/tiny.jpg');
+  assert.strictEqual(notification.cropIcon, false);
   assert.strictEqual(notification.heroImg, 'https://example.com/header.jpg');
   assert.ok(!('headerImg' in notification), 'the unsupported headerImg key must not be sent to powertoast');
+
+  const fallback = buildToastNotification(
+    {
+      notificationType: 'playtime',
+      appid: 480,
+      achievementDisplayName: 'Spacewar',
+      achievementDescription: 'You played for 12m',
+      gameIcon: 'https://example.com/library.jpg',
+    },
+    toastOptions({ imageIntegration: '0' })
+  ).notification;
+  assert.strictEqual(fallback.icon, 'https://example.com/library.jpg', 'missing game logos keep a best-effort fallback');
 });
 
 test('inline image and progress payload use the keys powertoast actually renders', () => {
@@ -174,6 +195,7 @@ test('the payload renders a valid toast XML (hero image, progress, protocol acti
   const xml = toXmlString(notification);
   assert.match(xml, /<toast /);
   assert.match(xml, /<image placement="hero"/);
+  assert.match(xml, /hint-crop="none"/);
   assert.match(xml, /<progress value="0\.30" status="3\/10"/);
   assert.match(xml, /activationType="protocol"/);
   assert.match(xml, /launch="achievement-watcher:\/\/game\/480\/ACH_XML"/);
@@ -215,7 +237,7 @@ test('the app own identity is preferred over the dead Xbox default, and is check
   // trusted on format alone (issue #8).
   const candidates = toastIdentity.toastIdentityCandidates(
     { notification_advanced: { appID: '' } },
-    { AW_AUMID: 'io.github.shirowwww.achievement.watcher' }
+    {}
   );
   assert.strictEqual(candidates[0].id, 'io.github.shirowwww.achievement.watcher');
   assert.strictEqual(candidates[candidates.length - 1].id, toastIdentity.DEFAULT_TOAST_AUMID);
@@ -236,7 +258,7 @@ test('test buttons build the same payload contract as real toasts', () => {
   const [message, toastOptions] = notificationTest.testMessageAndOptions('toast', options);
   assert.strictEqual(message.achievementName, 'TOAST_TEST');
   assert.strictEqual(toastOptions.toast.imageIntegration, '0');
-  assert.strictEqual(toastOptions.toast.cropIcon, true);
+  assert.strictEqual(toastOptions.toast.cropIcon, undefined);
   assert.strictEqual(toastOptions.toast.attribution, 'Hollow Knight');
 
   const [, playtimeOptions] = notificationTest.testMessageAndOptions('playtime', options);

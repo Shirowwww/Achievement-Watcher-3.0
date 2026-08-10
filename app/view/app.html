@@ -372,6 +372,11 @@
               <div class="help-card settings-card">
                 <div class="title"><i class="fas fa-question-circle"></i> <span id="help-title">Help &amp; tips</span></div>
                 <p class="help-intro" id="help-intro"></p>
+                <div class="help-actions">
+                  <button type="button" class="help-action" id="help-action-folder" data-help-view="folder"><i class="far fa-folder"></i> <span></span></button>
+                  <button type="button" class="help-action" id="help-action-source" data-help-view="source"><i class="fas fa-file-import"></i> <span></span></button>
+                  <button type="button" class="help-action" id="help-action-notification" data-help-view="notification"><i class="fas fa-bell"></i> <span></span></button>
+                </div>
                 <div class="help-grid">
                   <details class="help-panel" open>
                     <summary><i class="fas fa-bolt"></i> <span id="help-quick-title">First steps</span></summary>
@@ -1094,6 +1099,25 @@
                 <ul id="libdirlist"></ul>
                 <div id="generate-configs-result" class="diag-line"></div>
               </div>
+
+              <div class="folder-rescan-card" id="folder-rescan">
+                <div class="folder-rescan-heading">
+                  <i class="fas fa-sync-alt"></i>
+                  <div>
+                    <strong id="folder-rescan-title"></strong>
+                    <p id="folder-rescan-help"></p>
+                  </div>
+                </div>
+                <div class="folder-rescan-toolbar">
+                  <button type="button" class="inline-action-btn secondary" id="folder-rescan-select-all"><i class="fas fa-check"></i> <span></span></button>
+                  <button type="button" class="inline-action-btn secondary" id="folder-rescan-select-none"><i class="fas fa-times"></i> <span></span></button>
+                </div>
+                <ul id="folder-rescan-list"></ul>
+                <div class="folder-rescan-actions">
+                  <button type="button" class="inline-action-btn primary" id="folder-rescan-run" disabled><i class="fas fa-redo"></i> <span></span></button>
+                </div>
+                <div id="folder-rescan-result" class="diag-line" aria-live="polite"></div>
+              </div>
             </section>
 
             <section class="content" data-view="notification">
@@ -1205,7 +1229,7 @@
                     </li>
 
                     <li class="hasHelper expand">
-                      <div class="left"><i class="fas fa-circle-exclamation"></i> <span></span></div>
+                      <div class="left"><i class="fas fa-exclamation-circle"></i> <span></span></div>
                       <div class="right">
                         <div class="previous">
                           <span class="arrow"><i class="fas fa-chevron-left"></i></span>

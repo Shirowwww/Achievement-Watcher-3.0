@@ -149,6 +149,8 @@ const userThemes = require(path.join(__dirname, '../util/userThemes.js'));
 const themeLayers = require(path.join(__dirname, '../util/themeLayers.js'));
 const overlayLocale = require(path.join(__dirname, '../util/overlayLocale.js'));
 const { resolveOverlayRequest } = require(path.join(__dirname, '../util/overlayRequest.js'));
+const { normalizeWindowArgs } = require(path.join(__dirname, '../util/windowArgs.js'));
+const notificationBounds = require(path.join(__dirname, '../util/notificationBounds.js'));
 
 // Main-process counterpart of app/locale/t.js: imperative strings (dialogs,
 // tray menu, notifications) resolve from the selected locale's `dialogs`
@@ -216,7 +218,7 @@ function currentThemePayload(nameOverride) {
 
 const BASE_URL = 'https://www.steamgriddb.com/api/v2';
 const DEFAULT_API_KEY = '2a9d32ddd0bfe4e1191b4f6ff56fef60'; // bundled public fallback (rate-limited)
-const startupArgs = minimist(process.argv.slice(1));
+const startupArgs = normalizeWindowArgs(minimist(process.argv.slice(1)));
 const safeMode = startupArgs['safe-mode'] === true || startupArgs.safeMode === true || startupArgs['reset-window'] === true;
 
 // SteamGridDB artwork key: the bundled public fallback is used directly — no per-user key.
@@ -2630,6 +2632,7 @@ function shouldQuitApp() {
 }
 
 function parseArgs(args) {
+  args = normalizeWindowArgs(args);
   let windowType = args['wintype'] || 'main'; // overlay (in-game) or main; notifications are Windows system notifications
   let appid = args['appid']; // appid
   let source = args['source'] || 'steam'; // source: steam, epic, gog, luma
@@ -2736,30 +2739,27 @@ function getPresetDimensions(presetFolder) {
   return { width: 400, height: 200 };
 }
 
-// Place the window within the primary display's work area for a given position keyword.
-function computeNotificationBounds(position, w, h) {
-  const { x: ax, y: ay, width: aw, height: ah } = require('electron').screen.getPrimaryDisplay().workArea;
-  let x = ax + Math.floor((aw - w) / 2);
-  let y = ay + ah - h;
-  switch (position) {
-    case 'center-top':   x = ax + Math.floor((aw - w) / 2); y = ay;                            break;
-    case 'top-left':     x = ax;                            y = ay;                            break;
-    case 'top-right':    x = ax + aw - w;                   y = ay;                            break;
-    case 'middle-left':  x = ax;                            y = ay + Math.floor((ah - h) / 2); break;
-    case 'middle-right': x = ax + aw - w;                   y = ay + Math.floor((ah - h) / 2); break;
-    case 'bottom-left':  x = ax;                            y = ay + ah - h;                   break;
-    case 'bottom-right': x = ax + aw - w - 10;              y = ay + ah - h;                   break;
-    case 'custom': {
-      // User-positioned via the "Reposition" witness; persisted in overlayBounds.json (notif).
-      const saved = readOverlayBounds().notif;
-      if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)) return { x: saved.x, y: saved.y };
-      x = ax + Math.floor((aw - w) / 2); y = ay + ah - h; // fall back to center-bottom until set
-      break;
-    }
-    case 'center-bottom':
-    default:             x = ax + Math.floor((aw - w) / 2); y = ay + ah - h;                   break;
-  }
-  return { x: Math.max(ax, x), y: Math.max(ay, y) };
+function notificationWorkArea() {
+  const electronScreen = require('electron').screen;
+  try {
+    // The cursor is normally over the game that triggered the unlock, so this keeps the popup on
+    // that monitor instead of unexpectedly putting it on the primary display.
+    const display = electronScreen.getDisplayNearestPoint(electronScreen.getCursorScreenPoint());
+    if (display && display.workArea) return display.workArea;
+  } catch {}
+  return electronScreen.getPrimaryDisplay().workArea;
+}
+
+// Place the window inside the target display's usable area. The shared helper clamps both edges,
+// including a manually repositioned popup, instead of only protecting the left/top edges.
+function computeNotificationBounds(position, width, height, workArea) {
+  return notificationBounds.placeNotification({
+    position,
+    width,
+    height,
+    workArea: workArea || notificationWorkArea(),
+    custom: position === 'custom' ? readOverlayBounds().notif : null,
+  });
 }
 
 // Localized strings used by the notification preset windows (fallback titles/descriptions).
@@ -2794,15 +2794,22 @@ function createNotificationWindow(data = {}) {
   const presetHtml = path.join(presetFolder, 'index.html');
 
   const scaleRaw = Number(data.scale);
-  const scale = Number.isFinite(scaleRaw) && scaleRaw > 0 ? scaleRaw : 1;
+  const requestedScale = Number.isFinite(scaleRaw) && scaleRaw > 0 ? scaleRaw : 1;
   const { width: baseW, height: baseH } = getPresetDimensions(presetFolder);
-  // Grow the window with scale (only when >1) so larger presets are not clipped.
-  const w = Math.ceil(baseW * (scale > 1 ? scale : 1));
-  const h = Math.ceil(baseH * (scale > 1 ? scale : 1));
   const position = data.position || 'center-bottom';
-  const { x, y } = computeNotificationBounds(position, w, h);
+  const workArea = notificationWorkArea();
+  // Scale the host window in both directions, then cap the effective scale to the current work
+  // area. This keeps small themes tightly anchored and large themes visible instead of clipping.
+  const geometry = notificationBounds.fitNotificationScale({
+    baseWidth: baseW,
+    baseHeight: baseH,
+    scale: requestedScale,
+    workArea,
+  });
+  const { x, y, width: w, height: h } = computeNotificationBounds(position, geometry.width, geometry.height, workArea);
+  const scale = geometry.scale;
 
-  debug.log('[overlay-notif] preset=' + path.basename(presetFolder) + ' pos=' + position + ' scale=' + scale + ' size=' + w + 'x' + h);
+  debug.log('[overlay-notif] preset=' + path.basename(presetFolder) + ' pos=' + position + ' scale=' + requestedScale + '→' + scale + ' size=' + w + 'x' + h);
 
   const notif = new BrowserWindow({
     width: w,
@@ -3773,7 +3780,7 @@ try {
       // A second launch (user re-running the exe, e.g. from the Start menu while it sits hidden in
       // the tray) should surface the UI window.
       debug.log(`[second-instance] argv=${JSON.stringify(argv || [])}`);
-      const args = minimist(argv.slice(1));
+      const args = normalizeWindowArgs(minimist(argv.slice(1)));
       if ((args['wintype'] || 'main') === 'main') createMainWindow();
       else parseArgs(args);
 

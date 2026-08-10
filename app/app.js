@@ -17,6 +17,7 @@ const humanizeDuration = require('humanize-duration');
 const settings = require(path.join(appPath, 'settings.js'));
 settings.setUserDataPath(getUserDataPath());
 const achievements = require(path.join(appPath, 'parser/achievements.js'));
+const scanScope = require(path.join(appPath, 'parser/scanScope.js'));
 const userdatapath = getUserDataPath();
 const isDev = ipcRenderer.sendSync('win-isDev') || false;
 achievements.initDebug({ isDev, userDataPath: userdatapath });
@@ -75,6 +76,14 @@ window.addEventListener('error', (e) => {
 
 const gameElements = new Map();
 let gameList = [];
+
+function gameTouchesScanScope(game, scope) {
+  const data = (game && game.data) || {};
+  const sourcePaths = Array.isArray(game && game.dataPaths) ? game.dataPaths.map((entry) => entry && entry.path) : [];
+  return [game && game.path, game && game.dataPath, game && game.gameDir, game && game.exe, data.path, data.root, data.gameDir, data.exe, ...sourcePaths]
+    .filter(Boolean)
+    .some((candidate) => scanScope.pathIsWithinSelectedDirectories(candidate, scope));
+}
 
 function finiteNumber(value, fallback = 0) {
   const number = Number(value);
@@ -878,8 +887,9 @@ var app = {
     remote.dialog.showMessageBoxSync({ type: 'error', title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'), message: `${message}`, detail: `${err}` });
     remote.app.quit();
   },
-  onStart: function () {
+  onStart: function (options = {}) {
     let self = this;
+    const activeScanScope = scanScope.normalizeScanScope(options && options.scanScope);
 
     // Re-entry guard. onStart is triggered from several places (boot, the 15-min new-game scan, F5 /
     // refresh, settings save, onboarding finish). makeList streams tiles into #game-list as each game
@@ -889,7 +899,11 @@ var app = {
     // concurrent scan.
     if (self.listLoadInFlight) {
       self.listRescanPending = true;
-      return;
+      // A normal refresh must remain broader than a queued selective retry. Multiple selective
+      // requests are coalesced to the newest one; the UI disables its own button while waiting.
+      if (!activeScanScope) self.listRescanScope = null;
+      else if (self.listRescanScope !== null) self.listRescanScope = activeScanScope;
+      return self.listLoadPromise || Promise.resolve();
     }
     self.listLoadInFlight = true;
     clearTimeout(self.listLoadGuardTimer);
@@ -948,6 +962,11 @@ var app = {
     $('#sort-box').fadeTo('fast', 1).css('pointer-events', 'initial');
     $('#search-bar').fadeTo('fast', 1).css('pointer-events', 'initial');
     $('title-bar')[0].inSettings = false;
+    // A scoped refresh redraws the same library, but only re-reads the selected configured folders.
+    // Keep entries that do not live below one of those roots: otherwise clicking "rescan C:\\Games"
+    // would make games discovered from D:\\Games disappear until the next full refresh.
+    const previousGames = activeScanScope ? gameList.slice() : [];
+    const scanConfig = activeScanScope ? { ...self.config, scanScope: activeScanScope } : self.config;
     gameList = [];
     const renderedAppids = new Set();
     // Make onStart() idempotent: re-running it (e.g. after right-click → remove from list) must not
@@ -959,14 +978,15 @@ var app = {
     $('#game-config').off('click', '.edit').off('click', '.unlink');
     $('#btn-game-config-save').off('click');
     $('#btn-game-config-cancel, #game-config .overlay').off('click');
-    achievements
+    let renderGame;
+    const listLoadPromise = achievements
       .makeList(
-        self.config,
+        scanConfig,
         (percent) => {
           loadingElem.progress.attr('data-percent', percent);
           loadingElem.meter.css('width', percent + '%');
         },
-        (game) => {
+        (renderGame = (game) => {
           let elem = $('#game-list ul');
           if (game.achievement.unlocked > 0 || self.config.achievement.hideZero == false) {
             const appidKey = String(game.appid);
@@ -1089,7 +1109,7 @@ var app = {
               applyCoverWithFallback(game, headerEl, imgName);
             }, 0);
           }
-        }
+        })
       )
       .then((list) => {
         // Scan finished — release the re-entry guard. If a refresh was requested while this run was in
@@ -1098,7 +1118,19 @@ var app = {
         self.listLoadInFlight = false;
         if (self.listRescanPending) {
           self.listRescanPending = false;
-          return self.onStart();
+          const nextScope = self.listRescanScope;
+          self.listRescanScope = undefined;
+          return self.onStart(nextScope ? { scanScope: nextScope } : {});
+        }
+        if (activeScanScope && previousGames.length > 0 && Array.isArray(list)) {
+          const freshAppids = new Set(list.map((game) => String(game && game.appid)));
+          const preserved = previousGames.filter(
+            (game) => game && !freshAppids.has(String(game.appid)) && !gameTouchesScanScope(game, activeScanScope)
+          );
+          for (const game of preserved) {
+            list.push(game);
+            renderGame(game);
+          }
         }
         loadingElem.elem.hide();
         $('#main-footer').addClass('done');
@@ -2700,90 +2732,6 @@ var app = {
               }
             }
 
-            if (isUbisoftSource && ubisoftTools) {
-              let addedUbisoftFolder = false;
-              if (ubisoftTools.runtimeDir && fs.existsSync(ubisoftTools.runtimeDir)) {
-                folderMenu.append(
-                  new MenuItem({
-                    icon: menuIcon('folder-open.png'),
-                    label: t('open-uplay-r2-configuration-folder', 'Open Uplay R2 configuration folder', 'Ouvrir le dossier de configuration Uplay R2'),
-                    click() {
-                      remote.shell.openPath(ubisoftTools.runtimeDir);
-                    },
-                  })
-                );
-                addedUbisoftFolder = true;
-              }
-              if (ubisoftTools.configFile && fs.existsSync(ubisoftTools.configFile)) {
-                folderMenu.append(
-                  new MenuItem({
-                    label: t('show-uplay-r2-configuration-file', 'Show Uplay R2 configuration file', 'Afficher le fichier de configuration Uplay R2'),
-                    click() {
-                      remote.shell.showItemInFolder(ubisoftTools.configFile);
-                    },
-                  })
-                );
-                addedUbisoftFolder = true;
-              }
-              if (ubisoftTools.schemaFile && fs.existsSync(ubisoftTools.schemaFile)) {
-                folderMenu.append(
-                  new MenuItem({
-                    label: t('show-achievements-schema-json', 'Show achievements_schema.json', 'Afficher achievements_schema.json'),
-                    click() {
-                      remote.shell.showItemInFolder(ubisoftTools.schemaFile);
-                    },
-                  })
-                );
-                addedUbisoftFolder = true;
-              }
-              if (ubisoftTools.saveDir) {
-                // Prefer the folder that actually holds the unlock file over the redirect target:
-                // on a loader build without AchSavePath support the emulator ignores the redirect and
-                // keeps writing to its own folder, so `saveDir` alone would open an empty directory.
-                const liveSaveDir =
-                  (ubisoftTools.saveDirs || []).find((dir) => {
-                    try {
-                      return fs.existsSync(path.join(dir, uplayR2.ACH_SAVE_FILE));
-                    } catch {
-                      return false;
-                    }
-                  }) || ubisoftTools.saveDir;
-                folderMenu.append(
-                  new MenuItem({
-                    icon: menuIcon('folder-open.png'),
-                    label: t('open-ubisoft-achievement-saves', 'Open Ubisoft achievement saves', 'Ouvrir les sauvegardes de succès Ubisoft'),
-                    click() {
-                      fs.mkdirSync(liveSaveDir, { recursive: true });
-                      remote.shell.openPath(liveSaveDir);
-                    },
-                  })
-                );
-                addedUbisoftFolder = true;
-              }
-              if (addedUbisoftFolder) folderMenu.append(new MenuItem({ type: 'separator' }));
-            }
-
-            folderMenu.append(
-              new MenuItem({
-                icon: menuIcon('folder-open.png'),
-                label: $('#game-list').attr('data-ctx-iconcache') || '',
-                click() {
-                  remote.shell.openPath(path.join(getUserDataPath(), 'steam_cache', 'icon', catalogAppid || `${appid}`));
-                },
-              })
-            );
-            folderMenu.append(
-              new MenuItem({
-                icon: menuIcon('folder-open.png'),
-                label: $('#game-list').attr('data-ctx-dbcache') || '',
-                click() {
-                  remote.shell.showItemInFolder(
-                    path.join(getUserDataPath(), 'steam_cache', 'schema', `${app.config.achievement.lang}`, `${catalogAppid || appid}.db`)
-                  );
-                },
-              })
-            );
-
             // Open the actual game install folder, when AW managed to resolve one (Goldberg/GBE scan
             // or name-based folder match).
             const gameForDir = list.find((g) => g.appid == appid);
@@ -2799,58 +2747,46 @@ var app = {
               );
             }
 
-            // Open the folder this entry's achievements were actually parsed from. It answers
-            // "where is this card coming from?" — which emulator or source produced it — without
-            // digging through the watched roots by hand (issue #21). Only offered when the parser
-            // recorded a real folder that still exists, so it can never open something unrelated.
-            // Some sources point at the save FILE itself; reveal it rather than trying to open a
-            // file as a folder.
+            // Keep the top-level menu short, while retaining the useful maintenance paths. Some
+            // sources point at the save FILE itself, so reveal it rather than trying to open a file
+            // as a folder.
             const revealDataPath = (target) => {
-              if (fs.statSync(target).isDirectory()) remote.shell.openPath(target);
-              else remote.shell.showItemInFolder(target);
-            };
-            // Every source that produced this card and still exists on disk. A single-source entry
-            // (the common case) keeps one flat item; a merged card gets one per source, labelled
-            // with it, because that is the case where the question is actually hard to answer.
-            const dataPaths = (gameForDir?.dataPaths?.length ? gameForDir.dataPaths : [{ source: '', path: gameForDir?.dataPath }])
-              .filter((entry) => entry.path && fs.existsSync(entry.path));
-
-            if (dataPaths.length > 0) {
-              const openLabel = t('open-achievement-data-folder', 'Open achievement data folder', 'Ouvrir le dossier des données de succès');
-              if (dataPaths.length === 1) {
-                folderMenu.append(
-                  new MenuItem({ icon: menuIcon('folder-open.png'), label: openLabel, click: () => revealDataPath(dataPaths[0].path) })
-                );
-              } else {
-                const perSource = new Menu();
-                // One emulator can write the same game to two different roots (a GBE install with
-                // both `Goldberg SteamEmu Saves` and `GSE Saves`), so the source name alone is not
-                // always unique. Fall back to the folder when it does not tell the entries apart —
-                // two identically labelled items would defeat the point of the submenu.
-                const segments = (p) => p.replace(/[\\/]+$/, '').split(/[\\/]/).filter(Boolean);
-                // The leaf is usually the appid, identical across those roots, so the parent is what
-                // actually tells them apart ("Goldberg SteamEmu Saves" vs "GSE Saves").
-                const rootOf = (p) => segments(p).slice(-2)[0] || segments(p).pop() || p;
-                const labelCount = new Map();
-                for (const entry of dataPaths) {
-                  const name = entry.source || rootOf(entry.path);
-                  labelCount.set(name, (labelCount.get(name) || 0) + 1);
-                }
-                for (const entry of dataPaths) {
-                  const name = entry.source || rootOf(entry.path);
-                  perSource.append(
-                    new MenuItem({
-                      icon: menuIcon('folder-open.png'),
-                      label: labelCount.get(name) > 1 ? `${name} — ${rootOf(entry.path)}` : name,
-                      click: () => revealDataPath(entry.path),
-                    })
-                  );
-                }
-                folderMenu.append(new MenuItem({ icon: menuIcon('folder-open.png'), label: openLabel, submenu: perSource }));
+              try {
+                if (!fs.existsSync(target)) return;
+                if (fs.statSync(target).isDirectory()) remote.shell.openPath(target);
+                else remote.shell.showItemInFolder(target);
+              } catch (err) {
+                debug.error(err);
               }
-              // The issue asked for the resolved path to be readable and copyable without leaving
-              // the app; the paths are long enough that retyping one is not an option.
-              folderMenu.append(
+            };
+            // A merged card can have several sources. Keep each real source available in one
+            // submenu instead of silently picking a fallback or filling the parent menu with paths.
+            const seenDataPaths = new Set();
+            const dataPaths = (gameForDir?.dataPaths?.length ? gameForDir.dataPaths : [{ source: '', path: gameForDir?.dataPath }]).filter(
+              (entry) => {
+                if (!entry.path || seenDataPaths.has(entry.path) || !fs.existsSync(entry.path)) return false;
+                seenDataPaths.add(entry.path);
+                return true;
+              }
+            );
+            if (dataPaths.length) {
+              const dataMenu = new Menu();
+              const segments = (folderPath) => folderPath.replace(/[\\/]+$/, '').split(/[\\/]/).filter(Boolean);
+              const rootOf = (folderPath) => segments(folderPath).slice(-2)[0] || segments(folderPath).pop() || folderPath;
+              const labels = dataPaths.map((entry) => entry.source || rootOf(entry.path));
+              const labelCounts = labels.reduce((counts, label) => counts.set(label, (counts.get(label) || 0) + 1), new Map());
+              dataPaths.forEach((entry, index) => {
+                const label = labels[index];
+                dataMenu.append(
+                  new MenuItem({
+                    icon: menuIcon('folder-open.png'),
+                    label: labelCounts.get(label) > 1 ? `${label} — ${rootOf(entry.path)}` : label,
+                    click: () => revealDataPath(entry.path),
+                  })
+                );
+              });
+              dataMenu.append(new MenuItem({ type: 'separator' }));
+              dataMenu.append(
                 new MenuItem({
                   label: t('copy-achievement-data-path', 'Copy achievement data path', 'Copier le chemin des données de succès'),
                   click() {
@@ -2858,7 +2794,43 @@ var app = {
                   },
                 })
               );
+              folderMenu.append(
+                new MenuItem({
+                  icon: menuIcon('folder-open.png'),
+                  label: t('achievement-data-folders', 'Achievement data', 'Données de succès'),
+                  submenu: dataMenu,
+                })
+              );
             }
+
+            const cacheMenu = new Menu();
+            cacheMenu.append(
+              new MenuItem({
+                icon: menuIcon('folder-open.png'),
+                label: $('#game-list').attr('data-ctx-iconcache') || '',
+                click() {
+                  remote.shell.openPath(path.join(getUserDataPath(), 'steam_cache', 'icon', catalogAppid || `${appid}`));
+                },
+              })
+            );
+            cacheMenu.append(
+              new MenuItem({
+                icon: menuIcon('folder-open.png'),
+                label: $('#game-list').attr('data-ctx-dbcache') || '',
+                click() {
+                  remote.shell.showItemInFolder(
+                    path.join(getUserDataPath(), 'steam_cache', 'schema', `${app.config.achievement.lang}`, `${catalogAppid || appid}.db`)
+                  );
+                },
+              })
+            );
+            folderMenu.append(
+              new MenuItem({
+                icon: menuIcon('folder-open.png'),
+                label: t('cache-folders', 'Caches', 'Caches'),
+                submenu: cacheMenu,
+              })
+            );
 
             // Catalog links use the mapped Steam appid for Ubisoft records (including namespaced
             // uplay-<productId> official entries). Never emit broken URLs with a local/native id.
@@ -3339,6 +3311,8 @@ var app = {
         $('#search-bar').fadeTo('fast', 1).css('pointer-events', 'initial');
         $('title-bar')[0].inSettings = false;
       });
+    self.listLoadPromise = listLoadPromise;
+    return listLoadPromise;
   },
   onGameBoxClick: function (self, list) {
     self.css('pointer-events', 'none');

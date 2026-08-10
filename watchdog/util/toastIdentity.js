@@ -3,6 +3,11 @@
 const os = require('os');
 const startApps = require('./startApps.js');
 
+// This is the desktop AppUserModelID declared by app/electron-builder.yml.  The Electron main
+// process passes it down too (so a future branded build can override it), but keeping the normal
+// id here means the standalone Settings toast tester does not need to borrow Game Bar's identity.
+const ACHIEVEMENT_WATCHER_AUMID = 'io.github.shirowwww.achievement.watcher';
+
 // Last-resort AppUserModelID. Kept only for continuity with older installs — on Windows 11 the
 // classic Xbox app it names is no longer shipped, which is precisely why it must never be trusted
 // without an existence check (issue #8).
@@ -17,7 +22,7 @@ function toastIdentityCandidates(options, env = process.env) {
   const candidates = [];
   const override = options && options.notification_advanced ? options.notification_advanced.appID : '';
   if (override && override !== '') candidates.push({ id: override, why: 'user override' });
-  if (env.AW_AUMID) candidates.push({ id: env.AW_AUMID, why: 'Achievement Watcher' });
+  candidates.push({ id: env.AW_AUMID || ACHIEVEMENT_WATCHER_AUMID, why: 'Achievement Watcher' });
 
   const win_ver = os.release().split('.');
   if (win_ver[0] == '6' && (win_ver[1] == '3' || win_ver[1] == '2')) {
@@ -81,4 +86,10 @@ function requiresLocalImages(aumid) {
   return !startApps.isPackagedAUMID(aumid);
 }
 
-module.exports = { DEFAULT_TOAST_AUMID, toastIdentityCandidates, resolveToastIdentity, requiresLocalImages };
+module.exports = {
+  ACHIEVEMENT_WATCHER_AUMID,
+  DEFAULT_TOAST_AUMID,
+  toastIdentityCandidates,
+  resolveToastIdentity,
+  requiresLocalImages,
+};

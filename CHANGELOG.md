@@ -7,14 +7,18 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Folder settings can now rescan only the selected save/config or game-library locations. Entries
+  found outside that selection stay in the library, while the selected disks are the only ones read.
+- Help now includes direct, localized shortcuts to the Folders, Sources and Notifications settings,
+  so the most common setup and troubleshooting steps are one click away.
 - Achievement toasts can be marked urgent, which is the only way Windows 11 (22H2 and later) puts a
   notification on screen while Do Not Disturb is on — including the automatic "playing a game" and
   "app in full screen" rules that make an in-game unlock invisible for a whole session. It is off by
   default and available as **Priority notifications** under **Settings → Notification**. Windows asks
   once, per app, before honouring it and keeps the answer in Settings > Notifications, so nothing is
   escalated behind the user's back. Playtime and progress toasts are never marked urgent.
-- Right-click → **Folders** keeps the game installation, every available achievement-data source,
-  Ubisoft runtime files and caches, grouped into short submenus instead of one long flat list.
+- Right-click → **Folders** keeps only the game installation, achievement-data sources and caches,
+  grouped into short submenus instead of one long flat list.
 - The Sources tab now has a switch for every source the scanner reads. Ubisoft Connect, GOG Galaxy,
   Epic Games, the Nemirtingas GOG/Epic emulators, shadPS4 and Xenia were all on by default with no
   way to turn them off short of hand-editing `options.ini` — which is why a Ubisoft entry could not
@@ -31,6 +35,18 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- In-game notification popups now use the real dimensions of the selected theme and scale before
+  anchoring. Every preset is kept inside the active monitor's work area — including custom saved
+  positions — so bottom/right choices stay bottom/right and oversized themes shrink to fit instead
+  of being clipped off screen.
+- Native Windows notification artwork is square; playtime cards use the game logo in that compact
+  slot and always show the game's wide header above their message.
+- Standalone notification tests now prefer Achievement Watcher's registered Windows identity,
+  instead of unnecessarily displaying under Xbox Game Bar.
+- Overlay notifications now retain the achievement name and type when Windows case-folds the
+  Watchdog command-line arguments during its hand-off to the resident app.
+- The Priority notifications setting now shows its warning icon on the bundled Font Awesome 5
+  version and follows the active theme like the other notification preferences.
 - Updated transitive `js-yaml` packages to 4.3.1, removing the known high-severity YAML parsing
   vulnerability from the updater and release dependency tree.
 - Hiding the main window to the tray now stops its renderer-side gamepad polling. Electron does not

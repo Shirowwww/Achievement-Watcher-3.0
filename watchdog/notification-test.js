@@ -4,6 +4,7 @@ const path = require('path');
 const toast = require('./util/powertoast');
 const balloon = require('./util/powerballoon');
 const toastIdentity = require('./util/toastIdentity.js');
+const prefetch = require('./notification/prefetch.js');
 const settings = require('./settings.js');
 const soundPlayer = require('./util/soundPlayer.js');
 const { mediaPlayerVolume } = require('./util/notificationVolume.js');
@@ -20,7 +21,10 @@ const cfg_file = path.join(require('./util/userData.js').userDataDir(), 'cfg', '
 
 const TEST_APPID = 367520;
 const TEST_GAME = 'Hollow Knight';
-const TEST_ICON = 'https://cdn.cloudflare.steamstatic.com/steam/apps/367520/capsule_184x69.jpg';
+// Real square Hollow Knight artwork. The old 184×69 store capsule made the Windows app-logo slot
+// look broken even though the square layout itself was correct.
+const TEST_ACHIEVEMENT_ICON = 'https://shared.fastly.steamstatic.com/community_assets/images/apps/367520/6d15e62c48ba57d23e72b8f24fb775a44223cb8f.jpg';
+const TEST_GAME_ICON = 'https://shared.fastly.steamstatic.com/community_assets/images/apps/367520/f6ab055c2366237200b1a31cccbd6cf81e436d72.jpg';
 const TEST_HEADER = 'https://cdn.cloudflare.steamstatic.com/steam/apps/367520/header.jpg';
 
 // Resolve the AUMID through the SAME code path as a real unlock (util/toastIdentity.js), and
@@ -28,11 +32,26 @@ const TEST_HEADER = 'https://cdn.cloudflare.steamstatic.com/steam/apps/367520/he
 // util/powertoast.js into show()). Sharing the resolver is the point: a test button that picks its
 // app id differently from the Watchdog can pass while real toasts stay invisible — which is exactly
 // how issue #8 stayed hidden.
-async function applyToastAppSettings(payload, options) {
-  const chosen = await toastIdentity.resolveToastIdentity(options, { log: require('./util/log.js') });
+async function applyToastAppSettings(payload, options, identity = null) {
+  const chosen = identity || (await toastIdentity.resolveToastIdentity(options, { log: require('./util/log.js') }));
   payload.aumid = chosen.id;
   if (options.notification_transport.winRT === false) payload.disableWinRT = true;
   return payload;
+}
+
+// Powertoast's desktop AppUserModelIDs only accept local image paths. The real Watchdog goes
+// through toaster.js, which caches them first; Settings tests post their payload directly and must
+// do the same or they would misleadingly omit their icon/header only after installation.
+async function prefetchDesktopToastArtwork(message, aumid) {
+  if (!toastIdentity.requiresLocalImages(aumid)) return;
+
+  const cachedByUrl = new Map();
+  for (const field of ['icon', 'gameIcon', 'image']) {
+    const source = message[field];
+    if (!source) continue;
+    if (!cachedByUrl.has(source)) cachedByUrl.set(source, await prefetch(source, message.appid));
+    message[field] = cachedByUrl.get(source);
+  }
 }
 
 // Build the exact message + toast options the Watchdog uses for each notification kind, so the
@@ -47,13 +66,12 @@ function testMessageAndOptions(kind, options) {
     // Achievements/progress stay clean (no hero image); playtime/platinum use the game header.
     imageIntegration: kind === 'playtime' || kind === 'platinum' ? '1' : '0',
     group: options.notification_toast.groupToast,
-    cropIcon: true,
   };
 
   const common = {
     appid: TEST_APPID,
     gameDisplayName: TEST_GAME,
-    gameIcon: TEST_HEADER,
+    gameIcon: TEST_GAME_ICON,
     image: TEST_HEADER,
     // powertoast's `time` is a Unix timestamp in SECONDS (it multiplies by 1000 for
     // displayTimestamp); passing milliseconds dated the test toast to the year 55000.
@@ -76,7 +94,7 @@ function testMessageAndOptions(kind, options) {
           achievementName: 'RARE_TEST',
           achievementDisplayName: strings.rareAchievement,
           achievementDescription: notifyStrings.interpolate(strings.rareDescription, { percent: rarePct }),
-          icon: TEST_ICON,
+          icon: TEST_ACHIEVEMENT_ICON,
           rarityPercent: rarePct,
         },
         { toast: baseToast },
@@ -91,7 +109,7 @@ function testMessageAndOptions(kind, options) {
           achievementName: 'PROGRESS_TEST',
           achievementDisplayName: 'Far Traveler',
           achievementDescription: 'Travel 1000 light-years in a single game.',
-          icon: TEST_ICON,
+          icon: TEST_ACHIEVEMENT_ICON,
           progress: { current: 3, max: 10 },
         },
         { toast: baseToast },
@@ -105,7 +123,7 @@ function testMessageAndOptions(kind, options) {
           notificationType: 'playtime',
           achievementDisplayName: TEST_GAME,
           achievementDescription: '0h 42m',
-          icon: TEST_ICON,
+          icon: TEST_GAME_ICON,
           silent: true,
         },
         { toast: baseToast },
@@ -118,7 +136,7 @@ function testMessageAndOptions(kind, options) {
           notificationType: 'platinum',
           achievementDisplayName: TEST_GAME,
           achievementDescription: strings.platinumDesc,
-          icon: TEST_ICON,
+          icon: TEST_ACHIEVEMENT_ICON,
         },
         { toast: baseToast },
       ];
@@ -131,7 +149,7 @@ function testMessageAndOptions(kind, options) {
           achievementName: 'TOAST_TEST',
           achievementDisplayName: strings.testAchievement,
           achievementDescription: strings.testDescription,
-          icon: TEST_ICON,
+          icon: TEST_ACHIEVEMENT_ICON,
         },
         { toast: baseToast },
       ];
@@ -154,8 +172,10 @@ async function runTest(kind, { rumble = true } = {}) {
     // The test runs in the Watchdog process but reloads options itself, so it has to apply the
     // urgency preference too — otherwise the button would not exercise what a real unlock does.
     require('./notification/transport/toast.js').setUrgentUnlocks(options.notification_toast?.urgent === true);
+    const identity = await toastIdentity.resolveToastIdentity(options, { log: require('./util/log.js') });
+    await prefetchDesktopToastArtwork(message, identity.id);
     const { notification, soundFile } = buildToastNotification(message, toastOptions);
-    await applyToastAppSettings(notification, options);
+    await applyToastAppSettings(notification, options, identity);
 
     try {
       await toast(notification);

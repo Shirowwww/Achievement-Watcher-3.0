@@ -5090,6 +5090,49 @@ body {
   line-height: 1.5;
 }
 
+#settings .help-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+#settings .help-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid var(--set-control-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--set-control-bg) 82%, var(--accent) 7%);
+  color: var(--text);
+  font: 700 12px 'Open-Sans';
+  cursor: pointer;
+  transition: transform 120ms ease, background 150ms ease, border-color 150ms ease;
+}
+
+#settings .help-action:hover,
+#settings .help-action:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 62%, var(--set-control-border));
+  background: color-mix(in srgb, var(--set-control-bg) 72%, var(--accent) 15%);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+#settings .help-action i {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+#settings .help-action span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 #settings .help-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5388,6 +5431,119 @@ body {
 }
 #settings .actions-row .btn {
   margin: 0;
+}
+
+/* Selective folder rescan: a compact, explicit scope rather than a second opaque full-scan button. */
+#settings .folder-rescan-card {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--set-hairline-soft));
+  border-radius: 10px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, var(--set-panel)), var(--set-panel));
+}
+
+#settings .folder-rescan-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+#settings .folder-rescan-heading > i {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-radius: 8px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 11%, transparent);
+}
+
+#settings .folder-rescan-heading strong {
+  display: block;
+  color: var(--text);
+  font: 700 13px 'Open-Sans', sans-serif;
+}
+
+#settings .folder-rescan-heading p {
+  margin: 3px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+#settings .folder-rescan-toolbar,
+#settings .folder-rescan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+#settings #folder-rescan-list {
+  max-height: 172px;
+  margin: 10px 0 0;
+  overflow: auto;
+  border: 1px solid var(--set-hairline-soft);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--set-surface-sunken) 42%, transparent);
+}
+
+#settings #folder-rescan-list:empty {
+  display: none;
+}
+
+#settings #folder-rescan-list > li {
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid var(--set-divider);
+}
+
+#settings #folder-rescan-list > li:last-child {
+  border-bottom: 0;
+}
+
+#settings .folder-rescan-location label {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 34px;
+  gap: 9px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+#settings .folder-rescan-location label:hover {
+  background: var(--set-row-hover);
+}
+
+#settings .folder-rescan-location input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  flex: 0 0 auto;
+  accent-color: var(--accent);
+}
+
+#settings .folder-rescan-location i {
+  width: 16px;
+  flex: 0 0 16px;
+  color: var(--set-icon);
+  text-align: center;
+}
+
+#settings .folder-rescan-location span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#settings #folder-rescan-result:not(:empty) {
+  margin-top: 8px;
 }
 
 #settings #defaultdir,

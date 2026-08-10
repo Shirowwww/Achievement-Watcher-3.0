@@ -42,6 +42,7 @@ test('the priority control is the last common notification row and has a locale 
   const rows = [...list[1].matchAll(/<li\b[\s\S]*?<\/li>/g)];
   assert.equal(rows.length, 7, 'priority must be appended without shifting existing positional rows');
   assert.match(rows[6][0], /id="option_urgent"/);
+  assert.match(rows[6][0], /fa-exclamation-circle/);
   assert.match(rows[6][0], /<option value="false" selected><\/option>/);
   assert.match(rows[6][0], /<option value="true"><\/option>/);
 

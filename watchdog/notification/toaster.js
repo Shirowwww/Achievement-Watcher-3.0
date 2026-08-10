@@ -69,7 +69,6 @@ module.exports = async (message, option = {}) => {
         volume: option.toast.volume != null ? option.toast.volume : 100,
         imageIntegration: option.toast.imageIntegration || '0',
         group: option.toast.group || false,
-        cropIcon: option.toast.cropIcon || false,
         attribution: option.toast.attribution || null,
       },
       prefetch: option.prefetch != null ? option.prefetch : true,
@@ -189,7 +188,14 @@ module.exports = async (message, option = {}) => {
           message.gameIcon = await fetch(message.gameIcon, message.appid);
         }
 
-        if (options.transport.toast && options.toast.imageIntegration != '0' && message.image) {
+        // The transport always gives playtime cards their game header as a hero image, even when
+        // ordinary achievement images are disabled. Desktop AUMIDs cannot render remote artwork,
+        // so cache it before Powertoast builds the Windows payload.
+        if (
+          options.transport.toast &&
+          (message.notificationType === 'playtime' || options.toast.imageIntegration != '0') &&
+          message.image
+        ) {
           message.image = await fetch(message.image, message.appid);
         }
       }

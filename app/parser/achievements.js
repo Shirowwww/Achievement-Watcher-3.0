@@ -39,6 +39,7 @@ const { resolveAchievementDataPath } = require(path.join(appPath, '..', 'util', 
 const exeDetect = require(path.join(appPath, 'exeDetect.js'));
 const installState = require(path.join(appPath, 'installState.js'));
 const { applyLocalStatProgress } = require(path.join(appPath, 'statProgress.js'));
+const scanScope = require(path.join(appPath, 'scanScope.js'));
 let debug;
 let _userDataPath = null; // cache root for automatic emulator setup and downloaded tools
 
@@ -256,11 +257,18 @@ function getDiscoverySources(record, cachedList) {
 // Folder-tab save-dirs (kept for backward compat — those often already point inside a game install),
 // and the Desktop. Deduplicated, existing-only. A game installed there but never run has no %APPDATA%
 // save folder, so the normal save-folder scan can't see it — this is what makes those games show up regardless.
-async function goldbergScanRoots() {
+async function goldbergScanRoots(scope = _activeScanScope) {
   const roots = [];
   const add = (p) => {
     if (p && !roots.some((r) => r.toLowerCase() === String(p).toLowerCase())) roots.push(p);
   };
+  if (scope) {
+    // A selective rescan must not add automatic roots (Desktop, storefront defaults, …): those are
+    // what turn a one-folder retry back into a whole-disk discovery pass.
+    for (const dir of scope.libraryDirs || []) add(dir);
+    for (const dir of scope.userDirs || []) add(dir);
+    return roots;
+  }
   try {
     for (const dir of await libraryDirs.get()) add(dir);
   } catch (err) {
@@ -293,6 +301,10 @@ let _folderIndex = null;
 // populated by scanInstalledGoldbergGames. The name-based fallback must NOT match these, otherwise a
 // similarly-named game (e.g. "Forza Horizon 5") could steal another game's folder ("Forza Horizon 6").
 let _claimedDirs = new Set();
+// A manual selective rescan is intentionally narrower than normal discovery. The active scope is
+// kept alongside the per-run folder index so later name-based executable matching cannot walk every
+// configured library again and undo the selected-folder limit.
+let _activeScanScope = null;
 
 // Short-TTL cache of the discovery phase (the recursive C:\Jeux / Desktop / library disk walks), so a
 // settings-save rescan or a refresh moments later skips redoing them. Keyed (in makeList) on sources,
@@ -310,6 +322,7 @@ async function buildDiscoverCacheKey(option) {
       udirs: (await userDir.get()).map((d) => d.path),
       ldirs: await libraryDirs.get(),
       bl: await blacklist.get(),
+      scope: scanScope.cacheValue(scanScope.normalizeScanScope(option.scanScope)),
     });
   } catch {
     return null;
@@ -317,16 +330,19 @@ async function buildDiscoverCacheKey(option) {
 }
 
 async function discoverWithCache(option, steamAccFilter) {
+  const activeScope = scanScope.normalizeScanScope(option.scanScope);
   const cacheKey = await buildDiscoverCacheKey(option);
   if (cacheKey && _discoverCache && _discoverCache.key === cacheKey && Date.now() - _discoverCache.time < DISCOVER_TTL_MS) {
+    _activeScanScope = activeScope;
     _folderIndex = _discoverCache.folderIndex;
     _claimedDirs = _discoverCache.claimedDirs;
     debug.log(`[discover] reusing cached scan (${((Date.now() - _discoverCache.time) / 1000).toFixed(1)}s old)`);
     return _discoverCache.appidList;
   }
+  _activeScanScope = activeScope;
   _folderIndex = null;
   _claimedDirs = new Set();
-  const appidList = await discover(option.achievement_source, steamAccFilter);
+  const appidList = await discover(option.achievement_source, steamAccFilter, activeScope);
   if (cacheKey) _discoverCache = { key: cacheKey, time: Date.now(), appidList, folderIndex: _folderIndex, claimedDirs: _claimedDirs };
   return appidList;
 }
@@ -797,10 +813,10 @@ function isEmuSaveRecord(record) {
 // empty, it attaches { steamSettings, needsSchema } so getSavedAchievementsForAppid can auto-write
 // the schema later — that way a game that was launched once (found via its save folder) but whose
 // install schema is broken still gets repaired, not just the never-launched ones.
-async function scanInstalledGoldbergGames(data) {
+async function scanInstalledGoldbergGames(data, scope = _activeScanScope) {
   const additions = [];
   try {
-    const roots = await goldbergScanRoots();
+    const roots = await goldbergScanRoots(scope);
     if (roots.length === 0) return additions;
     debug.log(`[goldberg-scan] scanning ${roots.length} root(s): ${roots.join(', ')}`);
 
@@ -934,7 +950,7 @@ const UNCONFIG_SKIP_DIR = /^(_?CommonRedist|_?Redist|redist|DirectX|dx|dotnet|pr
 // this scan matches on "looks like a game exe" alone, which is too loose for a Desktop full of
 // shortcuts/random folders. A library-like Desktop subfolder (Desktop\Jeux, Desktop\Games, …) is
 // still scanned like any other library root.
-async function scanUnconfiguredInstalls(linkedExes = []) {
+async function scanUnconfiguredInstalls(linkedExes = [], scope = _activeScanScope) {
   const out = [];
   // Folders that already host a game configured under a real appid (from exeList): never surface them
   // again as "unconfigured", or the same game shows twice (e.g. LEGO Batman).
@@ -952,7 +968,7 @@ async function scanUnconfiguredInstalls(linkedExes = []) {
   };
   const desktopSet = new Set(desktopRoots().map((p) => p.toLowerCase()));
   const roots = [];
-  for (const dir of await goldbergScanRoots()) {
+  for (const dir of await goldbergScanRoots(scope)) {
     if (desktopSet.has(dir.toLowerCase())) {
       // The Desktop itself is never scanned for unconfigured installs (too many shortcuts/random
       // folders), but a library-like subfolder (Desktop\Jeux, Desktop\Games, …) is a legitimate
@@ -1086,13 +1102,15 @@ function resolveUplayR2Mapping(u) {
   return null;
 }
 
-async function discover(source, steamAccFilter) {
+async function discover(source, steamAccFilter, scope = null) {
   let data = [];
 
   //UserCustomDir
   let additionalSearch = [];
   try {
-    for (let dir of await userDir.get()) {
+    const configuredDirs = await userDir.get();
+    const userDirs = scope ? scanScope.filterSelectedDirectories(configuredDirs, scope.userDirs, (dir) => dir.path) : configuredDirs;
+    for (let dir of userDirs) {
       debug.log(`[userdir] ${dir.path}`);
 
       let scanned = [];
@@ -1133,7 +1151,7 @@ async function discover(source, steamAccFilter) {
 
   //Goldberg SocialClub Emulator — %APPDATA%\Goldberg SocialClub Emu Saves is auto-scanned like the
   //other known emulator roots, even when the user never added it to Settings.
-  if (source.socialClub) {
+  if (!scope && source.socialClub) {
     try {
       const scRoot = socialclub.defaultRoot();
       const scanned = scRoot ? await socialclub.scan(scRoot) : [];
@@ -1151,7 +1169,7 @@ async function discover(source, steamAccFilter) {
   //ShadPS4 stores trophies in %APPDATA%/shadPS4 regardless of where the .exe lives — auto-scan that
   //known location so the user doesn't have to add it as a watched folder. De-dupe against anything the
   //watched-folder pass already found (portable installs that keep game_data next to the binary).
-  if (source.shadps4) {
+  if (!scope && source.shadps4) {
     try {
       const known = await shadps4.scan(path.join(process.env['APPDATA'] || '', 'shadPS4'));
       const have = new Set(data.map((g) => `${g.source}:${g.appid}`));
@@ -1175,7 +1193,7 @@ async function discover(source, steamAccFilter) {
   }
 
   //GreenLuma
-  if (source.greenLuma) {
+  if (!scope && source.greenLuma) {
     try {
       data = data.concat(await greenluma.scan());
     } catch (err) {
@@ -1184,7 +1202,7 @@ async function discover(source, steamAccFilter) {
   }
 
   //Legit Steam
-  if (source.legitSteam > 0) {
+  if (!scope && source.legitSteam > 0) {
     try {
       const legit = await steam.scanLegit(source.legitSteam, steamAccFilter);
       // Attach the authoritative install folder from Steam's own library manifests so the Play
@@ -1216,7 +1234,7 @@ async function discover(source, steamAccFilter) {
     }
   }
 
-  if (source.lumaPlay) {
+  if (!scope && source.lumaPlay) {
     //Lumaplay (emulated/cracked Ubisoft — the actual point of this source toggle)
     try {
       data = data.concat(await uplay.scan());
@@ -1231,7 +1249,7 @@ async function discover(source, steamAccFilter) {
     // Ubisoft Connect" toggle is for emulated saves only.
   }
 
-  if (source.gog) {
+  if (!scope && source.gog) {
     try {
       data = data.concat(await gog.scan());
     } catch (err) {
@@ -1240,7 +1258,7 @@ async function discover(source, steamAccFilter) {
   }
 
   //GOG Galaxy official (legit client data — schema, unlocks and rarity read from Galaxy's SQLite)
-  if (source.gogOfficial) {
+  if (!scope && source.gogOfficial) {
     try {
       data = data.concat(await gogOfficial.scan());
     } catch (err) {
@@ -1249,7 +1267,7 @@ async function discover(source, steamAccFilter) {
   }
 
   //Ubisoft Connect official (legit client data — spool unlock state + cached achievements archive)
-  if (source.ubisoftOfficial) {
+  if (!scope && source.ubisoftOfficial) {
     try {
       // A Steam purchase that launches Ubisoft Connect is an owned Steam game, so "don't display
       // official Steam games" has to hide it too — it used to stay in the library no matter how the
@@ -1265,7 +1283,7 @@ async function discover(source, steamAccFilter) {
   }
 
   //Epic official (installed Epic games — public localized schema + rarity; unlocks when connected)
-  if (source.epicOfficial) {
+  if (!scope && source.epicOfficial) {
     try {
       data = data.concat(epicOfficial.scan());
     } catch (err) {
@@ -1273,7 +1291,7 @@ async function discover(source, steamAccFilter) {
     }
   }
 
-  if (source.epic) {
+  if (!scope && source.epic) {
     try {
       data = data.concat(await epic.scan());
     } catch (err) {
@@ -1281,7 +1299,7 @@ async function discover(source, steamAccFilter) {
     }
   }
 
-  if (source.ea) {
+  if (!scope && source.ea) {
     try {
       data = data.concat(await ea.scan());
     } catch (err) {
@@ -1290,7 +1308,7 @@ async function discover(source, steamAccFilter) {
   }
 
   //Xbox PC (Game Pass / Microsoft Store / Online-Fix) — local installs + imported Xbox Network cache.
-  if (source.xboxPc) {
+  if (!scope && source.xboxPc) {
     try {
       const xboxPc = require(path.join(appPath, 'xboxPc.js'));
       xboxPc.setUserDataPath(_userDataPath || userDataDir());
@@ -1329,7 +1347,7 @@ async function discover(source, steamAccFilter) {
     }
   }
 
-  if (source.importCache) {
+  if (!scope && source.importCache) {
     try {
       data = data.concat(await watchdog.scan());
     } catch (err) {
@@ -1341,7 +1359,7 @@ async function discover(source, steamAccFilter) {
   //Runs last so it can dedupe against every other source by appid.
   if (source.steamEmu) {
     try {
-      data = data.concat(await scanInstalledGoldbergGames(data));
+      data = data.concat(await scanInstalledGoldbergGames(data, scope));
     } catch (err) {
       debug.error(err);
     }
@@ -1357,7 +1375,7 @@ async function discover(source, steamAccFilter) {
       } catch {
         /* no exeList yet */
       }
-      const unconfigured = await scanUnconfiguredInstalls(linkedExes);
+      const unconfigured = await scanUnconfiguredInstalls(linkedExes, scope);
       // Resolve identity by name BEFORE makeList's concurrent per-game fetch starts (not lazily inside
       // getSavedAchievementsForAppid): that ran in the same Promise.all as the already-identified game
       // it was lending gameDir to, so the lend frequently lost the race — the real entry had already
