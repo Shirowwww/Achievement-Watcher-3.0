@@ -317,6 +317,12 @@ function translateUI(lang, locale, template) {
   selector.find("li:nth-child(6) .right select option[value='true']").text(clear(template.settings.common.enable));
   selector.find("li:nth-child(6) .right select option[value='false']").text(clear(template.settings.common.disable));
   selector.find('li:nth-child(6) .help').text(clear(template.settings.notification.option.groupToast.description));
+  // Appended after groupToast, which was the last row: inserting anywhere else would shift every
+  // nth-child binding above and relabel its neighbours.
+  selector.find('li:nth-child(7) .left span').text(clear(template.settings.notification.option.urgent.name));
+  selector.find("li:nth-child(7) .right select option[value='true']").text(clear(template.settings.common.enable));
+  selector.find("li:nth-child(7) .right select option[value='false']").text(clear(template.settings.common.disable));
+  selector.find('li:nth-child(7) .help').text(clear(template.settings.notification.option.urgent.description));
   selector = $('#options-notify-transport');
   selector.prev('.title').find('span').text(clear(template.settings.notification.title.transport));
   selector.find("li:nth-child(1) .right select option[value='true']").text(clear(template.settings.common.enable));

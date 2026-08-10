@@ -129,6 +129,7 @@ Choose **Windows notification**, **In-game overlay** or **Both** under **Setting
 - Position, scale, duration and overlay volume up to 200%.
 - Separate presets for normal, rare and 100% completion events.
 - Per-game progress mute without hiding real unlocks.
+- Optional priority unlock notifications that can appear during Windows Do Not Disturb after your approval.
 - Optional screenshot souvenirs.
 
 <table>

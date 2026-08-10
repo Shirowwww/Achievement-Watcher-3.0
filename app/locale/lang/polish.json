@@ -471,6 +471,10 @@
           "name": "Grupuj według gry",
           "description": "Wizualnie grupuje powiadomienia systemu Windows tej samej gry w Centrum akcji"
         },
+        "urgent": {
+          "name": "Powiadomienia priorytetowe",
+          "description": "Umożliwia wyświetlanie odblokowanych osiągnięć, gdy aktywny jest tryb Nie przeszkadzać. System Windows raz poprosi o uprawnienie."
+        },
         "useToast": {
           "name": "Powiadomienie systemu Windows",
           "description": "Powiadomienie systemu Windows 8-10"
@@ -1191,6 +1195,8 @@
     "scanning": "Skanowanie…",
     "scan-no-gbe-installs": "Nie znaleziono instalacji Goldberg / GBE Fork w tym folderze.",
     "scan-found-count": "Znaleziono {found} instalacji; u {missing} brakuje schematu achievements.json.",
+    "scan-failed-x": "Skanowanie nie powiodło się: {error}",
+    "ok": "OK",
     "goldberg-gbe-fork-scan": "Skan Goldberg / GBE Fork",
     "scan-found-message": "Znaleziono {found} instalacji — {missing} nieskonfigurowanych",
     "emu-login-missing": "Najpierw podaj nazwę użytkownika i hasło Steama.",

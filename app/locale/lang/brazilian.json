@@ -471,6 +471,10 @@
           "name": "Agrupar por jogo",
           "description": "Agrupar visualmente as notificações do Windows do mesmo jogo na Central de Ações"
         },
+        "urgent": {
+          "name": "Notificações prioritárias",
+          "description": "Permitir que desbloqueios de conquistas apareçam enquanto o Não perturbe estiver ativo. O Windows pede permissão uma vez."
+        },
         "useToast": {
           "name": "Notificação do Windows",
           "description": "Notificação de sistema do Windows 8-10"
@@ -1191,6 +1195,8 @@
     "scanning": "Escaneando…",
     "scan-no-gbe-installs": "Nenhuma instalação Goldberg / GBE Fork encontrada nessa pasta.",
     "scan-found-count": "{found} instalação(ões) encontrada(s); {missing} sem o esquema achievements.json.",
+    "scan-failed-x": "Falha na análise: {error}",
+    "ok": "OK",
     "goldberg-gbe-fork-scan": "Varredura Goldberg / GBE Fork",
     "scan-found-message": "{found} instalação(ões) encontrada(s) — {missing} não configurada(s)",
     "emu-login-missing": "Digite primeiro o usuário e a senha do Steam.",

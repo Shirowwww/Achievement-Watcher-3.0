@@ -42,6 +42,10 @@ Open **Settings → Notification** and choose a delivery mode:
 - **In-game overlay** displays a styled popup over the running game.
 - **Both** enables both transports.
 
+If Windows Do Not Disturb normally hides desktop notifications while playing, enable **Priority
+notifications** in the same section and approve the one-time Windows request. This affects achievement
+unlocks, not progress or playtime updates.
+
 Use the test buttons before launching a game. Presets, sounds, volume, duration and position can all be changed later. See [Notifications](notifications.md) for details.
 
 ## Tray and startup behavior

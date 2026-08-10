@@ -7,6 +7,14 @@ const notifyStrings = require('../../util/notifyStrings.js');
 
 const TOAST_QUEUE_SOUND_DELAY_MS = 5000;
 
+// Eleven call sites build toast options from settings; threading one more flag through all of them
+// would be noise, so the unlock-urgency preference lives here and is set once when settings load —
+// the same shape toaster.js uses for the shared overlay sound options.
+let urgentUnlocks = false;
+function setUrgentUnlocks(enabled) {
+  urgentUnlocks = enabled === true;
+}
+
 function normalizeProgress(progress) {
   if (!progress) return null;
   const max = Number(progress.max);
@@ -106,6 +114,16 @@ function buildToastNotification(message, options) {
 
   notification.uniqueID = message.achievementName ? `${message.appid}:${message.achievementName}` : `${message.appid}`;
 
+  // Windows 11 22H2 and later will not put a toast on screen while Do Not Disturb is on — which
+  // includes its automatic "playing a game" / "app in full screen" rules, the reason an unlock can
+  // go unseen for a whole session (issue #18). A notification marked urgent is the documented way
+  // through, and Windows asks the user once per app before honouring it (Settings > Notifications
+  // keeps the answer), so this escalates nothing behind their back. Off by default all the same,
+  // and never for playtime or progress: those are not worth interrupting a focused session for.
+  if (urgentUnlocks && message.notificationType !== 'playtime' && message.notificationType !== 'progress') {
+    notification.scenario = 'urgent';
+  }
+
   // powertoast has no `onClick` option — clicks are configured through `activation`. Foreground
   // activation is not usable here: it requires a COM toast-activator bound to our AUMID, which an
   // unpackaged desktop app does not get for free, so the click would do nothing at all. Protocol
@@ -172,3 +190,4 @@ module.exports = async (message, options) => {
 
 module.exports.buildToastNotification = buildToastNotification;
 module.exports.buildActivation = buildActivation;
+module.exports.setUrgentUnlocks = setUrgentUnlocks;

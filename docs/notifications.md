@@ -12,6 +12,18 @@ Achievement Watcher can announce unlocks with a native Windows notification (toa
 
 Use the built-in test buttons after changing the mode. A successful test confirms the display path; a real unlock still depends on the relevant game source being watched correctly.
 
+## Priority Windows notifications
+
+Full-screen games and other automatic Windows rules can turn on **Do Not Disturb**, which sends ordinary
+toasts to Notification Center without showing them on screen. Enable **Settings → Notification → Priority
+notifications** to mark achievement unlocks as important. Windows then asks once whether Achievement
+Watcher may send those notifications; the user can allow or refuse it in Windows notification settings.
+
+This is deliberately off by default. It applies to achievement and completion unlocks only, never to
+progress or playtime updates. The underlying Windows toast uses the `urgent` scenario, supported on
+Windows 10 version 2004 and later; it remains subject to Windows' notification permission and system
+policy. See [Microsoft's app-notification documentation](https://learn.microsoft.com/en-us/windows/apps/develop/notifications/app-notifications/app-notifications-content).
+
 ## In-game overlay presets
 
 The app includes presets inspired by several console and PC notification styles. You can select a main preset and optional overrides for:
@@ -57,8 +69,10 @@ Achievements with a global unlock rate below the configured rare threshold displ
 1. Confirm the selected mode is **Windows notification**, **In-game overlay** or **Both**, not disabled.
 2. Check that the background tracker is running.
 3. For overlays, select a valid preset and test again outside an exclusive fullscreen game.
-4. Check Windows notification settings for Achievement Watcher when notifications are missing.
-5. Open **Settings → Advanced → Diagnostics** and inspect the logs.
+4. If a full-screen game or Do Not Disturb hides Windows notifications, enable **Priority notifications**
+   and approve Windows' one-time request for Achievement Watcher.
+5. Check Windows notification settings for Achievement Watcher when notifications are missing.
+6. Open **Settings → Advanced → Diagnostics** and inspect the logs.
 
 Continue with [Troubleshooting](troubleshooting.md#notifications-do-not-appear) if the problem remains.
 

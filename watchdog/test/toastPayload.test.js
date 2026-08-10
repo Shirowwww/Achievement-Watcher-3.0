@@ -4,7 +4,8 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 
-const { buildToastNotification } = require(path.join(__dirname, '..', 'notification', 'transport', 'toast.js'));
+const toastTransport = require(path.join(__dirname, '..', 'notification', 'transport', 'toast.js'));
+const { buildToastNotification } = toastTransport;
 const toastIdentity = require(path.join(__dirname, '..', 'util', 'toastIdentity.js'));
 
 // A toast click can only reach an unpackaged desktop app through a registered URI scheme, which the
@@ -81,6 +82,30 @@ test('a grouped toast never hands powertoast a group it will reject', async () =
     () => new Toast({ aumid: 'x', title: 't', message: 'm', group: { id: 367520, title: 'Hollow Knight' } }),
     'a numeric group id must still be rejected by powertoast — this test is the reason we coerce it'
   );
+});
+
+// Windows will not show a toast while Do Not Disturb is on unless it is marked urgent, which is why
+// an in-game unlock can go unseen (issue #18). Opt-in, and pointedly not for the notifications that
+// are not worth breaking a focused session for.
+test('urgent unlocks are marked only when enabled, and never for playtime or progress', () => {
+  const build = (message) => {
+    const { notification } = buildToastNotification(message, toastOptions());
+    return notification.scenario;
+  };
+  const unlock = { appid: 480, achievementName: 'A', achievementDisplayName: 'X', achievementDescription: 'y' };
+
+  toastTransport.setUrgentUnlocks(false);
+  assert.strictEqual(build(unlock), undefined, 'off by default, no scenario is emitted');
+
+  toastTransport.setUrgentUnlocks(true);
+  assert.strictEqual(build(unlock), 'urgent');
+  assert.strictEqual(build({ ...unlock, notificationType: 'platinum' }), 'urgent');
+  assert.strictEqual(build({ ...unlock, notificationType: 'playtime' }), undefined);
+  assert.strictEqual(build({ ...unlock, notificationType: 'progress' }), undefined);
+
+  // powertoast validates the scenario against its own list; an unknown one is silently dropped,
+  // which would make this setting a no-op without anything failing.
+  toastTransport.setUrgentUnlocks(false);
 });
 
 test('winrt=false is forwarded as disableWinRT on the payload', () => {

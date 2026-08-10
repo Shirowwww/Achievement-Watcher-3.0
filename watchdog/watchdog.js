@@ -459,6 +459,9 @@ var app = {
       // Windows toasts resolve their sound from the same overlay settings as the in-game
       // overlay (Son / Son aléatoire / Volume); refresh on every settings reload too.
       notify.setOverlayOptions(self.options.overlay || {});
+    // Whether an unlock may be marked urgent, i.e. allowed on screen while Do Not Disturb is on.
+    // Refreshed on every settings reload, like the sound options above.
+    require('./notification/transport/toast.js').setUrgentUnlocks(self.options.notification_toast?.urgent === true);
       self.cfgOptionPath = cfg_file.option; // used to locate the per-game progress-mute store
       debug.log(self.options);
 

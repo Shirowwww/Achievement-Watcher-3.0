@@ -212,6 +212,11 @@ module.exports.load = async (cfg_file) => {
       fixFile = true;
     }
 
+    if (typeof options.notification_toast.urgent !== 'boolean') {
+      options.notification_toast.urgent = false;
+      fixFile = true;
+    }
+
     //Transport
 
     // Drop legacy display-transport flags from old configs. NOTE: `mode` is intentionally kept —
@@ -398,6 +403,7 @@ module.exports.load = async (cfg_file) => {
       notification_toast: {
         customToastAudio: '1',
         groupToast: false,
+      urgent: false,
       },
       notification_transport: {
         winRT: true,

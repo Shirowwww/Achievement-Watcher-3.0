@@ -471,6 +471,10 @@
           "name": "Csoportosítás játék szerint",
           "description": "Az azonos játék Windows-értesítéseinek vizuális csoportosítása a Műveletközpontban"
         },
+        "urgent": {
+          "name": "Kiemelt értesítések",
+          "description": "Lehetővé teszi az eredmények feloldásának megjelenését a Ne zavarjanak mód alatt. A Windows egyszer kér engedélyt."
+        },
         "useToast": {
           "name": "Windows-értesítés",
           "description": "Windows 8-10 rendszerértesítés"
@@ -1191,6 +1195,8 @@
     "scanning": "Vizsgálat…",
     "scan-no-gbe-installs": "Ebben a mappában nem található Goldberg / GBE Fork telepítés.",
     "scan-found-count": "{found} telepítés található; {missing} hiányzik az achievements.json séma.",
+    "scan-failed-x": "A vizsgálat sikertelen: {error}",
+    "ok": "Rendben",
     "goldberg-gbe-fork-scan": "Goldberg / GBE Fork vizsgálat",
     "scan-found-message": "{found} telepítés található — {missing} nincs konfigurálva",
     "emu-login-missing": "Először add meg a Steam felhasználónevet és jelszót.",

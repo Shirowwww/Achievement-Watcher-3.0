@@ -471,6 +471,10 @@
           "name": "จัดกลุ่มตามเกม",
           "description": "จัดกลุ่มการแจ้งเตือนของ Windows ของเกมเดียวกันด้วยภาพในศูนย์การแจ้งเตือน"
         },
+        "urgent": {
+          "name": "การแจ้งเตือนที่มีความสำคัญสูง",
+          "description": "อนุญาตให้แสดงการปลดล็อกความสำเร็จขณะเปิดโหมดห้ามรบกวน Windows จะขออนุญาตหนึ่งครั้ง"
+        },
         "useToast": {
           "name": "การแจ้งเตือนของ Windows",
           "description": "การแจ้งเตือนระบบของ Windows 8-10"
@@ -1191,6 +1195,8 @@
     "scanning": "กำลังสแกน…",
     "scan-no-gbe-installs": "ไม่พบการติดตั้ง Goldberg / GBE Fork ในโฟลเดอร์นั้น",
     "scan-found-count": "พบการติดตั้ง {found} รายการ; {missing} รายการไม่มีสคีมา achievements.json",
+    "scan-failed-x": "การสแกนล้มเหลว: {error}",
+    "ok": "ตกลง",
     "goldberg-gbe-fork-scan": "สแกน Goldberg / GBE Fork",
     "scan-found-message": "พบการติดตั้ง {found} รายการ — ยังไม่ได้กำหนดค่า {missing} รายการ",
     "emu-login-missing": "กรุณาป้อนชื่อผู้ใช้และรหัสผ่าน Steam ก่อน",

@@ -471,6 +471,10 @@
           "name": "Oyuna göre grupla",
           "description": "Aynı oyunun Windows bildirimlerini İşlem Merkezi içinde görsel olarak grupla"
         },
+        "urgent": {
+          "name": "Öncelikli bildirimler",
+          "description": "Rahatsız Etmeyin etkinken başarı kilit açmalarının gösterilmesini sağlar. Windows bir kez izin ister."
+        },
         "useToast": {
           "name": "Windows bildirimi",
           "description": "Windows 8-10 sistem bildirimi"
@@ -1191,6 +1195,8 @@
     "scanning": "Taranıyor…",
     "scan-no-gbe-installs": "Bu klasörde Goldberg / GBE Fork kurulumu bulunamadı.",
     "scan-found-count": "{found} kurulum bulundu; {missing} tanesinde achievements.json şeması eksik.",
+    "scan-failed-x": "Tarama başarısız: {error}",
+    "ok": "Tamam",
     "goldberg-gbe-fork-scan": "Goldberg / GBE Fork taraması",
     "scan-found-message": "{found} kurulum bulundu — {missing} yapılandırılmamış",
     "emu-login-missing": "Önce Steam kullanıcı adını ve parolasını girin.",

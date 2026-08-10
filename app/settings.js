@@ -301,6 +301,10 @@ module.exports.load = () => {
       options.notification_toast.groupToast = false;
     }
 
+    if (typeof options.notification_toast.urgent !== 'boolean') {
+      options.notification_toast.urgent = false;
+    }
+
     //Transport
 
     // Drop legacy display-transport flags so the file stays clean. NOTE: `mode` is intentionally
@@ -474,6 +478,7 @@ module.exports.load = () => {
       notification_toast: {
         customToastAudio: '1',
         groupToast: false,
+        urgent: false,
       },
       notification_transport: {
         winRT: true,

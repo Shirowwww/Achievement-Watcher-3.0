@@ -48,8 +48,10 @@ Hidden achievement descriptions may stay hidden when every available source inte
 2. Use the normal, rare and overlay tests under **Settings → Notification**.
 3. Confirm the delivery mode and selected preset.
 4. Check Windows notification permissions for Achievement Watcher.
-5. Test the overlay outside exclusive fullscreen mode.
-6. Review the logs immediately after a failed test or unlock.
+5. If the issue happens only while playing or in full screen, turn on **Priority notifications** under
+   **Settings → Notification** and accept the Windows permission prompt.
+6. Test the overlay outside exclusive fullscreen mode.
+7. Review the logs immediately after a failed test or unlock.
 
 If the library updates but no notification appears, the source watcher works and the problem is likely in the selected notification transport. If the library also stays unchanged, diagnose the source or save path first.
 

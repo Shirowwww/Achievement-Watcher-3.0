@@ -117,12 +117,12 @@ function getGlobalStat(appid, source, gameName, achievements, context) {
       const items = [];
       if (manual) {
         items.push({
-          label: $('#game-list').attr('data-ctx-clearmanualunlock') || 'Clear manual unlock',
+          label: $('#game-list').attr('data-ctx-clearmanualunlock') || '',
           click: () => window.app?.manualUnlockAction?.(appid, source, name, 'clear-manual'),
         });
       } else if (!achieved) {
         items.push({
-          label: $('#game-list').attr('data-ctx-manualunlock') || 'Mark as manually unlocked',
+          label: $('#game-list').attr('data-ctx-manualunlock') || '',
           click: () => window.app?.manualUnlockAction?.(appid, source, name, 'mark-unlocked'),
         });
       }

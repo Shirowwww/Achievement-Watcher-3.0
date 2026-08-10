@@ -471,6 +471,10 @@
           "name": "Raggruppa per gioco",
           "description": "Raggruppa visivamente le notifiche di Windows dello stesso gioco nel Centro notifiche"
         },
+        "urgent": {
+          "name": "Notifiche prioritarie",
+          "description": "Consente di visualizzare gli sblocchi degli obiettivi mentre Non disturbare è attivo. Windows chiede l'autorizzazione una sola volta."
+        },
         "useToast": {
           "name": "Notifica di Windows",
           "description": "Notifica di sistema Windows 8-10"
@@ -1191,6 +1195,8 @@
     "scanning": "Scansione…",
     "scan-no-gbe-installs": "Nessuna installazione Goldberg / GBE Fork trovata in quella cartella.",
     "scan-found-count": "Trovate {found} installazione/i; a {missing} manca lo schema achievements.json.",
+    "scan-failed-x": "Scansione non riuscita: {error}",
+    "ok": "OK",
     "goldberg-gbe-fork-scan": "Scansione Goldberg / GBE Fork",
     "scan-found-message": "{found} installazione/i trovata/e — {missing} non configurate",
     "emu-login-missing": "Inserisci prima nome utente e password Steam.",

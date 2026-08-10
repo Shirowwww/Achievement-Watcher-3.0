@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { execFileSync } = require('node:child_process');
 
 /*
   Runs the real settings filter, through the real jQuery, over the real app.html markup in a real
@@ -20,7 +21,7 @@ const path = require('node:path');
 const appDir = path.join(__dirname, '..', 'app');
 const puppeteer = require(path.join(appDir, 'node_modules', 'puppeteer-core'));
 
-function findBrowser() {
+function findBrowsers() {
   const candidates = [
     process.env.PUPPETEER_EXECUTABLE_PATH,
     path.join(process.env['ProgramFiles(x86)'] || '', 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
@@ -28,13 +29,68 @@ function findBrowser() {
     path.join(process.env.ProgramFiles || '', 'Google', 'Chrome', 'Application', 'chrome.exe'),
     path.join(process.env['ProgramFiles(x86)'] || '', 'Google', 'Chrome', 'Application', 'chrome.exe'),
   ].filter(Boolean);
-  return candidates.find((file) => {
+  return candidates.filter((file) => {
     try {
       return fs.existsSync(file);
     } catch {
       return false;
     }
   });
+}
+
+// A browser that fails to launch can still leave processes behind: Edge re-execs itself and
+// detaches, so puppeteer reports "Failed to launch the browser process: Code: 0" while six live
+// msedge.exe stay parked on the profile it was given. Nothing owns them afterwards, and the next
+// run's Edge attempt then blocks on that stale profile until the launch timeout — which is how one
+// unusable browser turned into an 80-second suite and a failing file. Each attempt therefore gets a
+// profile directory we control, so a failure can clean up after itself by pid.
+function killProcessesUsing(userDataDir) {
+  if (process.platform !== 'win32') return;
+  try {
+    execFileSync(
+      'powershell.exe',
+      [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        // The directory travels in the environment, never interpolated into the script: a temp path
+        // holding a quote (a user named O'Brien) would end the string, and `-like` would read `[`,
+        // `]`, `*` and `?` in it as wildcards. `.Contains()` on an env var has neither problem.
+        "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine.Contains($env:AW_TEST_PROFILE_DIR) } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }",
+      ],
+      { stdio: 'ignore', timeout: 30000, env: { ...process.env, AW_TEST_PROFILE_DIR: userDataDir } }
+    );
+  } catch {
+    /* best effort: a leftover browser must never fail the test */
+  }
+}
+
+// An installed browser is not necessarily a usable one, so try each until one actually starts —
+// this machine has a working Chrome sitting right behind an Edge that cannot start headless, and
+// the first candidate failing used to fail the whole test. The explicit `timeout` matters just as
+// much: without it a browser that starts but never speaks CDP hangs this test, and the suite with
+// it, forever.
+async function launchBrowser() {
+  const failures = [];
+  for (const executablePath of findBrowsers()) {
+    const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-browser-'));
+    try {
+      const browser = await puppeteer.launch({
+        executablePath,
+        headless: true,
+        timeout: 30000,
+        protocolTimeout: 60000,
+        userDataDir,
+        args: ['--no-sandbox', '--disable-gpu'],
+      });
+      return { browser, executablePath, userDataDir, failures };
+    } catch (err) {
+      failures.push(`${path.basename(executablePath)}: ${String(err.message || err).split('\n')[0]}`);
+      killProcessesUsing(userDataDir);
+      fs.rmSync(userDataDir, { recursive: true, force: true });
+    }
+  }
+  return { browser: null, executablePath: null, userDataDir: null, failures };
 }
 
 // The settings panel, jQuery and the filter module, wired into a standalone page. `module.exports`
@@ -56,17 +112,19 @@ function buildHarness() {
   </body></html>`;
 }
 
-test('the settings filter behaves correctly in a real DOM', { concurrency: 1 }, async (t) => {
-  const executablePath = findBrowser();
-  if (!executablePath) {
-    t.skip('no Chromium-family browser available to host the DOM');
+test('the settings filter behaves correctly in a real DOM', { concurrency: 1, timeout: 180000 }, async (t) => {
+  const { browser, userDataDir, failures } = await launchBrowser();
+  if (!browser) {
+    // Skipped, not failed: with no browser that will start, this test can say nothing at all about
+    // the filter. The reasons are printed so an environment fault stays visible instead of hiding
+    // behind a quiet skip.
+    t.skip(failures.length ? `no usable Chromium-family browser — ${failures.join(' | ')}` : 'no Chromium-family browser installed');
     return;
   }
 
   const harness = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'aw-settings-')), 'harness.html');
   fs.writeFileSync(harness, buildHarness());
 
-  const browser = await puppeteer.launch({ executablePath, headless: true, args: ['--no-sandbox', '--disable-gpu'] });
   try {
     const page = await browser.newPage();
     await page.goto('file://' + harness.replace(/\\/g, '/'));
@@ -130,6 +188,10 @@ test('the settings filter behaves correctly in a real DOM', { concurrency: 1 }, 
     assert.strictEqual(await signature(), before);
   } finally {
     await browser.close();
+    // close() returns before the OS has torn the processes down; anything still holding the profile
+    // would keep it locked and strand the directory.
+    killProcessesUsing(userDataDir);
     fs.rmSync(path.dirname(harness), { recursive: true, force: true });
+    fs.rmSync(userDataDir, { recursive: true, force: true });
   }
 });

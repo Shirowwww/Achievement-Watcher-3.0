@@ -471,6 +471,10 @@
           "name": "Групувати за грою",
           "description": "Візуально групувати сповіщення Windows однієї гри в Центрі сповіщень"
         },
+        "urgent": {
+          "name": "Пріоритетні сповіщення",
+          "description": "Дозволяє показувати розблокування досягнень, коли ввімкнено режим «Не турбувати». Windows один раз попросить дозвіл."
+        },
         "useToast": {
           "name": "Сповіщення Windows",
           "description": "Системне сповіщення Windows 8-10"
@@ -1191,6 +1195,8 @@
     "scanning": "Сканування…",
     "scan-no-gbe-installs": "У цій папці не знайдено встановлень Goldberg / GBE Fork.",
     "scan-found-count": "Знайдено встановлень: {found}; у {missing} відсутня схема achievements.json.",
+    "scan-failed-x": "Сканування не вдалося: {error}",
+    "ok": "ОК",
     "goldberg-gbe-fork-scan": "Сканування Goldberg / GBE Fork",
     "scan-found-message": "Знайдено встановлень: {found} — не налаштовано: {missing}",
     "emu-login-missing": "Спочатку введіть ім’я користувача та пароль Steam.",

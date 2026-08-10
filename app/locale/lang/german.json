@@ -471,6 +471,10 @@
           "name": "Nach Spiel gruppieren",
           "description": "Windows-Benachrichtigungen desselben Spiels im Info-Center optisch gruppieren"
         },
+        "urgent": {
+          "name": "Prioritätsbenachrichtigungen",
+          "description": "Ermöglicht, dass Erfolgsfreischaltungen angezeigt werden, während „Nicht stören“ aktiv ist. Windows fragt einmalig nach der Berechtigung."
+        },
         "useToast": {
           "name": "Windows-Benachrichtigung",
           "description": "Windows-8-10-Systembenachrichtigung"
@@ -1191,6 +1195,8 @@
     "scanning": "Wird gescannt…",
     "scan-no-gbe-installs": "In diesem Ordner wurden keine Goldberg-/GBE-Fork-Installationen gefunden.",
     "scan-found-count": "{found} Installation(en) gefunden; bei {missing} fehlt das achievements.json-Schema.",
+    "scan-failed-x": "Scan fehlgeschlagen: {error}",
+    "ok": "OK",
     "goldberg-gbe-fork-scan": "Goldberg-/GBE-Fork-Scan",
     "scan-found-message": "{found} Installation(en) gefunden — {missing} nicht konfiguriert",
     "emu-login-missing": "Gib zuerst Steam-Benutzername und -Passwort ein.",

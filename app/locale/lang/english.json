@@ -471,6 +471,10 @@
           "name": "Group by game",
           "description": "Visually group Windows notifications from the same game within Action Center"
         },
+        "urgent": {
+          "name": "Priority notifications",
+          "description": "Let achievement unlocks show while Do Not Disturb is active. Windows asks for permission once."
+        },
         "useToast": {
           "name": "Windows notification",
           "description": "Windows 8-10 system notification"
@@ -1191,6 +1195,8 @@
     "scanning": "Scanning…",
     "scan-no-gbe-installs": "No Goldberg / GBE Fork installs found in that folder.",
     "scan-found-count": "Found {found} install(s); {missing} missing their achievements.json schema.",
+    "scan-failed-x": "Scan failed: {error}",
+    "ok": "OK",
     "goldberg-gbe-fork-scan": "Goldberg / GBE Fork scan",
     "scan-found-message": "{found} install(s) found — {missing} unconfigured",
     "emu-login-missing": "Enter the Steam username and password first.",

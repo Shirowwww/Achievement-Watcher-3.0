@@ -471,6 +471,10 @@
           "name": "ゲームごとにグループ化",
           "description": "アクションセンターで同じゲームの Windows 通知を視覚的にグループ化します"
         },
+        "urgent": {
+          "name": "優先度の高い通知",
+          "description": "「応答不可」が有効な間も実績解除を表示します。Windows は一度だけ許可を求めます。"
+        },
         "useToast": {
           "name": "Windows 通知",
           "description": "Windows 8-10 システム通知"
@@ -1191,6 +1195,8 @@
     "scanning": "スキャン中…",
     "scan-no-gbe-installs": "そのフォルダに Goldberg / GBE Fork のインストールが見つかりません。",
     "scan-found-count": "インストール {found} 件を検出；{missing} 件は achievements.json スキーマがありません。",
+    "scan-failed-x": "スキャンに失敗しました: {error}",
+    "ok": "OK",
     "goldberg-gbe-fork-scan": "Goldberg / GBE Fork スキャン",
     "scan-found-message": "インストール {found} 件を検出 — 未設定 {missing} 件",
     "emu-login-missing": "最初に Steam のユーザー名とパスワードを入力してください。",

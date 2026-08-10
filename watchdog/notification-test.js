@@ -151,6 +151,9 @@ async function runTest(kind, { rumble = true } = {}) {
           ? notificationSound.pickRandomSound() || notificationSound.resolveSoundFile(ov.notificationSound)
           : notificationSound.resolveSoundFile(ov.notificationSound);
     }
+    // The test runs in the Watchdog process but reloads options itself, so it has to apply the
+    // urgency preference too — otherwise the button would not exercise what a real unlock does.
+    require('./notification/transport/toast.js').setUrgentUnlocks(options.notification_toast?.urgent === true);
     const { notification, soundFile } = buildToastNotification(message, toastOptions);
     await applyToastAppSettings(notification, options);
 

@@ -471,6 +471,10 @@
           "name": "按游戏分组",
           "description": "在操作中心内按同一游戏对 Windows 通知进行视觉分组"
         },
+        "urgent": {
+          "name": "高优先级通知",
+          "description": "即使“请勿打扰”处于开启状态，也显示成就解锁通知。Windows 将请求一次权限。"
+        },
         "useToast": {
           "name": "Windows 通知",
           "description": "Windows 8-10 系统通知"
@@ -1191,6 +1195,8 @@
     "scanning": "正在扫描…",
     "scan-no-gbe-installs": "该文件夹中未找到 Goldberg / GBE Fork 安装。",
     "scan-found-count": "找到 {found} 个安装；{missing} 个缺少 achievements.json 架构。",
+    "scan-failed-x": "扫描失败：{error}",
+    "ok": "确定",
     "goldberg-gbe-fork-scan": "Goldberg / GBE Fork 扫描",
     "scan-found-message": "找到 {found} 个安装 — {missing} 个未配置",
     "emu-login-missing": "请先输入 Steam 用户名和密码。",

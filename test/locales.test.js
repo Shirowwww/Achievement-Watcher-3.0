@@ -54,6 +54,11 @@ test('all bundled locales have the complete English key set', () => {
   for (const file of files) {
     const locale = JSON.parse(fs.readFileSync(path.join(localeDir, file), 'utf8'));
     assert.deepStrictEqual(leafPaths(locale).sort(), expected, `${file} must match the English locale keys`);
+    for (const key of expected) {
+      const value = valueAt(locale, key);
+      assert.notStrictEqual(value, undefined, `${file}: ${key} must be defined`);
+      if (typeof value === 'string') assert.ok(value.trim(), `${file}: ${key} must be translated`);
+    }
     for (const label of newLabels) {
       assert.ok(String(valueAt(locale, label) || '').trim(), `${file}: ${label} must be translated`);
     }
@@ -70,6 +75,30 @@ test('every template.* path referenced by the locale loader exists in the locale
   const english = JSON.parse(fs.readFileSync(path.join(localeDir, 'english.json'), 'utf8'));
   for (const ref of refs) {
     assert.notStrictEqual(valueAt(english, ref), undefined, `template.${ref} must exist in english.json`);
+  }
+  for (const file of fs.readdirSync(localeDir).filter((name) => name.endsWith('.json'))) {
+    const locale = JSON.parse(fs.readFileSync(path.join(localeDir, file), 'utf8'));
+    for (const ref of refs) {
+      const value = valueAt(locale, ref);
+      assert.notStrictEqual(value, undefined, `${file}: template.${ref} must exist`);
+      if (typeof value === 'string') assert.ok(value.trim(), `${file}: template.${ref} must be translated`);
+    }
+  }
+});
+
+test('locale-backed menu and status labels have no embedded English fallbacks', () => {
+  const sources = [
+    path.join(__dirname, '..', 'app', 'app.js'),
+    path.join(__dirname, '..', 'app', 'ui', 'game.js'),
+    path.join(__dirname, '..', 'app', 'ui', 'settings.js'),
+  ].map((file) => fs.readFileSync(file, 'utf8'));
+
+  for (const source of sources) {
+    assert.doesNotMatch(
+      source,
+      /attr\(['"]data-(?:ctx|lang|configured|fallback|running|done|empty|restore|err|ok|fail)[^'"\r\n]*['"]\)\s*\|\|\s*(?:['"`])[^'"`\r\n]+(?:['"`])/,
+      'a localized data attribute must not fall back to a hard-coded label'
+    );
   }
 });
 

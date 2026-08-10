@@ -916,7 +916,7 @@ var app = {
         app.errorExit(err, 'Error loading lang.');
       });
 
-    $('#user-info .info .name').text(self.config.general.username || os.userInfo().username || 'User');
+    $('#user-info .info .name').text(self.config.general.username || os.userInfo().username || '');
 
     let loadingElem = {
       elem: $('#main-footer .loading'),
@@ -1527,7 +1527,7 @@ var app = {
             );
             gameMenu.append(
               new MenuItem({
-                label: $('#game-list').attr('data-ctx-resetplaytime') || 'Reset playtime and last played',
+                label: $('#game-list').attr('data-ctx-resetplaytime') || '',
                 async click() {
                   self.css('pointer-events', 'none');
                   await PlaytimeTracking.reset(appid).catch((err) => debug.error(err));
@@ -1540,8 +1540,8 @@ var app = {
           gameMenu.append(
             new MenuItem({
               label: progressMute.isMuted(appid)
-                ? $('#game-list').attr('data-ctx-unmuteprogress') || 'Unmute progress notifications'
-                : $('#game-list').attr('data-ctx-muteprogress') || 'Mute progress notifications',
+                ? $('#game-list').attr('data-ctx-unmuteprogress') || ''
+                : $('#game-list').attr('data-ctx-muteprogress') || '',
               click() {
                 try {
                   progressMute.toggle(appid);
@@ -1562,7 +1562,7 @@ var app = {
             // Steam/GBE only
             gameMenu.append(
               new MenuItem({
-                label: $('#game-list').attr('data-ctx-resetplaytime') || 'Reset playtime and last played',
+                label: $('#game-list').attr('data-ctx-resetplaytime') || '',
                 async click() {
                   self.css('pointer-events', 'none');
                   await PlaytimeTracking.reset(appid).catch((err) => {
@@ -1605,7 +1605,7 @@ var app = {
             emulatorMenu.append(
               new MenuItem({
                 icon: menuIcon('file-text.png'),
-                label: $('#game-list').attr('data-ctx-genjson') || 'Generate achievements.json for Goldberg Emu',
+                label: $('#game-list').attr('data-ctx-genjson') || '',
                 async click() {
                   self.css('pointer-events', 'none');
                   try {
@@ -1675,7 +1675,7 @@ var app = {
             emulatorMenu.append(
               new MenuItem({
                 icon: menuIcon('file-text.png'),
-                label: $('#game-list').attr('data-ctx-diagnose') || 'Diagnose Goldberg/GBE setup',
+                label: $('#game-list').attr('data-ctx-diagnose') || '',
                 async click() {
                   try {
                     const game = list.find((g) => g.appid == appid);
@@ -1704,7 +1704,7 @@ var app = {
               emulatorMenu.append(
                 new MenuItem({
                   icon: menuIcon('folder-open.png'),
-                  label: $('#game-list').attr('data-ctx-backupgbe') || 'Back up GBE/Goldberg setup (steam_settings + steam_api(64).dll)…',
+                  label: $('#game-list').attr('data-ctx-backupgbe') || '',
                   async click() {
                     try {
                       const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
@@ -1754,7 +1754,7 @@ var app = {
               emulatorMenu.append(
                 new MenuItem({
                   icon: menuIcon('redo-alt.png'),
-                  label: $('#game-list').attr('data-ctx-restoregbe') || 'Restore latest GBE/Goldberg backup…',
+                  label: $('#game-list').attr('data-ctx-restoregbe') || '',
                   async click() {
                     try {
                       let backup = findLatestGbeBackup({ ...backupGame, appid });
@@ -1823,7 +1823,7 @@ var app = {
               emulatorMenu.append(
                 new MenuItem({
                   icon: menuIcon('file-text.png'),
-                  label: $('#game-list').attr('data-ctx-installgbe') || 'Apply emulator fix (GBE Fork)…',
+                  label: $('#game-list').attr('data-ctx-installgbe') || '',
                   async click() {
                     try {
                       // 1 — reuse the install folder discover() already found; only prompt when
@@ -2144,7 +2144,7 @@ var app = {
               emulatorMenu.append(
                 new MenuItem({
                   icon: menuIcon('file-text.png'),
-                  label: $('#game-list').attr('data-ctx-removedrm') || 'Remove Steam DRM (Steamless)…',
+                  label: $('#game-list').attr('data-ctx-removedrm') || '',
                   async click() {
                     try {
                       const game = list.find((g) => g.appid == appid);
@@ -2234,7 +2234,7 @@ var app = {
               emulatorMenu.append(
                 new MenuItem({
                   icon: menuIcon('file-text.png'),
-                  label: $('#game-list').attr('data-ctx-crackfix') || 'Community fix (CrakFiles)…',
+                  label: $('#game-list').attr('data-ctx-crackfix') || '',
                   async click() {
                     // Hoisted so the catch's "pixeldrain captcha → apply a manually-downloaded file" flow
                     // can reach the resolved game / fix / install dir.
@@ -2766,7 +2766,7 @@ var app = {
             folderMenu.append(
               new MenuItem({
                 icon: menuIcon('folder-open.png'),
-                label: $('#game-list').attr('data-ctx-iconcache') || `Open the game's icon cache folder`,
+                label: $('#game-list').attr('data-ctx-iconcache') || '',
                 click() {
                   remote.shell.openPath(path.join(getUserDataPath(), 'steam_cache', 'icon', catalogAppid || `${appid}`));
                 },
@@ -2775,7 +2775,7 @@ var app = {
             folderMenu.append(
               new MenuItem({
                 icon: menuIcon('folder-open.png'),
-                label: $('#game-list').attr('data-ctx-dbcache') || `Open the game's .db cache folder`,
+                label: $('#game-list').attr('data-ctx-dbcache') || '',
                 click() {
                   remote.shell.showItemInFolder(
                     path.join(getUserDataPath(), 'steam_cache', 'schema', `${app.config.achievement.lang}`, `${catalogAppid || appid}.db`)
@@ -2791,7 +2791,7 @@ var app = {
               folderMenu.append(
                 new MenuItem({
                   icon: menuIcon('folder-open.png'),
-                  label: $('#game-list').attr('data-ctx-installloc') || `Open the game's install location`,
+                  label: $('#game-list').attr('data-ctx-installloc') || '',
                   click() {
                     remote.shell.openPath(gameForDir.gameDir);
                   },
@@ -3187,17 +3187,17 @@ var app = {
           // Native Electron menu labels treat a lone "&" as an accelerator marker (swallowed at
           // render time), so a literal ampersand must be doubled ("&&"). Locale strings keep the
           // single "&" (they're also used in HTML); escape only here, at the native-menu boundary.
-          const groupLabel = (attribute, fallback) => ($('#game-list').attr(attribute) || fallback).replace(/&/g, '&&');
-          if (gameMenu.items.length) menu.append(new MenuItem({ label: groupLabel('data-ctx-group-game', 'Game'), submenu: gameMenu }));
+          const groupLabel = (attribute) => ($('#game-list').attr(attribute) || '').replace(/&/g, '&&');
+          if (gameMenu.items.length) menu.append(new MenuItem({ label: groupLabel('data-ctx-group-game'), submenu: gameMenu }));
           if (emulatorMenu.items.length)
             menu.append(
               new MenuItem({
-                label: isUbisoftSource ? 'Ubisoft Connect' : groupLabel('data-ctx-group-emulator', 'Emulator & tools'),
+                label: isUbisoftSource ? 'Ubisoft Connect' : groupLabel('data-ctx-group-emulator'),
                 submenu: emulatorMenu,
               })
             );
-          if (folderMenu.items.length) menu.append(new MenuItem({ label: groupLabel('data-ctx-group-folders', 'Folders'), submenu: folderMenu }));
-          if (linkMenu.items.length) menu.append(new MenuItem({ label: groupLabel('data-ctx-group-links', 'Useful links'), submenu: linkMenu }));
+          if (folderMenu.items.length) menu.append(new MenuItem({ label: groupLabel('data-ctx-group-folders'), submenu: folderMenu }));
+          if (linkMenu.items.length) menu.append(new MenuItem({ label: groupLabel('data-ctx-group-links'), submenu: linkMenu }));
 
           // ---- Cover art management (re-download / alternate AppID / local image) ----
           const coverGame = list.find((g) => g.appid == appid);
@@ -3311,7 +3311,7 @@ var app = {
                 })
               );
             }
-            menu.append(new MenuItem({ label: groupLabel('data-ctx-group-cover', 'Cover'), submenu: coverMenu }));
+            menu.append(new MenuItem({ label: groupLabel('data-ctx-group-cover'), submenu: coverMenu }));
           }
 
           menu.popup({ window: remote.getCurrentWindow() });

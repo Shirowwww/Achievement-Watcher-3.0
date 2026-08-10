@@ -471,6 +471,10 @@
           "name": "Zoskupiť podľa hry",
           "description": "Vizuálne zoskupiť oznámenia Windows tej istej hry v Centre akcií"
         },
+        "urgent": {
+          "name": "Prioritné oznámenia",
+          "description": "Umožní zobraziť odomknutia úspechov, keď je aktívny režim Nerušiť. Windows si raz vyžiada povolenie."
+        },
         "useToast": {
           "name": "Oznámenie Windows",
           "description": "Systémové oznámenie Windows 8-10"
@@ -1191,6 +1195,8 @@
     "scanning": "Skenovanie…",
     "scan-no-gbe-installs": "V tomto priečinku sa nenašli žiadne inštalácie Goldberg / GBE Fork.",
     "scan-found-count": "Nájdených {found} inštalácií; u {missing} chýba schéma achievements.json.",
+    "scan-failed-x": "Skenovanie zlyhalo: {error}",
+    "ok": "OK",
     "goldberg-gbe-fork-scan": "Sken Goldberg / GBE Fork",
     "scan-found-message": "{found} inštalácií nájdených — {missing} nenakonfigurovaných",
     "emu-login-missing": "Najprv zadajte používateľské meno a heslo Steamu.",

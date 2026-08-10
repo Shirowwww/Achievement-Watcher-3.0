@@ -289,7 +289,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           ]) {
             const typeSel = $(id);
             typeSel.empty();
-            typeSel.append($('<option>').attr('value', '').text(typeSel.attr('data-lang-same') || 'Same as main'));
+            typeSel.append($('<option>').attr('value', '').text(typeSel.attr('data-lang-same') || ''));
             list.forEach((name) => {
               typeSel.append($('<option>').attr('value', name).text(name));
             });
@@ -302,7 +302,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         .then((sounds) => {
           const sel = $('#option_overlaySound');
           sel.empty();
-          sel.append($('<option>').attr('value', '').text(sel.attr('data-lang-none') || 'None'));
+          sel.append($('<option>').attr('value', '').text(sel.attr('data-lang-none') || ''));
           (sounds || []).forEach((name) => sel.append($('<option>').attr('value', name).text(name.replace(/\.[^.]+$/, ''))));
           sel.val(cfgOverlay.notificationSound || '');
         })
@@ -354,8 +354,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const apikeyEl = $('#diag-apikey');
         apikeyEl.find('span').last().text(
           hasKey
-            ? apikeyEl.attr('data-configured') || 'configured'
-            : apikeyEl.attr('data-fallback') || 'not set — using fallback scraping'
+            ? apikeyEl.attr('data-configured') || ''
+            : apikeyEl.attr('data-fallback') || ''
         );
       } catch (err) {
         debug.log(err);
@@ -503,11 +503,11 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
             missing: unconfigured.length,
           }),
           detail,
-          buttons: ['OK'],
+          buttons: [t('ok', 'OK', 'OK')],
           noLink: true,
         });
       } catch (err) {
-        result.text(`Scan failed: ${err}`);
+        result.text(t('scan-failed-x', 'Scan failed: {error}', 'Échec de l’analyse : {error}', { error: err }));
         debug.log(err);
       }
     });
@@ -621,8 +621,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         .children('select')
         .each(function (index) {
           try {
-            // groupToast sits in the common group visually but persists under notification_toast.
-            if ($(this)[0].id === 'option_groupToast') return;
+            // groupToast and urgent sit in the common group visually but persist under
+            // notification_toast.
+            if ($(this)[0].id === 'option_groupToast' || $(this)[0].id === 'option_urgent') return;
             if ($(this)[0].id !== '' && $(this).val() !== '') {
               app.config.notification[$(this)[0].id.replace('option_', '')] =
                 $(this).val() === 'true' ? true : $(this).val() === 'false' ? false : $(this).val();
@@ -635,6 +636,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
       if ($('#option_groupToast').val() !== '') {
         app.config.notification_toast.groupToast = $('#option_groupToast').val() === 'true';
+      }
+      if ($('#option_urgent').val() !== '') {
+        app.config.notification_toast.urgent = $('#option_urgent').val() === 'true';
       }
 
       $('#options-notify-transport .right')
@@ -1717,7 +1721,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
       debug.log('auto-finding folder(s) ...');
       const result = $('#folder-action-result');
-      result.text(result.attr('data-running') || 'Searching…');
+      result.text(result.attr('data-running') || '');
       // Diff the lists before/after so the summary reports what Smart Find actually added.
       const before = $('#settings #dirlist > li').length + $('#settings #libdirlist > li').length;
 
@@ -1738,7 +1742,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           }
         }
         const added = Math.max(0, $('#settings #dirlist > li').length + $('#settings #libdirlist > li').length - before);
-        result.text(`${result.attr('data-done') || 'Search complete.'} (${added})`);
+        result.text(`${result.attr('data-done') || ''} (${added})`);
       } catch (err) {
         result.text('');
         remote.dialog.showMessageBoxSync({
@@ -1771,16 +1775,16 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       } catch (err) {
         debug.log(err);
       }
-      emptyEl.text(entries.length === 0 ? listEl.attr('data-empty') || 'No hidden games.' : '');
+      emptyEl.text(entries.length === 0 ? listEl.attr('data-empty') || '' : '');
       for (const entry of entries) {
         const li = $('<li>');
         $('<span class="name">')
-          .text(entry.name || `App ${entry.appid}`)
+          .text(entry.name || String(entry.appid))
           .attr('title', String(entry.appid))
           .appendTo(li);
         $('<span class="appid">').text(entry.appid).appendTo(li);
         $('<button type="button" class="inline-action-btn"><i class="fas fa-undo"></i></button>')
-          .attr('title', listEl.attr('data-restore') || 'Restore this game')
+          .attr('title', listEl.attr('data-restore') || '')
           .on('click', async function () {
             const btn = $(this);
             btn.css('pointer-events', 'none');
@@ -2171,7 +2175,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           const sounds = await ipcRenderer.invoke('list-sounds');
           const sel = $('#option_overlaySound');
           sel.empty();
-          sel.append($('<option>').attr('value', '').text(sel.attr('data-lang-none') || 'None'));
+          sel.append($('<option>').attr('value', '').text(sel.attr('data-lang-none') || ''));
           (sounds || []).forEach((n) => sel.append($('<option>').attr('value', n).text(n.replace(/\.[^.]+$/, ''))));
           sel.val(name).change();
         }
@@ -2234,7 +2238,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const status = $('#cust-status');
       const name = ($('#cust-name').val() || '').trim();
       if (!name) {
-        status.text(status.attr('data-err') || 'Enter a name first').css('color', '#e66');
+        status.text(status.attr('data-err') || '').css('color', '#e66');
         return;
       }
       self.css('pointer-events', 'none');
@@ -2256,13 +2260,13 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           sel.empty();
           (presets && presets.length ? presets : ['Shirow', 'Default']).forEach((n) => sel.append($('<option>').attr('value', n).text(n)));
           sel.val(res.name).change();
-          status.text((status.attr('data-ok') || 'Created & selected:') + ' ' + res.name).css('color', '#6c6');
+          status.text((status.attr('data-ok') || '') + ' ' + res.name).css('color', '#6c6');
         } else {
-          status.text((status.attr('data-fail') || 'Failed') + (res && res.error ? ': ' + res.error : '')).css('color', '#e66');
+          status.text((status.attr('data-fail') || '') + (res && res.error ? ': ' + res.error : '')).css('color', '#e66');
         }
       } catch (e) {
         debug.log(e);
-        status.text('Failed: ' + e).css('color', '#e66');
+        status.text((status.attr('data-fail') || '') + ': ' + e).css('color', '#e66');
       }
       self.css('pointer-events', 'initial');
     });
@@ -2307,7 +2311,8 @@ function readNotificationSettings() {
   $('#options-notify-common .right')
     .children('select')
     .each(function () {
-      if (this.id === 'option_groupToast') return; // persists under notification_toast (handled below)
+      // persist under notification_toast (handled below)
+      if (this.id === 'option_groupToast' || this.id === 'option_urgent') return;
       if (this.id !== '' && $(this).val() !== '') app.config.notification[this.id.replace('option_', '')] = boolifyValue($(this).val());
     });
   $('#options-notify-transport .right')
@@ -2315,8 +2320,9 @@ function readNotificationSettings() {
     .each(function () {
       if (this.id !== '' && $(this).val() !== '') app.config.notification_transport[this.id.replace('option_', '')] = boolifyValue($(this).val());
     });
-  // Group-by-game sits in the common group visually but is persisted under notification_toast.
+  // Group-by-game and urgent sit in the common group visually but persist under notification_toast.
   if ($('#option_groupToast').val() !== '') app.config.notification_toast.groupToast = boolifyValue($('#option_groupToast').val());
+  if ($('#option_urgent').val() !== '') app.config.notification_toast.urgent = boolifyValue($('#option_urgent').val());
 
   // Overlay (in-game) notification — enable in notification_transport, look in overlay.notification*.
   app.config.notification_transport.mode = $('#option_notifMode').val() || 'overlay';
