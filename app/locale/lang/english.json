@@ -591,6 +591,27 @@
       "socialClub": {
         "name": "Goldberg SocialClub",
         "description": "Track achievements from the Goldberg Social Club emulator"
+      },
+      "ubisoftOfficial": {
+        "description": "Official Ubisoft Connect client data"
+      },
+      "gogOfficial": {
+        "description": "Official GOG Galaxy client data"
+      },
+      "epicOfficial": {
+        "description": "Official Epic Games client data"
+      },
+      "gog": {
+        "description": "GOG emulator saves"
+      },
+      "epic": {
+        "description": "Epic emulator saves"
+      },
+      "shadps4": {
+        "description": "PlayStation 4 emulator"
+      },
+      "xenia": {
+        "description": "Xbox 360 emulator"
       }
     },
     "guide": {

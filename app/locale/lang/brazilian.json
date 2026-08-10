@@ -591,6 +591,27 @@
       "socialClub": {
         "name": "Goldberg SocialClub",
         "description": "Rastrear conquistas do emulador Goldberg Social Club"
+      },
+      "ubisoftOfficial": {
+        "description": "Dados do cliente oficial Ubisoft Connect"
+      },
+      "gogOfficial": {
+        "description": "Dados do cliente oficial GOG Galaxy"
+      },
+      "epicOfficial": {
+        "description": "Dados do cliente oficial Epic Games"
+      },
+      "gog": {
+        "description": "Saves do emulador GOG"
+      },
+      "epic": {
+        "description": "Saves do emulador Epic"
+      },
+      "shadps4": {
+        "description": "Emulador de PlayStation 4"
+      },
+      "xenia": {
+        "description": "Emulador de Xbox 360"
       }
     },
     "guide": {

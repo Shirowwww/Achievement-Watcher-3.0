@@ -591,6 +591,27 @@
       "socialClub": {
         "name": "Goldberg SocialClub",
         "description": "跟踪 Goldberg Social Club 模拟器的成就。"
+      },
+      "ubisoftOfficial": {
+        "description": "Ubisoft Connect 官方客户端数据"
+      },
+      "gogOfficial": {
+        "description": "GOG Galaxy 官方客户端数据"
+      },
+      "epicOfficial": {
+        "description": "Epic Games 官方客户端数据"
+      },
+      "gog": {
+        "description": "GOG 模拟器存档"
+      },
+      "epic": {
+        "description": "Epic 模拟器存档"
+      },
+      "shadps4": {
+        "description": "PlayStation 4 模拟器"
+      },
+      "xenia": {
+        "description": "Xbox 360 模拟器"
       }
     },
     "guide": {

@@ -591,6 +591,27 @@
       "socialClub": {
         "name": "Goldberg SocialClub",
         "description": "Goldberg Social Club emulátor eredményeinek követése"
+      },
+      "ubisoftOfficial": {
+        "description": "A hivatalos Ubisoft Connect kliens adatai"
+      },
+      "gogOfficial": {
+        "description": "A hivatalos GOG Galaxy kliens adatai"
+      },
+      "epicOfficial": {
+        "description": "A hivatalos Epic Games kliens adatai"
+      },
+      "gog": {
+        "description": "A GOG-emulátor mentései"
+      },
+      "epic": {
+        "description": "Az Epic-emulátor mentései"
+      },
+      "shadps4": {
+        "description": "PlayStation 4 emulátor"
+      },
+      "xenia": {
+        "description": "Xbox 360 emulátor"
       }
     },
     "guide": {

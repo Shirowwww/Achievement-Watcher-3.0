@@ -591,6 +591,27 @@
       "socialClub": {
         "name": "Goldberg SocialClub",
         "description": "Erfolge aus dem Goldberg-SocialClub-Emulator verfolgen"
+      },
+      "ubisoftOfficial": {
+        "description": "Daten des offiziellen Ubisoft-Connect-Clients"
+      },
+      "gogOfficial": {
+        "description": "Daten des offiziellen GOG-Galaxy-Clients"
+      },
+      "epicOfficial": {
+        "description": "Daten des offiziellen Epic-Games-Clients"
+      },
+      "gog": {
+        "description": "Spielstände des GOG-Emulators"
+      },
+      "epic": {
+        "description": "Spielstände des Epic-Emulators"
+      },
+      "shadps4": {
+        "description": "PlayStation-4-Emulator"
+      },
+      "xenia": {
+        "description": "Xbox-360-Emulator"
       }
     },
     "guide": {

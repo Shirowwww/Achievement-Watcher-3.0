@@ -591,6 +591,27 @@
       "socialClub": {
         "name": "Goldberg SocialClub",
         "description": "ติดตามความสำเร็จจาก Goldberg Social Club Emulator"
+      },
+      "ubisoftOfficial": {
+        "description": "ข้อมูลไคลเอนต์ Ubisoft Connect อย่างเป็นทางการ"
+      },
+      "gogOfficial": {
+        "description": "ข้อมูลไคลเอนต์ GOG Galaxy อย่างเป็นทางการ"
+      },
+      "epicOfficial": {
+        "description": "ข้อมูลไคลเอนต์ Epic Games อย่างเป็นทางการ"
+      },
+      "gog": {
+        "description": "ไฟล์บันทึกของโปรแกรมจำลอง GOG"
+      },
+      "epic": {
+        "description": "ไฟล์บันทึกของโปรแกรมจำลอง Epic"
+      },
+      "shadps4": {
+        "description": "โปรแกรมจำลอง PlayStation 4"
+      },
+      "xenia": {
+        "description": "โปรแกรมจำลอง Xbox 360"
       }
     },
     "guide": {

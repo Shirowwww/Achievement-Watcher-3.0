@@ -591,6 +591,27 @@
       "socialClub": {
         "name": "Goldberg SocialClub",
         "description": "Goldberg Social Club エミュレーターの実績を追跡します。"
+      },
+      "ubisoftOfficial": {
+        "description": "Ubisoft Connect 公式クライアントのデータ"
+      },
+      "gogOfficial": {
+        "description": "GOG Galaxy 公式クライアントのデータ"
+      },
+      "epicOfficial": {
+        "description": "Epic Games 公式クライアントのデータ"
+      },
+      "gog": {
+        "description": "GOG エミュレーターのセーブデータ"
+      },
+      "epic": {
+        "description": "Epic エミュレーターのセーブデータ"
+      },
+      "shadps4": {
+        "description": "PlayStation 4 エミュレーター"
+      },
+      "xenia": {
+        "description": "Xbox 360 エミュレーター"
       }
     },
     "guide": {

@@ -591,6 +591,27 @@
       "socialClub": {
         "name": "Goldberg SocialClub",
         "description": "Отслеживать достижения эмулятора Goldberg Social Club"
+      },
+      "ubisoftOfficial": {
+        "description": "Данные официального клиента Ubisoft Connect"
+      },
+      "gogOfficial": {
+        "description": "Данные официального клиента GOG Galaxy"
+      },
+      "epicOfficial": {
+        "description": "Данные официального клиента Epic Games"
+      },
+      "gog": {
+        "description": "Сохранения эмулятора GOG"
+      },
+      "epic": {
+        "description": "Сохранения эмулятора Epic"
+      },
+      "shadps4": {
+        "description": "Эмулятор PlayStation 4"
+      },
+      "xenia": {
+        "description": "Эмулятор Xbox 360"
       }
     },
     "guide": {

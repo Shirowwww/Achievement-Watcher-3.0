@@ -470,6 +470,15 @@ function translateUI(lang, locale, template) {
   selector.find("li:nth-child(9) .right select option[value='true']").text(clear(template.settings.common.enable));
   selector.find("li:nth-child(9) .right select option[value='false']").text(clear(template.settings.common.disable));
   selector.find('li:nth-child(9) .help').text(clear(template.settings.source.socialClub.description));
+  // Sources whose row carries a proper name (shadPS4, Ubisoft Connect, ...) only need their help
+  // text translated. Bound by id rather than by position: the nth-child bindings above break the
+  // moment a row is inserted anywhere but the end, which is why these are kept out of that scheme.
+  for (const key of ['ubisoftOfficial', 'gogOfficial', 'epicOfficial', 'gog', 'epic', 'shadps4', 'xenia']) {
+    const source = template.settings.source[key];
+    if (source && source.description) $(`#source-help-${key}`).text(clear(source.description));
+    $(`#option_${key} option[value='true']`).text(clear(template.settings.common.enable));
+    $(`#option_${key} option[value='false']`).text(clear(template.settings.common.disable));
+  }
   $('#advanced-blacklist-title').text(clear(template.settings.advanced.blacklistTitle));
   $('#blacklist_reset span').text(clear(template.settings.advanced.blacklistButton));
   $('#blacklist-info').text(clear(template.settings.advanced.blacklistInfo));

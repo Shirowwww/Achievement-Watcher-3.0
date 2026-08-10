@@ -110,6 +110,16 @@ module.exports.load = async (cfg_file) => {
       fixFile = true;
     }
 
+    if (typeof options.achievement_source.shadps4 !== 'boolean') {
+      options.achievement_source.shadps4 = true;
+      fixFile = true;
+    }
+
+    if (typeof options.achievement_source.xenia !== 'boolean') {
+      options.achievement_source.xenia = true;
+      fixFile = true;
+    }
+
     if (typeof options.achievement_source.lumaPlay !== 'boolean') {
       options.achievement_source.lumaPlay = true;
       fixFile = true;
@@ -132,6 +142,11 @@ module.exports.load = async (cfg_file) => {
 
     if (typeof options.achievement_source.epic !== 'boolean') {
       options.achievement_source.epic = true;
+      fixFile = true;
+    }
+
+    if (typeof options.achievement_source.epicOfficial !== 'boolean') {
+      options.achievement_source.epicOfficial = true;
       fixFile = true;
     }
 
@@ -361,11 +376,14 @@ module.exports.load = async (cfg_file) => {
         socialClub: true,
         greenLuma: true,
         rpcs3: true,
+        shadps4: true,
+        xenia: true,
         lumaPlay: false,
         gog: true,
         gogOfficial: true,
         ubisoftOfficial: true,
         epic: true,
+        epicOfficial: true,
         ea: true,
         xboxPc: true,
         importCache: true,

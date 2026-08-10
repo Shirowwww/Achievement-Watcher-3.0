@@ -591,6 +591,27 @@
       "socialClub": {
         "name": "Goldberg SocialClub",
         "description": "Sledovat úspěchy z emulátoru Goldberg Social Club"
+      },
+      "ubisoftOfficial": {
+        "description": "Data oficiálního klienta Ubisoft Connect"
+      },
+      "gogOfficial": {
+        "description": "Data oficiálního klienta GOG Galaxy"
+      },
+      "epicOfficial": {
+        "description": "Data oficiálního klienta Epic Games"
+      },
+      "gog": {
+        "description": "Uložené pozice emulátoru GOG"
+      },
+      "epic": {
+        "description": "Uložené pozice emulátoru Epic"
+      },
+      "shadps4": {
+        "description": "Emulátor PlayStation 4"
+      },
+      "xenia": {
+        "description": "Emulátor Xbox 360"
       }
     },
     "guide": {

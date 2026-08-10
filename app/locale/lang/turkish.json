@@ -591,6 +591,27 @@
       "socialClub": {
         "name": "Goldberg SocialClub",
         "description": "Goldberg Social Club emülatöründeki başarımları takip edin"
+      },
+      "ubisoftOfficial": {
+        "description": "Resmî Ubisoft Connect istemcisi verileri"
+      },
+      "gogOfficial": {
+        "description": "Resmî GOG Galaxy istemcisi verileri"
+      },
+      "epicOfficial": {
+        "description": "Resmî Epic Games istemcisi verileri"
+      },
+      "gog": {
+        "description": "GOG öykünücüsü kayıtları"
+      },
+      "epic": {
+        "description": "Epic öykünücüsü kayıtları"
+      },
+      "shadps4": {
+        "description": "PlayStation 4 öykünücüsü"
+      },
+      "xenia": {
+        "description": "Xbox 360 öykünücüsü"
       }
     },
     "guide": {
