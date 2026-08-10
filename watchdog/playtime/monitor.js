@@ -48,6 +48,14 @@ const builtinIgnoredAppids = new Set([
 ]);
 const wallpaperProcessNames = new Set(['wallpaperui.exe', 'wallpaper32.exe', 'wallpaper64.exe', 'wallpaperservice32.exe', 'winrtutil32.exe', 'winrtutil64.exe']);
 
+// Join a path under an environment root, tolerating an unset variable. The mute list below is built
+// at module load, so a missing SystemRoot used to throw before the module even finished loading —
+// path.join() rejects undefined — and take the whole playtime monitor down with it.
+function envPath(variable, ...segments) {
+  const root = process.env[variable];
+  return root ? path.join(root, ...segments) : '';
+}
+
 const filter = {
   ignore: blacklist.ignore, //WMI WQL FILTER
   mute: {
@@ -59,9 +67,9 @@ const filter = {
       process.env['LOCALAPPDATA'],
       process.env['ProgramFiles'],
       process.env['ProgramFiles(x86)'],
-      path.join(process.env['SystemRoot'], 'System32'),
-      path.join(process.env['SystemRoot'], 'SysWOW64'),
-      path.join(process.env['SystemRoot']),
+      envPath('SystemRoot', 'System32'),
+      envPath('SystemRoot', 'SysWOW64'),
+      envPath('SystemRoot'),
     ],
     file: blacklist.mute,
   },
@@ -77,12 +85,17 @@ function normalizeAppid(appid) {
 // skipped instead of crashing the creation handler with a TypeError.
 function isMutedByPath(filepath, dirs) {
   if (!filepath) return false;
-  const norm = (p) => String(p).replace(/[\\/]+/g, path.sep).toLowerCase();
-  const dir = norm(path.parse(filepath).dir);
+  // Both sides are Windows paths, whatever the host's own path.sep is: normalize to a single
+  // separator here rather than going through path.parse, which reads "C:\Games\game.exe" as one
+  // long filename on a POSIX host and made every comparison silently miss.
+  const norm = (p) => String(p).replace(/[\\/]+/g, '/').replace(/\/+$/, '').toLowerCase();
+  const file = norm(filepath);
+  const lastSeparator = file.lastIndexOf('/');
+  const dir = lastSeparator < 0 ? '' : file.slice(0, lastSeparator);
   return (Array.isArray(dirs) ? dirs : []).some((dirpath) => {
     if (!dirpath) return false;
-    const root = norm(dirpath).replace(/[\\/]+$/, '');
-    return root !== '' && (dir === root || dir.startsWith(root + path.sep));
+    const root = norm(dirpath);
+    return root !== '' && (dir === root || dir.startsWith(root + '/'));
   });
 }
 
