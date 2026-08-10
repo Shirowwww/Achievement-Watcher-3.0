@@ -392,6 +392,18 @@ function SpawnOverlayNotification(args) {
 }
 module.exports = { SpawnOverlayNotification };
 
+// The app reports back every overlay close it performed on its own (the overlay header's × button,
+// the app quitting) so `overlayOpened` cannot drift out of sync with what is on screen — a stale
+// "open" would make the next hotkey press send a close for a window that is already gone.
+process.on('message', (msg) => {
+  if (!msg || !msg.overlayState) return;
+  const opened = msg.overlayState.opened === true;
+  if (opened === overlayOpened) return;
+  overlayOpened = opened;
+  overlayControllerService?.notifyOverlayPresentationChanged(opened, 'main-process-sync');
+  debug.log(`[overlay] presentation state synced from the app: ${opened ? 'open' : 'closed'}`);
+});
+
 // Pick the AppUserModelID every toast is posted under (see util/toastIdentity.js for why the id has
 // to be checked for existence rather than for format), then apply what that choice implies.
 async function applyToastIdentity(self) {

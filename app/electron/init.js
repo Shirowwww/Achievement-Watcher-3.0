@@ -1198,6 +1198,18 @@ function handleMonitorMessage(msg) {
   }
 }
 
+// Tell the monitor the overlay is no longer on screen. It owns the hotkey and keeps its own
+// open/closed flag, so a close it did not initiate would leave that flag stuck on "open" and the
+// next hotkey press would send a close for a window that is already gone instead of opening one.
+function notifyMonitorOverlayClosed() {
+  if (!monitorProc || monitorProc.exitCode !== null || monitorProc.killed || !monitorProc.connected) return;
+  try {
+    monitorProc.send({ overlayState: { opened: false } });
+  } catch (err) {
+    debug.log(`[monitor] overlay state sync failed: ${err.message || err}`);
+  }
+}
+
 // Schedule the supervised respawn with an exponential backoff (3s -> 6s -> 12s -> ... -> 60s cap)
 // so a monitor that crashes in a loop (bad code, missing native module, config corruption) does not
 // hammer the machine every three seconds. The backoff resets once a child survives 30 seconds.
@@ -2992,6 +3004,14 @@ ipcMain.on('overlay-resize-by', (event, { dw = 0, dh = 0 } = {}) => {
   const width = Math.max(360, Math.min(1920, b.width + (Number(dw) || 0)));
   const height = Math.max(240, Math.min(1080, b.height + (Number(dh) || 0)));
   overlayWindow.setBounds({ x: b.x, y: b.y, width, height });
+});
+
+// The overlay header's × button. This is the one close the Watchdog does not already know about —
+// it sent the request itself for the hotkey and for a game exit — so it is told here.
+ipcMain.on('overlay-close', () => {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  overlayWindow.close();
+  notifyMonitorOverlayClosed();
 });
 
 function normalizeNotificationProgress(args) {

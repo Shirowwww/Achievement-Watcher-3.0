@@ -43,6 +43,7 @@ test('all bundled locales have the complete English key set', () => {
     'overlay.settingsUseTheme',
     'overlay.clear',
     'overlay.close',
+    'overlay.closeOverlay',
     'dialogs.setupLooksValid',
     'dialogs.failedToSetAvatar',
     'watchdog.achievementUnlocked',

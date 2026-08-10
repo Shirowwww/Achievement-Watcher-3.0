@@ -115,6 +115,13 @@
         color: var(--text);
       }
 
+      /* Window close keeps the usual title-bar affordance: red on hover, never on the accent. */
+      .icon-btn-close:hover,
+      .icon-btn-close:focus-visible {
+        background: #e81123;
+        color: #fff;
+      }
+
       /* ---- Search + filters ---- */
       .overlay-tools {
         padding: 0 12px 8px;
@@ -803,9 +810,10 @@
         <div class="overlay-brand">
           <span class="trophy">🏆</span>
           <span class="title" id="overlay-title">Achievements</span>
-        <div class="overlay-actions">
+          <div class="overlay-actions">
             <span class="overlay-mode-badge" id="overlay-mode-badge" hidden></span>
             <button type="button" class="icon-btn" id="overlay-settings-toggle" title="Overlay options" aria-label="Overlay options">⚙</button>
+            <button type="button" class="icon-btn icon-btn-close" id="overlay-close" title="Close overlay" aria-label="Close overlay">✕</button>
           </div>
         </div>
 
@@ -986,6 +994,7 @@
           noResults: 'No achievements match your search.',
           clear: 'Clear',
           close: 'Close',
+          closeOverlay: 'Close overlay',
           accentSteamBlue: 'Steam Blue',
           accentEmerald: 'Emerald',
           accentGold: 'Gold',
@@ -1135,6 +1144,8 @@
           $('overlay-settings-toggle').setAttribute('aria-label', overlayStrings.settingsTitle);
           $('overlay-search-clear').setAttribute('aria-label', overlayStrings.clear);
           $('settings-close').setAttribute('aria-label', overlayStrings.close);
+          $('overlay-close').title = overlayStrings.closeOverlay;
+          $('overlay-close').setAttribute('aria-label', overlayStrings.closeOverlay);
           $('overlay-th-achievement').textContent = overlayStrings.achievement;
           $('overlay-th-rarity').firstElementChild.textContent = overlayStrings.rarityColumn;
           $('overlay-th-date').firstElementChild.textContent = overlayStrings.dateColumn;
@@ -1304,18 +1315,25 @@
           $('overlay-settings-toggle').classList.toggle('active', shouldOpen);
         }
 
+        function closeOverlay() {
+          if (window.customApi && window.customApi.closeOverlay) window.customApi.closeOverlay();
+        }
+
         // ---- Events ----
         $('overlay-settings-toggle').addEventListener('click', () => toggleSettings());
         $('settings-close').addEventListener('click', () => toggleSettings(false));
+        $('overlay-close').addEventListener('click', closeOverlay);
         document.addEventListener('keydown', (e) => {
           if (e.key === 'Escape') {
+            // Escape unwinds one layer at a time — the options panel, then the search — and closes
+            // the overlay only once there is nothing left to dismiss.
             if ($('overlay-settings').classList.contains('open')) toggleSettings(false);
             else if (query) {
               query = '';
               $('overlay-search').value = '';
               $('overlay-search-box').classList.remove('has-text');
               renderRows();
-            }
+            } else closeOverlay();
             return;
           }
           if (e.key === '/' && !$('overlay-settings').classList.contains('open')) {
@@ -1455,6 +1473,7 @@
             '.filter-pill',
             '.sort-btn',
             '#overlay-settings-toggle',
+            '#overlay-close',
             '#overlay-search',
             '#overlay-search-clear',
             '.settings-toggle',

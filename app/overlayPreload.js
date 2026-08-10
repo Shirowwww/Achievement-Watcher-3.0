@@ -11,9 +11,10 @@
 const { contextBridge, ipcRenderer, webFrame } = require('electron');
 
 contextBridge.exposeInMainWorld('customApi', {
-  minimizeWindow: () => ipcRenderer.send('minimize-window'),
-  maximizeWindow: () => ipcRenderer.send('maximize-window'),
-  closeWindow: () => ipcRenderer.send('close-window'),
+  // Header × button. The overlay is a frameless always-on-top window, so it has no system
+  // title bar to close it with. (The old minimize/maximize/close bridge was dead code: the
+  // main process never registered handlers for those channels.)
+  closeOverlay: () => ipcRenderer.send('overlay-close'),
   // Gamepad window control from the in-game overlay (move / resize).
   moveWindowBy: (dx, dy) => ipcRenderer.send('overlay-move-by', { dx: Number(dx) || 0, dy: Number(dy) || 0 }),
   resizeWindowBy: (dw, dh) => ipcRenderer.send('overlay-resize-by', { dw: Number(dw) || 0, dh: Number(dh) || 0 }),
