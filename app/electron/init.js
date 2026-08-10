@@ -1198,13 +1198,16 @@ function handleMonitorMessage(msg) {
   }
 }
 
-// Tell the monitor the overlay is no longer on screen. It owns the hotkey and keeps its own
-// open/closed flag, so a close it did not initiate would leave that flag stuck on "open" and the
-// next hotkey press would send a close for a window that is already gone instead of opening one.
-function notifyMonitorOverlayClosed() {
+// Tell the monitor whether the overlay is on screen. It owns the hotkey and keeps its own
+// open/closed flag, so a change it did not initiate would leave that flag stale and the next hotkey
+// press would send the wrong request — a close for a window that is already gone, or an open for
+// one that is already up. Reported from the window's own 'closed'/creation points rather than from
+// the close button alone, so Alt+F4, a crash-close and the game-changed reopen are all covered.
+// Sends the monitor already agrees with are dropped on its side, so the redundant ones are free.
+function notifyMonitorOverlayState(opened) {
   if (!monitorProc || monitorProc.exitCode !== null || monitorProc.killed || !monitorProc.connected) return;
   try {
-    monitorProc.send({ overlayState: { opened: false } });
+    monitorProc.send({ overlayState: { opened: opened === true } });
   } catch (err) {
     debug.log(`[monitor] overlay state sync failed: ${err.message || err}`);
   }
@@ -2586,7 +2589,16 @@ async function createOverlayWindow(info) {
       overlayAppid = null;
       overlayClickThrough = false;
       unregisterOverlayShortcuts();
+      // Every close funnels through here — the × button, Escape, Alt+F4, the game-changed reopen —
+      // so this is the one place the monitor's flag can be kept true to the screen.
+      notifyMonitorOverlayState(false);
     });
+
+    // ... and the matching "it is up again" edge. The reopen path closes the previous window first,
+    // which reports `false` above; without this the monitor would believe the overlay is gone while
+    // the new game's overlay is on screen, and the next hotkey press would ask to open an overlay
+    // that is already there (resolved as "ignore" — the hotkey would look dead).
+    notifyMonitorOverlayState(true);
   } catch (e) {
     debug.log(`Error creating overlay window, ${e}`);
     if (shouldQuitApp()) app.quit();
@@ -2607,7 +2619,11 @@ function parseArgs(args) {
   let appid = args['appid']; // appid
   let source = args['source'] || 'steam'; // source: steam, epic, gog, luma
   let description = args['description']; // text
-  debug.log('opening ' + windowType + ' window');
+  // What was ASKED for, not what will happen: an overlay request carries an action (open/close/
+  // refresh) and createOverlayWindow may well decide to do nothing with it. Logging "opening
+  // overlay window" for an incoming close — which is what this said before — made issue #19 look
+  // like it was still happening in the logs long after it was fixed.
+  debug.log(`${windowType} window request` + (description ? ` (${description})` : ''));
   switch (windowType) {
     case 'overlay':
       createOverlayWindow({ appid, source, action: description });
@@ -3006,12 +3022,11 @@ ipcMain.on('overlay-resize-by', (event, { dw = 0, dh = 0 } = {}) => {
   overlayWindow.setBounds({ x: b.x, y: b.y, width, height });
 });
 
-// The overlay header's × button. This is the one close the Watchdog does not already know about —
-// it sent the request itself for the hotkey and for a game exit — so it is told here.
+// The overlay header's × button (and Escape, which shares this path). Closing the window is all
+// that is needed: its 'closed' handler reports the new state to the monitor, whatever triggered it.
 ipcMain.on('overlay-close', () => {
   if (!overlayWindow || overlayWindow.isDestroyed()) return;
   overlayWindow.close();
-  notifyMonitorOverlayClosed();
 });
 
 function normalizeNotificationProgress(args) {

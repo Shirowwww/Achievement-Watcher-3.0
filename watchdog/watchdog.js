@@ -392,9 +392,11 @@ function SpawnOverlayNotification(args) {
 }
 module.exports = { SpawnOverlayNotification };
 
-// The app reports back every overlay close it performed on its own (the overlay header's × button,
-// the app quitting) so `overlayOpened` cannot drift out of sync with what is on screen — a stale
-// "open" would make the next hotkey press send a close for a window that is already gone.
+// The app reports every overlay window that opens or closes, from the window's own lifecycle events
+// rather than from any one button, so `overlayOpened` cannot drift out of sync with what is on
+// screen — a stale "open" would make the next hotkey press send a close for a window that is
+// already gone (and a stale "closed" would ask to open one that is already up). Transitions we
+// caused ourselves arrive here too and are dropped by the equality check below.
 process.on('message', (msg) => {
   if (!msg || !msg.overlayState) return;
   const opened = msg.overlayState.opened === true;
