@@ -52,6 +52,8 @@ Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
 
 That variable is used only for the Watchdog child process. Setting it globally makes Electron start as plain Node and prevents the desktop app from loading.
 
+It is not installed as a user or machine environment variable. The packaged desktop app never sets it for itself; only its private Watchdog child receives it.
+
 ### Driving the running app
 
 The main window, the in-game overlay and the notification windows are all BrowserWindows inside the one tray-daemon process, so there is no separate process or debug port to attach to. `tools/aw-probe.ps1` drives a running dev build from the command line:
@@ -181,9 +183,9 @@ The Watchdog runs under Electron's bundled Node runtime through `ELECTRON_RUN_AS
 
 ### Signing
 
-No *trusted* code-signing certificate is configured, so public releases remain
-unsigned and may trigger SmartScreen. For local builds, the repository
-supports signing with a self-signed certificate:
+No *trusted* code-signing certificate is configured, so public releases may
+still trigger SmartScreen. For local builds, the repository supports signing
+with a self-signed certificate:
 
 ```powershell
 Push-Location app
@@ -196,6 +198,8 @@ plus a local `.password` file (both git-ignored). It does not touch the
 Windows trust stores by default, so it never shows a certificate-install
 prompt. Once the PFX exists, `npm run build` signs the app and installer
 automatically; without it the build stays unsigned (see `app/build/build.js`).
+The packager explicitly excludes the PFX, certificate and password: downloaders
+never receive them and the installer never asks to install a certificate.
 
 To also suppress SmartScreen on a machine you control, run the script again
 with `-InstallTrust` (accepting the one-time Windows confirmation):

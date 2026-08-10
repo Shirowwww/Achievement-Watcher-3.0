@@ -74,11 +74,21 @@ files:
   - '**/*'
   - '!**/*.map'
   - '!dist/**'
+  # Build-only signing material must never be shipped. A self-signed certificate is used only by
+  # the release machine; end users do not receive or install it.
+  - '!build/signing/**'
+  - '!**/*.pfx'
+  - '!**/*.cer'
+  - '!**/.password'
   - '!buildme.cmd'
   - '!watchdog/_wip_/**'
   - '!watchdog/patches/**'
 
 extraFiles:
+  # Keep the attribution notice beside the installed application as well as in source releases.
+  - from: ../NOTICE
+    to: resources/NOTICE
+
   - from: ../watchdog
     to: ./watchdog
     filter:
@@ -88,8 +98,8 @@ extraFiles:
       - '!watchdog/test/**'
       - '!watchdog/notification-test.js'
 
-  # NOTE: the portable node/ (Node 14) is gone since the A2 koffi migration — the monitor now runs
-  # under Electron's own Node via ELECTRON_RUN_AS_NODE (see launchWatchdog in electron/init.js).
+  # NOTE: the portable Node 14 runtime is gone since the A2 koffi migration. The monitor runs
+  # under Electron's bundled Node runtime (see launchWatchdog in electron/init.js).
 
   - from: ./media
     to: resources/userData/Media

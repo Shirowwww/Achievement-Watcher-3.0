@@ -33,56 +33,19 @@ for (const sw of ['disable-extensions', 'disable-component-extensions-with-backg
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=256');
 const { BrowserWindow, dialog, session, shell, ipcMain, globalShortcut, Tray, Menu, nativeImage, Notification } = require('electron');
 const { autoUpdater } = require('electron-updater');
+const { verifyUpdateCodeSignature } = require('../util/updateSignature.js');
 // Never download silently: the user is asked first (update-available → "Download && Install" —
 // the ampersand is doubled because Win32 treats a single '&' as a mnemonic prefix and hides it),
 // then asked again once the download finishes (update-downloaded → "Install now"). Install-on-quit
 // stays off so an update is only applied through the explicit prompt.
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
-// electron-updater's default Windows verifier only accepts a signature Windows itself trusts
-// (Get-AuthenticodeSignature Status "Valid"), which our self-signed release certificate (CN=Shirow,
-// not chained to a trusted root) can never satisfy — every update check failed with "not signed by
-// the application owner" even though the signer matched. This replacement keeps the same signer-name
-// check but drops the trusted-root requirement, which is the part a self-signed cert cannot pass.
-autoUpdater.verifyUpdateCodeSignature = (publisherNames, unescapedTempUpdateFile) =>
-  new Promise((resolve) => {
-    const tempUpdateFile = unescapedTempUpdateFile.replace(/'/g, "''");
-    const command = `Get-AuthenticodeSignature -LiteralPath '${tempUpdateFile}' | ConvertTo-Json -Compress`;
-    execFile(
-      'powershell.exe',
-      ['-NoProfile', '-NonInteractive', '-InputFormat', 'None', '-Command', command],
-      { timeout: 20 * 1000 },
-      (error, stdout, stderr) => {
-        if (error || stderr) {
-          debug.log(`[updater] signature check could not run: ${error || stderr}`);
-          resolve(null); // don't block installs on a broken powershell environment
-          return;
-        }
-        try {
-          const data = JSON.parse(stdout);
-          const subject = data && data.SignerCertificate && data.SignerCertificate.Subject;
-          // Releases are intentionally unsigned when no local certificate exists (see
-          // build/signing/). electron-updater still runs this verifier, and rejecting an
-          // unsigned file made every "Download && Install" fail with "App is not signed"
-          // (issue #17) even though latest.yml's SHA-512 already authenticates the file.
-          // Accept the missing-signature case explicitly and keep rejecting a signature
-          // that belongs to someone other than our publisher.
-          if (!subject) {
-            debug.log('[updater] update file carries no Authenticode signature — accepting (unsigned release)');
-            resolve(null);
-            return;
-          }
-          if (publisherNames.some((name) => subject.includes(`CN=${name}`))) {
-            resolve(null); // signer matches our publisher CN -> verified
-            return;
-          }
-          resolve(`installer is not signed by ${publisherNames.join(' | ')} (subject: ${subject || 'none'})`);
-        } catch (err) {
-          resolve(`signature check failed to parse: ${err.message}`);
-        }
-      }
-    );
-  });
+// electron-updater's default Windows verifier requires a certificate chain Windows trusts. Our
+// self-signed CN=Shirow certificate is intentionally not a trusted root on every PC, so use the
+// tested publisher-CN verifier instead. It keeps valid first-time installs and future updates from
+// showing the misleading "not signed by the application owner" error.
+autoUpdater.verifyUpdateCodeSignature = (publisherNames, tempUpdateFile) =>
+  verifyUpdateCodeSignature(publisherNames, tempUpdateFile, (message) => debug.log(message));
 let updateCheckTimer = null;
 let updatePromptOpen = false;
 let updaterErrorNotified = false;

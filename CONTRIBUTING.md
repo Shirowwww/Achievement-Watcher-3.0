@@ -70,4 +70,4 @@ Releases are maintained separately through [docs/RELEASE_WORKFLOW.md](docs/RELEA
 
 ## License
 
-By contributing, you agree that your contribution may be distributed under the project's [LGPL-3.0 license](LICENSE).
+By contributing, you agree that your contribution may be distributed under the project's [LGPL-3.0 license](LICENSE). Redistributions must also preserve the applicable project attribution in [NOTICE](NOTICE).

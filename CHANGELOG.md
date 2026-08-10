@@ -35,6 +35,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Updates signed with the local Shirow certificate no longer fail on PCs that do not trust that
+  self-signed root. The updater verifies the matching publisher name and the release SHA-512
+  manifest instead of showing the misleading “not signed by the application owner” error.
 - In-game notification popups now use the real dimensions of the selected theme and scale before
   anchoring. Every preset is kept inside the active monitor's work area — including custom saved
   positions — so bottom/right choices stay bottom/right and oversized themes shrink to fit instead

@@ -29,36 +29,51 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 
 ## ✨ What this fork adds
 
-| Area | What you get here |
+| Area | Main improvements since Achievement Watcher 2.x |
 |---|---|
-| **Modern Windows base** | Electron 43, a current Node runtime, refreshed dependencies, safer renderer defaults and Windows 10/11 support without WMIC |
-| **One local-first library** | Steam, GOG, Ubisoft, Epic, EA, Xbox PC and compatible saves/emulators in one place, with source controls and targeted rescans |
-| **Practical compatibility tools** | Read-only Goldberg/GBE/Uplay R2 diagnosis plus opt-in repairs, matched runtimes and backups when a local setup needs help |
-| **Notifications made for play** | Native Windows toasts or a localized in-game overlay, with progress, rare/completion styles, priority delivery, custom sounds and screenshot souvenirs |
-| **Comfortable daily use** | Quiet tray Watchdog, live playtime, game and achievement search, installed-only filtering, cover tools and right-click game actions |
-| **Personal without fragility** | Controller navigation, seven built-in themes plus a Custom theme, 18 complete UI languages, local artwork/schemas and data isolated from the original 1.6.8 app |
+| **Modern foundation** | Electron 12 → 43, a current Node runtime, refreshed dependencies, tighter renderer security and Windows 10/11 support without WMIC |
+| **More real sources** | Local Steam appcache, GOG Galaxy and Ubisoft Connect readers; optional Epic account connection; EA Desktop; Xbox PC (Game Pass / Microsoft Store) account import; Goldberg SocialClub; RPCS3, ShadPS4 and Xenia |
+| **Goldberg / GBE / Uplay R2 tools** | Read-only diagnosis, `steam_settings` repair, matched GBE Fork runtime install, loader-version-aware Uplay R2 support, Steamless support, opt-in API-check bypass, backups/restore and opt-in background setup |
+| **Better library** | Game and achievement search, installed-only filtering, blacklist restore, rarity tiers, progress achievements, smarter covers with a per-game SteamDB/SteamGridDB gallery, executable detection and right-click uninstall |
+| **Live tracking** | Tray-first background Watchdog, Xenia/ShadPS4/GOG/Ubisoft unlock monitoring, safer startup baselines and duplicate suppression |
+| **Notifications** | Native Windows notifications + a customizable, localized in-game overlay (stats bar, instant search, status filters, rarity badges, progress bars, density/icon-size/accent/zoom), preset library, custom builder, custom sounds, 0–200% volume and separate rare/completion styles |
+| **Controller and UI** | Full controller navigation (XInput plus native PlayStation/Switch input), controller control of the in-game overlay, mouse Back/Forward, resizable interface, seven built-in themes plus a Custom theme with per-layer colors/images/gradients, 18 complete UI languages and a localized installer |
+| **Local-first reliability** | Own data directory isolated from the original 1.6.8 app, migration-safe settings and avatar, offline names and artwork, local schemas, platform-aware cache IDs, bounded caches, self-healing folders and fewer browser-dependent lookups |
 
 ---
 
-## ⚖️ At a glance
+## ⚖️ Quick comparison
 
 | Feature | ⭐ **This fork** | [Achievements](https://github.com/PSerban93/Achievements) | [Achievement Watcher 2.x](https://github.com/darktakayanagi/Achievement-Watcher) |
 |---|:---:|:---:|:---:|
 | Modern desktop runtime | ✅ Electron 43 | ✅ Electron 43 | ❌ Electron 12 |
-| Local + official source readers | ✅ Steam · GOG · Ubisoft · Epic · EA · Xbox PC | ✅ Steam · GOG · Ubisoft · Epic · EA · Xbox PC | ⚠️ Steam · GOG · Epic · Uplay |
-| Quiet tray playtime tracking | ✅ | ✅ | ✅ |
-| Installed-only library and game actions | ✅ Filter · uninstall · restore | ⚠️ Config-driven | ❌ Not documented |
-| Windows toast **and** in-game overlay | ✅ Both | ⚠️ Animated overlay | ⚠️ Chromium / toast transports |
-| Selective scan and source controls | ✅ | ✅ Auto-config | ⚠️ Smart Find |
-| Goldberg / GBE / Uplay R2 maintenance | ✅ Diagnose · repair · backup | ⚠️ Auto-config/schema | ❌ Manual setup |
-| Live RPCS3 / ShadPS4 / Xenia unlocks | ✅ | ✅ | ⚠️ RPCS3 |
-| Controller navigation | ✅ App + overlay | ✅ App + overlay | ❌ Planned |
-| Themes and interface languages | ✅ 7 + Custom · 18 languages | ✅ Multiple · translated achievements | ⚠️ Legacy translations |
-| Xbox PC achievement import | ✅ | ✅ | ❌ |
+| Unified dashboard, game and achievement search | ✅ Both | ✅ Both | ✅ Both |
+| Installed-games-only filter and game actions | ✅ Filter · uninstall · restore | ❌ | ❌ |
+| Automatic folder discovery/configuration | ✅ | ✅ Auto-config | ✅ Smart Find |
+| Official and local platform readers | ✅ Steam · GOG · Ubisoft · Epic · EA | ✅ Steam · GOG · Ubisoft · Epic · EA | ⚠️ Steam · GOG · Epic · Uplay (legacy) |
+| Steam-emulator tracking | ✅ | ✅ | ✅ |
+| Goldberg SocialClub (Rockstar/GTA) source | ✅ | ❌ | ❌ |
+| Goldberg Uplay R2 support | ✅ Loader-version aware | ❌ | ❌ |
+| GBE runtime install and schema repair | ✅ Full | ⚠️ Auto-config/schema | ❌ Manual setup |
+| Safe repair workflow | ✅ Backup/restore · Steamless · opt-in API-check bypass | ❌ | ❌ |
+| Native Windows notifications and in-game overlay | ✅ Both | ⚠️ Animated overlay | ⚠️ Chromium / toast transports |
+| No-code custom preset builder | ✅ | ❌ | ❌ |
+| Separate rare and completion styles | ✅ | ✅ | ❌ Not documented |
+| Live RPCS3 / ShadPS4 / Xenia unlocks | ✅ | ✅ | ⚠️ RPCS3 only |
+| Full controller navigation | ✅ App + overlay | ✅ App + overlay | ❌ Planned only |
+| Screenshot souvenirs | ✅ | ✅ | ✅ |
+| Multiple UI themes | ✅ 7 + Custom + user | ✅ 8 + user | ❌ |
+| Interface languages | ✅ 18 complete | ✅ 30 locales | ✅ 18 locales |
+| Xbox PC (Game Pass / Store) | ✅ Account import | ✅ Account import | ❌ |
+| Manual achievement unlock | ✅ | ✅ | ❌ |
+| Process trail for already-running games | ✅ | ✅ | ❌ |
+| Random sound and FLAC/M4A/AAC support | ✅ | ✅ | ⚠️ Custom FLAC/M4A/AAC |
+| Per-emulator notification presets | ✅ Xenia · RPCS3 · ShadPS4 | ✅ | ❌ |
+| Emulator rarity and live Xbox unlocks | ✅ | ✅ | ❌ |
 
-This fork is for players who want a polished local library, a quiet tray workflow, native Windows notifications and deeper compatibility tooling. **Achievements** is especially strong for automated configuration and its animated overlay. **Achievement Watcher 2.x** remains the historical foundation with its own legacy notification options.
+This fork focuses on an all-in-one library, a quiet tray workflow, native Windows notifications and deeper Goldberg/GBE repair. **Achievements** has a strong auto-configuration and animated-overlay workflow. **Achievement Watcher 2.x** remains the historical base with broad emulator compatibility and several legacy notification transports.
 
-<sub>✅ = supported and documented · ⚠️ = a partial, manual or different workflow · ❌ = not documented on the linked public branch. This is a concise orientation, not a feature matrix; verify upstream documentation before choosing a project.</sub>
+<sub>✅ = supported and documented · ⚠️ = partial, manual or a different workflow · ❌ = unavailable or not documented on the current public branch. Compared against the public READMEs, package manifests and source on 10 August 2026.</sub>
 
 ---
 
@@ -173,6 +188,8 @@ The installer and updater files are written to `app\dist`. See [BUILD.md](BUILD.
 
 ## 🔐 Security and support
 
+Found a problem, have an idea, or simply want something improved? Please [open an issue](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues) — reports and suggestions are what help Achievement Watcher become better.
+
 - Download builds only from the [official Releases page](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases).
 - Releases are currently unsigned, so SmartScreen or antivirus warnings are possible.
 - `latest.yml` contains the installer's SHA-512 digest.
@@ -183,6 +200,6 @@ For a bug report, include the app version, Windows version, affected source and 
 
 ## ⚖️ Credits and license
 
-Created by [Xan105](https://github.com/xan105/Achievement-Watcher), continued by [darktakayanagi](https://github.com/darktakayanagi/Achievement-Watcher), and maintained here by Shirowwww and project contributors.
+Created by [Xan105](https://github.com/xan105/Achievement-Watcher), continued by [darktakayanagi](https://github.com/darktakayanagi/Achievement-Watcher), and maintained here by Shirowwww and project contributors. Redistributions of this fork must retain the project attribution in [NOTICE](NOTICE).
 
-Licensed under [LGPL-3.0](LICENSE). This project is not affiliated with Valve, Sony, Microsoft, GOG, Epic Games, Electronic Arts or Ubisoft.
+Licensed under [LGPL-3.0](LICENSE), with the permitted attribution notice in [NOTICE](NOTICE). This project is not affiliated with Valve, Sony, Microsoft, GOG, Epic Games, Electronic Arts or Ubisoft.
