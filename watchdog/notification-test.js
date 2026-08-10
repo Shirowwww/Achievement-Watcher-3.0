@@ -164,6 +164,10 @@ async function runTest(kind, { rumble = true } = {}) {
         });
       }
     } catch (err) {
+      // The balloon fallback made a failing toast look like a working one: the test resolved, the
+      // Settings dialog reported success, the pad still rumbled, and the only visible difference
+      // was that no toast appeared — which is precisely how issue #18 was reported. Say what broke.
+      require('./util/log.js').warn(`[Toast] failed, falling back to a tray balloon: ${err && (err.message || err)}`);
       if (options.notification_transport.balloon) {
         await balloon({
           title: notification.title,

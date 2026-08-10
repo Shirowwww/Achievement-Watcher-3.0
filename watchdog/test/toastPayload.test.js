@@ -54,6 +54,35 @@ test('achievement toast payload carries the intended AUMID under the key powerto
   assert.ok(!('onClick' in notification), 'the dead onClick option must not be sent to powertoast');
 });
 
+// powertoast accepts `group` only when both fields are non-empty STRINGS. Given anything else its
+// option parser stores a null group and then dereferences it, throwing
+// "Cannot read properties of null (reading 'activation')" before the toast is ever shown — and both
+// callers fall back to a tray balloon, so the failure looked like a delivered notification that
+// simply never appeared (issue #18). A numeric appid alone was enough to trigger it.
+test('a grouped toast never hands powertoast a group it will reject', async () => {
+  const numeric = buildToastNotification(
+    { appid: 367520, achievementName: 'TOAST_TEST', achievementDisplayName: 'X', achievementDescription: 'y', gameDisplayName: 'Hollow Knight' },
+    toastOptions({ group: true })
+  ).notification;
+  assert.deepStrictEqual(numeric.group, { id: '367520', title: 'Hollow Knight' });
+  assert.strictEqual(typeof numeric.group.id, 'string');
+
+  // No name to group under: drop the grouping, never the notification.
+  const unnamed = buildToastNotification(
+    { appid: 480, achievementName: 'A', achievementDisplayName: 'X', achievementDescription: 'y', gameDisplayName: '' },
+    toastOptions({ group: true })
+  ).notification;
+  assert.ok(!('group' in unnamed), 'an empty game name must not produce a group powertoast rejects');
+
+  // The contract that actually matters: powertoast must accept the payload we build.
+  const { Toast } = await import('powertoast');
+  assert.doesNotThrow(() => new Toast({ aumid: 'x', title: 't', message: 'm', group: numeric.group }));
+  assert.throws(
+    () => new Toast({ aumid: 'x', title: 't', message: 'm', group: { id: 367520, title: 'Hollow Knight' } }),
+    'a numeric group id must still be rejected by powertoast — this test is the reason we coerce it'
+  );
+});
+
 test('winrt=false is forwarded as disableWinRT on the payload', () => {
   const { notification } = buildToastNotification(
     { appid: 480, achievementDisplayName: 'X', achievementDescription: '' },

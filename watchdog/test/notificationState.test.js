@@ -27,10 +27,58 @@ test('quiet hours is not treated as a running full-screen app', () => {
   );
 });
 
-test('an unreadable notification state never suppresses a notification', async () => {
-  // resolvePowerShell()/SHQueryUserNotificationState cannot answer off Windows: the query fails and
-  // both predicates must answer false rather than guess.
+// The regression this file exists for. The previous version of this test asserted that the query
+// returns null and explained it with "cannot answer off Windows" — but it could not answer ON
+// Windows either (it shelled out to `Add-Type -AssemblyName shell32`, an assembly that does not
+// exist), so it passed everywhere while every caller silently answered "false" on every machine.
+// Asserting a real state on the platform the feature targets is what makes that impossible to
+// reintroduce; a null here means the query is broken again, not that the machine is unusual.
+test('on Windows the query returns a real notification state', { skip: process.platform !== 'win32' ? 'Windows-only' : false }, async () => {
+  state._resetCache();
+  const current = await state.queryUserNotificationState();
+  assert.ok(
+    current && Object.values(state.QUERY_USER_NOTIFICATION_STATE).includes(current),
+    `expected one of ${Object.values(state.QUERY_USER_NOTIFICATION_STATE).join(', ')}, got ${JSON.stringify(current)}`
+  );
+  // The predicates must agree with the state rather than answering from a failed query.
+  state._resetCache();
+  assert.strictEqual(await state.arePopupsSuppressed(), state.POPUP_SUPPRESSED_STATES.includes(current));
+  state._resetCache();
+  assert.strictEqual(await state.isFullscreenAppRunning(), state.FULLSCREEN_STATES.includes(current));
+});
+
+// Off Windows the query cannot answer at all, and both predicates must say "not suppressed" rather
+// than guess — a wrong guess would swallow a working notification.
+test('an unreadable notification state never suppresses a notification', { skip: process.platform === 'win32' ? 'non-Windows only' : false }, async () => {
+  state._resetCache();
   assert.strictEqual(await state.queryUserNotificationState(), null);
+  state._resetCache();
   assert.strictEqual(await state.arePopupsSuppressed(), false);
+  state._resetCache();
   assert.strictEqual(await state.isFullscreenAppRunning(), false);
+});
+
+// The state is read once per achievement in a batch unlock, so the answer has to be shared.
+test('repeated reads inside the TTL are served from one query', async () => {
+  state._resetCache();
+  const first = await state.queryUserNotificationState();
+  const started = Date.now();
+  for (let i = 0; i < 25; i += 1) assert.strictEqual(await state.queryUserNotificationState(), first);
+  assert.ok(Date.now() - started < 200, 'cached reads must not each shell out to PowerShell');
+});
+
+// A batch unlock asks all at once, before any answer is cached. Without in-flight sharing every
+// caller starts its own PowerShell — twenty of them, each compiling the shell32 import — which is
+// exactly the burst the notification path produces when a save file unlocks a whole set.
+test('a burst of simultaneous reads shares a single query', async () => {
+  state._resetCache();
+  const started = Date.now();
+  const answers = await Promise.all(Array.from({ length: 20 }, () => state.queryUserNotificationState()));
+  const elapsed = Date.now() - started;
+
+  assert.strictEqual(new Set(answers).size, 1, 'every caller in the burst must get the same answer');
+  // One real query is ~300ms here; twenty serialised or parallel ones are several times that. The
+  // bound is deliberately loose so a slow machine does not make this flaky, while still failing if
+  // the burst stops being shared.
+  assert.ok(elapsed < 1200, `a shared burst should cost about one query, took ${elapsed}ms`);
 });

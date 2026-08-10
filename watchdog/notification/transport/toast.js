@@ -126,7 +126,18 @@ function buildToastNotification(message, options) {
     }
   }
 
-  if (options.toast.group) notification.group = { id: message.appid, title: message.gameDisplayName };
+  // Grouping is best-effort, and powertoast validates it strictly: `group` is accepted only when
+  // BOTH id and title are non-empty strings. Anything else makes its option parser store a null
+  // group and then dereference it — `Cannot read properties of null (reading 'activation')` — which
+  // throws before the toast is ever shown. A numeric appid (the Settings test passes 367520 as a
+  // number) or a game with no resolved name was therefore enough to silently swallow the whole
+  // notification, which is the "nothing is displayed" half of issue #18. Coerce the id, and drop
+  // the grouping rather than the toast when there is no title to group under.
+  if (options.toast.group) {
+    const groupId = String(message.appid ?? '').trim();
+    const groupTitle = String(message.gameDisplayName ?? '').trim();
+    if (groupId && groupTitle) notification.group = { id: groupId, title: groupTitle };
+  }
 
   if (options.toast.winrt === false) notification.disableWinRT = true;
 
