@@ -44,6 +44,36 @@ Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
 
 That variable is used only for the Watchdog child process. Setting it globally makes Electron start as plain Node and prevents the desktop app from loading.
 
+### Driving the running app
+
+The main window, the in-game overlay and the notification windows are all BrowserWindows inside the one tray-daemon process, so there is no separate process or debug port to attach to. `tools/aw-probe.ps1` drives a running dev build from the command line:
+
+```powershell
+.\tools\aw-probe.ps1 Start                                     # launch and wait for the main window
+.\tools\aw-probe.ps1 Windows                                   # what is actually on screen
+.\tools\aw-probe.ps1 Send -Arguments '--wintype=overlay --appid=480 --description=open'
+.\tools\aw-probe.ps1 Shot -Match 'Achievements Overlay' -Out overlay.png
+.\tools\aw-probe.ps1 Key  -Keys ESC -FocusMatch 'Achievements Overlay'
+.\tools\aw-probe.ps1 Key  -Keys CTRL+SHIFT+K                   # the global overlay hotkey
+.\tools\aw-probe.ps1 Wait -Match 'Achievements Overlay' -Absent # exit code 0/1, for scripting
+.\tools\aw-probe.ps1 Stop
+```
+
+To navigate the interface itself, `Click` and `Scroll` take coordinates relative to a window, so a position read off a screenshot can be replayed wherever the window sits:
+
+```powershell
+.\tools\aw-probe.ps1 Click  -Match 'Achievement Watcher' -X 1137 -Y 15      # the settings gear
+.\tools\aw-probe.ps1 Scroll -Match 'Achievement Watcher' -X 760 -Y 450 -Notches -6
+.\tools\aw-probe.ps1 Click  -Match 'Achievement Watcher' -X 221 -Y 273 -RightClick
+.\tools\aw-probe.ps1 Shot   -Screen -Out desktop.png                        # native menus need this
+```
+
+Take a screenshot after every step rather than chaining clicks blindly: several panels re-layout as settings change (the Notifications tab grows overlay-only sections when the transport is set to the in-game overlay), so a coordinate read a moment ago can land somewhere else entirely. Native context menus are not part of the Electron window, so capture them with `-Screen`.
+
+`Send` works because the single-instance lock forwards argv to the running instance — the same channel the Watchdog uses. Window enumeration, not the log files, is the reliable answer to "is the overlay on screen?": the main process logs an incoming overlay *request* before deciding what to do with it.
+
+Dev and the installed app share `%APPDATA%\Achievement Watcher 3.0`. Back up `cfg\options.ini` before a test that changes settings, and restore it afterwards.
+
 ## Run tests
 
 ```powershell
@@ -58,10 +88,19 @@ Pop-Location
 
 The app suite includes parser, discovery, install-state and locale-completeness checks. The Watchdog suite covers monitoring, notifications and related helpers.
 
+The app suite includes a real-DOM check of the settings filter that needs a Chromium-family browser. It tries each installed candidate in turn (an installed browser is not always a launchable one) and skips — printing why — only when none will start. Point it at a specific binary with `PUPPETEER_EXECUTABLE_PATH`.
+
 Before handing off a change, also run:
 
 ```powershell
 git diff --check
+```
+
+This repository stores line endings exactly as committed and its files mix CRLF and LF within a single file, so also confirm that an editor has not silently restyled one:
+
+```powershell
+$a = git diff --numstat; $b = git diff --numstat --ignore-cr-at-eol
+if (Compare-Object $a $b) { 'line endings were rewritten - fix before committing' } else { 'ok' }
 ```
 
 ## Build an unpacked app

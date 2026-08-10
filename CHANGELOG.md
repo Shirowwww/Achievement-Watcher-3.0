@@ -7,6 +7,21 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Achievement toasts can be marked urgent, which is the only way Windows 11 (22H2 and later) puts a
+  notification on screen while Do Not Disturb is on — including the automatic "playing a game" and
+  "app in full screen" rules that make an in-game unlock invisible for a whole session. It is off by
+  default and available as **Priority notifications** under **Settings → Notification**. Windows asks
+  once, per app, before honouring it and keeps the answer in Settings > Notifications, so nothing is
+  escalated behind the user's back. Playtime and progress toasts are never marked urgent.
+- Right-click → **Folders** keeps the game installation, every available achievement-data source,
+  Ubisoft runtime files and caches, grouped into short submenus instead of one long flat list.
+- The Sources tab now has a switch for every source the scanner reads. Ubisoft Connect, GOG Galaxy,
+  Epic Games, the Nemirtingas GOG/Epic emulators, shadPS4 and Xenia were all on by default with no
+  way to turn them off short of hand-editing `options.ini` — which is why a Ubisoft entry could not
+  be hidden through the interface (issue #20).
+- The in-game overlay has a close (×) button in its header, next to the options gear. The overlay is
+  a frameless always-on-top window with no system title bar, so closing it previously meant pressing
+  the hotkey again. `Escape` closes it too, after first dismissing the options panel and the search.
 - The launch panel now auto-fills game executables after every scan: Steam installs are matched to
   their `appmanifest`/`libraryfolders.vdf` folders, GOG Galaxy launch tasks, Epic manifests, EA
   Desktop logs and Xbox configs provide the exact launcher exe, and every other known install folder
@@ -16,6 +31,53 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Updated transitive `js-yaml` packages to 4.3.1, removing the known high-severity YAML parsing
+  vulnerability from the updater and release dependency tree.
+- Hiding the main window to the tray now stops its renderer-side gamepad polling. Electron does not
+  consistently expose `BrowserWindow.hide()` through the page visibility API, so the main process
+  now sends the actual show/hide state to the renderer. This removes needless background CPU work
+  while keeping controller navigation responsive when the window is shown again.
+- The Settings notification test finally shows a Windows toast. It never did: the payload grouped
+  toasts by game with the appid as-is, and the test's appid is a number, while powertoast accepts a
+  group only when both its id and title are non-empty strings. Given anything else it stored a null
+  group and then dereferenced it, throwing before the toast was ever shown — and the failure landed
+  in the tray-balloon fallback, so the test reported success, the gamepad still rumbled, and the
+  only symptom was that nothing appeared. That is exactly how it was reported (issue #18). The id is
+  now coerced and a game with no resolved name loses its grouping rather than its notification, so
+  unnamed entries can no longer swallow a toast either. The test also logs the underlying failure
+  instead of falling back silently.
+- Windows full-screen and quiet-hours detection works at all. `SHQueryUserNotificationState` was
+  read through `Add-Type -AssemblyName shell32`, which is not a real assembly: PowerShell wrote two
+  errors to stderr, left the state at 0 and still exited 0, so the reader parsed "0", matched no
+  state (the enum starts at 1) and returned null on every Windows machine — without ever reaching
+  its error handler. Both callers therefore always answered "no". The state is now read with a real
+  `DllImport` and its `HRESULT` is checked, so the Watchdog log finally reports when Windows is
+  swallowing achievement toasts (issue #18), and an unreadable state is warned about once instead of
+  failing silently forever.
+- The overlay hotkey stays in step with the overlay however it was closed. The app reported closes
+  only from the × button, so any other way the window went away — Escape, the game-changed reopen,
+  an external close — left the Watchdog's flag stale and the next hotkey press sent the wrong
+  request. Open and close are now both reported from the overlay window's own lifecycle events.
+- The main process no longer logs "opening overlay window" for requests that open nothing: an
+  incoming close or refresh was announced as an open before the decision was even taken, which made
+  issue #19 look like it was still happening long after it was fixed.
+- The playtime monitor's muted-path filter compares Windows paths correctly regardless of the host
+  separator, and no longer builds paths from an unset `SystemRoot`.
+- Disabling the display of official Steam games now also hides a Steam purchase that launches
+  Ubisoft Connect (e.g. Far Cry 4). Such an entry is read through the Ubisoft source, so no filter
+  applied to it. Two generic signals now identify one: the configuration blocks naming Steam
+  (`third_party_platform`, or a storefront-only sibling block) and an install registered inside a
+  Steam library (`steamapps\common`). No per-game data is involved (issue #20).
+- The Settings notification test no longer breaks the very thing it tests: it opened a fullscreen
+  backdrop right before firing the Windows toast, and Windows turns on do not disturb by default
+  while an app is in full screen, so the toast was accepted and then never shown. The backdrop is
+  now only used for the in-game overlay test, which is what it was for. This is also why achievement
+  toasts appear to vanish in-game while playtime ones (fired after the game exits) always show up
+  (issue #18).
+- The overlay no longer opens by itself after a game exits. The Watchdog asks the app to close the
+  overlay on every game exit; with no overlay open that request fell through to the open path and
+  popped the overlay onto the desktop. Close and refresh requests now only ever act on a window that
+  is already there, and the Watchdog only asks for a close when it believes one is up (issue #19).
 - Ubisoft Connect titles bought on Steam no longer need a per-game row in the uplay↔Steam mapping
   asset: the cached achievements archive's own spec name (`971_FarCry4` → "far cry 4") is now a
   resolution candidate when the registered install folder is unavailable and the configurations
