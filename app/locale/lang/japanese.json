@@ -1098,6 +1098,7 @@
     "show-uplay-r2-configuration-file": "Uplay R2 設定ファイルを表示",
     "show-achievements-schema-json": "achievements_schema.json を表示",
     "open-ubisoft-achievement-saves": "Ubisoft の実績セーブを開く",
+    "open-achievement-data-folder": "実績データのフォルダを開く",
     "uninstall-via-steam": "Steam 経由でアンインストール…",
     "uninstall-x-via-steam": "「{name}」を Steam 経由でアンインストールしますか？",
     "steam-uninstall-detail": "Steam はゲームのローカルファイルを削除します。後でライブラリから再インストールできます。",

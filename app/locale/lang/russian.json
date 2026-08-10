@@ -1098,6 +1098,7 @@
     "show-uplay-r2-configuration-file": "Показать файл конфигурации Uplay R2",
     "show-achievements-schema-json": "Показать achievements_schema.json",
     "open-ubisoft-achievement-saves": "Открыть сохранения достижений Ubisoft",
+    "open-achievement-data-folder": "Открыть папку с данными достижений",
     "uninstall-via-steam": "Удалить через Steam…",
     "uninstall-x-via-steam": "Удалить «{name}» через Steam?",
     "steam-uninstall-detail": "Steam удалит локальные файлы игры. Позже её можно переустановить из библиотеки.",

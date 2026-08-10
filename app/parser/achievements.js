@@ -35,6 +35,7 @@ const crackFix = require(path.join(appPath, 'crackFix.js'));
 const genEmuConfig = require(path.join(appPath, 'genEmuConfig.js'));
 const gameIndex = require(path.join(appPath, 'gameIndex.js'));
 const { userDataDir } = require(path.join(appPath, '..', 'util', 'userDataPath.js'));
+const { resolveAchievementDataPath } = require(path.join(appPath, '..', 'util', 'achievementDataPath.js'));
 const exeDetect = require(path.join(appPath, 'exeDetect.js'));
 const installState = require(path.join(appPath, 'installState.js'));
 const { applyLocalStatProgress } = require(path.join(appPath, 'statProgress.js'));
@@ -1695,6 +1696,10 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     if (!resolvedGameDir && game.name) resolvedGameDir = await resolveGameDirByName(game.name);
     if (resolvedGameDir) game.gameDir = resolvedGameDir;
     if (appid.data && appid.data.steamSettings) game.steamSettings = appid.data.steamSettings;
+    // The folder this entry's achievement data was parsed from, for the right-click "Open
+    // achievement data folder" action (issue #21). Empty for registry-backed sources.
+    const dataPath = resolveAchievementDataPath(appid.data);
+    if (dataPath) game.dataPath = dataPath;
     let resolvedEmu = null;
     let resolvedExe = null;
     let resolvedExeConfident = false;

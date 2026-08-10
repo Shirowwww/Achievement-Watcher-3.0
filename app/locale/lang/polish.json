@@ -1098,6 +1098,7 @@
     "show-uplay-r2-configuration-file": "Pokaż plik konfiguracyjny Uplay R2",
     "show-achievements-schema-json": "Pokaż achievements_schema.json",
     "open-ubisoft-achievement-saves": "Otwórz zapisy osiągnięć Ubisoft",
+    "open-achievement-data-folder": "Otwórz folder danych osiągnięć",
     "uninstall-via-steam": "Odinstaluj przez Steam…",
     "uninstall-x-via-steam": "Odinstalować „{name}” przez Steam?",
     "steam-uninstall-detail": "Steam usunie lokalne pliki gry. Możesz ją później ponownie zainstalować z biblioteki.",

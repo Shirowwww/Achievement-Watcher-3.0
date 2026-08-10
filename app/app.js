@@ -2799,6 +2799,26 @@ var app = {
               );
             }
 
+            // Open the folder this entry's achievements were actually parsed from. It answers
+            // "where is this card coming from?" — which emulator or source produced it — without
+            // digging through the watched roots by hand (issue #21). Only offered when the parser
+            // recorded a real folder that still exists, so it can never open something unrelated.
+            const achievementDataPath = gameForDir?.dataPath;
+            if (achievementDataPath && fs.existsSync(achievementDataPath)) {
+              folderMenu.append(
+                new MenuItem({
+                  icon: menuIcon('folder-open.png'),
+                  label: t('open-achievement-data-folder', 'Open achievement data folder', 'Ouvrir le dossier des données de succès'),
+                  click() {
+                    // Some sources point at the save FILE itself; reveal it rather than trying to
+                    // open a file as a folder.
+                    if (fs.statSync(achievementDataPath).isDirectory()) remote.shell.openPath(achievementDataPath);
+                    else remote.shell.showItemInFolder(achievementDataPath);
+                  },
+                })
+              );
+            }
+
             // Catalog links use the mapped Steam appid for Ubisoft records (including namespaced
             // uplay-<productId> official entries). Never emit broken URLs with a local/native id.
             if (/^[0-9]+$/.test(catalogAppid)) {

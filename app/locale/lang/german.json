@@ -1098,6 +1098,7 @@
     "show-uplay-r2-configuration-file": "Uplay-R2-Konfigurationsdatei anzeigen",
     "show-achievements-schema-json": "achievements_schema.json anzeigen",
     "open-ubisoft-achievement-saves": "Ubisoft-Erfolgsspeicher öffnen",
+    "open-achievement-data-folder": "Ordner mit den Erfolgsdaten öffnen",
     "uninstall-via-steam": "Über Steam deinstallieren…",
     "uninstall-x-via-steam": "„{name}“ über Steam deinstallieren?",
     "steam-uninstall-detail": "Steam entfernt die lokalen Dateien des Spiels. Du kannst es später aus deiner Bibliothek neu installieren.",
