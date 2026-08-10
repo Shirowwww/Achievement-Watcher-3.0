@@ -69,6 +69,10 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     const held = new Map();
     let selected = null;
     let activeByController = false;
+    let pollFrame = null;
+    // Electron's Page Visibility state stays "visible" for some hidden BrowserWindows. The main
+    // process supplies the authoritative tray-window state once this renderer has loaded.
+    let mainWindowVisible = false;
 
     function isVisible(element) {
       if (!element || !element.isConnected || element.hidden || element.disabled) return false;
@@ -233,6 +237,10 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     }
 
     function poll() {
+      pollFrame = null;
+      // This is renderer-only navigation. The Watchdog handles global controller input, so polling
+      // a hidden tray window only wastes CPU and can keep Chromium from settling into its idle state.
+      if (!canPoll()) return;
       const gamepad = Array.from(navigator.getGamepads?.() || []).find(Boolean);
       if (gamepad && document.hasFocus()) {
         const axisX = Math.abs(gamepad.axes[0] || 0) >= 0.55 ? Math.sign(gamepad.axes[0]) : 0;
@@ -259,7 +267,16 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         repeat('rb', pressed(gamepad, BUTTON.RB), () => changeSettingsTab(1));
         repeat('start', pressed(gamepad, BUTTON.START), openSettings);
       }
-      requestAnimationFrame(poll);
+      schedulePoll();
+    }
+
+    function canPoll() {
+      return mainWindowVisible && document.visibilityState === 'visible';
+    }
+
+    function schedulePoll() {
+      if (pollFrame !== null || !canPoll()) return;
+      pollFrame = requestAnimationFrame(poll);
     }
 
     function leaveControllerMode() {
@@ -268,12 +285,28 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       if (selected) selected.classList.remove('controller-focus');
     }
 
+    function updatePollingState() {
+      if (canPoll()) {
+        schedulePoll();
+        return;
+      }
+      if (pollFrame !== null) cancelAnimationFrame(pollFrame);
+      pollFrame = null;
+      held.clear();
+      leaveControllerMode();
+    }
+
     window.addEventListener('gamepaddisconnected', () => {
       held.clear();
       leaveControllerMode();
     });
     window.addEventListener('pointerdown', leaveControllerMode, { passive: true });
     window.addEventListener('keydown', leaveControllerMode, { passive: true });
-    requestAnimationFrame(poll);
+    document.addEventListener('visibilitychange', updatePollingState);
+    require('electron').ipcRenderer.on('main-window-visibility', (_event, visible) => {
+      mainWindowVisible = visible === true;
+      updatePollingState();
+    });
+    schedulePoll();
   })();
 }

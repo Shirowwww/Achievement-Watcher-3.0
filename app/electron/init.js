@@ -287,6 +287,10 @@ try {
 if (manifest.config['disable-gpu'] || userDisableGpu || safeMode) app.disableHardwareAcceleration();
 if (manifest.config.appid) app.setAppUserModelId(manifest.config.appid);
 manifest.config.debug = process.env.NODE_ENV === 'development' || process.defaultApp || /[\\/]electron/.test(process.execPath);
+// DevTools creates another Chromium renderer. Opening it for every dev launch makes the tray-idle
+// profile look hundreds of MiB heavier than the shipped app and keeps the inspector alive after the
+// main window is hidden. Keep DevTools available in development, but open it only when requested.
+const openDevTools = manifest.config.debug && /^(1|true)$/i.test(String(process.env.AW_OPEN_DEVTOOLS || ''));
 
 // Clicking a Windows toast can only reach an unpackaged desktop app through a registered URI
 // scheme (the alternative, foreground activation, needs a COM activator bound to our AUMID that we
@@ -2138,12 +2142,23 @@ function createMainWindow() {
     MainWin = new BrowserWindow(options);
     getRemoteMain().enable(MainWin.webContents);
 
+    // BrowserWindow.hide() does not reliably update document.visibilityState on every Electron
+    // version. Tell the renderer directly so its optional controller polling can stop while the
+    // app is resident only in the tray.
+    const sendMainWindowVisibility = (visible) => {
+      if (!MainWin || MainWin.isDestroyed() || MainWin.webContents.isDestroyed()) return;
+      MainWin.webContents.send('main-window-visibility', visible);
+    };
+    MainWin.on('show', () => sendMainWindowVisibility(true));
+    MainWin.on('hide', () => sendMainWindowVisibility(false));
+    MainWin.webContents.on('did-finish-load', () => sendMainWindowVisibility(MainWin.isVisible()));
+
     //Frameless
     if (options.frame === false) MainWin.isFrameless = true;
 
     //Debug tool
     if (manifest.config.debug) {
-      MainWin.webContents.openDevTools({ mode: 'undocked' });
+      if (openDevTools) MainWin.webContents.openDevTools({ mode: 'undocked' });
       MainWin.isDev = true;
       console.info((({ node, electron, chrome }) => ({ node, electron, chrome }))(process.versions));
       // electron-context-menu is ESM-only in v4+ — must use dynamic import
@@ -2521,7 +2536,7 @@ async function createOverlayWindow(info) {
     });
 
     if (manifest.config.debug) {
-      overlayWindow.webContents.openDevTools({ mode: 'undocked' });
+      if (openDevTools) overlayWindow.webContents.openDevTools({ mode: 'undocked' });
       overlayWindow.isDev = true;
       console.info((({ node, electron, chrome }) => ({ node, electron, chrome }))(process.versions));
       // electron-context-menu is ESM-only in v4+ — must use dynamic import (same as the MainWin path;

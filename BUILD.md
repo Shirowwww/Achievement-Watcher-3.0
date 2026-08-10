@@ -36,6 +36,14 @@ Pop-Location
 
 The command starts Electron directly from `app/`. The background Watchdog is launched by the main process.
 
+DevTools stays available but is closed by default so a hidden dev instance matches the tray footprint more closely. Open it explicitly when needed:
+
+```powershell
+$env:AW_OPEN_DEVTOOLS = '1'
+npm start
+Remove-Item Env:AW_OPEN_DEVTOOLS -ErrorAction SilentlyContinue
+```
+
 If `ELECTRON_RUN_AS_NODE` is present in the parent environment, remove it first:
 
 ```powershell
