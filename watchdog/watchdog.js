@@ -424,10 +424,26 @@ var app = {
   watcher: [],
   tick: 0,
   toastID: toastIdentity.DEFAULT_TOAST_AUMID,
+  starting: false,
+  restartPending: false,
   start: async function () {
+    // start() is re-entered on every options.ini change and awaits a dozen slow things (settings
+    // load, the WinRT probe, folder discovery, five sub-watchers). Two saves landing close together
+    // used to run it twice concurrently: both passes assigned into self.watcher, so the first pass's
+    // file watchers were overwritten without being closed and leaked for the life of the process.
+    // Serialise instead — a reload requested mid-start is collapsed into one extra pass at the end.
+    if (this.starting) {
+      this.restartPending = true;
+      debug.log('settings reload requested while starting > coalescing into the current pass');
+      return;
+    }
+    this.starting = true;
     try {
       let self = this;
       self.cache = [];
+      // Rebuild the watcher list from scratch: the reload path closes the previous watchers, and a
+      // shorter run must not leave stale, already-closed handles behind for the next close sweep.
+      self.watcher = [];
 
       debug.log('Achievement Watchdog starting ...');
       const net = require('net');
@@ -490,7 +506,7 @@ var app = {
         self.watcher[0] = watch(cfg_file.option, function (evt, name) {
           if (evt === 'update') {
             debug.log('option file change detected -> reloading');
-            self.watcher.forEach((watcher) => watcher.close());
+            self.closeWatchers();
             self.start();
           }
         });
@@ -555,6 +571,24 @@ var app = {
       debug.error(err);
       instance.unlock();
       process.exit();
+    } finally {
+      this.starting = false;
+    }
+    if (this.restartPending) {
+      this.restartPending = false;
+      this.closeWatchers();
+      await this.start();
+    }
+  },
+  // Close every watcher this pass opened. node-watch tolerates closing an already-closed watcher,
+  // and holes cannot occur (self.watch assigns before the caller advances its index).
+  closeWatchers: function () {
+    for (const watcher of this.watcher) {
+      try {
+        if (watcher) watcher.close();
+      } catch (err) {
+        debug.error(`[watch] close failed: ${err && err.message ? err.message : err}`);
+      }
     }
   },
   watch: function (i, dir, options) {

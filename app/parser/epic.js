@@ -79,7 +79,9 @@ module.exports.scan = async (dir) => {
       } else {
         try {
           const title = await getGameTitleFromMapping(gameList[game.appid]);
-          steamid = ipcRenderer.sendSync('get-steam-appid-from-title', { title });
+          // invoke, not sendSync: this resolves through a hidden-BrowserWindow store scrape that
+          // can take up to 30s, once per uncached game — blocking the renderer froze the whole scan.
+          steamid = await ipcRenderer.invoke('get-steam-appid-from-title', { title });
           cache.push({ epicid: game.appid, steamid });
         } catch (err) {
           //appid not found on mapping, either a new game or using custom appid
@@ -151,7 +153,7 @@ module.exports.getGameData = async (cfg) => {
     } catch (err) {
       //appid not found on mapping, either a new game or using custom appid
       //lets assume its new and search for it on the epic games store
-      title = ipcRenderer.sendSync('get-title-from-epic-id', { appid: cfg.appID }) || 'Unknown game';
+      title = (await ipcRenderer.invoke('get-title-from-epic-id', { appid: cfg.appID })) || 'Unknown game';
     }
   }
   if (!title) return result;
@@ -195,7 +197,7 @@ module.exports.getGameData = async (cfg) => {
   };
   if (!cfg.steamappid) {
     // if its exclusive then use epic images instead of steam's
-    const links = ipcRenderer.sendSync('get-images-for-game', { name: title }) || {};
+    const links = (await ipcRenderer.invoke('get-images-for-game', { name: title })) || {};
     result.img = {
       header: links.landscape,
       background: links.background,

@@ -3,7 +3,7 @@
 const { app, ipcMain, BrowserWindow } = require('electron');
 const path = require('path');
 const { fetchIcon } = require('../parser/steam');
-const { pathToFileURL } = require('url');
+const { iconResultToFileUrl } = require('../util/iconUrl.js');
 const achievementsJS = require(path.join(__dirname, '../parser/achievements.js'));
 achievementsJS.initDebug({ isDev: app.isDev || false, userDataPath: app.getPath('userData') });
 const settingsJS = require(path.join(__dirname, '../settings.js'));
@@ -86,16 +86,14 @@ ipcMain.on('get-steam-user-list', async (event) => {
 
 ipcMain.on('fetch-icon', async (event, url, appid) => {
   try {
-    const p = await fetchIcon(url, appid);
-    event.returnValue = p ? pathToFileURL(p).href : null;
+    event.returnValue = iconResultToFileUrl(await fetchIcon(url, appid));
   } catch {
     event.returnValue = null;
   }
 });
 ipcMain.handle('fetch-icon', async (event, url, appid) => {
   try {
-    const p = await fetchIcon(url, appid);
-    return p ? pathToFileURL(p).href : null;
+    return iconResultToFileUrl(await fetchIcon(url, appid));
   } catch {
     return null;
   }

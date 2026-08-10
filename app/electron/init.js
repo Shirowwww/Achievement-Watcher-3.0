@@ -181,6 +181,10 @@ function currentThemePayload(nameOverride) {
 
 const BASE_URL = 'https://www.steamgriddb.com/api/v2';
 const DEFAULT_API_KEY = '2a9d32ddd0bfe4e1191b4f6ff56fef60'; // bundled public fallback (rate-limited)
+// Every SteamGridDB / artwork request is time-boxed. The global fetch here is undici, whose default
+// headers timeout is 300s: without an explicit signal a blackholed DNS or a captive portal stalls an
+// artwork lookup for minutes instead of failing over to the next source.
+const SGDB_FETCH_TIMEOUT_MS = 8000;
 const startupArgs = normalizeWindowArgs(minimist(process.argv.slice(1)));
 const safeMode = startupArgs['safe-mode'] === true || startupArgs.safeMode === true || startupArgs['reset-window'] === true;
 
@@ -682,9 +686,14 @@ ipcMain.handle('get-steam-data', async (event, arg) => {
   return await getSteamData({ appid, type: arg.type, user: arg.user, lang: arg.lang });
 });
 
-ipcMain.on('get-steam-appid-from-title', async (event, arg) => {
+// The three Epic lookups below each block on something slow and remote: a hidden-BrowserWindow
+// Steam store scrape (up to 30s) or four SteamGridDB round-trips. epic.js drove them through a
+// blocking sendSync once per uncached game, which froze the renderer for the whole scan. Same
+// problem, same fix as the get-steam-data pair above: keep the legacy `.on` twin for compatibility
+// and give each channel an invoke twin so the UI thread stays responsive while the lookup runs.
+async function resolveSteamAppidFromTitle(arg) {
   function normalizeTitle(str) {
-    return str
+    return String(str || '')
       .toLowerCase()
       .normalize('NFKD') // normalize accents
       .replace(/[\u2018\u2019\u201A\u201B\u2039\u203A']/g, '') // single quotes
@@ -699,15 +708,12 @@ ipcMain.on('get-steam-appid-from-title', async (event, arg) => {
   searchForSteamAppId(info);
   let possibleMatch;
   // searchForSteamAppId populates info.games asynchronously; bound the poll so a failed page load
-  // can't leave this blocking sendSync hanging forever (~30s cap, then return the best partial match).
+  // can't leave the caller hanging forever (~30s cap, then return the best partial match).
   let tries = 0;
   while (tries < 60) {
     if (info.games) {
       for (let game of info.games) {
-        if (normalizeTitle(game.title) === normalizeTitle(arg.title)) {
-          event.returnValue = game.appid;
-          return;
-        }
+        if (normalizeTitle(game.title) === normalizeTitle(arg.title)) return game.appid;
         if (!possibleMatch && normalizeTitle(game.title).includes(normalizeTitle(arg.title))) {
           possibleMatch = game.appid;
         }
@@ -717,58 +723,88 @@ ipcMain.on('get-steam-appid-from-title', async (event, arg) => {
     await delay(500);
     tries++;
   }
-  event.returnValue = possibleMatch;
-});
+  return possibleMatch;
+}
 
-ipcMain.on('get-title-from-epic-id', async (event, arg) => {
+ipcMain.on('get-steam-appid-from-title', async (event, arg) => {
+  try {
+    event.returnValue = await resolveSteamAppidFromTitle(arg);
+  } catch {
+    event.returnValue = undefined;
+  }
+});
+ipcMain.handle('get-steam-appid-from-title', (event, arg) => resolveSteamAppidFromTitle(arg));
+
+async function resolveTitleFromEpicId(arg) {
   let info = { appid: arg.appid };
   await searchForGameName(info); // bounded internally; info.title may be undefined on a miss
-  event.returnValue = info.title;
-});
+  return info.title;
+}
 
-ipcMain.on('get-images-for-game', async (event, arg) => {
+ipcMain.on('get-title-from-epic-id', async (event, arg) => {
+  try {
+    event.returnValue = await resolveTitleFromEpicId(arg);
+  } catch {
+    event.returnValue = undefined;
+  }
+});
+ipcMain.handle('get-title-from-epic-id', (event, arg) => resolveTitleFromEpicId(arg));
+
+async function resolveImagesForGame(arg) {
   const gameName = arg.name;
   const apiKey = getSteamGridDbApiKey();
-  // Driven by a blocking sendSync (epic.js): every exit path MUST set event.returnValue, or the
-  // renderer stays frozen forever on a SteamGridDB miss / network error.
+  // Time-box every request: undici's default headers timeout is 300s, so a blackholed DNS or a
+  // captive portal used to stall artwork lookups for minutes (and, over sendSync, the whole UI).
+  const sgdb = (url) =>
+    fetch(url, { headers: { Authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(SGDB_FETCH_TIMEOUT_MS) });
   try {
-    const searchRes = await fetch(`${BASE_URL}/search/autocomplete/${encodeURIComponent(gameName)}`, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
+    const searchRes = await sgdb(`${BASE_URL}/search/autocomplete/${encodeURIComponent(gameName)}`);
 
     const searchData = await searchRes.json();
-    const game = searchData.data[0];
+    // A SteamGridDB error payload has no `data` array at all, so guard the index rather than
+    // relying on the catch below to turn a TypeError into a silent miss.
+    const game = searchData?.data?.[0];
     if (!game) {
       debug.log('Game not found');
-      event.returnValue = null;
-      return;
+      return null;
     }
 
     const gameId = game.id;
 
     const [iconsRes, gridsRes, heroesRes, logosRes] = await Promise.all([
-      fetch(`${BASE_URL}/icons/game/${gameId}`, { headers: { Authorization: `Bearer ${apiKey}` } }),
-      fetch(`${BASE_URL}/grids/game/${gameId}`, { headers: { Authorization: `Bearer ${apiKey}` } }),
-      fetch(`${BASE_URL}/heroes/game/${gameId}`, { headers: { Authorization: `Bearer ${apiKey}` } }),
-      fetch(`${BASE_URL}/logos/game/${gameId}`, { headers: { Authorization: `Bearer ${apiKey}` } }),
+      sgdb(`${BASE_URL}/icons/game/${gameId}`),
+      sgdb(`${BASE_URL}/grids/game/${gameId}`),
+      sgdb(`${BASE_URL}/heroes/game/${gameId}`),
+      sgdb(`${BASE_URL}/logos/game/${gameId}`),
     ]);
 
     const [icons, grids, heroes, logos] = await Promise.all([iconsRes.json(), gridsRes.json(), heroesRes.json(), logosRes.json()]);
 
-    const portrait = grids.data.find((g) => g.width === 600 && g.height === 900);
-    const landscape = grids.data.find((g) => g.width === 920 && g.height === 430);
-    const links = {
-      icon: icons.data?.[0]?.url || logos.data?.[0]?.url,
-      background: heroes.data?.[0]?.url,
+    const gridList = Array.isArray(grids?.data) ? grids.data : [];
+    const portrait = gridList.find((g) => g.width === 600 && g.height === 900);
+    const landscape = gridList.find((g) => g.width === 920 && g.height === 430);
+    return {
+      icon: icons?.data?.[0]?.url || logos?.data?.[0]?.url,
+      background: heroes?.data?.[0]?.url,
       portrait: portrait?.url,
       landscape: landscape?.url,
     };
-    event.returnValue = links;
   } catch (err) {
     debug.log(`[get-images-for-game] ${gameName}: ${err.message}`);
+    return null;
+  }
+}
+
+ipcMain.on('get-images-for-game', async (event, arg) => {
+  // Legacy blocking twin: every exit path MUST set event.returnValue, or a sendSync caller stays
+  // frozen forever on a SteamGridDB miss / network error.
+  try {
+    event.returnValue = await resolveImagesForGame(arg);
+  } catch {
     event.returnValue = null;
   }
 });
+ipcMain.handle('get-images-for-game', (event, arg) => resolveImagesForGame(arg));
 
 ipcMain.on('stylize-background-for-appid', async (event, arg) => {
   const imageUrl = arg.background;
@@ -777,9 +813,12 @@ ipcMain.on('stylize-background-for-appid', async (event, arg) => {
   const sharp = require('sharp');
 
   try {
-    const res = await fetch(imageUrl);
+    const res = await fetch(imageUrl, { signal: AbortSignal.timeout(SGDB_FETCH_TIMEOUT_MS) });
     if (!res.ok) throw new Error(`Failed to fetch image: ${res.statusText}`);
-    const buffer = await res.buffer();
+    // `.buffer()` is node-fetch's API; the global fetch here is undici, which only has
+    // arrayBuffer(). The call threw "res.buffer is not a function" on every single invocation and
+    // the catch below swallowed it, so Epic background blur/tint had never actually run.
+    const buffer = Buffer.from(await res.arrayBuffer());
 
     const metadata = await sharp(buffer).metadata();
     const { width, height } = metadata;
@@ -1197,7 +1236,13 @@ function scheduleMonitorRespawn() {
 }
 
 function launchWatchdog() {
+  // Clearing the handle is not enough: scheduleMonitorRespawn() treats a non-null monitorRespawnTimer
+  // as "a respawn is already pending" and returns early. A manual restart (tray/Settings) landing
+  // while a respawn was pending used to leave the stale, already-cleared handle in place, which
+  // silently disabled supervised respawn for the rest of the session — the next monitor crash then
+  // killed notifications and playtime tracking with no way back short of restarting the app.
   clearTimeout(monitorRespawnTimer);
+  monitorRespawnTimer = null;
   if (monitorProc && monitorProc.exitCode === null && !monitorProc.killed) {
     return { ok: true }; // already running — idempotent
   }
@@ -2153,11 +2198,16 @@ function createMainWindow() {
     });
 
     //External open links
+    // Only http(s) is handed to the OS. shell.openExternal() launches whatever handler Windows has
+    // registered for a scheme, so forwarding "anything that is not file:///" turned a stray in-page
+    // navigation into an arbitrary protocol launch (ms-msdt:, search-ms:, a UNC path...). This now
+    // matches the setWindowOpenHandler below, which already filtered on http(s); an unknown scheme is
+    // simply blocked rather than opened.
     const openExternal = function (event, url) {
-      if (!url.startsWith('file:///')) {
-        event.preventDefault();
-        shell.openExternal(url).catch(() => {});
-      }
+      if (url.startsWith('file:///')) return;
+      event.preventDefault();
+      if (/^https?:\/\//i.test(url)) shell.openExternal(url).catch(() => {});
+      else debug.log(`[nav] blocked navigation to a non-http(s) scheme: ${String(url).slice(0, 80)}`);
     };
     MainWin.webContents.on('will-navigate', openExternal); //a href
 
@@ -2959,10 +3009,11 @@ function processNotificationQueue() {
     if (notifQueue.length) {
       setTimeout(processNotificationQueue, 50);
     } else if (shouldQuitApp()) {
-      // No window was created (e.g. unresolvable preset) and nothing is queued. In a transient
-      // Watchdog-spawned notification process there is now nothing to wait on and 'window-all-closed'
-      // will never fire, so quit immediately rather than sit idle holding the single-instance lock
-      // (which blocks the main app from launching).
+      // Vestigial. Back when a notification could be rendered by a transient Watchdog-spawned
+      // process, a failed spawn left nothing to wait on ('window-all-closed' never fires) and that
+      // process had to quit rather than sit idle holding the single-instance lock. The Watchdog is
+      // now a child of the resident tray daemon, so notifications always render in the daemon and
+      // shouldQuitApp() is a hard false: this branch is unreachable and quits nothing.
       app.quit();
     }
     return;

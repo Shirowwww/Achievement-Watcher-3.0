@@ -315,7 +315,7 @@ module.exports.getGameData = async (appid, lang) => {
   let img = { header: null, background: null, portrait: null, icon: null };
   try {
     const { ipcRenderer } = require('electron');
-    const links = ipcRenderer.sendSync('get-images-for-game', { name: data.title }) || {};
+    const links = (await ipcRenderer.invoke('get-images-for-game', { name: data.title })) || {};
     img = { header: links.landscape, background: links.background, portrait: links.portrait, icon: links.icon };
     if (links.background) ipcRenderer.send('stylize-background-for-appid', { background: links.background, appid: appid.appid });
   } catch {

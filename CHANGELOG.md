@@ -35,6 +35,28 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The background monitor is supervised again after a manual restart. Restarting it from the tray
+  or Settings while an automatic respawn was already queued left the supervisor believing a
+  respawn was still pending, which silently disabled it for the rest of the session: the next
+  crash ended achievement notifications and playtime tracking until the app was restarted.
+- Cover art falls back correctly when a download fails. A failed fetch was reported to the
+  interface as a successful one, so the portrait/header fallback never ran and the tile stayed
+  blank; **Use another Steam AppID…** could also save that failure as a permanent cover override
+  instead of warning that the AppID has no art.
+- Covers, achievement icons and game backgrounds no longer disappear when their path contains an
+  apostrophe or parentheses — an ordinary game folder ("Assassin's Creed", `Program Files (x86)`)
+  or a Windows account name with an apostrophe was enough to drop the image silently.
+- Per-game launch arguments keep quoted values intact. `-savedir "D:\My Games\Save"` reached the
+  game with the quotes still attached, so the path did not resolve; an unmatched quote no longer
+  makes the play button do nothing either.
+- Epic backgrounds are blurred and tinted again. The image was fetched through an API the bundled
+  runtime does not provide, so the step failed on every game and the error was swallowed.
+- Scanning Epic games no longer freezes the interface. Looking up a title's Steam AppID and its
+  artwork blocked the whole window for up to 30 seconds per game — several minutes on a first
+  scan — and artwork requests are now time-boxed instead of hanging on an unreachable network.
+- Saving settings twice in quick succession no longer leaks file watchers in the background
+  monitor.
+- In-app links to unknown URL schemes are no longer handed to Windows to open.
 - Updates signed with the local Shirow certificate no longer fail on PCs that do not trust that
   self-signed root. The updater verifies the matching publisher name and the release SHA-512
   manifest instead of showing the misleading “not signed by the application owner” error.

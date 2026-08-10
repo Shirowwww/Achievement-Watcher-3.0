@@ -10,6 +10,8 @@ const os = require('os');
 const fs = require('fs');
 const { pathToFileURL } = require('url');
 const args_split = require('argv-split');
+const { cssUrl } = require(path.join(appPath, 'util/cssUrl.js'));
+const { splitLaunchArgs } = require(path.join(appPath, 'util/launchArgs.js'));
 const args = require('minimist');
 const moment = require('moment');
 const { spawn } = require('child_process');
@@ -270,14 +272,15 @@ function applyCoverBackground(appid, value) {
   if (!value || value === 'none') {
     el.css({ background: 'none', backgroundSize: '', backgroundPosition: '', backgroundRepeat: '' });
   } else {
-    el.css({ backgroundImage: `url('${value}')`, backgroundSize: 'cover', backgroundPosition: 'center center', backgroundRepeat: 'no-repeat' });
+    el.css({ backgroundImage: cssUrl(value), backgroundSize: 'cover', backgroundPosition: 'center center', backgroundRepeat: 'no-repeat' });
   }
 }
 
 // Fetch a game's cover, and when the preferred art cannot be downloaded (dead hashed URL, missing
 // portrait, placeholder from a legacy schema) try the alternate (portrait <-> header) before giving
-// up and clearing the tile. fetch-icon returns the input URL unchanged on failure, so a result that
-// equals the requested URL means "couldn't get it".
+// up and clearing the tile. fetch-icon resolves to null on a miss (see util/iconUrl.js — it used to
+// resolve to a file:// URL built from the failed http one, which read as a success and killed this
+// fallback entirely), so anything truthy here is a real cached file.
 function applyCoverWithFallback(game, headerEl, imgName, tried) {
   const img = (game && game.img) || {};
   const fallback = (current) => {
@@ -295,7 +298,7 @@ function applyCoverWithFallback(game, headerEl, imgName, tried) {
     .invoke('fetch-icon', imgName, game.steamappid || game.appid)
     .then((localPath) => {
       if (localPath && localPath !== imgName) {
-        headerEl.css('background', `url('${localPath}')`);
+        headerEl.css('background', cssUrl(localPath));
       } else {
         const alt = fallback(imgName);
         if (alt) applyCoverWithFallback(game, headerEl, alt, tried);
@@ -374,7 +377,7 @@ function openCoverPicker(game, appid, coverCacheAppid) {
     const tile = document.createElement('div');
     tile.className = 'aw-cover-picker-tile';
     if (!portraitView) tile.classList.add('aw-landscape');
-    tile.style.backgroundImage = `url('${url}')`;
+    tile.style.backgroundImage = cssUrl(url);
     tile.title = url;
     const tag = document.createElement('span');
     tag.className = 'aw-cover-picker-source';
@@ -1034,9 +1037,9 @@ var app = {
               game.system ? `data-system="${game.system}"` : ''
             }>
                   <div class="loading-overlay"><div class="content"><i class="fas fa-spinner fa-spin"></i></div></div>
-                  <div class="header ${isPortrait ? 'glow' : ''}" id="game-header-${game.appid}" style="background: url('${
+                  <div class="header ${isPortrait ? 'glow' : ''}" id="game-header-${game.appid}" style="background: ${cssUrl(
               pathToFileURL(path.join(appPath, 'resources/img/loading.gif')).href
-            }');">
+            )};">
                   <!-- Play Button -->
                   <div class="play-button"><i class="fas fa-play"></i></div>
                   </div>
@@ -1095,11 +1098,11 @@ var app = {
               const coverOverride = coverOverrideFor(game.appid);
               if (coverOverride) {
                 // User-set cover (local image / alternate AppID) wins over every default source.
-                headerEl.css('background', `url('${coverOverride}')`);
+                headerEl.css('background', cssUrl(coverOverride));
                 return;
               }
               if (EMU_LOCAL_ICON_SOURCES.has(game.source)) {
-                if (game.img && game.img.header) headerEl.css('background', `url('${game.img.header}')`);
+                if (game.img && game.img.header) headerEl.css('background', cssUrl(game.img.header));
                 else headerEl.css('background', 'none');
                 return;
               }
@@ -3341,9 +3344,9 @@ var app = {
         ipcRenderer.invoke('fetch-icon', game.img.background, game.steamappid || game.appid).then((localPath) => {
           if (game.system === 'uplay' || game.img?.overlay === true) {
             let gradient = `linear-gradient(to bottom right, color-mix(in srgb, var(--bg-base) 88%, black) 0%, color-mix(in srgb, var(--bg-glow) 78%, black) 100%)`;
-            $('body').fadeIn().attr('style', `background: ${gradient}, url('${localPath}')`);
+            $('body').fadeIn().attr('style', `background: ${gradient}, ${cssUrl(localPath)}`);
           } else {
-            $('body').fadeIn().css('background', `url('${localPath}')`);
+            $('body').fadeIn().css('background', cssUrl(localPath));
           }
         });
       }
@@ -3369,9 +3372,9 @@ var app = {
       // which reads as "this page belongs to another game" (issue #15).
       const resetIconToPlaceholder = () => iconEl.css('background', '');
       if (headerIconSource) {
-        iconEl.css('background', `url('${pathToFileURL(path.join(appPath, 'resources/img/loading.gif')).href}')`);
+        iconEl.css('background', cssUrl(pathToFileURL(path.join(appPath, 'resources/img/loading.gif')).href));
         ipcRenderer.invoke('fetch-icon', headerIconSource, game.steamappid || game.appid).then((localPath) => {
-          if (localPath) iconEl.css('background', `url('${localPath}')`);
+          if (localPath) iconEl.css('background', cssUrl(localPath));
           else resetIconToPlaceholder();
         }).catch(() => resetIconToPlaceholder());
       } else {
@@ -3477,9 +3480,9 @@ var app = {
                               </div>
                               <div class="icon" id="achievement-${String(achievement.name)
                                 .replace(/\s+/g, '_')
-                                .replace(/[^\w\-]/g, '')}" style="background: url('${
+                                .replace(/[^\w\-]/g, '')}" style="background: ${cssUrl(
           pathToFileURL(path.join(appPath, 'resources/img/loading.gif')).href
-        }');"></div>
+        )};"></div>
                             </div>
                             <div class="content">
                                 <div class="title">${
@@ -3521,7 +3524,7 @@ var app = {
         return new Promise((resolve, reject) => {
           const img = new Image();
           img.onload = () => {
-            $(selector).css('background', `url(${imagePath})`);
+            $(selector).css('background', cssUrl(imagePath));
             resolve();
           };
           img.onerror = () => {
@@ -3714,7 +3717,10 @@ var app = {
         });
       };
       try {
-        let game = spawn(cfg.exe, (cfg.args || '').trim().match(/(?:[^\s"]+|"[^"]*")+/g) || [], {
+        // args_split (argv-split) strips the quotes it uses for grouping; the hand-rolled regex that
+        // used to live here kept them, and since spawn() runs without a shell Node re-quoted the token,
+        // so a game asked for -savedir "D:\My Games\Save" received the literal quotes as part of the path.
+        let game = spawn(cfg.exe, splitLaunchArgs(cfg.args, (m) => debug.log(m)), {
           cwd: path.dirname(cfg.exe),
           detached: true,
           stdio: 'ignore',
