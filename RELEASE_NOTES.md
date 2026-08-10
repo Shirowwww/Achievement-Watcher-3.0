@@ -1,34 +1,39 @@
-# Achievement Watcher 3.7.0
+# Achievement Watcher 3.8.0
 
-Custom theme gradients, a cover-art gallery, smarter installed-game detection and a batch of
-stability fixes — including the in-app updater and a Far Cry 4 identity regression.
+Per-source switches, a shortcut to each entry's achievement data, automatic launch-executable
+detection and priority notifications — plus the fixes for the four open reports about missing
+achievement toasts, the overlay opening by itself, and Far Cry 4 ignoring the Steam filter.
 
 ## Highlights
 
-- **Per-layer theme gradients.** The Custom theme editor now has a Gradient editor for surface
-  layers: pick two colors and a direction (0/45/90/135/180/270°) with a live preview, applied in
-  the app and the in-game overlay. Older single-toggle gradients import automatically as a dark
-  fade of the layer color.
-- **Cover picker gallery.** Right-click a game → "Choose another cover…" opens a themed gallery
-  with the current cover, SteamDB library assets and up to eight SteamGridDB community grids,
-  matching the library's portrait/landscape orientation.
-- **Cross-source duplicate merge.** A Ubisoft Connect product mapped to an already-listed Steam
-  release is merged into one tile with both unlock sources instead of showing twice (for example
-  the Steam-variant Far Cry 4 product 971 now resolves to Steam 298110 with its real cover).
-- **Smarter install detection.** Per-user game libraries, nested library-like folders and
-  launcher-managed installs are probed on every scan; unconfigured installs are named from the
-  exe's own FileDescription/ProductName; known non-game executables no longer mark games installed.
-- **Updater fixed for unsigned releases.** "Download && Install" no longer fails with
-  "App is not signed": the verifier accepts intentionally unsigned release files (still
-  authenticated by the feed's SHA-512) and only rejects signatures from another publisher.
-- **Game-page artwork fix.** The header icon is reset to a neutral placeholder when a game has no
-  artwork, so a page can never show the previous game's icon.
+- **A switch for every source.** Ubisoft Connect, GOG Galaxy, Epic Games, the Nemirtingas GOG/Epic
+  emulators, shadPS4 and Xenia were all read unconditionally, with no way to turn them off short of
+  editing `options.ini` by hand. Each one now has its own toggle in the Sources tab.
+- **Achievement data, one click away.** Right-click a game → **Folders → Achievement data** opens
+  the folder an entry was actually read from, with one item per source on a merged card, plus
+  **Copy achievement data path**. It is the fastest way to tell where a card came from.
+- **Launch executables detected automatically.** After every scan the launch panel fills itself
+  from Steam `appmanifest` folders, GOG launch tasks, Epic manifests, EA Desktop logs and Xbox
+  configs, and from install folders behind a conservative confidence gate. Ambiguous folders stay
+  empty for a manual pick, and a manually configured exe is never overwritten.
+- **Achievement toasts actually appear.** Three separate faults were suppressing them while
+  playtime notifications worked: the payload built an invalid toast group from a numeric appid and
+  threw before display, the Settings test opened a fullscreen backdrop that switched Windows into
+  do not disturb, and the fullscreen/quiet-hours probe silently returned "no" on every machine.
+- **Priority notifications.** Optional, off by default: marks unlock toasts urgent so Windows 11
+  shows them while Do Not Disturb is on — including the automatic "playing a game" and "app in full
+  screen" rules. Windows asks once before honouring it.
+- **The overlay stays put.** It no longer opens by itself after a game exits, it has a close (×)
+  button and `Escape` closes it, and the hotkey stays in step however the window was dismissed.
+- **Far Cry 4 respects the Steam filter.** A Steam purchase that launches Ubisoft Connect is read
+  through the Ubisoft source, so no filter applied to it. Two generic signals now identify one, with
+  no per-game data involved.
 
 ## Install
 
-Download `Achievement.Watcher.Setup.3.7.0.exe` from the
-[v3.7.0 release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/tag/v3.7.0).
+Download `Achievement.Watcher.Setup.3.8.0.exe` from the
+[v3.8.0 release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/tag/v3.8.0).
 
 The `.blockmap` and `latest.yml` assets are used by automatic updates. Upgrading preserves data.
 
-See the [changelog](CHANGELOG.md#370---2026-08-06) for the full list of changes.
+See the [changelog](CHANGELOG.md#380---2026-08-10) for the full list of changes.
