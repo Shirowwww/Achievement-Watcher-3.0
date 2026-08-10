@@ -85,6 +85,90 @@ test('blocks sharing one achievements spec are merged, storefront last', () => {
   assert.equal(ubi._internal.mergeConfigBlocks([]), null);
 });
 
+// A Steam purchase that launches Ubisoft Connect states its store outright, in its own block —
+// there is no separate storefront block to infer it from. Without reading it, the library had no
+// way to tell such a copy from a Ubisoft-store one, so the "official Steam games" filter could
+// never hide it (issue #20).
+const THIRD_PARTY_BLOCK = [
+  'version: 2.0',
+  'root:',
+  '  name: l1',
+  '  installer:',
+  '    game_identifier: Far Cry 4',
+  '  third_party_platform:',
+  '    name: Steam',
+  '  uplay:',
+  "    achievements: '971_spec'",
+  '',
+].join('\n');
+
+test('a Steam purchase is recognised from third_party_platform', () => {
+  const blocks = ubi._internal.readConfigurationsIndex(writeConfigurations(THIRD_PARTY_BLOCK, 'third-party'));
+  assert.equal(blocks.length, 1);
+  assert.equal(blocks[0].thirdPartyPlatform, 'Steam');
+  assert.equal(blocks[0].title, 'Far Cry 4', 'the store name never becomes the title');
+
+  const merged = ubi._internal.mergeConfigBlocks(blocks);
+  assert.deepEqual(merged.storefronts, ['steam']);
+  assert.equal(ubi.isSteamPurchase({ storefronts: merged.storefronts }), true);
+});
+
+test('a Ubisoft-store copy is not mistaken for a Steam purchase', () => {
+  const merged = ubi._internal.mergeConfigBlocks(ubi._internal.readConfigurationsIndex(writeConfigurations(GAME_BLOCK, 'ubisoft-only')));
+  assert.deepEqual(merged.storefronts, []);
+  assert.equal(ubi.isSteamPurchase({ storefronts: merged.storefronts }), false);
+  assert.equal(ubi.isSteamPurchase({ gameDir: 'C:\\Program Files (x86)\\Ubisoft\\Ubisoft Game Launcher\\games\\Far Cry 4' }), false);
+  assert.equal(ubi.isSteamPurchase({}), false);
+  assert.equal(ubi.isSteamPurchase(null), false);
+});
+
+// A product whose spec has no entry in the configurations index carries no storefront signal at
+// all. Steam's library layout is fixed, so the registered install folder still gives it away.
+test('an install inside a Steam library counts as a Steam purchase on its own', () => {
+  for (const dir of [
+    'C:\\Program Files (x86)\\Steam\\steamapps\\common\\Far Cry 4',
+    'D:\\SteamLibrary\\steamapps\\common\\Far Cry 4\\',
+    'e:/games/steamlibrary/SteamApps/Common/Far Cry 4',
+  ]) {
+    assert.equal(ubi.isSteamPurchase({ storefronts: [], gameDir: dir }), true, `${dir} is a Steam library install`);
+  }
+  // Neither signal present, and a folder that merely mentions Steam is not a Steam library.
+  assert.equal(ubi.isSteamPurchase({ storefronts: [], gameDir: 'D:\\Games\\SteamUnlocked\\Far Cry 4' }), false);
+  assert.equal(ubi.isSteamPurchase({ storefronts: [], gameDir: '' }), false);
+});
+
+// The library-facing half of issue #20: recognising a Steam purchase only matters if the entry is
+// then actually withheld. discover() delegates the whole decision here, so this is the behaviour
+// the report describes — "disable the display of official Steam games, rescan, the entry is still
+// listed" — checked without needing a Ubisoft install to reproduce it against.
+test('Steam purchases are withheld exactly when official Steam games are disabled (issue #20)', () => {
+  const farCry4 = { appid: 'uplay-971', data: { title: 'Far Cry 4', gameDir: 'D:\\SteamLibrary\\steamapps\\common\\Far Cry 4' } };
+  const rainbowSix = { appid: 'uplay-1843', data: { title: 'Rainbow Six Siege', storefronts: ['steam'] } };
+  const ubisoftStoreGame = { appid: 'uplay-6100', data: { title: 'Ubisoft-store copy', storefronts: [], gameDir: 'C:\\Ubisoft\\games\\X' } };
+  const entries = [farCry4, rainbowSix, ubisoftStoreGame];
+
+  // Steam games hidden -> both Steam purchases go, the Ubisoft-store copy stays.
+  const filtered = ubi.partitionBySteamFilter(entries, false);
+  assert.deepEqual(
+    filtered.kept.map((e) => e.appid),
+    ['uplay-6100']
+  );
+  assert.deepEqual(
+    filtered.hidden.map((e) => e.appid),
+    ['uplay-971', 'uplay-1843']
+  );
+
+  // Steam games shown -> nothing is withheld, and the list is passed through untouched.
+  const unfiltered = ubi.partitionBySteamFilter(entries, true);
+  assert.strictEqual(unfiltered.kept, entries);
+  assert.deepEqual(unfiltered.hidden, []);
+
+  // Degenerate input must not throw: discover() feeds this whatever scan() returned.
+  assert.deepEqual(ubi.partitionBySteamFilter([], false), { kept: [], hidden: [] });
+  assert.deepEqual(ubi.partitionBySteamFilter(undefined, false), { kept: [], hidden: [] });
+  assert.deepEqual(ubi.partitionBySteamFilter([{ appid: 'uplay-1' }], false), { kept: [{ appid: 'uplay-1' }], hidden: [] });
+});
+
 test('name candidates come from the game fields, never the storefront', () => {
   const block = ubi._internal.mergeConfigBlocks(ubi._internal.readConfigurationsIndex(writeConfigurations(`${STOREFRONT_BLOCK}${GAME_BLOCK}`, 'candidates')));
   // Only the game's own name. "l1" is a localization key, "Steam" a storefront, and sort_string

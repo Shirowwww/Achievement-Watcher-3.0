@@ -1250,7 +1250,14 @@ async function discover(source, steamAccFilter) {
   //Ubisoft Connect official (legit client data — spool unlock state + cached achievements archive)
   if (source.ubisoftOfficial) {
     try {
-      data = data.concat(ubisoftOfficial.scan());
+      // A Steam purchase that launches Ubisoft Connect is an owned Steam game, so "don't display
+      // official Steam games" has to hide it too — it used to stay in the library no matter how the
+      // filters were set, because its achievement data comes from Ubisoft (issue #20).
+      const ubisoft = ubisoftOfficial.partitionBySteamFilter(ubisoftOfficial.scan(), source.legitSteam > 0);
+      if (ubisoft.hidden.length > 0) {
+        debug.log(`-> ${ubisoft.hidden.length} Ubisoft entrie(s) hidden: Steam purchases, and official Steam games are disabled`);
+      }
+      data = data.concat(ubisoft.kept);
     } catch (err) {
       debug.error(err);
     }

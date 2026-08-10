@@ -390,7 +390,15 @@ function mergeConfigBlocks(blocks) {
     iconImage: firstRaw('iconImage'),
     // Which storefronts this spec appeared under. Not a title, but it does say "this product is
     // also sold on Steam", which is exactly the case the identity resolution has to handle.
-    storefronts: [...new Set(list.map((b) => String(b.rootName || '').trim().toLowerCase()).filter((n) => LAUNCHER_TITLE_BLOCKLIST.has(n)))],
+    // `third_party_platform.name` states the same thing outright, so both signals feed one list.
+    storefronts: [
+      ...new Set(
+        list
+          .flatMap((b) => [b.rootName, b.thirdPartyPlatform])
+          .map((n) => String(n || '').trim().toLowerCase())
+          .filter((n) => LAUNCHER_TITLE_BLOCKLIST.has(n))
+      ),
+    ],
   };
   merged.title = merged.gameIdentifier || merged.displayName || merged.rootName || '';
   return merged;
@@ -435,6 +443,12 @@ function readConfigurationsIndex(configurationsPath = DEFAULT_CONFIGURATIONS_PAT
     // sort_string is a shelf-ordering key ("Assassin's Creed 05.1"): a poor title, but a usable
     // last-resort name candidate when every other field is a storefront name or a loc key.
     const sortString = normalizeQuotedText(block.match(/^\s*sort_string:\s*([^\r\n]+)/m)?.[1] || '');
+    // The store the copy was actually bought from, stated by the block itself:
+    //   third_party_platform:
+    //     name: Steam
+    // A Steam purchase that merely launches through Ubisoft Connect is still an owned Steam title,
+    // and the library filter for those has to be able to see it (issue #20).
+    const thirdPartyPlatform = normalizeQuotedText(block.match(/^\s*third_party_platform:\s*\r?\n\s*name:\s*([^\r\n]+)/m)?.[1] || '');
     const backgroundImage = normalizeQuotedText(block.match(/^\s*background_image:\s*([^\r\n]+)/m)?.[1] || '');
     const logoImage = normalizeQuotedText(block.match(/^\s*logo_image:\s*([^\r\n]+)/m)?.[1] || '');
     const iconImage = normalizeQuotedText(block.match(/^\s*icon_image:\s*([^\r\n]+)/m)?.[1] || '');
@@ -445,6 +459,7 @@ function readConfigurationsIndex(configurationsPath = DEFAULT_CONFIGURATIONS_PAT
       displayName,
       rootName,
       sortString,
+      thirdPartyPlatform,
       backgroundImage,
       logoImage,
       iconImage,
@@ -1036,6 +1051,10 @@ module.exports.scan = () => {
         archivePath: archive.archivePath,
         spec: archive.spec || '',
         configBlock: archive.metadata || null,
+        // Storefronts the product's configuration blocks name (its own `third_party_platform` and
+        // any storefront-only sibling block). Lets the library tell a Ubisoft-store copy from a
+        // Steam purchase that happens to launch Ubisoft Connect.
+        storefronts: archive.metadata?.storefronts || [],
         title: archive.title || mapping?.uplay_name || mapping?.steam_name || '',
       },
     });
@@ -1187,6 +1206,32 @@ module.exports.getGameData = async (appid, lang) => {
 module.exports.getAchievements = (appid) => {
   const spool = readUbisoftSpoolFile(appid.data.spoolFilePath);
   return buildUbisoftOfficialSnapshot(spool.records);
+};
+
+// True when the copy Ubisoft Connect launches was bought on Steam. Such an entry is an officially
+// owned Steam title in every sense the user cares about, so the "official Steam games" library
+// filter has to govern it even though the achievement data is read from Ubisoft (issue #20).
+//
+// Two independent signals, because neither is always present:
+//   - the configuration blocks name Steam (`third_party_platform`, or a storefront-only sibling
+//     block) — absent when the launcher's configurations index has no entry for the product;
+//   - Ubisoft Connect registered the install inside a Steam library. `steamapps\common` is Steam's
+//     own fixed layout, so a product installed there was installed by Steam, whatever the index says.
+const STEAM_LIBRARY_DIR = /[\\/]steamapps[\\/]common[\\/]/i;
+module.exports.isSteamPurchase = (data) =>
+  (Array.isArray(data?.storefronts) && data.storefronts.includes('steam')) || STEAM_LIBRARY_DIR.test(String(data?.gameDir || ''));
+
+// Split scanned entries into the ones the library shows and the Steam purchases that the "display
+// official Steam games" setting governs. Kept here, next to the rule it applies, so the decision is
+// testable on its own: discover() only concatenates the result and logs the count.
+module.exports.partitionBySteamFilter = (entries, showOfficialSteam) => {
+  const list = Array.isArray(entries) ? entries : [];
+  if (showOfficialSteam) return { kept: list, hidden: [] };
+
+  const kept = [];
+  const hidden = [];
+  for (const entry of list) (module.exports.isSteamPurchase(entry?.data) ? hidden : kept).push(entry);
+  return { kept, hidden };
 };
 
 // Exposed for unit tests (and a future watchdog live watcher).
