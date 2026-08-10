@@ -148,6 +148,7 @@ const notificationSounds = require(path.join(__dirname, '../util/notificationSou
 const userThemes = require(path.join(__dirname, '../util/userThemes.js'));
 const themeLayers = require(path.join(__dirname, '../util/themeLayers.js'));
 const overlayLocale = require(path.join(__dirname, '../util/overlayLocale.js'));
+const { resolveOverlayRequest } = require(path.join(__dirname, '../util/overlayRequest.js'));
 
 // Main-process counterpart of app/locale/t.js: imperative strings (dialogs,
 // tray menu, notifications) resolve from the selected locale's `dialogs`
@@ -2444,35 +2445,33 @@ async function resolveOverlayFallbackAppid() {
 async function createOverlayWindow(info) {
   try {
     if (!info.action) info.action = 'open';
-    if (overlayWindow && !overlayWindow.isDestroyed()) {
-      if (info.action === 'close') {
-        overlayWindow.close();
-        return;
-      }
-      if (info.action === 'refresh') {
-        overlayWindow.webContents.send('refresh-achievements-table', String(info.appid));
-        return;
-      }
-      if (String(info.appid) === '0') return; // already showing a fallback overlay
-      if (overlayAppid && overlayAppid !== String(info.appid)) {
-        // The active game changed while the overlay was open: close the old one
-        // cleanly, then fall through and open the new game's achievements.
-        const old = overlayWindow;
-        overlayWindow = null;
-        await new Promise((resolve) => {
-          old.once('closed', resolve);
-          old.close();
-        });
-      } else {
-        return; // same game already shown
-      }
+    const isOpen = !!(overlayWindow && !overlayWindow.isDestroyed());
+    const request = resolveOverlayRequest({ action: info.action, appid: info.appid, isOpen, openAppid: overlayAppid });
+
+    if (request.action === 'ignore') return;
+    if (request.action === 'close') {
+      overlayWindow.close();
+      return;
     }
-    if (String(info.appid) === '0') {
+    if (request.action === 'refresh') {
+      overlayWindow.webContents.send('refresh-achievements-table', String(info.appid));
+      return;
+    }
+    if (request.action === 'reopen') {
+      // The active game changed while the overlay was open: close the old one cleanly, then fall
+      // through and open the new game's achievements.
+      const old = overlayWindow;
+      overlayWindow = null;
+      await new Promise((resolve) => {
+        old.once('closed', resolve);
+        old.close();
+      });
+    }
+    if (request.action === 'fallback') {
       const fallback = await resolveOverlayFallbackAppid();
       if (!fallback) return;
       info.appid = fallback;
     }
-    if (info.action === 'refresh') return;
     overlayAppid = String(info.appid);
     const { width, height } = require('electron').screen.getPrimaryDisplay().workAreaSize;
 
