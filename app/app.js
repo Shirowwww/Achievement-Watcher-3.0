@@ -2803,17 +2803,58 @@ var app = {
             // "where is this card coming from?" — which emulator or source produced it — without
             // digging through the watched roots by hand (issue #21). Only offered when the parser
             // recorded a real folder that still exists, so it can never open something unrelated.
-            const achievementDataPath = gameForDir?.dataPath;
-            if (achievementDataPath && fs.existsSync(achievementDataPath)) {
+            // Some sources point at the save FILE itself; reveal it rather than trying to open a
+            // file as a folder.
+            const revealDataPath = (target) => {
+              if (fs.statSync(target).isDirectory()) remote.shell.openPath(target);
+              else remote.shell.showItemInFolder(target);
+            };
+            // Every source that produced this card and still exists on disk. A single-source entry
+            // (the common case) keeps one flat item; a merged card gets one per source, labelled
+            // with it, because that is the case where the question is actually hard to answer.
+            const dataPaths = (gameForDir?.dataPaths?.length ? gameForDir.dataPaths : [{ source: '', path: gameForDir?.dataPath }])
+              .filter((entry) => entry.path && fs.existsSync(entry.path));
+
+            if (dataPaths.length > 0) {
+              const openLabel = t('open-achievement-data-folder', 'Open achievement data folder', 'Ouvrir le dossier des données de succès');
+              if (dataPaths.length === 1) {
+                folderMenu.append(
+                  new MenuItem({ icon: menuIcon('folder-open.png'), label: openLabel, click: () => revealDataPath(dataPaths[0].path) })
+                );
+              } else {
+                const perSource = new Menu();
+                // One emulator can write the same game to two different roots (a GBE install with
+                // both `Goldberg SteamEmu Saves` and `GSE Saves`), so the source name alone is not
+                // always unique. Fall back to the folder when it does not tell the entries apart —
+                // two identically labelled items would defeat the point of the submenu.
+                const segments = (p) => p.replace(/[\\/]+$/, '').split(/[\\/]/).filter(Boolean);
+                // The leaf is usually the appid, identical across those roots, so the parent is what
+                // actually tells them apart ("Goldberg SteamEmu Saves" vs "GSE Saves").
+                const rootOf = (p) => segments(p).slice(-2)[0] || segments(p).pop() || p;
+                const labelCount = new Map();
+                for (const entry of dataPaths) {
+                  const name = entry.source || rootOf(entry.path);
+                  labelCount.set(name, (labelCount.get(name) || 0) + 1);
+                }
+                for (const entry of dataPaths) {
+                  const name = entry.source || rootOf(entry.path);
+                  perSource.append(
+                    new MenuItem({
+                      icon: menuIcon('folder-open.png'),
+                      label: labelCount.get(name) > 1 ? `${name} — ${rootOf(entry.path)}` : name,
+                      click: () => revealDataPath(entry.path),
+                    })
+                  );
+                }
+                folderMenu.append(new MenuItem({ icon: menuIcon('folder-open.png'), label: openLabel, submenu: perSource }));
+              }
+              // The issue asked for the resolved path to be readable and copyable without leaving
+              // the app; the paths are long enough that retyping one is not an option.
               folderMenu.append(
                 new MenuItem({
-                  icon: menuIcon('folder-open.png'),
-                  label: t('open-achievement-data-folder', 'Open achievement data folder', 'Ouvrir le dossier des données de succès'),
+                  label: t('copy-achievement-data-path', 'Copy achievement data path', 'Copier le chemin des données de succès'),
                   click() {
-                    // Some sources point at the save FILE itself; reveal it rather than trying to
-                    // open a file as a folder.
-                    if (fs.statSync(achievementDataPath).isDirectory()) remote.shell.openPath(achievementDataPath);
-                    else remote.shell.showItemInFolder(achievementDataPath);
+                    clipboard.writeText(dataPaths.map((entry) => entry.path).join('\r\n'));
                   },
                 })
               );

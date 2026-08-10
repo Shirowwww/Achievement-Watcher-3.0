@@ -1700,6 +1700,18 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     // achievement data folder" action (issue #21). Empty for registry-backed sources.
     const dataPath = resolveAchievementDataPath(appid.data);
     if (dataPath) game.dataPath = dataPath;
+    // One entry per source that contributed to this card. A merged card is the case where "where
+    // does this come from?" is hardest to answer — the same game read from two emulators, or a GOG
+    // copy sitting next to a Steam one — so each source keeps its own folder rather than collapsing
+    // to whichever record happened to win the merge (issue #21).
+    const perSource = [];
+    for (const record of Array.isArray(appid._sources) && appid._sources.length > 0 ? appid._sources : [appid]) {
+      const p = resolveAchievementDataPath(record?.data);
+      if (p && !perSource.some((s) => s.path.toLowerCase() === p.toLowerCase())) {
+        perSource.push({ source: record?.source || appid.source || '', path: p });
+      }
+    }
+    if (perSource.length > 0) game.dataPaths = perSource;
     let resolvedEmu = null;
     let resolvedExe = null;
     let resolvedExeConfident = false;

@@ -1120,6 +1120,7 @@
     "show-achievements-schema-json": "achievements_schema.json megjelenítése",
     "open-ubisoft-achievement-saves": "Ubisoft teljesítménymentések megnyitása",
     "open-achievement-data-folder": "Teljesítményadatok mappájának megnyitása",
+    "copy-achievement-data-path": "Teljesítményadatok elérési útjának másolása",
     "uninstall-via-steam": "Eltávolítás a Steamen keresztül…",
     "uninstall-x-via-steam": "Eltávolítjuk a(z) „{name}” játékot a Steamen keresztül?",
     "steam-uninstall-detail": "A Steam eltávolítja a játék helyi fájljait. Később újratelepítheted a könyvtáradból.",

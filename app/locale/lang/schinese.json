@@ -1120,6 +1120,7 @@
     "show-achievements-schema-json": "显示 achievements_schema.json",
     "open-ubisoft-achievement-saves": "打开 Ubisoft 成就存档",
     "open-achievement-data-folder": "打开成就数据文件夹",
+    "copy-achievement-data-path": "复制成就数据路径",
     "uninstall-via-steam": "通过 Steam 卸载…",
     "uninstall-x-via-steam": "要通过 Steam 卸载“{name}”吗？",
     "steam-uninstall-detail": "Steam 将删除游戏的本地文件。之后你可以从库中重新安装。",

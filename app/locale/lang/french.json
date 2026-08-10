@@ -1120,6 +1120,7 @@
     "show-achievements-schema-json": "Afficher achievements_schema.json",
     "open-ubisoft-achievement-saves": "Ouvrir les sauvegardes de succès Ubisoft",
     "open-achievement-data-folder": "Ouvrir le dossier des données de succès",
+    "copy-achievement-data-path": "Copier le chemin des données de succès",
     "uninstall-via-steam": "Désinstaller via Steam…",
     "uninstall-x-via-steam": "Désinstaller « {name} » via Steam ?",
     "steam-uninstall-detail": "Steam supprimera les fichiers locaux du jeu. Tu pourras le réinstaller plus tard depuis ta bibliothèque.",

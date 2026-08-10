@@ -1120,6 +1120,7 @@
     "show-achievements-schema-json": "แสดง achievements_schema.json",
     "open-ubisoft-achievement-saves": "เปิดไฟล์บันทึกความสำเร็จของ Ubisoft",
     "open-achievement-data-folder": "เปิดโฟลเดอร์ข้อมูลความสำเร็จ",
+    "copy-achievement-data-path": "คัดลอกเส้นทางข้อมูลความสำเร็จ",
     "uninstall-via-steam": "ถอนการติดตั้งผ่าน Steam…",
     "uninstall-x-via-steam": "ถอนการติดตั้ง \"{name}\" ผ่าน Steam หรือไม่?",
     "steam-uninstall-detail": "Steam จะลบไฟล์ในเครื่องของเกม คุณสามารถติดตั้งใหม่ได้ภายหลังจากคลังของคุณ",

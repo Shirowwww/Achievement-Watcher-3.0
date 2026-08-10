@@ -34,7 +34,7 @@
 [CmdletBinding()]
 param(
   [Parameter(Mandatory = $true, Position = 0)]
-  [ValidateSet('Start', 'Stop', 'Windows', 'Shot', 'Send', 'Key', 'Wait', 'Logs', 'Click', 'Scroll')]
+  [ValidateSet('Start', 'Stop', 'Windows', 'Shot', 'Send', 'Key', 'Wait', 'Logs', 'Click', 'Scroll', 'Hover')]
   [string]$Command,
 
   [string]$Arguments,
@@ -278,6 +278,14 @@ switch ($Command) {
     if ($Match) { $w = Get-InputTarget $Match 'scroll'; $sx += $w.X; $sy += $w.Y }
     [AwProbe]::ScrollAt($sx, $sy, $Notches)
     Write-Host "scrolled $Notches notch(es) at $sx,$sy"
+  }
+
+  'Hover' {
+    # Native submenus open on hover, and a click on the parent item closes the whole menu instead —
+    # so reaching one needs a cursor move with no button press. Coordinates are absolute here: a
+    # popup menu is its own window, not a child of the app's.
+    [void][AwProbe]::SetCursorPos($X, $Y)
+    Write-Host "hovering $X,$Y"
   }
 
   'Wait' {

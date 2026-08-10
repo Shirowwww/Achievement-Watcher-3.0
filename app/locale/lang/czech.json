@@ -1120,6 +1120,7 @@
     "show-achievements-schema-json": "Zobrazit achievements_schema.json",
     "open-ubisoft-achievement-saves": "Otevřít uložené úspěchy Ubisoft",
     "open-achievement-data-folder": "Otevřít složku s daty úspěchů",
+    "copy-achievement-data-path": "Kopírovat cestu k datům úspěchů",
     "uninstall-via-steam": "Odeinstalovat přes Steam…",
     "uninstall-x-via-steam": "Odeinstalovat „{name}“ přes Steam?",
     "steam-uninstall-detail": "Steam odstraní místní soubory hry. Později ji můžete znovu nainstalovat z knihovny.",

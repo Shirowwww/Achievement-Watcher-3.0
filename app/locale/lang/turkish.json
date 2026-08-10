@@ -1120,6 +1120,7 @@
     "show-achievements-schema-json": "achievements_schema.json’u göster",
     "open-ubisoft-achievement-saves": "Ubisoft başarım kayıtlarını aç",
     "open-achievement-data-folder": "Başarım verisi klasörünü aç",
+    "copy-achievement-data-path": "Başarım verisi yolunu kopyala",
     "uninstall-via-steam": "Steam üzerinden kaldır…",
     "uninstall-x-via-steam": "“{name}” Steam üzerinden kaldırılsın mı?",
     "steam-uninstall-detail": "Steam oyunun yerel dosyalarını kaldıracak. Daha sonra kitaplığınızdan yeniden kurabilirsiniz.",
