@@ -1900,13 +1900,18 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     updateOverlayOptionsVisibility();
 
     // Shared by the five Notifications-tab test buttons (toast/rare/progress/playtime/platinum):
-    // spawns a fullscreen dummy window so the toast is visible over it, then asks the watchdog
-    // (over its existing websocket) to fire the given test notification.
+    // asks the watchdog (over its existing websocket) to fire the given test notification.
     //
-    // The dummy window is a single shared instance reused across calls (not one per click) so
-    // firing several tests back-to-back — the normal way to compare presets — reuses the same
-    // black backdrop instead of stacking fullscreen windows or making the tester wait out a
-    // previous test's ~7s display time before the next one can start.
+    // A fullscreen black backdrop stands in for a running game so an overlay popup has something to
+    // render over. It is deliberately NOT used for the Windows-toast test: Windows turns on do not
+    // disturb by default while an app is in full screen, so the backdrop made Windows swallow the
+    // very toast the test was checking for — the test looked broken while the toast quietly landed
+    // in the notification centre (issue #18).
+    //
+    // The backdrop is a single shared instance reused across calls (not one per click) so firing
+    // several tests back-to-back — the normal way to compare presets — reuses the same window
+    // instead of stacking fullscreen windows or making the tester wait out a previous test's ~7s
+    // display time before the next one can start.
     let activeDummyWindow = null;
     let activeDummyCloseTimer = null;
 
@@ -1917,7 +1922,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       }, delayMs);
     }
 
-    function runNotificationTest(cmd) {
+    function openDummyBackdrop() {
       if (!activeDummyWindow || activeDummyWindow.isDestroyed()) {
         activeDummyWindow = new remote.BrowserWindow({ frame: false, backgroundColor: '#000000' });
         activeDummyWindow.setFullScreen(true);
@@ -1926,11 +1931,13 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           activeDummyWindow = null;
         });
       }
-      // Safety net: the dummy must never get stuck covering the whole screen. Whatever happens
-      // below (success, error, or the watchdog never answering at all — a dropped socket raises
-      // neither an error nor a message event), this fallback guarantees it closes eventually.
+      // Safety net: the backdrop must never get stuck covering the whole screen. Whatever happens
+      // (success, error, or the watchdog never answering at all — a dropped socket raises neither
+      // an error nor a message event), this fallback guarantees it closes eventually.
       scheduleDummyClose(6000);
+    }
 
+    function runNotificationTest(cmd) {
       setTimeout(() => {
         const ws = new WebSocket('ws://localhost:8082');
         ws.onerror = (err) => {
@@ -2066,7 +2073,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     function fireNotificationTest(kind, btn, modeOverride) {
       const mode = modeOverride || $('#option_notifMode').val() || 'overlay';
       if (mode === 'toast' || mode === 'both') runNotificationTest.call(btn, kind + '-test');
-      if (mode === 'overlay' || mode === 'both') ipcRenderer.send('spawn-overlay-notification', overlayTestData(kind));
+      if (mode === 'overlay' || mode === 'both') {
+        openDummyBackdrop();
+        ipcRenderer.send('spawn-overlay-notification', overlayTestData(kind));
+      }
     }
     // The first-run guide shares the exact same test path, while supplying its still-unsaved
     // notification transport choice. Keep the rendering and Watchdog protocol in one place.

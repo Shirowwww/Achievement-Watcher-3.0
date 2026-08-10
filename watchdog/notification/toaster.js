@@ -7,6 +7,7 @@ const balloon = require('../util/powerballoon');
 const fetch = require('./prefetch.js');
 const notificationSound = require('../util/notificationSound.js');
 const { broadcast } = require('../websocket.js');
+const { arePopupsSuppressed } = require('../queryUserNotificationState.js');
 
 const debug = require('../util/log.js');
 
@@ -106,6 +107,25 @@ module.exports = async (message, option = {}) => {
         if (progress) notification.progress = progress;
 
         broadcast(notification);
+      }
+
+      // Windows accepts a toast while a game is in full screen (or presentation mode, or quiet
+      // hours) but never pops it on screen — it goes straight to the notification centre, which is
+      // why achievement toasts looked lost in-game while playtime toasts, fired after the game
+      // exited, always showed up (issue #18). Nothing here can override that OS policy, so this
+      // only records WHY a toast was invisible; the state query runs detached so it never delays
+      // the notification itself.
+      if (options.transport.toast) {
+        arePopupsSuppressed()
+          .then((suppressed) => {
+            if (suppressed) {
+              debug.warn(
+                'Windows is suppressing notification popups (full screen / presentation / quiet hours) — this toast went straight to the notification centre. ' +
+                  'Turn off the automatic "do not disturb" rules in Windows notification settings, or use the in-game overlay transport.'
+              );
+            }
+          })
+          .catch((err) => debug.warn(`Could not read the user notification state: ${err.message || err}`));
       }
 
       // Overlay transport: spawn the styled in-game overlay notification ourselves so it shows even
