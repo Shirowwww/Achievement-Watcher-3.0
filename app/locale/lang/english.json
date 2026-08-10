@@ -929,6 +929,7 @@
     "game-config-placeholder": "…Click EDIT to choose the executable…",
     "game-config-unlink": "Unlink executable",
     "checking-for-updates": "Checking…",
+    "link-not-opened": "This link was not opened because it is not a web address.",
     "update-unavailable-dev": "Unavailable in dev build",
     "update-check-failed": "Check failed",
     "update-available-short": "Update available",

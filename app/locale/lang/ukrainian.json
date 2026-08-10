@@ -929,6 +929,7 @@
     "game-config-placeholder": "…Натисніть ЗМІНИТИ, щоб вибрати виконуваний файл…",
     "game-config-unlink": "Від'єднати виконуваний файл",
     "checking-for-updates": "Перевірка…",
+    "link-not-opened": "Це посилання не було відкрито, оскільки це не веб-адреса.",
     "update-unavailable-dev": "Недоступно в розробницькій збірці",
     "update-check-failed": "Помилка перевірки",
     "update-available-short": "Доступне оновлення",

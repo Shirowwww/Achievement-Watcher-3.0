@@ -929,6 +929,7 @@
     "game-config-placeholder": "…「編集」をクリックして実行ファイルを選択…",
     "game-config-unlink": "実行ファイルの関連付けを解除",
     "checking-for-updates": "確認中…",
+    "link-not-opened": "このリンクはウェブアドレスではないため、開かれませんでした。",
     "update-unavailable-dev": "開発版では利用できません",
     "update-check-failed": "確認に失敗しました",
     "update-available-short": "更新があります",

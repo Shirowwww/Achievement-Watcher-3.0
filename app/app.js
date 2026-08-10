@@ -12,6 +12,7 @@ const { pathToFileURL } = require('url');
 const args_split = require('argv-split');
 const { cssUrl } = require(path.join(appPath, 'util/cssUrl.js'));
 const { splitLaunchArgs } = require(path.join(appPath, 'util/launchArgs.js'));
+const { openExternalSafe } = require(path.join(appPath, 'util/externalLink.js'));
 const args = require('minimist');
 const moment = require('moment');
 const { spawn } = require('child_process');
@@ -199,6 +200,26 @@ function clearGameBoxBusy($box) {
   if (!$box || !$box.length) return;
   $box.removeClass('wait');
   $box.find('.loading-overlay .content').first().html('<i class="fas fa-spinner fa-spin"></i>');
+}
+
+// CrakFiles entries are fetched from a remote catalog, so their links are opened through the
+// http(s) guard rather than handed to Windows verbatim (util/externalLink.js). A rejected link is
+// surfaced instead of silently doing nothing, so a bad catalog entry is visible rather than a
+// button that looks broken.
+function openCatalogLink(url) {
+  return openExternalSafe(remote.shell, url, (rejected) => {
+    debug.warn(`[crackfix] refused to open a non-http(s) link: ${String(rejected).slice(0, 120)}`);
+    remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+      type: 'warning',
+      title: t('crakfiles', 'CrakFiles'),
+      message: t(
+        'link-not-opened',
+        'This link was not opened because it is not a web address.',
+        "Ce lien n'a pas \u00e9t\u00e9 ouvert car ce n'est pas une adresse web."
+      ),
+      detail: String(rejected || ''),
+    });
+  });
 }
 
 // Tracks in-flight uninstall completions so the game list refreshes once the
@@ -2342,12 +2363,12 @@ var app = {
                       });
                       if (choice.response === 0) return;
                       if (choice.response === 1) {
-                        if (fix.href) remote.shell.openExternal(fix.href);
+                        if (fix.href) openCatalogLink(fix.href);
                         return;
                       }
                       if (choice.response === 2) {
                         const src = (top.source_crack || [])[0];
-                        if (src) remote.shell.openExternal(src);
+                        if (src) openCatalogLink(src);
                         return;
                       }
                       // Download & apply
@@ -2371,7 +2392,7 @@ var app = {
                           cancelId: 0,
                           noLink: true,
                         });
-                        if (c === 1 && fix.href) remote.shell.openExternal(fix.href);
+                        if (c === 1 && fix.href) openCatalogLink(fix.href);
                         return;
                       }
                       setGameBoxBusy(self, t('downloading-fix', 'Downloading fix…', 'Téléchargement du fix…'));
@@ -2412,7 +2433,7 @@ var app = {
                         });
                         if (choice.response === 0) return;
                         if (choice.response === 1) {
-                          if (href) remote.shell.openExternal(href);
+                          if (href) openCatalogLink(href);
                           // Wait (non-blocking modal) for the user to finish the browser download, then let
                           // them pick the file. Cancelling here just leaves the page open.
                           const after = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {

@@ -929,6 +929,7 @@
     "game-config-placeholder": "…คลิก แก้ไข เพื่อเลือกไฟล์ปฏิบัติการ…",
     "game-config-unlink": "ยกเลิกการเชื่อมโยงไฟล์ปฏิบัติการ",
     "checking-for-updates": "กำลังตรวจสอบ…",
+    "link-not-opened": "ลิงก์นี้ไม่ถูกเปิด เนื่องจากไม่ใช่ที่อยู่เว็บ",
     "update-unavailable-dev": "ไม่พร้อมใช้งานในเวอร์ชันพัฒนา",
     "update-check-failed": "การตรวจสอบล้มเหลว",
     "update-available-short": "มีการอัปเดต",

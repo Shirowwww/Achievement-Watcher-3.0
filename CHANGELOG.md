@@ -56,7 +56,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   scan — and artwork requests are now time-boxed instead of hanging on an unreachable network.
 - Saving settings twice in quick succession no longer leaks file watchers in the background
   monitor.
-- In-app links to unknown URL schemes are no longer handed to Windows to open.
+- Links are only opened in a browser when they are web addresses. In-app navigation and the links
+  carried by CrakFiles community-fix entries — which come from a remote catalog — were both passed
+  to Windows as-is, which would launch whatever program is registered for the scheme.
 - Updates signed with the local Shirow certificate no longer fail on PCs that do not trust that
   self-signed root. The updater verifies the matching publisher name and the release SHA-512
   manifest instead of showing the misleading “not signed by the application owner” error.

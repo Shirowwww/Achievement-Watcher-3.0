@@ -929,6 +929,7 @@
     "game-config-placeholder": "…Clicca su MODIFICA per scegliere l’eseguibile…",
     "game-config-unlink": "Scollega eseguibile",
     "checking-for-updates": "Verifica in corso…",
+    "link-not-opened": "Questo collegamento non è stato aperto perché non è un indirizzo web.",
     "update-unavailable-dev": "Non disponibile nella build di sviluppo",
     "update-check-failed": "Verifica non riuscita",
     "update-available-short": "Aggiornamento disponibile",

@@ -929,6 +929,7 @@
     "game-config-placeholder": "…Нажмите ИЗМЕНИТЬ, чтобы выбрать исполняемый файл…",
     "game-config-unlink": "Отвязать исполняемый файл",
     "checking-for-updates": "Проверка…",
+    "link-not-opened": "Эта ссылка не была открыта, так как это не веб-адрес.",
     "update-unavailable-dev": "Недоступно в тестовой сборке",
     "update-check-failed": "Ошибка проверки",
     "update-available-short": "Доступно обновление",

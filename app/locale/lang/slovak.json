@@ -929,6 +929,7 @@
     "game-config-placeholder": "…Kliknite na UPRAVIŤ a vyberte spustiteľný súbor…",
     "game-config-unlink": "Odpojiť spustiteľný súbor",
     "checking-for-updates": "Kontrola…",
+    "link-not-opened": "Tento odkaz nebol otvorený, pretože nejde o webovú adresu.",
     "update-unavailable-dev": "Nedostupné v testovacej verzii",
     "update-check-failed": "Kontrola zlyhala",
     "update-available-short": "Aktualizácia je k dispozícii",

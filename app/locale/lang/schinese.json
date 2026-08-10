@@ -929,6 +929,7 @@
     "game-config-placeholder": "…点击\"编辑\"选择可执行文件…",
     "game-config-unlink": "取消关联可执行文件",
     "checking-for-updates": "正在检查…",
+    "link-not-opened": "此链接不是网址，因此未被打开。",
     "update-unavailable-dev": "开发版中不可用",
     "update-check-failed": "检查失败",
     "update-available-short": "有可用更新",

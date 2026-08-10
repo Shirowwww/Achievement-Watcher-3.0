@@ -929,6 +929,7 @@
     "game-config-placeholder": "…Auf BEARBEITEN klicken, um die ausführbare Datei zu wählen…",
     "game-config-unlink": "Ausführbare Datei trennen",
     "checking-for-updates": "Wird geprüft…",
+    "link-not-opened": "Dieser Link wurde nicht geöffnet, da es sich nicht um eine Webadresse handelt.",
     "update-unavailable-dev": "In der Dev-Version nicht verfügbar",
     "update-check-failed": "Prüfung fehlgeschlagen",
     "update-available-short": "Update verfügbar",

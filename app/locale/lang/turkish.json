@@ -929,6 +929,7 @@
     "game-config-placeholder": "…Yürütülebilir dosyayı seçmek için DÜZENLE’ye tıklayın…",
     "game-config-unlink": "Yürütülebilir dosya bağlantısını kaldır",
     "checking-for-updates": "Kontrol ediliyor…",
+    "link-not-opened": "Bu bağlantı bir web adresi olmadığı için açılmadı.",
     "update-unavailable-dev": "Geliştirici sürümünde kullanılamaz",
     "update-check-failed": "Kontrol başarısız oldu",
     "update-available-short": "Güncelleme mevcut",

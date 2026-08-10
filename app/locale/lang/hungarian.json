@@ -929,6 +929,7 @@
     "game-config-placeholder": "…Kattints a SZERKESZTÉS gombra a futtatható fájl kiválasztásához…",
     "game-config-unlink": "Futtatható fájl leválasztása",
     "checking-for-updates": "Ellenőrzés…",
+    "link-not-opened": "Ez a hivatkozás nem nyílt meg, mert nem webcím.",
     "update-unavailable-dev": "Fejlesztői verzióban nem elérhető",
     "update-check-failed": "Az ellenőrzés sikertelen",
     "update-available-short": "Frissítés elérhető",
