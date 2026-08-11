@@ -37,8 +37,9 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 | **Better library** | Game and achievement search, installed-only filtering, blacklist restore, rarity tiers, progress achievements, smarter covers with a per-game SteamDB/SteamGridDB gallery, automatic launch-executable detection, a shortcut to each entry's achievement-data folder and right-click uninstall |
 | **Live tracking** | Tray-first background Watchdog, Xenia/ShadPS4/GOG/Ubisoft unlock monitoring, safer startup baselines and duplicate suppression |
 | **Notifications** | Native Windows notifications + a customizable, localized in-game overlay (stats bar, instant search, status filters, rarity badges, progress bars, density/icon-size/accent/zoom), preset library, custom builder, custom sounds, 0–200% volume, separate rare/completion styles and optional priority delivery that survives Do Not Disturb |
-| **Controller and UI** | Full controller navigation (XInput plus native PlayStation/Switch input), controller control of the in-game overlay, mouse Back/Forward, resizable interface, seven built-in themes plus a Custom theme with per-layer colors/images/gradients, 18 complete UI languages and a localized installer |
+| **Controller and UI** | Full controller navigation (XInput plus native PlayStation/Switch input), controller control of the in-game overlay, mouse Back/Forward, resizable interface, collapsible settings sections that remember what you folded away, seven built-in themes plus a Custom theme with per-layer colors/images/gradients, 18 complete UI languages and a localized installer |
 | **Local-first reliability** | Own data directory isolated from the original 1.6.8 app, migration-safe settings and avatar, offline names and artwork, local schemas, platform-aware cache IDs, bounded caches, self-healing folders and fewer browser-dependent lookups |
+| **Stays out of the way** | Update prompts remember "Later" for a day and never interrupt a running game; logs append instead of overwriting each other, so a crash survives the next launch and every run starts with a diagnostics block worth pasting into an issue |
 
 ---
 
@@ -49,12 +50,12 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 | Modern desktop runtime | ✅ Electron 43 | ✅ Electron 43 | ❌ Electron 12 |
 | Unified dashboard, game and achievement search | ✅ Both | ✅ Both | ✅ Both |
 | Installed-games-only filter and game actions | ✅ Filter · uninstall · restore | ❌ | ❌ |
-| Automatic folder discovery/configuration | ✅ | ✅ Auto-config | ✅ Smart Find |
+| Automatic folder discovery/configuration | ✅ Auto-config & Smart Find | ✅ Auto-config | ✅ Smart Find |
 | Official and local platform readers | ✅ Steam · GOG · Ubisoft · Epic · EA | ✅ Steam · GOG · Ubisoft · Epic · EA | ⚠️ Steam · GOG · Epic · Uplay (legacy) |
 | Steam-emulator tracking | ✅ | ✅ | ✅ |
 | Goldberg SocialClub (Rockstar/GTA) source | ✅ | ❌ | ❌ |
 | Goldberg Uplay R2 support | ✅ Loader-version aware | ❌ | ❌ |
-| GBE runtime install and schema repair | ✅ Full | ⚠️ Auto-config/schema | ❌ Manual setup |
+| GBE runtime install and schema repair | ✅ Full | ⚠️ Schema | ❌ Manual setup |
 | Safe repair workflow | ✅ Backup/restore · Steamless · opt-in API-check bypass | ❌ | ❌ |
 | Native Windows notifications and in-game overlay | ✅ Both | ⚠️ Animated overlay | ⚠️ Chromium / toast transports |
 | No-code custom preset builder | ✅ | ❌ | ❌ |
@@ -62,7 +63,7 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 | Live RPCS3 / ShadPS4 / Xenia unlocks | ✅ | ✅ | ⚠️ RPCS3 only |
 | Full controller navigation | ✅ App + overlay | ✅ App + overlay | ❌ Planned only |
 | Screenshot souvenirs | ✅ | ✅ | ✅ |
-| Multiple UI themes | ✅ 7 + Custom + user | ✅ 8 + user | ❌ |
+| Multiple UI themes | ✅ 7 + Custom | ✅ 8 | ❌ |
 | Interface languages | ✅ 18 complete | ✅ 30 locales | ✅ 18 locales |
 | Xbox PC (Game Pass / Store) | ✅ Account import | ✅ Account import | ❌ |
 | Manual achievement unlock | ✅ | ✅ | ❌ |
@@ -116,7 +117,7 @@ Updating over an older build keeps settings, cache, playtime and achievement dat
 Choose **Windows notification**, **In-game overlay** or **Both** under **Settings → Notification**.
 
 - Presets for clean desktop, Steam, PlayStation, Xbox, rare and completion styles.
-- A no-code preset builder with live preview.
+- A no-code preset builder with live preview: try a design as a real popup before saving it, reopen a saved preset to tweak it, and delete the ones you do not keep.
 - Custom `.wav`, `.mp3` and `.ogg` sounds.
 - Position, scale, duration and overlay volume up to 200%.
 - Separate presets for normal, rare and 100% completion events.

@@ -12,6 +12,25 @@ Use **Settings → Advanced → Diagnostics** to open the log or data directory.
 
 The most useful files are usually `Achievement Watcher.log`, `renderer.log`, `parser.log` and the Watchdog logs created for the affected source. Zip several files when the failure crosses scanning, UI and notification behavior.
 
+Logs are appended, never truncated, so a crash survives the next launch. Each run starts with a marker, which is how you tell one launch from the next:
+
+```text
+===== session 2026-08-11T00:53:31.890Z pid=19276 =====
+```
+
+Right after it, a `[diag]` block records everything a bug report needs and nobody should have to collect by hand — versions, install and data paths, how the app was started, the active language and theme, and the geometry of every display:
+
+```text
+[diag] app: Achievement Watcher 3.8.0 (packaged)
+[diag] runtime: electron 43.1.0 · chrome 150.0.7871.47 · node 24.18.0
+[diag] display: 3056414223 1080x1920 @1x work=1080x1872 rotation=270
+[diag] display: 3933707034 (primary) 2048x1152 @1.25x work=2048x1104 rotation=0
+```
+
+Paste that block into an issue. Window size and placement problems are almost always a display-scaling or multi-monitor story, and the `[MainWindow]` lines that follow record the window's bounds every time it is shown, moved, resized or closed — including which display it was on.
+
+Each log file rotates to `<name>.log.1` past 2 MB, so one older generation is always kept.
+
 ## A game is missing
 
 1. Open **Settings → Sources** and confirm the relevant integration is enabled.

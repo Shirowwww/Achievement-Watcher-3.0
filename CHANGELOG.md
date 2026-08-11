@@ -3,6 +3,143 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 3.8.1 - 2026-08-11
+
+### Added
+
+- Every section of the Settings panel folds away under its own header, with a chevron that points
+  down when open and sideways when closed. Each section remembers its state, so a tab can be kept
+  reduced to the few sections actually being used. The **Custom preset** builder — the largest
+  section, and the one needed least often — starts closed. Searching still looks through closed
+  sections, so a match is never buried in one.
+- Presets made in the builder can be deleted from it. It could only ever add to the preset list, so
+  a throwaway attempt had to be removed from Explorer. Only presets the builder generated can be
+  deleted — bundled and hand-written ones are refused.
+- **Find a community fix** is offered for Ubisoft installs too, and now names its source
+  (**CrakFiles**) so it can be found. The list is matched by game name and a fix is just files
+  dropped into the install folder, so nothing about it was ever Steam-specific — the entry simply
+  sat inside the Steam-only branch of the menu.
+- Uplay R2 setups can restore the snapshot taken before the last repair. Every repair already saved
+  one; nothing could read it back, which is most of why that submenu looked so much thinner than the
+  Steam one.
+- The custom notification-preset builder can now reopen a preset it made. Every generated preset
+  stores the settings that produced it, so **Edit a preset** loads its colours and sliders back into
+  the builder and the button becomes **Update preset** instead of silently replacing the old one.
+- **Preview** renders the design being edited as a real overlay popup, at full size and with the
+  configured position, scale and animation — without saving it first, so trying ideas no longer
+  fills the preset list with throwaway attempts.
+- The builder gained a **Width** control for the popup, and each slider now shows its value.
+- Downloading an update drives the taskbar progress bar. The download starts once the prompt is
+  answered and then says nothing for as long as it takes; the app is a resident tray daemon, so the
+  window is usually closed and the next visible sign was the "install now?" box minutes later. The
+  progress is re-applied if the window is opened mid-download, the tray tooltip carries the same
+  figure while there is no window to draw on, and the log records one line per 10% with the rate.
+
+### Changed
+
+- Every theme carries its own success, warning and danger hue. The Steam-login and Epic-account
+  cards and their badges were pinned to one hardcoded amber and stayed Steam-blue-tinted under
+  OLED, Dracula, Nord, Gruvbox and Tokyo Night; they now recolour with the palette.
+- The **Rescan selected folders** card is an ordinary settings section, with the same frame, header
+  and hairline as every other card, instead of its own accent-washed frame.
+- The profile stat pills and the empty-library panel follow the theme. Both were painted with fixed
+  Steam-blue values and stayed blue under every other palette.
+- A card's primary action is accented again. The panel's neutral button fill was more specific than
+  the primary style, so the one action meant to stand out in a card rendered exactly like the plain
+  buttons next to it.
+- A window closed while it was still starting no longer breaks the next one. The main process gates
+  "ready to show" on a one-shot handler that is only unregistered when it fires, and registering it
+  a second time throws — which would have taken the whole window creation down with it. The
+  watchdog-status handlers are also guarded against arriving before the title bar exists.
+- The **EA Desktop** source now reads "Read EA Desktop's local achievement log (for games outside
+  EA's managed folders)".
+- The onboarding's recommended-settings step points at how to find things afterwards: the search box
+  at the top of the panel, the foldable sections, and the Help tab.
+- Every launch writes a `[diag]` block to the log — versions, install and data paths, how the app
+  was started, language, theme and the geometry of every display — followed by a `[MainWindow]` line
+  each time the window is shown, moved, resized or closed. It is the block to paste into an issue.
+- Testing an overlay notification no longer blacks out the screen. The popup is its own
+  always-on-top window and never needed the fullscreen backdrop that stood in for a running game —
+  all it did was hide the settings panel whose presets you were comparing, for several seconds per
+  click.
+
+- The installer shows what it is doing again. The status line above the progress bar was blank and
+  the details pane empty for the whole install, including the steps the installer prints itself —
+  closing the background monitor, and the settings folder it preserves. The build now keeps NSIS's
+  default reporting instead of suppressing it.
+
+### Fixed
+
+- The custom notification-preset builder can save and preview at all. Both wrote the generated
+  preset into the app's own `presets` folder, which is packed inside `app.asar` once the app is
+  installed — an archive file, not a directory — so creating a folder in it failed with `ENOTDIR`
+  and **Preview** and **Save** did nothing on an installed build. Only a development run, where that
+  path is a real directory, ever worked. Generated presets now live in
+  `%APPDATA%\Achievement Watcher 3.0\presets\Users Presets`, next to imported sounds and user
+  themes: always writable, and no longer discarded by an update or an uninstall. The bundled preset
+  libraries are still read from the app, and a generated preset is looked up first, so saving under
+  a bundled name shadows it rather than being ignored.
+- The layer controls in the custom theme editor stop sliding left. Switching an effect on and then
+  off hides its two sub-groups, which shrank the collapsed panel enough for it to fit back on the
+  controls' line — a collapsed panel has no height but still had a width — and the whole colour /
+  gradient / effect block jumped 130px toward the middle of the row.
+- **Launch game** and **Configure executable…** are offered for every game, not only Ubisoft ones.
+  Both entries were built inside the Ubisoft branch of the right-click menu, so a Steam, GOG, Epic
+  or emulated game could not be started from it even with its executable already configured — while
+  the tile's own play button, which runs the very same code, worked fine.
+- A manual unlock raises the game's percentage straight away. The tile and the profile counters are
+  accumulated while the library is scanned and nothing recomputed them afterwards, so the library
+  kept showing the figure from the last full scan. Clearing a manual unlock now also takes the
+  unlock back: the marker was removed but the achievement stayed unlocked until the next rescan. An
+  unlock the save itself reported is never undone.
+- Scanning the library shows a busy pointer, so a long scan is not mistaken for a frozen window.
+- Log files are no longer shredded by a second launch. They were opened truncating, and the stream
+  is created before the single-instance check — so starting the app while it was already running
+  emptied the running instance's log, which then kept writing at its old offset and left a hole of
+  NUL bytes over everything before it. A crash was also erased by the very next launch. Logs now
+  append, mark each run with a session line, and rotate at 2 MB.
+- Notification presets no longer clip their own artwork: the Xbox Series family cut off its laurel
+  wreath, and the progress row was drawn at full width while the popup was still expanding, so it
+  hung outside the pill. Sunset, Batman and TigerDX Award were clipped too.
+- The window buttons cannot stack on top of each other. They sit in a shrink-to-fit row that wrapped
+  once the available width got small enough — reachable on a display/scaling change.
+- A community fix is no longer proposed for a different game in the same franchise. Ranking scored
+  "Assassin's Creed: Mirage" above the match floor against "Assassin's Creed Black Flag Resynced" on
+  the words the whole franchise shares, so an unrelated fix was offered as found. A candidate that
+  carries a distinguishing word the game's name never mentions is now rejected; repack tags and
+  re-release words in the local name still match.
+- Uninstalling a game shows that it is working. Running the uninstaller and moving a folder to the
+  Recycle Bin both take time and left the tile looking untouched; they now use the same spinner as
+  the emulator fix, cleared on success, on failure and on a launch error alike.
+- Update prompts no longer interrupt a game. The dialog is modal and has no parent window, so it
+  landed on top of whatever was on screen, fullscreen sessions included. The background monitor now
+  tells the app how many games are running, and while any are, the check is skipped entirely — no
+  dialog and no network. The offer comes back shortly after the session ends, and a download that
+  finished mid-session re-opens its own "install now?" prompt rather than asking about the download
+  again. Nothing is recorded when a prompt is only held back, and an explicit **Check for updates**
+  always answers immediately.
+- The update prompt stops nagging. Answering **Later** recorded nothing at all, and the app — a tray
+  daemon that stays resident and re-checks every hour — reopened the same dialog an hour later, and
+  every hour after that. **Later** now silences that version for a day; **Skip this version** stays
+  permanent; neither ever hides a newer release, and **Check for updates** in Settings overrules a
+  postpone. Declining the "install now?" prompt is remembered too, instead of coming straight back
+  through a re-download on the next check.
+- Two update checks landing together can no longer stack two dialogs. Both prompt handlers tested
+  their "a prompt is already open" flag, then awaited, and only then set it — so the hourly check
+  racing the Settings button walked past the guard twice. Answers are also written to disk before
+  the handler moves on, so a "skip" or "later" is not lost if the app closes right after the click.
+- **Start with Windows** stays on. Windows' login-item query matches the registered command line
+  against the running build, so it answers "not registered" whenever the two drift apart — after an
+  update that moved the executable, or in a development run — and opening Settings adopted that
+  answer, flipping the setting to No and persisting it on the next save. The saved preference now
+  wins and is re-applied to Windows when the two disagree.
+- Hidden games are listed by name instead of a bare App ID. Names are resolved from the app's own
+  game index and cached game data first — the only local sources that cover non-Steam entries — then
+  from Steam for anything left, and the answer is remembered. A game hidden from the right-click
+  menu also records its name before it is dropped from the index. A local install whose id is a hash
+  of its folder is traced back to that folder, which is the only thing that can still name an entry
+  hidden long before names were recorded.
+
 ## 3.8.0 - 2026-08-10
 
 ### Added

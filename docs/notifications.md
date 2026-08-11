@@ -41,9 +41,21 @@ rich payload: rare achievements tint the popup with a gold/silver/bronze tier (b
 
 ## Create a custom preset
 
-The preset builder changes the background, text, accent color, opacity, font size, icon size and corner radius while showing a live preview. Select **Create preset** to save the result to the local preset library.
+The builder is the **Custom preset** section of **Settings → Notification**. It starts collapsed: open it with its header.
 
-Custom presets live in the Achievement Watcher data directory and are preserved when the application is updated.
+Set the background, text and accent colors, then the opacity, font size, corner radius, icon size and popup width. Each slider shows its current value, and the sample popup under the controls updates as you go — it is painted from your colors, not from the app theme, so it shows what the notification will look like in a game.
+
+| Action | What it does |
+| --- | --- |
+| **Preview** | Renders the design as a real overlay popup, at full size and in the configured position, **without saving it**. Use it to compare ideas without filling the preset list. |
+| **Create preset** | Saves it and selects it as the active preset. |
+| **Update preset** | The same button, once the name matches a preset the builder made — it replaces that preset instead of adding another. |
+| **Edit a preset** | Loads one of your generated presets back into the controls. Every value returns exactly as saved. |
+| **Delete** | Appears once a generated preset is loaded, and removes it after a confirmation. |
+
+Only presets this builder generated can be re-opened or deleted: it stores its settings in an `aw-preset.json` beside the generated files, and that file is what makes a preset editable. Bundled presets and hand-written ones are never touched.
+
+> **Custom presets are stored in the installation folder** (`presets\Users Presets\`), not in the data directory. Copy any preset you want to keep before reinstalling or updating, since installing over the application replaces that folder.
 
 ## Sounds, volume and duration
 
