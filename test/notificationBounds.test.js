@@ -15,14 +15,14 @@ function assertInside(bounds) {
 
 test('every named notification position is anchored to the corresponding work-area edge', () => {
   const expected = {
-    'center-top': { x: -1260, y: 52 },
-    'top-left': { x: -1908, y: 52 },
-    'top-right': { x: -612, y: 52 },
-    'middle-left': { x: -1908, y: 460 },
-    'middle-right': { x: -612, y: 460 },
-    'bottom-left': { x: -1908, y: 868 },
-    'bottom-right': { x: -612, y: 868 },
-    'center-bottom': { x: -1260, y: 868 },
+    'center-top': { x: -1260, y: 46 },
+    'top-left': { x: -1914, y: 46 },
+    'top-right': { x: -606, y: 46 },
+    'middle-left': { x: -1914, y: 460 },
+    'middle-right': { x: -606, y: 460 },
+    'bottom-left': { x: -1914, y: 874 },
+    'bottom-right': { x: -606, y: 874 },
+    'center-bottom': { x: -1260, y: 874 },
   };
 
   for (const [position, anchor] of Object.entries(expected)) {
@@ -46,12 +46,12 @@ test('a large preset is reduced to the active work area before it is positioned'
     workArea: { x: 0, y: 0, width: 1000, height: 700 },
   });
 
-  assert.equal(fitted.scale, 1.0844444444444445);
-  assert.equal(fitted.width, 976);
-  assert.equal(fitted.height, 651);
-  assert.deepEqual({ x: bounds.x, y: bounds.y }, { x: 12, y: 37 });
-  assert.equal(bounds.x + bounds.width, 988);
-  assert.equal(bounds.y + bounds.height, 688);
+  assert.equal(fitted.scale, 1.0977777777777777);
+  assert.equal(fitted.width, 988);
+  assert.equal(fitted.height, 659);
+  assert.deepEqual({ x: bounds.x, y: bounds.y }, { x: 6, y: 35 });
+  assert.equal(bounds.x + bounds.width, 994);
+  assert.equal(bounds.y + bounds.height, 694);
 });
 
 test('custom notification positions are clamped back inside the current monitor', () => {
@@ -63,6 +63,6 @@ test('custom notification positions are clamped back inside the current monitor'
     custom: { x: 9000, y: -9000 },
   });
 
-  assert.deepEqual({ x: bounds.x, y: bounds.y }, { x: -652, y: 52 });
+  assert.deepEqual({ x: bounds.x, y: bounds.y }, { x: -646, y: 46 });
   assertInside(bounds);
 });
