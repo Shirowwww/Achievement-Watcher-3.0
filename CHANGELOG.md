@@ -3,6 +3,42 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- Xbox PC polling cannot overlap itself or apply a delayed result after the tracked game changes,
+  avoiding stale achievement notifications and state updates.
+- Xbox PC imports now retain their unlocked/progress state, including achievements marked secret by
+  the normal boolean Xbox API flag.
+- Legacy GOG and Epic discovery tolerates absent or corrupt mapping caches, GOG-only releases and
+  temporary Epic mapping outages without hiding other locally discovered games.
+- Achievement rarity rendering handles names containing selector-special characters and still
+  updates every duplicate rendered row.
+- A failed Chromium startup releases its Steam scrape lease, library rescans preserve the game-view
+  click behavior, and detached overlay/custom-action launches fail safely instead of taking the
+  Watchdog down.
+- Restarting the Watchdog while a game is already running restores activity, overlay and Xbox
+  polling state without generating a synthetic launch notification.
+- A slow Windows notification-state query no longer starts its cache lifetime before its result
+  arrives, avoiding repeated PowerShell calls on a busy machine.
+- Partial hand-edited Watchdog configuration files are completed without discarding valid or
+  unknown sections.
+- Manually unlocked achievements are applied while the library rebuilds, so their tile and profile
+  completion remain correct after restarting the app.
+- The development window once again loads the profile avatar and presents visible Settings,
+  minimize, maximize and close controls reliably on high-DPI displays.
+- The Watchdog no longer depends on a native WQL callback that could crash on startup on some
+  Windows systems; process tracking now starts reliably and recognizes games already running.
+
+### Changed
+
+- High-frequency schema, discovery, process and renderer lookups use scoped indexes or snapshots,
+  reducing repeated scans without retaining extra long-lived UI state.
+- Main-window chrome, progress tracks and settings status surfaces now inherit the selected theme
+  instead of retaining fixed Steam-blue colors. The NSIS welcome/finish banner is regenerated from
+  the 256px app logo, keeping the installer emblem sharp.
+
 ## 3.8.1 - 2026-08-11
 
 ### Added

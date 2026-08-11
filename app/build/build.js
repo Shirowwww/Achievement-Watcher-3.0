@@ -1,9 +1,6 @@
 "use strict";
 
-// Build wrapper: signs automatically with the local self-signed certificate
-// when app/build/signing/Shirow.pfx exists, otherwise builds unsigned.
-// The certificate is never committed; create it with:
-//   powershell -ExecutionPolicy Bypass -File build/signing/create-self-signed-cert.ps1
+// Sign when the local certificate exists; otherwise build unsigned.
 
 const { spawnSync } = require("child_process");
 const crypto = require("crypto");

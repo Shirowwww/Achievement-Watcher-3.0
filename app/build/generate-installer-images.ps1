@@ -1,5 +1,6 @@
 param(
   [string]$IconPath = (Join-Path $PSScriptRoot 'icon.ico'),
+  [string]$LogoPath = (Join-Path $PSScriptRoot '../resources/icon/icon.png'),
   [string]$OutDir = $PSScriptRoot
 )
 
@@ -10,6 +11,14 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
+
+if (Test-Path -LiteralPath $LogoPath) {
+  $logoImage = [System.Drawing.Image]::FromFile($LogoPath)
+} else {
+  $icon = New-Object System.Drawing.Icon($IconPath)
+  $logoImage = $icon.ToBitmap()
+  $icon.Dispose()
+}
 
 function New-InstallerBitmap {
   param(
@@ -22,11 +31,13 @@ function New-InstallerBitmap {
   $bitmap = New-Object System.Drawing.Bitmap($Width, $Height, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
   $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
   $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+  $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+  $graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+  $graphics.CompositingQuality = [System.Drawing.Drawing2D.CompositingQuality]::HighQuality
   $graphics.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::AntiAliasGridFit
 
   $rect = New-Object System.Drawing.Rectangle(0, 0, $Width, $Height)
   $dark = [System.Drawing.Color]::FromArgb(255, 21, 32, 45)      # #15202d
-  $base = [System.Drawing.Color]::FromArgb(255, 27, 40, 56)      # #1b2838
   $light = [System.Drawing.Color]::FromArgb(255, 38, 56, 76)     # #26384c
   $accent = [System.Drawing.Color]::FromArgb(255, 91, 141, 255)  # #5b8dff
   $text = [System.Drawing.Color]::FromArgb(255, 217, 223, 228)   # #d9dfe4
@@ -44,13 +55,11 @@ function New-InstallerBitmap {
   $glowY = [int](($Height - $glowSize) / 2)
   $graphics.FillEllipse($glow, $glowX, $glowY, $glowSize, $glowSize)
 
-  # App icon, centered.
-  $icon = New-Object System.Drawing.Icon($IconPath)
-  $iconBitmap = $icon.ToBitmap()
-  $iconSize = if ($Sidebar) { 96 } else { 40 }
+  # The PNG keeps the sidebar logo sharp; Icon.ToBitmap() picks the 32px ICO frame.
+  $iconSize = if ($Sidebar) { 112 } else { 40 }
   $iconX = [int](($Width - $iconSize) / 2)
-  $iconY = if ($Sidebar) { 38 } else { [int](($Height - $iconSize) / 2) }
-  $graphics.DrawImage($iconBitmap, $iconX, $iconY, $iconSize, $iconSize)
+  $iconY = if ($Sidebar) { 26 } else { [int](($Height - $iconSize) / 2) }
+  $graphics.DrawImage($logoImage, $iconX, $iconY, $iconSize, $iconSize)
 
   if ($Sidebar) {
     $titleFont = New-Object System.Drawing.Font('Segoe UI', 15, [System.Drawing.FontStyle]::Bold, [System.Drawing.GraphicsUnit]::Pixel)
@@ -71,12 +80,14 @@ function New-InstallerBitmap {
   $bitmap.Save($Path, [System.Drawing.Imaging.ImageFormat]::Bmp)
   $graphics.Dispose()
   $bitmap.Dispose()
-  $icon.Dispose()
-  $iconBitmap.Dispose()
 }
 
-New-InstallerBitmap -Path (Join-Path $OutDir 'installerHeader.bmp') -Width 150 -Height 57
-New-InstallerBitmap -Path (Join-Path $OutDir 'installerSidebar.bmp') -Width 164 -Height 314 -Sidebar
+try {
+  New-InstallerBitmap -Path (Join-Path $OutDir 'installerHeader.bmp') -Width 150 -Height 57
+  New-InstallerBitmap -Path (Join-Path $OutDir 'installerSidebar.bmp') -Width 164 -Height 314 -Sidebar
+} finally {
+  $logoImage.Dispose()
+}
 
 Write-Host 'Installer images regenerated:'
 Write-Host "  $(Join-Path $OutDir 'installerHeader.bmp')"

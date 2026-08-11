@@ -12,7 +12,7 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 ![Electron](https://img.shields.io/badge/Electron-43-47848F?logo=electron&logoColor=white&style=flat-square)
 [![License](https://img.shields.io/badge/license-LGPL--3.0-green?style=flat-square)](LICENSE)
 
-**[Download](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/latest)** · [Documentation](docs/README.md) · [Changelog](CHANGELOG.md) · [Issues](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues)
+**[Download](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/latest)** · [Documentation](docs/README.md) · [Changelog](CHANGELOG.md) · [Security](SECURITY.md) · [Issues](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues)
 
 <table>
 <tr>
@@ -34,12 +34,11 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 | **Modern foundation** | Electron 12 → 43, a current Node runtime, refreshed dependencies, tighter renderer security and Windows 10/11 support without WMIC |
 | **More real sources** | Local Steam appcache, GOG Galaxy and Ubisoft Connect readers; optional Epic account connection; EA Desktop; Xbox PC (Game Pass / Microsoft Store) account import; Goldberg SocialClub; RPCS3, ShadPS4 and Xenia — each one individually switchable |
 | **Goldberg / GBE / Uplay R2 tools** | Read-only diagnosis, `steam_settings` repair, matched GBE Fork runtime install, loader-version-aware Uplay R2 support, Steamless support, opt-in API-check bypass, backups/restore and opt-in background setup |
-| **Better library** | Game and achievement search, installed-only filtering, blacklist restore, rarity tiers, progress achievements, smarter covers with a per-game SteamDB/SteamGridDB gallery, automatic launch-executable detection, a shortcut to each entry's achievement-data folder and right-click uninstall |
+| **Better library** | Game and achievement search, installed-only filtering, blacklist restore, rarity tiers, progress achievements, persistent manual achievement unlocks, smarter covers with a per-game SteamDB/SteamGridDB gallery, automatic launch-executable detection, a shortcut to each entry's achievement-data folder and right-click uninstall |
 | **Live tracking** | Tray-first background Watchdog, Xenia/ShadPS4/GOG/Ubisoft unlock monitoring, safer startup baselines and duplicate suppression |
 | **Notifications** | Native Windows notifications + a customizable, localized in-game overlay (stats bar, instant search, status filters, rarity badges, progress bars, density/icon-size/accent/zoom), preset library, custom builder, custom sounds, 0–200% volume, separate rare/completion styles and optional priority delivery that survives Do Not Disturb |
 | **Controller and UI** | Full controller navigation (XInput plus native PlayStation/Switch input), controller control of the in-game overlay, mouse Back/Forward, resizable interface, collapsible settings sections that remember what you folded away, seven built-in themes plus a Custom theme with per-layer colors/images/gradients, 18 complete UI languages and a localized installer |
-| **Local-first reliability** | Own data directory isolated from the original 1.6.8 app, migration-safe settings and avatar, offline names and artwork, local schemas, platform-aware cache IDs, bounded caches, self-healing folders and fewer browser-dependent lookups |
-| **Stays out of the way** | Update prompts remember "Later" for a day and never interrupt a running game; logs append instead of overwriting each other, so a crash survives the next launch and every run starts with a diagnostics block worth pasting into an issue |
+| **Local-first reliability** | Own data directory isolated from the original 1.6.8 app, migration-safe settings and avatar, offline names and artwork, local schemas, platform-aware cache IDs, bounded caches, self-healing folders, quiet update prompts and durable diagnostics |
 
 ---
 
@@ -165,6 +164,7 @@ Those games show the same Steam community percentage column as native Steam game
 - [Build guide](BUILD.md)
 - [Architecture](docs/architecture.md)
 - [Release workflow](docs/RELEASE_WORKFLOW.md)
+- [Security policy](SECURITY.md)
 
 The [documentation index](docs/README.md) explains what each guide covers.
 
@@ -189,7 +189,7 @@ The installer and updater files are written to `app\dist`. See [BUILD.md](BUILD.
 
 ## 🔐 Security and support
 
-Found a problem, have an idea, or simply want something improved? Please [open an issue](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues) — reports and suggestions are what help Achievement Watcher become better.
+Found a problem, have an idea, or simply want something improved? Please [open an issue](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues) — reports and suggestions are what help Achievement Watcher become better. For a vulnerability, use the private process in the [security policy](SECURITY.md), not a public issue.
 
 - Download builds only from the [official Releases page](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases).
 - Releases are currently unsigned, so SmartScreen or antivirus warnings are possible.

@@ -8,6 +8,7 @@ Bug fixes, documentation improvements, translations and focused new features are
 - Search existing issues for the same symptom.
 - Reproduce the problem on the latest release when possible.
 - Gather the app version, Windows version, source involved and relevant logs.
+- Report a suspected vulnerability through the private process in [SECURITY.md](SECURITY.md), never in a public issue.
 
 Use the repository templates for bug reports, feature requests and support questions. Keep reports focused on Achievement Watcher itself; the issue tracker cannot provide games, account access or piracy support.
 
