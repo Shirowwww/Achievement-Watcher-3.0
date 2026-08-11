@@ -372,7 +372,7 @@ async function newBrowserPage(browser) {
     } catch {}
     if (type === 'document') return req.continue();
     if (['media', 'font', 'stylesheet'].includes(type)) return req.abort();
-    if (type === 'image' && host && !host.endsWith('exophase.com')) return req.abort();
+    if (type === 'image' && host && host !== 'exophase.com' && !host.endsWith('.exophase.com')) return req.abort();
     return req.continue();
   });
   return page;

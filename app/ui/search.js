@@ -1,12 +1,11 @@
 'use strict';
 
 (function ($, window, document) {
+  const { stripTags } = require('../util/stripTags.js');
   $(function () {
     $('#search-bar input[type=search]').keyup(function () {
       const self = $(this);
-      const filter = self
-        .val()
-        .replace(/<\/?[^>]+>/gi, '')
+      const filter = stripTags(self.val())
         .trim()
         .toUpperCase();
       const gamelist = $('#game-list ul');

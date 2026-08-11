@@ -31,7 +31,7 @@ test('bundled notification presets contain their assets and valid inline scripts
     assert.match(html, /<meta\s+width=["']\d+["']\s+height=["']\d+["']/i, `${relative} has no window-size metadata`);
 
     let scriptCount = 0;
-    for (const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)) {
+    for (const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script\s*>/gi)) {
       new vm.Script(match[1], { filename: htmlPath });
       scriptCount += 1;
     }

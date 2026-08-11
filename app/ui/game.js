@@ -85,8 +85,8 @@ function getGlobalStat(appid, source, gameName, achievements, context) {
     // Filter the unlocked/locked achievement rows by title or (visible) description. Hidden-masked
     // descriptions are matched on their displayed label only, so spoilers don't leak through search.
     $('#achievement-search-input').on('input', function () {
-      const filter = String($(this).val() || '')
-        .replace(/<\/?[^>]+>/gi, '')
+      const { stripTags } = require('../util/stripTags.js');
+      const filter = stripTags(String($(this).val() || ''))
         .trim()
         .toUpperCase();
       $('#achievement .achievement-list ul > li').each(function () {

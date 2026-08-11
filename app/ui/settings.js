@@ -1139,7 +1139,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const previewStyle =
           `background-color:${grad.enabled === true ? 'transparent' : (layer.color || '#1b2838')};` +
           (previewImage
-            ? `background-image:${gradStyle ? gradStyle + ',' : ''}url('${require('url').pathToFileURL(previewImage).href.replace(/'/g, "\\'")}');`
+            ? `background-image:${gradStyle ? gradStyle + ',' : ''}${require(path.join(appPath, 'util/cssUrl.js')).cssUrl(require('url').pathToFileURL(previewImage).href)};`
             : gradStyle
             ? `background-image:${gradStyle};`
             : 'background-image:none;');
@@ -1367,7 +1367,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const layers = [];
       if (enabled) layers.push(`linear-gradient(${angle}deg, ${from} 0%, ${to} 100%)`);
       const imageSrc = row.data('previewImage') || '';
-      if (imageSrc) layers.push(`url('${imageSrc.replace(/'/g, "\\'")}')`);
+      if (imageSrc) layers.push(require(path.join(appPath, 'util/cssUrl.js')).cssUrl(imageSrc));
       preview.css('background-image', layers.length ? layers.join(',') : 'none');
     }
 

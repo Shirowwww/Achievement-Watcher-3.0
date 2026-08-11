@@ -6,6 +6,7 @@ const appPath = path.join(__dirname, '..');
 
 const merge = require('deepmerge');
 const ffs = require('../util/fsAsync');
+const { stripTags } = require('../util/stripTags.js');
 
 const langDir = path.join(appPath, 'locale/lang');
 const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
@@ -600,7 +601,6 @@ function translateUI(lang, locale, template) {
 
 function clear(str) {
   if (str) {
-    str = str.toString();
-    return str.replace(/<\/?[^>]+>/gi, '');
+    return stripTags(str.toString());
   }
 }

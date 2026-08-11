@@ -6,6 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
+const { cssUrl } = require('./cssUrl.js');
 
 const LAYER_IDS = ['bg', 'header', 'panel', 'card', 'settings', 'text', 'muted', 'border', 'accent'];
 const IMAGE_LAYER_IDS = ['bg', 'header', 'panel', 'card', 'settings'];
@@ -239,8 +240,7 @@ function imageUrl(filePath) {
   if (!filePath) return 'none';
   try {
     if (!fs.existsSync(filePath)) return 'none';
-    const href = pathToFileURL(path.resolve(filePath)).href.replace(/'/g, "\\'");
-    return `url('${href}')`;
+    return cssUrl(pathToFileURL(path.resolve(filePath)).href);
   } catch {
     return 'none';
   }

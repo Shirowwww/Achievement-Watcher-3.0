@@ -11,6 +11,7 @@ const fs = require('fs');
 const { pathToFileURL } = require('url');
 const args_split = require('argv-split');
 const { cssUrl } = require(path.join(appPath, 'util/cssUrl.js'));
+const { stripTags } = require(path.join(appPath, 'util/stripTags.js'));
 const { splitLaunchArgs } = require(path.join(appPath, 'util/launchArgs.js'));
 const { openExternalSafe } = require(path.join(appPath, 'util/externalLink.js'));
 const args = require('minimist');
@@ -3699,7 +3700,7 @@ var app = {
 
       $('#achievement').fadeIn(600, function () {
         if (app.args.appid && app.args.name) {
-          let target = elem.find(`.achievement[data-name="${app.args.name.toString().replace(/<\/?[^>]+>/gi, '')}"]`).parent('li');
+          let target = elem.find(`.achievement[data-name="${stripTags(app.args.name.toString())}"]`).parent('li');
           target.addClass('highlight');
 
           let pos = target.offset().top + $(this).scrollTop() - target.outerHeight(true);

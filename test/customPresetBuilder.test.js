@@ -77,7 +77,7 @@ test('the generated preset satisfies the notification-window contract', () => {
   assert.match(html, /notificationRenderReady/, 'never signals that it has rendered');
 
   let scripts = 0;
-  for (const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)) {
+  for (const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script\s*>/gi)) {
     new vm.Script(match[1], { filename: 'generated-preset.html' }); // throws on a syntax error
     scripts += 1;
   }
