@@ -1021,16 +1021,12 @@ ipcMain.handle('epic:login', async () => {
       const wc = contents && !contents.isDestroyed() ? contents : epicLoginWindow && !epicLoginWindow.isDestroyed() ? epicLoginWindow.webContents : null;
       if (settled || !wc) return;
       try {
-        // JSON.stringify() alone is not safe to splice into a script body: U+2028/U+2029 (line/
-        // paragraph separator) are valid inside a JSON string but were illegal inside a JS string
-        // literal in older engines. redirectUrl is built by our own code and never legitimately
-        // contains them, so strip them outright rather than relying on the target page's JS version.
-        const lineSeparator = String.fromCharCode(0x2028);
-        const paragraphSeparator = String.fromCharCode(0x2029);
-        const safeRedirectUrl = redirectUrl.split(lineSeparator).join("").split(paragraphSeparator).join("");
-        const redirectUrlLiteral = JSON.stringify(safeRedirectUrl);
+        // encodeURIComponent() restricts the spliced value to a fixed, code-safe character set
+        // (letters, digits, -_.!~*'()% ) before it is quoted with JSON.stringify() -- unlike a
+        // hand-picked blacklist, it can't miss a character that breaks out of the script body.
+        const redirectUrlLiteral = JSON.stringify(encodeURIComponent(redirectUrl));
         const code = await wc.executeJavaScript(
-          `(async () => { try { const r = await fetch(${redirectUrlLiteral}, { credentials: 'include' }); const j = await r.json(); return (j && (j.authorizationCode || j.code)) || ''; } catch { return ''; } })()`,
+          `(async () => { try { const r = await fetch(decodeURIComponent(${redirectUrlLiteral}), { credentials: 'include' }); const j = await r.json(); return (j && (j.authorizationCode || j.code)) || ''; } catch { return ''; } })()`,
           true
         );
         if (code) {
