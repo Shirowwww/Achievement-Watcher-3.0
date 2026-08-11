@@ -8,6 +8,18 @@ const path = require('node:path');
 
 const themeLayers = require('../app/util/themeLayers.js');
 
+test('main-window chrome and progress surfaces use theme tokens', () => {
+  const css = fs.readFileSync(path.join(__dirname, '../app/resources/css/app.css'), 'utf8');
+  const titlebarCss = fs.readFileSync(path.join(__dirname, '../app/resources/css/titlebar.css'), 'utf8');
+
+  assert.match(css, /--success: #3fb950/);
+  assert.match(titlebarCss, /--sf-indicator-green: var\(--success/);
+  assert.match(titlebarCss, /background-color: color-mix\(in srgb, var\(--surface-sunken/);
+  assert.match(css, /#game-list \.game-box \.info \.progressBar\s*\{[\s\S]*?var\(--surface-sunken\)/);
+  assert.match(css, /#game-list \.game-box \.info \.progressBar > \.meter\s*\{[\s\S]*?var\(--accent\)/);
+  assert.doesNotMatch(css, /#0c1828|#08121f|#4f8bf7|#5f75df|#7f8cff/);
+});
+
 test('custom themes sanitize colors, images and fit values', () => {
   const clean = themeLayers.sanitizeCustomTheme({
     bg: {

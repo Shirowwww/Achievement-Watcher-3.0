@@ -43,6 +43,9 @@
   --accent-soft: color-mix(in srgb, var(--accent) 18%, transparent);
   --surface-elevated: #1f3042;
   --surface-sunken: #101a27;
+  --success: #3fb950;
+  --warning: #f0b429;
+  --danger: #d9534f;
 
   /* Settings-modal-only surface tokens. Default to the same value as the card surface (so built-in
      themes look exactly as before), but the custom theme engine (themeLayers.js) repoints these at
@@ -56,7 +59,7 @@
   /* Settings modal chrome — derived from the active theme tokens (via color-mix) so the whole panel,
      its controls and buttons follow OLED / Dracula / Graphite instead of staying locked to Steam blue.
      Change a theme's base tokens above and the Settings modal recolours with it. */
-  --set-scrim: rgba(3, 8, 14, 0.76);
+  --set-scrim: color-mix(in srgb, var(--surface-sunken) 78%, transparent);
   --set-modal-top: color-mix(in srgb, var(--set-surface-elevated) 88%, white 5%);
   --set-modal-bottom: var(--bg-base);
   --set-header-bg: color-mix(in srgb, var(--set-surface-sunken) 82%, black);
@@ -239,7 +242,7 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  border: 1px solid #50525b;
+  border: 1px solid var(--border);
   box-sizing: border-box;
   /* Soft top-centre glow for depth behind the header (flat fill before; JS swaps in game art on
      the detail view, so this only affects the home screen). */
@@ -247,10 +250,6 @@ body {
   background-size: cover !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
-}
-
-title-bar {
-  background: color-mix(in srgb, var(--surface-sunken) 72%, transparent);
 }
 
 main {
@@ -349,7 +348,7 @@ main {
   border: 1px solid color-mix(in srgb, var(--border) 18%, transparent);
   border-radius: 999px;
   overflow: hidden;
-  background: rgba(7, 16, 28, 0.64);
+  background: color-mix(in srgb, var(--surface-sunken) 72%, transparent);
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.38), 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
@@ -762,7 +761,11 @@ main {
 #game-list .game-box .info .progressBar {
   height: 16px;
   position: relative;
-  background: linear-gradient(180deg, #0c1828 0%, #08121f 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface-sunken) 82%, var(--bg-base)) 0%,
+    var(--surface-sunken) 100%
+  );
   border: 1px solid color-mix(in srgb, var(--border) 18%, transparent);
   border-radius: 8px;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -777,7 +780,12 @@ main {
   position: relative;
   overflow: hidden;
   transition: 0.3s all linear;
-  background-image: linear-gradient(90deg, #4f8bf7 0%, #5f75df 58%, #7f8cff 100%);
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent) 70%, black 12%) 0%,
+    var(--accent) 58%,
+    color-mix(in srgb, var(--accent) 78%, white 12%) 100%
+  );
   border-radius: inherit;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 0 10px color-mix(in srgb, var(--accent) 35%, transparent);
 }
@@ -799,7 +807,7 @@ main {
   transform: translate(-50%, -50%);
   left: 50%;
   display: table;
-  color: #f3f7ff;
+  color: var(--text);
   z-index: 2;
   letter-spacing: 0;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
@@ -3317,12 +3325,12 @@ main {
 #libdirlist > li .controls ul > li:hover,
 #btn-hotkey-edit:hover,
 #btn-hotkey-preview:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+  background-color: color-mix(in srgb, var(--text) 20%, transparent);
+  color: var(--text);
 }
 
 #defaultdir li span.constant {
-  color: #9ba0a5;
+  color: var(--text-muted);
 }
 
 #settings .folder-actions,
@@ -3337,7 +3345,7 @@ main {
   font-family: Open-sans;
   font-size: 13px;
   text-align: center;
-  color: #9ba0a5;
+  color: var(--text-muted);
   width: 90%;
   margin: 0 auto 6px auto;
 }
@@ -3358,12 +3366,12 @@ main {
   color: var(--text-muted);
   margin: 0 0 12px;
   padding: 5px 9px;
-  border: 1px solid rgba(109, 194, 87, 0.2);
+  border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
   border-radius: 999px;
-  background: rgba(109, 194, 87, 0.07);
+  background: color-mix(in srgb, var(--success) 9%, transparent);
 }
 #options-notify .autosave-hint i {
-  color: #6dc257;
+  color: var(--success);
 }
 
 #settings .folder-actions .info p {

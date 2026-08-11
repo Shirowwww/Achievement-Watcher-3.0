@@ -1,16 +1,7 @@
 'use strict';
 
-// Notification-preset generator for the Settings > Notification custom-preset builder.
-//
-// A generated preset is an ordinary preset folder: a FIXED, payload-consuming index.html (same
-// contract as the bundled presets — window.api.onNotification → fill .title/.detail/.icon, add
-// .active, close after the duration) plus a style.css driven by :root CSS variables. Only the CSS
-// differs between two generated presets, which is what keeps every one of them structurally
-// compatible with createNotificationWindow.
-//
-// Pure string/number work, deliberately free of electron and fs: init.js owns writing the files,
-// this module owns what goes in them — and, since it decides the layout of a generated preset, the
-// directory they belong in (generatedPresetsDir below; `path` only, still no fs).
+// Build notification preset files from the Settings customizer.
+// This module only builds strings; init.js writes them to userData.
 
 const path = require('path');
 

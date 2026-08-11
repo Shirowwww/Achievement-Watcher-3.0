@@ -1,11 +1,6 @@
 'use strict';
 
-// Renderer-side avatar persistence. A user's chosen avatar (uploaded locally or imported from
-// Steam/Windows) used to live only in `localStorage.avatar`, which is Chromium profile state — the
-// one-time %APPDATA%\Achievement Watcher 3.0 migration deliberately never imports the Chromium
-// profile (see util/migrateUserData.js), so a returning user's avatar silently vanished on upgrade
-// (issue #10). Storing it as a plain file under `cfg/` instead puts it on the same migration path as
-// every other durable setting, with no changes needed to the migration plan.
+// Persist the selected avatar under cfg/ so it follows normal user-data migration.
 
 const fs = require('fs');
 const path = require('path');

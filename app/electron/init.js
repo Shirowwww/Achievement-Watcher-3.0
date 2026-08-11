@@ -5,11 +5,7 @@ const { app } = require('electron');
 const { APP_DATA_DIR_NAME } = require('../util/userDataPath.js');
 const { migrateLegacyUserData } = require('../util/migrateUserData.js');
 app.setName('Achievement Watcher');
-// 3.x uses its own data directory. The original 1.6.8 app used %APPDATA%\Achievement Watcher and
-// its uninstaller deletes that whole folder — sharing it let an unrelated uninstall wipe every 3.x
-// setting and cache (issue #6). A one-time import below preserves existing data in the new home.
-// `--user-data-dir=<path>` overrides it (dev/testing, isolated profiles); Electron's own switch
-// arrives in argv before the app's modules load, so it is read manually here.
+// Keep 3.x data separate from the legacy folder; --user-data-dir still overrides it for tests.
 const cliUserDataDir = (() => {
   try {
     const argv = process.argv.slice(1);
@@ -27,44 +23,35 @@ migrateLegacyUserData(app.getPath('userData'));
 for (const sw of ['disable-extensions', 'disable-component-extensions-with-background-pages', 'disable-default-apps', 'disable-background-networking']) {
   app.commandLine.appendSwitch(sw);
 }
-// Cap V8 old-space for the main process. It drives the on-demand puppeteer scrape and the windows, but
-// spends most of its life as a resident tray daemon — a 256 MB ceiling bounds heap growth and forces
-// the GC to reclaim earlier when idle, without starving the brief scrape/HTML-parse bursts.
+// Bound heap growth while the app sits in the tray.
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=256');
 const { BrowserWindow, dialog, session, shell, ipcMain, globalShortcut, Tray, Menu, nativeImage, Notification } = require('electron');
 const os = require('os');
 const { autoUpdater } = require('electron-updater');
-const { verifyUpdateCodeSignature } = require('../util/updateSignature.js');
-// Never download silently: the user is asked first (update-available → "Download && Install" —
-// the ampersand is doubled because Win32 treats a single '&' as a mnemonic prefix and hides it),
-// then asked again once the download finishes (update-downloaded → "Install now"). Install-on-quit
-// stays off so an update is only applied through the explicit prompt.
+  const { verifyUpdateCodeSignature } = require('../util/updateSignature.js');
+  const { withScrapeLease } = require('../util/scrapeLease.js');
+  const { clampWindowBoundsToWorkArea } = require('../util/windowBounds.js');
+// Updates require an explicit download and install confirmation.
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
-// electron-updater's default Windows verifier requires a certificate chain Windows trusts. Our
-// self-signed CN=Shirow certificate is intentionally not a trusted root on every PC, so use the
-// tested publisher-CN verifier instead. It keeps valid first-time installs and future updates from
-// showing the misleading "not signed by the application owner" error.
+// Accept the project's self-signed publisher through the tested verifier.
 autoUpdater.verifyUpdateCodeSignature = (publisherNames, tempUpdateFile) =>
   verifyUpdateCodeSignature(publisherNames, tempUpdateFile, (message) => debug.log(message));
 let updateCheckTimer = null;
 let updatePromptOpen = false;
 let updaterErrorNotified = false;
-let manualUpdateCheckPending = false; // set by the Settings "Check for updates" button so update-not-available can report back
-let manualUpdateResult = null; // 'available' | 'uptodate' | 'error' — surfaced to the Settings button
+let manualUpdateCheckPending = false; // Settings requested a check.
+let manualUpdateResult = null; // 'available' | 'uptodate' | 'error'
 const UPDATE_RECHECK_MS = 60 * 60 * 1000; // silent hourly re-check while the app stays resident
 const UPDATE_RETRY_MS = 30 * 60 * 1000; // slower retry after a failed check
-// How many games the monitor currently reports as running. Kept here rather than queried on demand
-// because only the monitor can answer it, and it pushes every change over the ipc channel.
+// Number of games currently reported by the monitor.
 let gamesRunning = 0;
 const isGameRunning = () => gamesRunning > 0;
-// An "install now?" prompt that arrived mid-session, kept so it can be re-opened once the game
-// ends. Assigned where the updater events are wired up (inside the single-instance branch).
+// A completed update waiting for the current game to end.
 let promptDownloadedUpdate = null;
 let pendingInstallPrompt = null;
 
-// Whether an available update may interrupt the user. The rules (skip = permanent, later = until a
-// deadline, neither hides a newer release) live in util/updateGate.js so they can be unit-tested.
+// Update prompt policy lives in the unit-tested update gate.
 const updateGate = require(path.join(__dirname, '../util/updateGate.js'));
 
 async function applyGeneralPatch(patch) {
@@ -101,11 +88,7 @@ function shouldSuppressUpdatePrompt(version, { manual = false } = {}) {
   return suppress;
 }
 
-// Taskbar progress for the update download. Windows draws it inside the app's taskbar button, so it
-// only exists while a window does: the app is a resident tray daemon and the download usually runs
-// with the window closed. The fraction is therefore kept here and re-applied by createMainWindow(),
-// and the tray tooltip carries the same figure for the window-less case.
-// -1 is Electron's "no progress bar" value.
+// Keep download progress for both the taskbar and tray tooltip. -1 clears it.
 let updateDownloadFraction = -1;
 let updateProgressLogged = -1;
 
@@ -160,14 +143,11 @@ function scheduleUpdateCheck(delayMs) {
     updateCheckTimer = null;
     if (!app.isPackaged) return;
     if (updatePromptOpen) {
-      // Keep the chain alive: if a prompt is open when the timer fires, retry after
-      // the normal interval instead of silently dropping all future checks.
+      // Keep checking after an open prompt closes.
       scheduleUpdateCheck(UPDATE_RECHECK_MS);
       return;
     }
-    // Never interrupt a game. The update dialog is modal and has no parent window, so it would land
-    // on top of a fullscreen session. Skipping the whole check (not just the dialog) also keeps the
-    // network quiet while playing; the game-exit signal below asks again right afterwards.
+    // Do not interrupt a running game with a modal update dialog.
     if (isGameRunning()) {
       debug.log('[updater] check deferred: a game is running');
       scheduleUpdateCheck(updateGate.INTERVALS.inGame);
@@ -186,13 +166,7 @@ function scheduleUpdateCheck(delayMs) {
   }, delayMs);
 }
 
-/*
-  One block, written once per launch, holding everything a bug report needs and nobody can be asked
-  to collect by hand: build and runtime versions, where the app and its data actually live, how it
-  was started, and the display geometry (a wrong window size or a stacked title bar is almost always
-  a scaling/multi-monitor story, and "it looked weird" is not something a log can reconstruct after
-  the fact). Every value is either public or a local path that already appears throughout this log.
-*/
+// Record the runtime, paths, flags and display layout once for troubleshooting.
 function logStartupDiagnostics() {
   const line = (label, value) => debug.log(`[diag] ${label}: ${value}`);
   try {
@@ -208,8 +182,7 @@ function logStartupDiagnostics() {
     const general = (configJS && configJS.general) || {};
     line('settings', `lang=${(configJS && configJS.achievement && configJS.achievement.lang) || '?'} theme=${general.theme || '?'} closeToTray=${general.closeToTray !== false} startWithWindows=${general.startWithWindows !== false}`);
     line('settings', `skippedVersion=${general.skippedVersion || 'none'} updatePostponed=${general.updatePostponedVersion || '-'}${general.updatePostponedUntil ? ' until ' + new Date(Number(general.updatePostponedUntil)).toISOString() : ''}`);
-    // `screen` throws if it is touched before the app is ready, which is why it is required here
-    // rather than at the top of the file (same pattern as the overlay/notification positioning).
+    // Access screen only after app readiness.
     const electronScreen = require('electron').screen;
     const primaryId = electronScreen.getPrimaryDisplay().id;
     for (const display of electronScreen.getAllDisplays()) {
@@ -225,21 +198,15 @@ function logStartupDiagnostics() {
   }
 }
 
-/*
-  The monitor reports how many games are running. A session ending is the one moment an update
-  prompt is welcome, so the check is pulled forward instead of waiting out the rest of the hour.
-*/
+// Defer updates while games run and check again when the last one exits.
 function setGameActivity(count) {
   const wasRunning = isGameRunning();
   gamesRunning = Math.max(0, Number(count) || 0);
-  // Logged on every report, not only on a change: "is the monitor telling the app about games at
-  // all?" is the first question when an update prompt shows up (or fails to) at the wrong moment.
   debug.log(`[game-activity] ${gamesRunning} game(s) running`);
   if (wasRunning === isGameRunning()) return;
   if (isGameRunning() || !app.isPackaged) return;
 
-  // A download that completed mid-session already has its file on disk: re-open that exact prompt
-  // rather than sending the user back through the download question.
+  // Reopen a completed download prompt after the game ends.
   if (pendingInstallPrompt && typeof promptDownloadedUpdate === 'function') {
     const info = pendingInstallPrompt;
     pendingInstallPrompt = null;
@@ -260,10 +227,7 @@ const { resolveOverlayRequest } = require(path.join(__dirname, '../util/overlayR
 const { normalizeWindowArgs } = require(path.join(__dirname, '../util/windowArgs.js'));
 const notificationBounds = require(path.join(__dirname, '../util/notificationBounds.js'));
 
-// Main-process counterpart of app/locale/t.js: imperative strings (dialogs,
-// tray menu, notifications) resolve from the selected locale's `dialogs`
-// section when a real translation exists, otherwise fall back to the legacy
-// English/French pair that used to be hardcoded.
+// Resolve main-process strings from the selected locale, with English/French fallback.
 let mainLocaleCache = null;
 function t(key, english, french, params) {
   const interpolate = (value) =>
@@ -293,9 +257,7 @@ function t(key, english, french, params) {
   return interpolate(fallback || key);
 }
 
-// Payload for the in-game overlay's `overlay-language` channel. The overlay is
-// a separate renderer (app/view/overlay.html) and must be told which locale to
-// use each time it opens; the preload already exposes the listener.
+// Build the locale payload sent to the in-game overlay.
 function overlayLanguagePayload() {
   const lang = String((configJS && configJS.achievement && configJS.achievement.lang) || 'english');
   try {
@@ -306,11 +268,7 @@ function overlayLanguagePayload() {
   }
 }
 
-// Current theme resolved into CSS for the main window and the in-game overlay.
-// Built-in themes map one color per layer to the overlay; the Custom theme
-// injects per-layer colors/images into both windows; user CSS themes keep their
-// stylesheet on the main window and are also forwarded to the overlay so a
-// theme dropped into <userData>\themes can style the in-game list too.
+// Resolve the current theme for the main window and overlay.
 function currentThemePayload(nameOverride) {
   const name = String(nameOverride || (configJS && configJS.general && configJS.general.theme) || 'default');
   const user = userThemes.parseValue(name);
@@ -326,9 +284,7 @@ function currentThemePayload(nameOverride) {
 
 const BASE_URL = 'https://www.steamgriddb.com/api/v2';
 const DEFAULT_API_KEY = '2a9d32ddd0bfe4e1191b4f6ff56fef60'; // bundled public fallback (rate-limited)
-// Every SteamGridDB / artwork request is time-boxed. The global fetch here is undici, whose default
-// headers timeout is 300s: without an explicit signal a blackholed DNS or a captive portal stalls an
-// artwork lookup for minutes instead of failing over to the next source.
+// Bound artwork requests so a dead network cannot stall a scan for minutes.
 const SGDB_FETCH_TIMEOUT_MS = 8000;
 const startupArgs = normalizeWindowArgs(minimist(process.argv.slice(1)));
 const safeMode = startupArgs['safe-mode'] === true || startupArgs.safeMode === true || startupArgs['reset-window'] === true;
@@ -385,11 +341,7 @@ let settingsJS = null;
 let configJS = null;
 let achievementsJS = null;
 
-// Keep GPU hardware acceleration ON (default). Disabling it shaves ~30 MB idle but makes the library
-// scroll janky under software compositing (cover images), which is not worth it for an app whose
-// window is used interactively. Honour the explicit config opt-out, plus the user-facing General-tab
-// toggle. disableHardwareAcceleration() must run before app 'ready', so we read options.ini directly
-// here rather than via the async settings loader / renderer.
+// Read the GPU preference before app.ready; disabling it is opt-in.
 let userDisableGpu = false;
 try {
   const parsed = require('../util/ini').parse(fs.readFileSync(path.join(userData, 'cfg/options.ini'), 'utf8'));
@@ -401,16 +353,10 @@ try {
 if (manifest.config['disable-gpu'] || userDisableGpu || safeMode) app.disableHardwareAcceleration();
 if (manifest.config.appid) app.setAppUserModelId(manifest.config.appid);
 manifest.config.debug = process.env.NODE_ENV === 'development' || process.defaultApp || /[\\/]electron/.test(process.execPath);
-// DevTools creates another Chromium renderer. Opening it for every dev launch makes the tray-idle
-// profile look hundreds of MiB heavier than the shipped app and keeps the inspector alive after the
-// main window is hidden. Keep DevTools available in development, but open it only when requested.
+// Keep DevTools available in development, but open it only when requested.
 const openDevTools = manifest.config.debug && /^(1|true)$/i.test(String(process.env.AW_OPEN_DEVTOOLS || ''));
 
-// Clicking a Windows toast can only reach an unpackaged desktop app through a registered URI
-// scheme (the alternative, foreground activation, needs a COM activator bound to our AUMID that we
-// do not ship). The scheme is (re)registered under HKCU on every launch so it always points at the
-// current executable — unlike the legacy "ach:" scheme, which 1.6.8 wrote into HKLM and left behind
-// pointing at its own, now uninstalled, exe.
+// Register a per-user URI scheme so toast clicks can reopen the unpackaged app.
 const TOAST_PROTOCOL = 'achievement-watcher';
 let toastProtocolReady = false;
 if (!manifest.config.debug) {
@@ -437,9 +383,7 @@ process.on('unhandledRejection', (err) => {
 });
 
 async function fetchSteamCommunityAchievements(url) {
-  // The steamcommunity achievements page is server-rendered HTML, so a plain HTTP fetch + parse
-  // fully replaces a puppeteer/Chromium scrape here (verified for visible achievements). Returns the
-  // same { img, title, description } shape the callers expect; [] on any failure so nothing throws.
+  // Parse the server-rendered achievements page without launching Chromium.
   try {
     const htmlParser = require('node-html-parser');
     const res = await fetch(url, {
@@ -465,18 +409,7 @@ async function fetchSteamCommunityAchievements(url) {
   }
 }
 
-// Browser-free achievement schema via the official Steam Web API. Uses IPlayerService/
-// GetGameAchievements rather than the legacy ISteamUserStats/GetSchemaForGame: the legacy endpoint
-// always blanks the description of hidden ("secret") achievements as a spoiler guard, key or no key,
-// which is why hidden achievements were permanently stuck on "…" even for users with a Steam Web API
-// key (#57). GetGameAchievements has no such restriction — verified live against multiple titles
-// (007 First Light, Fast Food Simulator, even 2004's Half-Life 2): every hidden achievement comes
-// back with a real localized_desc.
-// Returns the same shape the steamhunters puppeteer scrape produces, so it is a drop-in
-// replacement when the user has configured a Steam Web API key. Returns:
-//   - an array of achievements on success
-//   - [] when the API responded but the game exposes no achievement schema
-//   - null on a transport/auth error, so the caller can fall back to scraping
+// Prefer the official Steam API; return null on transport/auth errors so scraping can take over.
 async function getSchemaFromWebAPI(appid, key, lang) {
   const language = (lang && (lang.api || lang)) || 'english';
   const url = `https://api.steampowered.com/IPlayerService/GetGameAchievements/v1/?key=${key}&appid=${appid}&language=${encodeURIComponent(language)}`;
@@ -547,7 +480,6 @@ async function getSteamData(request) {
       let info = { appid };
       const url = `https://steamcommunity.com/stats/${appid}/achievements?l=${lang.api}`; //this doesnt give hidden descriptions
       info.achievements = await fetchSteamCommunityAchievements(url);
-      currentlyscraping.steamcommunity = false;
       if (info.achievements.length > 0 && info.achievements.every((a) => a.description)) {
         return info;
       }
@@ -555,16 +487,12 @@ async function getSteamData(request) {
       let validXml = false;
       let xml;
 
-      //instead of looping steamuserids,
-      //lets get users from steamhunters and try those
+      // Prefer SteamHunters owners over a blind SteamID loop.
 
       await scrapeWithPuppeteer(info, { userlist: true, steamhunters: true, appid });
-      currentlyscraping.steamhunters = false;
-      // The userlist scrape sets info.users only on success — a failed page load leaves it undefined,
-      // which must not throw away the (possibly partial) achievements fetched above.
+      // Keep partial achievements when the owner list fails.
 
-      // Try each candidate owner's public profile: read its XML stats, and if every achievement has a
-      // localized description, adopt that profile's schema. Returns true once one succeeds.
+      // Use the first public owner profile with complete localized descriptions.
       const tryOwnerProfiles = async (ids) => {
         for (let id of ids) {
           userid = id;
@@ -587,7 +515,6 @@ async function getSteamData(request) {
           if (!allgood) continue;
           const url2 = `https://steamcommunity.com/profiles/${userid}/stats/${appid}?l=${lang.api}`; // this for name and description, match them via icon hash
           info.achievements = await fetchSteamCommunityAchievements(url2);
-          currentlyscraping.steamcommunity = false;
           return true;
         }
         return false;
@@ -595,8 +522,7 @@ async function getSteamData(request) {
 
       if (await tryOwnerProfiles((info.users || []).map((user) => user.steamId))) return info;
 
-      // Fallback when no SteamHunters owner 100%'d the game: try the top-owners SteamID pool (prolific
-      // collectors with public profiles, scraped from SteamLadder and cached).
+      // Fall back to the cached top-owner SteamID pool.
       const owners = await fetchTopOwners();
       if (owners.length && (await tryOwnerProfiles(owners))) return info;
       return info;
@@ -604,9 +530,7 @@ async function getSteamData(request) {
 
     if (type === 'data' || type === 'steamhunters') {
       let info = { appid };
-      // Fast path: official Steam Web API schema (no headless browser) when a key is configured.
-      // A blocking sendSync from the renderer drives this; the puppeteer scrape below can take up to
-      // 30s per game and freezes the whole UI, so prefer the ~200ms API call whenever possible.
+      // Use the official API when a key is configured; it avoids a slow browser scrape.
       const key = configJS?.steam?.apiKey;
       if (key) {
         const ach = await getSchemaFromWebAPI(appid, key, request.lang);
@@ -614,13 +538,11 @@ async function getSteamData(request) {
           info.achievements = ach;
           return info;
         }
-        // ach === null -> API/auth/network failure; fall through to the scraper below
+        // null means the API failed; continue with scraping.
       }
       await scrapeWithPuppeteer(info, { steamhunters: true });
-      currentlyscraping.steamhunters = false;
       if (type === 'data') {
-        // scrapeWithPuppeteer already ran above; bound this fallback wait so a scrape that never
-        // populates achievements can't hang the blocking sendSync IPC forever (~30s cap).
+        // Bound the fallback so a stalled scrape cannot hang sendSync forever.
         let waited = 0;
         while (!info.achievements && waited < 60) {
           await delay(500);
@@ -629,9 +551,7 @@ async function getSteamData(request) {
       }
       return info;
     }
-    // Offline-first name resolution: the cached GetAppList dump answers instantly and keeps
-    // working with no network, while the path below needs a Steam client logon + product-info
-    // request. Misses (brand-new appids) still fall through to the full lookup.
+    // Resolve names from the local app list first, then fall back to Steam's product info.
     if (type === 'name') {
       const offlineName = require('../util/gameNameCache.js').lookupSteamDbName(appid);
       if (offlineName) return offlineName;
@@ -686,15 +606,10 @@ async function getSteamData(request) {
   return {};
 }
 
-// Sources whose art/rarity comes from the local console-emulator sidecar rather than a store page —
-// mirrors app.js's EMU_LOCAL_ICON_SOURCES (renderer-only, not reachable from the main process).
+// Sources whose artwork and rarity come from local emulator data.
 const OVERLAY_EMULATOR_RARITY_SOURCES = new Set(['RPCS3 Emulator', 'ShadPS4 Emulator', 'Xenia Emulator']);
 
-// Merge the persisted community-rarity sidecar (populated by the main window's achievement detail
-// view — see util/rarity.js + ui/game.js's getGlobalStat) onto each achievement so the overlay's
-// rarity badges have something to show. Cache-only, no network: the overlay must open instantly
-// during gameplay, and by the time a player checks it the detail view has usually already warmed
-// the sidecar for that game.
+  // Apply cached rarity so the overlay can render immediately without network access.
 function attachOverlayRarity(game) {
   try {
     if (!game || !game.achievement || !Array.isArray(game.achievement.list)) return;
@@ -730,9 +645,7 @@ async function closePuppeteer() {
     puppeteerWindow = {};
     return;
   }
-  // Detach references FIRST so a concurrent startPuppeteer() spins up a fresh browser instead of
-  // grabbing the one being torn down — that race is how orphaned/duplicate Chromium instances
-  // accumulated (#32). Then close the captured handles, tolerating an already-closed browser.
+  // Detach handles first so a concurrent scrape cannot reuse a browser being closed.
   const browser = puppeteerWindow.browser;
   const context = puppeteerWindow.context;
   puppeteerWindow.browser = undefined;
@@ -755,9 +668,7 @@ async function startEngines() {
   if (!achievementsJS) {
     achievementsJS = require(path.join(__dirname, '../parser/achievements.js'));
     achievementsJS.initDebug({ isDev: app.isDev || false, userDataPath: userData });
-    // The per-game emulator setup now runs in the background (so a slow first-run fix can't blow the
-    // scan timeout), finishing after makeList's onGame callback has returned. Register a completion
-    // handler so the daemon still fires its "emulator fix applied" toast when each fix actually lands.
+    // Emulator setup runs in the background; keep its completion toast wired.
     if (achievementsJS.setEmulatorFixedHandler) achievementsJS.setEmulatorFixedHandler((g) => notifyEmulatorFixed(g));
   }
 }
@@ -809,10 +720,7 @@ ipcMain.on('get-steam-data', async (event, arg) => {
   event.returnValue = await getSteamData({ appid, type: arg.type, user: arg.user, lang: arg.lang });
 });
 
-// Reload the cached config when the renderer saves settings (onboarding finish, Settings auto-save).
-// Keeps configJS — and everything that reads it (the key-driven schema fast path below, background
-// auto-fix, overlay/notification lookups) — in sync without an app restart, so a Steam Web API key
-// entered during onboarding takes effect on the very next scan.
+// Reload the main-process config after the renderer saves settings.
 ipcMain.on('config-saved', async () => {
   try {
     await startEngines(); // re-reads options.ini into configJS
@@ -821,21 +729,13 @@ ipcMain.on('config-saved', async () => {
   }
 });
 
-// Async (invoke) twin of the handler above. The key-less puppeteer scrape inside getSteamData can take
-// up to ~30s per game; driving it through the blocking sendSync above froze the whole renderer for the
-// entire load (most visible on a fresh install with no API key and no cache — the UI hangs from the
-// very first game). Renderer callers use invoke so the UI thread stays responsive while the scrape runs
-// in the main process (which already serialises concurrent scrapes via the currentlyscraping mutex).
+// Async twin of the legacy handler; keep long scrapes off the renderer thread.
 ipcMain.handle('get-steam-data', async (event, arg) => {
   const appid = +arg.appid;
   return await getSteamData({ appid, type: arg.type, user: arg.user, lang: arg.lang });
 });
 
-// The three Epic lookups below each block on something slow and remote: a hidden-BrowserWindow
-// Steam store scrape (up to 30s) or four SteamGridDB round-trips. epic.js drove them through a
-// blocking sendSync once per uncached game, which froze the renderer for the whole scan. Same
-// problem, same fix as the get-steam-data pair above: keep the legacy `.on` twin for compatibility
-// and give each channel an invoke twin so the UI thread stays responsive while the lookup runs.
+// Async Epic lookups keep slow store and artwork requests off the renderer thread.
 async function resolveSteamAppidFromTitle(arg) {
   function normalizeTitle(str) {
     return String(str || '')
@@ -852,8 +752,7 @@ async function resolveSteamAppidFromTitle(arg) {
   let info = { name: arg.title };
   searchForSteamAppId(info);
   let possibleMatch;
-  // searchForSteamAppId populates info.games asynchronously; bound the poll so a failed page load
-  // can't leave the caller hanging forever (~30s cap, then return the best partial match).
+  // Bound the poll because the page may fail before populating info.games.
   let tries = 0;
   while (tries < 60) {
     if (info.games) {
@@ -898,16 +797,14 @@ ipcMain.handle('get-title-from-epic-id', (event, arg) => resolveTitleFromEpicId(
 async function resolveImagesForGame(arg) {
   const gameName = arg.name;
   const apiKey = getSteamGridDbApiKey();
-  // Time-box every request: undici's default headers timeout is 300s, so a blackholed DNS or a
-  // captive portal used to stall artwork lookups for minutes (and, over sendSync, the whole UI).
+  // Time-box artwork requests so network failures return quickly.
   const sgdb = (url) =>
     fetch(url, { headers: { Authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(SGDB_FETCH_TIMEOUT_MS) });
   try {
     const searchRes = await sgdb(`${BASE_URL}/search/autocomplete/${encodeURIComponent(gameName)}`);
 
     const searchData = await searchRes.json();
-    // A SteamGridDB error payload has no `data` array at all, so guard the index rather than
-    // relying on the catch below to turn a TypeError into a silent miss.
+    // Error payloads may omit data.
     const game = searchData?.data?.[0];
     if (!game) {
       debug.log('Game not found');
@@ -941,8 +838,7 @@ async function resolveImagesForGame(arg) {
 }
 
 ipcMain.on('get-images-for-game', async (event, arg) => {
-  // Legacy blocking twin: every exit path MUST set event.returnValue, or a sendSync caller stays
-  // frozen forever on a SteamGridDB miss / network error.
+  // Always set returnValue for legacy sendSync callers.
   try {
     event.returnValue = await resolveImagesForGame(arg);
   } catch {
@@ -960,9 +856,7 @@ ipcMain.on('stylize-background-for-appid', async (event, arg) => {
   try {
     const res = await fetch(imageUrl, { signal: AbortSignal.timeout(SGDB_FETCH_TIMEOUT_MS) });
     if (!res.ok) throw new Error(`Failed to fetch image: ${res.statusText}`);
-    // `.buffer()` is node-fetch's API; the global fetch here is undici, which only has
-    // arrayBuffer(). The call threw "res.buffer is not a function" on every single invocation and
-    // the catch below swallowed it, so Epic background blur/tint had never actually run.
+    // Undici exposes arrayBuffer(), not node-fetch's buffer().
     const buffer = Buffer.from(await res.arrayBuffer());
 
     const metadata = await sharp(buffer).metadata();
@@ -1012,8 +906,7 @@ ipcMain.on('fetch-source-img', async (event, arg) => {
       event.returnValue = path.join(userData, 'Source', 'xbox.svg');
       break;
     case 'Unconfigured':
-      // Exe-detected-only entry (no Steam appid match) — use a generic file icon instead of the
-      // Steam logo so these don't look like confirmed Steam games in the list.
+      // Use a generic icon for entries without a Steam appid.
       event.returnValue = path.join(__dirname, '../resources/img/file-text.png');
       break;
     case 'steam':
@@ -1027,22 +920,18 @@ ipcMain.handle('get-achievements', async (event, appid) => {
   return await getSteamData({ appid, type: 'steamhunters' });
 });
 
-// Settings > General "Check for updates" button. Feedback comes back through the same
-// dialog/balloon flow as the automatic hourly check (update-available prompt, or an
-// "up to date" / error balloon here for the cases that check normally leaves silent).
+// Manual update checks reuse the automatic prompt and notification flow.
 ipcMain.handle('check-for-updates', async () => {
   if (!app.isPackaged) return { ok: false, error: 'dev-build' };
   if (updatePromptOpen) return { ok: false, error: 'prompt-open' };
   manualUpdateCheckPending = true;
   manualUpdateResult = null;
   updaterErrorNotified = false; // let a still-failing check re-notify even if it already did once
-  // Asking for a check overrules an earlier "later" — otherwise the button would report an update
-  // and then silently refuse to offer it.
+  // A manual check overrides a previous "later" choice.
   await clearUpdatePostpone();
   try {
     await autoUpdater.checkForUpdates();
-    // update-available / update-not-available fire right after the check resolves;
-    // give them a short window so the button can report a concrete outcome.
+    // Give update events a short window to report the result.
     for (let i = 0; i < 20 && manualUpdateResult === null; i++) {
       await new Promise((resolve) => setTimeout(resolve, 150));
     }
@@ -1053,11 +942,7 @@ ipcMain.handle('check-for-updates', async () => {
   }
 });
 
-// ---- Epic "Connect account" OAuth flow ---------------------------------------------------------
-// Opens a real Epic sign-in window; once the user authenticates, Epic's redirect endpoint serves
-// { authorizationCode }, which we exchange for (and persist, encrypted) an Epic token set. This
-// unlocks per-player achievement state for the epic-official source (parser/epicOfficial.js). The
-// schema + rarity already work without connecting — this only adds "which are unlocked".
+// ---- Epic account connection ---------------------------------------------------------------
 ipcMain.handle('epic:auth-status', async () => {
   try {
     return await require(path.join(app.getAppPath(), 'util/epicAuth.js')).getEpicAuthStatus({ userDataDir: userData });
@@ -1111,11 +996,7 @@ ipcMain.handle('epic:login', async () => {
       }
     });
 
-    // Epic's sign-in page offers Google / Apple / Xbox / PlayStation / Steam / Facebook SSO, each of
-    // which opens a popup window for that provider's OAuth. The app-wide setWindowOpenHandler denies
-    // all popups (anti-abuse) — that silently broke "Sign in with Google/…". Re-allow popups spawned
-    // BY the Epic login window (same session partition so the SSO cookie flows back), and watch those
-    // child windows for the redirect code too, since some providers finalize the flow in the popup.
+    // Allow SSO popups from the Epic login window and capture their redirects.
     const attachCapture = (contents) => {
       const grab = () => tryCapture(contents);
       contents.on('did-navigate', grab);
@@ -1135,8 +1016,7 @@ ipcMain.handle('epic:login', async () => {
       attachCapture(childWindow.webContents);
     });
 
-    // After a successful sign-in the redirect page returns a JSON body with the authorizationCode.
-    // Poll it whenever navigation settles on the Epic domain; the user may bounce through 2FA/SSO first.
+    // Poll the redirect endpoint after each navigation settles.
     const tryCapture = async (contents) => {
       const wc = contents && !contents.isDestroyed() ? contents : epicLoginWindow && !epicLoginWindow.isDestroyed() ? epicLoginWindow.webContents : null;
       if (settled || !wc) return;
@@ -1161,9 +1041,7 @@ ipcMain.handle('epic:login', async () => {
   });
 });
 
-// ---- Xbox PC "Connect Microsoft / Xbox Network" + library import -------------------------------
-// OAuth against the public Xbox Live client id, XSTS session
-// stored encrypted, then an import that caches every PC title's achievements under steam_cache/xbox.
+// ---- Xbox PC connection and library import -------------------------------------------------
 let xboxLoginWindow = null;
 ipcMain.handle('xbox-pc:status', async () => {
   try {
@@ -1211,9 +1089,7 @@ ipcMain.handle('xbox-pc:login', async () => {
     } catch (err) {
       return finish({ ok: false, error: String(err && err.message ? err.message : err) });
     }
-    // Tracks every webContents that may carry the OAuth redirect: the login window itself plus any
-    // popup live.com opens for the consent/SSO flow (the app-wide setWindowOpenHandler denies all
-    // popups, so the login window re-allows its own, mirroring the Epic login flow).
+    // Track the login window and any consent/SSO popup that can carry the redirect.
     const trackedContents = new Set();
     const tryCapture = (contents, url) => {
       const wc =
@@ -1650,19 +1526,41 @@ async function startPuppeteer(headless, strip) {
 }
 
 async function scrapeWithPuppeteer(info = { appid: 269770 }, alternate) {
-  if (alternate?.steamhunters || alternate?.steamcommunity)
-    // NB: `await` is essential here — without it this becomes a tight CPU-pinning busy-loop that
-    // spins at 100% while two scrapes overlap (a direct cause of the watchdog CPU spikes #24/#39).
-    while ((currentlyscraping.steamhunters && alternate?.steamhunters) || (currentlyscraping.steamcommunity && alternate?.steamcommunity))
-      await delay(100);
-  currentlyscraping.steamcommunity = alternate?.steamcommunity ? true : currentlyscraping.steamcommunity;
-  currentlyscraping.steamhunters = alternate?.steamhunters ? true : currentlyscraping.steamhunters;
-  await startPuppeteer(alternate, alternate?.steamhunters);
-  try {
-    if (alternate) {
-      if (alternate.steamhunters) {
-        if (alternate.userlist) {
-          const url = `https://steamhunters.com/apps/${info.appid}/users?sort=completionstate`;
+  return withScrapeLease(currentlyscraping, alternate, async () => {
+    await startPuppeteer(alternate, alternate?.steamhunters);
+    try {
+      if (alternate) {
+        if (alternate.steamhunters) {
+          if (alternate.userlist) {
+            const url = `https://steamhunters.com/apps/${info.appid}/users?sort=completionstate`;
+            const page = puppeteerWindow.pagesh;
+            try {
+              await page.goto(url);
+              await page.waitForFunction(() => {
+                return Array.from(document.querySelectorAll('script')).some((s) => s.textContent.includes('var sh'));
+              });
+              await page.evaluate(() => {
+                const scripts = Array.from(document.querySelectorAll('script'));
+                const target = scripts.find((s) => s.textContent.includes('var sh'));
+                eval(target.textContent);
+              });
+              const users = (await page.evaluate(() => sh.model.listData.pagedList.items)) || [];
+
+              const results = [];
+              users.forEach((item) => {
+                results.push({
+                  id: item.steamId,
+                  isPublic: item.privacyState === 0,
+                });
+              });
+              info.users = users;
+            } catch (e) {
+              debug.log(e);
+            }
+            return;
+          }
+          let start = Date.now();
+          const url = `https://steamhunters.com/apps/${info.appid}/achievements?group=&sort=name`;
           const page = puppeteerWindow.pagesh;
           try {
             await page.goto(url);
@@ -1674,64 +1572,37 @@ async function scrapeWithPuppeteer(info = { appid: 269770 }, alternate) {
               const target = scripts.find((s) => s.textContent.includes('var sh'));
               eval(target.textContent);
             });
-            const users = (await page.evaluate(() => sh.model.listData.pagedList.items)) || [];
+            const achievements = (await page.evaluate(() => sh.model.listData.pagedList.items)) || [];
 
             const results = [];
-            users.forEach((item) => {
+            achievements.forEach((item) => {
               results.push({
-                id: item.steamId,
-                isPublic: item.privacyState === 0,
+                name: item.apiName,
+                default_value: 0,
+                displayName: item.name,
+                hidden: item.hidden ? 1 : 0,
+                description: item.description || ' ',
+                icon: item.icon,
+                icongray: item.iconGray,
               });
             });
-            info.users = users;
+            info.achievements = results;
+            debug.log(`[${info.appid}] steamhunters took ${(Date.now() - start) / 1000}s`);
           } catch (e) {
             debug.log(e);
           }
           return;
         }
-        let start = Date.now();
-        const url = `https://steamhunters.com/apps/${info.appid}/achievements?group=&sort=name`;
-        const page = puppeteerWindow.pagesh;
-        try {
-          await page.goto(url);
-          await page.waitForFunction(() => {
-            return Array.from(document.querySelectorAll('script')).some((s) => s.textContent.includes('var sh'));
-          });
-          await page.evaluate(() => {
-            const scripts = Array.from(document.querySelectorAll('script'));
-            const target = scripts.find((s) => s.textContent.includes('var sh'));
-            eval(target.textContent);
-          });
-          const achievements = (await page.evaluate(() => sh.model.listData.pagedList.items)) || [];
 
-          const results = [];
-          achievements.forEach((item) => {
-            results.push({
-              name: item.apiName,
-              default_value: 0,
-              displayName: item.name,
-              hidden: item.hidden ? 1 : 0,
-              description: item.description || ' ',
-              icon: item.icon,
-              icongray: item.iconGray,
-            });
-          });
-          info.achievements = results;
-          debug.log(`[${info.appid}] steamhunters took ${(Date.now() - start) / 1000}s`);
-        } catch (e) {
-          debug.log(e);
-        }
-        return;
+        // NB: the old steamcommunity-in-page and steamdb scrape branches were removed — every caller
+        // goes through the steamhunters paths above (the steamcommunity schema now uses a plain HTTP
+        // fetch, see fetchSteamCommunityAchievements), and the steamdb branch relied on a
+        // `puppeteerWindow.page` that startPuppeteer never created.
       }
-
-      // NB: the old steamcommunity-in-page and steamdb scrape branches were removed — every caller
-      // goes through the steamhunters paths above (the steamcommunity schema now uses a plain HTTP
-      // fetch, see fetchSteamCommunityAchievements), and the steamdb branch relied on a
-      // `puppeteerWindow.page` that startPuppeteer never created.
+    } catch (err) {
+      debug.log(err);
     }
-  } catch (err) {
-    debug.log(err);
-  }
+  }, delay);
 }
 
 // Drop the payloads a SteamDB/HTML scrape never reads: video, fonts and (optionally) images. The
@@ -2414,10 +2285,25 @@ function createMainWindow() {
     MainWin.on('enter-full-screen', () => logWindowGeometry('enter-full-screen'));
     MainWin.on('leave-full-screen', () => logWindowGeometry('leave-full-screen'));
 
+    const fitMainWindowInWorkArea = () => {
+      if (!MainWin || MainWin.isDestroyed()) return;
+      try {
+        const bounds = MainWin.getBounds();
+        const display = require('electron').screen.getDisplayMatching(bounds);
+        const fitted = clampWindowBoundsToWorkArea(bounds, display.workArea);
+        if (fitted.x === bounds.x && fitted.y === bounds.y) return;
+        MainWin.setBounds(fitted);
+        debug.log(`[MainWindow] moved into work area: ${bounds.x},${bounds.y} -> ${fitted.x},${fitted.y}`);
+      } catch (err) {
+        debug.log(`[MainWindow] could not validate its work area (${err.message || err})`);
+      }
+    };
+
     const showMainWindow = (reason) => {
       if (mainWindowShown || !MainWin) return;
       mainWindowShown = true;
       debug.log(`[MainWindow] showing (${reason})`);
+      fitMainWindowInWorkArea();
       MainWin.show();
       MainWin.focus();
       logWindowGeometry('shown');

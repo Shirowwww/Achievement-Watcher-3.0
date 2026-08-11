@@ -208,13 +208,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#option_controllerEnabled').val(String(app.config.controller.enabled === true)).change();
       $('#option_controllerBackend').val(app.config.controller.backend || 'auto').change();
       populateThemeSelect();
-      // Windows' login item is a MIRROR of the stored preference, never its source of truth. The
-      // query matches the registered command line against this build's exe + args, so it answers
-      // "not registered" for an entry that is really there whenever the two drift apart — after an
-      // update that moved the executable, or in a dev run (whose exe is electron.exe). Adopting that
-      // answer silently flipped "Start with Windows" to No and persisted it on the next save, even
-      // though init.js re-applies the stored value at every startup. So the stored preference wins,
-      // and a disagreement is repaired by re-applying it to Windows.
+      // The saved startup preference is authoritative; repair a mismatched login item.
       const startupPreference = app.config.general.startWithWindows !== false;
       ipcRenderer
         .invoke('startup:get-start-with-windows')
@@ -277,10 +271,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const souvenirDir = cfgSouvenir.dir && cfgSouvenir.dir.trim() ? cfgSouvenir.dir : souvenirDefaultDir();
       $('#souvenir-dir-display').text(souvenirDir);
       $('#btn-souvenir-dir').attr('title', souvenirDir);
-      // The preset/sound dropdowns are filled asynchronously. Auto-save must stay disarmed until BOTH
-      // finish populating: otherwise the `change` event fired while populating runs readNotificationSettings
-      // against a still-empty sound dropdown and persists notificationSound='' (wiping the user's choice).
-      // settingsReady is therefore armed in the Promise.all below, not synchronously at the end of this handler.
+      // Arm auto-save only after both asynchronous lists are populated.
       const presetsReady = ipcRenderer
         .invoke('list-presets')
         .then((presets) => {
@@ -408,10 +399,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#hotkey').text('...');
     });
 
-    // Opens the real in-game overlay on top of the desktop, using whichever game is currently open
-    // in the achievement detail view (or the first game in the library otherwise), so the hotkey and
-    // the overlay's look can be checked without having a game actually running. Clicking again closes
-    // it (same toggle the main process applies to the in-game hotkey).
+    // Preview the real overlay for the selected or first game.
     $('#btn-hotkey-preview').click(function () {
       const openAppid = $('#achievement .wrapper > .header').attr('data-appid');
       const fallbackAppid = $('#game-list .game-box[data-appid]').first().data('appid');
@@ -1737,10 +1725,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       self.css('pointer-events', 'initial');
     });
 
-    // #7 — Generate configs from the watched/library folders on demand. Persists the current folders,
-    // then runs a full rescan: makeList discovers every game in those folders and applies the one-shot
-    // emulator fix (schema + steam_settings + icons) to unconfigured ones, so they're ready without
-    // waiting for the 15-min background scan or opening each game manually.
+    // Generate emulator configs for the watched/library folders, then rescan.
     $('#generate-configs').click(async function () {
       const self = $(this);
       const result = $('#generate-configs-result');
@@ -1995,13 +1980,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     $('#blacklist-add-input').attr('placeholder', t('blacklist-add-placeholder', 'Steam App ID', 'ID d’app Steam'));
     $('#blacklist-add-btn span').text(t('blacklist-add-button', 'Add', 'Ajouter'));
 
-    // Ask Steam for a title the local caches don't know. One small store lookup per appid, and
-    // getSteamData writes the answer into steam_cache, so the offline resolver finds it next time.
-    // Returns '' for a non-numeric id (local/Uplay/Xbox entries) or an unreachable store.
-    //
-    // Bounded: without an API key getSteamData falls back to a hidden-window store scrape that can
-    // run for ~30s per game. A missing title is cosmetic — the row still shows its id — so it is
-    // never worth making the user wait that long for one.
+    // Resolve missing numeric blacklist names with a short, cacheable Steam lookup.
     const BLACKLIST_NAME_LOOKUP_TIMEOUT_MS = 8000;
     async function resolveBlacklistNameOnline(appid) {
       const id = String(appid ?? '').trim();
@@ -2018,14 +1997,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       }
     }
 
-    // Blacklist manager: list the user's hidden games, each with a restore button. Restoring only
-    // flags the library for refresh — the actual reload runs once, when Settings closes, instead of
-    // yanking the whole UI on every click.
-    //
-    // Entries hidden before the name sidecar existed carry no title, so the list used to be a column
-    // of bare appids. getUserDetailed() backfills those from every local source it has; whatever is
-    // still unnamed is then resolved online, in the background, and written back to the sidecar — the
-    // rows fill in as the answers land instead of blocking the panel on the network.
+    // Render hidden games, backfilling missing names locally and then online.
     async function renderBlacklistManager() {
       const listEl = $('#blacklist-manager');
       const emptyEl = $('#blacklist-empty');
@@ -2139,16 +2111,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         });
     });
 
-    // Auto-save the Notifications tab: persist immediately on any change, no OK required.
-    // The volume slider is a range input, not a <select>, so it is targeted explicitly (the
-    // customiser's own range inputs build presets and must NOT trigger a settings save).
+    // Auto-save notification controls, excluding customizer sliders.
     $("#settings .box section.content[data-view='notification']").on('change', 'select, #option_overlayVolume', autosaveNotifications);
 
-    // Overlay-only options (presets, position, sound, scale, duration…) and the custom-preset
-    // builder only make sense for in-game overlay notifications. Collapse them with a smooth
-    // height/opacity animation when the transport is Windows toast; restore them for
-    // overlay/both. Heights are measured per row so the animation matches whatever the
-    // localized labels/help make each row's real height.
+    // Collapse overlay-only controls when toast-only mode is selected.
     function animateOverlaySettingCollapse(el, visible) {
       const $el = $(el);
       if (!$el.length) return;
@@ -2175,8 +2141,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     function updateOverlayOptionsVisibility() {
       const mode = $('#option_notifMode').val() || 'overlay';
       const visible = mode !== 'toast';
-      // Sound selection stays relevant for Windows toasts too (they now play the configured
-      // sound), so those rows are never collapsed with the rest of the overlay-only options.
+      // Sound controls also apply to Windows toasts.
       const KEEP_VISIBLE_OVERLAY_IDS = new Set(['lbl-overlaySound', 'lbl-overlayRandomSound', 'lbl-overlayVolume']);
       $('#options-notify-overlay > li:not(:first-child)').each(function () {
         const labelId = $(this).find('[id^="lbl-overlay"]').first().attr('id') || '';
@@ -2187,13 +2152,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     $('#option_notifMode').on('change', updateOverlayOptionsVisibility);
     updateOverlayOptionsVisibility();
 
-    // Shared by the five Notifications-tab test buttons (toast/rare/progress/playtime/platinum):
-    // asks the watchdog (over its existing websocket) to fire the given test notification.
-    //
-    // Overlay tests used to open a fullscreen black window first, to stand in for a running game.
-    // The popup never needed it — it is its own always-on-top window — so all the backdrop did was
-    // black out the screen (hiding the Settings panel whose presets you are comparing) for several
-    // seconds per click. It is gone: the test now renders the popup over whatever is on screen.
+    // Send notification test requests through the watchdog websocket.
     function runNotificationTest(cmd) {
       setTimeout(() => {
         const ws = new WebSocket('ws://localhost:8082');
@@ -2258,13 +2217,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const tier = tiers[Math.floor(Math.random() * tiers.length)];
       return Math.round((tier.min + Math.random() * (tier.max - tier.min)) * 10) / 10;
     }
-    // Build overlay test payload for a given notification kind, using the current overlay settings.
-    // `presetOverride` renders through a preset that is not the selected one — the builder's Preview
-    // uses it for the unsaved design, and the sample text then names that design instead of lying
-    // about which preset you are looking at. `label` is what the sample text says.
+    // Build a notification test payload using the current overlay settings.
     function overlayTestData(kind, presetOverride, label) {
       const mainPreset = $('#option_overlayPreset').val() || 'Shirow';
-      // Tests honor the per-type preset overrides so they render exactly like the real popups.
+      // Match the per-type preset used by real notifications.
       const preset =
         presetOverride ||
         (kind === 'rare'

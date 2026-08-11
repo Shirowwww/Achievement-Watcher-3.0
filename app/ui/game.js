@@ -1,5 +1,16 @@
 'use strict';
 
+function indexAchievementRows($) {
+  const rowsByName = new Map();
+  $('#achievement li .achievement[data-name]').each(function () {
+    const name = this.getAttribute('data-name');
+    const rows = rowsByName.get(name);
+    if (rows) rows.push(this);
+    else rowsByName.set(name, [this]);
+  });
+  return rowsByName;
+}
+
 // Paint the global unlock % (rarity) onto the rendered achievement rows. `entries` is the normalized
 // [{name, percent}] shape produced by util/rarity.js, identical for Steam/Epic/GOG.
 function applyRarity(entries) {
@@ -12,11 +23,12 @@ function applyRarity(entries) {
   } catch {
     return; // rarity is a non-essential enrichment
   }
+  const rowsByName = indexAchievementRows($);
   for (const { name, percent: raw } of entries) {
     let percent = Math.round(raw * 10) / 10;
     if (percent > 100) percent = 100;
 
-    const elem = $(`#achievement li .achievement[data-name="${name}"]`);
+    const elem = $(rowsByName.get(String(name)) || []);
     elem.find('.stats .community span.data').text(percent);
 
     const tier = rarityTier(percent);

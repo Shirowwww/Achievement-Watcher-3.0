@@ -96,6 +96,25 @@ function sortOptions() {
   return { alpha: mode === 'alpha', percent: mode === 'percent', time: mode === 'time', played: mode === 'played', direction };
 }
 
+function snapshotGameSortValues(li, options) {
+  const values = new Map();
+  li.each(function () {
+    const row = $(this);
+    const value = {};
+    let gameBox;
+    if (options.played || options.time || !options.alpha) {
+      gameBox = row.find('.game-box');
+      if (options.played) value.played = gameBox.data('lastplayed');
+      if (options.time) value.time = gameBox.data('time');
+      if (!options.alpha) value.appid = gameBox.data('appid');
+    }
+    if (options.percent) value.percent = row.find('.progressBar').data('percent');
+    if (options.alpha) value.title = row.find('.info .title').text();
+    values.set(this, value);
+  });
+  return values;
+}
+
 function sort(elem, option = {}) {
   let options = {
     alpha: option.alpha,
@@ -108,27 +127,30 @@ function sort(elem, option = {}) {
   const factor = options.direction === 'asc' ? 1 : -1;
 
   let li = elem.children('li');
+  const values = snapshotGameSortValues(li, options);
 
   li.detach().sort(function (a, b) {
+    const aValue = values.get(a);
+    const bValue = values.get(b);
     if (options.played) {
-      let result = ($(a).find('.game-box').data('lastplayed') - $(b).find('.game-box').data('lastplayed')) * factor;
+      let result = (aValue.played - bValue.played) * factor;
       if (result != 0) return result;
     }
 
     if (options.time) {
-      let result = ($(a).find('.game-box').data('time') - $(b).find('.game-box').data('time')) * factor;
+      let result = (aValue.time - bValue.time) * factor;
       if (result != 0) return result;
     }
 
     if (options.percent) {
-      let result = ($(a).find('.progressBar').data('percent') - $(b).find('.progressBar').data('percent')) * factor;
+      let result = (aValue.percent - bValue.percent) * factor;
       if (result != 0) return result;
     }
 
     if (options.alpha) {
-      return $(a).find('.info .title').text().localeCompare($(b).find('.info .title').text(), undefined, { sensitivity: 'base' }) * factor;
+      return aValue.title.localeCompare(bValue.title, undefined, { sensitivity: 'base' }) * factor;
     } else {
-      return $(a).find('.game-box').data('appid') - $(b).find('.game-box').data('appid');
+      return aValue.appid - bValue.appid;
     }
   });
 
@@ -188,18 +210,7 @@ window.restoreAchievementSorts = function () {
   });
 };
 
-// "Show installed games only" filter. ON by default (hides phantom entries: orphaned emulator
-// save folders and stale cache imports that have no live install). State persists in localStorage.
-// Filtering is purely CSS-driven (a class on the list <ul>), so it applies instantly to already
-// rendered tiles AND to tiles streamed in afterwards, with no rescan.
-//
-// localStorage lives in Chromium's profile, which the one-time %APPDATA%\Achievement Watcher 3.0
-// migration deliberately never imports (util/migrateUserData.js — it's regenerated on first launch).
-// For a genuinely new install that is the right call; but for a user migrated from an older version,
-// their fresh profile has no `showInstalledOnly` key either, and most of their real, previously
-// visible library has no on-disk-confirmed install (see achievements.js `installState.isInstalled`) —
-// so defaulting to ON silently hid almost their whole library (issue #10). Only default to ON when
-// there is no evidence this profile was just imported from a legacy install.
+// Persist the installed-only filter and keep it CSS-driven for streamed tiles.
 let _migratedFromLegacyCache = null;
 function wasMigratedFromLegacy() {
   if (_migratedFromLegacyCache !== null) return _migratedFromLegacyCache;

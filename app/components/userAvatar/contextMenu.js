@@ -1,5 +1,6 @@
 'use strict';
 
+const path = require('path');
 const remote = require('@electron/remote');
 const { Menu, MenuItem, nativeImage } = remote;
 const request = require('request-zero');

@@ -1,6 +1,8 @@
 'use strict';
 
 const remote = require('@electron/remote');
+const path = require('path');
+const appPath = path.join(__dirname, '..');
 
 const merge = require('deepmerge');
 const ffs = require('../util/fsAsync');

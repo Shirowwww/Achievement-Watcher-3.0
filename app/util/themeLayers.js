@@ -1,18 +1,7 @@
 'use strict';
 
-/*
- * Layer-based theme engine.
- *
- * The app is split into visual "layers" (window background, header, library
- * panel, cards, settings modal, overlay panel, ...). Built-in themes provide a
- * color per layer; the Custom theme additionally lets the user pick a color and
- * an optional image per layer. This module owns the layer model and generates
- * the CSS that applies a theme to the main window and to the in-game overlay.
- *
- * Custom themes are persisted as <userData>/cfg/customTheme.json. Images are
- * copied into <userData>/theme-images so the theme survives the source file
- * being moved or deleted.
- */
+// Theme layers and the CSS generated for the main window and overlay.
+// Custom theme data lives under userData so source images can be moved later.
 
 const fs = require('fs');
 const path = require('path');
@@ -23,10 +12,7 @@ const IMAGE_LAYER_IDS = ['bg', 'header', 'panel', 'card', 'settings'];
 const FITS = ['cover', 'contain', 'repeat', 'fill'];
 const EFFECT_TYPES = ['veil', 'blur'];
 
-// One color per layer for each built-in theme. These mirror the values in
-// app/resources/css/app.css (2026 interface pass for `default`, data-theme
-// blocks for the others) and are the source of truth for the overlay, which
-// has no stylesheet of its own.
+// Built-in colors mirror app.css; the overlay uses this table directly.
 const BUILTIN_COLORS = {
   default: {
     bg: '#1b2838',

@@ -1,21 +1,7 @@
 'use strict';
 
-// Decides what an incoming in-game overlay request means, given what is currently on screen.
-//
-// Requests reach the main process from three places — the Watchdog hotkey, the controller service
-// and the playtime monitor — as `{ appid, action }` pairs, and the same pair means different things
-// depending on whether an overlay window is already open. Keeping that decision here (instead of
-// inline in createOverlayWindow's branch chain) makes it unit-testable, which is how issue #19 was
-// caught: a `close` request arriving with NO overlay open fell through to the open path and popped
-// the overlay onto the desktop right after the game exited.
-//
-// Outcomes:
-//   ignore   — nothing to do
-//   close    — close the open overlay
-//   refresh  — push fresh achievement data into the open overlay
-//   reopen   — the running game changed: close the current overlay, then open the new game's
-//   open     — open the overlay for `appid`
-//   fallback — appid 0 (hotkey pressed with no game running): resolve a game, then open
+// Resolve overlay requests without mixing open, close and refresh state in the window code.
+// Outcomes are ignore, close, refresh, reopen, open or fallback.
 function resolveOverlayRequest({ action, appid, isOpen, openAppid } = {}) {
   const wanted = String(appid == null ? '' : appid).trim();
   const current = String(openAppid == null ? '' : openAppid).trim();

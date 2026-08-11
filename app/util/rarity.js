@@ -1,17 +1,7 @@
 'use strict';
 
-// Generalized achievement-rarity aggregation.
-//
-// "Rarity" = the global unlock percentage of an achievement across all players. The renderer already
-// fetched this live from Steam/Epic on every game view (app/ui/game.js getGlobalStat), but it was
-// never persisted: each visit paid a fresh network round-trip and the panel showed nothing offline.
-// This module is the shared, persisted layer:
-//   - one fetcher per platform (Steam global %, Epic public %, GOG gameplay %),
-//   - a normalized {name, percent} shape regardless of source,
-//   - a per-appid sidecar cache (steam_cache/rarity/<appid>.json) with a TTL so repeat views and
-//     offline launches render instantly and the network is only hit when the cache is stale.
-//
-// Uses the Fetch API provided by the supported Electron/Node runtime.
+// Shared rarity fetchers and the per-appid cache used by the renderer and watchdog.
+// Results are normalized to { name, percent } and kept in steam_cache/rarity.
 
 const fs = require('fs');
 const path = require('path');
@@ -220,16 +210,7 @@ async function getSteamBridgeRarity(cacheId, steamAppId, names, options = {}) {
   return cached ? cached.entries : [];
 }
 
-// Decide how (and whether) a game's detail view gets global unlock percentages. Every source that
-// can be reconciled back to Steam gets the same Steam community column as a native Steam game:
-//   - Uplay R2 keeps the Steam AppID directly and its schema already uses Steam API names;
-//   - official Ubisoft Connect / Lumaplay use a namespaced appid + native numeric ids, so they go
-//     through the Steam↔id bridge cache (seeded by the parser, refreshed by the renderer);
-//   - Goldberg SocialClub uses a namespaced appid but loads the Steam schema of its resolved Steam
-//     release, so the Steam percentages apply directly through game.steamappid;
-//   - Epic installs with a known Steam release borrow the Steam percentages.
-// Sources without a Steam counterpart keep their own rarity (Epic/GOG/console emulators) and EA
-// (which has none) resolves to null (the column stays hidden).
+// Resolve the rarity source for a game's detail view.
 function resolveGameRarityContext(game, options = {}) {
   if (!game || !game.achievement || !Array.isArray(game.achievement.list)) return null;
   const system = String(game.system || '').toLowerCase();

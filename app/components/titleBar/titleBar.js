@@ -12,7 +12,7 @@ const template = `
     <div class="sf-indicator">
     <ul id="watchdog-status" class="sf-indicator"><span class="status-dot status-orange"></span><span class="status-text">Vérification du Watchdog…</span> <span id="start-watchdog"></span></ul>
     </div>
-    <ul>
+    <ul id="window-controls">
       <li id="btn-close"><i class="fas fa-times"></i></li>
       <li id="btn-maximize"><i class="far fa-window-maximize"></i></li>
       <li id="btn-minimize"><i class="far fa-window-minimize"></i></li>
@@ -31,33 +31,35 @@ export default class titleBar extends HTMLElement {
     this.settingsBtn = this.shadowRoot.querySelector('#btn-settings');
     this.minimizeBtn = this.shadowRoot.querySelector('#btn-minimize');
     this.watchdogBtn = this.shadowRoot.querySelector('#start-watchdog');
+    this.onClose = () => this.close();
+    this.onMaximize = () => this.maximize();
+    this.onSettings = () => this.settings();
+    this.onMinimize = () => this.minimize();
+    this.onStartWatchdog = () => this.start_watchdog();
   }
 
   /* Life Cycle */
   connectedCallback() {
-    this.closeBtn.addEventListener('click', this.close.bind(this));
-    this.maximizeBtn.addEventListener('click', this.maximize.bind(this));
-    this.settingsBtn.addEventListener('click', this.settings.bind(this));
-    this.minimizeBtn.addEventListener('click', this.minimize.bind(this));
-    this.watchdogBtn.addEventListener('click', this.start_watchdog.bind(this));
+    this.closeBtn.addEventListener('click', this.onClose);
+    this.maximizeBtn.addEventListener('click', this.onMaximize);
+    this.settingsBtn.addEventListener('click', this.onSettings);
+    this.minimizeBtn.addEventListener('click', this.onMinimize);
+    this.watchdogBtn.addEventListener('click', this.onStartWatchdog);
 
     const defaults = [ipcRenderer.invoke('win-isMinimizable'), ipcRenderer.invoke('win-isMaximizable')];
-
-    Promise.allSettled(defaults).then((promises) => {
-      const [isMinimizable, isMaximizable] = promises;
-
+    Promise.allSettled(defaults).then(([isMinimizable, isMaximizable]) => {
       if (isMinimizable.value === true) this.setAttribute('minimizable', '');
       if (isMaximizable.value === true) this.setAttribute('maximizable', '');
-
       this.update();
     });
   }
 
   disconnectedCallback() {
-    this.closeBtn.removeEventListener('click', this.close.bind(this));
-    this.maximizeBtn.removeEventListener('click', this.maximize.bind(this));
-    this.settingsBtn.removeEventListener('click', this.settings.bind(this));
-    this.minimizeBtn.removeEventListener('click', this.minimize.bind(this));
+    this.closeBtn.removeEventListener('click', this.onClose);
+    this.maximizeBtn.removeEventListener('click', this.onMaximize);
+    this.settingsBtn.removeEventListener('click', this.onSettings);
+    this.minimizeBtn.removeEventListener('click', this.onMinimize);
+    this.watchdogBtn.removeEventListener('click', this.onStartWatchdog);
   }
 
   /* Update */
@@ -71,25 +73,11 @@ export default class titleBar extends HTMLElement {
   }
 
   update() {
-    if (this.hasAttribute('maximizable')) {
-      this.maximizeBtn.style['display'] = 'inline-block';
-    } else {
-      this.maximizeBtn.style['display'] = 'none';
-    }
-
-    if (this.hasAttribute('minimizable')) {
-      this.minimizeBtn.style['display'] = 'inline-block';
-    } else {
-      this.minimizeBtn.style['display'] = 'none';
-    }
-
-    if (this.hasAttribute('insettings')) {
-      this.settingsBtn.style['pointer-events'] = 'none';
-      this.watchdogBtn.style['pointer-events'] = 'none';
-    } else {
-      this.settingsBtn.style['pointer-events'] = 'initial';
-      this.watchdogBtn.style['pointer-events'] = 'initial';
-    }
+    this.maximizeBtn.style.display = this.hasAttribute('maximizable') ? 'inline-flex' : 'none';
+    this.minimizeBtn.style.display = this.hasAttribute('minimizable') ? 'inline-flex' : 'none';
+    const disabled = this.hasAttribute('insettings');
+    this.settingsBtn.style.pointerEvents = disabled ? 'none' : 'initial';
+    this.watchdogBtn.style.pointerEvents = disabled ? 'none' : 'initial';
   }
 
   /* Getter/Setter */

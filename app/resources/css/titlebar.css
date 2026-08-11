@@ -1,8 +1,8 @@
 .sf-indicator {
   --sf-indicator-size: 9px;
-  --sf-indicator-green: #2fe55f;
-  --sf-indicator-red: #c51b1b;
-  --sf-indicator-orange: #db8719;
+  --sf-indicator-green: var(--success, #2fe55f);
+  --sf-indicator-red: var(--danger, #c51b1b);
+  --sf-indicator-orange: var(--warning, #db8719);
 }
 .sf-indicator {
   display: flex;
@@ -97,6 +97,7 @@ ul {
   right: 0;
   top: 0;
   z-index: 99;
+  height: 30px;
   direction: rtl;
   height: 100%;
   /* Shrink-to-fit box of inline-flex items: without this the window buttons WRAP onto a second row
@@ -109,6 +110,19 @@ ul#watchdog-status {
   right: auto;
   left: 0;
   direction: ltr;
+  max-width: calc(100% - 180px);
+  overflow: hidden;
+}
+ul#window-controls {
+  display: flex;
+  width: 180px;
+  min-width: 180px;
+}
+
+#watchdog-status {
+  height: 30px;
+  direction: ltr;
+  white-space: nowrap;
 }
 
 #start-watchdog {
@@ -127,6 +141,10 @@ ul#watchdog-status {
   font-family: 'Open-Sans', sans-serif;
   font-size: 13px;
   opacity: 0.88;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 ul > li {
@@ -148,18 +166,18 @@ ul > li#btn-minimize i {
   transform: translateY(-4px);
 }
 ul > li {
-  background-color: transparent;
+  background-color: color-mix(in srgb, var(--surface-sunken, #101a27) 72%, transparent);
 }
 ul > li:hover,
 #start-watchdog:hover {
-  background-color: rgba(255, 255, 255, 0.09);
-  color: #ffffff;
+  background-color: color-mix(in srgb, var(--text, #ffffff) 9%, transparent);
+  color: var(--text, #ffffff);
 }
 ul > li#btn-close {
   font-size: 16px;
 }
 ul > li#btn-close:hover {
-  background-color: rgba(215, 40, 40, 0.9);
+  background-color: color-mix(in srgb, var(--danger, #d9534f) 90%, transparent);
 }
 /* Settings cog gently turns on hover (previously gated behind a `.animate` host class that was never
    set, so it never fired). */

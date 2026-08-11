@@ -3,27 +3,16 @@
   Drive and visually verify a running Achievement Watcher dev build from the command line.
 
 .DESCRIPTION
-  The app is a resident tray daemon whose overlay, notifications and main window all live as
-  BrowserWindows inside one process, so there is nothing to attach a browser automation tool to and
-  `npm start` alone tells you almost nothing. Three primitives cover everything worth checking:
-
-    * the single-instance lock forwards CLI arguments to the running app, which is exactly how the
-      Watchdog talks to it (`--wintype=overlay --appid=<id> --description=open|close|refresh`), so
-      any request the Watchdog can make can be made by hand;
-    * top-level window enumeration says what is actually on screen, which is the only trustworthy
-      answer for "did the overlay appear?" — the logs are written before the decision is taken;
-    * PrintWindow captures a specific window even when it is occluded, giving a real screenshot to
-      look at rather than a claim.
-
-  Synthetic keystrokes cover the rest: the global hotkey and the overlay's own Escape/× path.
+  The app is a tray daemon. This script forwards overlay requests, enumerates windows,
+  sends input and captures screenshots for runtime checks.
 
 .EXAMPLE
-  # Is the overlay-close-with-nothing-open regression (issue #19) back?
+  # Closing a missing overlay must not open one.
   .\tools\aw-probe.ps1 Send -Arguments '--wintype=overlay --appid=0 --description=close'
   .\tools\aw-probe.ps1 Windows          # must NOT list "Achievements Overlay"
 
 .EXAMPLE
-  # Close the overlay the way a user does, then check ONE hotkey press brings it back.
+  # Close the overlay, then reopen it with the hotkey.
   .\tools\aw-probe.ps1 Key -Keys ESC -FocusMatch 'Achievements Overlay'
   .\tools\aw-probe.ps1 Key -Keys CTRL+SHIFT+K
   .\tools\aw-probe.ps1 Wait -Match 'Achievements Overlay' -TimeoutSeconds 10
@@ -46,12 +35,11 @@ param(
   [switch]$Absent,
   [switch]$Screen,
   [int]$Tail = 40,
-  # Click position. With -Match, X/Y are relative to that window's top-left corner (so a layout
-  # coordinate read off a screenshot can be replayed regardless of where the window sits).
+  # With -Match, X/Y are relative to the matched window.
   [int]$X = 0,
   [int]$Y = 0,
   [switch]$RightClick,
-  # Scroll: positive scrolls up, negative scrolls down (wheel notches).
+  # Positive scrolls up; negative scrolls down.
   [int]$Notches = -3
 )
 
@@ -61,9 +49,7 @@ $AppDir = Join-Path $RepoRoot 'app'
 $Electron = Join-Path $AppDir 'node_modules\electron\dist\electron.exe'
 $UserData = Join-Path $env:APPDATA 'Achievement Watcher 3.0'
 
-# Deliberately free of System.Drawing / WinForms types: those assemblies are not referenceable from
-# Add-Type under PowerShell 7, and this script has to run under both 5.1 and 7. The bitmap side is
-# done in PowerShell below, where `Add-Type -AssemblyName System.Drawing` works on both.
+# Keep the native helper compatible with PowerShell 5.1 and 7.
 Add-Type @"
 using System;
 using System.Text;
@@ -85,8 +71,7 @@ public class AwProbe {
   [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
   [DllImport("user32.dll")] public static extern void mouse_event(uint flags, int dx, int dy, uint data, UIntPtr extra);
 
-  // Screen-coordinate click. Chromium renders the whole UI itself, so there are no child HWNDs to
-  // target: a real cursor move plus button down/up is the only way in from outside the process.
+  // Chromium renders the UI in one window, so click through the real cursor.
   public static void ClickAt(int x, int y) {
     SetCursorPos(x, y);
     System.Threading.Thread.Sleep(120);
@@ -95,8 +80,7 @@ public class AwProbe {
     mouse_event(0x0004, 0, 0, 0, UIntPtr.Zero);   // LEFTUP
   }
 
-  // Wheel notches at a point. The cursor must sit over the scrollable area first: Chromium routes
-  // wheel input by hit-test, not by focus.
+  // Chromium routes wheel input by hit-test.
   public static void ScrollAt(int x, int y, int notches) {
     SetCursorPos(x, y);
     System.Threading.Thread.Sleep(120);
@@ -115,8 +99,7 @@ public class AwProbe {
   }
   [DllImport("user32.dll")] static extern int GetSystemMetrics(int index);
 
-  // Virtual screen origin/size (SM_XVIRTUALSCREEN..SM_CYVIRTUALSCREEN), so a full-desktop capture
-  // is correct on a multi-monitor setup instead of only ever grabbing the primary display.
+  // Return the virtual desktop bounds for multi-monitor captures.
   public static int[] VirtualScreen() {
     return new int[] { GetSystemMetrics(76), GetSystemMetrics(77), GetSystemMetrics(78), GetSystemMetrics(79) };
   }
@@ -128,8 +111,7 @@ public class AwProbe {
     public int X, Y, Width, Height;
   }
 
-  // Only windows belonging to an Electron process: the dev build runs from
-  // app/node_modules/electron, so the process name is "electron", not the packaged exe name.
+  // Dev builds use the process name "electron".
   public static List<Win> List(string processName) {
     var found = new List<Win>();
     EnumWindows((h, p) => {
@@ -181,11 +163,7 @@ function Get-VK([string]$name) {
   throw "Unknown key '$name'"
 }
 
-# Windows refuses SetForegroundWindow to a process that does not already own the foreground, and it
-# refuses SILENTLY — the call returns and the keystrokes then land on whatever was focused instead.
-# Tapping ALT satisfies the foreground-lock rule, and the result is verified rather than assumed: a
-# key sent to the wrong window is worse than a visible failure, because it looks like the app
-# ignored it.
+# Focus the window and verify it before sending input.
 function Set-Foreground([IntPtr]$handle) {
   for ($attempt = 0; $attempt -lt 5; $attempt++) {
     [AwProbe]::keybd_event(0x12, 0, 0, [UIntPtr]::Zero)
@@ -198,10 +176,7 @@ function Set-Foreground([IntPtr]$handle) {
   return $false
 }
 
-# Every input command needs the same thing: find the window, bring it to the front, and refuse to
-# act if that did not work. Keys go to whatever has focus and wheel events to whatever is under the
-# cursor, so acting anyway would drive the wrong window — which reads exactly like the app ignoring
-# the input.
+# All input commands require a focused target.
 function Get-InputTarget([string]$pattern, [string]$what) {
   $target = Select-Windows $pattern | Select-Object -First 1
   if (-not $target) { Write-Host "FAIL: no window matching '$pattern'"; exit 1 }
@@ -215,10 +190,9 @@ switch ($Command) {
     if ((Get-Process electron -ErrorAction SilentlyContinue)) {
       Write-Host 'An Electron instance is already running; Stop it first to get a clean state.'
     }
-    # ELECTRON_RUN_AS_NODE turns the launch into a bare node process and the GUI never appears.
+    # Remove the flag that disables Electron's GUI.
     Remove-Item Env:\ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
-    # `npm start` is just `electron .`, and npm resolves to npm.ps1 here, which Start-Process cannot
-    # launch. Going straight to the binary also keeps the app off this shell's lifetime.
+    # Launch Electron directly so the shell is not kept alive.
     Start-Process -FilePath $Electron -ArgumentList '.' -WorkingDirectory $AppDir -WindowStyle Hidden
 
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
