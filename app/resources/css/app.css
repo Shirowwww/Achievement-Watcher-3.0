@@ -6618,7 +6618,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  /* Column gap only: the collapsed effect panel is a zero-height line of its own, and a row gap
+     would still reserve 12px of dead space under every row that has one. An open panel carries its
+     own border-top and padding, so it needs no gap either. */
+  column-gap: 12px;
+  row-gap: 0;
   flex-wrap: wrap;
   min-height: 46px;
   padding: 7px 10px;
@@ -6800,6 +6804,13 @@ body {
   align-items: center;
   flex-wrap: wrap;
   gap: 10px 14px;
+  /* A collapsed panel keeps max-height:0, which removes its height but NOT its width: it stays a
+     flex item of the row. Once the effect has been switched on and off its two sub-groups are
+     hidden, so it shrinks to the width of the type selector, fits back on the controls' line and
+     drags them left. Claiming the full width forces it onto a line of its own in every state. */
+  flex: none;
+  width: 100%;
+  box-sizing: border-box;
   max-height: 0;
   opacity: 0;
   overflow: hidden;
@@ -6815,13 +6826,10 @@ body {
   border-top-color: var(--set-hairline-soft);
 }
 
-/* The gradient panel lives below the one-line controls row, not inside it. A collapsed
-   gradient must take no space at all (display:none) or it would still sit in the row and
-   cover the other controls; only the effect panel uses the max-height animation above. */
+/* The gradient panel lives below the one-line controls row, not inside it. Its own colour
+   pickers give it no useful collapsed state, so it is simply removed from the flow when
+   closed; the effect panel above keeps the max-height animation. */
 #theme-customizer .theme-layer-gradient-panel {
-  flex: none;
-  width: 100%;
-  box-sizing: border-box;
   display: none;
 }
 
