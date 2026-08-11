@@ -10,7 +10,8 @@ Achievement Watcher can announce unlocks with a native Windows notification (toa
 | **In-game overlay** | Opens a styled popup above the running game. The main library window may stay closed while the background tracker handles it. |
 | **Both** | Sends the same event to both transports. |
 
-Use the built-in test buttons after changing the mode. A successful test confirms the display path; a real unlock still depends on the relevant game source being watched correctly.
+> [!TIP]
+> Use the built-in test buttons after changing the mode. A successful test confirms the display path; a real unlock still depends on the relevant game source being watched correctly.
 
 ## Priority Windows notifications
 
@@ -55,7 +56,8 @@ Set the background, text and accent colors, then the opacity, font size, corner 
 
 Only presets this builder generated can be re-opened or deleted: it stores its settings in an `aw-preset.json` beside the generated files, and that file is what makes a preset editable. Bundled presets and hand-written ones are never touched.
 
-> **Custom presets are stored in the installation folder** (`presets\Users Presets\`), not in the data directory. Copy any preset you want to keep before reinstalling or updating, since installing over the application replaces that folder.
+> [!NOTE]
+> **Custom presets are stored in** `%APPDATA%\Achievement Watcher 3.0\presets\Users Presets`, not in the installation folder. They survive app updates.
 
 ## Sounds, volume and duration
 
@@ -68,7 +70,7 @@ Only presets this builder generated can be re-opened or deleted: it stores its s
 
 Choose a corner, edge or centered position from the Notification settings. The custom position can be moved with **Reposition** and is stored for later sessions.
 
-The in-game overlay also supports configured keyboard shortcuts for moving, snapping and click-through behavior. Controller overlay control is optional: enable it under **Settings → General → Controller**, then **BACK+START** opens the overlay, **LB+X** toggles in-overlay navigation and **RB+Y** toggles window move/resize. The in-app **Help** menu lists the full controller cheatsheet.
+The in-game overlay also supports configured keyboard shortcuts for moving, snapping and click-through behavior, plus optional controller navigation (enable it under **Settings → General → Controller**). See the [Overlay guide](overlay.md#controller-gamepad) for the full control scheme.
 
 ## Per-game behavior
 
@@ -88,4 +90,4 @@ Achievements with a global unlock rate below the configured rare threshold displ
 
 Continue with [Troubleshooting](troubleshooting.md#notifications-do-not-appear) if the problem remains.
 
-[Back to the documentation index](README.md)
+<p align="center"><a href="README.md">← Documentation</a> · <a href="../README.md">Project home</a></p>

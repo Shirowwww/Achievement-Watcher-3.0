@@ -4,7 +4,8 @@ Ubisoft games do not use Steam's `steam_api.dll`, so the normal GBE Fork repair 
 
 Official Ubisoft Connect achievement data may already be detected from the local client. This guide is only for games that actually use a Goldberg Uplay R2 loader.
 
-The setup modifies game files. Use it only with games you own and keep any additional backup you consider important.
+> [!WARNING]
+> The setup modifies game files. Use it only with games you own and keep any additional backup you consider important.
 
 ## Requirements
 
@@ -92,4 +93,4 @@ An empty or missing runtime save is expected until the game records an unlock. I
 
 For general schema/save distinctions, see the [Goldberg and GBE Fork guide](emulator-setup.md#schema-and-save-files-are-different).
 
-[Back to the documentation index](README.md)
+<p align="center"><a href="README.md">← Documentation</a> · <a href="emulator-setup.md">Goldberg / GBE setup</a> · <a href="../README.md">Project home</a></p>

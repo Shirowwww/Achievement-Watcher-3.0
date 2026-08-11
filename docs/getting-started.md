@@ -9,7 +9,8 @@ Achievement Watcher is a Windows desktop application. Packaged releases include 
 3. Run the installer and choose an installation folder.
 4. Open Achievement Watcher from the Start menu or desktop shortcut.
 
-The installer is currently unsigned. Windows SmartScreen may therefore ask for confirmation even when the file came from the official Releases page.
+> [!WARNING]
+> The installer is currently unsigned. Windows SmartScreen may therefore ask for confirmation even when the file came from the official Releases page.
 
 ## First launch
 
@@ -64,7 +65,7 @@ Installing a newer build over an older one replaces program files but preserves 
 %APPDATA%\Achievement Watcher 3.0
 ```
 
-This directory contains settings, watched folders, caches, playtime, logs, notification assets and local account data. On the first launch after upgrading from a 3.0 build that shared the legacy folder, Achievement Watcher imports the old `%APPDATA%\Achievement Watcher` directory once — it copies configuration and caches (large write-once caches use NTFS hard links), never moves or deletes the legacy folder, and records a migration marker. Uninstalling does not remove the data directory by default. Delete it manually only when you intentionally want a completely fresh profile.
+This directory contains settings, watched folders, caches, playtime, logs, notification assets and local account data. If you're upgrading from a 3.0 build that shared the legacy folder, Achievement Watcher copies the old `%APPDATA%\Achievement Watcher` data once on first launch, without touching or deleting the original. Uninstalling does not remove the data directory by default. Delete it manually only when you intentionally want a completely fresh profile.
 
 ## Next steps
 
@@ -72,4 +73,5 @@ This directory contains settings, watched folders, caches, playtime, logs, notif
 - [Set up Goldberg or GBE Fork](emulator-setup.md)
 - [Set up Goldberg Uplay R2](uplay-r2.md)
 - [Troubleshoot a problem](troubleshooting.md)
-- [Return to the documentation index](README.md)
+
+<p align="center"><a href="README.md">← Documentation</a> · <a href="../README.md">Project home</a></p>

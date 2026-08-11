@@ -2,6 +2,8 @@
 
 Bug fixes, documentation improvements, translations and focused new features are welcome.
 
+<p align="center"><a href="README.md">← Project home</a> · <a href="docs/README.md">Documentation</a> · <a href="BUILD.md">Build guide</a></p>
+
 ## Before opening an issue
 
 - Read the [documentation](docs/README.md) and [troubleshooting guide](docs/troubleshooting.md).

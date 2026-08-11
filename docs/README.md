@@ -1,6 +1,12 @@
-# Documentation
+<div align="center">
 
-[Download](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/latest) · [Main README](../README.md) · [Changelog](../CHANGELOG.md) · [Security](../SECURITY.md) · [Report an issue](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues)
+# 📚 Documentation
+
+Practical guides for setup, daily use and maintenance.
+
+[🏠 Project home](../README.md) · [⬇️ Download](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/latest) · [📋 Changelog](../CHANGELOG.md) · [🔐 Security](../SECURITY.md) · [💬 Report an issue](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues)
+
+</div>
 
 ## Start here
 

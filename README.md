@@ -2,7 +2,7 @@
 
 # 🏆 Achievement Watcher 3.0
 
-### All your PC achievements in one modern Windows library.
+<p><strong>All your PC achievements in one modern Windows library.</strong></p>
 
 Track achievements, rarity and playtime across launchers, local saves and supported emulators — with live Windows notifications or an in-game overlay.
 
@@ -131,7 +131,7 @@ Choose **Windows notification**, **In-game overlay** or **Both** under **Setting
 </tr>
 </table>
 
-[Notification guide](docs/notifications.md)
+→ [Notification guide](docs/notifications.md)
 
 ---
 
@@ -151,7 +151,7 @@ Ubisoft titles use a separate **Uplay R2** path because they do not load `steam_
 
 Those games show the same Steam community percentage column as native Steam games: Uplay R2 uses its mapped Steam AppID directly, official Ubisoft Connect titles are bridged from Steam's global percentages onto their native ids, and the result is cached like any other rarity.
 
-[Goldberg/GBE setup](docs/emulator-setup.md) · [Uplay R2 setup](docs/uplay-r2.md) · [Technical reference](docs/goldberg-gbe.md)
+→ [Goldberg/GBE setup](docs/emulator-setup.md) · [Uplay R2 setup](docs/uplay-r2.md) · [Technical reference](docs/goldberg-gbe.md)
 
 ---
 

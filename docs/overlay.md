@@ -71,4 +71,6 @@ reopening the overlay. **Reset defaults** restores the original look.
 - Row content is escaped before rendering; achievement data is only displayed,
   never executed.
 - The overlay list is separate from the one-shot overlay *notification*
-  presets (Settings → Notifications). Preset appearance is configured there.
+  presets (Settings → Notification). Preset appearance is configured there.
+
+<p align="center"><a href="README.md">← Documentation</a> · <a href="notifications.md">Notification guide</a> · <a href="../README.md">Project home</a></p>

@@ -2,7 +2,8 @@
 
 Achievement Watcher can read achievement saves produced by Goldberg, GBE Fork and compatible Steam-emulator layouts. It can also diagnose and repair a game's local emulator configuration when the achievement schema, AppID or runtime files are incomplete.
 
-The repair tools are optional. They modify files inside the selected game directory, so use them only with games you own and keep any additional backup you consider important.
+> [!WARNING]
+> The repair tools are optional. They modify files inside the selected game directory, so use them only with games you own and keep any additional backup you consider important.
 
 ## Schema and save files are different
 
@@ -92,4 +93,4 @@ Review the [technical Goldberg/GBE reference](goldberg-gbe.md) for file formats,
 
 Some games do not report achievements through Steamworks at all, even when sold on Steam. Those titles cannot be tracked through a Goldberg/GBE save path. Achievement Watcher also cannot repair a game whose real identity or achievement schema cannot be resolved safely.
 
-[Back to the documentation index](README.md)
+<p align="center"><a href="README.md">← Documentation</a> · <a href="goldberg-gbe.md">Technical reference</a> · <a href="../README.md">Project home</a></p>

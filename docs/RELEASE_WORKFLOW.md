@@ -63,10 +63,7 @@ Do this only when asked, or when a competing project's fork clearly changed — 
 When you do it: **check the competitor's actual source (`main.js`/`preload.js`/renderer HTML,
 fetched via `gh api repos/<owner>/<repo>/contents/<path> -H "Accept: application/vnd.github.raw"`),
 not just their README.** A README is a marketing summary and routinely under-describes real
-features (e.g. their README only mentions overlay controller support, but their renderer has a
-full keyboard+gamepad dashboard navigation manager; their README doesn't mention app-level UI
-themes at all, but `utils/app-theme.js` ships 8 built-in themes plus a `userData/Themes` folder for
-custom ones). A missing README mention is not evidence of a missing feature — grep the code before
+features. A missing README mention is not evidence of a missing feature — grep the code before
 downgrading a ✅ to a ❌.
 
 ## Clean validation

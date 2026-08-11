@@ -4,6 +4,8 @@ Achievement Watcher loads interface text from `app/locale/lang`. English is the 
 
 The Steam Web API key disclaimer remains in English by design.
 
+<p align="center"><a href="../../README.md">← Project home</a> · <a href="../../CONTRIBUTING.md">Contributing</a></p>
+
 ## Bundled languages
 
 The current build includes:

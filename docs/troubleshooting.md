@@ -115,4 +115,4 @@ If the issue disappears, restore only the data you need or attach the relevant c
 
 Search the [existing issues](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues) first. If no report matches, open a bug using the repository template and attach logs after removing any information you do not want to share publicly.
 
-[Back to the documentation index](README.md)
+<p align="center"><a href="README.md">← Documentation</a> · <a href="getting-started.md">Getting started</a> · <a href="../README.md">Project home</a></p>
