@@ -1215,6 +1215,7 @@
     "update-ready": "Aktualizácia pripravená",
     "update-ready-message": "Nová verzia ({version}) bola stiahnutá.",
     "update-ready-detail": "Chcete ju nainštalovať teraz?",
+    "downloading-update": "sťahovanie aktualizácie {percent} %",
     "yes": "Áno",
     "select-a-game-library-folder-to-scan": "Vyberte priečinok knižnice hier na skenovanie",
     "scan": "Skenovať",

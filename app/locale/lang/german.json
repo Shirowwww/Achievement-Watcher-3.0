@@ -1215,6 +1215,7 @@
     "update-ready": "Update bereit",
     "update-ready-message": "Eine neue Version ({version}) wurde heruntergeladen.",
     "update-ready-detail": "Möchtest du es jetzt installieren?",
+    "downloading-update": "Update wird heruntergeladen {percent} %",
     "yes": "Ja",
     "select-a-game-library-folder-to-scan": "Wähle einen Spielebibliotheksordner zum Scannen",
     "scan": "Scannen",

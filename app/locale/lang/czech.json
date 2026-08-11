@@ -1215,6 +1215,7 @@
     "update-ready": "Aktualizace připravena",
     "update-ready-message": "Nová verze ({version}) byla stažena.",
     "update-ready-detail": "Chcete ji nainstalovat nyní?",
+    "downloading-update": "stahování aktualizace {percent} %",
     "yes": "Ano",
     "select-a-game-library-folder-to-scan": "Vyberte složku knihovny her ke skenování",
     "scan": "Skenovat",

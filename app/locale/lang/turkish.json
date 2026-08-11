@@ -1215,6 +1215,7 @@
     "update-ready": "Güncelleme hazır",
     "update-ready-message": "Yeni bir sürüm ({version}) indirildi.",
     "update-ready-detail": "Şimdi kurmak ister misiniz?",
+    "downloading-update": "güncelleme indiriliyor %{percent}",
     "yes": "Evet",
     "select-a-game-library-folder-to-scan": "Taranacak bir oyun kitaplığı klasörü seçin",
     "scan": "Tara",

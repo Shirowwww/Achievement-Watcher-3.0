@@ -1215,6 +1215,7 @@
     "update-ready": "Оновлення готове",
     "update-ready-message": "Завантажено нову версію ({version}).",
     "update-ready-detail": "Установити його зараз?",
+    "downloading-update": "завантаження оновлення {percent} %",
     "yes": "Так",
     "select-a-game-library-folder-to-scan": "Виберіть папку бібліотеки ігор для сканування",
     "scan": "Сканувати",

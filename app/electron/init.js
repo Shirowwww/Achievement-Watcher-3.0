@@ -101,8 +101,45 @@ function shouldSuppressUpdatePrompt(version, { manual = false } = {}) {
   return suppress;
 }
 
+// Taskbar progress for the update download. Windows draws it inside the app's taskbar button, so it
+// only exists while a window does: the app is a resident tray daemon and the download usually runs
+// with the window closed. The fraction is therefore kept here and re-applied by createMainWindow(),
+// and the tray tooltip carries the same figure for the window-less case.
+// -1 is Electron's "no progress bar" value.
+let updateDownloadFraction = -1;
+let updateProgressLogged = -1;
+
+function applyUpdateProgressToWindow(win) {
+  if (!win || win.isDestroyed()) return;
+  try {
+    win.setProgressBar(updateDownloadFraction);
+  } catch (err) {
+    debug.log(`[updater] could not set the taskbar progress: ${err.message || err}`);
+  }
+}
+
+function setUpdateDownloadProgress(fraction) {
+  updateDownloadFraction = fraction;
+  applyUpdateProgressToWindow(MainWin);
+  if (!tray) return;
+  try {
+    tray.setToolTip(
+      fraction >= 0
+        ? `Achievement Watcher — ${t('downloading-update', 'downloading update {percent}%', 'téléchargement de la mise à jour {percent} %', { percent: Math.round(fraction * 100) })}`
+        : 'Achievement Watcher',
+    );
+  } catch {}
+}
+
+function clearUpdateDownloadProgress() {
+  if (updateDownloadFraction < 0) return;
+  updateProgressLogged = -1;
+  setUpdateDownloadProgress(-1);
+}
+
 function notifyUpdateError(message) {
   debug.log(`[updater] ${message}`);
+  clearUpdateDownloadProgress();
   manualUpdateResult = 'error';
   manualUpdateCheckPending = false;
   if (!updaterErrorNotified && tray) {
@@ -2268,6 +2305,10 @@ function createMainWindow() {
     MainWin = new BrowserWindow(options);
     getRemoteMain().enable(MainWin.webContents);
 
+    // A download started while the app was tray-only has no taskbar button to draw on. Opening the
+    // window creates one, so hand it the progress that is already running.
+    if (updateDownloadFraction >= 0) applyUpdateProgressToWindow(MainWin);
+
     // BrowserWindow.hide() does not reliably update document.visibilityState on every Electron
     // version. Tell the renderer directly so its optional controller polling can stop while the
     // app is resident only in the tray.
@@ -3785,8 +3826,25 @@ try {
       } catch {}
     }
   });
+  // The download can take minutes on a slow line and gives no sign of life otherwise: the window is
+  // usually closed (tray daemon) and the app never says it is busy. Drive the taskbar progress bar
+  // from the updater's own byte counter.
+  autoUpdater.on('download-progress', (progress) => {
+    const percent = Math.max(0, Math.min(100, Number(progress && progress.percent) || 0));
+    setUpdateDownloadProgress(percent / 100);
+    // One line per 10% rather than per chunk, so the log stays readable.
+    const step = Math.floor(percent / 10);
+    if (step !== updateProgressLogged) {
+      updateProgressLogged = step;
+      const speed = Math.round((Number(progress && progress.bytesPerSecond) || 0) / 1024);
+      debug.log(`[updater] downloading: ${percent.toFixed(0)}% (${speed} KB/s)`);
+    }
+  });
   autoUpdater.on('error', (err) => notifyUpdateError(err && err.message ? err.message : String(err)));
-  autoUpdater.on('update-downloaded', (info) => promptDownloadedUpdate(info));
+  autoUpdater.on('update-downloaded', (info) => {
+    clearUpdateDownloadProgress();
+    promptDownloadedUpdate(info);
+  });
   promptDownloadedUpdate = async function (info) {
     // Same synchronous claim as update-available: the flag has to be taken before the first await.
     if (updatePromptOpen) {

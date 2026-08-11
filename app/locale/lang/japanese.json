@@ -1215,6 +1215,7 @@
     "update-ready": "アップデートの準備ができました",
     "update-ready-message": "新しいバージョン（{version}）をダウンロードしました。",
     "update-ready-detail": "今すぐインストールしますか？",
+    "downloading-update": "アップデートをダウンロード中 {percent}%",
     "yes": "はい",
     "select-a-game-library-folder-to-scan": "スキャンするゲームライブラリフォルダを選択",
     "scan": "スキャン",

@@ -1215,6 +1215,7 @@
     "update-ready": "更新就绪",
     "update-ready-message": "已下载新版本（{version}）。",
     "update-ready-detail": "要立即安装吗？",
+    "downloading-update": "正在下载更新 {percent}%",
     "yes": "是",
     "select-a-game-library-folder-to-scan": "选择要扫描的游戏库文件夹",
     "scan": "扫描",

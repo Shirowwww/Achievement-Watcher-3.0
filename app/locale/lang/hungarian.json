@@ -1215,6 +1215,7 @@
     "update-ready": "Frissítés kész",
     "update-ready-message": "Egy új verzió ({version}) letöltésre került.",
     "update-ready-detail": "Telepítsük most?",
+    "downloading-update": "frissítés letöltése {percent}%",
     "yes": "Igen",
     "select-a-game-library-folder-to-scan": "Válassz egy játékkönyvtár-mappát a vizsgálathoz",
     "scan": "Vizsgálat",
