@@ -61,6 +61,17 @@ ipcMain.handle('crackfix-extract-rar', async (_event, { archivePath, destDir } =
   }
 });
 
+// Same CSP problem, same fix, for the Steam API Check Bypass proxy DLLs (also shipped in a RAR5).
+const apiCheckBypassJS = require(path.join(__dirname, '../parser/apiCheckBypass.js'));
+ipcMain.handle('apicheckbypass-extract-rar', async (_event, { rarPath, destDir } = {}) => {
+  try {
+    const wrote = await apiCheckBypassJS.extractDllsFromRarDirect(rarPath, destDir);
+    return { ok: true, wrote };
+  } catch (err) {
+    return { error: (err && (err.message || String(err))) || 'unknown error' };
+  }
+});
+
 // Handler for renderer process
 ipcMain.handle('get-app-name', () => {
   return app.getName();

@@ -77,3 +77,48 @@ try {
 } finally {
   fs.rmSync(temp, { recursive: true, force: true });
 }
+
+/*
+  pickBypassDllEntries — the pure filter/rename step factored out of extractDllsFromRar so the RAR
+  extraction (moved behind the `apicheckbypass-extract-rar` IPC handler; see ipc.js / crackFix.js's
+  extractRarToDir for why node-unrar-js cannot run in the renderer) stays testable without a real RAR
+  fixture. node-unrar-js's own reading is unchanged by that move and needs no re-test here.
+*/
+// node-unrar-js's extractor.extract({...}).files shape: [{ fileHeader: { name }, extraction }]
+function entry(name, extraction) {
+  return { fileHeader: { name }, extraction };
+}
+
+{
+  const files = [
+    entry('SteamAPICheckBypass.dll', new Uint8Array([1, 2, 3])),
+    entry('SteamAPICheckBypass_x32.dll', new Uint8Array([4, 5])),
+    entry('readme.txt', new Uint8Array([9])),
+    entry('nested/dir/SteamAPICheckBypass.dll', new Uint8Array([7, 7])), // nested path, same basename
+  ];
+  const picked = bypass.pickBypassDllEntries(files);
+  assert.strictEqual(picked.length, 3, 'picks both bypass DLLs by basename, ignores unrelated files, nested path still matches by basename');
+  assert.ok(picked.some((p) => p.name === 'SteamAPICheckBypass.dll'), 'x64 dll picked');
+  assert.ok(picked.some((p) => p.name === 'SteamAPICheckBypass_x32.dll'), 'x86 dll picked');
+  const x64 = picked.find((p) => p.name === 'SteamAPICheckBypass.dll');
+  assert.ok(Buffer.isBuffer(x64.data), 'picked entry data is a Buffer');
+  assert.strictEqual(x64.data.toString('hex'), Buffer.from([1, 2, 3]).toString('hex'), 'picked entry bytes match the source extraction');
+
+  // Entries without an `extraction` (directories) are skipped, never throw.
+  const withDir = [{ fileHeader: { name: 'somedir' } }, entry('SteamAPICheckBypass.dll', new Uint8Array([1]))];
+  assert.strictEqual(bypass.pickBypassDllEntries(withDir).length, 1, 'entries with no extraction (directories) are skipped without throwing');
+
+  // Empty / missing input never throws.
+  assert.strictEqual(bypass.pickBypassDllEntries([]).length, 0, 'empty file list => nothing picked');
+  assert.strictEqual(bypass.pickBypassDllEntries(null).length, 0, 'null file list => nothing picked, no throw');
+  assert.strictEqual(bypass.pickBypassDllEntries(undefined).length, 0, 'undefined file list => nothing picked, no throw');
+
+  console.log('PASS: apiCheckBypass (pickBypassDllEntries)');
+}
+
+// extractDllsFromRarDirect is exported and CSP-safe by construction: it is only ever called directly
+// from main-process/plain-Node code (the `apicheckbypass-extract-rar` IPC handler, or here) — never
+// from the renderer, which must go through the IPC round-trip instead. This just pins that it exists
+// with the expected shape.
+assert.strictEqual(typeof bypass.extractDllsFromRarDirect, 'function', 'extractDllsFromRarDirect is exported for the main-process IPC handler');
+console.log('PASS: apiCheckBypass (extractDllsFromRarDirect export)');

@@ -14,7 +14,10 @@
   This mirrors SteamAutoCrack's ApplySteamAPICheckBypass (SteamStubUnpacker.cs) — same proxy DLLs (from
   the official release), same JSON rules. It is OFF by default (as in SteamAutoCrack); it does NOT help
   PlayStation-PSPC titles (their trophies never hit the Steam API). Renderer-side; fs + request-zero +
-  node-unrar-js (the release ships the DLLs in a RAR5, which 7za can't open). Reverts cleanly.
+  node-unrar-js (the release ships the DLLs in a RAR5, which 7za can't open). The RAR extraction itself
+  cannot run in the renderer (CSP forbids node-unrar-js's `new Function()`) — extractDllsFromRar routes
+  it to the main process over the `apicheckbypass-extract-rar` IPC handler; see extractDllsFromRarDirect.
+  Reverts cleanly.
 */
 
 const fs = require('fs');
@@ -57,25 +60,48 @@ function cachedDlls(cacheDir, tag) {
   return fs.existsSync(x64) && fs.existsSync(x86) ? { tag, dir, x64, x86 } : null;
 }
 
+// Pick the two bypass DLLs out of a node-unrar-js extraction result. Pure (no I/O) so it can be
+// unit-tested without a real RAR fixture; `files` is node-unrar-js's `extractor.extract({...}).files`.
+function pickBypassDllEntries(files) {
+  const picked = [];
+  for (const file of files || []) {
+    if (!file || !file.extraction) continue;
+    const base = path.basename(file.fileHeader.name);
+    if (base === BYPASS_DLL.x64 || base === BYPASS_DLL.x86) {
+      picked.push({ name: base, data: Buffer.from(file.extraction) });
+    }
+  }
+  return picked;
+}
+
 // Extract the two proxy DLLs out of the release RAR5 with node-unrar-js (loaded lazily — only this
-// feature needs it, and only when the user opts in).
-async function extractDllsFromRar(rarPath, destDir) {
+// feature needs it, and only when the user opts in). MUST run in a Node context (Electron main process
+// — NEVER the Chromium renderer: node-unrar-js's Emscripten/Embind glue calls `new Function()`, which the
+// renderer's strict CSP forbids (same issue crackFix.js's extractRarToDir works around). Only call this
+// directly from main-process code (e.g. the `apicheckbypass-extract-rar` IPC handler) or a plain-Node
+// context (tests); a renderer must go through extractDllsFromRar below.
+async function extractDllsFromRarDirect(rarPath, destDir) {
   const { createExtractorFromData } = require('node-unrar-js');
   const buf = fs.readFileSync(rarPath);
   const extractor = await createExtractorFromData({ data: Uint8Array.from(buf).buffer });
   const names = [...extractor.getFileList().fileHeaders].filter((h) => !h.flags.directory).map((h) => h.name);
   const extracted = extractor.extract({ files: names });
+  const picked = pickBypassDllEntries([...extracted.files]);
   fs.mkdirSync(destDir, { recursive: true });
-  let wrote = 0;
-  for (const file of extracted.files) {
-    if (!file.extraction) continue;
-    const base = path.basename(file.fileHeader.name);
-    if (base === BYPASS_DLL.x64 || base === BYPASS_DLL.x86) {
-      fs.writeFileSync(path.join(destDir, base), Buffer.from(file.extraction));
-      wrote++;
-    }
+  for (const entry of picked) fs.writeFileSync(path.join(destDir, entry.name), entry.data);
+  return picked.length;
+}
+
+// Renderer-safe entry point: delegates the actual extraction to the main process over IPC (CSP blocks
+// node-unrar-js in the renderer — see extractDllsFromRarDirect); runs directly in main/plain-Node.
+async function extractDllsFromRar(rarPath, destDir) {
+  if (typeof process !== 'undefined' && process.type === 'renderer') {
+    const { ipcRenderer } = require('electron');
+    const res = await ipcRenderer.invoke('apicheckbypass-extract-rar', { rarPath, destDir });
+    if (res && res.error) throw new Error(res.error);
+    return (res && res.wrote) || 0;
   }
-  return wrote;
+  return extractDllsFromRarDirect(rarPath, destDir);
 }
 
 async function downloadAndCache(cacheDir, tag, rarUrl) {
@@ -246,4 +272,12 @@ function revertBypass({ gameDir, exePath, log = noopLog } = {}) {
   return { removed };
 }
 
-module.exports = { ensureBypassDlls, buildBypassConfig, applyBypass, revertBypass, findExeBackup };
+module.exports = {
+  ensureBypassDlls,
+  buildBypassConfig,
+  applyBypass,
+  revertBypass,
+  findExeBackup,
+  pickBypassDllEntries,
+  extractDllsFromRarDirect,
+};
