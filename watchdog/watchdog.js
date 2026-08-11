@@ -173,6 +173,23 @@ const overlayHotkey = new GlobalHotkey({ debug });
 let runningGames = [];
 const localProgressSchemaCache = new Map();
 
+/*
+  Tell the app how many games are running. Only this process knows: it owns the WQL process monitor.
+  The app uses it to hold back the update prompt — a modal dialog has no parent window, so it lands
+  on top of whatever is on screen, including a fullscreen game.
+
+  Sent on every change (and once at startup, covering the process-trail seed of games that were
+  already running), so the app never has to poll or guess.
+*/
+function forwardGameActivity() {
+  if (typeof process.send !== 'function' || !process.connected) return;
+  try {
+    process.send({ gameActivity: { count: runningGames.length } });
+  } catch (err) {
+    debug.error(`[game-activity] IPC failed: ${err}`);
+  }
+}
+
 function readProgressSchemaFile(file) {
   try {
     if (!file || !fs.existsSync(file)) return [];
@@ -1095,6 +1112,9 @@ var app = {
       .init()
       .then((monitor) => {
         debug.log('Playtime monitoring activated');
+        // Publish the starting state, which the process trail may already have filled with games
+        // that were running before this monitor started.
+        forwardGameActivity();
 
         monitor.on('disable-overlay', () => {
           runningAppid = null;
@@ -1124,6 +1144,7 @@ var app = {
             runningGames.push(game);
             if (String(game.source || '') === 'Xbox PC') startXboxPolling(game);
           }
+          forwardGameActivity();
           if (app.options.notification.playtime) {
             // Localize the playtime text here (the monitor stays language-agnostic and emits raw seconds).
             const wdStrings = notifyStrings.forLang(app.options.achievement.lang);

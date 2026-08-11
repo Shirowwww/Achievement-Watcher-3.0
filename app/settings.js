@@ -35,6 +35,16 @@ module.exports.load = () => {
       options.general.skippedVersion = 'none';
     }
 
+    // "Later" on an update prompt. Without these the answer was forgotten immediately and the
+    // hourly re-check asked again, every hour, for as long as the tray daemon stayed running.
+    // Version + deadline, so a postpone expires on its own and never hides a NEWER release.
+    if (typeof options.general.updatePostponedVersion !== 'string') {
+      options.general.updatePostponedVersion = '';
+    }
+    if (typeof options.general.updatePostponedUntil !== 'number' || !Number.isFinite(options.general.updatePostponedUntil)) {
+      options.general.updatePostponedUntil = Number(options.general.updatePostponedUntil) || 0;
+    }
+
     if (typeof options.general.onboardingCompleted !== 'boolean') {
       options.general.onboardingCompleted = false;
     }
@@ -405,6 +415,8 @@ module.exports.load = () => {
       general: {
         username: os.userInfo().username || 'User',
         skippedVersion: 'none',
+        updatePostponedVersion: '',
+        updatePostponedUntil: 0,
         onboardingCompleted: false,
         startWithWindows: true,
         disableHardwareAccel: false,
