@@ -3,10 +3,16 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 3.8.2 - 2026-08-11
 
 ### Fixed
 
+- A Goldberg/GBE install whose configuration lives in a nested engine folder (Unity's
+  `_Data/Plugins/x86_64`, Unreal's `Binaries/Win64`, ...) no longer resurfaces as a second,
+  artwork-less "Unconfigured" tile, and the real game executable is now attached to the
+  already-tracked game instead of being missed. A same-folder loader or launcher (for example a
+  second Uplay R2 loader shipped by a repack) can no longer outrank the actual game executable
+  during automatic detection.
 - Xbox PC polling cannot overlap itself or apply a delayed result after the tracked game changes,
   avoiding stale achievement notifications and state updates.
 - Xbox PC imports now retain their unlocked/progress state, including achievements marked secret by
@@ -38,6 +44,15 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - Main-window chrome, progress tracks and settings status surfaces now inherit the selected theme
   instead of retaining fixed Steam-blue colors. The NSIS welcome/finish banner is regenerated from
   the 256px app logo, keeping the installer emblem sharp.
+
+### Security
+
+- Hardened string sanitization flagged by CodeQL code scanning: a stable tag-stripping pass now
+  loops until the string stops changing, closing a bypass a single regex pass could miss on
+  overlapping tags, and theme/preset CSS `url()` values are built through the existing
+  backslash-safe helper everywhere instead of a duplicated one. The Exophase image-proxy host
+  check now requires an exact or subdomain match, and line-separator characters are stripped
+  before the Epic login redirect URL is spliced into injected page script.
 
 ## 3.8.1 - 2026-08-11
 
