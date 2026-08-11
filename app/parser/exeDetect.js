@@ -201,6 +201,15 @@ function confidenceFor(best, candidates, gameDir, gameName, opts = {}) {
 
   if (candidates.length === 1) return { confident: true, reason: 'single-candidate' };
 
+  // Dual-DRM repacks commonly ship a real game exe next to a loader/launcher stub whose job is only
+  // to patch the ownership check (e.g. a Goldberg-cracked Steam release wrapped with a second Uplay R2
+  // loader). The internal binary name is frequently a codename with zero lexical overlap with the
+  // storefront title ("AC4BFSP.exe" for "Assassin's Creed IV Black Flag"), so gameSim/folderSim can
+  // never clear a name-based threshold above — but once every soft-penalized candidate is filtered out,
+  // "best" being the only thing left is exactly as strong a signal as candidates.length === 1 above.
+  const nonUtility = candidates.filter((c) => !SOFT_PENALTY.some((r) => r.test(c.name)));
+  if (nonUtility.length === 1 && nonUtility[0] === best) return { confident: true, reason: 'sole-non-utility-candidate' };
+
   const second = candidates.filter((c) => c !== best)[0] || null;
   const margin = second ? best.score - second.score : Infinity;
   if (
@@ -258,7 +267,8 @@ function detect(gameDir, gameName, opts = {}) {
     const sim = nameSimilarity(gameName, base);
     const sizeFactor = c.size / maxSize;
     const candidateDir = path.resolve(c.dir).toLowerCase();
-    let soft = SOFT_PENALTY.some((r) => r.test(c.name)) ? PENALTY_SOFT : 0;
+    const softHit = SOFT_PENALTY.some((r) => r.test(c.name));
+    let soft = softHit ? PENALTY_SOFT : 0;
     if (/-l$/i.test(base) && basesInSameDir.has(`${candidateDir}|${base.replace(/-l$/i, '')}`)) {
       soft += PENALTY_SHADOWED_L_SUFFIX;
     }
@@ -274,8 +284,14 @@ function detect(gameDir, gameName, opts = {}) {
     c.score = sim * W_NAME + sizeFactor * W_SIZE + dllBonus - soft - c.depth * PENALTY_DEPTH;
     c._sim = sim;
     c._dllBonus = dllBonus;
+    c._softHit = softHit;
   }
-  candidates.sort((a, b) => b.score - a.score || a.depth - b.depth || b.size - a.size);
+  // A loader/launcher/helper is only ever picked when nothing else is available: a big DLL/size bonus
+  // could otherwise let it outscore the real game exe on raw score alone (e.g. a sizeable Ubisoft R2
+  // loader sitting right next to the emulator dll), silently seeding the wrong binary for playtime
+  // tracking or the launch panel's default guess. Non-utility candidates are always tried first; score
+  // only breaks ties within each tier.
+  candidates.sort((a, b) => a._softHit - b._softHit || b.score - a.score || a.depth - b.depth || b.size - a.size);
 
   for (const c of candidates) {
     if (!taken.has(c.full.toLowerCase())) {

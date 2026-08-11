@@ -98,6 +98,67 @@ test('nested steam_api and nested appid config are anchored to the root game fol
   assert.strictEqual(found[0].appid, '123456');
 });
 
+test('a steam_settings folder nested under a Unity engine subfolder is anchored to the root game folder', () => {
+  // Mirrors a real repack layout: "<Game>_Data/Plugins/x86_64/steam_settings" holds the Goldberg
+  // config, but "<Game>.exe" lives three levels up. Anchoring gameDir at the nested folder would strand
+  // the install with no reachable exe and leave the real root folder unclaimed (so a second, independent
+  // scan pass could later "discover" it again as an unrelated duplicate).
+  const root = tmpGame('goldberg-nested-steam-settings');
+  const gameDir = path.join(root, 'Big Walk');
+  const gameExe = path.join(gameDir, 'Big Walk.exe');
+  const engineDir = path.join(gameDir, 'Big Walk_Data', 'Plugins', 'x86_64');
+  const steamSettings = path.join(engineDir, 'steam_settings');
+
+  writeBytes(gameExe, 200);
+  fs.mkdirSync(steamSettings, { recursive: true });
+  writeBytes(path.join(engineDir, 'steam_api64.dll'), 1);
+  fs.writeFileSync(path.join(steamSettings, 'steam_appid.txt'), '1478500');
+
+  const found = goldberg.findCompatibleGames([root]);
+  assert.strictEqual(found.length, 1);
+  assert.strictEqual(found[0].gameDir, gameDir, 'gameDir should be anchored at the top-level folder, not the nested engine folder');
+  assert.strictEqual(found[0].appid, '1478500');
+  // The exe finder must actually be able to find something once anchored correctly.
+  const exe = exeDetect.detect(found[0].gameDir, path.basename(found[0].gameDir), {});
+  assert.ok(exe, 'an exe should be discoverable from the corrected gameDir');
+  assert.strictEqual(exe.full, gameExe);
+});
+
+test('a steam_settings folder that already sits next to the exe is left untouched (no unnecessary walk-up)', () => {
+  const root = tmpGame('goldberg-shallow-steam-settings');
+  const gameDir = path.join(root, 'Some Game');
+  const gameExe = path.join(gameDir, 'SomeGame.exe');
+  const steamSettings = path.join(gameDir, 'steam_settings');
+
+  writeBytes(gameExe, 200);
+  fs.mkdirSync(steamSettings, { recursive: true });
+  fs.writeFileSync(path.join(steamSettings, 'steam_appid.txt'), '999000');
+
+  const found = goldberg.findCompatibleGames([root]);
+  assert.strictEqual(found.length, 1);
+  assert.strictEqual(found[0].gameDir, gameDir);
+  assert.strictEqual(found[0].appid, '999000');
+});
+
+test('a folder merely named like an engine subfolder (but actually the game root) is not walked past', () => {
+  // The nested-anchor fix is gated on the marker folder's own name looking like an engine-internals
+  // directory (x86_64, bin, plugins, ...) AND having no exe of its own. A top-level game folder that
+  // happens to be named "bin" (unusual, but not impossible) and DOES have its own exe must be left alone.
+  const root = tmpGame('goldberg-engine-named-root');
+  const gameDir = path.join(root, 'bin');
+  const gameExe = path.join(gameDir, 'game.exe');
+  const steamSettings = path.join(gameDir, 'steam_settings');
+
+  writeBytes(gameExe, 200);
+  fs.mkdirSync(steamSettings, { recursive: true });
+  fs.writeFileSync(path.join(steamSettings, 'steam_appid.txt'), '888000');
+
+  const found = goldberg.findCompatibleGames([root]);
+  assert.strictEqual(found.length, 1);
+  assert.strictEqual(found[0].gameDir, gameDir);
+  assert.strictEqual(found[0].appid, '888000');
+});
+
 test('steam_appid.txt tolerates trailing NUL bytes from repacks', () => {
   const root = tmpGame('goldberg-appid-nul');
   const gameDir = path.join(root, 'It Takes Two');

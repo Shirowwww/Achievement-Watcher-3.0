@@ -1016,10 +1016,20 @@ function findCompatibleGames(roots, { maxDepth = 5 } = {}) {
   // as the anchor — it frequently lives in a nested engine folder (bin/, Binaries/, x86_64/), which
   // would mis-anchor gameDir and miss the root-level appid. A dll with no nearby appid file can't be
   // identified anyway.
+  //
+  // The identity files themselves can also live inside one of those nested engine folders (Unity ships
+  // steam_settings under "<Game>_Data/Plugins/x86_64/", not next to "<Game>.exe"). Anchoring gameDir
+  // there would strand it in a folder with no executable, so walk up like the dll+config case does —
+  // but only when the marker sits in a folder that is itself named like a generic engine-internals
+  // directory AND has no plausible exe of its own. Both conditions must hold: the name check keeps this
+  // from ever firing on an ordinary top-level game folder that simply lacks a recognizable exe (e.g. a
+  // Dolphin build whose only .exe's are on the known-non-game list).
+  const NESTED_ENGINE_DIR = /^(x86|x64|x86_64|win32|win64|binaries|bin|plugins)$/i;
+  const anchorDir = (dir) => (NESTED_ENGINE_DIR.test(path.basename(dir)) && !exeDetect.shallowGameExe(dir) ? parentGameRootFor(dir) : dir);
   const gameRootMarker = (dir, entries) => {
     for (const e of entries) {
-      if (e.isFile() && e.name.toLowerCase() === 'steam_appid.txt') return { gameDir: dir, appidFile: path.join(dir, e.name) };
-      if (e.isDirectory() && e.name.toLowerCase() === 'steam_settings') return { gameDir: dir };
+      if (e.isFile() && e.name.toLowerCase() === 'steam_appid.txt') return { gameDir: anchorDir(dir), appidFile: path.join(dir, e.name) };
+      if (e.isDirectory() && e.name.toLowerCase() === 'steam_settings') return { gameDir: anchorDir(dir) };
     }
     const hasSteamApi = entries.some((e) => e.isFile() && EMU_DLL_NAMES.includes(e.name.toLowerCase()));
     const appidConfig = entries.find((e) => e.isFile() && APPID_CONFIG_FILES.has(e.name.toLowerCase()));

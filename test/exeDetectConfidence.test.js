@@ -84,3 +84,39 @@ test('a strong name beats a larger unrelated helper', () => {
   assert.ok(res);
   assert.strictEqual(res.name, 'Rayman.exe');
 });
+
+test('a dual-DRM repack (real exe + unrelated-named loader) is confident even with zero name overlap', () => {
+  // The internal exe name often has no lexical relationship to the storefront title (Ubisoft codenames,
+  // sequel subtitles, remaster suffixes, ...), so neither gameSim nor folderSim can ever clear a
+  // name-based threshold here. The loader is still unambiguous by elimination: it is the only
+  // non-utility candidate once the loader itself is filtered out.
+  const gameDir = tmpGame('AC Black Flag Resynced');
+  writeBytes(path.join(gameDir, 'upc_r2_loader64.exe'), 512);
+  writeBytes(path.join(gameDir, 'AC4BFSP.exe'), 40 * 1024);
+  const res = exeDetect.detectConfident(gameDir, 'Assassin’s Creed Black Flag Resynced');
+  assert.ok(res, 'the real exe should be confidently identified by elimination');
+  assert.strictEqual(res.name, 'AC4BFSP.exe');
+  assert.strictEqual(res.confidence, 'sole-non-utility-candidate');
+});
+
+test('two genuinely ambiguous non-utility candidates stay ambiguous (elimination rule does not overreach)', () => {
+  const gameDir = tmpGame('two-non-utility');
+  writeBytes(path.join(gameDir, 'Foo.exe'), 1000);
+  writeBytes(path.join(gameDir, 'Bar.exe'), 1000);
+  const res = exeDetect.detect(gameDir, 'Totally Unrelated Title');
+  assert.ok(res);
+  assert.strictEqual(res.confident, false);
+});
+
+test('a loader never outranks a real exe in raw selection, even with a large size/dll advantage', () => {
+  const gameDir = tmpGame('loader-outsizes-real-exe');
+  const dll = path.join(gameDir, 'steam_api64.dll');
+  writeBytes(dll, 1);
+  // The loader sits next to the dll (max dll bonus) and dwarfs the real exe in size — without the
+  // non-utility-first tie-break this can outscore the genuine candidate on raw score alone.
+  writeBytes(path.join(gameDir, 'upc_r2_loader64.exe'), 50 * 1024 * 1024);
+  writeBytes(path.join(gameDir, 'AC4BFSP.exe'), 128);
+  const res = exeDetect.detect(gameDir, 'Assassin’s Creed Black Flag Resynced', { dllPaths: [dll] });
+  assert.ok(res);
+  assert.strictEqual(res.name, 'AC4BFSP.exe', 'the loader must never be picked over a genuine candidate');
+});

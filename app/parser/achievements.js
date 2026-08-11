@@ -762,16 +762,27 @@ async function scanInstalledGoldbergGames(data, scope = _activeScanScope) {
       let appid = g.appid && /^[0-9]+$/.test(String(g.appid)) ? String(g.appid) : null;
       let detectedExe = null;
       let detectedEmu = null;
-      if (!appid && g.gameDir) {
+      // Exe detection runs regardless of whether the appid is already known: an install whose identity
+      // marker (steam_settings/steam_appid.txt) sits in a nested engine folder can still resolve its
+      // appid directly, but that tells us nothing about where the launchable exe lives. Without this,
+      // an already-tracked game (found earlier via its %APPDATA% save folder, with no exe yet) would
+      // never get one attached even after its install folder is scanned.
+      if (g.gameDir) {
         try {
           detectedEmu = detectEmulatorCached(g.gameDir);
           detectedExe = goldberg.findGameExe(g.gameDir, detectedEmu.dll);
+        } catch {
+          /* leave exe/emu detection empty — the merge/creation below tolerates nulls */
+        }
+      }
+      if (!appid && g.gameDir) {
+        try {
           const resolved = await resolveUnconfiguredSteamAppid({
             name: path.basename(g.gameDir),
             data: {
               gameDir: g.gameDir,
               exe: detectedExe && detectedExe.full,
-              hasSteamApiDll: detectedEmu.dll.length > 0,
+              hasSteamApiDll: detectedEmu && detectedEmu.dll.length > 0,
             },
           });
           if (resolved) {
@@ -915,11 +926,25 @@ async function scanUnconfiguredInstalls(linkedExes = [], scope = _activeScanScop
     const folderName = path.basename(dir);
     const name = unconfiguredDisplayName(folderName, exe.name, productName && productName.trim().length >= 3 ? productName.trim() : '');
     const id = 'local-' + (crc32(dir.toLowerCase()) >>> 0).toString(16);
+    // hasDll(entries) only looks at this folder's own top-level files. A Unity/UE install ships its
+    // Goldberg files under a nested engine folder ("<Game>_Data/Plugins/x86_64/", "Binaries/Win64/"),
+    // so a shallow check here would miss it and the record below would carry no Steam evidence at all —
+    // which is what the caller uses to decide whether to even attempt merging this install into an
+    // already-known appid instead of surfacing it as a brand-new "Unconfigured" duplicate. Recursive
+    // detection (same one goldberg-scan itself uses) finds that evidence regardless of nesting depth.
+    const emu = detectEmulatorCached(dir);
     out.push({
       appid: id,
       name,
       source: 'Unconfigured',
-      data: { type: 'unconfigured', gameDir: dir, exe: exe.full, hasSteamApiDll: hasDll(entries || []), productName: productName || '' },
+      data: {
+        type: 'unconfigured',
+        gameDir: dir,
+        exe: exe.full,
+        hasSteamApiDll: hasDll(entries || []) || emu.dll.length > 0,
+        steamSettings: emu.steamSettings || null,
+        productName: productName || '',
+      },
     });
   };
 
