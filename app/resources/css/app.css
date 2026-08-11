@@ -72,16 +72,24 @@
   --set-title: color-mix(in srgb, var(--text) 88%, white);
   --set-icon: color-mix(in srgb, var(--accent) 42%, var(--text-muted));
   --set-divider: color-mix(in srgb, var(--border) 20%, transparent);
-  /* Account cards (Steam login / Epic connect) share one amber surface. */
-  --set-amber: #e5b263;
-  --set-account-border: color-mix(in srgb, var(--set-amber) 22%, transparent);
-  --set-account-bg: linear-gradient(135deg, color-mix(in srgb, var(--set-amber) 12%, transparent), var(--set-panel));
+  /* Account cards (Steam login / Epic connect) share one caution surface, keyed off the theme's
+     own --warning hue so the cards recolour with the palette instead of staying Steam-blue amber
+     under every theme (the literal here is only the fallback for a theme that defines no warning). */
+  /* Account cards (Steam login / Epic connect) read as part of the theme, not as a warning. They
+     were a fixed amber, then a per-theme amber — still amber, still the odd one out in a blue or
+     purple palette. They now use the accent like every other highlighted surface; the "throwaway
+     account" badge on the Steam card keeps the caution hue, which is where it belongs. */
+  --set-account-border: color-mix(in srgb, var(--accent) 26%, transparent);
+  --set-account-bg: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, transparent), var(--set-panel));
   --set-btn-top: color-mix(in srgb, var(--set-surface) 78%, white 4%);
   --set-btn-bottom: color-mix(in srgb, var(--set-surface) 92%, black 12%);
 }
 
 /* App themes (Settings > General). Dark variants only: the stylesheet's translucent white/black
-   overlays assume a dark base, so every theme keeps light text and shifts backgrounds/accents. */
+   overlays assume a dark base, so every theme keeps light text and shifts backgrounds/accents.
+   Each theme also carries the three semantic hues (--success / --warning / --danger) in its own
+   palette: they drive the account cards, the caution badges and the diagnostic lines, which used
+   to be pinned to one hardcoded amber/green and stayed Steam-blue-tinted under every theme. */
 :root[data-theme='oled'] {
   --bg-base: #000000;
   --bg-glow: #101014;
@@ -95,6 +103,9 @@
   --accent-soft: rgba(77, 163, 255, 0.18);
   --surface-elevated: #101015;
   --surface-sunken: #000000;
+  --success: #3ddc97;
+  --warning: #f0b429;
+  --danger: #ff6b6b;
 }
 :root[data-theme='dracula'] {
   --bg-base: #282a36;
@@ -109,6 +120,9 @@
   --accent-soft: rgba(189, 147, 249, 0.2);
   --surface-elevated: #2b2d3b;
   --surface-sunken: #171923;
+  --success: #50fa7b;
+  --warning: #ffb86c;
+  --danger: #ff5555;
 }
 :root[data-theme='graphite'] {
   --bg-base: #1d1f22;
@@ -123,6 +137,9 @@
   --accent-soft: rgba(111, 191, 115, 0.18);
   --surface-elevated: #212327;
   --surface-sunken: #101113;
+  --success: #8ed49a;
+  --warning: #d8a657;
+  --danger: #e0685a;
 }
 /* Established community color schemes, ported with their canonical palettes. */
 :root[data-theme='nord'] {
@@ -138,6 +155,9 @@
   --accent-soft: rgba(136, 192, 208, 0.18);
   --surface-elevated: #434c5e;
   --surface-sunken: #262b35;
+  --success: #a3be8c;
+  --warning: #ebcb8b;
+  --danger: #bf616a;
 }
 :root[data-theme='gruvbox'] {
   --bg-base: #282828;
@@ -152,6 +172,9 @@
   --accent-soft: rgba(254, 128, 25, 0.18);
   --surface-elevated: #504945;
   --surface-sunken: #1d2021;
+  --success: #b8bb26;
+  --warning: #fabd2f;
+  --danger: #fb4934;
 }
 :root[data-theme='tokyonight'] {
   --bg-base: #1a1b26;
@@ -166,6 +189,9 @@
   --accent-soft: rgba(125, 207, 255, 0.18);
   --surface-elevated: #292e42;
   --surface-sunken: #13141c;
+  --success: #9ece6a;
+  --warning: #e0af68;
+  --danger: #f7768e;
 }
 
 html,
@@ -200,6 +226,14 @@ li {
 
 html {
   user-select: none;
+}
+
+/* Library scan in progress. `progress` rather than `wait`: the window stays usable while games
+   stream in, so the pointer should say "working", not "blocked". The `*` rule is needed because
+   every interactive element sets its own cursor and would otherwise override the root. */
+html.library-loading,
+html.library-loading * {
+  cursor: progress !important;
 }
 body {
   width: 100vw;
@@ -539,7 +573,7 @@ main {
   transform: translate(-50%, -50%);
   padding: 10px 20px;
   border-radius: 12px;
-  background: linear-gradient(180deg, #1d3044 0%, #172638 100%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 62%, var(--surface-sunken)) 0%, color-mix(in srgb, var(--surface) 34%, var(--surface-sunken)) 100%);
   border: 1px solid color-mix(in srgb, var(--border) 12%, transparent);
   box-shadow: 0 20px 44px rgba(0, 0, 0, 0.42);
 }
@@ -672,7 +706,7 @@ main {
 
 #game-list .game-box {
   font-family: 'Open-Sans';
-  background: linear-gradient(180deg, #1d3044 0%, #172638 100%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 62%, var(--surface-sunken)) 0%, color-mix(in srgb, var(--surface) 34%, var(--surface-sunken)) 100%);
   width: 230px;
   border-radius: 8px;
   overflow: hidden;
@@ -3851,7 +3885,7 @@ main {
   display: none;
   margin: 0 0 14px;
   padding: 14px 16px 16px;
-  border: 1px solid rgba(240, 183, 92, 0.2);
+  border: 1px solid var(--set-account-border);
   border-radius: 12px;
   background: var(--set-account-bg);
 }
@@ -3881,10 +3915,10 @@ main {
   gap: 6px;
   flex-shrink: 0;
   padding: 4px 8px;
-  border: 1px solid rgba(241, 185, 94, 0.25);
+  border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
   border-radius: 999px;
-  color: #efc57f;
-  background: rgba(133, 85, 24, 0.14);
+  color: color-mix(in srgb, var(--warning) 82%, white 18%);
+  background: color-mix(in srgb, var(--warning) 16%, transparent);
   font-size: 10.5px;
   font-weight: 700;
   text-transform: uppercase;
@@ -4273,6 +4307,7 @@ main {
   --accent-strong: #7aa7ff;
   --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
   --success: #5fd49a;
+  --warning: #e5b263;
   --danger: #e07a5f;
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -4320,7 +4355,7 @@ body {
   gap: 5px;
   margin: 0;
   padding: 5px 9px;
-  color: #c8d4e3;
+  color: color-mix(in srgb, var(--text) 88%, var(--text-muted));
   background: color-mix(in srgb, var(--surface-sunken) 46%, transparent);
   border: 1px solid color-mix(in srgb, var(--border) 10%, transparent);
   border-radius: 999px;
@@ -5345,12 +5380,105 @@ body {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: var(--set-panel);
+  /* --set-panel is translucent, which let the rows scroll visibly THROUGH the pinned header — the
+     section title and the first row printed on top of each other. A pinned header has to be opaque:
+     same colour, composited over the modal surface instead of over whatever is passing behind it. */
+  background: color-mix(in srgb, var(--set-panel) 100%, var(--set-modal-top));
+  background-color: color-mix(in srgb, var(--set-surface) 60%, var(--set-modal-top));
 }
 /* Inline headings live inside a hero/heading block, not at the top of a scrolling card. */
 #settings .emulator-hero .title,
 #settings .emulator-login-heading > .title {
   position: static;
+}
+
+/* ── COLLAPSIBLE SECTIONS ──────────────────────────────────────────────────
+   Every section card folds under its own header. The header becomes the control
+   (pointer, hover tint, focus ring, chevron); the card's non-header children are
+   hidden by state, which is why this is one of the few justified `!important`s in
+   the file — it has to beat each child's own layout rule (grid/flex/block) without
+   restating them all. Nothing is wrapped or moved: the i18n loader binds labels
+   positionally, so the DOM has to stay exactly as authored. */
+#settings .settings-section-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+#settings .settings-section-header:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 7%, var(--set-panel));
+}
+
+#settings .settings-section-header:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 80%, transparent);
+  outline-offset: -2px;
+}
+
+/* The account/customizer cards put their header text one level in, so the hover tint has to land
+   on the heading row itself rather than on its .title child. */
+#settings .emulator-login-heading.settings-section-header {
+  margin: 0 -14px 10px;
+  padding: 9px 14px;
+}
+
+/* The chevron is an <i> inside a card header, so the header's own icon rules
+   (`.emulator-group-title i`, `.content .title > i:first-child`) are more specific than a single
+   class and would paint it their fixed blue on every theme. Match on the header too. */
+#settings .settings-section-header .settings-section-arrow,
+#settings .content .title .settings-section-arrow,
+#settings .emulator-group-title .settings-section-arrow {
+  width: auto;
+  min-width: 0;
+  margin-left: auto;
+  color: var(--set-icon);
+  font-size: 11px;
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+#settings .settings-section-header:hover .settings-section-arrow {
+  color: var(--accent);
+}
+
+/* Down = open, sideways = closed. */
+#settings .settings-section.is-collapsed > .settings-section-header .settings-section-arrow {
+  transform: rotate(-90deg);
+}
+
+#settings:not(.searching) .settings-section.is-collapsed > *:not(.settings-section-header) {
+  display: none !important;
+}
+
+/* A collapsed card is just its header: drop the body padding so it reads as one compact bar. */
+#settings:not(.searching) .settings-section.is-collapsed {
+  padding-bottom: 0;
+}
+
+#settings:not(.searching) .settings-section.is-collapsed > .settings-section-header {
+  margin-bottom: 0;
+  border-bottom: 0;
+}
+
+/* Opening a section reveals content that was not in the layout a frame ago; a short fade keeps
+   that from registering as a jump. */
+@keyframes settings-section-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+#settings .settings-section:not(.is-collapsed) > *:not(.settings-section-header) {
+  animation: settings-section-reveal 0.18s ease both;
+}
+
+/* A search looks through every section, so a match is never buried in a folded card. The chevrons
+   stay put — the sections have not been opened, the filter is just seeing past them. */
+#settings.searching .settings-section.is-collapsed > *:not(.settings-section-header) {
+  animation: none;
 }
 
 /* ── ONE SECTION MODEL FOR EVERY TAB ───────────────────────────────────────
@@ -5433,41 +5561,12 @@ body {
   margin: 0;
 }
 
-/* Selective folder rescan: a compact, explicit scope rather than a second opaque full-scan button. */
-#settings .folder-rescan-card {
-  margin: 12px 0 0;
-  padding: 12px 14px;
-  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--set-hairline-soft));
-  border-radius: 10px;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, var(--set-panel)), var(--set-panel));
-}
-
-#settings .folder-rescan-heading {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-#settings .folder-rescan-heading > i {
-  width: 28px;
-  min-width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
-  border-radius: 8px;
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 11%, transparent);
-}
-
-#settings .folder-rescan-heading strong {
-  display: block;
-  color: var(--text);
-  font: 700 13px 'Open-Sans', sans-serif;
-}
-
-#settings .folder-rescan-heading p {
-  margin: 3px 0 0;
+/* Selective folder rescan: a compact, explicit scope rather than a second opaque full-scan button.
+   It is an ordinary settings section (`.settings-card`), so its frame, header and hairline come from
+   the shared section model above and follow the active theme like every other card — it used to
+   carry its own accent-washed frame, which read as a foreign element in every palette. */
+#settings .folder-rescan-help {
+  margin: 8px 0 0;
   color: var(--text-muted);
   font-size: 12px;
   line-height: 1.35;
@@ -5710,6 +5809,20 @@ body {
   transform: none;
 }
 
+/* The neutral button fill above is more specific than `.inline-action-btn.primary`, so the one
+   accented action in a card (e.g. "Rescan selected folders") was rendering identically to the
+   plain buttons beside it. Restate it here so a primary action reads as one. */
+#settings .inline-action-btn.primary {
+  border-color: color-mix(in srgb, var(--accent) 38%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 82%, white 6%), color-mix(in srgb, var(--accent) 78%, black 12%));
+  color: color-mix(in srgb, var(--bg-base) 88%, black);
+}
+
+#settings .inline-action-btn.primary:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 92%, white 10%), color-mix(in srgb, var(--accent) 84%, black 8%));
+}
+
 #settings .emulator-settings {
   padding-top: 22px;
 }
@@ -5806,10 +5919,10 @@ body {
   flex: 0 0 auto;
   margin: 0;
   padding: 4px 9px;
-  border: 1px solid rgba(241, 185, 94, 0.25);
+  border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
   border-radius: 999px;
-  color: #efc57f;
-  background: rgba(133, 85, 24, 0.16);
+  color: color-mix(in srgb, var(--warning) 82%, white 18%);
+  background: color-mix(in srgb, var(--warning) 16%, transparent);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -6094,17 +6207,170 @@ body {
   padding: 18px 20px 20px;
 }
 
-#settings #options-notify-customiser .cust-field {
-  gap: 7px !important;
+/* Custom-preset builder. The controls and the stage behind the sample popup follow the app theme;
+   only the sample popup itself is painted from the user's chosen colours (that IS the preview).
+
+   An ordinary settings row (`li.hasHelper`) is a two-column label|control grid with explicit row
+   placement. The builder is not that shape — it is a stack of full-width blocks — so its row opts
+   out of the grid entirely rather than fighting the column widths and pinned rows. */
+#settings #options-notify-customiser > li {
+  display: block;
 }
 
-#settings #cust-name {
-  width: 220px;
+#settings #options-notify-customiser > li > .left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+#settings .cust-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px 18px;
+  width: 100%;
+  padding: 10px 0 4px;
+}
+
+#settings #options-notify-customiser .cust-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  font-size: 0.85em;
+}
+
+#settings .cust-field-wide {
+  grid-column: span 2;
+}
+
+#settings .cust-field > span {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-muted);
+}
+
+/* Live readout for each slider — the builder used to show a bare handle with no value at all. */
+#settings .cust-value {
+  color: var(--text);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+#settings #cust-name,
+#settings #cust-load {
+  width: 100%;
+  box-sizing: border-box;
   padding-left: 14px;
+}
+
+#settings #cust-load {
+  min-height: 32px;
+  border: 1px solid var(--set-control-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--set-surface-sunken) 62%, black);
+  color: var(--text);
+  font-family: 'Open-Sans';
+  font-size: 13px;
 }
 
 #settings #cust-name::placeholder {
   color: var(--text-muted);
+}
+
+#settings .cust-stage {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 6px 0;
+  padding: 16px 12px;
+  overflow-x: auto;
+  border: 1px solid var(--set-hairline-soft);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--set-surface-sunken) 55%, transparent);
+}
+
+/* DELIBERATELY not themed. This is the sample popup being authored, so it is painted from the
+   builder's own colour pickers (updatePresetPreview writes these inline on every input) — the app
+   palette must not leak into a preview of what the notification will look like in a game. The
+   literals here are only the starting values, and they mirror the generator's defaults. */
+#settings #cust-preview {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  padding: 12px 18px;
+  border-left: 4px solid #4aa3ff;
+  border-radius: 12px;
+  background: #16181d;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  color: #ffffff;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 16px;
+}
+
+#settings #cust-preview .cust-preview-icon-wrap {
+  flex: 0 0 auto;
+}
+
+#settings #cust-preview .cust-preview-text {
+  min-width: 0;
+}
+
+#settings #cust-preview-icon {
+  color: #4aa3ff;
+  font-size: 40px;
+}
+
+#settings #cust-preview-title {
+  overflow: hidden;
+  color: #4aa3ff;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#settings #cust-preview-detail {
+  overflow: hidden;
+  opacity: 0.9;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The action row also carries `.right`, whose `#settings .arrow-list li .right` rule pins a 230px
+   column — so this needs the extra id to claim the full width and its natural height. */
+#settings #options-notify-customiser .cust-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  height: auto;
+}
+
+/* An action row normally holds one button and stretches it; this one holds two, side by side. */
+#settings #options-notify-customiser .cust-actions .inline-action-btn {
+  width: auto;
+}
+
+#settings #cust-status {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 0.85em;
+}
+
+#settings #cust-status.is-ok {
+  color: var(--success);
+}
+
+#settings #cust-status.is-error {
+  color: var(--danger);
 }
 
 #settings .help-grid {

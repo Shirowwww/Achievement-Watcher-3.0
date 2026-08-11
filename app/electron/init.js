@@ -32,6 +32,7 @@ for (const sw of ['disable-extensions', 'disable-component-extensions-with-backg
 // the GC to reclaim earlier when idle, without starving the brief scrape/HTML-parse bursts.
 app.commandLine.appendSwitch('js-flags', '--max-old-space-size=256');
 const { BrowserWindow, dialog, session, shell, ipcMain, globalShortcut, Tray, Menu, nativeImage, Notification } = require('electron');
+const os = require('os');
 const { autoUpdater } = require('electron-updater');
 const { verifyUpdateCodeSignature } = require('../util/updateSignature.js');
 // Never download silently: the user is asked first (update-available → "Download && Install" —
@@ -53,15 +54,51 @@ let manualUpdateCheckPending = false; // set by the Settings "Check for updates"
 let manualUpdateResult = null; // 'available' | 'uptodate' | 'error' — surfaced to the Settings button
 const UPDATE_RECHECK_MS = 60 * 60 * 1000; // silent hourly re-check while the app stays resident
 const UPDATE_RETRY_MS = 30 * 60 * 1000; // slower retry after a failed check
+// How many games the monitor currently reports as running. Kept here rather than queried on demand
+// because only the monitor can answer it, and it pushes every change over the ipc channel.
+let gamesRunning = 0;
+const isGameRunning = () => gamesRunning > 0;
+// An "install now?" prompt that arrived mid-session, kept so it can be re-opened once the game
+// ends. Assigned where the updater events are wired up (inside the single-instance branch).
+let promptDownloadedUpdate = null;
+let pendingInstallPrompt = null;
 
-function isVersionSkipped(version) {
+// Whether an available update may interrupt the user. The rules (skip = permanent, later = until a
+// deadline, neither hides a newer release) live in util/updateGate.js so they can be unit-tested.
+const updateGate = require(path.join(__dirname, '../util/updateGate.js'));
+
+async function applyGeneralPatch(patch) {
+  if (!configJS) return;
+  if (!configJS.general) configJS.general = {};
+  Object.assign(configJS.general, patch);
+  await settingsJS.save(configJS);
+}
+
+async function postponeUpdate(version) {
   try {
-    const skipped = configJS && configJS.general && configJS.general.skippedVersion;
-    if (typeof skipped !== 'string' || skipped.toLowerCase() === 'none') return false;
-    return require('semver').gte(skipped, version);
-  } catch {
-    return false;
+    const patch = updateGate.postponePatch(version);
+    await applyGeneralPatch(patch);
+    debug.log(`[updater] version ${version} postponed until ${new Date(patch.updatePostponedUntil).toISOString()}`);
+  } catch (err) {
+    debug.log(`[updater] could not persist the postpone: ${err.message || err}`);
   }
+}
+
+// A user who asks for a check has just overruled their own "later".
+async function clearUpdatePostpone() {
+  try {
+    const general = (configJS && configJS.general) || {};
+    if (!general.updatePostponedVersion && !general.updatePostponedUntil) return;
+    await applyGeneralPatch(updateGate.clearPostponePatch());
+  } catch (err) {
+    debug.log(`[updater] could not clear the postpone: ${err.message || err}`);
+  }
+}
+
+function shouldSuppressUpdatePrompt(version, { manual = false } = {}) {
+  const { suppress, reason } = updateGate.shouldSuppressUpdatePrompt((configJS && configJS.general) || {}, version, { manual });
+  if (suppress) debug.log(`[updater] version ${version} not offered (${reason})`);
+  return suppress;
 }
 
 function notifyUpdateError(message) {
@@ -91,17 +128,88 @@ function scheduleUpdateCheck(delayMs) {
       scheduleUpdateCheck(UPDATE_RECHECK_MS);
       return;
     }
+    // Never interrupt a game. The update dialog is modal and has no parent window, so it would land
+    // on top of a fullscreen session. Skipping the whole check (not just the dialog) also keeps the
+    // network quiet while playing; the game-exit signal below asks again right afterwards.
+    if (isGameRunning()) {
+      debug.log('[updater] check deferred: a game is running');
+      scheduleUpdateCheck(updateGate.INTERVALS.inGame);
+      return;
+    }
     autoUpdater
       .checkForUpdates()
       .then(() => {
         updaterErrorNotified = false; // a healthy check clears the "already told the user" flag
-        scheduleUpdateCheck(UPDATE_RECHECK_MS);
+        scheduleUpdateCheck(updateGate.nextCheckDelayMs({ gameRunning: isGameRunning() }));
       })
       .catch((err) => {
         notifyUpdateError(err && err.message ? err.message : String(err));
-        scheduleUpdateCheck(UPDATE_RETRY_MS);
+        scheduleUpdateCheck(updateGate.nextCheckDelayMs({ gameRunning: isGameRunning(), failed: true }));
       });
   }, delayMs);
+}
+
+/*
+  One block, written once per launch, holding everything a bug report needs and nobody can be asked
+  to collect by hand: build and runtime versions, where the app and its data actually live, how it
+  was started, and the display geometry (a wrong window size or a stacked title bar is almost always
+  a scaling/multi-monitor story, and "it looked weird" is not something a log can reconstruct after
+  the fact). Every value is either public or a local path that already appears throughout this log.
+*/
+function logStartupDiagnostics() {
+  const line = (label, value) => debug.log(`[diag] ${label}: ${value}`);
+  try {
+    const { node, electron, chrome, v8 } = process.versions;
+    line('app', `${app.getName()} ${app.getVersion()} (${app.isPackaged ? 'packaged' : 'dev'}${manifest.config.debug ? ', debug' : ''})`);
+    line('runtime', `electron ${electron} · chrome ${chrome} · node ${node} · v8 ${v8}`);
+    line('os', `${os.type()} ${os.release()} ${process.arch} · ${os.cpus().length} cpu · ${Math.round(os.totalmem() / 1048576)} MB`);
+    line('paths', `exe=${process.execPath}`);
+    line('paths', `app=${app.getAppPath()}`);
+    line('paths', `userData=${userData}`);
+    line('argv', JSON.stringify(process.argv.slice(1)));
+    line('flags', `hidden=${process.argv.includes('--hidden')} safeMode=${safeMode} gpuDisabled=${!!(manifest.config['disable-gpu'] || userDisableGpu || safeMode)}`);
+    const general = (configJS && configJS.general) || {};
+    line('settings', `lang=${(configJS && configJS.achievement && configJS.achievement.lang) || '?'} theme=${general.theme || '?'} closeToTray=${general.closeToTray !== false} startWithWindows=${general.startWithWindows !== false}`);
+    line('settings', `skippedVersion=${general.skippedVersion || 'none'} updatePostponed=${general.updatePostponedVersion || '-'}${general.updatePostponedUntil ? ' until ' + new Date(Number(general.updatePostponedUntil)).toISOString() : ''}`);
+    // `screen` throws if it is touched before the app is ready, which is why it is required here
+    // rather than at the top of the file (same pattern as the overlay/notification positioning).
+    const electronScreen = require('electron').screen;
+    const primaryId = electronScreen.getPrimaryDisplay().id;
+    for (const display of electronScreen.getAllDisplays()) {
+      const { width, height } = display.size;
+      const work = display.workAreaSize;
+      line(
+        'display',
+        `${display.id}${display.id === primaryId ? ' (primary)' : ''} ${width}x${height} @${display.scaleFactor}x work=${work.width}x${work.height} rotation=${display.rotation}`
+      );
+    }
+  } catch (err) {
+    debug.log(`[diag] failed to collect startup diagnostics: ${err.message || err}`);
+  }
+}
+
+/*
+  The monitor reports how many games are running. A session ending is the one moment an update
+  prompt is welcome, so the check is pulled forward instead of waiting out the rest of the hour.
+*/
+function setGameActivity(count) {
+  const wasRunning = isGameRunning();
+  gamesRunning = Math.max(0, Number(count) || 0);
+  // Logged on every report, not only on a change: "is the monitor telling the app about games at
+  // all?" is the first question when an update prompt shows up (or fails to) at the wrong moment.
+  debug.log(`[game-activity] ${gamesRunning} game(s) running`);
+  if (wasRunning === isGameRunning()) return;
+  if (isGameRunning() || !app.isPackaged) return;
+
+  // A download that completed mid-session already has its file on disk: re-open that exact prompt
+  // rather than sending the user back through the download question.
+  if (pendingInstallPrompt && typeof promptDownloadedUpdate === 'function') {
+    const info = pendingInstallPrompt;
+    pendingInstallPrompt = null;
+    setTimeout(() => promptDownloadedUpdate(info), updateGate.INTERVALS.afterGame);
+    return;
+  }
+  scheduleUpdateCheck(updateGate.INTERVALS.afterGame);
 }
 const minimist = require('minimist');
 const { execSync, execFile, spawn } = require('child_process');
@@ -891,6 +999,9 @@ ipcMain.handle('check-for-updates', async () => {
   manualUpdateCheckPending = true;
   manualUpdateResult = null;
   updaterErrorNotified = false; // let a still-failing check re-notify even if it already did once
+  // Asking for a check overrules an earlier "later" — otherwise the button would report an update
+  // and then silently refuse to offer it.
+  await clearUpdatePostpone();
   try {
     await autoUpdater.checkForUpdates();
     // update-available / update-not-available fire right after the check resolves;
@@ -1201,6 +1312,7 @@ function handleMonitorMessage(msg) {
   try {
     if (msg && Array.isArray(msg.argv)) parseArgs(minimist(msg.argv));
     else if (msg && msg.overlayControl) handleOverlayControl(msg.overlayControl.action, msg.overlayControl.payload);
+    else if (msg && msg.gameActivity) setGameActivity(msg.gameActivity.count);
   } catch (err) {
     debug.log(`[monitor] message handling failed: ${err.message || err}`);
   }
@@ -1304,12 +1416,16 @@ function launchWatchdog() {
       // stay dead for the whole session.
       debug.log(`[monitor] spawn error: ${err.message}`);
       if (monitorProc === child) monitorProc = null;
+      // Only the monitor can tell us a game ended. If it dies mid-session the count would stay
+      // above zero forever and updates would never be offered again.
+      setGameActivity(0);
       scheduleMonitorRespawn();
     });
     child.on('exit', (code, signal) => {
       debug.log(`[monitor] exited code=${code}${signal ? ` signal=${signal}` : ''}`);
       const wasCurrent = monitorProc === child;
       if (wasCurrent) monitorProc = null; // only clear if still the current child
+      if (wasCurrent) setGameActivity(0); // see the spawn-error handler above
       if (wasCurrent) scheduleMonitorRespawn(); // manual restarts take over their own relaunch
     });
     // Backoff reset: if this child survives 30s the crash loop is likely over.
@@ -2228,12 +2344,42 @@ function createMainWindow() {
     MainWin.loadFile(manifest.config.window.view);
 
     let mainWindowShown = false;
+    // Window geometry, in the log. "It opened/closed the wrong shape" is otherwise unreconstructable
+    // after the fact, and the shape almost always comes from the display it landed on: a bounds line
+    // next to the display block in [diag] turns a vague report into something answerable.
+    const logWindowGeometry = (event) => {
+      if (!MainWin || MainWin.isDestroyed()) return;
+      try {
+        const b = MainWin.getBounds();
+        const c = MainWin.getContentBounds();
+        const display = require('electron').screen.getDisplayMatching(b);
+        debug.log(
+          `[MainWindow] ${event}: bounds=${b.width}x${b.height}@${b.x},${b.y} content=${c.width}x${c.height}` +
+            ` state=${MainWin.isMinimized() ? 'minimized' : MainWin.isMaximized() ? 'maximized' : 'normal'}` +
+            `${MainWin.isFullScreen() ? '/fullscreen' : ''} visible=${MainWin.isVisible()}` +
+            ` display=${display.id}@${display.scaleFactor}x`
+        );
+      } catch (err) {
+        debug.log(`[MainWindow] ${event}: geometry unavailable (${err.message || err})`);
+      }
+    };
+    // 'resize'/'move' fire continuously while dragging, so they are logged once the user lets go.
+    MainWin.on('resized', () => logWindowGeometry('resized'));
+    MainWin.on('moved', () => logWindowGeometry('moved'));
+    MainWin.on('maximize', () => logWindowGeometry('maximized'));
+    MainWin.on('unmaximize', () => logWindowGeometry('unmaximized'));
+    MainWin.on('minimize', () => logWindowGeometry('minimized'));
+    MainWin.on('restore', () => logWindowGeometry('restored'));
+    MainWin.on('enter-full-screen', () => logWindowGeometry('enter-full-screen'));
+    MainWin.on('leave-full-screen', () => logWindowGeometry('leave-full-screen'));
+
     const showMainWindow = (reason) => {
       if (mainWindowShown || !MainWin) return;
       mainWindowShown = true;
       debug.log(`[MainWindow] showing (${reason})`);
       MainWin.show();
       MainWin.focus();
+      logWindowGeometry('shown');
       const net = require('net');
       const PIPE_NAME = '\\\\.\\pipe\\AchievementWatchdogPipe';
       function checkWatchdogStatus(callback) {
@@ -2268,6 +2414,10 @@ function createMainWindow() {
         }); //Window is loaded and ready to be drawn
       }),
       new Promise(function (resolve) {
+        // Clear any handler left behind by a window that was closed before its renderer reported in:
+        // handleOnce only unregisters when it actually fires, and registering a second handler for
+        // the same channel throws — which would take the whole window creation down with it.
+        ipcMain.removeHandler('components-loaded');
         ipcMain.handleOnce('components-loaded', () => {
           debug.log('[MainWindow] components-loaded');
           return resolve();
@@ -2294,6 +2444,7 @@ function createMainWindow() {
         return;
       }
       event.preventDefault();
+      logWindowGeometry('closing');
       debug.log('[MainWindow] close intercepted -> hiding to tray');
       clearInterval(watchdogStatusInterval);
       watchdogStatusInterval = null;
@@ -3210,6 +3361,11 @@ function resolveNotificationSound(name) {
   return '';
 }
 
+// Scratch preset the builder's Preview button renders through. It is a real preset folder (so the
+// preview goes through the exact same notification path as a saved one) but a reserved name, hidden
+// from every list so it can never be picked, exported or left behind as a "preset" the user made.
+const PREVIEW_PRESET_NAME = '__aw-preview__';
+
 // List available preset names (Default Presets + Users Presets) for the settings dropdown.
 ipcMain.handle('list-presets', async () => {
   const out = [];
@@ -3217,6 +3373,7 @@ ipcMain.handle('list-presets', async () => {
   for (const root of roots) {
     try {
       for (const name of fs.readdirSync(root)) {
+        if (name === PREVIEW_PRESET_NAME) continue;
         if (fs.existsSync(path.join(root, name, 'index.html')) && !out.includes(name)) out.push(name);
       }
     } catch {}
@@ -3226,181 +3383,109 @@ ipcMain.handle('list-presets', async () => {
 });
 
 // --- Custom preset builder (Phase 3 customiser) -----------------------------------------------------
-// Generate a notification-overlay preset into "Users Presets/<name>" from simple visual settings. The
-// index.html is a FIXED, payload-consuming engine (same contract as the bundled presets:
-// window.api.onNotification → fill .title/.detail/.icon, add .active, close after the duration); only the
-// generated style.css differs, driven by :root CSS variables. This guarantees every generated preset is
-// structurally compatible with createNotificationWindow.
-const CUSTOM_PRESET_INDEX_HTML = [
-  '<!DOCTYPE html>',
-  '<html lang="en"><head>',
-  '<meta charset="UTF-8" />',
-  '<link rel="stylesheet" href="style.css" />',
-  '<meta name="duration" content="6000" />',
-  '<meta width="450" height="150" />',
-  '<title>AW Custom Preset</title>',
-  '</head><body>',
-  '<div class="ach"><div class="icon"><img src="" alt="" /></div>',
-  '<div class="text_wrap"><p class="title"></p><span class="detail"></span>',
-  '<div class="progress_line" hidden><span class="progress_track"><span class="progress_meter"></span></span><span class="progress_label"></span></div></div></div>',
-  '<script>',
-  "window.addEventListener('DOMContentLoaded', function () {",
-  "  var metaDur = document.querySelector('meta[name=\"duration\"]');",
-  '  var base = Math.max(1, Number((metaDur && metaDur.content) || 6000));',
-  '  function applyRarityTier(rootEl, value) {',
-  "    if (!rootEl) return;",
-  "    rootEl.classList.remove('rarity-gold', 'rarity-silver', 'rarity-bronze');",
-  "    if (value == null || value === '') return;",
-  '    var percent = Number(value);',
-  '    if (!isFinite(percent) || percent < 0 || percent > 10) return;',
-  "    if (percent < 3) rootEl.classList.add('rarity-gold');",
-  "    else if (percent < 6) rootEl.classList.add('rarity-silver');",
-  "    else rootEl.classList.add('rarity-bronze');",
-  '  }',
-  '  function normalizeProgress(data) {',
-  '    var src = (data && data.progress) || data || {};',
-  '    var max = Number(src.max != null ? src.max : src.progressMax);',
-  '    if (!isFinite(max) || max <= 1) return null;',
-  '    var currentRaw = Number(src.current != null ? src.current : src.progressCurrent);',
-  '    var current = Math.max(0, Math.min(max, isFinite(currentRaw) ? currentRaw : 0));',
-  '    var percentRaw = Number(src.percent != null ? src.percent : src.progressPercent);',
-  '    var percent = isFinite(percentRaw)',
-  '      ? Math.max(0, Math.min(100, Math.floor(percentRaw)))',
-  '      : Math.max(0, Math.min(100, Math.floor((current / max) * 100)));',
-  '    return { current: current, max: max, percent: percent };',
-  '  }',
-  '  function applyProgress(data) {',
-  "    var line = document.querySelector('.progress_line');",
-  "    var meter = document.querySelector('.progress_meter');",
-  "    var label = document.querySelector('.progress_label');",
-  '    if (!line || !meter || !label) return;',
-  '    var progress = normalizeProgress(data);',
-  '    if (!progress) { line.hidden = true; meter.style.width = "0%"; label.textContent = ""; return; }',
-  '    line.hidden = false;',
-  '    meter.style.width = progress.percent + "%";',
-  '    label.textContent = progress.current + "/" + progress.max + " - " + progress.percent + "%";',
-  '  }',
-  '  function startMarqueeIfOverflow(lineEl) {',
-  '    if (!lineEl) return;',
-  '    try { lineEl.getAnimations().forEach(function (a) { a.cancel(); }); } catch (e) {}',
-  "    lineEl.classList.remove('marquee');",
-  '    void lineEl.offsetWidth;',
-  "    var clip = lineEl.closest('.text_wrap') || lineEl;",
-  '    var overflow = Math.round((lineEl.scrollWidth || 0) - (clip.clientWidth || 0));',
-  '    if (overflow > 2) {',
-  '      var px = Math.ceil(overflow + 24);',
-  "      lineEl.classList.add('marquee');",
-  '      lineEl.animate([{ transform: "translateX(0)" }, { transform: "translateX(-" + px + "px)" }], { duration: Math.max(3000, Math.round(px / 50) * 1000), delay: 1000, easing: "linear", fill: "both" });',
-  '    }',
-  '  }',
-  '  function onPayload(displayName, description, iconPath, scale, data) {',
-  "    var ach = document.querySelector('.ach');",
-  "    var titleEl = document.querySelector('.title');",
-  "    var detailEl = document.querySelector('.detail');",
-  "    var iconEl = document.querySelector('.icon img');",
-  '    if (displayName != null) titleEl.textContent = displayName;',
-  '    if (description != null) detailEl.textContent = description;',
-  '    if (iconPath) { var p = String(iconPath).replace(/\\\\/g, "/"); iconEl.src = p.indexOf("file://") === 0 ? p : "file:///" + p; }',
-  "    else { iconEl.style.display = 'none'; }",
-  '    var s = Math.max(0.01, parseFloat(scale || 1) || 1);',
-  "    ach.style.setProperty('--scale', String(s));",
-  '    applyRarityTier(ach, data && data.rarityPercent);',
-  '    applyProgress(data);',
-  '    var total = Math.max(0, Number((metaDur && metaDur.content) || base));',
-  '    var t = Math.max(0.1, total / base);',
-  '    var inMs = Math.max(120, Math.round(520 * t));',
-  '    var outMs = Math.max(120, Math.round(380 * t));',
-  '    var holdMs = Math.max(0, total - inMs - outMs);',
-  "    ach.style.setProperty('--ach-in', inMs + 'ms');",
-  "    ach.style.setProperty('--ach-hold', holdMs + 'ms');",
-  "    ach.style.setProperty('--ach-out', outMs + 'ms');",
-  "    ach.classList.add('active');",
-  '    if (window.api && window.api.notificationRenderReady) window.api.notificationRenderReady();',
-  '    requestAnimationFrame(function () { startMarqueeIfOverflow(titleEl); startMarqueeIfOverflow(detailEl); });',
-  '    setTimeout(function () {',
-  "      ach.classList.remove('active');",
-  '      if (window.api && window.api.closeNotificationWindow) window.api.closeNotificationWindow();',
-  '    }, total);',
-  '  }',
-  '  if (window.api && window.api.onNotification) window.api.onNotification(function (d) {',
-  '    onPayload(d && d.displayName, d && d.description, d && (d.iconPath || d.icon), d && d.scale, d || {});',
-  '  });',
-  '});',
-  '</script></body></html>',
-].join('\n');
+// The generator itself lives in util/customPreset.js (pure string work, unit-tested); this file owns
+// where the generated files land and which preset names are reserved.
+const customPreset = require(path.join(__dirname, '../util/customPreset.js'));
+const { customPresetNumbers, buildCustomPresetHtml, buildCustomPresetCss } = customPreset;
 
-function buildCustomPresetCss(o) {
-  const num = (v, def, min, max) => {
-    const n = Number(v);
-    if (!Number.isFinite(n)) return def;
-    return Math.max(min, Math.min(max, n));
-  };
-  const color = (v, def) => (typeof v === 'string' && /^(#[0-9a-f]{3,8}|rgba?\([^)]*\)|[a-z]+)$/i.test(v.trim()) ? v.trim() : def);
-  const bg = color(o.bg, '#16181d');
-  const text = color(o.text, '#ffffff');
-  const accent = color(o.accent, '#4aa3ff');
-  const opacity = num(o.opacity, 1, 0.2, 1);
-  const fontSize = num(o.fontSize, 16, 10, 28);
-  const radius = num(o.radius, 12, 0, 40);
-  const iconSize = num(o.iconSize, 64, 24, 110);
-  return [
-    ':root {',
-    `  --bg: ${bg};`,
-    `  --text: ${text};`,
-    `  --accent: ${accent};`,
-    `  --opacity: ${opacity};`,
-    `  --font-size: ${fontSize}px;`,
-    `  --radius: ${radius}px;`,
-    `  --icon-size: ${iconSize}px;`,
-    '  --ach-in: 520ms; --ach-hold: 5000ms; --ach-out: 380ms;',
-    '}',
-    'html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }',
-    '.ach {',
-    '  position: fixed; left: 50%; bottom: 16px;',
-    '  transform: translate(-50%, 170%) scale(var(--scale, 1)); transform-origin: center bottom;',
-    '  display: flex; align-items: center; gap: 12px; box-sizing: border-box;',
-    '  width: 420px; padding: 12px 18px;',
-    '  background: var(--bg); color: var(--text);',
-    '  border-radius: var(--radius); border-left: 4px solid var(--accent);',
-    "  font-family: 'Segoe UI', system-ui, sans-serif; font-size: var(--font-size);",
-    '  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); opacity: 0;',
-    '}',
-    '.ach .icon img { width: var(--icon-size); height: var(--icon-size); border-radius: 14%; object-fit: cover; display: block; }',
-    '.ach .text_wrap { display: flex; flex-direction: column; min-width: 0; }',
-    '.ach .title { margin: 0; font-weight: 700; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }',
-    '.ach .detail { margin: 0; opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }',
-    '@keyframes aw_in { from { transform: translate(-50%, 170%) scale(var(--scale, 1)); opacity: 0; } to { transform: translate(-50%, 0) scale(var(--scale, 1)); opacity: var(--opacity); } }',
-    '@keyframes aw_hold { from, to { transform: translate(-50%, 0) scale(var(--scale, 1)); opacity: var(--opacity); } }',
-    '@keyframes aw_out { from { transform: translate(-50%, 0) scale(var(--scale, 1)); opacity: var(--opacity); } to { transform: translate(-50%, 170%) scale(var(--scale, 1)); opacity: 0; } }',
-    '.active { animation: aw_in var(--ach-in) cubic-bezier(0.2, 0.8, 0.2, 1) forwards, aw_hold var(--ach-hold) forwards, aw_out var(--ach-out) ease-in forwards; animation-delay: 0s, var(--ach-in), calc(var(--ach-in) + var(--ach-hold)); }',
-    '.ach { --aw-accent: ' + accent + '; --aw-accent-soft: ' + accent + '; --aw-glow: color-mix(in srgb, ' + accent + ' 55%, transparent); }',
-    '.ach.rarity-gold { --aw-accent: #ffd24e; --aw-accent-soft: #fff0a8; --aw-glow: color-mix(in srgb, #ffd24e 55%, transparent); }',
-    '.ach.rarity-silver { --aw-accent: #9fb2cc; --aw-accent-soft: #eef4fb; --aw-glow: color-mix(in srgb, #9fb2cc 55%, transparent); }',
-    '.ach.rarity-bronze { --aw-accent: #cd7f32; --aw-accent-soft: #f0bd91; --aw-glow: color-mix(in srgb, #cd7f32 55%, transparent); }',
-    '.ach .title.marquee, .ach .detail.marquee { display: inline-block; white-space: nowrap; overflow: visible; will-change: transform; }',
-    '.progress_line { display: flex; align-items: center; gap: 8px; margin-top: 8px; min-width: 0; }',
-    '.progress_line[hidden] { display: none; }',
-    '.progress_track { display: block; flex: 1 1 auto; min-width: 70px; height: 8px; overflow: hidden; border-radius: 999px; background: rgba(0, 0, 0, 0.45); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }',
-    '.progress_meter { display: block; width: 0%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--aw-accent) 0%, var(--aw-accent-soft) 100%); box-shadow: 0 0 12px var(--aw-glow); transition: width 0.35s ease; }',
-    '.progress_label { flex: 0 0 auto; max-width: 110px; overflow: hidden; color: #f3f7ff; font-size: 12px; font-weight: 700; line-height: 1; text-align: right; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4); }',
-    '',
-  ].join('\n');
+// Folder-safe, readable preset name. Returns '' for anything unusable.
+function sanitizePresetName(raw) {
+  return String(raw || '')
+    .trim()
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 48);
+}
+
+const usersPresetsDir = () => path.join(__dirname, '../presets/Users Presets');
+
+// The builder's own options, stored next to the generated files. Without it a generated preset is
+// write-only: the CSS can be read back but the eight slider/colour values that produced it cannot,
+// so tweaking a preset meant rebuilding it from memory. Purely additive — the notification engine
+// never reads this file, and a preset that predates it simply cannot be re-opened.
+const PRESET_OPTIONS_FILE = 'aw-preset.json';
+
+function writeCustomPreset(name, opts) {
+  const dir = path.join(usersPresetsDir(), name);
+  const values = customPresetNumbers(opts);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'index.html'), buildCustomPresetHtml(opts), 'utf8');
+  fs.writeFileSync(path.join(dir, 'style.css'), buildCustomPresetCss(opts), 'utf8');
+  fs.writeFileSync(path.join(dir, PRESET_OPTIONS_FILE), JSON.stringify({ name, ...values }, null, 2), 'utf8');
+  return dir;
 }
 
 ipcMain.handle('create-custom-preset', async (event, opts = {}) => {
   try {
-    const rawName = String(opts.name || '').trim();
-    // Folder-safe name; keep it readable. Reject empties and reserved/odd names.
-    const name = rawName.replace(/[<>:"/\\|?*\x00-\x1f]/g, '').replace(/\s+/g, ' ').trim().slice(0, 48);
+    const name = sanitizePresetName(opts.name);
     if (!name) return { ok: false, error: 'invalid-name' };
-    const dir = path.join(__dirname, '../presets/Users Presets', name);
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, 'index.html'), CUSTOM_PRESET_INDEX_HTML, 'utf8');
-    fs.writeFileSync(path.join(dir, 'style.css'), buildCustomPresetCss(opts), 'utf8');
-    debug.log('[custom-preset] wrote ' + dir);
-    return { ok: true, name };
+    if (name === PREVIEW_PRESET_NAME) return { ok: false, error: 'reserved-name' };
+    const existed = fs.existsSync(path.join(usersPresetsDir(), name, 'index.html'));
+    debug.log('[custom-preset] wrote ' + writeCustomPreset(name, opts));
+    return { ok: true, name, replaced: existed };
   } catch (err) {
     debug.log('[custom-preset] failed: ' + (err.message || err));
+    return { ok: false, error: String(err.message || err) };
+  }
+});
+
+// Presets this builder generated, i.e. the ones it can load back into its controls.
+ipcMain.handle('list-custom-presets', async () => {
+  try {
+    return fs
+      .readdirSync(usersPresetsDir())
+      .filter((name) => name !== PREVIEW_PRESET_NAME && fs.existsSync(path.join(usersPresetsDir(), name, PRESET_OPTIONS_FILE)))
+      .sort((a, b) => a.localeCompare(b));
+  } catch {
+    return [];
+  }
+});
+
+// Load one generated preset's stored options back into the builder. null when the preset was not
+// made here (bundled/hand-written presets have no options file) or is unreadable.
+ipcMain.handle('read-custom-preset', async (event, name) => {
+  const safe = sanitizePresetName(name);
+  if (!safe) return null;
+  try {
+    const parsed = JSON.parse(fs.readFileSync(path.join(usersPresetsDir(), safe, PRESET_OPTIONS_FILE), 'utf8'));
+    return { name: safe, ...customPresetNumbers(parsed) };
+  } catch {
+    return null;
+  }
+});
+
+/*
+  Delete a preset the builder made. Deliberately narrow: the folder must sit directly under
+  "Users Presets" AND carry the builder's own options file, so a bundled preset (or anything a user
+  hand-authored in there) can never be removed through this channel. Without it the builder could
+  only ever add to the preset list — a throwaway attempt had to be deleted from Explorer.
+*/
+ipcMain.handle('delete-custom-preset', async (event, name) => {
+  const safe = sanitizePresetName(name);
+  if (!safe || safe === PREVIEW_PRESET_NAME) return { ok: false, error: 'invalid-name' };
+  const dir = path.join(usersPresetsDir(), safe);
+  try {
+    if (path.dirname(path.resolve(dir)) !== path.resolve(usersPresetsDir())) return { ok: false, error: 'outside-users-presets' };
+    if (!fs.existsSync(path.join(dir, PRESET_OPTIONS_FILE))) return { ok: false, error: 'not-generated-here' };
+    fs.rmSync(dir, { recursive: true, force: true });
+    debug.log('[custom-preset] deleted ' + dir);
+    return { ok: true, name: safe };
+  } catch (err) {
+    debug.log('[custom-preset] delete failed: ' + (err.message || err));
+    return { ok: false, error: String(err.message || err) };
+  }
+});
+
+// Render the design currently in the builder without saving it: write the scratch preset and hand
+// its reserved name back, so the caller fires an ordinary test notification through it. Previewing
+// used to require creating the preset first, which filled the preset list with throwaway attempts.
+ipcMain.handle('preview-custom-preset', async (event, opts = {}) => {
+  try {
+    writeCustomPreset(PREVIEW_PRESET_NAME, opts);
+    return { ok: true, name: PREVIEW_PRESET_NAME };
+  } catch (err) {
+    debug.log('[custom-preset] preview failed: ' + (err.message || err));
     return { ok: false, error: String(err.message || err) };
   }
 });
@@ -3637,22 +3722,31 @@ try {
   autoUpdater.on('update-available', async (info) => {
     debug.log(`[updater] update available: ${info.version}`);
     manualUpdateResult = 'available';
+    const manual = manualUpdateCheckPending;
     manualUpdateCheckPending = false; // the dialog below already answers a manual check
+    // Claim the prompt BEFORE the first await. Checking here and setting the flag after
+    // startEngines() let two checks landing in the same tick (the hourly timer racing the Settings
+    // button) both walk past the guard and stack two dialogs on the user.
     if (updatePromptOpen) {
       debug.log('[updater] a prompt is already open; ignoring duplicate update-available');
       return;
     }
-    try {
-      await startEngines();
-    } catch (err) {
-      debug.log(`[updater] config load failed before prompt: ${err.message || err}`);
-    }
-    if (isVersionSkipped(info.version)) {
-      debug.log(`[updater] version ${info.version} skipped (skippedVersion=${configJS && configJS.general.skippedVersion})`);
-      return;
-    }
     updatePromptOpen = true;
     try {
+      try {
+        await startEngines();
+      } catch (err) {
+        debug.log(`[updater] config load failed before prompt: ${err.message || err}`);
+      }
+      if (shouldSuppressUpdatePrompt(info.version, { manual })) return;
+      // A game can start between the check being fired and this handler running, and a manual check
+      // is a deliberate request that should still answer. Nothing is recorded — the offer is only
+      // held back, and the game-exit signal brings it straight back.
+      if (!manual && isGameRunning()) {
+        debug.log(`[updater] version ${info.version} held back: a game is running`);
+        scheduleUpdateCheck(updateGate.INTERVALS.inGame);
+        return;
+      }
       const { response } = await dialog.showMessageBox({
         type: 'info',
         title: t('update-available', 'Update Available', 'Mise à jour disponible'),
@@ -3667,8 +3761,11 @@ try {
         autoUpdater.downloadUpdate().catch((err) => notifyUpdateError(`download failed: ${err.message || err}`));
       } else if (response === 2) {
         configJS.general.skippedVersion = info.version;
-        settingsJS.save(configJS);
+        await settingsJS.save(configJS);
         debug.log(`[updater] version ${info.version} skipped by user`);
+      } else {
+        // "Later" (and the dialog's cancel path, which maps to it).
+        await postponeUpdate(info.version);
       }
     } finally {
       updatePromptOpen = false;
@@ -3689,19 +3786,34 @@ try {
     }
   });
   autoUpdater.on('error', (err) => notifyUpdateError(err && err.message ? err.message : String(err)));
-  autoUpdater.on('update-downloaded', async (info) => {
+  autoUpdater.on('update-downloaded', (info) => promptDownloadedUpdate(info));
+  promptDownloadedUpdate = async function (info) {
+    // Same synchronous claim as update-available: the flag has to be taken before the first await.
     if (updatePromptOpen) {
       debug.log('[updater] a prompt is already open; ignoring duplicate update-downloaded');
       return;
     }
-    try {
-      await startEngines();
-    } catch (err) {
-      debug.log(`[updater] config load failed before install prompt: ${err.message || err}`);
-    }
-    if (isVersionSkipped(info.version)) return;
     updatePromptOpen = true;
     try {
+      try {
+        await startEngines();
+      } catch (err) {
+        debug.log(`[updater] config load failed before install prompt: ${err.message || err}`);
+      }
+      if (shouldSuppressUpdatePrompt(info.version)) {
+        pendingInstallPrompt = null;
+        return;
+      }
+      // The download finishes on its own schedule, so it can land mid-session. Asking to restart
+      // and install while a game is running is the worst possible moment. The update is already on
+      // disk, so remember it and re-open this exact prompt when the session ends — going back
+      // through a fresh check would make the user answer the download question a second time.
+      if (isGameRunning()) {
+        debug.log(`[updater] install prompt for ${info.version} held back: a game is running`);
+        pendingInstallPrompt = info;
+        return;
+      }
+      pendingInstallPrompt = null;
       const { response } = await dialog.showMessageBox({
         type: 'info',
         title: t('update-ready', 'Update Ready', 'Mise à jour prête'),
@@ -3715,12 +3827,17 @@ try {
       if (response === 0) autoUpdater.quitAndInstall();
       else if (response === 2) {
         configJS.general.skippedVersion = info.version;
-        settingsJS.save(configJS);
+        await settingsJS.save(configJS);
+      } else {
+        // Declining the install must silence the whole cycle: without this the next hourly check
+        // re-offers the download, electron-updater reports the file it already has, and the very
+        // same "install now?" box comes back an hour later.
+        await postponeUpdate(info.version);
       }
     } finally {
       updatePromptOpen = false;
     }
-  });
+  };
 
   app
     .on('ready', async function () {
@@ -3732,6 +3849,7 @@ try {
       } catch (err) {
         debug.log('[startEngines] failed before startup sync: ' + err.message);
       }
+      logStartupDiagnostics();
       try {
         checkResources();
       } catch (err) {

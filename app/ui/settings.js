@@ -190,6 +190,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#settings .box').fadeIn();
       // Reopening starts from the full list, not from whatever was typed last time.
       if (typeof window.resetSettingsSearch === 'function') window.resetSettingsSearch();
+      // Idempotent: sections already wired keep their key and are skipped.
+      if (typeof window.initCollapsibleSections === 'function') window.initCollapsibleSections();
       renderBlacklistManager().catch((err) => debug.log(err));
 
       for (let option in app.config.achievement) {
@@ -206,11 +208,20 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#option_controllerEnabled').val(String(app.config.controller.enabled === true)).change();
       $('#option_controllerBackend').val(app.config.controller.backend || 'auto').change();
       populateThemeSelect();
+      // Windows' login item is a MIRROR of the stored preference, never its source of truth. The
+      // query matches the registered command line against this build's exe + args, so it answers
+      // "not registered" for an entry that is really there whenever the two drift apart — after an
+      // update that moved the executable, or in a dev run (whose exe is electron.exe). Adopting that
+      // answer silently flipped "Start with Windows" to No and persisted it on the next save, even
+      // though init.js re-applies the stored value at every startup. So the stored preference wins,
+      // and a disagreement is repaired by re-applying it to Windows.
+      const startupPreference = app.config.general.startWithWindows !== false;
       ipcRenderer
         .invoke('startup:get-start-with-windows')
         .then((enabled) => {
-          app.config.general.startWithWindows = enabled === true;
-          $('#option_startWithWindows').val(String(enabled === true)).change();
+          if (enabled === startupPreference) return null;
+          debug.log(`startup: login item (${enabled}) disagrees with the saved preference (${startupPreference}); re-applying`);
+          return ipcRenderer.invoke('startup:set-start-with-windows', startupPreference);
         })
         .catch((err) => debug.log(`startup:get-start-with-windows failed: ${err}`));
 
@@ -1477,11 +1488,96 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $(`#settingNav li[data-view='${view}']`).trigger('click');
     });
 
+    /* ---- Collapsible sections ----------------------------------------------
+       Every section card folds away under its own header, so a long tab can be
+       reduced to the handful of sections being worked on. State is per section
+       and remembered across sessions.
+
+       Nothing is wrapped, moved or removed: the header gains a chevron and the
+       card gains a class, and CSS hides the card's non-header children. That is
+       forced by the same constraint as the search filter below — the i18n loader
+       binds labels positionally, so the DOM structure has to survive untouched.
+    */
+    const sectionRules = require(path.join(appPath, 'util/settingsSections.js'));
+    const SECTION_STATE_KEY = 'settingsCollapsedSections';
+
+    function readCollapsedSections() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(SECTION_STATE_KEY) || 'null');
+        if (Array.isArray(stored)) return new Set(stored);
+      } catch (err) {
+        debug.log(`settings sections: unreadable stored state (${err})`);
+      }
+      return new Set(sectionRules.DEFAULT_COLLAPSED);
+    }
+
+    function writeCollapsedSections(keys) {
+      try {
+        localStorage.setItem(SECTION_STATE_KEY, JSON.stringify([...keys]));
+      } catch (err) {
+        debug.log(`settings sections: could not persist state (${err})`);
+      }
+    }
+
+    function setSectionCollapsed(section, collapsed) {
+      const el = $(section);
+      el.toggleClass('is-collapsed', collapsed);
+      const header = sectionRules.headerFor($, section);
+      if (header) header.attr('aria-expanded', collapsed ? 'false' : 'true');
+    }
+
+    function initCollapsibleSections() {
+      const collapsed = readCollapsedSections();
+      $('#settings .box section.content[data-view]').each(function () {
+        const view = $(this).attr('data-view');
+        sectionRules.sectionsIn($, this).each(function (index) {
+          const section = $(this);
+          const header = sectionRules.headerFor($, this);
+          if (!header || section.data('sectionKey')) return; // already wired
+          const key = sectionRules.sectionKey($, this, view, index);
+          section.addClass('settings-section').data('sectionKey', key);
+          header.addClass('settings-section-header').attr({ role: 'button', tabindex: '0' });
+          // The chevron is appended once and points down when open, sideways when closed.
+          if (!header.children('.settings-section-arrow').length) {
+            header.append('<i class="fas fa-chevron-down settings-section-arrow" aria-hidden="true"></i>');
+          }
+          setSectionCollapsed(this, collapsed.has(key));
+        });
+      });
+    }
+
+    function toggleSection(section) {
+      const key = $(section).data('sectionKey');
+      if (!key) return;
+      const collapsed = readCollapsedSections();
+      const nowCollapsed = !$(section).hasClass('is-collapsed');
+      if (nowCollapsed) collapsed.add(key);
+      else collapsed.delete(key);
+      setSectionCollapsed(section, nowCollapsed);
+      writeCollapsedSections(collapsed);
+    }
+
+    window.initCollapsibleSections = initCollapsibleSections;
+    initCollapsibleSections();
+
+    $('#settings').on('click', '.settings-section-header', function () {
+      toggleSection($(this).closest('.settings-section'));
+    });
+    $('#settings').on('keydown', '.settings-section-header', function (e) {
+      if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+      e.preventDefault();
+      toggleSection($(this).closest('.settings-section'));
+    });
+
     /* ---- Settings search ---------------------------------------------------
        Seven tabs and roughly a hundred rows means the hardest part of changing a
        setting is remembering which tab owns it. Typing here filters the rows of
        every tab at once and the nav counters show where the matches are, so a
        half-remembered word is enough to find an option.
+
+       A search sees through collapsed sections: `#settings.searching` suspends
+       the collapse in CSS, so a match is never hidden inside a folded card, and
+       every section returns to its own state when the query is cleared.
 
        Rows are hidden with a class rather than removed: the i18n loader binds
        most labels positionally (`li:nth-child(n)`), and :nth-child counts
@@ -1842,6 +1938,11 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       }
     });
     $(document).on('folder-rescan-locations-changed', renderFolderRescanLocations);
+    // Adding or removing a scan root changes which `local-<hash>` ids can be traced back to a
+    // folder, so the resolver's cached folder map has to be rebuilt on the next lookup.
+    $(document).on('folder-rescan-locations-changed', function () {
+      if (typeof blacklist.forgetLocalInstallIndex === 'function') blacklist.forgetLocalInstallIndex();
+    });
     renderFolderRescanLocations();
 
     $('#smartFind').click(async function () {
@@ -1894,9 +1995,37 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     $('#blacklist-add-input').attr('placeholder', t('blacklist-add-placeholder', 'Steam App ID', 'ID d’app Steam'));
     $('#blacklist-add-btn span').text(t('blacklist-add-button', 'Add', 'Ajouter'));
 
+    // Ask Steam for a title the local caches don't know. One small store lookup per appid, and
+    // getSteamData writes the answer into steam_cache, so the offline resolver finds it next time.
+    // Returns '' for a non-numeric id (local/Uplay/Xbox entries) or an unreachable store.
+    //
+    // Bounded: without an API key getSteamData falls back to a hidden-window store scrape that can
+    // run for ~30s per game. A missing title is cosmetic — the row still shows its id — so it is
+    // never worth making the user wait that long for one.
+    const BLACKLIST_NAME_LOOKUP_TIMEOUT_MS = 8000;
+    async function resolveBlacklistNameOnline(appid) {
+      const id = String(appid ?? '').trim();
+      if (!/^\d+$/.test(id)) return '';
+      try {
+        const name = await Promise.race([
+          ipcRenderer.invoke('get-steam-data', { appid: Number(id), type: 'name' }),
+          new Promise((resolve) => setTimeout(() => resolve(''), BLACKLIST_NAME_LOOKUP_TIMEOUT_MS)),
+        ]);
+        return typeof name === 'string' ? name.trim() : '';
+      } catch (err) {
+        debug.log(`blacklist: online name lookup failed for ${id}: ${err}`);
+        return '';
+      }
+    }
+
     // Blacklist manager: list the user's hidden games, each with a restore button. Restoring only
     // flags the library for refresh — the actual reload runs once, when Settings closes, instead of
     // yanking the whole UI on every click.
+    //
+    // Entries hidden before the name sidecar existed carry no title, so the list used to be a column
+    // of bare appids. getUserDetailed() backfills those from every local source it has; whatever is
+    // still unnamed is then resolved online, in the background, and written back to the sidecar — the
+    // rows fill in as the answers land instead of blocking the panel on the network.
     async function renderBlacklistManager() {
       const listEl = $('#blacklist-manager');
       const emptyEl = $('#blacklist-empty');
@@ -1908,12 +2037,14 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         debug.log(err);
       }
       emptyEl.text(entries.length === 0 ? listEl.attr('data-empty') || '' : '');
+      const unresolved = [];
       for (const entry of entries) {
         const li = $('<li>');
-        $('<span class="name">')
+        const nameEl = $('<span class="name">')
           .text(entry.name || String(entry.appid))
           .attr('title', String(entry.appid))
           .appendTo(li);
+        if (!entry.name) unresolved.push({ appid: entry.appid, nameEl });
         $('<span class="appid">').text(entry.appid).appendTo(li);
         $('<button type="button" class="inline-action-btn"><i class="fas fa-undo"></i></button>')
           .attr('title', listEl.attr('data-restore') || '')
@@ -1932,6 +2063,25 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           .appendTo(li);
         listEl.append(li);
       }
+      // Deliberately not awaited: the rows are already on screen from local data, and the callers
+      // that await this render (opening Settings, restoring a game) must not sit on the network.
+      resolveMissingBlacklistNames(unresolved).catch((err) => debug.log(err));
+    }
+
+    async function resolveMissingBlacklistNames(pendingRows) {
+      for (const pending of pendingRows) {
+        // Sequential on purpose: an appid-only blacklist would otherwise fire a burst of store
+        // lookups at once, and each one is already cached after the first success.
+        const name = await resolveBlacklistNameOnline(pending.appid);
+        if (!name) continue;
+        // The list may have been re-rendered (or Settings closed) while this was in flight.
+        if (pending.nameEl.closest('body').length) pending.nameEl.text(name);
+        try {
+          await blacklist.setName(pending.appid, name);
+        } catch (err) {
+          debug.log(err);
+        }
+      }
     }
     window.renderBlacklistManager = renderBlacklistManager;
 
@@ -1940,6 +2090,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const appid = String(input.val() || '').trim();
       if (!/^\d+$/.test(appid)) return;
       try {
+        // No name to hand over: add() resolves one from the local sources itself, and the render
+        // below fills in anything only Steam knows. Neither step blocks this click.
         await blacklist.add(appid, '');
         input.val('');
         await renderBlacklistManager();
@@ -2038,47 +2190,15 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     // Shared by the five Notifications-tab test buttons (toast/rare/progress/playtime/platinum):
     // asks the watchdog (over its existing websocket) to fire the given test notification.
     //
-    // A fullscreen black backdrop stands in for a running game so an overlay popup has something to
-    // render over. It is deliberately NOT used for the Windows-toast test: Windows turns on do not
-    // disturb by default while an app is in full screen, so the backdrop made Windows swallow the
-    // very toast the test was checking for — the test looked broken while the toast quietly landed
-    // in the notification centre (issue #18).
-    //
-    // The backdrop is a single shared instance reused across calls (not one per click) so firing
-    // several tests back-to-back — the normal way to compare presets — reuses the same window
-    // instead of stacking fullscreen windows or making the tester wait out a previous test's ~7s
-    // display time before the next one can start.
-    let activeDummyWindow = null;
-    let activeDummyCloseTimer = null;
-
-    function scheduleDummyClose(delayMs) {
-      clearTimeout(activeDummyCloseTimer);
-      activeDummyCloseTimer = setTimeout(() => {
-        if (activeDummyWindow && !activeDummyWindow.isDestroyed()) activeDummyWindow.close();
-      }, delayMs);
-    }
-
-    function openDummyBackdrop() {
-      if (!activeDummyWindow || activeDummyWindow.isDestroyed()) {
-        activeDummyWindow = new remote.BrowserWindow({ frame: false, backgroundColor: '#000000' });
-        activeDummyWindow.setFullScreen(true);
-        activeDummyWindow.on('closed', () => {
-          clearTimeout(activeDummyCloseTimer);
-          activeDummyWindow = null;
-        });
-      }
-      // Safety net: the backdrop must never get stuck covering the whole screen. Whatever happens
-      // (success, error, or the watchdog never answering at all — a dropped socket raises neither
-      // an error nor a message event), this fallback guarantees it closes eventually.
-      scheduleDummyClose(6000);
-    }
-
+    // Overlay tests used to open a fullscreen black window first, to stand in for a running game.
+    // The popup never needed it — it is its own always-on-top window — so all the backdrop did was
+    // black out the screen (hiding the Settings panel whose presets you are comparing) for several
+    // seconds per click. It is gone: the test now renders the popup over whatever is on screen.
     function runNotificationTest(cmd) {
       setTimeout(() => {
         const ws = new WebSocket('ws://localhost:8082');
         ws.onerror = (err) => {
           ws.close();
-          scheduleDummyClose(0);
           remote.dialog.showMessageBoxSync({
             type: 'error',
             title: t('websocket-connection-error', 'WebSocket Connection Error', 'Erreur de connexion WebSocket'),
@@ -2094,9 +2214,6 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
               if (res.cmd === cmd) {
                 if (res.success === true) {
                   ws.close();
-                  // The toast stays visible after the black backdrop closes; don't keep the
-                  // tester's screen covered for the toast's full lifetime.
-                  scheduleDummyClose(1200);
                 } else if (res.success === false && res.error) {
                   throw res.error;
                 } else {
@@ -2107,7 +2224,6 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
               }
             } catch (err) {
               ws.close();
-              scheduleDummyClose(0);
               remote.dialog.showMessageBoxSync({
                 type: 'error',
                 title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
@@ -2120,7 +2236,6 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
             ws.send(JSON.stringify({ cmd }));
           } catch (err) {
             ws.close();
-            scheduleDummyClose(0);
             remote.dialog.showMessageBoxSync({
               type: 'error',
               title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
@@ -2144,21 +2259,26 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       return Math.round((tier.min + Math.random() * (tier.max - tier.min)) * 10) / 10;
     }
     // Build overlay test payload for a given notification kind, using the current overlay settings.
-    function overlayTestData(kind) {
+    // `presetOverride` renders through a preset that is not the selected one — the builder's Preview
+    // uses it for the unsaved design, and the sample text then names that design instead of lying
+    // about which preset you are looking at. `label` is what the sample text says.
+    function overlayTestData(kind, presetOverride, label) {
       const mainPreset = $('#option_overlayPreset').val() || 'Shirow';
       // Tests honor the per-type preset overrides so they render exactly like the real popups.
       const preset =
-        kind === 'rare'
+        presetOverride ||
+        (kind === 'rare'
           ? $('#option_overlayPresetRare').val() || mainPreset
           : kind === 'platinum'
           ? $('#option_overlayPresetPlatinum').val() || mainPreset
-          : mainPreset;
+          : mainPreset);
+      const presetLabel = label || preset;
       const sound = $('#option_overlaySound').val() || '';
       const rarePct = kind === 'rare' ? randomRareRarity() : null;
       const texts = {
         toast: {
           displayName: t('test-toast-name', 'Achievement Unlocked', 'Succès débloqué'),
-          description: t('test-toast-desc', 'Notification test — {preset} preset', 'Test de notification — preset {preset}', { preset }),
+          description: t('test-toast-desc', 'Notification test — {preset} preset', 'Test de notification — preset {preset}', { preset: presetLabel }),
         },
         rare: {
           displayName: t('test-rare-name', 'Rare Achievement', 'Succès rare'),
@@ -2209,10 +2329,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     function fireNotificationTest(kind, btn, modeOverride) {
       const mode = modeOverride || $('#option_notifMode').val() || 'overlay';
       if (mode === 'toast' || mode === 'both') runNotificationTest.call(btn, kind + '-test');
-      if (mode === 'overlay' || mode === 'both') {
-        openDummyBackdrop();
-        ipcRenderer.send('spawn-overlay-notification', overlayTestData(kind));
-      }
+      if (mode === 'overlay' || mode === 'both') ipcRenderer.send('spawn-overlay-notification', overlayTestData(kind));
     }
     // The first-run guide shares the exact same test path, while supplying its still-unsaved
     // notification transport choice. Keep the rendering and Watchdog protocol in one place.
@@ -2345,46 +2462,196 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       }
     });
 
-    // --- Custom preset builder: live preview + create ---
+    // --- Custom preset builder: live preview, real overlay preview, create/update ---
     function custInt(id, def) {
       const n = parseInt($('#' + id).val(), 10);
       return Number.isFinite(n) ? n : def;
     }
+    // The one place that reads the builder's controls. Everything downstream (the inline preview,
+    // the overlay preview and the generator) works from this, so all three can never disagree.
+    function readPresetOptions() {
+      return {
+        bg: $('#cust-bg').val() || '#16181d',
+        text: $('#cust-text').val() || '#ffffff',
+        accent: $('#cust-accent').val() || '#4aa3ff',
+        opacity: custInt('cust-opacity', 100) / 100,
+        fontSize: custInt('cust-font', 16),
+        radius: custInt('cust-radius', 12),
+        iconSize: custInt('cust-icon', 64),
+        width: custInt('cust-width', 420),
+      };
+    }
+    function setPresetStatus(message, state) {
+      $('#cust-status')
+        .text(message || '')
+        .removeClass('is-ok is-error')
+        .addClass(state === 'ok' ? 'is-ok' : state === 'error' ? 'is-error' : '');
+    }
     function updatePresetPreview() {
-      const bg = $('#cust-bg').val() || '#16181d';
-      const text = $('#cust-text').val() || '#ffffff';
-      const accent = $('#cust-accent').val() || '#4aa3ff';
-      const opacity = custInt('cust-opacity', 100) / 100;
-      const font = custInt('cust-font', 16);
-      const radius = custInt('cust-radius', 12);
-      const icon = custInt('cust-icon', 64);
-      $('#cust-preview').css({ background: bg, color: text, 'border-left-color': accent, 'border-radius': radius + 'px', 'font-size': font + 'px', opacity: opacity });
-      $('#cust-preview-title').css('color', accent);
-      $('#cust-preview-icon').css({ color: accent, 'font-size': Math.round(icon * 0.62) + 'px' });
+      const o = readPresetOptions();
+      $('#cust-preview').css({
+        background: o.bg,
+        color: o.text,
+        'border-left-color': o.accent,
+        'border-radius': o.radius + 'px',
+        'font-size': o.fontSize + 'px',
+        width: o.width + 'px',
+        opacity: o.opacity,
+      });
+      $('#cust-preview-title').css('color', o.accent);
+      $('#cust-preview-icon').css({ color: o.accent, 'font-size': Math.round(o.iconSize * 0.62) + 'px' });
+      $('#cust-val-opacity').text(Math.round(o.opacity * 100) + '%');
+      $('#cust-val-font').text(o.fontSize + 'px');
+      $('#cust-val-radius').text(o.radius + 'px');
+      $('#cust-val-icon').text(o.iconSize + 'px');
+      $('#cust-val-width').text(o.width + 'px');
     }
     $('#options-notify-customiser').on('input change', 'input', updatePresetPreview);
     updatePresetPreview();
+
+    // Creating a preset that already exists replaces it, so the button says so: "Create" for a new
+    // name, "Update" once the typed name matches a preset the builder generated.
+    let generatedPresets = [];
+    function updateCreateButtonMode() {
+      const name = ($('#cust-name').val() || '').trim();
+      const known = name && generatedPresets.some((n) => n.toLowerCase() === name.toLowerCase());
+      const label = known ? $('#cust-lbl-create').attr('data-update') : $('#cust-lbl-create').attr('data-create');
+      if (label) $('#cust-lbl-create').text(label);
+      $('#btn-create-preset').find('i').attr('class', known ? 'fas fa-save' : 'fas fa-plus');
+    }
+
+    // Presets generated here can be re-opened: the builder stores its own options next to the
+    // generated CSS, so a preset stays editable instead of being a one-shot export.
+    async function refreshGeneratedPresetList(selected) {
+      try {
+        generatedPresets = (await ipcRenderer.invoke('list-custom-presets')) || [];
+      } catch (err) {
+        debug.log(err);
+        generatedPresets = [];
+      }
+      const sel = $('#cust-load');
+      sel.empty();
+      sel.append($('<option>').attr('value', '').text(sel.attr('data-new') || ''));
+      generatedPresets.forEach((n) => sel.append($('<option>').attr('value', n).text(n)));
+      sel.val(generatedPresets.includes(selected) ? selected : '');
+      updateCreateButtonMode();
+      updateDeleteButtonVisibility();
+    }
+
+    // Deleting only ever applies to a preset this builder generated, so the button appears once one
+    // is actually loaded — never next to a bundled preset or a half-typed new name.
+    function updateDeleteButtonVisibility() {
+      const loaded = String($('#cust-load').val() || '');
+      $('#btn-delete-preset').toggle(Boolean(loaded) && generatedPresets.includes(loaded));
+    }
+
+    $('#btn-delete-preset').click(async function () {
+      const name = String($('#cust-load').val() || '');
+      if (!name) return;
+      const self = $(this);
+      const confirmed = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+        type: 'warning',
+        buttons: [t('delete', 'Delete', 'Supprimer'), t('cancel', 'Cancel', 'Annuler')],
+        defaultId: 1,
+        cancelId: 1,
+        title: t('delete-preset-title', 'Delete preset', 'Supprimer le preset'),
+        message: t('delete-preset-message', 'Delete the preset "{name}"?', 'Supprimer le preset « {name} » ?', { name }),
+        detail: t('delete-preset-detail', 'The preset files are removed from disk. This cannot be undone.', 'Les fichiers du preset seront supprimés du disque. Cette action est irréversible.'),
+        noLink: true,
+      });
+      if (confirmed !== 0) return;
+      self.css('pointer-events', 'none');
+      try {
+        const res = await ipcRenderer.invoke('delete-custom-preset', name);
+        if (res && res.ok) {
+          // The deleted preset may have been the selected one; rebuild both lists and fall back.
+          const presets = await ipcRenderer.invoke('list-presets');
+          const sel = $('#option_overlayPreset');
+          const previous = sel.val();
+          sel.empty();
+          (presets && presets.length ? presets : ['Shirow', 'Default']).forEach((n) => sel.append($('<option>').attr('value', n).text(n)));
+          sel.val(presets.includes(previous) ? previous : presets[0] || 'Shirow').change();
+          $('#cust-name').val('');
+          await refreshGeneratedPresetList('');
+          setPresetStatus(`${$('#cust-status').attr('data-deleted') || ''} ${name}`.trim(), 'ok');
+        } else {
+          setPresetStatus((($('#cust-status').attr('data-fail') || '') + (res && res.error ? ': ' + res.error : '')).trim(), 'error');
+        }
+      } catch (err) {
+        debug.log(err);
+        setPresetStatus((($('#cust-status').attr('data-fail') || '') + ': ' + err).trim(), 'error');
+      }
+      self.css('pointer-events', 'initial');
+    });
+    $('#cust-name').on('input', updateCreateButtonMode);
+
+    $('#cust-load').on('change', async function () {
+      const name = String($(this).val() || '');
+      updateDeleteButtonVisibility();
+      if (!name) {
+        setPresetStatus('');
+        return;
+      }
+      try {
+        const opts = await ipcRenderer.invoke('read-custom-preset', name);
+        if (!opts) {
+          setPresetStatus($('#cust-status').attr('data-fail') || '', 'error');
+          return;
+        }
+        $('#cust-name').val(opts.name || name);
+        $('#cust-bg').val(opts.bg);
+        $('#cust-text').val(opts.text);
+        $('#cust-accent').val(opts.accent);
+        $('#cust-opacity').val(Math.round(opts.opacity * 100));
+        $('#cust-font').val(opts.fontSize);
+        $('#cust-radius').val(opts.radius);
+        $('#cust-icon').val(opts.iconSize);
+        $('#cust-width').val(opts.width);
+        updatePresetPreview();
+        updateCreateButtonMode();
+        updateDeleteButtonVisibility();
+        setPresetStatus(`${$('#cust-status').attr('data-loaded') || ''} ${opts.name || name}`.trim(), 'ok');
+      } catch (err) {
+        debug.log(err);
+        setPresetStatus($('#cust-status').attr('data-fail') || '', 'error');
+      }
+    });
+
+    // Render the design as a real overlay popup without saving it first — the only way to judge a
+    // preset is at full size, on screen, with the animation and the configured position/scale.
+    $('#btn-preview-preset').click(async function () {
+      const self = $(this);
+      self.css('pointer-events', 'none');
+      try {
+        const res = await ipcRenderer.invoke('preview-custom-preset', readPresetOptions());
+        if (res && res.ok) {
+          setPresetStatus('');
+          // Only name the design when the user actually named it. Falling back to the picker's
+          // "New preset…" placeholder produced "Notification test — New preset… preset", which
+          // reads like a bug; an unnamed draft just shows the plain sample text instead.
+          const label = ($('#cust-name').val() || '').trim();
+          ipcRenderer.send('spawn-overlay-notification', overlayTestData('toast', res.name, label));
+        } else {
+          setPresetStatus((($('#cust-status').attr('data-fail') || '') + (res && res.error ? ': ' + res.error : '')).trim(), 'error');
+        }
+      } catch (e) {
+        debug.log(e);
+        setPresetStatus((($('#cust-status').attr('data-fail') || '') + ': ' + e).trim(), 'error');
+      }
+      self.css('pointer-events', 'initial');
+    });
 
     $('#btn-create-preset').click(async function () {
       const self = $(this);
       const status = $('#cust-status');
       const name = ($('#cust-name').val() || '').trim();
       if (!name) {
-        status.text(status.attr('data-err') || '').css('color', '#e66');
+        setPresetStatus(status.attr('data-err') || '', 'error');
         return;
       }
       self.css('pointer-events', 'none');
       try {
-        const res = await ipcRenderer.invoke('create-custom-preset', {
-          name,
-          bg: $('#cust-bg').val(),
-          text: $('#cust-text').val(),
-          accent: $('#cust-accent').val(),
-          opacity: custInt('cust-opacity', 100) / 100,
-          fontSize: custInt('cust-font', 16),
-          radius: custInt('cust-radius', 12),
-          iconSize: custInt('cust-icon', 64),
-        });
+        const res = await ipcRenderer.invoke('create-custom-preset', Object.assign({ name }, readPresetOptions()));
         if (res && res.ok) {
           // Refresh the preset dropdown and select the new preset (autosave persists the choice).
           const presets = await ipcRenderer.invoke('list-presets');
@@ -2392,15 +2659,24 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           sel.empty();
           (presets && presets.length ? presets : ['Shirow', 'Default']).forEach((n) => sel.append($('<option>').attr('value', n).text(n)));
           sel.val(res.name).change();
-          status.text((status.attr('data-ok') || '') + ' ' + res.name).css('color', '#6c6');
+          await refreshGeneratedPresetList(res.name);
+          const done = res.replaced ? status.attr('data-updated') : status.attr('data-ok');
+          setPresetStatus(`${done || ''} ${res.name}`.trim(), 'ok');
         } else {
-          status.text((status.attr('data-fail') || '') + (res && res.error ? ': ' + res.error : '')).css('color', '#e66');
+          setPresetStatus(((status.attr('data-fail') || '') + (res && res.error ? ': ' + res.error : '')).trim(), 'error');
         }
       } catch (e) {
         debug.log(e);
-        status.text((status.attr('data-fail') || '') + ': ' + e).css('color', '#e66');
+        setPresetStatus(((status.attr('data-fail') || '') + ': ' + e).trim(), 'error');
       }
       self.css('pointer-events', 'initial');
+    });
+
+    refreshGeneratedPresetList().catch((err) => debug.log(err));
+    // The locale loader can run after this file wired the picker up (and again on a language
+    // change), so re-render the two runtime-worded controls whenever it publishes new labels.
+    $(document).on('customiser-labels-changed', function () {
+      refreshGeneratedPresetList(String($('#cust-load').val() || '')).catch((err) => debug.log(err));
     });
 
     $('#option_mergeDuplicate')

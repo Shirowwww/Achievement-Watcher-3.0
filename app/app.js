@@ -202,6 +202,64 @@ function clearGameBoxBusy($box) {
   $box.find('.loading-overlay .content').first().html('<i class="fas fa-spinner fa-spin"></i>');
 }
 
+// Busy pointer for the whole window while the library is being scanned. Set on <html> so it also
+// covers the gaps between elements; `progress` (not `wait`) is the Windows convention for "still
+// usable, work in progress", which this is — the UI stays interactive while games stream in.
+function setLibraryBusyCursor(busy) {
+  try {
+    document.documentElement.classList.toggle('library-loading', busy === true);
+  } catch (err) {
+    debug.warn(`[cursor] ${err && err.message ? err.message : err}`);
+  }
+}
+
+/*
+  Repaint one library tile's progress bar and the profile header from the current in-memory list.
+
+  The header counters are accumulated as games stream in during a scan, so nothing recomputed them
+  when a single game's unlock count changed afterwards: a manual unlock updated the achievement view
+  while the tile — and the totals above it — kept the number from the last full scan until a refresh.
+  Derived from `games` here rather than from running totals, so it is correct however it is reached.
+*/
+function refreshLibraryProgressFor(appid, games) {
+  const list = Array.isArray(games) ? games : [];
+  const game = list.find((g) => g && String(g.appid) === String(appid));
+  if (game && game.achievement) {
+    const total = Number(game.achievement.total) || 0;
+    const percent = total > 0 ? Math.round((100 * (Number(game.achievement.unlocked) || 0)) / total) : 0;
+    const bar = $('#game-list .game-box')
+      .filter(function () {
+        return String($(this).data('appid')) === String(appid);
+      })
+      .first()
+      .find('.progressBar')
+      .first();
+    if (bar.length) {
+      bar.attr('data-percent', percent);
+      bar.find('.meter').css('width', percent + '%');
+      bar.find('.progress-value').text(percent + '%');
+    }
+  }
+
+  const withAchievements = list.filter((g) => g && g.achievement);
+  if (withAchievements.length === 0) return;
+  const totalUnlocked = withAchievements.reduce((sum, g) => sum + (parseInt(g.achievement.unlocked, 10) || 0), 0);
+  const completed = withAchievements.filter((g) => Number(g.achievement.total) > 0 && g.achievement.unlocked == g.achievement.total).length;
+  const average = Math.floor(
+    withAchievements.reduce((sum, g) => {
+      const total = Number(g.achievement.total) || 0;
+      return sum + (total > 0 ? Math.round((100 * (Number(g.achievement.unlocked) || 0)) / total) : 0);
+    }, 0) / withAchievements.length
+  );
+
+  $('#user-info .info .stats li:eq(0) span.data').text(totalUnlocked);
+  $('#user-info .info .stats li:eq(1) span.data').text(`${completed}/${withAchievements.length}`);
+  $('#user-info .info .stats li:eq(2) span.data').text(average);
+  const distEl = $('#user-info .completion-dist');
+  distEl.find('.fill').css('width', average + '%');
+  distEl.attr('title', average + '%');
+}
+
 // CrakFiles entries are fetched from a remote catalog, so their links are opened through the
 // http(s) guard rather than handed to Windows verbatim (util/externalLink.js). A rejected link is
 // surfaced instead of silently doing nothing, so a bad catalog entry is visible rather than a
@@ -786,8 +844,17 @@ function formatGbeBackupDetail(backup, game) {
   return lines.join('\n');
 }
 
+// The title bar is a custom element, so its shadow root only exists once the definition has been
+// upgraded. A watchdog-status push that lands before that (the main process does not wait for the
+// renderer to finish booting) would otherwise throw out of the IPC handler.
+function titleBarShadow() {
+  const bar = document.querySelector('title-bar');
+  return (bar && bar.shadowRoot) || null;
+}
+
 ipcRenderer.on('reset-watchdog-status', (event) => {
-  let shadow = document.querySelector('title-bar').shadowRoot;
+  let shadow = titleBarShadow();
+  if (!shadow) return;
   let watchdogStatus = shadow.querySelector('.status-dot');
   let watchdoglbl = shadow.querySelector('.status-text');
   watchdoglbl.textContent = t('checking-watchdog-status', 'Checking watchdog status...', 'Vérification du Watchdog…');
@@ -799,7 +866,8 @@ ipcRenderer.on('reset-watchdog-status', (event) => {
 });
 
 ipcRenderer.on('watchdog-status', (event, found) => {
-  let shadow = document.querySelector('title-bar').shadowRoot;
+  let shadow = titleBarShadow();
+  if (!shadow) return;
   let watchdogStatus = shadow.querySelector('.status-dot');
   let watchdoglbl = shadow.querySelector('.status-text');
   watchdoglbl.textContent = t(
@@ -965,6 +1033,10 @@ var app = {
     // whole footer when done so it does not leave an empty strip below the game list.
     $('#main-footer').removeClass('done');
     loadingElem.elem.show();
+    // Scanning a library takes seconds to minutes and the pointer gave no sign of it. The busy
+    // cursor is the one signal that follows the mouse everywhere in the window, so it reads as
+    // "working" even while the user is over the header or an empty area rather than the footer bar.
+    setLibraryBusyCursor(true);
 
     $('#user-info .info .stats li:eq(0) span.data').text('0');
     $('#user-info .info .stats li:eq(1) span.data').text('0');
@@ -1158,6 +1230,7 @@ var app = {
         }
         loadingElem.elem.hide();
         $('#main-footer').addClass('done');
+        setLibraryBusyCursor(false);
 
         if (list.length == 0) {
           debug.log('No game found !');
@@ -1375,6 +1448,231 @@ var app = {
             if (img.isEmpty()) return img;
             return img.resize({ width: 16, height: 16, quality: 'best' });
           };
+
+          // CrakFiles community fixes. Declared here, appended by whichever branch below applies:
+          // the list is matched by game NAME (it holds no appids) and a fix is just files dropped into
+          // the install folder, so nothing about it is Steam-specific. It used to live inside the
+          // Steam-only branch, which silently denied it to cracked Ubisoft games.
+          const appendCrackFixItem = () => {
+            // Community "Fixes & Bypasses" from the CrakFiles list — a SEPARATE launch helper. These
+            // can overwrite game files (incl. steam_api), so it warns that achievement detection runs
+            // through the emulator and the emulator fix may need re-applying. Overwritten files are
+            // backed up under <gameDir>/.aw-crackfix-backups/.
+            emulatorMenu.append(
+              new MenuItem({
+                icon: menuIcon('file-text.png'),
+                label: $('#game-list').attr('data-ctx-crackfix') || '',
+                async click() {
+                  // Hoisted so the catch's "pixeldrain captcha → apply a manually-downloaded file" flow
+                  // can reach the resolved game / fix / install dir.
+                  let game = null;
+                  let top = null;
+                  let fix = null;
+                  let gameDir = null;
+                  const crackFix = require(path.join(appPath, 'parser/crackFix.js'));
+                  try {
+                    game = list.find((g) => g.appid == appid);
+                    if (!game?.name) {
+                      remote.dialog.showMessageBoxSync({ type: 'info', title: t('crakfiles', 'CrakFiles'), message: t('unknown-game-name', 'Unknown game name.', 'Nom de jeu inconnu.') });
+                      return;
+                    }
+                    const cacheDir = path.join(getUserDataPath(), 'cache/crackfiles');
+                    setGameBoxBusy(self, t('searching-fixes', 'Searching fixes…', 'Recherche de fixes…'));
+                    const cfList = await crackFix.fetchList({ cacheDir, log: debug });
+                    clearGameBoxBusy(self);
+                    const matches = crackFix.findFixes(cfList, game.name, { limit: 5 });
+                    if (matches.length === 0) {
+                      const c = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                        type: 'info',
+                        title: t('crakfiles', 'CrakFiles'),
+                        message: t('no-fix-found-for-x', 'No fix found for "{name}".', 'Aucun fix trouvé pour « {name} ».', { name: game.name }),
+                        detail: t('the-crakfiles-list-is-community-maintained-and-limited', 'The CrakFiles list is community-maintained and limited.', 'La liste CrakFiles est communautaire et limitée.'),
+                        buttons: ['OK', t('open-crakfiles', 'Open CrakFiles', 'Ouvrir CrakFiles')],
+                        defaultId: 0,
+                        cancelId: 0,
+                        noLink: true,
+                      });
+                      if (c === 1) remote.shell.openExternal('https://github.com/KoriaPolis/CrakFiles');
+                      return;
+                    }
+                    top = matches[0];
+                    // Pick the best fix instead of blindly the first listed: prefer an auto-installable
+                    // (pixeldrain) link and the build matching the game's architecture when detectable.
+                    let arch = null;
+                    try {
+                      if (game.gameDir && fs.existsSync(game.gameDir)) {
+                        const pe = require(path.join(appPath, 'util/pe.js'));
+                        const emu0 = goldberg.detectEmulator(game.gameDir);
+                        const exe0 = exeDetect.detect(game.gameDir, game.name || '', { dllPaths: emu0.dll });
+                        if (exe0 && exe0.full) arch = pe.exeArch(exe0.full);
+                      }
+                    } catch {}
+                    fix = crackFix.pickBestFix(top, { arch }) || (top.fixes && top.fixes[0]) || {};
+                    const badges = (fix.badges || []).join(', ');
+                    const choice = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+                      type: 'warning',
+                      title: t('crakfiles', 'CrakFiles'),
+                      message: t('fix-found-x', 'Fix found: {name}', 'Fix trouvé : {name}', { name: top.name }),
+                      detail:
+                        (fix.filename ? `${fix.filename}${badges ? ` [${badges}]` : ''}\n` : '') +
+                        t(
+                          'crackfix-overwrite-warning',
+                          '\n⚠ A community crack may overwrite game files (incl. steam_api(64).dll). Achievement detection runs through the emulator — if the crack replaces steam_api, re-run "Apply emulator fix" afterwards. Overwritten files are backed up.',
+                          "\n⚠ Un crack communautaire peut écraser des fichiers du jeu (dont steam_api(64).dll). La détection des succès passe par l'émulateur — si le crack remplace steam_api, relance « Appliquer le fix émulateur » après. Les fichiers écrasés sont sauvegardés."
+                        ),
+                      // NB: Windows treats `&` in a button label as the Alt-mnemonic marker and hides
+                      // it ("Download  apply"); double it so a literal ampersand shows.
+                      buttons: [
+                        t('cancel', 'Cancel', 'Annuler'),
+                        t('open-download-page', 'Open download page', 'Ouvrir la page de téléchargement'),
+                        t('open-source', 'Open source', 'Ouvrir la source'),
+                        t('download-apply', 'Download && apply', 'Télécharger && appliquer'),
+                      ],
+                      defaultId: 1,
+                      cancelId: 0,
+                      noLink: true,
+                    });
+                    if (choice.response === 0) return;
+                    if (choice.response === 1) {
+                      if (fix.href) openCatalogLink(fix.href);
+                      return;
+                    }
+                    if (choice.response === 2) {
+                      const src = (top.source_crack || [])[0];
+                      if (src) openCatalogLink(src);
+                      return;
+                    }
+                    // Download & apply
+                    gameDir = game.gameDir && fs.existsSync(game.gameDir) ? game.gameDir : null;
+                    if (!gameDir) {
+                      const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
+                        title: t('game-install-folder', 'Game install folder', "Dossier d'installation du jeu"),
+                        properties: ['openDirectory', 'dontAddToRecent'],
+                      });
+                      if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
+                      gameDir = picked.filePaths[0];
+                    }
+                    if (!crackFix.pixeldrainDirectUrl(fix.href)) {
+                      const c = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                        type: 'info',
+                        title: t('crakfiles', 'CrakFiles'),
+                        message: t('this-link-cannot-be-applied-automatically', 'This link cannot be applied automatically.', 'Ce lien ne peut pas être appliqué automatiquement.'),
+                        detail: t('open-the-download-page-and-apply-it-manually', 'Open the download page and apply it manually.', 'Ouvre la page de téléchargement et applique-le manuellement.'),
+                        buttons: ['OK', t('open', 'Open', 'Ouvrir')],
+                        defaultId: 1,
+                        cancelId: 0,
+                        noLink: true,
+                      });
+                      if (c === 1 && fix.href) openCatalogLink(fix.href);
+                      return;
+                    }
+                    setGameBoxBusy(self, t('downloading-fix', 'Downloading fix…', 'Téléchargement du fix…'));
+                    const res = await crackFix.downloadAndApply({ fix, gameDir, cacheDir, entryName: top.name, proxyFallback: (app.config?.emulator || {}).pixeldrainProxyFallback !== false, log: debug });
+                    remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                      type: 'info',
+                      title: t('crakfiles', 'CrakFiles'),
+                      message: t('applied-x-file-s', 'Applied {count} file(s).', '{count} fichier(s) appliqué(s).', { count: res.applied.length }),
+                      detail:
+                        gameDir +
+                        (res.backupDir ? `\n${t('backup', 'Backup:', 'Sauvegarde :')} ${res.backupDir}` : '') +
+                        (t('n-nif-steam-api-was-replaced-re-run-apply-emulator-fix-to-keep-a', '\n\nIf steam_api was replaced, re-run "Apply emulator fix" to keep achievement detection.', '\n\nSi steam_api a été remplacé, relance « Appliquer le fix émulateur » pour garder la détection des succès.')),
+                      noLink: true,
+                    });
+                  } catch (err) {
+                    // Pixeldrain rate-limits popular files (403): they can't be auto-downloaded, only
+                    // fetched through a browser (captcha). Rather than a dead end, walk the user through
+                    // downloading it themselves and then hand the file to AW to extract + apply.
+                    if (err && err.code === 'PIXELDRAIN_UNAVAILABLE') {
+                      const href = err.href || fix?.href;
+                      const choice = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+                        type: 'warning',
+                        title: t('crakfiles', 'CrakFiles'),
+                        message: t('pixeldrain-captcha-required-for-this-file', 'Pixeldrain captcha required for this file.', 'Captcha pixeldrain requis pour ce fichier.'),
+                        detail: t(
+                          'pixeldrain-rate-limited',
+                          "Pixeldrain rate-limited this file (too many downloads): you must solve a captcha in the browser.\n\n1) Open the page and download the .rar.\n2) Come back and select the downloaded file — AW will extract and apply it automatically (overwritten files are backed up).",
+                          "Pixeldrain limite ce fichier (trop de téléchargements) : il faut résoudre un captcha dans le navigateur.\n\n1) Ouvre la page et télécharge le .rar.\n2) Reviens et sélectionne le fichier téléchargé — AW l'extraira et l'appliquera automatiquement (les fichiers écrasés sont sauvegardés)."
+                        ),
+                        buttons: [
+                          t('cancel', 'Cancel', 'Annuler'),
+                          t('open-page', 'Open page', 'Ouvrir la page'),
+                          t('select-downloaded-file', 'Select downloaded file…', 'Sélectionner le fichier téléchargé…'),
+                        ],
+                        defaultId: 1,
+                        cancelId: 0,
+                        noLink: true,
+                      });
+                      if (choice.response === 0) return;
+                      if (choice.response === 1) {
+                        if (href) openCatalogLink(href);
+                        // Wait (non-blocking modal) for the user to finish the browser download, then let
+                        // them pick the file. Cancelling here just leaves the page open.
+                        const after = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+                          type: 'info',
+                          title: t('crakfiles', 'CrakFiles'),
+                          message: t('once-the-download-is-finished', 'Once the download is finished…', 'Une fois le téléchargement terminé…'),
+                          detail: t('select-the-downloaded-file-rar-zip-7z-to-apply-it', 'Select the downloaded file (.rar/.zip/.7z) to apply it.', 'Sélectionne le fichier téléchargé (.rar/.zip/.7z) pour l’appliquer.'),
+                          buttons: [t('cancel', 'Cancel', 'Annuler'), t('select-file', 'Select file…', 'Sélectionner le fichier…')],
+                          defaultId: 1,
+                          cancelId: 0,
+                          noLink: true,
+                        });
+                        if (after.response !== 1) return;
+                      }
+                      // Pick + apply the locally-downloaded archive.
+                      const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
+                        title: t('select-the-downloaded-crack', 'Select the downloaded crack', 'Sélectionne le crack téléchargé'),
+                        properties: ['openFile', 'dontAddToRecent'],
+                        filters: [
+                          { name: t('archives', 'Archives', 'Archives'), extensions: ['rar', 'zip', '7z'] },
+                          { name: t('all-files', 'All files', 'Tous les fichiers'), extensions: ['*'] },
+                        ],
+                      });
+                      if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
+                      // Resolve the install folder (the try-scoped one may be unset if we failed early).
+                      let applyDir = (gameDir && fs.existsSync(gameDir) && gameDir) ||
+                        (game?.gameDir && fs.existsSync(game.gameDir) ? game.gameDir : null);
+                      if (!applyDir) {
+                        const pd = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
+                          title: t('game-install-folder', 'Game install folder', "Dossier d'installation du jeu"),
+                          properties: ['openDirectory', 'dontAddToRecent'],
+                        });
+                        if (pd.canceled || !pd.filePaths || pd.filePaths.length === 0) return;
+                        applyDir = pd.filePaths[0];
+                      }
+                      try {
+                        setGameBoxBusy(self, t('applying-file', 'Applying file…', 'Application du fichier…'));
+                        const res = await crackFix.applyLocalArchive({
+                          archivePath: picked.filePaths[0],
+                          gameDir: applyDir,
+                          fix: fix && fix.href ? fix : null,
+                          entryName: top?.name || '',
+                          log: debug,
+                        });
+                        clearGameBoxBusy(self);
+                        remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                          type: 'info',
+                          title: t('crakfiles', 'CrakFiles'),
+                          message: t('applied-x-file-s', 'Applied {count} file(s).', '{count} fichier(s) appliqué(s).', { count: res.applied.length }),
+                          detail:
+                            applyDir +
+                            (res.backupDir ? `\n${t('backup', 'Backup:', 'Sauvegarde :')} ${res.backupDir}` : '') +
+                            (t('n-nif-steam-api-was-replaced-re-run-apply-emulator-fix-to-keep-a', '\n\nIf steam_api was replaced, re-run "Apply emulator fix" to keep achievement detection.', '\n\nSi steam_api a été remplacé, relance « Appliquer le fix émulateur » pour garder la détection des succès.')),
+                          noLink: true,
+                        });
+                      } catch (e2) {
+                        remote.dialog.showMessageBoxSync({ type: 'error', title: t('crakfiles', 'CrakFiles'), message: t('apply-failed', 'Apply failed.', 'Échec de l’application.'), detail: formatErr(e2) });
+                      }
+                    } else {
+                      remote.dialog.showMessageBoxSync({ type: 'error', title: t('crakfiles', 'CrakFiles'), message: t('failed', 'Failed.', 'Échec.'), detail: formatErr(err) });
+                    }
+                  } finally {
+                    clearGameBoxBusy(self);
+                  }
+                },
+              })
+            );
+          };
           const menu = new Menu();
           const gameMenu = new Menu();
           const emulatorMenu = new Menu();
@@ -1563,24 +1861,30 @@ var app = {
             );
           }
 
+          // Launching and picking the executable are not Ubisoft-specific: every tile carries the
+          // same play and config buttons, and onPlayButtonClick works for any source. These two
+          // entries used to sit inside the Ubisoft branch, so right-clicking a Steam, GOG or Epic
+          // game offered no way to start it even with the executable already configured.
+          gameMenu.append(new MenuItem({ type: 'separator' }));
+          gameMenu.append(
+            new MenuItem({
+              label: t('launch-game', 'Launch game', 'Lancer le jeu'),
+              async click() {
+                await app.onPlayButtonClick(self.find('.play-button'));
+              },
+            })
+          );
+          gameMenu.append(
+            new MenuItem({
+              label: t('configure-executable', 'Configure executable…', 'Configurer l’exécutable…'),
+              async click() {
+                await app.onConfigButtonClick(self.find('.config-button'));
+              },
+            })
+          );
+
           if (isUbisoftSource) {
-            gameMenu.append(new MenuItem({ type: 'separator' }));
-            gameMenu.append(
-              new MenuItem({
-                label: t('launch-game', 'Launch game', 'Lancer le jeu'),
-                async click() {
-                  await app.onPlayButtonClick(self.find('.play-button'));
-                },
-              })
-            );
-            gameMenu.append(
-              new MenuItem({
-                label: t('configure-executable', 'Configure executable…', 'Configurer l’exécutable…'),
-                async click() {
-                  await app.onConfigButtonClick(self.find('.config-button'));
-                },
-              })
-            );
+            // Non-Ubisoft games get their own reset-playtime entry in the emulator section below.
             gameMenu.append(
               new MenuItem({
                 label: $('#game-list').attr('data-ctx-resetplaytime') || '',
@@ -2283,224 +2587,7 @@ var app = {
                 })
               );
 
-              // Community "Fixes & Bypasses" from the CrakFiles list — a SEPARATE launch helper. These
-              // can overwrite game files (incl. steam_api), so it warns that achievement detection runs
-              // through the emulator and the emulator fix may need re-applying. Overwritten files are
-              // backed up under <gameDir>/.aw-crackfix-backups/.
-              emulatorMenu.append(
-                new MenuItem({
-                  icon: menuIcon('file-text.png'),
-                  label: $('#game-list').attr('data-ctx-crackfix') || '',
-                  async click() {
-                    // Hoisted so the catch's "pixeldrain captcha → apply a manually-downloaded file" flow
-                    // can reach the resolved game / fix / install dir.
-                    let game = null;
-                    let top = null;
-                    let fix = null;
-                    let gameDir = null;
-                    const crackFix = require(path.join(appPath, 'parser/crackFix.js'));
-                    try {
-                      game = list.find((g) => g.appid == appid);
-                      if (!game?.name) {
-                        remote.dialog.showMessageBoxSync({ type: 'info', title: t('crakfiles', 'CrakFiles'), message: t('unknown-game-name', 'Unknown game name.', 'Nom de jeu inconnu.') });
-                        return;
-                      }
-                      const cacheDir = path.join(getUserDataPath(), 'cache/crackfiles');
-                      setGameBoxBusy(self, t('searching-fixes', 'Searching fixes…', 'Recherche de fixes…'));
-                      const cfList = await crackFix.fetchList({ cacheDir, log: debug });
-                      clearGameBoxBusy(self);
-                      const matches = crackFix.findFixes(cfList, game.name, { limit: 5 });
-                      if (matches.length === 0) {
-                        const c = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
-                          type: 'info',
-                          title: t('crakfiles', 'CrakFiles'),
-                          message: t('no-fix-found-for-x', 'No fix found for "{name}".', 'Aucun fix trouvé pour « {name} ».', { name: game.name }),
-                          detail: t('the-crakfiles-list-is-community-maintained-and-limited', 'The CrakFiles list is community-maintained and limited.', 'La liste CrakFiles est communautaire et limitée.'),
-                          buttons: ['OK', t('open-crakfiles', 'Open CrakFiles', 'Ouvrir CrakFiles')],
-                          defaultId: 0,
-                          cancelId: 0,
-                          noLink: true,
-                        });
-                        if (c === 1) remote.shell.openExternal('https://github.com/KoriaPolis/CrakFiles');
-                        return;
-                      }
-                      top = matches[0];
-                      // Pick the best fix instead of blindly the first listed: prefer an auto-installable
-                      // (pixeldrain) link and the build matching the game's architecture when detectable.
-                      let arch = null;
-                      try {
-                        if (game.gameDir && fs.existsSync(game.gameDir)) {
-                          const pe = require(path.join(appPath, 'util/pe.js'));
-                          const emu0 = goldberg.detectEmulator(game.gameDir);
-                          const exe0 = exeDetect.detect(game.gameDir, game.name || '', { dllPaths: emu0.dll });
-                          if (exe0 && exe0.full) arch = pe.exeArch(exe0.full);
-                        }
-                      } catch {}
-                      fix = crackFix.pickBestFix(top, { arch }) || (top.fixes && top.fixes[0]) || {};
-                      const badges = (fix.badges || []).join(', ');
-                      const choice = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
-                        type: 'warning',
-                        title: t('crakfiles', 'CrakFiles'),
-                        message: t('fix-found-x', 'Fix found: {name}', 'Fix trouvé : {name}', { name: top.name }),
-                        detail:
-                          (fix.filename ? `${fix.filename}${badges ? ` [${badges}]` : ''}\n` : '') +
-                          t(
-                            'crackfix-overwrite-warning',
-                            '\n⚠ A community crack may overwrite game files (incl. steam_api(64).dll). Achievement detection runs through the emulator — if the crack replaces steam_api, re-run "Apply emulator fix" afterwards. Overwritten files are backed up.',
-                            "\n⚠ Un crack communautaire peut écraser des fichiers du jeu (dont steam_api(64).dll). La détection des succès passe par l'émulateur — si le crack remplace steam_api, relance « Appliquer le fix émulateur » après. Les fichiers écrasés sont sauvegardés."
-                          ),
-                        // NB: Windows treats `&` in a button label as the Alt-mnemonic marker and hides
-                        // it ("Download  apply"); double it so a literal ampersand shows.
-                        buttons: [
-                          t('cancel', 'Cancel', 'Annuler'),
-                          t('open-download-page', 'Open download page', 'Ouvrir la page de téléchargement'),
-                          t('open-source', 'Open source', 'Ouvrir la source'),
-                          t('download-apply', 'Download && apply', 'Télécharger && appliquer'),
-                        ],
-                        defaultId: 1,
-                        cancelId: 0,
-                        noLink: true,
-                      });
-                      if (choice.response === 0) return;
-                      if (choice.response === 1) {
-                        if (fix.href) openCatalogLink(fix.href);
-                        return;
-                      }
-                      if (choice.response === 2) {
-                        const src = (top.source_crack || [])[0];
-                        if (src) openCatalogLink(src);
-                        return;
-                      }
-                      // Download & apply
-                      gameDir = game.gameDir && fs.existsSync(game.gameDir) ? game.gameDir : null;
-                      if (!gameDir) {
-                        const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-                          title: t('game-install-folder', 'Game install folder', "Dossier d'installation du jeu"),
-                          properties: ['openDirectory', 'dontAddToRecent'],
-                        });
-                        if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
-                        gameDir = picked.filePaths[0];
-                      }
-                      if (!crackFix.pixeldrainDirectUrl(fix.href)) {
-                        const c = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
-                          type: 'info',
-                          title: t('crakfiles', 'CrakFiles'),
-                          message: t('this-link-cannot-be-applied-automatically', 'This link cannot be applied automatically.', 'Ce lien ne peut pas être appliqué automatiquement.'),
-                          detail: t('open-the-download-page-and-apply-it-manually', 'Open the download page and apply it manually.', 'Ouvre la page de téléchargement et applique-le manuellement.'),
-                          buttons: ['OK', t('open', 'Open', 'Ouvrir')],
-                          defaultId: 1,
-                          cancelId: 0,
-                          noLink: true,
-                        });
-                        if (c === 1 && fix.href) openCatalogLink(fix.href);
-                        return;
-                      }
-                      setGameBoxBusy(self, t('downloading-fix', 'Downloading fix…', 'Téléchargement du fix…'));
-                      const res = await crackFix.downloadAndApply({ fix, gameDir, cacheDir, entryName: top.name, proxyFallback: (app.config?.emulator || {}).pixeldrainProxyFallback !== false, log: debug });
-                      remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
-                        type: 'info',
-                        title: t('crakfiles', 'CrakFiles'),
-                        message: t('applied-x-file-s', 'Applied {count} file(s).', '{count} fichier(s) appliqué(s).', { count: res.applied.length }),
-                        detail:
-                          gameDir +
-                          (res.backupDir ? `\n${t('backup', 'Backup:', 'Sauvegarde :')} ${res.backupDir}` : '') +
-                          (t('n-nif-steam-api-was-replaced-re-run-apply-emulator-fix-to-keep-a', '\n\nIf steam_api was replaced, re-run "Apply emulator fix" to keep achievement detection.', '\n\nSi steam_api a été remplacé, relance « Appliquer le fix émulateur » pour garder la détection des succès.')),
-                        noLink: true,
-                      });
-                    } catch (err) {
-                      // Pixeldrain rate-limits popular files (403): they can't be auto-downloaded, only
-                      // fetched through a browser (captcha). Rather than a dead end, walk the user through
-                      // downloading it themselves and then hand the file to AW to extract + apply.
-                      if (err && err.code === 'PIXELDRAIN_UNAVAILABLE') {
-                        const href = err.href || fix?.href;
-                        const choice = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
-                          type: 'warning',
-                          title: t('crakfiles', 'CrakFiles'),
-                          message: t('pixeldrain-captcha-required-for-this-file', 'Pixeldrain captcha required for this file.', 'Captcha pixeldrain requis pour ce fichier.'),
-                          detail: t(
-                            'pixeldrain-rate-limited',
-                            "Pixeldrain rate-limited this file (too many downloads): you must solve a captcha in the browser.\n\n1) Open the page and download the .rar.\n2) Come back and select the downloaded file — AW will extract and apply it automatically (overwritten files are backed up).",
-                            "Pixeldrain limite ce fichier (trop de téléchargements) : il faut résoudre un captcha dans le navigateur.\n\n1) Ouvre la page et télécharge le .rar.\n2) Reviens et sélectionne le fichier téléchargé — AW l'extraira et l'appliquera automatiquement (les fichiers écrasés sont sauvegardés)."
-                          ),
-                          buttons: [
-                            t('cancel', 'Cancel', 'Annuler'),
-                            t('open-page', 'Open page', 'Ouvrir la page'),
-                            t('select-downloaded-file', 'Select downloaded file…', 'Sélectionner le fichier téléchargé…'),
-                          ],
-                          defaultId: 1,
-                          cancelId: 0,
-                          noLink: true,
-                        });
-                        if (choice.response === 0) return;
-                        if (choice.response === 1) {
-                          if (href) openCatalogLink(href);
-                          // Wait (non-blocking modal) for the user to finish the browser download, then let
-                          // them pick the file. Cancelling here just leaves the page open.
-                          const after = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
-                            type: 'info',
-                            title: t('crakfiles', 'CrakFiles'),
-                            message: t('once-the-download-is-finished', 'Once the download is finished…', 'Une fois le téléchargement terminé…'),
-                            detail: t('select-the-downloaded-file-rar-zip-7z-to-apply-it', 'Select the downloaded file (.rar/.zip/.7z) to apply it.', 'Sélectionne le fichier téléchargé (.rar/.zip/.7z) pour l’appliquer.'),
-                            buttons: [t('cancel', 'Cancel', 'Annuler'), t('select-file', 'Select file…', 'Sélectionner le fichier…')],
-                            defaultId: 1,
-                            cancelId: 0,
-                            noLink: true,
-                          });
-                          if (after.response !== 1) return;
-                        }
-                        // Pick + apply the locally-downloaded archive.
-                        const picked = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-                          title: t('select-the-downloaded-crack', 'Select the downloaded crack', 'Sélectionne le crack téléchargé'),
-                          properties: ['openFile', 'dontAddToRecent'],
-                          filters: [
-                            { name: t('archives', 'Archives', 'Archives'), extensions: ['rar', 'zip', '7z'] },
-                            { name: t('all-files', 'All files', 'Tous les fichiers'), extensions: ['*'] },
-                          ],
-                        });
-                        if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
-                        // Resolve the install folder (the try-scoped one may be unset if we failed early).
-                        let applyDir = (gameDir && fs.existsSync(gameDir) && gameDir) ||
-                          (game?.gameDir && fs.existsSync(game.gameDir) ? game.gameDir : null);
-                        if (!applyDir) {
-                          const pd = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
-                            title: t('game-install-folder', 'Game install folder', "Dossier d'installation du jeu"),
-                            properties: ['openDirectory', 'dontAddToRecent'],
-                          });
-                          if (pd.canceled || !pd.filePaths || pd.filePaths.length === 0) return;
-                          applyDir = pd.filePaths[0];
-                        }
-                        try {
-                          setGameBoxBusy(self, t('applying-file', 'Applying file…', 'Application du fichier…'));
-                          const res = await crackFix.applyLocalArchive({
-                            archivePath: picked.filePaths[0],
-                            gameDir: applyDir,
-                            fix: fix && fix.href ? fix : null,
-                            entryName: top?.name || '',
-                            log: debug,
-                          });
-                          clearGameBoxBusy(self);
-                          remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
-                            type: 'info',
-                            title: t('crakfiles', 'CrakFiles'),
-                            message: t('applied-x-file-s', 'Applied {count} file(s).', '{count} fichier(s) appliqué(s).', { count: res.applied.length }),
-                            detail:
-                              applyDir +
-                              (res.backupDir ? `\n${t('backup', 'Backup:', 'Sauvegarde :')} ${res.backupDir}` : '') +
-                              (t('n-nif-steam-api-was-replaced-re-run-apply-emulator-fix-to-keep-a', '\n\nIf steam_api was replaced, re-run "Apply emulator fix" to keep achievement detection.', '\n\nSi steam_api a été remplacé, relance « Appliquer le fix émulateur » pour garder la détection des succès.')),
-                            noLink: true,
-                          });
-                        } catch (e2) {
-                          remote.dialog.showMessageBoxSync({ type: 'error', title: t('crakfiles', 'CrakFiles'), message: t('apply-failed', 'Apply failed.', 'Échec de l’application.'), detail: formatErr(e2) });
-                        }
-                      } else {
-                        remote.dialog.showMessageBoxSync({ type: 'error', title: t('crakfiles', 'CrakFiles'), message: t('failed', 'Failed.', 'Échec.'), detail: formatErr(err) });
-                      }
-                    } finally {
-                      clearGameBoxBusy(self);
-                    }
-                  },
-                })
-              );
+              appendCrackFixItem();
             }
             }
 
@@ -2724,6 +2811,64 @@ var app = {
                   },
                 })
               );
+
+              // Undo the last fix. Every Uplay R2 repair snapshots the schema + ini files it is about
+              // to overwrite, but nothing could read those back — the Steam side has had its
+              // "restore a backup" entry from the start, which is most of why this submenu looked so
+              // much thinner. Only offered when a snapshot actually exists.
+              {
+                const restoreDir = ctxGame?.gameDir && fs.existsSync(ctxGame.gameDir) ? ctxGame.gameDir : null;
+                const backups = restoreDir ? uplayR2.listConfigBackups(restoreDir) : [];
+                if (backups.length > 0) {
+                  emulatorMenu.append(
+                    new MenuItem({
+                      icon: menuIcon('redo-alt.png'),
+                      label:
+                        $('#game-list').attr('data-ctx-restoreuplayr2') ||
+                        t('restore-uplay-r2-config', 'Restore the previous Uplay R2 configuration…', 'Restaurer la configuration Uplay R2 précédente…'),
+                      async click() {
+                        try {
+                          const latest = backups[0];
+                          const confirmed = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                            type: 'question',
+                            buttons: [t('restore', 'Restore', 'Restaurer'), t('cancel', 'Cancel', 'Annuler')],
+                            defaultId: 0,
+                            cancelId: 1,
+                            title: t('restore-uplay-r2-title', 'Restore Uplay R2 configuration', 'Restaurer la configuration Uplay R2'),
+                            message: t(
+                              'restore-uplay-r2-message',
+                              'Restore the snapshot taken before the last repair?',
+                              'Restaurer la sauvegarde prise avant la dernière réparation ?'
+                            ),
+                            detail: `${latest.name}\n${latest.files.join('\n')}`,
+                            noLink: true,
+                          });
+                          if (confirmed !== 0) return;
+                          const result = uplayR2.restoreConfigBackup({ dir: restoreDir, backup: latest });
+                          remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                            type: 'info',
+                            title: t('restore-uplay-r2-title', 'Restore Uplay R2 configuration', 'Restaurer la configuration Uplay R2'),
+                            message: t('restore-uplay-r2-done', 'Configuration restored.', 'Configuration restaurée.'),
+                            detail: result.restored.join('\n'),
+                            noLink: true,
+                          });
+                        } catch (err) {
+                          remote.dialog.showMessageBoxSync({
+                            type: 'error',
+                            title: t('restore-failed', 'Restore failed', 'Échec de la restauration'),
+                            message: t('could-not-restore-the-uplay-r2-setup', 'Could not restore the Uplay R2 configuration.', 'Impossible de restaurer la configuration Uplay R2.'),
+                            detail: `${err}`,
+                          });
+                        }
+                      },
+                    })
+                  );
+                }
+              }
+
+              // A cracked Ubisoft game is exactly what the CrakFiles list is full of, and the entry
+              // needs nothing Steam-specific — it was simply unreachable from this branch.
+              appendCrackFixItem();
 
               emulatorMenu.append(new MenuItem({ type: 'separator' }));
               emulatorMenu.append(
@@ -3083,10 +3228,14 @@ var app = {
                         noLink: true,
                       });
                       if (confirm.response !== 1) return;
+                      // The tile stays busy for as long as the uninstaller runs, so a silent
+                      // uninstall (no window of its own) is not mistaken for nothing happening.
+                      setGameBoxBusy(self, t('uninstalling-game', 'Uninstalling…', 'Désinstallation…'));
                       let child;
                       try {
                         child = spawn(local.file, local.args, { cwd: uninstallDir, detached: true, stdio: 'ignore' });
                       } catch (err) {
+                        clearGameBoxBusy(self);
                         remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                           type: 'error',
                           title: t('launch-failed', 'Launch failed', 'Échec du lancement'),
@@ -3097,6 +3246,7 @@ var app = {
                       }
                       child.on('error', (err) => {
                         debug.warn(`[uninstall] ${local.file} => ${formatErr(err)}`);
+                        clearGameBoxBusy(self);
                         remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                           type: 'error',
                           title: t('launch-failed', 'Launch failed', 'Échec du lancement'),
@@ -3113,6 +3263,7 @@ var app = {
                       // uninstall may not have actually finished).
                       child.on('exit', (code) => {
                         if (code === 0) uninstall.cleanupSilentUninstaller(local);
+                        clearGameBoxBusy(self);
                         setTimeout(() => app.onStart(), 1500);
                       });
                       child.unref();
@@ -3149,9 +3300,14 @@ var app = {
                         noLink: true,
                       });
                       if (confirm.response !== 1) return;
+                      // Moving a game folder to the Recycle Bin takes as long as the folder is big,
+                      // and the tile gave no sign of it — the same spinner the emulator fix uses says
+                      // the work started and is still going.
+                      setGameBoxBusy(self, t('deleting-game-folder', 'Moving to the Recycle Bin…', 'Déplacement vers la Corbeille…'));
                       try {
                         await remote.shell.trashItem(uninstallDir);
                       } catch (err) {
+                        clearGameBoxBusy(self);
                         remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                           type: 'error',
                           title: t('delete-failed', 'Delete failed', 'Échec de la suppression'),
@@ -3160,6 +3316,7 @@ var app = {
                         });
                         return;
                       }
+                      clearGameBoxBusy(self);
                       app.onStart();
                     },
                   })
@@ -3321,6 +3478,7 @@ var app = {
       .catch((err) => {
         loadingElem.elem.hide();
         $('#main-footer').addClass('done');
+        setLibraryBusyCursor(false);
         $('#game-list .isEmpty').show();
         remote.dialog.showMessageBoxSync({
           type: 'error',
@@ -3685,8 +3843,12 @@ var app = {
         })
         .first();
       if (box.length && typeof this.onGameBoxClick === 'function') {
+        // Re-rendering the detail view is what re-applies the overrides to the in-memory game, so
+        // the tile and the header counters are refreshed from it afterwards — otherwise the library
+        // kept showing the percentage from the last full scan.
         this.onGameBoxClick(box, gameList);
       }
+      refreshLibraryProgressFor(appid, gameList);
       return result;
     } catch (err) {
       debug.warn(`[manualUnlock] ${err && err.stack ? err.stack : err}`);

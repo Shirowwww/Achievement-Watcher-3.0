@@ -1100,14 +1100,9 @@
                 <div id="generate-configs-result" class="diag-line"></div>
               </div>
 
-              <div class="folder-rescan-card" id="folder-rescan">
-                <div class="folder-rescan-heading">
-                  <i class="fas fa-sync-alt"></i>
-                  <div>
-                    <strong id="folder-rescan-title"></strong>
-                    <p id="folder-rescan-help"></p>
-                  </div>
-                </div>
+              <div class="folder-rescan-card settings-card" id="folder-rescan">
+                <div class="title"><i class="fas fa-sync-alt"></i> <span id="folder-rescan-title"></span></div>
+                <p id="folder-rescan-help" class="folder-rescan-help"></p>
                 <div class="folder-rescan-toolbar">
                   <button type="button" class="inline-action-btn secondary" id="folder-rescan-select-all"><i class="fas fa-check"></i> <span></span></button>
                   <button type="button" class="inline-action-btn secondary" id="folder-rescan-select-none"><i class="fas fa-times"></i> <span></span></button>
@@ -1465,30 +1460,34 @@
                 <div class="arrow-list overlay-only-card">
                   <div class="title"><span id="customiser-title">Custom preset</span></div>
                   <ul id="options-notify-customiser">
-                    <li class="hasHelper" style="flex-wrap: wrap">
-                      <div class="left" style="width: 100%"><i class="fas fa-magic"></i> <span id="customiser-intro">Build your own in-game overlay notification preset.</span></div>
-                      <div style="display: flex; flex-wrap: wrap; gap: 12px 18px; width: 100%; padding: 8px 0">
-                        <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-name">Name</span><input type="text" id="cust-name" maxlength="48" placeholder="My preset" /></label>
-                        <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-bg">Background</span><input type="color" id="cust-bg" value="#16181d" /></label>
-                        <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-text">Text</span><input type="color" id="cust-text" value="#ffffff" /></label>
-                        <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-accent">Accent</span><input type="color" id="cust-accent" value="#4aa3ff" /></label>
-                        <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-opacity">Opacity</span><input type="range" id="cust-opacity" min="20" max="100" value="100" /></label>
-                        <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-font">Font size</span><input type="range" id="cust-font" min="10" max="28" value="16" /></label>
-                        <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-radius">Corners</span><input type="range" id="cust-radius" min="0" max="40" value="12" /></label>
-                        <label class="cust-field" style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em"><span id="cust-lbl-icon">Icon size</span><input type="range" id="cust-icon" min="24" max="110" value="64" /></label>
+                    <li class="cust-row">
+                      <div class="left"><i class="fas fa-magic"></i> <span id="customiser-intro">Build your own in-game overlay notification preset.</span></div>
+                      <div class="cust-grid">
+                        <label class="cust-field cust-field-wide"><span id="cust-lbl-load">Edit a preset</span><select autocomplete="off" id="cust-load"></select></label>
+                        <label class="cust-field cust-field-wide"><span id="cust-lbl-name">Name</span><input type="text" id="cust-name" maxlength="48" placeholder="My preset" /></label>
+                        <label class="cust-field"><span id="cust-lbl-bg">Background</span><input type="color" id="cust-bg" value="#16181d" /></label>
+                        <label class="cust-field"><span id="cust-lbl-text">Text</span><input type="color" id="cust-text" value="#ffffff" /></label>
+                        <label class="cust-field"><span id="cust-lbl-accent">Accent</span><input type="color" id="cust-accent" value="#4aa3ff" /></label>
+                        <label class="cust-field"><span><span id="cust-lbl-opacity">Opacity</span> <b class="cust-value" id="cust-val-opacity">100%</b></span><input type="range" id="cust-opacity" min="20" max="100" value="100" /></label>
+                        <label class="cust-field"><span><span id="cust-lbl-font">Font size</span> <b class="cust-value" id="cust-val-font">16px</b></span><input type="range" id="cust-font" min="10" max="28" value="16" /></label>
+                        <label class="cust-field"><span><span id="cust-lbl-radius">Corners</span> <b class="cust-value" id="cust-val-radius">12px</b></span><input type="range" id="cust-radius" min="0" max="40" value="12" /></label>
+                        <label class="cust-field"><span><span id="cust-lbl-icon">Icon size</span> <b class="cust-value" id="cust-val-icon">64px</b></span><input type="range" id="cust-icon" min="24" max="110" value="64" /></label>
+                        <label class="cust-field"><span><span id="cust-lbl-width">Width</span> <b class="cust-value" id="cust-val-width">420px</b></span><input type="range" id="cust-width" min="280" max="620" step="10" value="420" /></label>
                       </div>
-                      <div style="width: 100%; display: flex; justify-content: center; padding: 14px 0; background: rgba(0, 0, 0, 0.25); border-radius: 8px; margin: 6px 0">
-                        <div id="cust-preview" style="display: flex; align-items: center; gap: 12px; width: 360px; box-sizing: border-box; padding: 12px 18px; background: #16181d; color: #ffffff; border-radius: 12px; border-left: 4px solid #4aa3ff; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 16px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4)">
-                          <div style="flex: 0 0 auto"><i class="fas fa-trophy" id="cust-preview-icon" style="font-size: 40px; color: #4aa3ff"></i></div>
-                          <div style="min-width: 0">
-                            <div id="cust-preview-title" style="font-weight: 700; color: #4aa3ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Achievement Unlocked</div>
-                            <div id="cust-preview-detail" style="opacity: 0.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Sample achievement description</div>
+                      <div class="cust-stage">
+                        <div id="cust-preview">
+                          <div class="cust-preview-icon-wrap"><i class="fas fa-trophy" id="cust-preview-icon"></i></div>
+                          <div class="cust-preview-text">
+                            <div id="cust-preview-title">Achievement Unlocked</div>
+                            <div id="cust-preview-detail">Sample achievement description</div>
                           </div>
                         </div>
                       </div>
-                      <div class="right action-right" style="width: 100%">
+                      <div class="right action-right cust-actions">
                         <button type="button" id="btn-create-preset" class="inline-action-btn"><i class="fas fa-plus"></i> <span id="cust-lbl-create">Create preset</span></button>
-                        <span id="cust-status" style="margin-left: 10px; font-size: 0.85em; opacity: 0.85"></span>
+                        <button type="button" id="btn-preview-preset" class="inline-action-btn secondary"><i class="fas fa-play"></i> <span id="cust-lbl-preview">Preview</span></button>
+                        <button type="button" id="btn-delete-preset" class="inline-action-btn secondary" style="display: none"><i class="fas fa-trash"></i> <span id="cust-lbl-delete">Delete</span></button>
+                        <span id="cust-status"></span>
                       </div>
                     </li>
                   </ul>

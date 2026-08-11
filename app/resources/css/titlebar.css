@@ -99,6 +99,11 @@ ul {
   z-index: 99;
   direction: rtl;
   height: 100%;
+  /* Shrink-to-fit box of inline-flex items: without this the window buttons WRAP onto a second row
+     once the available width drops below their combined width, so the close button ends up stacked
+     under the others and hanging below a 30px title bar. Reachable whenever the renderer briefly
+     reports a very narrow viewport (a DPI/display change, a restore from a collapsed state). */
+  white-space: nowrap;
 }
 ul#watchdog-status {
   right: auto;
