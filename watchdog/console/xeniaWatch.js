@@ -1,16 +1,7 @@
 'use strict';
 
-// Live toasts for Xenia (Xbox 360 emulator) achievements. A title keeps schema, unlock state AND
-// icons inside one binary GPD (XDBF) file: <root>/content/<XUID>/<titleID>/00000001/<titleID>.gpd.
-// The minimal XDBF reader below is the same logic as app/parser/xenia.js, trimmed to what live
-// notifications need. Like shadps4Watch, this module is isolated from the Steam watch path: it has
-// its own discovery (the user's saved folders, cfg/userdir.db), its own unlock baseline, and reuses
-// only the shared notify() toaster + waitForFileStable.
-//
-// Xenia rewrites every profile GPD on some syncs (the reference project hit duplicate notifications
-// for several games at once) — two guards prevent that here: only the title's own <titleID>.gpd is
-// watched (never the dashboard/profile GPDs), and unlocks are diffed against a persisted baseline so
-// a rewrite without new earned flags never toasts.
+// Watch Xenia's per-title GPD files and notify on newly earned achievements.
+// The schema, icons and unlock state are read from the same binary file.
 
 const fs = require('fs');
 const path = require('path');

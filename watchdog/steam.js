@@ -9,10 +9,7 @@ const steamLang = require('./steam.json');
 const htmlParser = require('node-html-parser');
 const { userDataDir } = require('./util/userData.js');
 
-// Coerce a possibly non-string schema name into a usable display title (issue #54): handles a plain
-// string, a { name } wrapper, a localized { english, … } map (prefers english), a number, and falls
-// back to the appid so a toast never shows "[object Object]". Mirrors normalizeGameName in the
-// renderer's parser/achievements.js (kept local since the watchdog is a separate process).
+// Normalize schema names so notifications never show "[object Object]".
 function normalizeName(name, appID) {
   if (typeof name === 'string') return name;
   if (name && typeof name === 'object') {
@@ -96,9 +93,7 @@ function getSteamDataFromSRV(appID, lang) {
 }
 
 async function getSteamData(appID, lang, key) {
-  // IPlayerService/GetGameAchievements (not the legacy ISteamUserStats/GetSchemaForGame) so hidden
-  // achievements keep their real description — same root-cause fix as the renderer (#57). Mapped to
-  // the {name, displayName, hidden, description, icon, icongray} shape the rest of the watchdog uses.
+  // Use IPlayerService so hidden achievements keep their descriptions.
   const url = `https://api.steampowered.com/IPlayerService/GetGameAchievements/v1/?key=${key}&appid=${appID}&language=${lang}`;
 
   const data = await request.getJson(url);

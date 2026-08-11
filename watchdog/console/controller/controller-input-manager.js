@@ -1,8 +1,4 @@
-// Controller input manager: polls XInput (+ raw-HID / GameInput fallback) for connected pads and turns button/stick input into overlay-control actions (toggle, control-mode, move/scroll/nudge/snap). Works while the game window is focused, so the overlay can be driven by controller in-game.
-//
-// Runs under the
-// Watchdog (Electron Node via ELECTRON_RUN_AS_NODE) using koffi, the same single-runtime FFI stack as
-// the A2 migration (wql-process-monitor / regodit / xinput-ffi).
+// Poll controller backends and translate input into overlay-control actions.
 
 const { createRawHidControllerHub } = require("./raw-hid-controller-hub");
 

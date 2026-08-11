@@ -1,8 +1,4 @@
-// Raw-HID controller worker: enumerates + reads HID gamepads (SetupAPI + hid.dll + overlapped ReadFile via koffi) in a worker thread and posts normalized snapshots. Enables native PlayStation input and the guide button while a game is foregrounded.
-//
-// Runs under the
-// Watchdog (Electron Node via ELECTRON_RUN_AS_NODE) using koffi, the same single-runtime FFI stack as
-// the A2 migration (wql-process-monitor / regodit / xinput-ffi).
+// Worker thread that reads raw-HID gamepads and posts normalized snapshots.
 
 const { parentPort, workerData } = require("node:worker_threads");
 const koffi = require("koffi");

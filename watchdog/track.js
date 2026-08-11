@@ -5,32 +5,36 @@ const fs = require('./util/fsAsync');
 
 let cacheDir = path.join(require('./util/userData.js').userDataDir(), 'steam_cache', 'data');
 
-// In-memory baselines. track.save() can still fail for reasons other than a missing directory
-// (permissions, disk full, antivirus lock, ...). If the next scan then re-reads a stale or missing
-// .db, the diff engine treats the game as a first observation again and re-notifies the boot-seed
-// block. Keeping the latest snapshot in memory makes the baseline stable for this process even when
-// disk persistence fails.
+// Keep an in-memory baseline when disk persistence fails.
 const memoryCache = new Map();
 
-// Serialize writes per appid: emulators can rewrite the same save through several watched paths in
-// quick succession, and two concurrent writes to the same .db could interleave and corrupt it.
+// Serialize writes per appid.
 const writeQueues = new Map();
 
-// Test/embedding hook: point the cache at a temp dir. Clears the in-memory baseline so each test
-// starts clean.
+function cacheKey(appID) {
+  return String(appID);
+}
+
+function cacheFilePath(appID) {
+  return path.join(cacheDir, `${cacheKey(appID)}.db`);
+}
+
+// Test hook for an isolated cache.
 module.exports.setCacheDir = (dir) => {
   cacheDir = dir;
   memoryCache.clear();
+  writeQueues.clear();
 };
 
 module.exports.load = async (appID) => {
-  // The in-memory baseline is always at least as fresh as the file: prefer it when present.
-  if (memoryCache.has(appID)) return snapshotOf(memoryCache.get(appID));
+  const key = cacheKey(appID);
+  // Prefer the in-memory baseline when available.
+  if (memoryCache.has(key)) return snapshotOf(memoryCache.get(key));
 
   try {
-    const parsed = JSON.parse(await fs.readFile(path.join(cacheDir, `${appID}.db`), 'utf8'));
+    const parsed = JSON.parse(await fs.readFile(cacheFilePath(key), 'utf8'));
     const normalized = Array.isArray(parsed) ? parsed : [];
-    memoryCache.set(appID, normalized);
+    memoryCache.set(key, normalized);
     return snapshotOf(normalized);
   } catch {
     return [];
@@ -39,22 +43,21 @@ module.exports.load = async (appID) => {
 
 module.exports.save = async (appID, achievements) => {
   if (!Array.isArray(achievements)) {
-    // Never let a bad call wipe a valid baseline (memory or disk) with an empty array.
     throw new TypeError('track.save requires an achievements array');
   }
-  // Snapshot now: the caller (watchdog.js) keeps using its own array after save, and the in-memory
-  // baseline must behave exactly like the serialized file — immutable once persisted.
+  // Snapshot before storing so callers cannot mutate the baseline.
+  const key = cacheKey(appID);
   const normalized = snapshotOf(achievements);
-  memoryCache.set(appID, normalized);
+  memoryCache.set(key, normalized);
 
-  const filePath = path.join(cacheDir, `${appID}.db`);
-  const previous = writeQueues.get(appID) || Promise.resolve();
+  const filePath = cacheFilePath(key);
+  const previous = writeQueues.get(key) || Promise.resolve();
   const pending = previous.then(() => persist(filePath, normalized));
-  // Keep the queue alive even when a write fails, so later saves still serialize.
+  // Keep later saves serializable after a failure.
   const tracked = pending.catch(() => {});
-  writeQueues.set(appID, tracked);
+  writeQueues.set(key, tracked);
   tracked.finally(() => {
-    if (writeQueues.get(appID) === tracked) writeQueues.delete(appID);
+    if (writeQueues.get(key) === tracked) writeQueues.delete(key);
   });
   await pending;
 };
@@ -64,27 +67,31 @@ function snapshotOf(entries) {
 }
 
 async function persist(filePath, achievements) {
-  // The cache directory may not exist yet on a fresh install: create it (and any missing parents)
-  // before the first write. Without this, writeFile throws ENOENT and the baseline never persists,
-  // so every later save-file change is treated as a first observation again.
+  // Create the cache directory on first use.
   await fs.mkdir(path.dirname(filePath), { recursive: true });
 
   const data = JSON.stringify(achievements);
   const tmpPath = `${filePath}.tmp`;
 
-  // Write to a sibling temp file then rename, so a crash, power loss or concurrent reader can never
-  // observe a truncated .db. A corrupted baseline would otherwise read back as [] and re-trigger the
-  // boot-seed notifications.
-  await fs.writeFile(tmpPath, data, 'utf8');
+  // Write a sibling temp file, then rename it atomically.
+  try {
+    await fs.writeFile(tmpPath, data, 'utf8');
+  } catch (err) {
+    // Remove partial temp files.
+    await fs.unlink(tmpPath).catch(() => {});
+    throw err;
+  }
 
-  // Windows refuses to replace a file that another process has open for reading (EPERM) — and the
-  // renderer reads these .db files. Retry briefly, then fall back to an in-place write, which Windows
-  // does allow. The in-memory baseline still covers the session if even that fails.
+  // Retry Windows rename races, then fall back to an in-place write.
   try {
     await renameWithRetry(tmpPath, filePath);
   } catch {
-    await fs.writeFile(filePath, data, 'utf8');
-    await fs.unlink(tmpPath).catch(() => {});
+    try {
+      await fs.writeFile(filePath, data, 'utf8');
+    } finally {
+      // Remove any leftover temp file.
+      await fs.unlink(tmpPath).catch(() => {});
+    }
   }
 }
 

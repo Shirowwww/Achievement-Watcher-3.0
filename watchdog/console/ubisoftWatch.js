@@ -1,14 +1,7 @@
 'use strict';
 
-// Live toasts for Ubisoft Connect OFFICIAL achievements. The client appends a protobuf record
-// ({achievementId, earnedTime}) to %LOCALAPPDATA%\Ubisoft Game Launcher\spool\<userGuid>\
-// <productId>.spool the moment an achievement pops — watching those files gives real-time unlocks
-// for legit Ubisoft games. Toast texts/icons come from the client's cached achievements archive
-// (%ProgramData%\Ubisoft\Ubisoft Game Launcher\cache\achievements\<id>_<spec>, a ZIP of
-// <locale>_loc.txt + <id>.png); games without that archive are skipped (nothing to display).
-// Isolated from the Steam watch path like the other console watchers: own discovery, own baseline
-// cache, shared notify() only. The spool/zip readers are duplicated from app/parser/
-// ubisoftOfficial.js on purpose — the watchdog is packaged standalone and cannot require app/*.
+// Watch Ubisoft spool files and notify from the cached achievement archive.
+// This module is standalone because the packaged watchdog cannot require app/*.
 
 const fs = require('fs');
 const path = require('path');

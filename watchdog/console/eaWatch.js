@@ -1,10 +1,6 @@
 'use strict';
 
-// Live toasts for EA Desktop achievements. EA writes both schemas and unlock events to
-// %LOCALAPPDATA%/Electronic Arts/EA Desktop/Logs/EADesktopVerbose.log (+ .bak after rotation).
-// This module is intentionally self-contained so the packaged watchdog does not need to require the
-// renderer parser from app.asar. It seeds a per-achievement baseline on first observation, then notifies
-// only achievements that appear later in the log.
+// Watch EA Desktop's verbose log and notify on achievements seen after the baseline.
 
 const fs = require('fs');
 const path = require('path');

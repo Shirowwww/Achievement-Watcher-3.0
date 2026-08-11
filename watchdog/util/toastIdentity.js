@@ -3,21 +3,13 @@
 const os = require('os');
 const startApps = require('./startApps.js');
 
-// This is the desktop AppUserModelID declared by app/electron-builder.yml.  The Electron main
-// process passes it down too (so a future branded build can override it), but keeping the normal
-// id here means the standalone Settings toast tester does not need to borrow Game Bar's identity.
+// Desktop AppUserModelID declared by electron-builder.
 const ACHIEVEMENT_WATCHER_AUMID = 'io.github.shirowwww.achievement.watcher';
 
-// Last-resort AppUserModelID. Kept only for continuity with older installs — on Windows 11 the
-// classic Xbox app it names is no longer shipped, which is precisely why it must never be trusted
-// without an existence check (issue #8).
+// Legacy fallback; verify it before use.
 const DEFAULT_TOAST_AUMID = 'Microsoft.XboxApp_8wekyb3d8bbwe!Microsoft.XboxApp';
 
-// Ordered identities a toast may be posted under, best first:
-//   1. the user's explicit override (Settings > Notifications > Advanced),
-//   2. Achievement Watcher's own identity — registered by the installer's Start Menu shortcut, so
-//      toasts appear under "Achievement Watcher" instead of a borrowed Xbox app id,
-//   3. the legacy Xbox ids, for Windows 8.x and for installs where (2) is unavailable (dev runs).
+// Candidates are checked in override, app, then legacy order.
 function toastIdentityCandidates(options, env = process.env) {
   const candidates = [];
   const override = options && options.notification_advanced ? options.notification_advanced.appID : '';
@@ -35,25 +27,13 @@ function toastIdentityCandidates(options, env = process.env) {
   return candidates.filter((c) => startApps.isValidAUMID(c.id));
 }
 
-/**
- * Pick the AppUserModelID toasts are posted under, checking that Windows actually knows it.
- *
- * Windows silently drops a toast whose AUMID no installed app owns — no error, no callback, nothing
- * in the log. That is exactly what happened on Windows 11: the hardcoded default was the classic
- * Xbox app, which no longer ships, and the old format-only check happily reported it as a "valid
- * AUMID" (issue #8). So candidates are now checked for EXISTENCE, and the failure is reported.
- *
- * Returns `{ id, why, registered }`; `registered` is false when nothing could be verified, in which
- * case the first candidate is still returned so a toast is at least attempted.
- */
+/** Pick the first usable AppUserModelID and report whether it is registered. */
 async function resolveToastIdentity(options, { env = process.env, log } = {}) {
   const debug = log || { log() {}, warn() {}, error() {} };
   const candidates = toastIdentityCandidates(options, env);
   const registered = await startApps.listAumids();
 
-  // An explicit override is obeyed even when Get-StartApps does not list it: the user may be
-  // pointing at an identity we cannot enumerate, and silently ignoring their setting would be worse
-  // than a warning. Only the automatic candidates have to prove they exist.
+  // Respect an explicit override even when it cannot be enumerated.
   if (candidates[0] && candidates[0].why === 'user override') {
     const override = candidates.shift();
     const known = await startApps.hasAumid(override.id, registered);
@@ -79,9 +59,7 @@ async function resolveToastIdentity(options, { env = process.env, log } = {}) {
   return { ...fallback, registered: false };
 }
 
-// Only a packaged (MSIX/UWP) identity lets Windows download http(s) toast images; a desktop app id
-// must point at files on disk. Achievement Watcher's own id is a desktop one, so its icons have to
-// be prefetched or every toast would render without artwork.
+// Desktop AUMIDs require local image files, so artwork is prefetched.
 function requiresLocalImages(aumid) {
   return !startApps.isPackagedAUMID(aumid);
 }

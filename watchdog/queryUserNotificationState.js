@@ -16,23 +16,13 @@ const QUERY_USER_NOTIFICATION_STATE = {
   7: 'QUNS_APP',
 };
 
-// States in which a game (or any other full-screen app) is on top of everything else. Used to
-// decide whether a watched game counts as "running" without shelling out to tasklist.
+// Windows states that indicate a foreground/full-screen app.
 const FULLSCREEN_STATES = ['QUNS_BUSY', 'QUNS_RUNNING_D3D_FULL_SCREEN', 'QUNS_PRESENTATION_MODE', 'QUNS_APP'];
 
-// States in which Windows accepts a toast but never pops it on screen — it goes straight to the
-// notification centre. This is why achievement toasts appeared to be lost while playtime toasts
-// (fired once the game has exited) always showed up: the automatic "playing a game" / "using an
-// app in full screen mode" do-not-disturb rules are on by default on Windows 11 (issue #18).
+// States where Windows sends toasts to the notification centre instead of showing a popup.
 const POPUP_SUPPRESSED_STATES = [...FULLSCREEN_STATES, 'QUNS_QUIET_TIME'];
 
-// SHQueryUserNotificationState is a shell32 export, not a .NET method: it has to be imported with a
-// DllImport member definition. `Add-Type -AssemblyName shell32` — what this used to do — looks
-// plausible but there is no such assembly, so PowerShell wrote two errors to stderr, left $state at
-// its initialised 0, and still EXITED 0. The reader then parsed "0", found no matching state (the
-// enum starts at 1) and returned null forever, without ever reaching its catch. Every caller
-// silently answered "false" on every Windows machine. Keep the HRESULT check: a non-zero hr means
-// the value is meaningless, and must be an error rather than a plausible-looking state.
+// Import the shell32 function directly and reject failed HRESULTs.
 const QUERY_SCRIPT = `
   $ErrorActionPreference = 'Stop';
   Add-Type -Namespace AchievementWatcher -Name Shell32 -MemberDefinition '[DllImport("shell32.dll")] public static extern int SHQueryUserNotificationState(out int state);';
@@ -42,22 +32,14 @@ const QUERY_SCRIPT = `
   Write-Output $state;
 `;
 
-// Querying costs a PowerShell round-trip, and a save file that unlocks a whole batch of
-// achievements asks the same question once per achievement. One shared answer per second is plenty:
-// the display state cannot meaningfully change faster than a toast is built.
+// Share the answer briefly across a batch of notifications.
 const STATE_TTL_MS = 1000;
 let cached = { at: 0, state: null, valid: false };
 
-// The TTL alone does not help a burst: a save file that unlocks twenty achievements at once asks
-// twenty times before the first answer has come back, so every caller misses the cache and starts
-// its own round-trip. That was survivable when the query was broken and returned instantly; a real
-// query costs a PowerShell start plus a C# compile, so the burst has to share one. Callers that
-// arrive while a query is running await that same promise.
+// Share the in-flight query too; a batch can arrive before the first result.
 let inFlight = null;
 
-// A machine where the query cannot work (not Windows, PowerShell locked down, shell32 import
-// refused) would otherwise repeat the same warning every second. Say it once, loudly, and again
-// only if the situation changes — a silent unusable query is what hid the bug above.
+// Avoid repeating the same failure warning every second.
 let lastReportedFailure = null;
 
 function reportFailure(reason) {
@@ -70,9 +52,7 @@ function queryUserNotificationState() {
   if (cached.valid && Date.now() - cached.at < STATE_TTL_MS) return Promise.resolve(cached.state);
   if (inFlight) return inFlight;
   inFlight = readNotificationState();
-  // Clear the slot however it settles, so a failed query never wedges every later caller onto a
-  // rejected promise. readNotificationState resolves rather than throws, but this must hold even if
-  // that ever changes.
+  // Always release the shared promise slot.
   inFlight.catch(() => {}).finally(() => {
     inFlight = null;
   });
@@ -80,15 +60,13 @@ function queryUserNotificationState() {
 }
 
 async function readNotificationState() {
-  const now = Date.now();
   let state = null;
   try {
     if (process.platform !== 'win32') throw new Error('not a Windows host');
     const { stdout } = await execFileAsync(resolvePowerShell(), ['-NoProfile', '-NonInteractive', '-Command', QUERY_SCRIPT]);
     const raw = String(stdout).trim();
     state = QUERY_USER_NOTIFICATION_STATE[Number.parseInt(raw, 10)] || null;
-    // Anything the enum does not cover means the query did not actually run. Treat it as the
-    // failure it is instead of quietly degrading to "nothing is suppressed".
+    // Unknown output means the query failed.
     if (!state) throw new Error(`unrecognized state ${JSON.stringify(raw)}`);
     lastReportedFailure = null;
   } catch (err) {
@@ -96,8 +74,8 @@ async function readNotificationState() {
     reportFailure(err.message || String(err));
   }
 
-  // Cache failures too, so a permanently broken query costs one round-trip per second at most.
-  cached = { at: now, state, valid: true };
+  // Cache failures too, and start the TTL after PowerShell returns.
+  cached = { at: Date.now(), state, valid: true };
   return state;
 }
 
@@ -105,8 +83,7 @@ async function isFullscreenAppRunning() {
   return FULLSCREEN_STATES.includes(await queryUserNotificationState());
 }
 
-// True only when Windows is known to be swallowing toast popups. An unknown state (query failed,
-// not Windows) answers false so a working notification is never suppressed on a guess.
+// Unknown states never suppress a working notification.
 async function arePopupsSuppressed() {
   return POPUP_SUPPRESSED_STATES.includes(await queryUserNotificationState());
 }

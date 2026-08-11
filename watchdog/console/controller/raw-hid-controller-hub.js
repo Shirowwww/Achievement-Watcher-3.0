@@ -1,8 +1,4 @@
-// Raw-HID controller hub: spawns/supervises the raw-HID worker thread and exposes the latest snapshot + guide-button events to the input manager.
-//
-// Runs under the
-// Watchdog (Electron Node via ELECTRON_RUN_AS_NODE) using koffi, the same single-runtime FFI stack as
-// the A2 migration (wql-process-monitor / regodit / xinput-ffi).
+// Manage the raw-HID worker and expose its latest controller state.
 
 const path = require("path");
 const { Worker } = require("node:worker_threads");

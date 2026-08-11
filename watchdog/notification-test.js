@@ -12,8 +12,7 @@ const { buildToastNotification } = require('./notification/transport/toast.js');
 const notificationSound = require('./util/notificationSound.js');
 const notifyStrings = require('./util/notifyStrings.js');
 
-// xinput-ffi is ESM-only (koffi) since v2; load it lazily via dynamic import (cached by Node) only
-// when the test toast actually rumbles. Best-effort: a load failure (no XInput runtime) is swallowed.
+// Load the optional rumble dependency only when needed.
 let xinputPromise = null;
 const loadXinput = () => xinputPromise || (xinputPromise = import('xinput-ffi').catch(() => null));
 
@@ -21,17 +20,12 @@ const cfg_file = path.join(require('./util/userData.js').userDataDir(), 'cfg', '
 
 const TEST_APPID = 367520;
 const TEST_GAME = 'Hollow Knight';
-// Real square Hollow Knight artwork. The old 184×69 store capsule made the Windows app-logo slot
-// look broken even though the square layout itself was correct.
+// Use square artwork for the Windows app-logo slot.
 const TEST_ACHIEVEMENT_ICON = 'https://shared.fastly.steamstatic.com/community_assets/images/apps/367520/6d15e62c48ba57d23e72b8f24fb775a44223cb8f.jpg';
 const TEST_GAME_ICON = 'https://shared.fastly.steamstatic.com/community_assets/images/apps/367520/f6ab055c2366237200b1a31cccbd6cf81e436d72.jpg';
 const TEST_HEADER = 'https://cdn.cloudflare.steamstatic.com/steam/apps/367520/header.jpg';
 
-// Resolve the AUMID through the SAME code path as a real unlock (util/toastIdentity.js), and
-// forward the WinRT-off flag the way powertoast expects it (on the payload, consumed by
-// util/powertoast.js into show()). Sharing the resolver is the point: a test button that picks its
-// app id differently from the Watchdog can pass while real toasts stay invisible — which is exactly
-// how issue #8 stayed hidden.
+// Use the same AUMID and WinRT options as real toasts.
 async function applyToastAppSettings(payload, options, identity = null) {
   const chosen = identity || (await toastIdentity.resolveToastIdentity(options, { log: require('./util/log.js') }));
   payload.aumid = chosen.id;
@@ -39,9 +33,7 @@ async function applyToastAppSettings(payload, options, identity = null) {
   return payload;
 }
 
-// Powertoast's desktop AppUserModelIDs only accept local image paths. The real Watchdog goes
-// through toaster.js, which caches them first; Settings tests post their payload directly and must
-// do the same or they would misleadingly omit their icon/header only after installation.
+// Cache artwork first because desktop AUMIDs require local image paths.
 async function prefetchDesktopToastArtwork(message, aumid) {
   if (!toastIdentity.requiresLocalImages(aumid)) return;
 
@@ -54,8 +46,7 @@ async function prefetchDesktopToastArtwork(message, aumid) {
   }
 }
 
-// Build the exact message + toast options the Watchdog uses for each notification kind, so the
-// Settings test buttons exercise the same builder (and therefore the same payload) as real unlocks.
+// Build the same payload used by real unlocks.
 function testMessageAndOptions(kind, options) {
   const strings = notifyStrings.forLang(options.achievement.lang);
   const baseToast = {
@@ -63,7 +54,7 @@ function testMessageAndOptions(kind, options) {
     winrt: options.notification_transport.winRT,
     customAudio: options.notification_toast.customToastAudio,
     volume: mediaPlayerVolume(options.overlay && options.overlay.notificationVolume),
-    // Achievements/progress stay clean (no hero image); playtime/platinum use the game header.
+    // Only playtime/platinum use the game header.
     imageIntegration: kind === 'playtime' || kind === 'platinum' ? '1' : '0',
     group: options.notification_toast.groupToast,
   };
@@ -73,8 +64,7 @@ function testMessageAndOptions(kind, options) {
     gameDisplayName: TEST_GAME,
     gameIcon: TEST_GAME_ICON,
     image: TEST_HEADER,
-    // powertoast's `time` is a Unix timestamp in SECONDS (it multiplies by 1000 for
-    // displayTimestamp); passing milliseconds dated the test toast to the year 55000.
+    // powertoast expects Unix seconds.
     time: Math.floor(Date.now() / 1000),
   };
 

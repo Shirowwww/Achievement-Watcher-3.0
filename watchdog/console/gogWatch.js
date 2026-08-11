@@ -1,13 +1,7 @@
 'use strict';
 
-// Live toasts for GOG Galaxy OFFICIAL achievements. Galaxy stores each game's achievement schema +
-// unlock state in a per-game SQLite file (%LOCALAPPDATA%\GOG.com\Galaxy\Applications\<clientId>\
-// Gameplay\<userId>\gameplay.db, localized, with GOG CDN icon URLs) that the client rewrites the
-// moment an achievement pops — so watching those files gives real-time unlocks for legit GOG games.
-// Product titles come from the Galaxy catalog db (%ProgramData%\GOG.com\Galaxy\storage\
-// galaxy-2.0.db). SQLite is read via the runtime's built-in node:sqlite (the watchdog runs under
-// Electron's Node 24) — no native dependency. Isolated from the Steam watch path like the other
-// console watchers: own discovery, own baseline cache, shared notify() only.
+// Watch GOG Galaxy gameplay databases and notify on newly earned achievements.
+// Titles come from the Galaxy catalog; SQLite is provided by the Electron runtime.
 
 const fs = require('fs');
 const path = require('path');

@@ -7,6 +7,32 @@ const fs = require('./util/fsAsync');
 const steamLang = require('./steam.json');
 const aes = require('./util/aes.js');
 
+// Complete partial options.ini sections before validating their values.
+const REQUIRED_OBJECT_SECTIONS = [
+  'achievement',
+  'overlay',
+  'achievement_source',
+  'notification',
+  'notification_toast',
+  'notification_transport',
+  'notification_advanced',
+  'souvenir',
+  'controller',
+  'action',
+];
+
+function normalizeSectionObjects(options) {
+  let changed = false;
+  for (const section of REQUIRED_OBJECT_SECTIONS) {
+    const value = options[section];
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      options[section] = {};
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 module.exports.load = async (cfg_file) => {
   let options = {};
 
@@ -14,6 +40,7 @@ module.exports.load = async (cfg_file) => {
     let fixFile = false;
 
     options = ini.parse(await fs.readFile(cfg_file, 'utf8'));
+    if (normalizeSectionObjects(options)) fixFile = true;
 
     if (!steamLang.some((lang) => lang.api == options.achievement.lang)) {
       try {
@@ -57,13 +84,7 @@ module.exports.load = async (cfg_file) => {
       fixFile = true;
     }
 
-    // The overlay section is required by the watchdog boot path (hotkey registration, toast
-    // sound lookups). A hand-edited or partial options.ini without it must not crash the
-    // monitor on startup — apply the same defaults the app-side settings loader uses.
-    if (!options.overlay || typeof options.overlay !== 'object') {
-      options.overlay = {};
-      fixFile = true;
-    }
+    // Apply overlay defaults used by hotkeys and notification sounds.
     if (typeof options.overlay.hotkey !== 'string' || !options.overlay.hotkey) {
       options.overlay.hotkey = 'Ctrl+Shift+K';
       fixFile = true;
@@ -83,7 +104,7 @@ module.exports.load = async (cfg_file) => {
       options.overlay.notificationVolume = Math.max(0, Math.min(200, Number(options.overlay.notificationVolume)));
     }
 
-    //Source
+    // Source settings.
 
     if (options.achievement_source.legitSteam != 0 && options.achievement_source.legitSteam != 1 && options.achievement_source.legitSteam != 2) {
       options.achievement_source.legitSteam = 0;
@@ -286,7 +307,6 @@ module.exports.load = async (cfg_file) => {
       delete options.souvenir_video;
       fixFile = true;
     }
-    if (!options.souvenir || typeof options.souvenir !== 'object') options.souvenir = {};
     if (typeof options.souvenir.screenshot !== 'boolean') {
       options.souvenir.screenshot = false;
       fixFile = true;
@@ -301,10 +321,6 @@ module.exports.load = async (cfg_file) => {
     }
 
     //Controller (native → overlay control, Tier 4). Opt-in; the koffi/HID stack loads only when enabled.
-    if (!options.controller || typeof options.controller !== 'object') {
-      options.controller = {};
-      fixFile = true;
-    }
     if (typeof options.controller.enabled !== 'boolean') {
       options.controller.enabled = false;
       fixFile = true;

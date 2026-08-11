@@ -110,6 +110,63 @@ test('falls back to an in-place write when the atomic rename fails (Windows open
   assert.equal(fs.existsSync(path.join(root, 'data', '2592160.db.tmp')), false, 'temp file should be cleaned up after the fallback');
 });
 
+test('cleans the temporary file when the fallback write fails', async (t) => {
+  const root = tempDir(t);
+  const dataDir = path.join(root, 'data');
+  track.setCacheDir(dataDir);
+
+  const originalRename = fsAsync.rename;
+  const originalWriteFile = fsAsync.writeFile;
+  fsAsync.rename = async () => {
+    const err = new Error('simulated EPERM: destination is open');
+    err.code = 'EPERM';
+    throw err;
+  };
+  fsAsync.writeFile = async (filePath, ...args) => {
+    if (filePath.endsWith('.db')) throw new Error('simulated disk-full fallback failure');
+    return originalWriteFile(filePath, ...args);
+  };
+  t.after(() => {
+    fsAsync.rename = originalRename;
+    fsAsync.writeFile = originalWriteFile;
+  });
+
+  await assert.rejects(track.save('2592160', [{ name: 'Burning Chrome', Achieved: 1 }]));
+  assert.equal(fs.existsSync(path.join(dataDir, '2592160.db.tmp')), false);
+});
+
+test('cleans a partially created temporary file when its initial write rejects', async (t) => {
+  const root = tempDir(t);
+  const dataDir = path.join(root, 'data');
+  track.setCacheDir(dataDir);
+
+  const originalWriteFile = fsAsync.writeFile;
+  fsAsync.writeFile = async (filePath, ...args) => {
+    if (filePath.endsWith('.tmp')) {
+      await originalWriteFile(filePath, ...args);
+      throw new Error('simulated interrupted temporary write');
+    }
+    return originalWriteFile(filePath, ...args);
+  };
+  t.after(() => {
+    fsAsync.writeFile = originalWriteFile;
+  });
+
+  await assert.rejects(track.save('2592160', [{ name: 'Burning Chrome', Achieved: 1 }]));
+  assert.equal(fs.existsSync(path.join(dataDir, '2592160.db.tmp')), false);
+});
+
+test('numeric and string appids share one in-memory baseline and write queue', async (t) => {
+  const root = tempDir(t);
+  track.setCacheDir(path.join(root, 'data'));
+
+  const achievements = [{ name: 'Burning Chrome', Achieved: 1, UnlockTime: 1000 }];
+  await track.save(2592160, achievements);
+
+  assert.deepEqual(await track.load('2592160'), achievements);
+  assert.deepEqual(await track.load(2592160), achievements);
+});
+
 test('save rejects a non-array payload and preserves the previous baseline', async (t) => {
   const root = tempDir(t);
   track.setCacheDir(path.join(root, 'data'));

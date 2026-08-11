@@ -2,9 +2,35 @@
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
 const path = require('node:path');
 
 const state = require(path.join(__dirname, '..', 'queryUserNotificationState.js'));
+
+function loadStateModuleWithFakeQuery(now, query) {
+  const source = fs.readFileSync(path.join(__dirname, '..', 'queryUserNotificationState.js'), 'utf8');
+  const fakeExecFile = () => {};
+  const module = { exports: {} };
+  const loadModule = new Function('require', 'module', 'exports', 'process', 'Date', source);
+
+  loadModule((request) => {
+    if (request === 'child_process') return { execFile: fakeExecFile };
+    if (request === 'util') {
+      return { promisify: (value) => value === fakeExecFile ? query : require('node:util').promisify(value) };
+    }
+    if (request === './util/powershell.js') return { resolvePowerShell: () => 'powershell.exe' };
+    if (request === './util/log.js') return { warn: () => {} };
+    throw new Error(`Unexpected module request: ${request}`);
+  }, module, module.exports, { platform: 'win32' }, { now });
+
+  return module.exports;
+}
+
+function deferred() {
+  let resolve;
+  const promise = new Promise((finish) => { resolve = finish; });
+  return { promise, resolve };
+}
 
 // SHQueryUserNotificationState tells us when Windows will accept a toast but never pop it on
 // screen. Achievement toasts are fired while the game is on top, playtime toasts after it exits —
@@ -60,25 +86,50 @@ test('an unreadable notification state never suppresses a notification', { skip:
 
 // The state is read once per achievement in a batch unlock, so the answer has to be shared.
 test('repeated reads inside the TTL are served from one query', async () => {
-  state._resetCache();
-  const first = await state.queryUserNotificationState();
-  const started = Date.now();
-  for (let i = 0; i < 25; i += 1) assert.strictEqual(await state.queryUserNotificationState(), first);
-  assert.ok(Date.now() - started < 200, 'cached reads must not each shell out to PowerShell');
+  let queries = 0;
+  const isolated = loadStateModuleWithFakeQuery(() => 0, async () => {
+    queries += 1;
+    return { stdout: '5' };
+  });
+  const first = await isolated.queryUserNotificationState();
+  for (let i = 0; i < 25; i += 1) assert.strictEqual(await isolated.queryUserNotificationState(), first);
+  assert.strictEqual(queries, 1, 'cached reads must not each shell out to PowerShell');
+});
+
+test('a slow query starts the TTL when its result arrives', async () => {
+  let now = 0;
+  let queries = 0;
+  const pending = deferred();
+  const isolated = loadStateModuleWithFakeQuery(() => now, () => {
+    queries += 1;
+    return pending.promise;
+  });
+
+  const first = isolated.queryUserNotificationState();
+  assert.strictEqual(queries, 1);
+
+  // Simulate a slow PowerShell startup that exceeds the one-second cache TTL.
+  now = 2000;
+  pending.resolve({ stdout: '5' });
+  assert.strictEqual(await first, 'QUNS_ACCEPTS_NOTIFICATIONS');
+  assert.strictEqual(await isolated.queryUserNotificationState(), 'QUNS_ACCEPTS_NOTIFICATIONS');
+  assert.strictEqual(queries, 1, 'a fresh result must remain cached for the full TTL');
 });
 
 // A batch unlock asks all at once, before any answer is cached. Without in-flight sharing every
 // caller starts its own PowerShell — twenty of them, each compiling the shell32 import — which is
 // exactly the burst the notification path produces when a save file unlocks a whole set.
 test('a burst of simultaneous reads shares a single query', async () => {
-  state._resetCache();
-  const started = Date.now();
-  const answers = await Promise.all(Array.from({ length: 20 }, () => state.queryUserNotificationState()));
-  const elapsed = Date.now() - started;
+  let queries = 0;
+  const pending = deferred();
+  const isolated = loadStateModuleWithFakeQuery(() => 0, () => {
+    queries += 1;
+    return pending.promise;
+  });
+  const answerPromise = Promise.all(Array.from({ length: 20 }, () => isolated.queryUserNotificationState()));
+  assert.strictEqual(queries, 1, 'every caller in the burst must share the in-flight query');
+  pending.resolve({ stdout: '5' });
+  const answers = await answerPromise;
 
   assert.strictEqual(new Set(answers).size, 1, 'every caller in the burst must get the same answer');
-  // One real query is ~300ms here; twenty serialised or parallel ones are several times that. The
-  // bound is deliberately loose so a slow machine does not make this flaky, while still failing if
-  // the burst stops being shared.
-  assert.ok(elapsed < 1200, `a shared burst should cost about one query, took ${elapsed}ms`);
 });

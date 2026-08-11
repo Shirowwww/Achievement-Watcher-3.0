@@ -1,12 +1,7 @@
 'use strict';
 
-// Live toasts for ShadPS4 (PS4 emulator) trophies. Kept deliberately small and self-contained: a
-// ShadPS4 trophy file is plain XML (TROP*.XML) holding BOTH the schema and the unlock state
-// (`unlockstate` / `timestamp` attributes), so a dependency-free regex reader is enough — no xml2js
-// (which the watchdog doesn't ship) and no binary decoding. This module is isolated from the Steam
-// watch path: it has its own discovery, its own tiny baseline cache, and reuses only the shared
-// notify() toaster + waitForFileStable. PS4 "platinum" is itself a normal trophy, so it toasts like
-// any other unlock — no synthetic 100% logic needed.
+// Watch ShadPS4 trophy XML files. Each file contains both schema and unlock state,
+// so the watchdog only needs a small dependency-free reader.
 
 const fs = require('fs');
 const path = require('path');

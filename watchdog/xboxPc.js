@@ -1,9 +1,6 @@
 'use strict';
 
-// Watchdog-side Xbox PC client (live unlock polling). Mirrors app/parser/xboxPc.js auth/session
-// handling but runs in the background Watchdog so unlocks are detected while the app is closed:
-// the session token is read from cfg/xbox-auth.json (AES-encrypted by the app), refreshed when
-// needed, and each running title is polled against the Xbox Live achievements API.
+// Background Xbox PC client: refresh the shared session and poll running titles.
 
 const fs = require('fs');
 const path = require('path');

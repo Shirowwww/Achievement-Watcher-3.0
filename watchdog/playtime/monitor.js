@@ -10,7 +10,8 @@ const Timer = require('./timer.js');
 const TimeTrack = require('./track.js');
 const { findByReadingContentOfKnownConfigfilesIn } = require('./steam_appid_find.js');
 const { loadSteamData } = require('../steam.js');
-const { binaryMatchesProcess, buildSeededSessions } = require('./seed.js');
+const { buildBinaryIndex, buildSeededSessions, getBinaryMatches, snapshotActiveGames } = require('./seed.js');
+const { createPollingProcessMonitor } = require('./pollingProcessMonitor.js');
 const { userDataDir } = require('../util/userData.js');
 
 const debug = new (require('../util/logger'))({
@@ -19,11 +20,7 @@ const debug = new (require('../util/logger'))({
 });
 
 const appdataPath = process.env['APPDATA'];
-// filter.json is an optional, machine-local process blacklist (gitignored, not shipped, and nothing
-// generates it). On a fresh install/clone it is absent — a hard require() here threw MODULE_NOT_FOUND,
-// crashing the monitor on boot and crash-looping it, which silently killed playtime tracking,
-// game-launch detection and live notifications. Fall back to empty lists so the monitor always starts;
-// the lists are only a noise-reduction optimisation, not required for correctness.
+// filter.json is optional; missing it means no extra process filters.
 let blacklist;
 try {
   blacklist = require('./filter.json');
@@ -34,6 +31,7 @@ if (!blacklist || typeof blacklist !== 'object') blacklist = {};
 if (!Array.isArray(blacklist.ignore)) blacklist.ignore = [];
 if (!Array.isArray(blacklist.mute)) blacklist.mute = [];
 let gameIndex;
+let gameIndexByBinary;
 let appidByDirCache;
 let ignoredAppidsCache = { mtimeMs: null, set: new Set() };
 
@@ -79,15 +77,10 @@ function normalizeAppid(appid) {
   return String(appid || '').trim();
 }
 
-// Path-level noise filter for process creation events. The mute list mixes fixed
-// Windows roots and environment variables that can be absent on some systems
-// (e.g. ProgramFiles(x86) on 32-bit Windows), so an undefined entry must be
-// skipped instead of crashing the creation handler with a TypeError.
+// Ignore process paths listed in the optional mute filter.
 function isMutedByPath(filepath, dirs) {
   if (!filepath) return false;
-  // Both sides are Windows paths, whatever the host's own path.sep is: normalize to a single
-  // separator here rather than going through path.parse, which reads "C:\Games\game.exe" as one
-  // long filename on a POSIX host and made every comparison silently miss.
+  // Normalize Windows paths even when tests run on another host.
   const norm = (p) => String(p).replace(/[\\/]+/g, '/').replace(/\/+$/, '').toLowerCase();
   const file = norm(filepath);
   const lastSeparator = file.lastIndexOf('/');
@@ -132,20 +125,24 @@ function isWallpaperEngineProcess(process, filepath) {
   return wallpaperProcessNames.has(proc) || file.includes('\\wallpaper_engine\\') || file.includes('/wallpaper_engine/');
 }
 
+// Keep process-name matching indexed, but evaluate user exclusions and demo filtering for every
+// event. Both can change while the Watchdog is running, so putting either condition in the index
+// would make a previously correct match stale.
+function getTrackableGameMatches(binaryIndex, process, isIgnored = isIgnoredAppid) {
+  return getBinaryMatches(binaryIndex, process).filter((game) => !isIgnored(game.appid) && !String(game.name || '').toLowerCase().includes('demo'));
+}
+
 async function init() {
   const emitter = new EventEmitter();
 
-  // wql-process-monitor is ESM-only (koffi) since v2 — load it via dynamic import (Node caches it).
-  const WQL = await import('wql-process-monitor');
-
   let nowPlaying = [];
+  // Expose startup sessions without replaying launch notifications.
+  emitter.getActiveGames = () => snapshotActiveGames(nowPlaying);
   appidByDirCache = new Map();
   gameIndex = await getGameIndex();
+  gameIndexByBinary = buildBinaryIndex(gameIndex);
 
-  // Process trail: games that were already running when the Watchdog started (e.g. the machine woke
-  // from sleep with a game open, or the app restarted mid-session) are seeded as active sessions so
-  // their playtime is recorded on exit. Only unambiguous known-binary matches are seeded; everything
-  // else is left to the live creation watcher below.
+  // Seed unambiguous games that were already running at startup.
   let snapshot = [];
   try {
     snapshot = await tasklist.list();
@@ -157,26 +154,33 @@ async function init() {
     debug.log(`[Process trail] tracking already-running ${playing.name}(${playing.appid}) pid=${[...playing.pids].join(',')}`);
   }
 
-  // createEventSink() is auto-invoked by subscribe() since v2, so we no longer call it explicitly.
-  // The built-in "Windows noise"/"usual program locations" filters were removed in v2; we intentionally
-  // never used them anyway (filterWindowsNoise/filterUsualProgramLocations were both false) because
-  // elevated processes — scene releases are usually UAC-elevated out of the box — must still be caught.
-  // We only exclude known OS/background noise by process name via bin.filter (filter.ignore).
-  // cf: https://github.com/xan105/node-processMonitor/issues/2
-  const processMonitor = await WQL.subscribe({
-    bin: { filter: filter.ignore, whitelist: false },
-  });
+  let processMonitor;
+  if (process.env.AW_PROCESS_MONITOR === 'wql') {
+    const WQL = await import('wql-process-monitor');
+    processMonitor = await WQL.subscribe({
+      bin: { filter: filter.ignore, whitelist: false },
+    });
+    debug.log('[Process trail] using native WQL monitor');
+  } else {
+    processMonitor = createPollingProcessMonitor({
+      list: tasklist.list,
+      initialProcesses: snapshot,
+      onError: (err) => debug.warn(`[Process trail] process poll failed => ${err}`),
+      shouldObserve: ({ process }) => {
+        const name = process.toLowerCase();
+        return !filter.ignore.some((bin) => bin.toLowerCase() === name);
+      },
+    });
+    debug.log('[Process trail] using task-list polling monitor');
+  }
 
   processMonitor.on('creation', async ([process, pid, filepath]) => {
-    //Mute event
-    if (!filepath) return;
+    // Apply path and process filters.
     if (isWallpaperEngineProcess(process, filepath)) return;
-    if (isMutedByPath(filepath, filter.mute.dir)) return;
+    if (filepath && isMutedByPath(filepath, filter.mute.dir)) return;
     if (filter.mute.file.some((bin) => bin.toLowerCase() === process.toLowerCase())) return;
 
-    const games = gameIndex.filter(
-      (game) => binaryMatchesProcess(game.binary, process) && !isIgnoredAppid(game.appid) && !String(game.name || '').toLowerCase().includes('demo')
-    );
+    const games = getTrackableGameMatches(gameIndexByBinary, process);
 
     let game;
 
@@ -186,6 +190,7 @@ async function init() {
     } else {
       //more than one entry or it's a new game
       debug.log(games.length > 1 ? `More than 1 entry for "${process}"` : `No entry found for ${process}`);
+      if (!filepath) return;
       const gameDir = path.parse(filepath).dir;
       debug.log(`Try to find appid from a cfg file in "${gameDir}"`);
       try {
@@ -226,28 +231,8 @@ async function init() {
       debug.log(`Ignoring blacklisted appid ${game.appid} for "${process}"`);
       return;
     }
-    debug.log(`DB Hit for ${game.name}(${game.appid}) ["${filepath}"]`);
-    // A newly discovered game was already added to gameIndex.json above (addToGameIndex), which is
-    // the Watchdog-side executable list. The app-side exeList (cfg/exeList.db) is the renderer's
-    // config for launch buttons and the installed filter — writing it from the monitor would race
-    // the app and is not needed for tracking. Schema/metadata refreshes for a new appid happen on
-    // the next library scan (loadSteamData above already seeds the name/icon for this session).
-
-    //RunningAppID is not that reliable and this intefere with Greenluma; Commenting out for now
-    /*const runningAppID = await regedit.promises.RegQueryIntegerValue("HKCU","SOFTWARE/Valve/Steam", "RunningAppID") || 0;
-    if (+runningAppID == game.appid){
-      debug.warn("RunningAppID found! Checking if Steam is running...");
-      const isSteamRunning = await tasklist.isProcessRunning("steam.exe").catch((err) => { return false });
-      if (isSteamRunning){
-        debug.warn("Ignoring game launched by Steam");
-        return;
-      }
-    }*/
-
-    //A game can spawn several processes (e.g. TLOU II runs crs-video.exe for the
-    //intro alongside the main tlou-ii.exe). Track them as a Set of pids on a single
-    //session so the timer starts once and only ends when every process is gone,
-    //rather than restarting/duplicating the session per extra process.
+    debug.log(`DB Hit for ${game.name}(${game.appid}) ["${filepath || process}"]`);
+    // Track child processes in one session so the timer starts and stops once.
     const alreadyPlaying = nowPlaying.find((g) => g.appid === game.appid);
     if (alreadyPlaying) {
       alreadyPlaying.pids.add(pid);
@@ -256,8 +241,8 @@ async function init() {
       const playing = Object.assign(game, {
         pids: new Set([pid]),
         timer: new Timer(),
-        exePath: filepath,
-        gameDir: path.parse(filepath).dir,
+        exePath: filepath || '',
+        gameDir: filepath ? path.parse(filepath).dir : '',
       });
       debug.log(playing);
 
@@ -268,11 +253,7 @@ async function init() {
   });
 
   processMonitor.on('deletion', ([process, pid]) => {
-    //Match on pid alone: it already uniquely identifies a process we chose to track in
-    //nowPlaying, so re-checking the stored binary here is both redundant and harmful.
-    //Many games run under a process name that differs from their gameIndex entry (e.g.
-    //tlou-ii.exe vs the stored tlou-ii-l.exe); the old binary check never matched on exit,
-    //so the timer never stopped and playtime was never recorded.
+    // PID is authoritative; process names may differ at exit.
     const game = nowPlaying.find((g) => g.pids.has(pid));
 
     if (!game) return;
@@ -314,6 +295,7 @@ async function addToGameIndex(game) {
   userOverride.push(game);
   fs.writeFileSync(path.join(userDataDir(), 'cfg', 'gameIndex.json'), JSON.stringify(userOverride), 'utf8');
   gameIndex.push(game);
+  gameIndexByBinary = buildBinaryIndex(gameIndex);
   debug.log(`Added ${game.name} to GameIndex.json`);
 }
 
@@ -354,4 +336,4 @@ async function getGameIndex() {
   return mergeArrayOfObj(gameIndex, userOverride, 'appid').filter((game) => !isIgnoredAppid(game.appid));
 }
 
-module.exports = { init, isMutedByPath };
+module.exports = { init, isMutedByPath, getTrackableGameMatches };

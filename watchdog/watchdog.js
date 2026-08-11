@@ -3,8 +3,7 @@
 process.on('uncaughtException', (err) => {
   console.error('Uncaught exception:', err);
   debug?.error?.(`Uncaught exception: ${err && err.stack ? err.stack : err}`); // safe optional chaining if debug isn’t loaded yet
-  // The app main process supervises this monitor (launchWatchdog in app/electron/init.js) and
-  // respawns it with a backoff. Dying here is better than limping on with half-initialized state.
+  // The main process supervises and restarts the monitor.
   process.exit(1);
 });
 
@@ -26,8 +25,7 @@ for (const signal of ['SIGTERM', 'SIGINT']) {
 }
 
 const debug = require('./util/log.js');
-// 3.x gets its own mutex: the legacy 1.6.8 watchdog used the same name, so running both apps at
-// once would have made one silently refuse to start (issue #6 isolation).
+// Use a separate mutex from the legacy watchdog.
 const instance = new (require('single-instance'))('Achievement Watchdog 3.0');
 const { spawn, execFile } = require('child_process');
 const path = require('path');
@@ -51,6 +49,7 @@ const track = require('./track.js');
 const { mapStatProgressEntries } = require('./util/statProgress.js');
 const { notificationVolumePercent } = require('./util/notificationVolume.js');
 const playtimeMonitor = require('./playtime/monitor.js');
+const { describeActiveGames } = require('./playtime/seed.js');
 const xboxPc = require('./xboxPc.js');
 const notify = require('./notification/toaster.js');
 const shadps4Watch = require('./console/shadps4Watch.js');
@@ -58,7 +57,6 @@ const xeniaWatch = require('./console/xeniaWatch.js');
 const eaWatch = require('./console/eaWatch.js');
 const gogWatch = require('./console/gogWatch.js');
 const ubisoftWatch = require('./console/ubisoftWatch.js');
-const { crc32 } = require('crc');
 const { isWinRTAvailable } = require('./util/powertoast');
 const { isFullscreenAppRunning } = require('./queryUserNotificationState.js');
 const GlobalHotkey = require('./util/globalHotkey.js');
@@ -69,6 +67,10 @@ const toastIdentity = require('./util/toastIdentity.js');
 const { userDataDir } = require('./util/userData.js');
 const { findIndexedSocialClubGame } = require('./util/socialClub.js');
 const notifyStrings = require('./util/notifyStrings.js');
+const { spawnDetached } = require('./util/spawnDetached.js');
+const { buildSchemaIndex, findSchemaAchievement, buildPreviousAchievementIndex } = require('./util/achievementIndex.js');
+const { createIndexedGameLookup } = require('./util/indexedGameLookup.js');
+const { runXboxPoll, matchesActiveXboxPoll } = require('./util/xboxPolling.js');
 
 const cfg_file = {
   option: path.join(userDataDir(), 'cfg', 'options.ini'),
@@ -83,38 +85,37 @@ let overlayOpened = false;
 let xboxPollState = null;
 const XBOX_POLL_INTERVAL_MS = 30000;
 
-// Live Xbox PC unlocks: while a title with source "Xbox PC" is running, poll the Xbox Live API and
-// fire a notification for each new unlock. Uses the session the app stored (cfg/xbox-auth.json),
-// refreshes it when needed, and keeps the local state cache in sync so the app view matches.
+// Poll Xbox PC achievements while a matching title runs.
 function startXboxPolling(game) {
   stopXboxPolling();
   const auth = xboxPc.loadAuth();
   const titleId = xboxPc.normalizeTitleId(game && game.appid);
   if (!auth || !titleId) return;
   debug.log(`[xbox-pc] live polling started for ${game.name}(${titleId})`);
-  xboxPollState = {
+  const state = {
     appid: titleId,
     game,
     auth,
     snapshot: xboxPc.readState(titleId),
     timer: null,
+    polling: false,
   };
+  xboxPollState = state;
   const poll = async () => {
-    if (!xboxPollState || xboxPollState.appid !== titleId) return;
-    try {
-      xboxPollState.auth = await xboxPc.ensureSession(xboxPollState.auth);
-      const { snapshot, newUnlocked } = await xboxPc.pollOnce({
-        auth: xboxPollState.auth,
-        titleId,
-        previousSnapshot: xboxPollState.snapshot,
-      });
-      xboxPollState.snapshot = snapshot;
-      xboxPc.writeState(titleId, snapshot);
-      if (!newUnlocked.length) return;
-      debug.log(`[xbox-pc] ${newUnlocked.length} new unlock(s) for ${game.name}`);
-      const schema = xboxPc.readSchema(titleId);
-      const schemaList = schema && schema.achievement && Array.isArray(schema.achievement.list) ? schema.achievement.list : [];
-      for (const id of newUnlocked) {
+    let schema = null;
+    let schemaList = [];
+    await runXboxPoll({
+      state,
+      getCurrentState: () => xboxPollState,
+      ensureSession: xboxPc.ensureSession,
+      pollOnce: xboxPc.pollOnce,
+      writeState: xboxPc.writeState,
+      beforeNotifications: (newUnlocked) => {
+        debug.log(`[xbox-pc] ${newUnlocked.length} new unlock(s) for ${game.name}`);
+        schema = xboxPc.readSchema(titleId);
+        schemaList = schema && schema.achievement && Array.isArray(schema.achievement.list) ? schema.achievement.list : [];
+      },
+      notifyUnlock: async (id) => {
         const ach = schemaList.find((a) => a && String(a.name) === id);
         const rarityPercent = ach && ach.rarityPct != null ? Number(ach.rarityPct) : null;
         const rounded = Number.isFinite(rarityPercent) ? Math.round(rarityPercent * 10) / 10 : null;
@@ -153,16 +154,18 @@ function startXboxPolling(game) {
             rumble: false,
           }
         );
-      }
-    } catch (err) {
-      debug.warn(`[xbox-pc] poll failed: ${err && err.message ? err.message : err}`);
-    }
+      },
+      onError: (err) => {
+        debug.warn(`[xbox-pc] poll failed: ${err && err.message ? err.message : err}`);
+      },
+    });
   };
-  xboxPollState.timer = setInterval(poll, XBOX_POLL_INTERVAL_MS);
+  state.timer = setInterval(poll, XBOX_POLL_INTERVAL_MS);
   poll();
 }
 
-function stopXboxPolling() {
+function stopXboxPolling(exitedGame) {
+  if (!matchesActiveXboxPoll(xboxPollState, exitedGame, xboxPc.normalizeTitleId)) return;
   if (xboxPollState && xboxPollState.timer) {
     clearInterval(xboxPollState.timer);
     debug.log(`[xbox-pc] live polling stopped for ${xboxPollState.game && xboxPollState.game.name}`);
@@ -173,14 +176,7 @@ const overlayHotkey = new GlobalHotkey({ debug });
 let runningGames = [];
 const localProgressSchemaCache = new Map();
 
-/*
-  Tell the app how many games are running. Only this process knows: it owns the WQL process monitor.
-  The app uses it to hold back the update prompt — a modal dialog has no parent window, so it lands
-  on top of whatever is on screen, including a fullscreen game.
-
-  Sent on every change (and once at startup, covering the process-trail seed of games that were
-  already running), so the app never has to poll or guess.
-*/
+// Tell the app how many games are running so updates can wait.
 function forwardGameActivity() {
   if (typeof process.send !== 'function' || !process.connected) return;
   try {
@@ -238,23 +234,15 @@ function findLocalProgressSchema(appID, game) {
   return generated;
 }
 
-function findIndexedGame(appID) {
-  const files = [
+const indexedGameLookup = createIndexedGameLookup({
+  getFiles: () => [
     path.join(userDataDir(), 'steam_cache', 'schema', 'gameIndex.json'),
     path.join(userDataDir(), 'cfg', 'gameIndex.json'),
-  ];
-  let indexed;
-  for (const file of files) {
-    try {
-      const list = JSON.parse(fs.readFileSync(file, 'utf8'));
-      if (!Array.isArray(list)) continue;
-      const found = list.find((game) => String(game && game.appid) === String(appID));
-      if (found) indexed = found;
-    } catch {
-      /* game index files are optional */
-    }
-  }
-  return indexed;
+  ],
+});
+
+function findIndexedGame(appID) {
+  return indexedGameLookup(appID);
 }
 
 function mergeIndexedGameMetadata(game, appID) {
@@ -294,11 +282,7 @@ function toggleOverlayForRunningGame() {
   overlayControllerService?.notifyOverlayPresentationChanged(overlayOpened, 'overlay-toggled');
 }
 
-// --- Native controller → overlay control (Tier 4) --------------------------------------------------
-// A controller can toggle and drive the in-game overlay while the game is focused. Polling + HID
-// live here in the Watchdog (koffi single-runtime, like the WQL monitor); overlay window ops that the
-// main process owns (move/scroll/nudge/snap/click-through) are forwarded over the existing 'ipc'
-// channel as { overlayControl } messages (init.js handleMonitorMessage routes them).
+// Native controller input is polled here; window operations are forwarded to the main process.
 let overlayControllerService = null;
 
 // Parse a stored "BACK+START" binding string into the button-name array the manager expects.
@@ -331,7 +315,7 @@ function handleControllerAction(type, payload = {}) {
       toggleOverlayForRunningGame();
       return;
     case 'overlay.control-mode':
-      // Entering control mode makes the overlay interactive so stick/dpad ops land; leaving restores it.
+      // Control mode makes stick and d-pad input interactive.
       forwardOverlayControl('control-mode', { active: payload.active === true });
       return;
     case 'overlay.move-relative':
@@ -348,7 +332,7 @@ function handleControllerAction(type, payload = {}) {
 function syncOverlayController() {
   const opts = controllerOptions();
   if (!overlayControllerService) {
-    // Nothing to do until the user opts in (avoids loading koffi/HID when the feature is off).
+    // Avoid loading HID support until the user opts in.
     if (opts.enabled !== true) return;
     overlayControllerService = createOverlayControllerService({
       logger: {
@@ -376,11 +360,7 @@ function syncOverlayController() {
 }
 
 function SpawnOverlayNotification(args) {
-  // When the monitor runs as a child of the Electron main process (it is spawned with an 'ipc' stdio
-  // channel), forward the window args over IPC so main renders the overlay/notification inside the
-  // resident tray daemon — no separate Electron process, no single-instance forwarding. main feeds
-  // these straight into its existing parseArgs() dispatch (--wintype=overlay|notification ...).
-  // Falls back to the legacy detached spawn when run standalone (e.g. `node watchdog.js` in dev).
+  // Use the main process when IPC is available; standalone runs use a detached child.
   if (typeof process.send === 'function' && process.connected) {
     try {
       process.send({ argv: args });
@@ -392,17 +372,29 @@ function SpawnOverlayNotification(args) {
   debug.log('Spawning achievement notification...');
   if (isDev) {
     const electronPath = require(path.join(appRoot, '../app/node_modules/electron')); // assumes 'electron' is installed in node_modules
-    spawn(electronPath, ['.', ...args], {
-      cwd: path.join(appRoot, '../app'),
-      detached: true,
-      stdio: 'ignore',
-    }).unref();
+    spawnDetached(
+      spawn,
+      electronPath,
+      ['.', ...args],
+      {
+        cwd: path.join(appRoot, '../app'),
+        detached: true,
+        stdio: 'ignore',
+      },
+      (err) => debug.error(`[overlay] Failed to start Electron: ${err && err.message ? err.message : err}`)
+    );
   } else {
     const execPath = path.join(appRoot, 'Achievement Watcher.exe'); // adjust for build path
-    spawn(execPath, args, {
-      detached: true,
-      stdio: ['ignore', process.stdout, process.stderr],
-    }).unref();
+    spawnDetached(
+      spawn,
+      execPath,
+      args,
+      {
+        detached: true,
+        stdio: ['ignore', process.stdout, process.stderr],
+      },
+      (err) => debug.error(`[overlay] Failed to start "${execPath}": ${err && err.message ? err.message : err}`)
+    );
     debug.log(execPath);
   }
 }
@@ -444,11 +436,7 @@ var app = {
   starting: false,
   restartPending: false,
   start: async function () {
-    // start() is re-entered on every options.ini change and awaits a dozen slow things (settings
-    // load, the WinRT probe, folder discovery, five sub-watchers). Two saves landing close together
-    // used to run it twice concurrently: both passes assigned into self.watcher, so the first pass's
-    // file watchers were overwritten without being closed and leaked for the life of the process.
-    // Serialise instead — a reload requested mid-start is collapsed into one extra pass at the end.
+    // Serialize settings reloads so concurrent starts cannot leak watchers.
     if (this.starting) {
       this.restartPending = true;
       debug.log('settings reload requested while starting > coalescing into the current pass');
@@ -458,18 +446,14 @@ var app = {
     try {
       let self = this;
       self.cache = [];
-      // Rebuild the watcher list from scratch: the reload path closes the previous watchers, and a
-      // shorter run must not leave stale, already-closed handles behind for the next close sweep.
+      // Rebuild the watcher list after closing the previous one.
       self.watcher = [];
 
       debug.log('Achievement Watchdog starting ...');
       const net = require('net');
       const PIPE_NAME = '\\\\.\\pipe\\AchievementWatchdogPipe';
 
-      // The options.ini watcher re-invokes start() on every settings change; only open the named pipe
-      // once. A second listen() on the already-bound pipe throws EADDRINUSE (previously surfaced via
-      // the global uncaughtException handler) and leaks a server handle on each reload. Guard it, and
-      // attach an error handler so a stray pipe error can never crash the watchdog.
+      // The pipe survives settings reloads and must be opened only once.
       if (!self.pipeServer) {
         self.pipeServer = net.createServer(() => {});
         self.pipeServer.on('error', (err) => debug.error(`[pipe] ${err}`));
@@ -764,7 +748,11 @@ var app = {
             // when *this* scan flips the game from incomplete to fully unlocked, and only when a real
             // unlock notification fired this scan (guards against firing on first load of old saves).
             const platinumTotal = Array.isArray(game.achievement.list) ? game.achievement.list.length : 0;
-            const platinumPrevUnlocked = cache.filter((a) => a.Achieved == 1).length;
+            const schemaIndex = buildSchemaIndex(game.achievement.list, {
+              includeCrc: achievements.some((achievement) => achievement && achievement.crc),
+            });
+            const previousIndex = buildPreviousAchievementIndex(cache);
+            const platinumPrevUnlocked = previousIndex.unlockedCount;
             let platinumNewUnlock = false;
             let platinumIcon = null;
 
@@ -772,13 +760,7 @@ var app = {
             for (let i in achievements) {
               if (Object.prototype.hasOwnProperty.call(achievements, i)) {
                 try {
-                  let ach = game.achievement.list.find((achievement) => {
-                    if (achievements[i].crc) {
-                      return achievements[i].crc.includes(crc32(achievement.name).toString(16)); //(SSE) crc module removes leading 0 when dealing with anything below 0x1000 -.-'
-                    } else {
-                      return achievement.name == achievements[i].name || achievement.name.toUpperCase() == achievements[i].name.toUpperCase(); //uppercase == uppercase : cdx xcom chimera (apiname doesn't match case with steam schema)
-                    }
-                  });
+                  let ach = findSchemaAchievement(schemaIndex, achievements[i]);
                   if (!ach) throw 'ACH_NOT_FOUND_IN_SCHEMA';
 
                   if (achievements[i].crc) {
@@ -786,7 +768,7 @@ var app = {
                     delete achievements[i].crc;
                   }
 
-                  let previous = cache.find((achievement) => achievement.name === ach.name) || {
+                  let previous = previousIndex.byName.get(ach.name) || {
                     Achieved: false,
                     CurProgress: 0,
                     MaxProgress: 0,
@@ -818,23 +800,31 @@ var app = {
                         if (self.options.action.target) {
                           debug.log(`Action: ${self.options.action.target}`);
                           if (fs.existsSync(self.options.action.target)) {
-                            const exec = spawn(self.options.action.target, {
-                              cwd: self.options.action.cwd || path.parse(self.options.action.target).dir,
-                              stdio: 'ignore',
-                              detached: true,
-                              windowsHide: self.options.action.hide ?? true,
-                              env: {
-                                ...process.env,
-                                AW_APPID: appID.toString(),
-                                AW_GAME: game.name.toString(),
-                                AW_ACHIEVEMENT: ach.name.toString(),
-                                AW_DISPLAYNAME: ach.displayName.toString(),
-                                AW_DESCRIPTION: ach.description?.toString() || '',
-                                AW_ICON: ach.icon?.toString() || '',
-                                AW_TIME: achievements[i].UnlockTime.toString(),
+                            spawnDetached(
+                              spawn,
+                              self.options.action.target,
+                              [],
+                              {
+                                cwd: self.options.action.cwd || path.parse(self.options.action.target).dir,
+                                stdio: 'ignore',
+                                detached: true,
+                                windowsHide: self.options.action.hide ?? true,
+                                env: {
+                                  ...process.env,
+                                  AW_APPID: appID.toString(),
+                                  AW_GAME: game.name.toString(),
+                                  AW_ACHIEVEMENT: ach.name.toString(),
+                                  AW_DISPLAYNAME: ach.displayName.toString(),
+                                  AW_DESCRIPTION: ach.description?.toString() || '',
+                                  AW_ICON: ach.icon?.toString() || '',
+                                  AW_TIME: achievements[i].UnlockTime.toString(),
+                                },
                               },
-                            });
-                            exec.unref();
+                              (err) =>
+                                debug.error(
+                                  `[action] Failed to start "${self.options.action.target}": ${err && err.message ? err.message : err}`
+                                )
+                            );
                           } else {
                             debug.warn('Action target missing');
                           }
@@ -1104,17 +1094,11 @@ var app = {
   try {
     await instance.lock();
 
-    // Start the process monitor BEFORE the toast/controller modules initialize COM security:
-    // wql-process-monitor's native sink calls CoInitializeSecurity(), which fails with
-    // RPC_E_TOO_LATE once another COM client (WinRT toasts, GameInput/XInput, ...) has already
-    // locked the security settings. Doing the subscription first keeps playtime tracking working.
+    // Start WQL before other COM clients initialize security.
     const playtimeMonitorReady = playtimeMonitor
       .init()
       .then((monitor) => {
         debug.log('Playtime monitoring activated');
-        // Publish the starting state, which the process trail may already have filled with games
-        // that were running before this monitor started.
-        forwardGameActivity();
 
         monitor.on('disable-overlay', () => {
           runningAppid = null;
@@ -1139,7 +1123,7 @@ var app = {
           if (isExit) {
             let gameIndex = runningGames.findIndex((g) => g.appid === game.appid);
             if (gameIndex !== -1) runningGames.splice(gameIndex, 1);
-            stopXboxPolling();
+            stopXboxPolling(game);
           } else {
             runningGames.push(game);
             if (String(game.source || '') === 'Xbox PC') startXboxPolling(game);
@@ -1198,6 +1182,17 @@ var app = {
             );
           }
         });
+
+        // Sync games already running when the monitor starts without fake launch notifications.
+        const activeGames = typeof monitor.getActiveGames === 'function' ? monitor.getActiveGames() : [];
+        const active = describeActiveGames(activeGames);
+        if (active.games.length > 0) {
+          runningGames = active.games;
+          runningAppid = active.overlayGame.appid;
+          if (active.xboxGame) startXboxPolling(active.xboxGame);
+          debug.log(`[Process trail] synchronized ${active.games.length} already-running game(s)`);
+        }
+        forwardGameActivity();
       })
       .catch((err) => {
         debug.error(err);

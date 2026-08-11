@@ -21,11 +21,7 @@ function normalizeProgress(progress) {
   return { current, max, percent };
 }
 
-// regodit & xinput-ffi are ESM-only (koffi) since their v2+ majors; load them lazily via dynamic
-// import (cached by Node's module registry) so this CommonJS module graph stays intact. regodit's
-// async API moved to the `regodit/promises` subpath and its functions were renamed PascalCase ->
-// camelCase. Controller rumble stays best-effort: a load failure (no XInput runtime, headless
-// session, etc.) must never take down the toast path, so we swallow it and disable rumble.
+// Load ESM-only controller dependencies lazily; rumble remains best effort.
 let regeditPromise = null;
 const loadRegedit = () => regeditPromise || (regeditPromise = import('regodit/promises'));
 
@@ -37,9 +33,7 @@ const loadXinput = () =>
     return null;
   }));
 
-// Overlay sound settings (Son / Son aléatoire / Volume) shared by every notify() caller. The
-// watchdog sets this once options.ini is loaded (and on each settings reload), so console
-// watchers don't each have to forward the overlay block.
+// Sound settings shared by all notification sources.
 let defaultOverlay = null;
 function setOverlayOptions(overlay) {
   defaultOverlay = overlay || null;
@@ -47,8 +41,7 @@ function setOverlayOptions(overlay) {
 
 module.exports = async (message, option = {}) => {
   try {
-    // A playtime card is about the game, not an unlocked achievement. Force its title from the
-    // dedicated game field so no generic/localized achievement label can leak into this toast.
+    // Playtime uses the game title, not an achievement label.
     if (message.notificationType === 'playtime' && message.gameDisplayName) {
       message.achievementDisplayName = message.gameDisplayName;
     }
@@ -76,10 +69,7 @@ module.exports = async (message, option = {}) => {
       souvenir: option.souvenir || null,
     };
 
-    // Windows toasts use the same sound the user configured for overlay notifications: the
-    // picked file (or a fresh random pick when enabled), played at the configured volume.
-    // Playtime cards stay silent, matching the overlay. When no sound is configured, the
-    // toast keeps its native Windows sound behavior.
+    // Reuse the configured sound; playtime cards stay silent.
     const overlay = option.overlay || defaultOverlay || {};
     options.toast.soundFile = message.silent
       ? ''
@@ -108,12 +98,7 @@ module.exports = async (message, option = {}) => {
         broadcast(notification);
       }
 
-      // Windows accepts a toast while a game is in full screen (or presentation mode, or quiet
-      // hours) but never pops it on screen — it goes straight to the notification centre, which is
-      // why achievement toasts looked lost in-game while playtime toasts, fired after the game
-      // exited, always showed up (issue #18). Nothing here can override that OS policy, so this
-      // only records WHY a toast was invisible; the state query runs detached so it never delays
-      // the notification itself.
+      // Log when Windows will route the toast to the notification centre.
       if (options.transport.toast) {
         arePopupsSuppressed()
           .then((suppressed) => {
@@ -127,12 +112,7 @@ module.exports = async (message, option = {}) => {
           .catch((err) => debug.warn(`Could not read the user notification state: ${err.message || err}`));
       }
 
-      // Overlay transport: spawn the styled in-game overlay notification ourselves so it shows even
-      // when the main app is closed (Watchdog runs in the background). The spawned `--wintype=notification`
-      // process reads the user's overlay preset/position/scale/sound from options.ini and renders on top
-      // of the game; if the main app is already open, the single-instance lock forwards the args to it
-      // instead (no duplicate). Done before prefetch so the icon stays a URL — the app resolves it from
-      // the same on-disk cache the Watchdog prefetches into.
+      // Spawn the styled overlay; the main process handles it when already running.
       if (options.transport.overlay) {
         debug.log('Overlay notification (spawn)');
         try {
