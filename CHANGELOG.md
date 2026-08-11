@@ -3,6 +3,29 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 3.8.3 - 2026-08-11
+
+### Fixed
+
+- Automatic emulator fix no longer overwrites `steam_api(64).dll` on a game already made to work by
+  a crack loader that hooks that DLL in place instead of replacing it (OnlineFix confirmed). Doing so
+  broke the loader's own Steamworks/EOS emulation on the next launch (an activation prompt or an
+  `EOS_Connect_CreateDeviceId` failure), even though the game worked before Achievement Watcher
+  touched it. The manual "Apply emulator fix" menu action still allows a deliberate override.
+- Steam API Check Bypass no longer silently fails to download or refresh its proxy DLLs: the RAR
+  extraction used to run inline in the renderer process, which its strict Content-Security-Policy
+  always blocked; it now runs in the main process, matching how the community-fix downloader already
+  handles the same restriction.
+
+### Security
+
+- Hardened string sanitization flagged by CodeQL code scanning: a stable tag-stripping pass now
+  loops until the string stops changing, closing a bypass a single regex pass could miss on
+  overlapping tags, and theme/preset CSS `url()` values are built through the existing
+  backslash-safe helper everywhere instead of a duplicated one. The Exophase image-proxy host
+  check now requires an exact or subdomain match, and line-separator characters are stripped
+  before the Epic login redirect URL is spliced into injected page script.
+
 ## 3.8.2 - 2026-08-11
 
 ### Fixed
@@ -44,15 +67,6 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - Main-window chrome, progress tracks and settings status surfaces now inherit the selected theme
   instead of retaining fixed Steam-blue colors. The NSIS welcome/finish banner is regenerated from
   the 256px app logo, keeping the installer emblem sharp.
-
-### Security
-
-- Hardened string sanitization flagged by CodeQL code scanning: a stable tag-stripping pass now
-  loops until the string stops changing, closing a bypass a single regex pass could miss on
-  overlapping tags, and theme/preset CSS `url()` values are built through the existing
-  backslash-safe helper everywhere instead of a duplicated one. The Exophase image-proxy host
-  check now requires an exact or subdomain match, and line-separator characters are stripped
-  before the Epic login redirect URL is spliced into injected page script.
 
 ## 3.8.1 - 2026-08-11
 
