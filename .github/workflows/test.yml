@@ -6,6 +6,16 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Keep the token least-privileged even if the repository default changes later.
+permissions:
+  contents: read
+
+# A newer push or PR update makes an older test run redundant. Cancelling it reduces queue time
+# without cancelling a run for a different pull request or branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 # The app + watchdog are Windows-only and ship native deps (registry-js, sharp,
 # and koffi-based watchdog modules). The unit tests run under standalone Node and
 # do not load those native modules, so we install with --ignore-scripts: this
@@ -18,13 +28,21 @@ env:
 
 jobs:
   test:
+    name: Node ${{ matrix.node-version }}
     runs-on: windows-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # Exercise both supported engine lines. Node 24 is the current packaged/runtime target;
+        # Node 22 remains supported for users and contributors on the previous LTS line.
+        node-version: [22.22.2, 24.19.0]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
+          node-version: ${{ matrix.node-version }}
           cache: npm
           cache-dependency-path: |
             app/package-lock.json
@@ -47,3 +65,11 @@ jobs:
       - name: Run watchdog tests
         working-directory: watchdog
         run: npm test
+
+      - name: Audit app production dependencies
+        working-directory: app
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Audit Watchdog production dependencies
+        working-directory: watchdog
+        run: npm audit --omit=dev --audit-level=high
