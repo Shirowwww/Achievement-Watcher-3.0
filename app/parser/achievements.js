@@ -29,6 +29,7 @@ const goldberg = require(path.join(appPath, 'goldberg.js'));
 const uplayR2 = require(path.join(appPath, 'uplayR2.js'));
 const gbeInstaller = require(path.join(appPath, 'gbeInstaller.js'));
 const pe = require(path.join(appPath, '..', 'util', 'pe.js'));
+const crackLoaderDetect = require(path.join(appPath, '..', 'util', 'crackLoaderDetect.js'));
 const { computeFolderContentVersion } = require(path.join(appPath, '..', 'util', 'contentVersion.js'));
 const steamless = require(path.join(appPath, 'steamless.js'));
 const apiCheckBypass = require(path.join(appPath, 'apiCheckBypass.js'));
@@ -1853,7 +1854,22 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       (appid.data.needsSchema || needsRuntimeFix)
     ) {
       // Run slow emulator repair in the background so the game appears immediately.
-      const canAutoApply = !!(option.emulator && option.emulator.autoApplyNewGames !== false && resolvedGameDir && _userDataPath);
+      // Never silently touch a game a loader like OnlineFix already hooks in place — swapping
+      // steam_api(64).dll for GBE Fork's breaks the loader's own Steamworks/EOS emulation (see
+      // crackLoaderDetect.js). Both the DLL swap (canAutoApply below) and the steam_settings
+      // schema/config write further down (bgWorkingCrackLoader) are skipped for it; the manual
+      // "Apply emulator fix" menu action can still override this for an edge case.
+      const workingCrackLoader = resolvedGameDir ? crackLoaderDetect.detectWorkingCrackLoader(resolvedGameDir) : null;
+      if (workingCrackLoader) {
+        debug.log(`[${appid.appid}] automatic emulator fix skipped — ${workingCrackLoader.name} loader already present in ${resolvedGameDir}`);
+      }
+      const canAutoApply = !!(
+        option.emulator &&
+        option.emulator.autoApplyNewGames !== false &&
+        resolvedGameDir &&
+        _userDataPath &&
+        !workingCrackLoader
+      );
       const fixKey = `${appid.appid}:${resolvedGameDir || appid.data.steamSettings}`;
       // Fingerprint the steam_settings content BEFORE the attempt: a successful setup writes into
       // the folder (schema/configs), so an unchanged version on a later scan means the last attempt
@@ -1876,6 +1892,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
         const bgGameDir = resolvedGameDir;
         const bgSteamSettings = appid.data.steamSettings;
         const bgNeedsSchema = !!appid.data.needsSchema;
+        const bgWorkingCrackLoader = workingCrackLoader;
         const bgGameName = game.name;
         const bgEmu = resolvedEmu;
         const bgExe = resolvedExe;
@@ -1914,7 +1931,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
           }
 
           const schemaRepairDirs = new Set();
-          if (bgNeedsSchema && goldberg.readLocalSchema(bgSteamSettings).length === 0) schemaRepairDirs.add(bgSteamSettings);
+          if (!bgWorkingCrackLoader && bgNeedsSchema && goldberg.readLocalSchema(bgSteamSettings).length === 0) schemaRepairDirs.add(bgSteamSettings);
           for (const dir of fixedSteamSettingsDirs) {
             if (dir && goldberg.readLocalSchema(dir).length === 0) schemaRepairDirs.add(dir);
           }
