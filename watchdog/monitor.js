@@ -6,6 +6,7 @@ const parentFind = require('./util/findUp');
 const omit = require('lodash.omit');
 const fs = require('./util/fsAsync');
 const sse = require('./sse.js');
+const { scanRootOnce } = require('./util/rootCascade.js');
 const { SOCIALCLUB_ACHIEVEMENT_FILES } = require('./util/socialClub.js');
 
 // A user-added folder belongs to the Goldberg SocialClub emulator when the SocialClub root is on
@@ -52,12 +53,20 @@ module.exports.getFolders = async (userDir_file) => {
       options: { recursive: true, filter: /([0-9]+)/, file: [files.achievement[0]] },
     },
     {
+      dir: path.join(process.env['Public'], 'Documents/Steam/RLD!'),
+      options: { recursive: true, filter: /([0-9]+)/, file: [files.achievement[2], files.achievement[4], files.achievement[6]] },
+    },
+    {
       dir: path.join(process.env['Public'], 'Documents/OnlineFix'),
       options: { recursive: true, filter: /([0-9]+)/, file: [files.achievement[0]] },
     },
     {
       dir: path.join(process.env['APPDATA'], 'Steam/CODEX'),
       options: { recursive: true, filter: /([0-9]+)/, file: [files.achievement[0]] },
+    },
+    {
+      dir: path.join(process.env['APPDATA'], 'Steam/RLD!'),
+      options: { recursive: true, filter: /([0-9]+)/, file: [files.achievement[2], files.achievement[4], files.achievement[6]] },
     },
     {
       dir: path.join(process.env['APPDATA'], 'Goldberg SteamEmu Saves'),
@@ -90,6 +99,10 @@ module.exports.getFolders = async (userDir_file) => {
     {
       dir: path.join(process.env['APPDATA'], 'EMPRESS'),
       options: { recursive: true, filter: /([0-9]+)\\remote\\([0-9]+)/, file: [files.achievement[1]] },
+    },
+    {
+      dir: path.join(process.env['APPDATA'], 'CreamAPI'),
+      options: { recursive: true, filter: /([0-9]+)/, file: [files.achievement[0]] },
     },
     {
       dir: path.join(process.env['Public'], 'Documents/EMPRESS'),
@@ -310,7 +323,22 @@ module.exports.getFolders = async (userDir_file) => {
               options: { recursive: true, filter: () => true, file: SOCIALCLUB_ACHIEVEMENT_FILES, socialClub: true },
             });
           } else {
-            steamEmu.push({ dir: dir.path, options: { recursive: true, filter: /([0-9]+)/, file: files.achievement } });
+            // Folders that do not match a known emulator config are classified
+            // by file signature. Only platforms without a dedicated live
+            // watcher are added here (GOG .info, UniverseLAN); the generic
+            // numeric fallback stays for everything else.
+            const cascade = await scanRootOnce(dir.path).catch(() => null);
+            const extra = cascade && cascade.entries
+              ? cascade.entries.filter((entry) => {
+                  const emu = String(entry && entry.options && entry.options.emu || '');
+                  return emu === 'gog' || emu === 'universe-lan';
+                })
+              : [];
+            if (extra.length) {
+              for (const entry of extra) steamEmu.push(entry);
+            } else {
+              steamEmu.push({ dir: dir.path, options: { recursive: true, filter: /([0-9]+)/, file: files.achievement } });
+            }
           }
         } catch (err) {
           /*Do nothing*/
