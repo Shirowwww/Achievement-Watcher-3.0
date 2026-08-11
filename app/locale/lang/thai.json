@@ -65,7 +65,7 @@
     "restoreGBE": "กู้คืนข้อมูลสำรอง GBE/Goldberg ล่าสุด…",
     "installGBE": "ใช้การแก้ไขอีมูเลเตอร์…",
     "removeDRM": "นำ DRM ออก…",
-    "crackfix": "ค้นหาการแก้ไขจากชุมชน…",
+    "crackfix": "ค้นหาแพตช์จากชุมชน (CrakFiles)…",
     "openIconCache": "แคชไอคอน",
     "openDbCache": "แคชข้อมูล (.db)",
     "openInstallLocation": "ตำแหน่งติดตั้งเกม",
@@ -426,6 +426,15 @@
           "fontSize": "ขนาดตัวอักษร",
           "corners": "มุม",
           "iconSize": "ขนาดไอคอน",
+          "deleteLabel": "ลบ",
+          "deleted": "ลบแล้ว:",
+          "width": "ความกว้าง",
+          "edit": "แก้ไขพรีเซ็ต",
+          "editNew": "พรีเซ็ตใหม่…",
+          "preview": "ดูตัวอย่าง",
+          "update": "อัปเดตพรีเซ็ต",
+          "updated": "อัปเดตและเลือกแล้ว:",
+          "loaded": "โหลดแล้ว:",
           "create": "สร้างพรีเซ็ต",
           "errName": "ป้อนชื่อก่อน",
           "created": "สร้างและเลือกแล้ว:",
@@ -582,7 +591,7 @@
       },
       "ea": {
         "name": "EA Desktop",
-        "description": "อ่านบันทึกความสำเร็จในเครื่องของ EA Desktop — เฉพาะเกมที่ติดตั้งนอกโฟลเดอร์ที่จัดการโดย EA (เกมที่ถูกแคร็ก)"
+        "description": "อ่านบันทึกความสำเร็จภายในเครื่องของ EA Desktop (สำหรับเกมนอกโฟลเดอร์ที่ EA จัดการ)"
       },
       "xboxPc": {
         "name": "Xbox PC",
@@ -668,7 +677,8 @@
         "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
         "The Watchdog runs in the background — it must be running for live notifications and playtime.",
         "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0."
+        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+        "ทุกส่วนของการตั้งค่าพับเก็บได้จากหัวข้อของตัวเอง — ลูกศรชี้ลงเมื่อเปิด ชี้ข้างเมื่อปิด และระบบจะจดจำการเลือกของคุณ"
       ],
       "steamTitle": "อีมูเลเตอร์ Steam",
       "steam": [
@@ -708,7 +718,8 @@
       "themes": [
         "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
         "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown."
+        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+        "ตัวสร้างพรีเซ็ตสามารถแสดงตัวอย่างงานออกแบบเป็นการแจ้งเตือนจริงก่อนบันทึก เปิดพรีเซ็ตที่บันทึกไว้เพื่อแก้ไข และลบรายการที่ไม่ต้องการ"
       ],
       "configTitle": "การตั้งค่าที่สร้างขึ้น",
       "config": [
@@ -732,7 +743,8 @@
       "troubleshoot": [
         "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
         "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue."
+        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+        "บันทึกจะถูกต่อท้าย ข้อมูลการขัดข้องจึงอยู่รอดถึงการเปิดครั้งถัดไป ทุกการรันเริ่มด้วยเครื่องหมายเซสชันและบล็อก [diag] (เวอร์ชัน พาธ จอภาพ) — วางลงในรายงานปัญหา"
       ]
     },
     "advanced": {
@@ -835,7 +847,7 @@
     "libraryList": "โฟลเดอร์ไลบรารี",
     "emptyList": "ไม่มีอะไรเพิ่มเซสชั่นนี้",
     "settingsTitle": "การตั้งค่าที่แนะนำ",
-    "settingsCopy": "สวิตช์เหล่านี้คือสวิตช์หลักที่ผู้ใช้ส่วนใหญ่ต้องการเป็นอันดับแรก ทุกอย่างยังคงสามารถแก้ไขได้ในภายหลังในการตั้งค่า",
+    "settingsCopy": "นี่คือการตั้งค่าหลักที่ผู้ใช้ส่วนใหญ่ต้องใช้ก่อน ทุกอย่างยังแก้ไขได้ภายหลังในการตั้งค่า — ค้นหาจากด้านบนของแผง พับส่วนใดก็ได้จากหัวข้อ และเปิดแท็บช่วยเหลือสำหรับส่วนที่เหลือ",
     "source": "แสดงเกม Steam",
     "notifications": "การแจ้งเตือน",
     "notificationTest": "ทดสอบการแจ้งเตือน",
@@ -1010,6 +1022,12 @@
     "restored-x-item-s": "กู้คืน {count} รายการแล้ว",
     "gbe-goldberg-restore-failed": "กู้คืน GBE/Goldberg ไม่สำเร็จ",
     "could-not-restore-this-gbe-goldberg-backup": "ไม่สามารถกู้คืนข้อมูลสำรอง GBE/Goldberg นี้ได้",
+    "restore-failed": "การคืนค่าล้มเหลว",
+    "restore-uplay-r2-config": "คืนค่าการตั้งค่า Uplay R2 ก่อนหน้า…",
+    "restore-uplay-r2-title": "คืนค่าการตั้งค่า Uplay R2",
+    "restore-uplay-r2-message": "คืนค่าสำเนาที่บันทึกไว้ก่อนการซ่อมแซมครั้งล่าสุดหรือไม่?",
+    "restore-uplay-r2-done": "คืนค่าการตั้งค่าแล้ว",
+    "could-not-restore-the-uplay-r2-setup": "ไม่สามารถคืนค่าการตั้งค่า Uplay R2 ได้",
     "select-install-folder-steam-api": "เลือกโฟลเดอร์ติดตั้งของเกม (ตำแหน่งที่จะวาง steam_api(64).dll)",
     "install-here": "ติดตั้งที่นี่",
     "backing-up-before-fix": "กำลังสำรองข้อมูลก่อนฟิกซ์…",
@@ -1151,6 +1169,11 @@
     "n-nno-uninstaller-was-found-in-this-folder-the-files-will-be-mov": "ไม่พบโปรแกรมถอนการติดตั้งในโฟลเดอร์นี้ ไฟล์จะถูกย้ายไปถังรีไซเคิล (กู้คืนได้)",
     "delete": "ลบ",
     "delete-failed": "ลบไม่สำเร็จ",
+    "uninstalling-game": "กำลังถอนการติดตั้ง…",
+    "deleting-game-folder": "กำลังย้ายไปถังรีไซเคิล…",
+    "delete-preset-title": "ลบพรีเซ็ต",
+    "delete-preset-message": "ลบพรีเซ็ต \"{name}\" หรือไม่?",
+    "delete-preset-detail": "ไฟล์พรีเซ็ตจะถูกลบออกจากดิสก์ การกระทำนี้ไม่สามารถย้อนกลับได้",
     "could-not-move-the-folder-to-the-recycle-bin": "ไม่สามารถย้ายโฟลเดอร์ไปถังรีไซเคิลได้",
     "re-download-cover": "ดาวน์โหลดปกอีกครั้ง",
     "use-another-steam-appid": "ใช้ ID แอป Steam อื่น…",

@@ -65,7 +65,7 @@
     "restoreGBE": "Letzte GBE/Goldberg-Sicherung wiederherstellen…",
     "installGBE": "Emulator-Fix anwenden…",
     "removeDRM": "DRM entfernen…",
-    "crackfix": "Community-Fix suchen…",
+    "crackfix": "Community-Fix suchen (CrakFiles)…",
     "openIconCache": "Symbol-Cache",
     "openDbCache": "Daten-Cache (.db)",
     "openInstallLocation": "Spielinstallation",
@@ -426,6 +426,15 @@
           "fontSize": "Schriftgröße",
           "corners": "Ecken",
           "iconSize": "Symbolgröße",
+          "deleteLabel": "Löschen",
+          "deleted": "Gelöscht:",
+          "width": "Breite",
+          "edit": "Vorlage bearbeiten",
+          "editNew": "Neue Vorlage…",
+          "preview": "Vorschau",
+          "update": "Vorlage aktualisieren",
+          "updated": "Aktualisiert & ausgewählt:",
+          "loaded": "Geladen:",
           "create": "Vorlage erstellen",
           "errName": "Gib zuerst einen Namen ein",
           "created": "Erstellt & ausgewählt:",
@@ -582,7 +591,7 @@
       },
       "ea": {
         "name": "EA Desktop",
-        "description": "Liest das lokale Erfolgsprotokoll von EA Desktop — nur für Spiele, die außerhalb der von EA verwalteten Ordner installiert sind (gecrackte Titel)."
+        "description": "Liest das lokale Erfolgsprotokoll von EA Desktop (für Spiele außerhalb der von EA verwalteten Ordner)."
       },
       "xboxPc": {
         "name": "Xbox PC",
@@ -668,7 +677,8 @@
         "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
         "The Watchdog runs in the background — it must be running for live notifications and playtime.",
         "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0."
+        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+        "Jeder Einstellungsbereich lässt sich über seine Kopfzeile einklappen — der Pfeil zeigt nach unten, wenn er offen ist, zur Seite, wenn er zu ist. Ihre Auswahl wird gemerkt."
       ],
       "steamTitle": "Steam-Emulatoren",
       "steam": [
@@ -708,7 +718,8 @@
       "themes": [
         "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
         "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown."
+        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+        "Der Vorlagen-Editor kann ein Design vor dem Speichern als echtes Pop-up zeigen, eine gespeicherte Vorlage zum Ändern erneut öffnen und nicht benötigte löschen."
       ],
       "configTitle": "Generierte Konfigurationen",
       "config": [
@@ -732,7 +743,8 @@
       "troubleshoot": [
         "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
         "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue."
+        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+        "Protokolle werden angehängt, ein Absturz übersteht also den nächsten Start. Jeder Lauf beginnt mit einer Sitzungsmarke und einem [diag]-Block (Versionen, Pfade, Bildschirme) — fügen Sie ihn dem Ticket bei."
       ]
     },
     "advanced": {
@@ -835,7 +847,7 @@
     "libraryList": "Bibliotheksordner",
     "emptyList": "In dieser Sitzung wurde nichts hinzugefügt.",
     "settingsTitle": "Empfohlene Einstellungen",
-    "settingsCopy": "Dies sind die Hauptschalter, die die meisten Benutzer zuerst benötigen. Alles bleibt später in den Einstellungen bearbeitbar.",
+    "settingsCopy": "Das sind die wichtigsten Schalter für den Anfang. Alles bleibt später in den Einstellungen änderbar — oben im Bereich suchen, jeden Abschnitt über seine Kopfzeile einklappen und für den Rest den Hilfe-Tab öffnen.",
     "source": "Steam-Spiele anzeigen",
     "notifications": "Benachrichtigungen",
     "notificationTest": "Benachrichtigung testen",
@@ -1010,6 +1022,12 @@
     "restored-x-item-s": "{count} Element(e) wiederhergestellt.",
     "gbe-goldberg-restore-failed": "GBE/Goldberg-Wiederherstellung fehlgeschlagen",
     "could-not-restore-this-gbe-goldberg-backup": "Dieses GBE/Goldberg-Backup konnte nicht wiederhergestellt werden.",
+    "restore-failed": "Wiederherstellung fehlgeschlagen",
+    "restore-uplay-r2-config": "Vorherige Uplay-R2-Konfiguration wiederherstellen…",
+    "restore-uplay-r2-title": "Uplay-R2-Konfiguration wiederherstellen",
+    "restore-uplay-r2-message": "Die Sicherung von vor der letzten Reparatur wiederherstellen?",
+    "restore-uplay-r2-done": "Konfiguration wiederhergestellt.",
+    "could-not-restore-the-uplay-r2-setup": "Die Uplay-R2-Konfiguration konnte nicht wiederhergestellt werden.",
     "select-install-folder-steam-api": "Installationsordner des Spiels auswählen (wo steam_api(64).dll hin soll)",
     "install-here": "Hier installieren",
     "backing-up-before-fix": "Vor dem Fix wird gesichert…",
@@ -1151,6 +1169,11 @@
     "n-nno-uninstaller-was-found-in-this-folder-the-files-will-be-mov": "In diesem Ordner wurde kein Deinstallierer gefunden. Die Dateien werden in den Papierkorb verschoben (wiederherstellbar).",
     "delete": "Löschen",
     "delete-failed": "Löschen fehlgeschlagen",
+    "uninstalling-game": "Wird deinstalliert…",
+    "deleting-game-folder": "Wird in den Papierkorb verschoben…",
+    "delete-preset-title": "Vorlage löschen",
+    "delete-preset-message": "Die Vorlage \"{name}\" löschen?",
+    "delete-preset-detail": "Die Dateien der Vorlage werden von der Festplatte entfernt. Das lässt sich nicht rückgängig machen.",
     "could-not-move-the-folder-to-the-recycle-bin": "Der Ordner konnte nicht in den Papierkorb verschoben werden.",
     "re-download-cover": "Cover erneut herunterladen",
     "use-another-steam-appid": "Andere Steam-AppID verwenden…",

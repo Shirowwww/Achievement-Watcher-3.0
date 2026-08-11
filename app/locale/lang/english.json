@@ -65,7 +65,7 @@
     "restoreGBE": "Restore latest GBE/Goldberg backup…",
     "installGBE": "Apply emulator fix…",
     "removeDRM": "Remove DRM…",
-    "crackfix": "Find a community fix…",
+    "crackfix": "Find a community fix (CrakFiles)…",
     "openIconCache": "Icon cache",
     "openDbCache": "Data cache (.db)",
     "openInstallLocation": "Game installation",
@@ -426,6 +426,15 @@
           "fontSize": "Font size",
           "corners": "Corners",
           "iconSize": "Icon size",
+          "deleteLabel": "Delete",
+          "deleted": "Deleted:",
+          "width": "Width",
+          "edit": "Edit a preset",
+          "editNew": "New preset…",
+          "preview": "Preview",
+          "update": "Update preset",
+          "updated": "Updated & selected:",
+          "loaded": "Loaded:",
           "create": "Create preset",
           "errName": "Enter a name first",
           "created": "Created & selected:",
@@ -582,7 +591,7 @@
       },
       "ea": {
         "name": "EA Desktop",
-        "description": "Read EA Desktop's local achievement log — only for games installed outside EA's managed folders (cracked titles)."
+        "description": "Read EA Desktop's local achievement log (for games outside EA's managed folders)."
       },
       "xboxPc": {
         "name": "Xbox PC",
@@ -668,7 +677,8 @@
         "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
         "The Watchdog runs in the background — it must be running for live notifications and playtime.",
         "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0."
+        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+        "Every settings section folds away under its own header — the chevron points down when open, sideways when closed. Your choices are remembered."
       ],
       "steamTitle": "Steam emulators",
       "steam": [
@@ -708,7 +718,8 @@
       "themes": [
         "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
         "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown."
+        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+        "The custom preset builder can preview a design as a real popup before saving it, reopen a saved preset to change it, and delete the ones you do not keep."
       ],
       "configTitle": "Generated configs",
       "config": [
@@ -732,7 +743,8 @@
       "troubleshoot": [
         "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
         "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue."
+        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+        "Logs are appended, so a crash survives the next launch. Each run starts with a session marker and a [diag] block (versions, paths, displays) — paste it into an issue."
       ]
     },
     "advanced": {
@@ -835,7 +847,7 @@
     "libraryList": "Game libraries",
     "emptyList": "Nothing added this session.",
     "settingsTitle": "Recommended settings",
-    "settingsCopy": "These are the main switches most users need first. Everything remains editable later in Settings.",
+    "settingsCopy": "These are the main switches most users need first. Everything stays editable later in Settings — search it from the top of the panel, fold any section away by its header, and open the Help tab for the rest.",
     "source": "Display Steam games",
     "notifications": "Notifications",
     "notificationTest": "Test notification",
@@ -1010,6 +1022,12 @@
     "restored-x-item-s": "Restored {count} item(s).",
     "gbe-goldberg-restore-failed": "GBE/Goldberg restore failed",
     "could-not-restore-this-gbe-goldberg-backup": "Could not restore this GBE/Goldberg backup.",
+    "restore-failed": "Restore failed",
+    "restore-uplay-r2-config": "Restore the previous Uplay R2 configuration…",
+    "restore-uplay-r2-title": "Restore Uplay R2 configuration",
+    "restore-uplay-r2-message": "Restore the snapshot taken before the last repair?",
+    "restore-uplay-r2-done": "Configuration restored.",
+    "could-not-restore-the-uplay-r2-setup": "Could not restore the Uplay R2 configuration.",
     "select-install-folder-steam-api": "Select the game's install folder (where steam_api(64).dll should go)",
     "install-here": "Install here",
     "backing-up-before-fix": "Backing up before fix…",
@@ -1151,6 +1169,11 @@
     "n-nno-uninstaller-was-found-in-this-folder-the-files-will-be-mov": "No uninstaller was found in this folder. The files will be moved to the Recycle Bin (recoverable).",
     "delete": "Delete",
     "delete-failed": "Delete failed",
+    "uninstalling-game": "Uninstalling…",
+    "deleting-game-folder": "Moving to the Recycle Bin…",
+    "delete-preset-title": "Delete preset",
+    "delete-preset-message": "Delete the preset \"{name}\"?",
+    "delete-preset-detail": "The preset files are removed from disk. This cannot be undone.",
     "could-not-move-the-folder-to-the-recycle-bin": "Could not move the folder to the Recycle Bin.",
     "re-download-cover": "Re-download cover",
     "use-another-steam-appid": "Use another Steam AppID…",

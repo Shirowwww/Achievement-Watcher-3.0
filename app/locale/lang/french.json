@@ -65,7 +65,7 @@
     "restoreGBE": "Restaurer la dernière sauvegarde GBE/Goldberg…",
     "installGBE": "Appliquer le fix émulateur…",
     "removeDRM": "Retirer le DRM…",
-    "crackfix": "Chercher un fix communautaire…",
+    "crackfix": "Chercher un fix communautaire (CrakFiles)…",
     "openIconCache": "Cache des icônes",
     "openDbCache": "Cache des données (.db)",
     "openInstallLocation": "Installation du jeu",
@@ -426,6 +426,15 @@
           "fontSize": "Taille du texte",
           "corners": "Coins",
           "iconSize": "Taille de l'icône",
+          "deleteLabel": "Supprimer",
+          "deleted": "Supprimé :",
+          "width": "Largeur",
+          "edit": "Modifier un preset",
+          "editNew": "Nouveau preset…",
+          "preview": "Aperçu",
+          "update": "Mettre à jour le preset",
+          "updated": "Mis à jour et sélectionné :",
+          "loaded": "Chargé :",
           "create": "Créer le preset",
           "errName": "Saisissez d'abord un nom",
           "created": "Créé et sélectionné :",
@@ -582,7 +591,7 @@
       },
       "ea": {
         "name": "EA Desktop",
-        "description": "Lit le journal local des succès EA Desktop — uniquement pour les jeux installés hors des dossiers gérés par EA (jeux crackés)."
+        "description": "Lit le journal local des succès EA Desktop (pour les jeux en dehors des dossiers gérés par EA)."
       },
       "xboxPc": {
         "name": "Xbox PC",
@@ -668,7 +677,8 @@
         "Ajoute les dossiers de sauvegarde/config dans Paramètres > Dossiers, puis active la source correspondante dans Paramètres > Sources.",
         "Le Watchdog tourne en arrière-plan : il doit être actif pour les notifications en direct et le temps de jeu.",
         "Une clé API Web Steam dans Paramètres > Général rend les premiers scans bien plus rapides et précis.",
-        "Tout (réglages, caches, logs, thèmes custom) se trouve dans %APPDATA%\\Achievement Watcher 3.0."
+        "Tout (réglages, caches, logs, thèmes custom) se trouve dans %APPDATA%\\Achievement Watcher 3.0.",
+        "Chaque section des réglages se replie sous son en-tête — le chevron pointe vers le bas quand elle est ouverte, sur le côté quand elle est fermée. Vos choix sont mémorisés."
       ],
       "steamTitle": "Émulateurs Steam",
       "steam": [
@@ -708,7 +718,8 @@
       "themes": [
         "Custom démarre en Steam Blue ; chaque couche (fond, en-tête, panneaux, cartes, réglages, texte, bordures, accent) est modifiable.",
         "Les images de couche passent sous un voile coloré avec un léger flou dépoli ; les effets sont par couche.",
-        "Dépose un thème CSS dans <userData>\\themes et il apparaît dans la liste des thèmes."
+        "Dépose un thème CSS dans <userData>\\themes et il apparaît dans la liste des thèmes.",
+        "Le créateur de preset peut afficher un aperçu réel avant d’enregistrer, rouvrir un preset sauvegardé pour le modifier, et supprimer ceux que vous ne gardez pas."
       ],
       "configTitle": "Configs générées",
       "config": [
@@ -732,7 +743,8 @@
       "troubleshoot": [
         "Si un jeu manque : ajoute les dossiers, relance un scan, puis vérifie l'interrupteur de source et la liste noire.",
         "Si les notifications n'apparaissent pas : vérifie l'Assistance focus Windows et lance l'app avec les mêmes droits que tes jeux.",
-        "Avancé > Diagnostics ouvre les logs et les dossiers de données ; joins-les quand tu signales un problème."
+        "Avancé > Diagnostics ouvre les logs et les dossiers de données ; joins-les quand tu signales un problème.",
+        "Les journaux sont ajoutés à la suite : un plantage survit au lancement suivant. Chaque exécution commence par un marqueur de session et un bloc [diag] (versions, chemins, écrans) — collez-le dans un ticket."
       ]
     },
     "advanced": {
@@ -835,7 +847,7 @@
     "libraryList": "Bibliothèques de jeux",
     "emptyList": "Rien n'a été ajouté à cette session.",
     "settingsTitle": "Paramètres recommandés",
-    "settingsCopy": "Ce sont les principaux commutateurs dont la plupart des utilisateurs ont besoin en premier. Tout reste modifiable ultérieurement dans Paramètres.",
+    "settingsCopy": "Voici les principaux réglages dont on a besoin en premier. Tout reste modifiable ensuite dans les Paramètres : cherche depuis le haut du panneau, replie n'importe quelle section par son en-tête, et ouvre l'onglet Aide pour le reste.",
     "source": "Afficher les jeux Steam",
     "notifications": "Notifications",
     "notificationTest": "Tester la notification",
@@ -1010,6 +1022,12 @@
     "restored-x-item-s": "{count} élément(s) restauré(s).",
     "gbe-goldberg-restore-failed": "Échec de la restauration GBE/Goldberg",
     "could-not-restore-this-gbe-goldberg-backup": "Impossible de restaurer cette sauvegarde GBE/Goldberg.",
+    "restore-failed": "Échec de la restauration",
+    "restore-uplay-r2-config": "Restaurer la configuration Uplay R2 précédente…",
+    "restore-uplay-r2-title": "Restaurer la configuration Uplay R2",
+    "restore-uplay-r2-message": "Restaurer la sauvegarde prise avant la dernière réparation ?",
+    "restore-uplay-r2-done": "Configuration restaurée.",
+    "could-not-restore-the-uplay-r2-setup": "Impossible de restaurer la configuration Uplay R2.",
     "select-install-folder-steam-api": "Sélectionne le dossier d'installation du jeu (où doit aller steam_api(64).dll)",
     "install-here": "Installer ici",
     "backing-up-before-fix": "Sauvegarde avant fix…",
@@ -1151,6 +1169,11 @@
     "n-nno-uninstaller-was-found-in-this-folder-the-files-will-be-mov": "Aucun désinstalleur n’a été trouvé dans ce dossier. Les fichiers seront déplacés vers la Corbeille (récupérables).",
     "delete": "Supprimer",
     "delete-failed": "Échec de la suppression",
+    "uninstalling-game": "Désinstallation…",
+    "deleting-game-folder": "Déplacement vers la Corbeille…",
+    "delete-preset-title": "Supprimer le preset",
+    "delete-preset-message": "Supprimer le preset « {name} » ?",
+    "delete-preset-detail": "Les fichiers du preset seront supprimés du disque. Cette action est irréversible.",
     "could-not-move-the-folder-to-the-recycle-bin": "Impossible de déplacer le dossier vers la Corbeille.",
     "re-download-cover": "Retélécharger la jaquette",
     "use-another-steam-appid": "Utiliser un autre AppID Steam…",

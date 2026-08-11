@@ -65,7 +65,7 @@
     "restoreGBE": "En son GBE/Goldberg yedeğini geri yükle…",
     "installGBE": "Emülatör düzeltmesini uygula…",
     "removeDRM": "DRM'yi kaldır…",
-    "crackfix": "Topluluk düzeltmesi ara…",
+    "crackfix": "Topluluk düzeltmesi bul (CrakFiles)…",
     "openIconCache": "Simge önbelleği",
     "openDbCache": "Veri önbelleği (.db)",
     "openInstallLocation": "Oyun kurulumu",
@@ -426,6 +426,15 @@
           "fontSize": "Yazı boyutu",
           "corners": "Köşeler",
           "iconSize": "Simge boyutu",
+          "deleteLabel": "Sil",
+          "deleted": "Silindi:",
+          "width": "Genişlik",
+          "edit": "Ön ayarı düzenle",
+          "editNew": "Yeni ön ayar…",
+          "preview": "Önizleme",
+          "update": "Ön ayarı güncelle",
+          "updated": "Güncellendi ve seçildi:",
+          "loaded": "Yüklendi:",
           "create": "Ön ayar oluştur",
           "errName": "Önce bir ad gir",
           "created": "Oluşturuldu ve seçildi:",
@@ -582,7 +591,7 @@
       },
       "ea": {
         "name": "EA Desktop",
-        "description": "EA Desktop'un yerel başarım günlüğünü okur — yalnızca EA'nın yönettiği klasörlerin dışına kurulan oyunlar için (cracklenmiş başlıklar)."
+        "description": "EA Desktop'un yerel başarım günlüğünü okur (EA'nın yönettiği klasörlerin dışındaki oyunlar için)."
       },
       "xboxPc": {
         "name": "Xbox PC",
@@ -668,7 +677,8 @@
         "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
         "The Watchdog runs in the background — it must be running for live notifications and playtime.",
         "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0."
+        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+        "Her ayar bölümü kendi başlığı altında katlanır — açıkken ok aşağıyı, kapalıyken yana bakar. Seçimleriniz hatırlanır."
       ],
       "steamTitle": "Steam emülatörleri",
       "steam": [
@@ -708,7 +718,8 @@
       "themes": [
         "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
         "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown."
+        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+        "Ön ayar oluşturucu, kaydetmeden önce tasarımı gerçek bir bildirim olarak gösterebilir, kayıtlı bir ön ayarı düzenlemek için yeniden açabilir ve tutmadıklarınızı silebilir."
       ],
       "configTitle": "Oluşturulan yapılandırmalar",
       "config": [
@@ -732,7 +743,8 @@
       "troubleshoot": [
         "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
         "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue."
+        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+        "Günlükler eklenerek yazılır, bu yüzden bir çökme sonraki açılışa kalır. Her çalıştırma bir oturum işareti ve [diag] bloğuyla başlar (sürümler, yollar, ekranlar) — bunu bildirime yapıştırın."
       ]
     },
     "advanced": {
@@ -835,7 +847,7 @@
     "libraryList": "Kütüphane klasörleri",
     "emptyList": "Bu oturuma hiçbir şey eklenmedi.",
     "settingsTitle": "Önerilen ayarlar",
-    "settingsCopy": "Bunlar çoğu kullanıcının ilk olarak ihtiyaç duyduğu ana anahtarlardır. Her şey daha sonra Ayarlar'da düzenlenebilir durumda kalır.",
+    "settingsCopy": "Bunlar çoğu kullanıcının önce ihtiyaç duyduğu temel ayarlardır. Her şey daha sonra Ayarlar'da düzenlenebilir: panelin üstünden arayın, herhangi bir bölümü başlığından katlayın ve gerisi için Yardım sekmesini açın.",
     "source": "Steam oyunlarını göster",
     "notifications": "Bildirimler",
     "notificationTest": "Bildirimi test et",
@@ -1010,6 +1022,12 @@
     "restored-x-item-s": "{count} öğe geri yüklendi.",
     "gbe-goldberg-restore-failed": "GBE/Goldberg geri yüklenemedi",
     "could-not-restore-this-gbe-goldberg-backup": "Bu GBE/Goldberg yedeği geri yüklenemedi.",
+    "restore-failed": "Geri yükleme başarısız",
+    "restore-uplay-r2-config": "Önceki Uplay R2 yapılandırmasını geri yükle…",
+    "restore-uplay-r2-title": "Uplay R2 yapılandırmasını geri yükle",
+    "restore-uplay-r2-message": "Son onarımdan önce alınan yedek geri yüklensin mi?",
+    "restore-uplay-r2-done": "Yapılandırma geri yüklendi.",
+    "could-not-restore-the-uplay-r2-setup": "Uplay R2 yapılandırması geri yüklenemedi.",
     "select-install-folder-steam-api": "Oyunun kurulum klasörünü seç (steam_api(64).dll’nin gideceği yer)",
     "install-here": "Buraya kur",
     "backing-up-before-fix": "Fix öncesi yedekleme…",
@@ -1151,6 +1169,11 @@
     "n-nno-uninstaller-was-found-in-this-folder-the-files-will-be-mov": "Bu klasörde kaldırıcı bulunamadı. Dosyalar Geri Dönüşüm Kutusu’na taşınacak (geri alınabilir).",
     "delete": "Sil",
     "delete-failed": "Silme başarısız",
+    "uninstalling-game": "Kaldırılıyor…",
+    "deleting-game-folder": "Geri Dönüşüm Kutusuna taşınıyor…",
+    "delete-preset-title": "Ön ayarı sil",
+    "delete-preset-message": "\"{name}\" ön ayarı silinsin mi?",
+    "delete-preset-detail": "Ön ayarın dosyaları diskten silinir. Bu işlem geri alınamaz.",
     "could-not-move-the-folder-to-the-recycle-bin": "Klasör Geri Dönüşüm Kutusu’na taşınamadı.",
     "re-download-cover": "Kapağı yeniden indir",
     "use-another-steam-appid": "Başka bir Steam uygulama kimliği kullan…",

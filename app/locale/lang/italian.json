@@ -65,7 +65,7 @@
     "restoreGBE": "Ripristina l’ultimo backup di GBE/Goldberg…",
     "installGBE": "Applica fix emulatore…",
     "removeDRM": "Rimuovi DRM…",
-    "crackfix": "Cerca un fix della community…",
+    "crackfix": "Cerca una fix della community (CrakFiles)…",
     "openIconCache": "Cache delle icone",
     "openDbCache": "Cache dei dati (.db)",
     "openInstallLocation": "Installazione del gioco",
@@ -426,6 +426,15 @@
           "fontSize": "Dimensione del testo",
           "corners": "Angoli",
           "iconSize": "Dimensione icona",
+          "deleteLabel": "Elimina",
+          "deleted": "Eliminata:",
+          "width": "Larghezza",
+          "edit": "Modifica una preimpostazione",
+          "editNew": "Nuova preimpostazione…",
+          "preview": "Anteprima",
+          "update": "Aggiorna preimpostazione",
+          "updated": "Aggiornata e selezionata:",
+          "loaded": "Caricata:",
           "create": "Crea preimpostazione",
           "errName": "Inserisci prima un nome",
           "created": "Creata e selezionata:",
@@ -582,7 +591,7 @@
       },
       "ea": {
         "name": "EA Desktop",
-        "description": "Legge il registro locale degli obiettivi di EA Desktop — solo per i giochi installati al di fuori delle cartelle gestite da EA (titoli craccati)."
+        "description": "Legge il registro locale degli obiettivi di EA Desktop (per i giochi fuori dalle cartelle gestite da EA)."
       },
       "xboxPc": {
         "name": "Xbox PC",
@@ -668,7 +677,8 @@
         "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
         "The Watchdog runs in the background — it must be running for live notifications and playtime.",
         "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0."
+        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+        "Ogni sezione delle impostazioni si richiude sotto la propria intestazione: la freccia punta in basso quando è aperta, di lato quando è chiusa. Le tue scelte vengono ricordate."
       ],
       "steamTitle": "Emulatori Steam",
       "steam": [
@@ -708,7 +718,8 @@
       "themes": [
         "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
         "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown."
+        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+        "Il creatore di preimpostazioni può mostrare un'anteprima reale prima di salvare, riaprire una preimpostazione salvata per modificarla ed eliminare quelle che non tieni."
       ],
       "configTitle": "Config generati",
       "config": [
@@ -732,7 +743,8 @@
       "troubleshoot": [
         "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
         "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue."
+        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+        "I log vengono accodati, quindi un crash sopravvive all'avvio successivo. Ogni esecuzione inizia con un marcatore di sessione e un blocco [diag] (versioni, percorsi, schermi): incollalo nella segnalazione."
       ]
     },
     "advanced": {
@@ -835,7 +847,7 @@
     "libraryList": "Cartelle della biblioteca",
     "emptyList": "Niente ha aggiunto questa sessione.",
     "settingsTitle": "Impostazioni consigliate",
-    "settingsCopy": "Questi sono gli interruttori principali di cui la maggior parte degli utenti ha bisogno per primi. Tutto rimane modificabile in seguito in Impostazioni.",
+    "settingsCopy": "Queste sono le impostazioni principali che servono per prime. Tutto resta modificabile in seguito nelle Impostazioni: cerca dall'alto del pannello, richiudi qualsiasi sezione dalla sua intestazione e apri la scheda Aiuto per il resto.",
     "source": "Visualizza i giochi Steam",
     "notifications": "Notifiche",
     "notificationTest": "Prova notifica",
@@ -1010,6 +1022,12 @@
     "restored-x-item-s": "Ripristinati {count} elemento/i.",
     "gbe-goldberg-restore-failed": "Ripristino GBE/Goldberg non riuscito",
     "could-not-restore-this-gbe-goldberg-backup": "Impossibile ripristinare questo backup GBE/Goldberg.",
+    "restore-failed": "Ripristino non riuscito",
+    "restore-uplay-r2-config": "Ripristina la configurazione Uplay R2 precedente…",
+    "restore-uplay-r2-title": "Ripristina la configurazione Uplay R2",
+    "restore-uplay-r2-message": "Ripristinare il backup creato prima dell'ultima riparazione?",
+    "restore-uplay-r2-done": "Configurazione ripristinata.",
+    "could-not-restore-the-uplay-r2-setup": "Impossibile ripristinare la configurazione Uplay R2.",
     "select-install-folder-steam-api": "Seleziona la cartella di installazione del gioco (dove deve andare steam_api(64).dll)",
     "install-here": "Installa qui",
     "backing-up-before-fix": "Creazione backup prima del fix…",
@@ -1151,6 +1169,11 @@
     "n-nno-uninstaller-was-found-in-this-folder-the-files-will-be-mov": "In questa cartella non è stato trovato alcun disinstallatore. I file verranno spostati nel Cestino (recuperabili).",
     "delete": "Elimina",
     "delete-failed": "Eliminazione non riuscita",
+    "uninstalling-game": "Disinstallazione…",
+    "deleting-game-folder": "Spostamento nel Cestino…",
+    "delete-preset-title": "Elimina preimpostazione",
+    "delete-preset-message": "Eliminare la preimpostazione \"{name}\"?",
+    "delete-preset-detail": "I file della preimpostazione verranno rimossi dal disco. L'operazione è irreversibile.",
     "could-not-move-the-folder-to-the-recycle-bin": "Impossibile spostare la cartella nel Cestino.",
     "re-download-cover": "Riscarica copertina",
     "use-another-steam-appid": "Usa un altro ID app Steam…",

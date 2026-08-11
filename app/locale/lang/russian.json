@@ -65,7 +65,7 @@
     "restoreGBE": "Восстановить последнюю резервную копию GBE/Goldberg…",
     "installGBE": "Применить исправление эмулятора…",
     "removeDRM": "Удалить DRM…",
-    "crackfix": "Найти исправление сообщества…",
+    "crackfix": "Найти фикс сообщества (CrakFiles)…",
     "openIconCache": "Кэш значков",
     "openDbCache": "Кэш данных (.db)",
     "openInstallLocation": "Установка игры",
@@ -426,6 +426,15 @@
           "fontSize": "Размер шрифта",
           "corners": "Углы",
           "iconSize": "Размер значка",
+          "deleteLabel": "Удалить",
+          "deleted": "Удалён:",
+          "width": "Ширина",
+          "edit": "Изменить пресет",
+          "editNew": "Новый пресет…",
+          "preview": "Предпросмотр",
+          "update": "Обновить пресет",
+          "updated": "Обновлён и выбран:",
+          "loaded": "Загружен:",
           "create": "Создать пресет",
           "errName": "Сначала введите имя",
           "created": "Создан и выбран:",
@@ -582,7 +591,7 @@
       },
       "ea": {
         "name": "EA Desktop",
-        "description": "Читает локальный журнал достижений EA Desktop — только для игр, установленных вне управляемых EA папок (взломанные игры)."
+        "description": "Читает локальный журнал достижений EA Desktop (для игр вне управляемых EA папок)."
       },
       "xboxPc": {
         "name": "Xbox PC",
@@ -668,7 +677,8 @@
         "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
         "The Watchdog runs in the background — it must be running for live notifications and playtime.",
         "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0."
+        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+        "Любой раздел настроек сворачивается по своему заголовку: стрелка вниз — раздел открыт, вбок — закрыт. Выбор запоминается."
       ],
       "steamTitle": "Эмуляторы Steam",
       "steam": [
@@ -708,7 +718,8 @@
       "themes": [
         "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
         "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown."
+        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+        "Конструктор пресетов умеет показать оформление настоящим всплывающим окном до сохранения, открыть сохранённый пресет для правки и удалить ненужные."
       ],
       "configTitle": "Сгенерированные конфиги",
       "config": [
@@ -732,7 +743,8 @@
       "troubleshoot": [
         "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
         "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue."
+        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+        "Журналы дописываются, поэтому сбой переживёт следующий запуск. Каждый запуск начинается с метки сессии и блока [diag] (версии, пути, экраны) — вставьте его в сообщение об ошибке."
       ]
     },
     "advanced": {
@@ -835,7 +847,7 @@
     "libraryList": "Папки библиотеки",
     "emptyList": "В этом сеансе ничего не добавлено.",
     "settingsTitle": "Рекомендуемые настройки",
-    "settingsCopy": "Это основные переключатели, которые нужны большинству пользователей в первую очередь. Все остается доступным для редактирования позже в настройках.",
+    "settingsCopy": "Это основные переключатели, нужные в первую очередь. Всё остальное можно изменить позже в настройках: поиск вверху панели, любой раздел сворачивается по заголовку, а остальное — на вкладке «Помощь».",
     "source": "Отображать игры Steam",
     "notifications": "Уведомления",
     "notificationTest": "Проверить уведомление",
@@ -1010,6 +1022,12 @@
     "restored-x-item-s": "Восстановлено элементов: {count}.",
     "gbe-goldberg-restore-failed": "Не удалось восстановить GBE/Goldberg",
     "could-not-restore-this-gbe-goldberg-backup": "Не удалось восстановить эту резервную копию GBE/Goldberg.",
+    "restore-failed": "Ошибка восстановления",
+    "restore-uplay-r2-config": "Восстановить прежнюю конфигурацию Uplay R2…",
+    "restore-uplay-r2-title": "Восстановление конфигурации Uplay R2",
+    "restore-uplay-r2-message": "Восстановить копию, созданную перед последним исправлением?",
+    "restore-uplay-r2-done": "Конфигурация восстановлена.",
+    "could-not-restore-the-uplay-r2-setup": "Не удалось восстановить конфигурацию Uplay R2.",
     "select-install-folder-steam-api": "Выберите папку установки игры (куда должна попасть steam_api(64).dll)",
     "install-here": "Установить сюда",
     "backing-up-before-fix": "Создание резервной копии перед фиксом…",
@@ -1151,6 +1169,11 @@
     "n-nno-uninstaller-was-found-in-this-folder-the-files-will-be-mov": "В этой папке не найден деинсталлятор. Файлы будут перемещены в Корзину (их можно восстановить).",
     "delete": "Удалить",
     "delete-failed": "Не удалось удалить",
+    "uninstalling-game": "Удаление…",
+    "deleting-game-folder": "Перемещение в корзину…",
+    "delete-preset-title": "Удалить пресет",
+    "delete-preset-message": "Удалить пресет \"{name}\"?",
+    "delete-preset-detail": "Файлы пресета будут удалены с диска. Это действие необратимо.",
     "could-not-move-the-folder-to-the-recycle-bin": "Не удалось переместить папку в Корзину.",
     "re-download-cover": "Скачать обложку заново",
     "use-another-steam-appid": "Использовать другой ID приложения Steam…",

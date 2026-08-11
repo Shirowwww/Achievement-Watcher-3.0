@@ -65,7 +65,7 @@
     "restoreGBE": "Restaurar a última cópia de segurança do GBE/Goldberg…",
     "installGBE": "Aplicar correção de emulador…",
     "removeDRM": "Remover DRM…",
-    "crackfix": "Procurar uma correção da comunidade…",
+    "crackfix": "Procurar uma correção da comunidade (CrakFiles)…",
     "openIconCache": "Cache de ícones",
     "openDbCache": "Cache de dados (.db)",
     "openInstallLocation": "Instalação do jogo",
@@ -426,6 +426,15 @@
           "fontSize": "Tamanho do texto",
           "corners": "Cantos",
           "iconSize": "Tamanho do ícone",
+          "deleteLabel": "Eliminar",
+          "deleted": "Eliminada:",
+          "width": "Largura",
+          "edit": "Editar uma predefinição",
+          "editNew": "Nova predefinição…",
+          "preview": "Pré-visualizar",
+          "update": "Atualizar predefinição",
+          "updated": "Atualizada e selecionada:",
+          "loaded": "Carregada:",
           "create": "Criar predefinição",
           "errName": "Introduza primeiro um nome",
           "created": "Criada e selecionada:",
@@ -582,7 +591,7 @@
       },
       "ea": {
         "name": "EA Desktop",
-        "description": "Lê o registo local de proezas do EA Desktop — apenas para jogos instalados fora das pastas geridas pela EA (títulos crackados)."
+        "description": "Lê o registo local de proezas do EA Desktop (para jogos fora das pastas geridas pela EA)."
       },
       "xboxPc": {
         "name": "Xbox PC",
@@ -668,7 +677,8 @@
         "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
         "The Watchdog runs in the background — it must be running for live notifications and playtime.",
         "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0."
+        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+        "Cada secção das definições recolhe sob o seu cabeçalho — a seta aponta para baixo quando está aberta e para o lado quando está fechada. As suas escolhas são memorizadas."
       ],
       "steamTitle": "Emuladores Steam",
       "steam": [
@@ -708,7 +718,8 @@
       "themes": [
         "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
         "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown."
+        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+        "O criador de predefinições pode pré-visualizar um design como uma notificação real antes de guardar, reabrir uma predefinição guardada para a alterar e eliminar as que não mantiver."
       ],
       "configTitle": "Configs geradas",
       "config": [
@@ -732,7 +743,8 @@
       "troubleshoot": [
         "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
         "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue."
+        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+        "Os registos são acrescentados, por isso uma falha sobrevive ao arranque seguinte. Cada execução começa com um marcador de sessão e um bloco [diag] (versões, caminhos, ecrãs) — cole-o no relatório."
       ]
     },
     "advanced": {
@@ -835,7 +847,7 @@
     "libraryList": "Pastas da biblioteca",
     "emptyList": "Nada adicionou esta sessão.",
     "settingsTitle": "Configurações recomendadas",
-    "settingsCopy": "Esses são os principais switches que a maioria dos usuários precisa primeiro. Tudo permanece editável posteriormente em Configurações.",
+    "settingsCopy": "Estas são as opções principais de que a maioria precisa primeiro. Tudo continua editável depois nas Definições: pesquise no topo do painel, recolha qualquer secção pelo seu cabeçalho e abra o separador Ajuda para o resto.",
     "source": "Exibir jogos Steam",
     "notifications": "Notificações",
     "notificationTest": "Testar notificação",
@@ -1010,6 +1022,12 @@
     "restored-x-item-s": "Restaurados {count} item(ns).",
     "gbe-goldberg-restore-failed": "Falha ao restaurar GBE/Goldberg",
     "could-not-restore-this-gbe-goldberg-backup": "Não foi possível restaurar esta cópia de segurança GBE/Goldberg.",
+    "restore-failed": "Falha na restauração",
+    "restore-uplay-r2-config": "Restaurar a configuração anterior do Uplay R2…",
+    "restore-uplay-r2-title": "Restaurar a configuração do Uplay R2",
+    "restore-uplay-r2-message": "Restaurar a cópia feita antes da última reparação?",
+    "restore-uplay-r2-done": "Configuração restaurada.",
+    "could-not-restore-the-uplay-r2-setup": "Não foi possível restaurar a configuração do Uplay R2.",
     "select-install-folder-steam-api": "Selecionar a pasta de instalação do jogo (onde deve ficar a steam_api(64).dll)",
     "install-here": "Instalar aqui",
     "backing-up-before-fix": "A criar cópia de segurança antes do fix…",
@@ -1151,6 +1169,11 @@
     "n-nno-uninstaller-was-found-in-this-folder-the-files-will-be-mov": "Não foi encontrado nenhum desinstalador nesta pasta. Os ficheiros serão movidos para o Reciclar (recuperáveis).",
     "delete": "Eliminar",
     "delete-failed": "Não foi possível eliminar",
+    "uninstalling-game": "A desinstalar…",
+    "deleting-game-folder": "A mover para a Reciclagem…",
+    "delete-preset-title": "Eliminar predefinição",
+    "delete-preset-message": "Eliminar a predefinição \"{name}\"?",
+    "delete-preset-detail": "Os ficheiros da predefinição serão removidos do disco. Esta ação é irreversível.",
     "could-not-move-the-folder-to-the-recycle-bin": "Não foi possível mover a pasta para o Reciclar.",
     "re-download-cover": "Voltar a transferir a capa",
     "use-another-steam-appid": "Usar outro ID de aplicação Steam…",

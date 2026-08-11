@@ -65,7 +65,7 @@
     "restoreGBE": "最新の GBE/Goldberg バックアップを復元…",
     "installGBE": "エミュレーター修正を適用…",
     "removeDRM": "DRM を削除…",
-    "crackfix": "コミュニティ修正を探す…",
+    "crackfix": "コミュニティ修正を検索 (CrakFiles)…",
     "openIconCache": "アイコンキャッシュ",
     "openDbCache": "データキャッシュ (.db)",
     "openInstallLocation": "ゲームのインストール先",
@@ -426,6 +426,15 @@
           "fontSize": "フォントサイズ",
           "corners": "角",
           "iconSize": "アイコンサイズ",
+          "deleteLabel": "削除",
+          "deleted": "削除しました：",
+          "width": "幅",
+          "edit": "プリセットを編集",
+          "editNew": "新しいプリセット…",
+          "preview": "プレビュー",
+          "update": "プリセットを更新",
+          "updated": "更新して選択しました：",
+          "loaded": "読み込みました：",
           "create": "プリセットを作成",
           "errName": "先に名前を入力してください",
           "created": "作成して選択しました：",
@@ -582,7 +591,7 @@
       },
       "ea": {
         "name": "EA Desktop",
-        "description": "EA Desktop のローカル実績ログを読み取ります — EA の管理フォルダー外にインストールされたゲーム（クラック版）のみ。"
+        "description": "EA Desktop のローカル実績ログを読み取ります（EA 管理フォルダー外のゲーム向け）。"
       },
       "xboxPc": {
         "name": "Xbox PC",
@@ -668,7 +677,8 @@
         "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
         "The Watchdog runs in the background — it must be running for live notifications and playtime.",
         "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0."
+        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+        "設定の各セクションは見出しから折りたためます。開いているときは山形が下、閉じているときは横を向きます。選択は記憶されます。"
       ],
       "steamTitle": "Steam エミュレーター",
       "steam": [
@@ -708,7 +718,8 @@
       "themes": [
         "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
         "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown."
+        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+        "プリセット作成では、保存する前に実際のポップアップとして確認でき、保存済みプリセットを開いて変更したり、不要なものを削除したりできます。"
       ],
       "configTitle": "生成された設定",
       "config": [
@@ -732,7 +743,8 @@
       "troubleshoot": [
         "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
         "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue."
+        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+        "ログは追記されるため、クラッシュは次回起動後も残ります。各実行はセッション標識と [diag] ブロック（バージョン・パス・ディスプレイ）で始まります。課題に貼り付けてください。"
       ]
     },
     "advanced": {
@@ -835,7 +847,7 @@
     "libraryList": "ライブラリフォルダー",
     "emptyList": "このセッションには何も追加されませんでした。",
     "settingsTitle": "推奨設定",
-    "settingsCopy": "これらは、ほとんどのユーザーが最初に必要とする主要なスイッチです。すべては後で [設定] で編集可能なままになります。",
+    "settingsCopy": "まず必要になる主な設定です。あとから設定でいつでも変更できます。パネル上部から検索でき、各セクションは見出しから折りたためます。残りはヘルプタブをご覧ください。",
     "source": "Steam ゲームを表示する",
     "notifications": "通知",
     "notificationTest": "通知をテスト",
@@ -1010,6 +1022,12 @@
     "restored-x-item-s": "{count} 項目を復元しました。",
     "gbe-goldberg-restore-failed": "GBE/Goldberg の復元に失敗しました",
     "could-not-restore-this-gbe-goldberg-backup": "この GBE/Goldberg バックアップを復元できませんでした。",
+    "restore-failed": "復元に失敗しました",
+    "restore-uplay-r2-config": "以前の Uplay R2 設定を復元…",
+    "restore-uplay-r2-title": "Uplay R2 設定の復元",
+    "restore-uplay-r2-message": "前回の修復前に取得したバックアップを復元しますか？",
+    "restore-uplay-r2-done": "設定を復元しました。",
+    "could-not-restore-the-uplay-r2-setup": "Uplay R2 設定を復元できませんでした。",
     "select-install-folder-steam-api": "ゲームのインストールフォルダを選択（steam_api(64).dll を置く場所）",
     "install-here": "ここにインストール",
     "backing-up-before-fix": "修正前にバックアップ中…",
@@ -1151,6 +1169,11 @@
     "n-nno-uninstaller-was-found-in-this-folder-the-files-will-be-mov": "このフォルダにアンインストーラが見つかりませんでした。ファイルはゴミ箱に移動されます（復元可能）。",
     "delete": "削除",
     "delete-failed": "削除に失敗しました",
+    "uninstalling-game": "アンインストール中…",
+    "deleting-game-folder": "ごみ箱へ移動中…",
+    "delete-preset-title": "プリセットを削除",
+    "delete-preset-message": "プリセット「{name}」を削除しますか？",
+    "delete-preset-detail": "プリセットのファイルがディスクから削除されます。元に戻せません。",
     "could-not-move-the-folder-to-the-recycle-bin": "フォルダをゴミ箱に移動できませんでした。",
     "re-download-cover": "カバーを再ダウンロード",
     "use-another-steam-appid": "別の Steam アプリ ID を使用…",

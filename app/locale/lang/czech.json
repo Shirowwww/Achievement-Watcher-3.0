@@ -65,7 +65,7 @@
     "restoreGBE": "Obnovit poslední zálohu GBE/Goldberg…",
     "installGBE": "Použít opravu emulátoru…",
     "removeDRM": "Odebrat DRM…",
-    "crackfix": "Najít komunitní opravu…",
+    "crackfix": "Najít komunitní opravu (CrakFiles)…",
     "openIconCache": "Mezipaměť ikon",
     "openDbCache": "Mezipaměť dat (.db)",
     "openInstallLocation": "Instalace hry",
@@ -426,6 +426,15 @@
           "fontSize": "Velikost písma",
           "corners": "Rohy",
           "iconSize": "Velikost ikony",
+          "deleteLabel": "Smazat",
+          "deleted": "Smazáno:",
+          "width": "Šířka",
+          "edit": "Upravit předvolbu",
+          "editNew": "Nová předvolba…",
+          "preview": "Náhled",
+          "update": "Aktualizovat předvolbu",
+          "updated": "Aktualizováno a vybráno:",
+          "loaded": "Načteno:",
           "create": "Vytvořit předvolbu",
           "errName": "Nejprve zadejte název",
           "created": "Vytvořeno a vybráno:",
@@ -582,7 +591,7 @@
       },
       "ea": {
         "name": "EA Desktop",
-        "description": "Čte místní záznam achievementů EA Desktop — pouze pro hry nainstalované mimo složky spravované EA (cracknuté tituly)."
+        "description": "Čte místní záznam úspěchů EA Desktop (pro hry mimo složky spravované EA)."
       },
       "xboxPc": {
         "name": "Xbox PC",
@@ -668,7 +677,8 @@
         "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
         "The Watchdog runs in the background — it must be running for live notifications and playtime.",
         "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0."
+        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+        "Každou sekci nastavení lze sbalit pod její záhlaví — šipka dolů znamená otevřeno, do strany zavřeno. Vaše volby se pamatují."
       ],
       "steamTitle": "Steam emulátory",
       "steam": [
@@ -708,7 +718,8 @@
       "themes": [
         "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
         "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown."
+        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+        "Tvůrce předvoleb umí ukázat návrh jako skutečné oznámení ještě před uložením, znovu otevřít uloženou předvolbu k úpravě a smazat ty, které si nenecháte."
       ],
       "configTitle": "Vygenerované konfigurace",
       "config": [
@@ -732,7 +743,8 @@
       "troubleshoot": [
         "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
         "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue."
+        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+        "Protokoly se připojují, takže pád přežije další spuštění. Každý běh začíná značkou relace a blokem [diag] (verze, cesty, obrazovky) — vložte jej do hlášení."
       ]
     },
     "advanced": {
@@ -835,7 +847,7 @@
     "libraryList": "Složky knihovny",
     "emptyList": "Do této relace nebylo nic přidáno.",
     "settingsTitle": "Doporučená nastavení",
-    "settingsCopy": "Toto jsou hlavní přepínače, které většina uživatelů potřebuje jako první. Vše lze později upravit v Nastavení.",
+    "settingsCopy": "Toto jsou hlavní přepínače, které většina lidí potřebuje nejdřív. Vše zůstává upravitelné později v Nastavení: hledejte v horní části panelu, libovolnou sekci sbalte jejím záhlavím a zbytek najdete na kartě Nápověda.",
     "source": "Zobrazit hry na Steamu",
     "notifications": "Oznámení",
     "notificationTest": "Otestovat oznámení",
@@ -1010,6 +1022,12 @@
     "restored-x-item-s": "Obnoveno {count} položek.",
     "gbe-goldberg-restore-failed": "Obnovení GBE/Goldberg se nezdařilo",
     "could-not-restore-this-gbe-goldberg-backup": "Tuto zálohu GBE/Goldberg se nepodařilo obnovit.",
+    "restore-failed": "Obnovení selhalo",
+    "restore-uplay-r2-config": "Obnovit předchozí konfiguraci Uplay R2…",
+    "restore-uplay-r2-title": "Obnovení konfigurace Uplay R2",
+    "restore-uplay-r2-message": "Obnovit zálohu pořízenou před poslední opravou?",
+    "restore-uplay-r2-done": "Konfigurace obnovena.",
+    "could-not-restore-the-uplay-r2-setup": "Konfiguraci Uplay R2 se nepodařilo obnovit.",
     "select-install-folder-steam-api": "Vyberte složku instalace hry (kam má jít steam_api(64).dll)",
     "install-here": "Nainstalovat sem",
     "backing-up-before-fix": "Zálohování před fixem…",
@@ -1151,6 +1169,11 @@
     "n-nno-uninstaller-was-found-in-this-folder-the-files-will-be-mov": "V této složce nebyl nalezen žádný odeinstalátor. Soubory budou přesunuty do Koše (lze je obnovit).",
     "delete": "Smazat",
     "delete-failed": "Smazání se nezdařilo",
+    "uninstalling-game": "Odinstalace…",
+    "deleting-game-folder": "Přesouvání do koše…",
+    "delete-preset-title": "Smazat předvolbu",
+    "delete-preset-message": "Smazat předvolbu \"{name}\"?",
+    "delete-preset-detail": "Soubory předvolby budou odstraněny z disku. Tuto akci nelze vrátit zpět.",
     "could-not-move-the-folder-to-the-recycle-bin": "Složku se nepodařilo přesunout do Koše.",
     "re-download-cover": "Znovu stáhnout obal",
     "use-another-steam-appid": "Použít jiné ID aplikace Steam…",

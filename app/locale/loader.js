@@ -418,11 +418,26 @@ function translateUI(lang, locale, template) {
     $('#cust-lbl-font').text(clear(c.fontSize));
     $('#cust-lbl-radius').text(clear(c.corners));
     $('#cust-lbl-icon').text(clear(c.iconSize));
-    $('#cust-lbl-create').text(clear(c.create));
+    $('#cust-lbl-width').text(clear(c.width));
+    $('#cust-lbl-load').text(clear(c.edit));
+    $('#cust-lbl-preview').text(clear(c.preview));
+    $('#cust-lbl-delete').text(clear(c.deleteLabel));
+    // The create button and the preset picker swap their wording at runtime (create vs update,
+    // "new preset" placeholder), so both spellings are parked on data attributes here and the
+    // settings code re-renders them on the event below.
+    $('#cust-lbl-create').attr('data-create', clear(c.create)).attr('data-update', clear(c.update)).text(clear(c.create));
+    $('#cust-load').attr('data-new', clear(c.editNew));
     $('#cust-name').attr('placeholder', clear(c.namePlaceholder));
-    $('#cust-status').attr('data-err', clear(c.errName)).attr('data-ok', clear(c.created)).attr('data-fail', clear(c.failed));
+    $('#cust-status')
+      .attr('data-err', clear(c.errName))
+      .attr('data-ok', clear(c.created))
+      .attr('data-updated', clear(c.updated))
+      .attr('data-loaded', clear(c.loaded))
+      .attr('data-deleted', clear(c.deleted))
+      .attr('data-fail', clear(c.failed));
     if (c.previewTitle) $('#cust-preview-title').text(clear(c.previewTitle));
     if (c.previewDetail) $('#cust-preview-detail').text(clear(c.previewDetail));
+    $(document).trigger('customiser-labels-changed');
   }
   // Localize the 8 overlay position options + expose the dynamic "None" sound label as a data attr.
   $("#option_overlayPosition option[value='center-bottom']").text(clear(template.settings.notification.option.position.centerBottom));

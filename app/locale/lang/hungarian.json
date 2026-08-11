@@ -65,7 +65,7 @@
     "restoreGBE": "Legutóbbi GBE/Goldberg mentés visszaállítása…",
     "installGBE": "Emulátorjavítás alkalmazása…",
     "removeDRM": "DRM eltávolítása…",
-    "crackfix": "Közösségi javítás keresése…",
+    "crackfix": "Közösségi javítás keresése (CrakFiles)…",
     "openIconCache": "Ikon-gyorsítótár",
     "openDbCache": "Adat-gyorsítótár (.db)",
     "openInstallLocation": "Játéktelepítés",
@@ -426,6 +426,15 @@
           "fontSize": "Betűméret",
           "corners": "Sarkok",
           "iconSize": "Ikonméret",
+          "deleteLabel": "Törlés",
+          "deleted": "Törölve:",
+          "width": "Szélesség",
+          "edit": "Előbeállítás szerkesztése",
+          "editNew": "Új előbeállítás…",
+          "preview": "Előnézet",
+          "update": "Előbeállítás frissítése",
+          "updated": "Frissítve és kiválasztva:",
+          "loaded": "Betöltve:",
           "create": "Előbeállítás létrehozása",
           "errName": "Először adj meg egy nevet",
           "created": "Létrehozva és kiválasztva:",
@@ -582,7 +591,7 @@
       },
       "ea": {
         "name": "EA Desktop",
-        "description": "Beolvassa az EA Desktop helyi teljesítménynaplóját — csak az EA által kezelt mappákon kívül telepített játékokhoz (feltört címek)."
+        "description": "Beolvassa az EA Desktop helyi teljesítménynaplóját (az EA által kezelt mappákon kívüli játékokhoz)."
       },
       "xboxPc": {
         "name": "Xbox PC",
@@ -668,7 +677,8 @@
         "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
         "The Watchdog runs in the background — it must be running for live notifications and playtime.",
         "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0."
+        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+        "Minden beállítási szakasz összecsukható a saját fejlécével — a nyíl lefelé mutat, ha nyitva van, oldalra, ha zárva. A választásai megmaradnak."
       ],
       "steamTitle": "Steam emulátorok",
       "steam": [
@@ -708,7 +718,8 @@
       "themes": [
         "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
         "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown."
+        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+        "Az előbeállítás-készítő mentés előtt valódi felugró ablakként mutatja a kinézetet, újra megnyit egy mentett előbeállítást módosításra, és törli azokat, amelyeket nem tart meg."
       ],
       "configTitle": "Generált konfigurációk",
       "config": [
@@ -732,7 +743,8 @@
       "troubleshoot": [
         "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
         "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue."
+        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+        "A naplók hozzáfűződnek, így egy összeomlás túléli a következő indítást. Minden futás munkamenet-jelöléssel és egy [diag] blokkal indul (verziók, útvonalak, kijelzők) — illessze be a hibajegybe."
       ]
     },
     "advanced": {
@@ -835,7 +847,7 @@
     "libraryList": "Könyvtári mappák",
     "emptyList": "Semmi sem lett hozzáadva ehhez a munkamenethez.",
     "settingsTitle": "Ajánlott beállítások",
-    "settingsCopy": "Ezekre a főkapcsolókra van szüksége a legtöbb felhasználónak. Később minden szerkeszthető marad a Beállításokban.",
+    "settingsCopy": "Ezek a legfontosabb kapcsolók, amelyekre elsőként szükség van. Minden később is módosítható a Beállításokban: keressen a panel tetején, csukjon össze bármely szakaszt a fejlécével, a többiért nyissa meg a Súgó lapot.",
     "source": "Steam játékok megjelenítése",
     "notifications": "Értesítések",
     "notificationTest": "Értesítés tesztelése",
@@ -1010,6 +1022,12 @@
     "restored-x-item-s": "{count} elem visszaállítva.",
     "gbe-goldberg-restore-failed": "A GBE/Goldberg visszaállítás nem sikerült",
     "could-not-restore-this-gbe-goldberg-backup": "Ennek a GBE/Goldberg mentésnek a visszaállítása nem sikerült.",
+    "restore-failed": "A visszaállítás sikertelen",
+    "restore-uplay-r2-config": "Az előző Uplay R2 beállítás visszaállítása…",
+    "restore-uplay-r2-title": "Uplay R2 beállítás visszaállítása",
+    "restore-uplay-r2-message": "Visszaállítja a legutóbbi javítás előtt készült mentést?",
+    "restore-uplay-r2-done": "A beállítás visszaállítva.",
+    "could-not-restore-the-uplay-r2-setup": "Az Uplay R2 beállítás visszaállítása nem sikerült.",
     "select-install-folder-steam-api": "Válaszd ki a játék telepítési mappáját (ahová a steam_api(64).dll kerül)",
     "install-here": "Telepítés ide",
     "backing-up-before-fix": "Biztonsági mentés a fix előtt…",
@@ -1151,6 +1169,11 @@
     "n-nno-uninstaller-was-found-in-this-folder-the-files-will-be-mov": "Ebben a mappában nem található eltávolító. A fájlok a Lomtárba kerülnek (visszaállíthatók).",
     "delete": "Törlés",
     "delete-failed": "A törlés nem sikerült",
+    "uninstalling-game": "Eltávolítás…",
+    "deleting-game-folder": "Áthelyezés a Lomtárba…",
+    "delete-preset-title": "Előbeállítás törlése",
+    "delete-preset-message": "Törli a(z) \"{name}\" előbeállítást?",
+    "delete-preset-detail": "Az előbeállítás fájljai törlődnek a lemezről. A művelet nem vonható vissza.",
     "could-not-move-the-folder-to-the-recycle-bin": "A mappa áthelyezése a Lomtárba nem sikerült.",
     "re-download-cover": "Borító újratöltése",
     "use-another-steam-appid": "Másik Steam alkalmazásazonosító használata…",

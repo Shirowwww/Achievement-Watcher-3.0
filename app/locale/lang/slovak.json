@@ -65,7 +65,7 @@
     "restoreGBE": "Obnoviť poslednú zálohu GBE/Goldberg…",
     "installGBE": "Použiť opravu emulátora…",
     "removeDRM": "Odstrániť DRM…",
-    "crackfix": "Nájsť komunitnú opravu…",
+    "crackfix": "Nájsť komunitnú opravu (CrakFiles)…",
     "openIconCache": "Vyrovnávacia pamäť ikon",
     "openDbCache": "Vyrovnávacia pamäť dát (.db)",
     "openInstallLocation": "Inštalácia hry",
@@ -426,6 +426,15 @@
           "fontSize": "Veľkosť písma",
           "corners": "Rohy",
           "iconSize": "Veľkosť ikony",
+          "deleteLabel": "Odstrániť",
+          "deleted": "Odstránené:",
+          "width": "Šírka",
+          "edit": "Upraviť predvoľbu",
+          "editNew": "Nová predvoľba…",
+          "preview": "Náhľad",
+          "update": "Aktualizovať predvoľbu",
+          "updated": "Aktualizované a vybrané:",
+          "loaded": "Načítané:",
           "create": "Vytvoriť predvoľbu",
           "errName": "Najprv zadajte názov",
           "created": "Vytvorené a vybrané:",
@@ -582,7 +591,7 @@
       },
       "ea": {
         "name": "EA Desktop",
-        "description": "Číta miestny záznam achievementov EA Desktop — iba pre hry nainštalované mimo priečinkov spravovaných EA (cracknuté tituly)."
+        "description": "Číta lokálny záznam úspechov EA Desktop (pre hry mimo priečinkov spravovaných EA)."
       },
       "xboxPc": {
         "name": "Xbox PC",
@@ -668,7 +677,8 @@
         "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
         "The Watchdog runs in the background — it must be running for live notifications and playtime.",
         "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0."
+        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+        "Každú sekciu nastavení možno zbaliť pod jej záhlavie — šípka nadol znamená otvorené, nabok zatvorené. Vaše voľby sa pamätajú."
       ],
       "steamTitle": "Steam emulátory",
       "steam": [
@@ -708,7 +718,8 @@
       "themes": [
         "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
         "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown."
+        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+        "Tvorca predvolieb dokáže ukázať návrh ako skutočné oznámenie ešte pred uložením, znova otvoriť uloženú predvoľbu na úpravu a odstrániť tie, ktoré si nenecháte."
       ],
       "configTitle": "Vygenerované konfigurácie",
       "config": [
@@ -732,7 +743,8 @@
       "troubleshoot": [
         "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
         "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue."
+        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+        "Protokoly sa pripájajú, takže pád prežije ďalšie spustenie. Každý beh začína značkou relácie a blokom [diag] (verzie, cesty, obrazovky) — vložte ho do hlásenia."
       ]
     },
     "advanced": {
@@ -835,7 +847,7 @@
     "libraryList": "Priečinky knižnice",
     "emptyList": "Do tejto relácie nebolo pridané nič.",
     "settingsTitle": "Odporúčané nastavenia",
-    "settingsCopy": "Toto sú hlavné prepínače, ktoré väčšina používateľov potrebuje ako prvé. Všetko zostáva upraviteľné neskôr v Nastaveniach.",
+    "settingsCopy": "Toto sú hlavné prepínače, ktoré väčšina potrebuje najskôr. Všetko zostáva upraviteľné neskôr v Nastaveniach: hľadajte v hornej časti panela, ľubovoľnú sekciu zbaľte jej záhlavím a zvyšok nájdete na karte Pomocník.",
     "source": "Zobraziť hry Steam",
     "notifications": "Upozornenia",
     "notificationTest": "Otestovať upozornenie",
@@ -1010,6 +1022,12 @@
     "restored-x-item-s": "Obnovených {count} položiek.",
     "gbe-goldberg-restore-failed": "Obnovenie GBE/Goldberg sa nepodarilo",
     "could-not-restore-this-gbe-goldberg-backup": "Túto zálohu GBE/Goldberg sa nepodarilo obnoviť.",
+    "restore-failed": "Obnovenie zlyhalo",
+    "restore-uplay-r2-config": "Obnoviť predchádzajúcu konfiguráciu Uplay R2…",
+    "restore-uplay-r2-title": "Obnovenie konfigurácie Uplay R2",
+    "restore-uplay-r2-message": "Obnoviť zálohu vytvorenú pred poslednou opravou?",
+    "restore-uplay-r2-done": "Konfigurácia obnovená.",
+    "could-not-restore-the-uplay-r2-setup": "Konfiguráciu Uplay R2 sa nepodarilo obnoviť.",
     "select-install-folder-steam-api": "Vyberte priečinok inštalácie hry (kam má ísť steam_api(64).dll)",
     "install-here": "Nainštalovať sem",
     "backing-up-before-fix": "Zálohovanie pred fixom…",
@@ -1151,6 +1169,11 @@
     "n-nno-uninstaller-was-found-in-this-folder-the-files-will-be-mov": "V tomto priečinku sa nenašiel žiadny odinštalátor. Súbory sa presunú do Koša (možno ich obnoviť).",
     "delete": "Vymazať",
     "delete-failed": "Vymazanie sa nepodarilo",
+    "uninstalling-game": "Odinštalovanie…",
+    "deleting-game-folder": "Presúvanie do koša…",
+    "delete-preset-title": "Odstrániť predvoľbu",
+    "delete-preset-message": "Odstrániť predvoľbu \"{name}\"?",
+    "delete-preset-detail": "Súbory predvoľby budú odstránené z disku. Túto akciu nemožno vrátiť späť.",
     "could-not-move-the-folder-to-the-recycle-bin": "Priečinok sa nepodarilo presunúť do Koša.",
     "re-download-cover": "Znova stiahnuť obal",
     "use-another-steam-appid": "Použiť iné ID aplikácie Steam…",

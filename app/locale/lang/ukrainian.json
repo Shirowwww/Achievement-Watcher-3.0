@@ -65,7 +65,7 @@
     "restoreGBE": "Відновити останню резервну копію GBE/Goldberg…",
     "installGBE": "Застосувати виправлення емулятора…",
     "removeDRM": "Видалити DRM…",
-    "crackfix": "Знайти виправлення спільноти…",
+    "crackfix": "Знайти фікс спільноти (CrakFiles)…",
     "openIconCache": "Кеш значків",
     "openDbCache": "Кеш даних (.db)",
     "openInstallLocation": "Встановлення гри",
@@ -426,6 +426,15 @@
           "fontSize": "Розмір шрифту",
           "corners": "Кути",
           "iconSize": "Розмір значка",
+          "deleteLabel": "Видалити",
+          "deleted": "Видалено:",
+          "width": "Ширина",
+          "edit": "Змінити пресет",
+          "editNew": "Новий пресет…",
+          "preview": "Попередній перегляд",
+          "update": "Оновити пресет",
+          "updated": "Оновлено та вибрано:",
+          "loaded": "Завантажено:",
           "create": "Створити пресет",
           "errName": "Спочатку введіть ім'я",
           "created": "Створено та вибрано:",
@@ -582,7 +591,7 @@
       },
       "ea": {
         "name": "EA Desktop",
-        "description": "Читає локальний журнал досягнень EA Desktop — лише для ігор, встановлених поза керованими EA папками (зламані ігри)."
+        "description": "Читає локальний журнал досягнень EA Desktop (для ігор поза керованими EA теками)."
       },
       "xboxPc": {
         "name": "Xbox PC",
@@ -668,7 +677,8 @@
         "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
         "The Watchdog runs in the background — it must be running for live notifications and playtime.",
         "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0."
+        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+        "Кожен розділ налаштувань згортається під власним заголовком — стрілка вниз означає відкрито, убік — закрито. Ваш вибір запам’ятовується."
       ],
       "steamTitle": "Емулятори Steam",
       "steam": [
@@ -708,7 +718,8 @@
       "themes": [
         "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
         "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown."
+        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+        "Конструктор пресетів може показати оформлення справжнім спливаючим вікном до збереження, відкрити збережений пресет для зміни та видалити непотрібні."
       ],
       "configTitle": "Згенеровані конфіги",
       "config": [
@@ -732,7 +743,8 @@
       "troubleshoot": [
         "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
         "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue."
+        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+        "Журнали дописуються, тож збій переживе наступний запуск. Кожен запуск починається з позначки сесії та блоку [diag] (версії, шляхи, екрани) — вставте його у звіт."
       ]
     },
     "advanced": {
@@ -835,7 +847,7 @@
     "libraryList": "Бібліотечні папки",
     "emptyList": "Цей сеанс нічого не додав.",
     "settingsTitle": "Рекомендовані налаштування",
-    "settingsCopy": "Це основні перемикачі, які в першу чергу потрібні більшості користувачів. Усе можна редагувати пізніше в налаштуваннях.",
+    "settingsCopy": "Це основні перемикачі, потрібні найперше. Усе залишається змінним пізніше в Налаштуваннях: шукайте вгорі панелі, згорніть будь-який розділ за його заголовком, а решту знайдете на вкладці «Довідка».",
     "source": "Показати ігри Steam",
     "notifications": "Сповіщення",
     "notificationTest": "Перевірити сповіщення",
@@ -1010,6 +1022,12 @@
     "restored-x-item-s": "Відновлено елементів: {count}.",
     "gbe-goldberg-restore-failed": "Не вдалося відновити GBE/Goldberg",
     "could-not-restore-this-gbe-goldberg-backup": "Не вдалося відновити цю резервну копію GBE/Goldberg.",
+    "restore-failed": "Помилка відновлення",
+    "restore-uplay-r2-config": "Відновити попередню конфігурацію Uplay R2…",
+    "restore-uplay-r2-title": "Відновлення конфігурації Uplay R2",
+    "restore-uplay-r2-message": "Відновити копію, створену перед останнім виправленням?",
+    "restore-uplay-r2-done": "Конфігурацію відновлено.",
+    "could-not-restore-the-uplay-r2-setup": "Не вдалося відновити конфігурацію Uplay R2.",
     "select-install-folder-steam-api": "Виберіть папку встановлення гри (куди має потрапити steam_api(64).dll)",
     "install-here": "Встановити сюди",
     "backing-up-before-fix": "Створення резервної копії перед фіксом…",
@@ -1151,6 +1169,11 @@
     "n-nno-uninstaller-was-found-in-this-folder-the-files-will-be-mov": "У цій папці не знайдено деінсталятора. Файли буде переміщено до Кошика (їх можна відновити).",
     "delete": "Видалити",
     "delete-failed": "Не вдалося видалити",
+    "uninstalling-game": "Видалення…",
+    "deleting-game-folder": "Переміщення в кошик…",
+    "delete-preset-title": "Видалити пресет",
+    "delete-preset-message": "Видалити пресет \"{name}\"?",
+    "delete-preset-detail": "Файли пресета буде видалено з диска. Цю дію не можна скасувати.",
     "could-not-move-the-folder-to-the-recycle-bin": "Не вдалося перемістити папку до Кошика.",
     "re-download-cover": "Завантажити обкладинку заново",
     "use-another-steam-appid": "Використати інший ID застосунку Steam…",

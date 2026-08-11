@@ -65,7 +65,7 @@
     "restoreGBE": "恢复最新的 GBE/Goldberg 备份…",
     "installGBE": "应用模拟器修复…",
     "removeDRM": "移除 DRM…",
-    "crackfix": "查找社区修复…",
+    "crackfix": "查找社区修复 (CrakFiles)…",
     "openIconCache": "图标缓存",
     "openDbCache": "数据缓存 (.db)",
     "openInstallLocation": "游戏安装位置",
@@ -426,6 +426,15 @@
           "fontSize": "字体大小",
           "corners": "圆角",
           "iconSize": "图标大小",
+          "deleteLabel": "删除",
+          "deleted": "已删除：",
+          "width": "宽度",
+          "edit": "编辑预设",
+          "editNew": "新建预设…",
+          "preview": "预览",
+          "update": "更新预设",
+          "updated": "已更新并选择：",
+          "loaded": "已加载：",
           "create": "创建预设",
           "errName": "请先输入名称",
           "created": "已创建并选择：",
@@ -582,7 +591,7 @@
       },
       "ea": {
         "name": "EA Desktop",
-        "description": "读取 EA Desktop 的本地成就日志 — 仅限安装在 EA 托管文件夹之外的游戏（破解版）。"
+        "description": "读取 EA Desktop 的本地成就日志（适用于 EA 管理文件夹之外的游戏）。"
       },
       "xboxPc": {
         "name": "Xbox PC",
@@ -668,7 +677,8 @@
         "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
         "The Watchdog runs in the background — it must be running for live notifications and playtime.",
         "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0."
+        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+        "每个设置分区都可以在其标题下折叠——展开时箭头朝下，折叠时朝向侧面。你的选择会被记住。"
       ],
       "steamTitle": "Steam 模拟器",
       "steam": [
@@ -708,7 +718,8 @@
       "themes": [
         "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
         "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown."
+        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+        "预设创建器可以在保存前以真实弹窗预览设计、重新打开已保存的预设进行修改，并删除不需要的预设。"
       ],
       "configTitle": "生成的配置",
       "config": [
@@ -732,7 +743,8 @@
       "troubleshoot": [
         "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
         "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue."
+        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+        "日志采用追加写入，因此崩溃记录不会被下次启动覆盖。每次运行都以会话标记和 [diag] 区块（版本、路径、显示器）开头——请粘贴到问题报告中。"
       ]
     },
     "advanced": {
@@ -835,7 +847,7 @@
     "libraryList": "图书馆文件夹",
     "emptyList": "本次会议没有添加任何内容。",
     "settingsTitle": "推荐设置",
-    "settingsCopy": "这些是大多数用户首先需要的主要开关。稍后所有内容都可以在“设置”中编辑。",
+    "settingsCopy": "这些是大多数用户最先需要的主要选项。之后都可以在设置中修改：在面板顶部搜索，通过标题折叠任意分区，其余内容请查看“帮助”标签页。",
     "source": "显示 Steam 游戏",
     "notifications": "通知",
     "notificationTest": "测试通知",
@@ -1010,6 +1022,12 @@
     "restored-x-item-s": "已恢复 {count} 个项目。",
     "gbe-goldberg-restore-failed": "GBE/Goldberg 恢复失败",
     "could-not-restore-this-gbe-goldberg-backup": "无法恢复此 GBE/Goldberg 备份。",
+    "restore-failed": "恢复失败",
+    "restore-uplay-r2-config": "恢复上一个 Uplay R2 配置…",
+    "restore-uplay-r2-title": "恢复 Uplay R2 配置",
+    "restore-uplay-r2-message": "是否恢复上次修复前创建的备份？",
+    "restore-uplay-r2-done": "配置已恢复。",
+    "could-not-restore-the-uplay-r2-setup": "无法恢复 Uplay R2 配置。",
     "select-install-folder-steam-api": "选择游戏的安装文件夹（steam_api(64).dll 应放置的位置）",
     "install-here": "安装到这里",
     "backing-up-before-fix": "修复前正在备份…",
@@ -1151,6 +1169,11 @@
     "n-nno-uninstaller-was-found-in-this-folder-the-files-will-be-mov": "此文件夹中未找到卸载程序。文件将移到回收站（可恢复）。",
     "delete": "删除",
     "delete-failed": "删除失败",
+    "uninstalling-game": "正在卸载…",
+    "deleting-game-folder": "正在移动到回收站…",
+    "delete-preset-title": "删除预设",
+    "delete-preset-message": "删除预设“{name}”？",
+    "delete-preset-detail": "预设文件将从磁盘中删除，此操作无法撤销。",
     "could-not-move-the-folder-to-the-recycle-bin": "无法将文件夹移动到回收站。",
     "re-download-cover": "重新下载封面",
     "use-another-steam-appid": "使用另一个 Steam 应用 ID…",
