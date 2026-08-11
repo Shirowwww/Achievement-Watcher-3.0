@@ -2916,11 +2916,8 @@ function openGameFromLaunchArgs(args) {
 function resolvePresetFolder(presetName) {
   const requestedRaw = String(presetName || 'Shirow');
   const requested = requestedRaw === 'Raposo' ? 'Shirow' : requestedRaw;
-  const roots = [
-    path.join(__dirname, '../presets/Default Presets'),
-    path.join(__dirname, '../presets/Users Presets'),
-    path.join(__dirname, '../presets'),
-  ];
+  // Generated presets (<userData>) first, then the bundled libraries, then the flat legacy folder.
+  const roots = [usersPresetsDir(), ...bundledPresetRoots(), path.join(__dirname, '../presets')];
   for (const root of roots) {
     const f = path.join(root, requested);
     if (fs.existsSync(path.join(f, 'index.html'))) return f;
@@ -3410,7 +3407,7 @@ const PREVIEW_PRESET_NAME = '__aw-preview__';
 // List available preset names (Default Presets + Users Presets) for the settings dropdown.
 ipcMain.handle('list-presets', async () => {
   const out = [];
-  const roots = [path.join(__dirname, '../presets/Default Presets'), path.join(__dirname, '../presets/Users Presets')];
+  const roots = [...bundledPresetRoots(), usersPresetsDir()];
   for (const root of roots) {
     try {
       for (const name of fs.readdirSync(root)) {
@@ -3439,7 +3436,21 @@ function sanitizePresetName(raw) {
     .slice(0, 48);
 }
 
-const usersPresetsDir = () => path.join(__dirname, '../presets/Users Presets');
+/*
+  Where a preset the builder generates is written: <userData>, never the app folder. Once packaged,
+  app/presets lives inside app.asar — a single file — so mkdir below it fails with ENOTDIR, which
+  broke Preview and Save on every installed build while a dev run worked. Sounds (userSoundsDir) and
+  user themes already work this way, and it also means generated presets survive an update.
+  The rule itself lives in util/customPreset.js so it can be unit-tested.
+*/
+const usersPresetsDir = () => customPreset.generatedPresetsDir(userData);
+
+// Read-only preset libraries shipped with the app. Generated presets are looked up first, so
+// re-saving under a bundled name shadows it rather than being ignored.
+const bundledPresetRoots = () => [
+  path.join(__dirname, '../presets/Default Presets'),
+  path.join(__dirname, '../presets/Users Presets'),
+];
 
 // The builder's own options, stored next to the generated files. Without it a generated preset is
 // write-only: the CSS can be read back but the eight slider/colour values that produced it cannot,

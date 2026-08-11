@@ -102,3 +102,32 @@ test('a generated preset stores the builder options that produced it, so it can 
   // read-custom-preset re-clamps what it read, so a hand-edited options file cannot widen the ranges.
   assert.match(init, /return \{ name: safe, \.\.\.customPresetNumbers\(parsed\) \};/);
 });
+
+test('generated presets are written under userData, never inside the packaged app', () => {
+  const { generatedPresetsDir, GENERATED_PRESETS_SUBPATH } = require(path.join(appRoot, 'util', 'customPreset.js'));
+
+  const userData = path.join('C:', 'Users', 'someone', 'AppData', 'Roaming', 'Achievement Watcher 3.0');
+  const dir = generatedPresetsDir(userData);
+
+  assert.ok(dir.startsWith(userData + path.sep), `${dir} is not under userData`);
+  assert.equal(dir, path.join(userData, ...GENERATED_PRESETS_SUBPATH));
+  // Packaging puts app/presets inside app.asar, which is a file: mkdir below it fails with ENOTDIR,
+  // so Preview and Save silently died on every installed build. Nothing may point back at the app.
+  assert.doesNotMatch(dir, /app\.asar/i);
+  assert.throws(() => generatedPresetsDir(''), /userData path is required/);
+});
+
+test('init.js resolves generated presets from userData and reads the bundled libraries separately', () => {
+  const init = fs.readFileSync(path.join(appRoot, 'electron', 'init.js'), 'utf8');
+
+  // The single writable root, taken from the tested helper rather than rebuilt by hand.
+  assert.match(init, /const usersPresetsDir = \(\) => customPreset\.generatedPresetsDir\(userData\);/);
+  // Every write goes through it...
+  const write = /function writeCustomPreset[\s\S]*?\n}/.exec(init);
+  assert.ok(write, 'writeCustomPreset not found');
+  assert.match(write[0], /path\.join\(usersPresetsDir\(\), name\)/);
+  assert.doesNotMatch(write[0], /__dirname/, 'writeCustomPreset still targets the app folder');
+  // ...and the notification lookup still finds both the generated and the bundled presets.
+  assert.match(init, /const roots = \[usersPresetsDir\(\), \.\.\.bundledPresetRoots\(\)/);
+  assert.match(init, /const roots = \[\.\.\.bundledPresetRoots\(\), usersPresetsDir\(\)\]/);
+});

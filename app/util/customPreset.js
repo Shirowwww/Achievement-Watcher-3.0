@@ -9,7 +9,10 @@
 // compatible with createNotificationWindow.
 //
 // Pure string/number work, deliberately free of electron and fs: init.js owns writing the files,
-// this module owns what goes in them.
+// this module owns what goes in them — and, since it decides the layout of a generated preset, the
+// directory they belong in (generatedPresetsDir below; `path` only, still no fs).
+
+const path = require('path');
 
 const CUSTOM_PRESET_INDEX_HTML_PARTS = [
   '<!DOCTYPE html>',
@@ -184,9 +187,26 @@ function buildCustomPresetCss(o) {
   ].join('\n');
 }
 
+/*
+  Where generated presets are written. Under <userData>, never under the app folder: once packaged,
+  app/presets sits inside app.asar, and a mkdir below a file fails with ENOTDIR — which silently
+  broke Preview and Save on every installed build while a dev run, where the same path is a real
+  directory, worked. Keeping them in userData also means they survive an update.
+
+  Exported (and tested) rather than inlined in init.js so the rule cannot drift back.
+*/
+const GENERATED_PRESETS_SUBPATH = ['presets', 'Users Presets'];
+
+function generatedPresetsDir(userDataPath) {
+  if (!userDataPath) throw new Error('generatedPresetsDir: userData path is required');
+  return path.join(userDataPath, ...GENERATED_PRESETS_SUBPATH);
+}
+
 module.exports = {
   CUSTOM_PRESET_WINDOW_MARGIN,
+  GENERATED_PRESETS_SUBPATH,
   customPresetNumbers,
   buildCustomPresetHtml,
   buildCustomPresetCss,
+  generatedPresetsDir,
 };
