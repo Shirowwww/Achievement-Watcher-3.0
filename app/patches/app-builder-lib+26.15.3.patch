@@ -1,0 +1,17 @@
+diff --git a/node_modules/app-builder-lib/templates/nsis/installSection.nsh b/node_modules/app-builder-lib/templates/nsis/installSection.nsh
+index 053772f..db30611 100644
+--- a/node_modules/app-builder-lib/templates/nsis/installSection.nsh
++++ b/node_modules/app-builder-lib/templates/nsis/installSection.nsh
+@@ -3,7 +3,11 @@
+ InitPluginsDir
+ 
+ ${IfNot} ${Silent}
+-  SetDetailsPrint none
++  # Achievement Watcher: upstream sets "none" here, which blanks the status line above the progress
++  # bar AND empties the details pane for the whole install — including every DetailPrint written by
++  # build/installer.nsh. "both" is the NSIS default: the status line names the current step and the
++  # details pane (shown via ShowInstDetails in build/installer.nsh) keeps the full log.
++  SetDetailsPrint both
+ ${endif}
+ 
+ StrCpy $appExe "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
