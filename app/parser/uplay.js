@@ -11,10 +11,7 @@ const steamLanguages = require(path.join(__dirname, '../locale/steam.json'));
 
 let debug;
 module.exports.initDebug = ({ isDev, userDataPath }) => {
-  // Was `remote.getCurrentWindow().isDev` — but `remote` is not imported here, so this threw the
-  // moment it ran. It never actually ran (achievements.initDebug forgot to call us), which left
-  // `debug` undefined and made every `debug.log(...)` throw "Cannot read property 'log' of
-  // undefined", skipping every UPLAY* game. Use the passed-in flag, like the other parsers.
+  // Use the passed-in debug flag; this parser also runs outside the renderer.
   debug = new (require('../util/logger'))({
     console: isDev || false,
     file: path.join(userDataPath, 'logs/uplay.log'),
@@ -22,7 +19,7 @@ module.exports.initDebug = ({ isDev, userDataPath }) => {
 };
 
 module.exports.scan = async () => {
-  //LumaPlay
+  // LumaPlay.
   let result = [];
   try {
     let users = listRegistryAllSubkeys('HKCU', 'SOFTWARE/LumaPlay');

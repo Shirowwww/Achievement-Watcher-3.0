@@ -371,11 +371,12 @@ function normalizeXboxAchievement(raw = {}) {
     media.find((m) => /icon/i.test(String(m?.mediaType || m?.type || '')))?.url,
     media[0]?.url
   );
+  const hidden = [raw?.isSecret, raw?.hidden].some((value) => value === true || value === 1 || /secret/i.test(String(value || '')));
   return {
     id: String(id),
     displayName: firstNonEmpty(raw?.name, raw?.displayName, id),
     description: firstNonEmpty(raw?.description, raw?.blurb, ''),
-    hidden: /secret/i.test(String(raw?.isSecret || raw?.hidden || '')),
+    hidden,
     icon,
     gamerscore: Number(raw?.rewards?.[0]?.value ?? raw?.gamerscore) || 0,
     rarity: Number.isFinite(rarity) ? Math.min(100, Math.max(0, rarity)) : null,
@@ -386,6 +387,61 @@ function normalizeXboxAchievement(raw = {}) {
       max_progress: Number.isFinite(progressMax) ? progressMax : undefined,
     },
   };
+}
+
+function finiteSnapshotNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : undefined;
+}
+
+function normalizedXboxSnapshot(value = {}) {
+  const snapshot = value && typeof value === 'object' ? value : {};
+  const result = { earned: snapshot.earned === true };
+  const earnedTime = finiteSnapshotNumber(snapshot.earned_time);
+  if (earnedTime && earnedTime > 0) result.earned_time = Math.floor(earnedTime);
+  for (const field of ['progress', 'max_progress']) {
+    const number = finiteSnapshotNumber(snapshot[field]);
+    if (number !== undefined) result[field] = number;
+  }
+  return result;
+}
+
+// Convert the normalized achievement rows returned by Xbox Network into the cache shape used by
+// both the library parser and the Watchdog. Keeping this separate from importLibrary makes the
+// state write deterministic and prevents the schema-only import from silently displaying 0%.
+function buildXboxStateSnapshot(achievements = []) {
+  const snapshot = {};
+  for (const achievement of Array.isArray(achievements) ? achievements : []) {
+    const id = String(achievement?.id || '').trim();
+    if (!id) continue;
+    snapshot[id] = normalizedXboxSnapshot(achievement.snapshot);
+  }
+  return snapshot;
+}
+
+// Xbox's API can briefly return stale/partial state while a title is synchronizing. Merge fresh
+// imports monotonically with the existing local snapshot: an already observed unlock is never
+// cleared, its earliest known unlock time is retained, and numeric progress never moves backwards.
+// Unknown old ids stay in the cache too, so a schema refresh cannot erase a live Watchdog update.
+function mergeXboxStateSnapshots(previous = {}, fresh = {}) {
+  const before = previous && typeof previous === 'object' && !Array.isArray(previous) ? previous : {};
+  const incoming = fresh && typeof fresh === 'object' && !Array.isArray(fresh) ? fresh : {};
+  const merged = {};
+  for (const id of new Set([...Object.keys(before), ...Object.keys(incoming)])) {
+    const oldValue = normalizedXboxSnapshot(before[id]);
+    const newValue = normalizedXboxSnapshot(incoming[id]);
+    const entry = { earned: oldValue.earned || newValue.earned };
+
+    const times = [oldValue.earned_time, newValue.earned_time].filter((value) => value && value > 0);
+    if (times.length) entry.earned_time = Math.min(...times);
+
+    for (const field of ['progress', 'max_progress']) {
+      const values = [oldValue[field], newValue[field]].filter((value) => value !== undefined);
+      if (values.length) entry[field] = Math.max(...values);
+    }
+    merged[id] = entry;
+  }
+  return merged;
 }
 
 // ---- Local install discovery ----
@@ -404,15 +460,16 @@ function parseMicrosoftGameConfig(configPath) {
   const titleIdHex = titleIdAttr || titleIdTag;
   const packageFamilyName = pick(['PackageFamilyName', 'packageFamilyName']);
   const applicationId = pick(['AppId', 'appId']);
+  const executable = pick(['executable', 'Executable']);
   return {
     titleId: titleIdHex ? normalizeTitleId(titleIdHex) : '',
     title: firstNonEmpty(pick(['name', 'Name']), path.basename(path.dirname(configPath))),
     installLocation: path.dirname(configPath),
-    executable: pick(['executable', 'Executable']),
+    executable,
     packageFamilyName,
     applicationId,
     aumid: packageFamilyName && applicationId ? `${packageFamilyName}!${applicationId}` : '',
-    processName: pick(['executable', 'Executable']) ? path.basename(pick(['executable', 'Executable'])) : '',
+    processName: executable ? path.basename(executable) : '',
   };
 }
 
@@ -618,10 +675,11 @@ async function importLibrary(options = {}) {
 
   const installations = await discoverXboxPcInstallations();
   const installedByTitleId = new Map(installations.filter((e) => e.titleId).map((e) => [e.titleId, e]));
+  const installedTitleIds = new Set(installedByTitleId.keys());
   const history = await fetchXboxTitleHistory({ ...options, auth });
   const pcTitles = new Map();
   for (const title of history) {
-    if (!isWindowsPcTitle(title, new Set(installedByTitleId.keys()))) continue;
+    if (!isWindowsPcTitle(title, installedTitleIds)) continue;
     const titleId = normalizeTitleId(title?.titleId ?? title?.id);
     if (titleId) pcTitles.set(titleId, title);
   }
@@ -695,8 +753,10 @@ async function importLibrary(options = {}) {
         },
       };
       const previous = readJson(schemaCacheFile(titleId));
+      const previousState = readJson(stateCacheFile(titleId));
+      const freshState = buildXboxStateSnapshot(localized.achievements);
       writeJson(schemaCacheFile(titleId), schema);
-      writeJson(stateCacheFile(titleId), readJson(stateCacheFile(titleId)) || {});
+      writeJson(stateCacheFile(titleId), mergeXboxStateSnapshots(previousState, freshState));
       if (previous) result.updated += 1;
       else result.created += 1;
     } catch (error) {
@@ -773,6 +833,8 @@ module.exports = {
   normalizeXuid,
   normalizeXboxClientId,
   normalizeXboxAchievement,
+  buildXboxStateSnapshot,
+  mergeXboxStateSnapshots,
   isWindowsPcTitle,
   resolveXboxTitleArtwork,
   importLibrary,

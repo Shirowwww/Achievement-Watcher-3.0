@@ -1,18 +1,7 @@
 'use strict';
 
-// Exophase multi-language achievement metadata source. Exophase serves localized achievement
-// names + descriptions (~30 languages, keyed by the same API language names Steam uses) for
-// Steam/GOG/console games, which makes it a supplemental source for (a) key-less users whose
-// schema scrape returned blank descriptions and (b) emulator platforms (RPCS3/Xenia/ShadPS4)
-// that have no localized descriptions at all.
-//
-// Uses a static request-zero fetch parsed with node-html-parser (Exophase serves the award list as
-// static HTML), with a puppeteer-extra + stealth fallback (both already bundled for the
-// SteamHunters scrape) when the static fetch is blocked. No new dependencies.
-//
-// This is a schema-enrichment source, not a save-file parser: there is no local directory to
-// scan and no unlock state to read, so the scan/getGameData/getAchievements parts of the parser
-// contract intentionally don't apply (same category as util/rarity.js).
+// Fetch localized achievement metadata from Exophase.
+// It enriches schemas; it does not scan saves or provide unlock state.
 
 const fs = require('fs');
 const path = require('path');
@@ -414,18 +403,7 @@ async function downloadExophaseIcon(iconUrl, outPath) {
   }
 }
 
-// Fetch the achievement list in one or more languages.
-//
-// options:
-//   platform       'steam' | 'gog' | 'rpcs3' | 'xenia' | 'shadps4' | native exophase suffix
-//   title          game name — slug candidates are derived from it (or pass slugCandidates)
-//   slugCandidates optional explicit slug list (see buildExophaseSlugVariants)
-//   langKeys       Steam API language names to fetch (default: all known); english is always
-//                  fetched first as the baseline
-//
-// Returns { baseUrl, gameTitle, items: [{ index, titles: {lang: ...}, descriptions: {lang: ...},
-// icon_url }] }. A language whose page just serves the english text again is skipped, so its key
-// is absent — callers should fall back to `english`. Throws when no slug candidate resolves.
+// Fetch achievement data in one or more languages and return a normalized list.
 async function fetchExophaseAchievementsMultiLang(options = {}) {
   const platform = mapExophasePlatform(options.platform || '');
   if (!platform) throw new Error('Missing platform for Exophase');

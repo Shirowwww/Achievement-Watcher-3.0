@@ -1,8 +1,6 @@
 'use strict';
 
-// Standalone test (run via: node --test "../test/*.test.js").
-// Characterizes epic.isExclusive's cache lookup — including the uncached branch
-// (the //TODO at epic.js:44, which currently resolves to "not exclusive").
+// Covers the synchronous Epic cache lookup.
 const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
@@ -34,8 +32,8 @@ try {
   fs.writeFileSync(
     path.join(cacheDir, 'epic.db'),
     JSON.stringify([
-      { epicid: 'EPIC-ONLY' }, // no steamid → Epic-exclusive
-      { epicid: 'BOTH', steamid: '12345' }, // also on Steam → not exclusive
+      { epicid: 'EPIC-ONLY' }, // no Steam id: Epic-only
+      { epicid: 'BOTH', steamid: '12345' }, // also on Steam
     ])
   );
 
@@ -48,7 +46,7 @@ try {
   test('lookup by the steam id of a dual title → not exclusive', () => {
     assert.strictEqual(epic.isExclusive('12345'), false);
   });
-  test('appid absent from a populated cache → not exclusive (uncached TODO branch)', () => {
+  test('an appid absent from the cache is not assumed exclusive', () => {
     assert.strictEqual(epic.isExclusive('NOPE'), false);
   });
 

@@ -1,20 +1,7 @@
 'use strict';
 
-// Epic Games OFFICIAL achievement source. Unlike parser/epic.js (NemirtingasEpicEmu saves mapped
-// onto Steam appids), this reads the real Epic ecosystem:
-//   - installed games from the launcher's local manifests
-//     (%ProgramData%\Epic\EpicGamesLauncher\Data\Manifests\*.item),
-//   - each game's native achievement schema (names/descriptions/icons/rarity, localized) from Epic's
-//     PUBLIC GraphQL endpoint keyed by sandbox id — no login required,
-//   - the player's unlock state from the authenticated GraphQL playerProfile query WHEN the user has
-//     connected their Epic account (see util/epicAuth.js); without a token every achievement simply
-//     shows locked, exactly like a legit Ubisoft game.
-//
-// So Epic-exclusive games (no Steam equivalent) get their real achievement set with rarity, offline
-// for the schema and public rarity, and live unlock state once connected.
-//
-// Reads only the paths Achievement Watcher needs and uses the runtime's global fetch instead of
-// axios (no new dependency).
+// Read Epic launcher manifests and native achievement data.
+// Schemas are public; unlock state is available after the user connects Epic.
 
 const fs = require('fs');
 const path = require('path');

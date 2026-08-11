@@ -9,24 +9,8 @@ const SETTINGS_REL = path.join('cfg', 'options.ini');
 const LEGACY_PLAYTIME_ROOT = 'Software/Achievement Watcher/Playtime/Steam';
 const PLAYTIME_ROOT = 'Software/Achievement Watcher 3.0/Playtime/Steam';
 
-// What actually belongs to Achievement Watcher inside the legacy directory, and how to move it.
-//
-// The legacy folder is NOT only AW data: because 1.6.8 and 3.x are Electron apps, Chromium keeps its
-// whole profile there too (`Cache/Cache_Data`, `Code Cache`, `GPUCache`, `Local Storage`, `Network`,
-// `Partitions`, `Preferences`, …). Those are regenerated on first launch and copying them would both
-// waste gigabytes and carry a stale profile from another Electron version into the new home, so they
-// are simply not listed here. `logs/` is skipped for the same reason (the new directory starts its
-// own log set). `Media/`, `Source/` and `view/` are re-copied from the installed resources on every
-// launch (see copyAppDataAssets in electron/init.js), so they never need importing either.
-//
-//   mode 'copy' → a real byte copy. Used for the small, MUTABLE payload: 3.x rewrites these files in
-//                 place, and a shared inode would write straight back into 1.6.8's configuration.
-//   mode 'link' → a hard link (same NTFS volume), falling back to a copy. Used for the large
-//                 WRITE-ONCE payload: caches of downloaded tools, extracted icons and GBE backups.
-//                 A real copy here is ~1.8 GB on a well-used install — enough to look like a frozen
-//                 first launch and to double disk usage. Hard links are metadata-only, and because
-//                 NTFS only frees a file when its LAST link disappears, the data still survives the
-//                 1.6.8 uninstaller deleting the legacy folder — which is the entire point of #6.
+// Import AW data without copying Chromium's profile.
+// Mutable files are copied; large write-once caches use hard links when possible.
 const MIGRATION_PLAN = [
   { rel: 'cfg', mode: 'copy' },
   { rel: 'themes', mode: 'copy' },
@@ -131,16 +115,7 @@ function isAlreadyInitialized(target) {
   return fs.existsSync(path.join(target, MARKER_REL)) || fs.existsSync(path.join(target, SETTINGS_REL));
 }
 
-/**
- * One-time import of the legacy `%APPDATA%\Achievement Watcher` directory into the 3.0 directory.
- *
- * The original 1.6.8 app and this 3.x fork used to share the same folder, and 1.6.8's uninstaller
- * deletes it — silently destroying 3.x configuration (issue #6). From now on 3.x lives in its own
- * directory; the first launch after an upgrade imports the legacy data (never moves or deletes it)
- * and records a marker so a later 1.6.8 uninstall cannot touch 3.x data.
- *
- * Returns the legacy path when a migration happened, otherwise null.
- */
+/** Import legacy user data once without deleting the source directory. */
 function migrateLegacyUserData(newUserDataDir, options = {}) {
   const legacy = options.legacyDir || legacyUserDataDir();
   const target = String(newUserDataDir || '').trim();

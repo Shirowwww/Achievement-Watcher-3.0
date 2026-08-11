@@ -54,18 +54,13 @@ const l10n = require(path.join(appPath, 'locale/loader.js'));
 const coverStore = require(path.join(appPath, 'util/coverStore.js'));
 const uninstall = require(path.join(appPath, 'util/uninstall.js'));
 const { resolveGameRarityContext } = require(path.join(appPath, 'util/rarity.js'));
-// `t` and `escapeHtml` are declared once in ui/settings.js (which loads immediately before this
-// script). Classic <script>s share a single global lexical scope, so re-declaring them here would
-// throw "Identifier ... has already been declared" and abort app.js entirely — they are consumed
-// from that shared scope, exactly like `path` / `appPath` / `remote`.
+// `t` and `escapeHtml` come from ui/settings.js; classic scripts share their lexical scope.
 let debug = new (require(path.join(appPath, 'util/logger.js')))({
   console: isDev,
   file: path.join(userdatapath, `logs/${ipcRenderer.sendSync('get-app-name-sync')}.log`),
 });
 
-// Surface otherwise-silent renderer failures to the log file. Without this a thrown error or a
-// rejected promise outside an explicit .catch() disappears, which is how the UI ends up stuck on a
-// perpetual "Loading" with no trace of what went wrong.
+// Keep otherwise-silent renderer failures in the log.
 window.addEventListener('unhandledrejection', (e) => {
   try {
     debug.error(`[unhandledrejection] ${(e.reason && e.reason.stack) || e.reason}`);
@@ -99,8 +94,7 @@ function percentFromProgress(current, max) {
 }
 
 function getAchievementProgressState(achievement) {
-  // Float stat counters (e.g. distance driven) can carry long tails (3.3333333…); cap what the
-  // progress label prints at 2 decimals, leaving integers untouched.
+  // Keep float counters readable without changing integers.
   const max = Math.round(Math.max(0, finiteNumber(achievement.MaxProgress ?? achievement.max_progress, 0)) * 100) / 100;
   let current = Math.max(0, finiteNumber(achievement.CurProgress ?? achievement.progress, 0));
   const achieved = achievement.Achieved == 1 || achievement.Achieved === true;
@@ -112,27 +106,17 @@ function getAchievementProgressState(achievement) {
     current,
     max,
     percent,
-    // Binary 0/1 progress is just a normal locked/unlocked achievement, not a useful counter.
+    // 0/1 is a normal locked/unlocked state, not a counter.
     hasProgress: max > 1,
   };
 }
 
-// Background new-game detection. Every NEW_GAME_SCAN_INTERVAL_MS we run a cheap discovery-only pass
-// (no per-game achievement/icon loading) and compare the discovered appids against what's currently
-// on screen. When a genuinely new install appears we trigger a full refresh, which re-seeds the
-// watchdog gameIndex so the new game is tracked for playtime/notifications without the user having to
-// reopen the app. Kept idle-friendly: it skips when the user is mid-session (game detail or settings
-// open) and never overlaps an in-flight scan.
+// Periodically discover new installs without loading their full data.
 const NEW_GAME_SCAN_INTERVAL_MS = 3 * 60 * 1000; // 3 minutes
 let newGameScanTimer = null;
 let scanInFlight = false;
 
-// Appids discovery keeps reporting that never reach the rendered list. Discovery is deliberately
-// broader than the list: an entry can fail to load (no Steam data for it), or be filtered out by
-// "hide 0%" or a disabled source. Comparing discovery against the SCREEN alone therefore made every
-// such appid look brand-new on every tick, and the library refreshed itself every 3 minutes forever —
-// the "it reloads on its own" report. Each appid now triggers at most one refresh; once it is on
-// screen the `known` check below takes over, so a game that starts loading correctly is unaffected.
+// Remember discovered ids that do not reach the rendered list to avoid refresh loops.
 let unrenderedAppids = new Set();
 
 // One detection tick: cheap discover, diff against the games on screen, full refresh only on a new one.
@@ -147,8 +131,7 @@ async function runNewGameScan() {
     const fresh = discovered.filter((id) => !known.has(id) && !unrenderedAppids.has(id));
     if (fresh.length > 0) {
       debug.log(`[new-game-scan] ${fresh.length} new game(s) detected (${fresh.join(', ')}) — refreshing library`);
-      // Anything still absent from the list after this refresh is not a new install; remember it so
-      // the next tick doesn't refresh again for the same appid.
+      // Avoid retrying ids that still cannot be rendered on the next tick.
       for (const id of fresh) unrenderedAppids.add(id);
       app.onStart(); // re-seeds the watchdog gameIndex so the new game is tracked
     }
@@ -159,10 +142,7 @@ async function runNewGameScan() {
   }
 }
 
-// Called by the manual refresh (ui/refresh.js). An explicit refresh means "try everything again",
-// so drop both write-offs: the appids the background detector stopped treating as new, and the
-// appids the Steam lookup memoized as unresolvable. Automatic refreshes keep both, since their whole
-// purpose is to stop re-doing work that already failed.
+// Manual refresh clears the background and Steam miss caches.
 function forgetUnrenderedAppids() {
   unrenderedAppids = new Set();
   try {
@@ -172,8 +152,7 @@ function forgetUnrenderedAppids() {
   }
 }
 
-// (Re)arm the background detection. onStart can run more than once, so clear any previous
-// timer first to keep exactly one interval alive.
+// Keep one background discovery timer alive.
 function scheduleNewGameScan() {
   if (newGameScanTimer) clearInterval(newGameScanTimer);
   newGameScanTimer = setInterval(runNewGameScan, NEW_GAME_SCAN_INTERVAL_MS);
@@ -185,10 +164,7 @@ function resolveUnpackedBinary(binPath) {
   return fs.existsSync(unpacked) ? unpacked : normalized;
 }
 
-// Per-game-box busy overlay for the longer context-menu actions (GBE install, DRM removal): reuses
-// the `.loading-overlay` spinner already in every box and the `.wait` class that reveals it, adding an
-// optional status line under the spinner. `.text()` (not `.html()`) keeps any dynamic label inert.
-// clearGameBoxBusy restores the plain spinner so the box's other `.wait` users are unaffected.
+// Show progress for long per-game actions without exposing dynamic HTML.
 function setGameBoxBusy($box, text) {
   if (!$box || !$box.length) return;
   const content = $box.find('.loading-overlay .content').first();
@@ -202,9 +178,7 @@ function clearGameBoxBusy($box) {
   $box.find('.loading-overlay .content').first().html('<i class="fas fa-spinner fa-spin"></i>');
 }
 
-// Busy pointer for the whole window while the library is being scanned. Set on <html> so it also
-// covers the gaps between elements; `progress` (not `wait`) is the Windows convention for "still
-// usable, work in progress", which this is — the UI stays interactive while games stream in.
+// Show a progress cursor while the interactive library scan runs.
 function setLibraryBusyCursor(busy) {
   try {
     document.documentElement.classList.toggle('library-loading', busy === true);
@@ -213,14 +187,7 @@ function setLibraryBusyCursor(busy) {
   }
 }
 
-/*
-  Repaint one library tile's progress bar and the profile header from the current in-memory list.
-
-  The header counters are accumulated as games stream in during a scan, so nothing recomputed them
-  when a single game's unlock count changed afterwards: a manual unlock updated the achievement view
-  while the tile — and the totals above it — kept the number from the last full scan until a refresh.
-  Derived from `games` here rather than from running totals, so it is correct however it is reached.
-*/
+// Repaint one tile and the header counters from the current in-memory list.
 function refreshLibraryProgressFor(appid, games) {
   const list = Array.isArray(games) ? games : [];
   const game = list.find((g) => g && String(g.appid) === String(appid));
@@ -260,10 +227,7 @@ function refreshLibraryProgressFor(appid, games) {
   distEl.attr('title', average + '%');
 }
 
-// CrakFiles entries are fetched from a remote catalog, so their links are opened through the
-// http(s) guard rather than handed to Windows verbatim (util/externalLink.js). A rejected link is
-// surfaced instead of silently doing nothing, so a bad catalog entry is visible rather than a
-// button that looks broken.
+// Open catalog links only after validating their http(s) scheme.
 function openCatalogLink(url) {
   return openExternalSafe(remote.shell, url, (rejected) => {
     debug.warn(`[crackfix] refused to open a non-http(s) link: ${String(rejected).slice(0, 120)}`);
@@ -307,9 +271,7 @@ function pollUninstallCompletion({ appid, gameDir, mode } = {}) {
   uninstallPolls.set(key, timer);
 }
 
-// request-zero (and some native callbacks) reject with a plain { code, message } object rather than an
-// Error, so `${err}` renders as the useless "[object Object]" in dialogs. Coerce anything thrown into a
-// readable one-liner: Error message, string, { message/error/reason }(+code), or a JSON fallback.
+// Convert Error, string, and plain-object failures into readable text.
 function formatErr(err) {
   if (err == null) return 'unknown error';
   if (err instanceof Error) return err.message || String(err);
@@ -326,9 +288,7 @@ function formatErr(err) {
   return String(err);
 }
 
-// Source-platform icons are shared by many games (most are "Steam (<user>)" or one of a handful of
-// crack sources), yet the old code did a *synchronous* IPC round-trip per game inside the render
-// loop. Memoize by source string so we pay one sync call per distinct source instead of one per game.
+// Cache source icons so each distinct source needs one IPC lookup.
 const sourceImgCache = new Map();
 function getSourceImg(source) {
   if (sourceImgCache.has(source)) return sourceImgCache.get(source);
@@ -355,11 +315,7 @@ function applyCoverBackground(appid, value) {
   }
 }
 
-// Fetch a game's cover, and when the preferred art cannot be downloaded (dead hashed URL, missing
-// portrait, placeholder from a legacy schema) try the alternate (portrait <-> header) before giving
-// up and clearing the tile. fetch-icon resolves to null on a miss (see util/iconUrl.js — it used to
-// resolve to a file:// URL built from the failed http one, which read as a success and killed this
-// fallback entirely), so anything truthy here is a real cached file.
+// Fetch the preferred cover, then try its portrait/header alternative.
 function applyCoverWithFallback(game, headerEl, imgName, tried) {
   const img = (game && game.img) || {};
   const fallback = (current) => {
@@ -391,9 +347,7 @@ function applyCoverWithFallback(game, headerEl, imgName, tried) {
     });
 }
 
-// Cover gallery: right-click a game -> "Choose another cover…". Shows the SteamDB portrait (when
-// the appid resolves) plus SteamGridDB community grids; clicking one applies it as a per-game
-// cover override (cfg/covers.db), exactly like the other cover actions.
+// Show alternate SteamDB and SteamGridDB covers for a game.
 function openCoverPicker(game, appid, coverCacheAppid) {
   const portraitView = !!(app.config && app.config.achievement && app.config.achievement.thumbnailPortrait);
   const img = (game && game.img) || {};
@@ -448,8 +402,7 @@ function openCoverPicker(game, appid, coverCacheAppid) {
   };
   document.addEventListener('keydown', onKey);
 
-  // Show the modal immediately — even if the options fetch fails, the user sees the gallery with
-  // the "no covers" state instead of a dead right-click.
+  // Show the gallery even when loading its options fails.
   document.body.append(overlay);
 
   const addTile = (url, source) => {
@@ -464,9 +417,7 @@ function openCoverPicker(game, appid, coverCacheAppid) {
     tile.append(tag);
     tile.onclick = async () => {
       try {
-        // fetch-icon can stall forever on some CDNs (request-zero's socket bug), which made the
-        // click look dead — nothing applied and no error was logged. Bound it, and on any failure
-        // fall back to the remote URL itself (the app's CSP allows https images).
+        // Bound downloads and fall back to the remote URL on failure.
         const local = await Promise.race([
           ipcRenderer.invoke('fetch-icon', url, coverCacheAppid),
           new Promise((_, reject) => setTimeout(() => reject(new Error('fetch-icon timeout')), 15000)),
@@ -580,21 +531,17 @@ function promptText(message, defaultValue = '', type = 'text') {
     };
   });
 }
-// Settings' Steam-login test uses the same modal so generate_emu_config can forward Steam Guard,
-// email-code and captcha prompts without opening a console window.
+// Share the modal with the Steam-login test and emulator setup prompts.
 window.awPromptText = promptText;
 
-// Emulator sources whose achievement/header icons are already resolved local file:/// paths, so they
-// must bypass the Steam `fetch-icon` IPC (which expects a Steam icon hash) and be used verbatim.
+// These emulator sources already provide local artwork paths.
 const EMU_LOCAL_ICON_SOURCES = new Set(['RPCS3 Emulator', 'ShadPS4 Emulator', 'Xenia Emulator']);
 
 function gameHasAchievements(game) {
   return !!(game && game.achievement && (Number(game.achievement.total) > 0 || (Array.isArray(game.achievement.list) && game.achievement.list.length > 0)));
 }
 
-// Games surfaced by the "Display Steam games" library source (parser/steam.js scanLegit) carry a
-// source like "Steam (<account>)": they are already identified by their Steam appid, so showing a
-// Steam logo, a "?"/"no achievements" icon, or any other badge next to them is pure noise.
+// Legitimate Steam-library entries already have a Steam appid; do not add a source badge.
 function isLegitSteamLibraryGame(game) {
   return String((game && game.source) || '').startsWith('Steam (');
 }
@@ -844,9 +791,7 @@ function formatGbeBackupDetail(backup, game) {
   return lines.join('\n');
 }
 
-// The title bar is a custom element, so its shadow root only exists once the definition has been
-// upgraded. A watchdog-status push that lands before that (the main process does not wait for the
-// renderer to finish booting) would otherwise throw out of the IPC handler.
+// Return the title-bar shadow root when the custom element is ready.
 function titleBarShadow() {
   const bar = document.querySelector('title-bar');
   return (bar && bar.shadowRoot) || null;
@@ -880,7 +825,6 @@ ipcRenderer.on('watchdog-status', (event, found) => {
   let startBtn = shadow.querySelector('#start-watchdog');
   startBtn.innerHTML = t('i-class-fas-fa-shield-alt-i-click-to-start-watchdog', '<i class="fas fa-shield-alt"></i> Click to Start Watchdog!', '<i class="fas fa-shield-alt"></i> Cliquez pour démarrer le Watchdog !');
   if (found) {
-    //let watchdogStatus = shadow.querySelector('.status-dot.status-orange');
     watchdogStatus.classList.remove('status-orange', 'status-red');
     watchdogStatus.classList.add('status-green');
     watchdoglbl.textContent = t('watchdog-is-running-in-game-overlay-windows-notifications-should', 'Watchdog is running (in-game overlay/Windows notifications should work properly)', 'Watchdog actif (overlays en jeu et notifications Windows fonctionnels)');
@@ -889,8 +833,7 @@ ipcRenderer.on('watchdog-status', (event, found) => {
 });
 
 ipcRenderer.on('achievement-unlock', (event, { appid, ach_data }) => {
-  // A toast can arrive for a game that isn't in the current (filtered / hide-zero) list, or for an
-  // achievement name the cached schema doesn't know — guard both before dereferencing.
+  // Ignore toasts for games or achievements missing from the current view.
   const game = gameList.find((game) => game.appid == appid);
   if (!game) return;
   const achievement = game.achievement.list.find((ach) => ach.name == ach_data.name);
@@ -904,8 +847,7 @@ ipcRenderer.on('achievement-unlock', (event, { appid, ach_data }) => {
   updateGamePage(appid, ach_data);
 });
 
-// A Windows toast click activates the app with the game/achievement (see transport/toast.js);
-// open the corresponding library tile exactly like a mouse click on it.
+// Open the library tile targeted by a Windows toast click.
 ipcRenderer.on('open-game', (event, { appid, achievement } = {}) => {
   if (!appid) return;
   const el = $('#game-list .game-box')
@@ -922,9 +864,7 @@ ipcRenderer.on('open-game', (event, { appid, achievement } = {}) => {
 });
 
 function updateGamePage(appid, ach_data) {
-  // Only live-refresh the detail view when it's actually open AND already showing this game.
-  // Otherwise a background unlock would crash (missing tile element) or yank the user off the
-  // home/list screen into a game page on every toast.
+  // Refresh details only when this game is already open.
   if (!$('#achievement').is(':visible')) return;
   if (String($('#achievement .wrapper > .header').attr('data-appid')) !== String(appid)) return;
   const el = gameElements.get(`${appid}`);
@@ -943,17 +883,12 @@ function updateGameBox(appid, newProgress) {
   if (value) value.textContent = `${newProgress}%`;
 }
 
-// Best-effort exe auto-detection for Goldberg/GBE games whose install folder was already
-// found by discover() (game.gameDir) — avoids re-asking the user to browse to a path the
-// app already knows. Returns the detected full exe path, or null.
-// Resolve the launch executable for a game folder. gameName drives name-aware scoring; taken is the
-// set of exe paths already assigned to OTHER games so auto-detection never picks a duplicate.
+// Auto-detect a launch executable from a known install folder.
 function autodetectGameExe(gameDir, gameName, taken) {
   if (!gameDir) return null;
   try {
     const emu = goldberg.detectEmulator(gameDir);
-    // Confidence-gated: only auto-launch a best guess when the name/folder/dll evidence is strong,
-    // otherwise the Play button asks for the exe manually (zero false-positive auto-assignment).
+    // Require strong evidence; otherwise let the user choose the executable.
     const exeInfo = exeDetect.detectConfident(gameDir, gameName || '', { dllPaths: emu.dll, taken });
     if (exeInfo?.full && fs.existsSync(exeInfo.full)) return exeInfo.full;
   } catch (err) {
@@ -983,16 +918,10 @@ var app = {
     let self = this;
     const activeScanScope = scanScope.normalizeScanScope(options && options.scanScope);
 
-    // Re-entry guard. onStart is triggered from several places (boot, the 15-min new-game scan, F5 /
-    // refresh, settings save, onboarding finish). makeList streams tiles into #game-list as each game
-    // loads, so two overlapping runs both append and the whole library shows up DUPLICATED — one copy
-    // fully loaded, the other still on the loading spinner. Coalesce instead: if a load is already
-    // running, request a single follow-up pass for when it finishes rather than starting a second
-    // concurrent scan.
+    // Coalesce overlapping scans so streaming tiles are not duplicated.
     if (self.listLoadInFlight) {
       self.listRescanPending = true;
-      // A normal refresh must remain broader than a queued selective retry. Multiple selective
-      // requests are coalesced to the newest one; the UI disables its own button while waiting.
+      // A full refresh takes precedence over queued selective retries.
       if (!activeScanScope) self.listRescanScope = null;
       else if (self.listRescanScope !== null) self.listRescanScope = activeScanScope;
       return self.listLoadPromise || Promise.resolve();
@@ -1029,13 +958,10 @@ var app = {
       progress: $('#main-footer .loading .progressBar'),
       meter: $('#main-footer .loading .progressBar > .meter'),
     };
-    // A refresh reuses the same DOM: reopen the loading footer before scanning, then collapse the
-    // whole footer when done so it does not leave an empty strip below the game list.
+    // Reuse the loading footer during refreshes.
     $('#main-footer').removeClass('done');
     loadingElem.elem.show();
-    // Scanning a library takes seconds to minutes and the pointer gave no sign of it. The busy
-    // cursor is the one signal that follows the mouse everywhere in the window, so it reads as
-    // "working" even while the user is over the header or an empty area rather than the footer bar.
+    // Show activity across the whole window while scanning.
     setLibraryBusyCursor(true);
 
     $('#user-info .info .stats li:eq(0) span.data').text('0');
@@ -1044,33 +970,33 @@ var app = {
 
     $('#search-bar input[type=search]').val('').change().blur();
 
-    // Running accumulators for the home header stats. The old code recomputed each of these by
-    // filter/reduce-ing the *entire growing* gameList on every appended game (O(n²)); keeping running
-    // totals makes each append O(1). statCount tracks displayed games (mirrors gameList.length).
+    // Keep header statistics incremental while tiles stream in.
     let statSumProgress = 0;
     let statCount = 0;
     let statTotalUnlocked = 0;
     let statCompleted = 0;
-    // Average achievement completion across the library, filled as each game streams in. Mirrors the
-    // "average %" stat shown above the bar — one simple, self-explanatory fill (was a 3-tier spread).
+    // Keep the average completion bar in sync with the streamed list.
     sortOptions(); // reflect persisted sort state on the sort-box during load (real sort runs once at the end)
     $('#user-info').fadeTo('fast', 1).css('pointer-events', 'initial');
     $('#sort-box').fadeTo('fast', 1).css('pointer-events', 'initial');
     $('#search-bar').fadeTo('fast', 1).css('pointer-events', 'initial');
     $('title-bar')[0].inSettings = false;
-    // A scoped refresh redraws the same library, but only re-reads the selected configured folders.
-    // Keep entries that do not live below one of those roots: otherwise clicking "rescan C:\\Games"
-    // would make games discovered from D:\\Games disappear until the next full refresh.
+    // A scoped refresh replaces only entries under the selected roots.
     const previousGames = activeScanScope ? gameList.slice() : [];
     const scanConfig = activeScanScope ? { ...self.config, scanScope: activeScanScope } : self.config;
+    // Read the manual-unlock sidecar once for this scan. Applying it in the streamed callback makes
+    // tile percentages and profile counters survive an app restart without doing sync I/O per game.
+    const manualUnlockMap = (() => {
+      const file = manualUnlock.sidecarFile();
+      return file ? manualUnlock.readMap(file) : {};
+    })();
     gameList = [];
     const renderedAppids = new Set();
-    // Make onStart() idempotent: re-running it (e.g. after right-click → remove from list) must not
-    // append to the existing DOM or stack duplicate delegated handlers, which previously duplicated the
-    // whole list until a full page refresh.
+    // Reset the list and handlers so onStart() stays idempotent.
     $('#game-list ul').empty();
     gameElements.clear();
-    $('#game-list').off();
+    // Remove only handlers owned by this scan.
+    $('#game-list').off('.awLibrary');
     $('#game-config').off('click', '.edit').off('click', '.unlink');
     $('#btn-game-config-save').off('click');
     $('#btn-game-config-cancel, #game-config .overlay').off('click');
@@ -1083,6 +1009,7 @@ var app = {
           loadingElem.meter.css('width', percent + '%');
         },
         (renderGame = (game) => {
+          manualUnlock.applyToGame(game, manualUnlockMap, game.appid, game.source);
           let elem = $('#game-list ul');
           if (game.achievement.unlocked > 0 || self.config.achievement.hideZero == false) {
             const appidKey = String(game.appid);
@@ -1240,14 +1167,10 @@ var app = {
         ipcRenderer.send('close-puppeteer');
         debug.log('Populating game list ...');
 
-        // Sort the fully-built list exactly once. The old code re-sorted the whole (growing) list on
-        // every appended game — O(n²) detach/sort/re-append churn during load. Tiles stream in arrival
-        // order, then settle into the chosen sort here.
+        // Sort once after all tiles have loaded.
         sort($('#game-list ul'), sortOptions());
 
-        // Drop duplicate binary assignments in the watchdog game index (e.g. a stale "Forza Horizon 5"
-        // pointing at forzahorizon6.exe alongside the real Forza Horizon 6) so playtime is attributed
-        // to the right game.
+        // Remove duplicate executable assignments before playtime tracking.
         try {
           const removed = gameIndex.reconcile(gameList);
           if (removed > 0) debug.log(`[gameIndex] reconcile removed ${removed} duplicate binary entr${removed === 1 ? 'y' : 'ies'}`);
@@ -1255,8 +1178,7 @@ var app = {
           debug.log(err);
         }
 
-        // Auto-update launch list against what's installed now: drop dead paths, break collisions
-        // (e.g. several games stuck on the same exe), and re-detect from each game's install folder.
+        // Reconcile launch paths with the installed games.
         exeList
           .reconcile(gameList)
           .then(async (n) => {
@@ -1298,7 +1220,7 @@ var app = {
         });
 
         $('#game-list')
-          .on('mouseenter', '.game-box .info .title', function () {
+          .on('mouseenter.awLibrary', '.game-box .info .title', function () {
             const text = this.querySelector('span');
             if (!text) return;
             const overflow = Math.max(0, Math.ceil(text.getBoundingClientRect().width - this.clientWidth));
@@ -1320,18 +1242,18 @@ var app = {
               }
             );
           })
-          .on('mouseleave', '.game-box .info .title', function () {
+          .on('mouseleave.awLibrary', '.game-box .info .title', function () {
             this._scrollAnimation?.cancel();
             this._scrollAnimation = null;
           })
-          .on('click', '.game-box', function () {
+          .on('click.awLibrary', '.game-box', function () {
             self.onGameBoxClick($(this), gameList);
           })
-          .on('click', '.game-box .play-button', async function (e) {
+          .on('click.awLibrary', '.game-box .play-button', async function (e) {
             e.stopPropagation();
             self.onPlayButtonClick($(this));
           })
-          .on('click', '.game-box .config-button', async function (e) {
+          .on('click.awLibrary', '.game-box .config-button', async function (e) {
             e.stopPropagation();
             self.onConfigButtonClick($(this), gameList, await exeList.get());
           });
@@ -1399,33 +1321,14 @@ var app = {
           e.preventDefault();
           let self = $(this);
           let appid = self.data('appid');
-          // "Unconfigured" games carry a synthetic "local-<hash>" id (no confirmed Steam appid), not a
-          // real numeric Steam appid. goldberg.repair() writes whatever appid it's given straight into
-          // steam_appid.txt — passing the synthetic id there corrupts the install's identity marker, so
-          // on the next scan it matches neither the appid-based Goldberg scan (needs a numeric appid)
-          // nor the unconfigured scan (which now sees an appid marker and stops treating it as
-          // unconfigured) and the game vanishes from the list entirely (reported: GBE Fork install
-          // made Jackbox 1/2/9 disappear on reload). Resolve a real numeric appid first — the
-          // unconfigured branch in achievements.js already looked one up via findAppidByName and
-          // exposed it as game.steamappid — and fall back to leaving steam_appid.txt untouched.
-          // `let`, not `const`: the GBE-install action below may resolve a still-unknown appid via the
-          // fuzzy picker and reassign this so the diagnose/repair closures (which read it at call time)
-          // write the correct steam_appid.txt.
+          // Never write a synthetic local id to steam_appid.txt; use a real Steam id when available.
           let writableAppid = /^[0-9]+$/.test(String(appid)) ? appid : list.find((g) => g.appid == appid)?.steamappid || null;
           const ctxGame = list.find((g) => g.appid == appid);
           const gameSource = ctxGame?.source || '';
-          // GBE Fork install helper — hidden only for games legitimately owned/installed via the
-          // real Steam client (source "Steam (<username>)") or native-launcher sources (GOG/Epic),
-          // none of which use a replaceable steam_api dll. Every other source (OnlineFix, Codex,
-          // Rune, Skidrow, SmartSteamEmu, CreamAPI, Reloaded - 3DM, Goldberg, GBE Fork, Unconfigured,
-          // custom Folder-tab dirs with no explicit source, …) is some flavor of cracked/emulated
-          // install and can always have GBE Fork (re)installed — this used to be an allowlist that
-          // missed most crack sources (#bug: "ne marche pas sur Fast Food Simulator/Forza Horizon 6").
+          // Offer GBE for non-Steam and non-native-launcher installs.
           const isLegitSteamOwned = gameSource.startsWith('Steam (');
           const isNativeLauncher = gameSource === 'gog' || gameSource === 'epic';
-          // A raw console-emulator record (RPCS3/ShadPS4/Xenia -> system="playstation"/"xbox"/…) never
-          // gets Steam/Ubisoft tools; "uplay" is the one system value that does, so games with no
-          // system or system="uplay" both remain candidates below.
+          // Console-emulator records do not use Steam/Ubisoft tools; Uplay is the exception.
           const rawSystem = self.data('system');
           const isConsoleSystem = !!rawSystem && rawSystem !== 'uplay';
           // Manual per-game override (right-click → Emulator source) lets the user force GBE Fork or
@@ -2172,12 +2075,7 @@ var app = {
               );
             }
 
-            // Ubisoft/uPlay sources have no steam_api.dll to replace — GBE Fork (Steam) can never
-            // apply there. They get the Uplay R2 fix block below instead ("instead of GBE").
-            // `uplayR2` covers the installs discover() found on disk by their Ubisoft markers: those
-            // carry a Steam appid (mapped via uplay-steam.json) or none at all, so the source string
-            // alone wouldn't tell them apart from a cracked Steam game. (isLegitSteamOwned/
-            // isNativeLauncher are computed near the top of this handler, alongside isUbisoftSource.)
+            // Ubisoft installs use Uplay R2 instead of the Steam GBE fix.
             if (!isLegitSteamOwned && !isNativeLauncher && !isUbisoftSource) {
               emulatorMenu.append(new MenuItem({ type: 'separator' }));
               emulatorMenu.append(
@@ -2213,13 +2111,7 @@ var app = {
                         ? t('n-nbackup-before-fix-nx', '\n\nBackup before fix:\n{dir}', '\n\nSauvegarde avant fix:\n{dir}', { dir: preFixBackup.backupDir })
                         : t('n-nbackup-before-fix-no-existing-steam-settings-steam-api-found', '\n\nBackup before fix: no existing steam_settings / steam_api found.', '\n\nSauvegarde avant fix: aucun steam_settings / steam_api existant.');
 
-                      // 1b — Community CrakFiles fix FIRST, same as the per-scan auto-apply
-                      // (achievements.js autoApplyEmulatorFix STEP 1). On a CONFIDENT name match with an
-                      // auto-installable (pixeldrain) fix, apply the crack before the emulator so the GBE
-                      // steam_api installed on top makes achievements work — and a cracked runtime makes
-                      // the Steamless/SteamStub step below unnecessary. Idempotent + confident-only, so it's
-                      // a silent no-op for games not in the list. Overwritten files are backed up under
-                      // <gameDir>/.aw-crackfix-backups/. Opt out with emulator.autoApplyCrackFix=false.
+                      // Apply a confident CrakFiles fix before the emulator repair.
                       let crackApplied = false;
                       let crackNote = '';
                       if ((app.config?.emulator || {}).autoApplyCrackFix !== false) {
@@ -3254,13 +3146,7 @@ var app = {
                           detail: formatErr(err),
                         });
                       });
-                      // Refresh once the uninstaller process itself exits — covers
-                      // uninstallers that leave an empty folder behind (the poll
-                      // above catches the folder-gone case even earlier). Silent
-                      // Inno/NSIS runs use `_?=` so we can wait on them, which also
-                      // stops them from deleting their own exe/.dat: clean that up
-                      // now that the process is done (skip on a non-zero exit — the
-                      // uninstall may not have actually finished).
+                      // Refresh after the uninstaller exits; clean up silent temp files on success.
                       child.on('exit', (code) => {
                         if (code === 0) uninstall.cleanupSilentUninstaller(local);
                         clearGameBoxBusy(self);

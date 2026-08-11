@@ -2,11 +2,8 @@
 
 const path = require('path');
 
-// Achievement Watcher 3.x keeps its data OUT of the legacy `%APPDATA%\Achievement Watcher` folder
-// used by the original 1.6.8 app, whose uninstaller deletes that directory (issue #6). This is the
-// single source of truth for the 3.x user-data root. The Electron main process sets the real path
-// via app.setPath('userData'); the renderer reads it back through @electron/remote; standalone
-// contexts (unit tests, scripts) fall back to the same 3.0 directory name under %APPDATA%.
+// 3.x uses a separate data folder so the legacy uninstaller cannot remove it.
+// Electron sets the path; tests and standalone scripts use the same folder under %APPDATA%.
 const APP_DATA_DIR_NAME = 'Achievement Watcher 3.0';
 const LEGACY_DATA_DIR_NAME = 'Achievement Watcher';
 

@@ -83,6 +83,35 @@ test('normalizeXboxAchievement extracts earned state, rarity and icon', () => {
   assert.equal(ach.icon, 'https://xbox/icon.png');
 });
 
+test('normalizeXboxAchievement recognizes the boolean isSecret flag', () => {
+  assert.equal(xboxPc.normalizeXboxAchievement({ id: 'secret', isSecret: true }).hidden, true);
+  assert.equal(xboxPc.normalizeXboxAchievement({ id: 'public', isSecret: false }).hidden, false);
+});
+
+test('Xbox import snapshots retain known unlocks while incorporating fresh state', () => {
+  const fresh = xboxPc.buildXboxStateSnapshot([
+    { id: 'a', snapshot: { earned: false, progress: 20, max_progress: 100 } },
+    { id: 'b', snapshot: { earned: true, earned_time: 300, progress: 100, max_progress: 100 } },
+  ]);
+  assert.deepEqual(fresh, {
+    a: { earned: false, progress: 20, max_progress: 100 },
+    b: { earned: true, earned_time: 300, progress: 100, max_progress: 100 },
+  });
+
+  const merged = xboxPc.mergeXboxStateSnapshots(
+    {
+      a: { earned: true, earned_time: 200, progress: 40, max_progress: 100 },
+      retained: { earned: true, earned_time: 150 },
+    },
+    fresh
+  );
+  assert.deepEqual(merged, {
+    a: { earned: true, earned_time: 200, progress: 40, max_progress: 100 },
+    b: { earned: true, earned_time: 300, progress: 100, max_progress: 100 },
+    retained: { earned: true, earned_time: 150 },
+  });
+});
+
 test('getGameData merges cached schema with unlock state', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-xboxcache-'));
   xboxPc.setUserDataPath(dir);

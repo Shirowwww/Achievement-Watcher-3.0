@@ -1,26 +1,7 @@
 'use strict';
 
-// Goldberg Social Club Emulator source.
-//
-// The emulator keeps its data in %APPDATA%\Goldberg SocialClub Emu Saves\<GameName>\<profile-id>\,
-// where <profile-id> is an emulator-generated hex id (e.g. 0F74F4C4) and the profile folder holds
-// the game's own save files. Unlike the Steam emulators there is no numeric AppID folder, which is
-// why the app used to reject the root in Settings and could never scan it (issue #9).
-//
-// This parser:
-//   - accepts the SocialClub root (or any game/profile folder under it) in Settings,
-//   - discovers one entry per game folder, keyed by a stable "socialclub-<slug>" appid,
-//   - discovers game folders by their REAL layout (hex profile folders, Rockstar save/profile
-//     files such as SGTA*/SRDR*/cfg.dat, or the standard emulator achievement files) instead of
-//     requiring a numeric AppID — the emulator itself redirects the Rockstar profile folder to
-//     "%APPDATA%\Goldberg SocialClub Emu Saves\<Game>\<hex-profile>\" (issue #9),
-//   - parses every supported achievement file inside the profile folders (the same formats the
-//     Steam emulators use: achievements.json/.ini, stats.json, achieve.dat, …), and reports the
-//     game honestly even when its achievements live in Rockstar's proprietary save files that no
-//     local tracker can decode yet,
-//   - resolves the game to its Steam release when the folder name matches a known Rockstar title
-//     (or a fuzzy Steam name lookup) so the library gets a real title, cover and achievement schema,
-//   - labels the source "Goldberg SocialClub" so the entries stay distinct from Steam/Goldberg/GSE.
+// Read Goldberg SocialClub saves under <GameName>/<profile-id>.
+// The parser uses stable socialclub-* ids and maps known titles to Steam metadata.
 
 const path = require('path');
 const fs = require('fs');

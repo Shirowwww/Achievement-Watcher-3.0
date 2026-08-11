@@ -68,6 +68,28 @@ test('sidecar persists across mark and read', () => {
   assert.equal(loaded['456::gog'].x.earned_time, 333);
 });
 
+test('a persisted manual unlock rehydrates a freshly scanned game after restart', () => {
+  const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-manual-restart-'));
+  try {
+    manualUnlock.setUserDataPath(userData);
+    assert.equal(manualUnlock.saveUpdate('123', 'steamEmu', 'ach_a', 'mark-unlocked').changed, true);
+
+    // This is the new object a library scan creates after the renderer/app has restarted.
+    const freshGame = makeGame([
+      { name: 'ach_a', Achieved: false },
+      { name: 'ach_b', Achieved: false },
+    ]);
+    manualUnlock.loadAndApplyToGame(freshGame, freshGame.appid, freshGame.source);
+
+    assert.equal(freshGame.achievement.unlocked, 1);
+    assert.equal(Math.round((100 * freshGame.achievement.unlocked) / freshGame.achievement.total), 50);
+    assert.equal(freshGame.achievement.list[0].manual, true);
+  } finally {
+    manualUnlock.setUserDataPath(null);
+    fs.rmSync(userData, { recursive: true, force: true });
+  }
+});
+
 test('unknown action or empty name is a no-op', () => {
   const map = {};
   assert.equal(manualUnlock.update(map, '1', 's', '', 'mark-unlocked').changed, false);

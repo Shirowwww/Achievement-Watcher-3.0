@@ -1,18 +1,6 @@
 'use strict';
 
-// SteamDB launch-metadata fallback. When AW can't detect a game's executable locally (no install
-// dir, or a scan that finds no matching .exe), the watchdog has no process name to match a running
-// game against — so playtime/launch detection silently does nothing. SteamDB's per-app config page
-// lists every launch option (executable, arguments, OS, launch type); this module picks the best
-// Windows one and returns a process_name the watchdog can match.
-//
-// SteamDB 403s plain HTTP requests (Cloudflare) but loads fine through AW's existing
-// puppeteer-extra + stealth browser, so the actual page fetch goes through the main process
-// (init.js `get-steamdb-launch` IPC, which reuses the SteamHunters scrape browser). This module is
-// the pure logic: parse the launch-options HTML and rank the candidates — unit-testable offline.
-//
-// Uses node-html-parser over the section HTML instead of a headless-browser scrape (no Playwright
-// dependency).
+// Parse and rank SteamDB launch options for Windows executable detection.
 
 const htmlParser = require('node-html-parser');
 

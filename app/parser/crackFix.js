@@ -1,30 +1,7 @@
 'use strict';
 
-/*
-  "Fixes & Bypasses" from the community CrakFiles list (KoriaPolis/CrakFiles), the same source SteaMidra
-  uses. crackfiles.json is an array of:
-    { buildid, name, source_crack:[url], original_download:[url], fixes:[{ href, filename, badges:[] }] }
-  Matched by game NAME (there is no appid in the list), reusing AW's fuzzy name matcher. Its fixes are
-  pixeldrain-hosted and auto-applicable; hostOf()/isApplicableHost() keep AW honest about any other host
-  (which would be opened in a browser instead of auto-downloaded).
-
-  IMPORTANT: this is a SEPARATE, complementary helper — it does NOT touch the emulated steam_api/GSE
-  Fork setup that actually detects achievements. A community crack can overwrite steam_api(64).dll, so
-  applying one may require re-running "Apply emulator fix" to restore achievement detection; the UI
-  warns about this. Files this overwrites are backed up under <gameDir>/.aw-crackfix-backups/<ts>/.
-
-  Automatic use (achievements.js autoApplyEmulatorFix, always tried unless emulator.autoApplyCrackFix is
-  explicitly set false): applyBestFix
-  is the high-level entry point. It only ever auto-commits a CONFIDENT name match (exact / strong token
-  — same bar as fuzzyAppid.bestConfidentAppid), only applies an auto-installable (pixeldrain) fix, picks
-  the best fix for the game's architecture, and writes an idempotency marker (.aw-crackfix-applied.json)
-  so the same fix is never re-downloaded/re-applied on every scan. The emulator fix runs AFTER the crack
-  so the GBE steam_api it installs is what survives — keeping achievement detection working.
-
-  Renderer-side (request-zero / node-7z for zip|7z / node-unrar-js for the common .rar format the bundled
-  7za can't open), but it also runs in the headless tray daemon's background auto-fix pass. Pure helpers
-  (list fetch/match/pick, pixeldrain URL) are testable without the network.
-*/
+// Community crack catalog and safe, idempotent fix application.
+// It is separate from the Goldberg achievement setup and backs up overwritten files.
 
 const fs = require('fs');
 const os = require('os');

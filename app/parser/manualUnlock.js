@@ -16,9 +16,10 @@ const fs = require('fs');
 const path = require('path');
 
 let userDataPath = null;
-module.exports.setUserDataPath = (p) => {
+
+function setUserDataPath(p) {
   userDataPath = p;
-};
+}
 
 function sidecarFile() {
   if (userDataPath) return path.join(userDataPath, 'cfg/manual-unlocks.json');
@@ -154,6 +155,7 @@ function saveUpdate(appid, source, name, action) {
 }
 
 module.exports = {
+  setUserDataPath,
   sidecarFile,
   gameKey,
   readMap,

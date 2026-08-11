@@ -1,21 +1,7 @@
 'use strict';
 
-/*
-  Single source of truth for "which .exe in this game folder is the game?".
-
-  Used by:
-    - app/parser/achievements.js  -> seeds the watchdog gameIndex (playtime tracking)
-    - app/app.js                  -> resolves the launch target for the Play/Config buttons
-
-  detect(gameDir, gameName, { dllPaths, taken, takenGameDirs }) -> { name, full, size, score } | null
-
-  Strategy: recursively collect every plausible .exe (bounded depth, skipping redist/meta folders and
-  hard-excluded utilities), score each by how well its filename matches the game name + its size + a
-  bonus for sitting next to the Steam-emulator dll, minus penalties for launcher/loader-style helpers,
-  then return the best candidate that isn't already claimed by another game (anti-collision).
-
-  Dependency-free (fs/path only) so it can be unit-tested without Electron.
-*/
+// Find the game executable in an install folder.
+// Candidates are scored by name, size, emulator markers and known utility penalties.
 
 const fs = require('fs');
 const path = require('path');

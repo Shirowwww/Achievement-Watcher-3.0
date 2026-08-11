@@ -1,17 +1,6 @@
 'use strict';
 
-// Top-owners SteamID seed. Some games have no achievement schema available without a Steam Web API
-// key and nobody on SteamHunters who 100%'d them — the keyless scrape in steam.js then has no public
-// profile to read the schema/rarity from (see its "fallback to steamuserids" TODO). SteamLadder's
-// games ladder lists prolific collectors whose profiles are public and own huge libraries, so their
-// SteamIDs are a reliable pool of owners to try for any given appid.
-//
-// SteamLadder 403s/challenges plain HTTP, so the page fetch runs through AW's puppeteer-extra +
-// stealth browser in the main process (init.js `get-top-owners`); the parsed list is disk-cached.
-// This module is the pure logic — pull 17-digit SteamID64s out of the page HTML — so it stays
-// unit-testable offline.
-//
-// Uses a regex sweep instead of cheerio/Playwright (no new dependency).
+// Extract SteamID64 owners from the SteamLadder HTML fetched by the main process.
 
 const PROFILE_HREF_RE = /\/profile\/(\d{17})\b/g;
 

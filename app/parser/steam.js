@@ -1,7 +1,5 @@
 'use strict';
 
-//const axios = require('axios');
-//const cheerio = require('cheerio');
 const path = require('path');
 const glob = require('fast-glob');
 const normalize = require('normalize-path');
@@ -22,6 +20,7 @@ const saveRoots = require(path.join(appPath, 'parser/saveRoots.js'));
 const uplayR2 = require(path.join(appPath, 'parser/uplayR2.js'));
 const emuIni = require(path.join(appPath, 'util/emuIni.js'));
 const { userDataDir } = require(path.join(appPath, 'util/userDataPath.js'));
+const { mergeTranslatedAchievements } = require('./achievementTranslations.js');
 
 let listReady = true;
 let steamUsersList;
@@ -214,23 +213,7 @@ module.exports.saveGameToCache = async (cfg) => {
   fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
 };
 
-/*
-  Negative cache for appids that resolve to nothing on Steam.
-
-  An id that is neither in the GetAppList dump nor resolvable through getProductInfo / the store
-  appdetails endpoint costs a full round of network calls before it can be ruled out — 11s to 30s in
-  practice — and, because nothing is written when the lookup fails, it paid that price again on EVERY
-  scan, stalling the loading bar near the end each time. Remembering the misses turns the second and
-  later scans into a dictionary lookup. The TTL keeps it honest for genuinely new releases, which are
-  the legitimate reason an appid isn't listed yet.
-
-  CRITICAL: only a *definitive* miss may be remembered. "No data came back" and "this is not a Steam
-  app" look identical at the call site, and offline they are the same thing for EVERY appid — the
-  app-list download fails, the store fetch fails, and a single offline scan would otherwise blacklist
-  the entire library for the whole TTL. appListUsable() is the guard: the miss is only trusted when
-  the app-list actually loaded (from network or cache), which is exactly when its absence means
-  something. See appListUsable() next to findInAppList().
-*/
+// Cache definitive Steam misses briefly; never cache a network outage.
 const NEGATIVE_CACHE_TTL_MS = 3 * 24 * 60 * 60 * 1000;
 let _negativeCache = null;
 
@@ -249,7 +232,7 @@ function loadNegativeCache() {
       }
     }
   } catch {
-    /* a corrupt cache is not worth failing a scan over — start empty */
+    /* A corrupt cache is equivalent to an empty cache. */
   }
   return _negativeCache;
 }
@@ -267,17 +250,11 @@ function rememberUnresolved(appID) {
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, JSON.stringify(Object.fromEntries(cache)));
   } catch {
-    /* best-effort: the in-memory copy still saves the rest of this session */
+    /* The in-memory copy remains usable. */
   }
 }
 
-/*
-  May this miss be remembered? Exported so the rule can be asserted directly — getting it wrong is
-  not a small bug: caching a network failure as "not a Steam app" hides real games for the whole TTL,
-  and offline it would do that to the entire library at once.
-
-  A miss only means something when the app-list was actually available to miss against.
-*/
+// A miss is meaningful only when the app list was available.
 module.exports.shouldRememberUnresolved = ({ hasResult, inAppList, appListLoaded } = {}) =>
   !hasResult && !inAppList && !!appListLoaded;
 
@@ -290,7 +267,7 @@ module.exports.forgetUnresolved = (appID) => {
     const file = negativeCacheFile();
     if (file) fs.writeFileSync(file, JSON.stringify(Object.fromEntries(cache)));
   } catch {
-    /* best-effort */
+    /* Best effort. */
   }
 };
 
@@ -333,13 +310,7 @@ module.exports.getGameData = async (cfg) => {
       needSaving = true;
     }
 
-    // Stale-cache description repair. A schema cached before #57 (or during the keyless/scrape era)
-    // can carry blank descriptions for visible achievements, and — before the switch to
-    // IPlayerService/GetGameAchievements — hidden ones too (the legacy GetSchemaForGame always blanked
-    // those as a spoiler guard). Once a Web API key is available the schema is authoritative, but the
-    // cache is never re-fetched once it has a name — so those games kept showing "…" forever. Re-pull
-    // just the schema once to fill the gaps, and stamp the attempt so titles whose descriptions are
-    // genuinely unavailable don't refetch on every scan.
+    // Repair blank descriptions in stale schemas, then stamp the attempt to avoid repeated fetches.
     const DESC_RECHECK_MS = 7 * 24 * 60 * 60 * 1000;
     const triedRecently = result && result.descBackfilledAt && Date.now() - result.descBackfilledAt < DESC_RECHECK_MS;
     const hasBlankVisibleDesc =
@@ -513,12 +484,7 @@ module.exports.getAchievementsFromFile = async (filePath) => {
       }
     }
 
-    // Online-Fix (and similar Goldberg-family repacks) split raw stat values into a sibling Stats.ini
-    // next to achievements.ini instead of embedding progress inline. Merge any values found there —
-    // keyed one level up, next to whichever achievements.ini variant matched — so
-    // parser/statProgress.js's applyLocalStatProgress can resolve progress-type achievements via the
-    // local GBE schema's stat_name (progress.value.operand1). Never touch entries that are already
-    // real achievements.
+    // Merge sibling Stats.ini values for progress-type achievements.
     if (matchedFile && /achievements\.ini$/i.test(matchedFile)) {
       for (const statsName of ['Stats.ini', 'stats.ini']) {
         const statsPath = path.join(filePath, path.dirname(matchedFile), statsName);
@@ -809,13 +775,7 @@ async function getSteamDataFromSRV(appID, lang) {
       : await ipcRenderer.invoke('get-steam-data', { appid: appID, type: 'steamcommunity', lang: langObj });
   const translatedAchievements = Array.isArray(steamcommunity?.achievements) ? steamcommunity.achievements : [];
 
-  for (let ach of translatedAchievements) {
-    let match = achievements.find((a) => a.icon === ach.img || a.icongray === ach.img);
-    if (match) {
-      match.description = ach.description;
-      match.displayName = ach.title;
-    }
-  }
+  mergeTranslatedAchievements(achievements, translatedAchievements);
 
   // No library capsule in the product info (common for brand-new appids) — recover the real hashed
   // cover from SteamDB (main process: stealth browser + 30-day disk cache). Only worth it for an
@@ -1027,16 +987,7 @@ async function getDataFromSteamStore(appID) {
   }
 }
 
-// Fetch the list of DLC appids + names for a base game from the public Steam storefront API, so the
-// GBE Fork repair can write a complete [app::dlcs] list (the enumeration APIs only return DLCs that
-// are spelled out by id=name — unlock_all alone isn't enough for games that *list* their DLCs).
-//
-// Two requests, then cached on disk for 14 days so the per-scan auto-repair never re-hits the store
-// for the same game (the storefront API rate-limits ~200 req / 5 min per IP):
-//   1. appdetails?appids=<base>          -> data.dlc = [ids]
-//   2. appdetails?appids=<ids>&filters=basic -> each id's data.name (chunked to keep URLs sane)
-// Returns [{ appid: <number>, name: <string> }] (possibly empty). Never throws — DLC config is a
-// best-effort extra, so a store outage degrades to "unlock_all=1 with no list" rather than failing.
+// Fetch and cache DLC names for GBE repair; a store failure is non-fatal.
 const getDLCList = (module.exports.getDLCList = async (appID) => {
   const id = parseInt(appID, 10);
   if (!Number.isInteger(id) || id <= 0) return [];
@@ -1211,14 +1162,7 @@ async function loadAppListBestEffort() {
   }
 }
 
-// Reverse lookup: resolve a game NAME to a Steam appid via the cached GetAppList map. Used to borrow
-// real store art (header/icon) for installed games we found on disk but that carry no appid of their
-// own. Exact normalized-name match only, to avoid attaching the wrong game's art. Returns appid|null.
-// Resolve a single AppID from a (possibly messy) folder/game name. Cleans repack/scene/version noise
-// and accepts an exact or strong token match, but never a low-confidence fuzzy guess — the result is
-// written to steam_appid.txt, so a wrong auto-pick would corrupt the install's identity. Use
-// findAppidCandidatesByName for an interactive picker that includes fuzzy hits. (Upgraded from the old
-// exact-normalized-equality match, which missed every "<Game> [FitGirl Repack]" / "(GOG)" folder.)
+// Resolve a messy install name to a confident Steam appid without guessing.
 module.exports.findAppidByName = async (name) => {
   if (!name) return null;
   await loadAppListBestEffort();
@@ -1455,14 +1399,7 @@ async function GetMissingData(data, showHidden, lang, steamSettings) {
         data.img.icon = data.img.icon || updatedImgs.icon;
       }
     }
-    // Backfill blank achievement descriptions from the supplemental source. That lookup isn't free
-    // (a key-less user pays for a puppeteer scrape), so once we've tried we stamp the schema and skip
-    // it for a week — otherwise a game whose descriptions are simply unavailable triggers a fresh
-    // attempt on every scan, a big contributor to the slow-load complaints (#53).
-    // A key user's schema now comes from IPlayerService/GetGameAchievements (#57), which — unlike the
-    // legacy GetSchemaForGame — already includes real text for hidden achievements, so a fresh fetch
-    // needs no backfill. This branch exists for caches written before that fix (stale blank hidden
-    // descriptions) and for key-less users, whose only source is the community scrape.
+    // Backfill blank descriptions once per week; key-based schemas already include hidden text.
     const DESC_RECHECK_MS = 7 * 24 * 60 * 60 * 1000;
     const triedRecently = data.descBackfilledAt && Date.now() - data.descBackfilledAt < DESC_RECHECK_MS;
     const hasBlankVisible = data.achievement.list.some((ac) => ac.hidden != 1 && (!ac.description || String(ac.description).trim() === ''));

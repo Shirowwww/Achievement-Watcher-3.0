@@ -8,9 +8,9 @@ const epicIdentity = require('../util/epicIdentity.js');
 
 let gameList;
 let cacheRoot;
-let debug;
+let debug = { log() {}, warn() {}, error() {} };
 module.exports.initDebug = ({ isDev, userDataPath }) => {
-  this.setUserDataPath(userDataPath);
+  module.exports.setUserDataPath(userDataPath);
   debug = new (require('../util/logger'))({
     console: isDev || false,
     file: path.join(userDataPath, 'logs/parser.log'),
@@ -20,6 +20,25 @@ module.exports.initDebug = ({ isDev, userDataPath }) => {
 module.exports.setUserDataPath = (p) => {
   cacheRoot = p;
 };
+
+// A broken mapping cache must not block the library scan.
+function readEpicMappingCache(cacheFile) {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(cacheFile, { encoding: 'utf8' }));
+    return Array.isArray(parsed) ? parsed.filter((entry) => entry && typeof entry === 'object') : [];
+  } catch {
+    return [];
+  }
+}
+
+function mappingByEpicId(cache) {
+  const byEpicId = new Map();
+  for (const entry of Array.isArray(cache) ? cache : []) {
+    const epicid = String(entry?.epicid || '').trim();
+    if (epicid && !byEpicId.has(epicid)) byEpicId.set(epicid, entry);
+  }
+  return byEpicId;
+}
 
 async function getEpicProductMapping() {
   const res = await request.get('https://store-content.ak.epicgames.com/api/content/productmapping');
@@ -39,77 +58,111 @@ async function getGameTitleFromMapping(slug) {
 
 module.exports.isExclusive = (appid) => {
   const cacheFile = path.join(cacheRoot, 'steam_cache', 'epic.db');
-  let cache = fs.existsSync(cacheFile) ? JSON.parse(fs.readFileSync(cacheFile, { encoding: 'utf8' })) : [];
-  let cached = cache.find((g) => g.epicid === appid || g.steamid === appid);
+  const cache = readEpicMappingCache(cacheFile);
+  const key = String(appid);
+  const cached = cache.find((game) => String(game?.epicid) === key || String(game?.steamid) === key);
   if (cached) return cached.steamid === undefined;
-  //TODO: in case appid is not cached, look it up
+  // Unknown ids are not assumed to be Epic-only.
   return false;
 };
 
 module.exports.scan = async (dir) => {
   const cacheFile = path.join(cacheRoot, 'steam_cache', 'epic.db');
-  let data = [];
-  let cache = [];
-  const { ipcRenderer } = require('electron');
-  if (!gameList) gameList = JSON.parse(await getEpicProductMapping());
-
-  if (fs.existsSync(cacheFile)) {
-    cache = JSON.parse(fs.readFileSync(cacheFile, { encoding: 'utf8' }));
-  }
+  const data = [];
+  const cache = readEpicMappingCache(cacheFile);
+  const cachedByEpicId = mappingByEpicId(cache);
 
   try {
-    for (let dir of await glob(path.join(process.env['APPDATA'], 'NemirtingasEpicEmu', '*/*/').replace(/\\/g, '/'), {
+    const directories = await glob(path.join(process.env['APPDATA'], 'NemirtingasEpicEmu', '*/*/').replace(/\\/g, '/'), {
       onlyDirectories: true,
       absolute: true,
-    })) {
-      let game = {
-        appid: path.parse(dir).name,
+    });
+    const games = directories
+      .map((gameDir) => ({
+        appid: path.parse(gameDir).name,
         source: 'epic',
         data: {
           type: 'file',
-          path: dir,
+          path: gameDir,
         },
-      };
-      if (game.appid.toLowerCase() === 'invalidappid') continue;
+      }))
+      .filter((game) => game.appid.toLowerCase() !== 'invalidappid');
 
+    // Fetch the large mapping only when an uncached game needs it.
+    const hasUncachedGame = games.some((game) => !cachedByEpicId.has(String(game.appid)));
+    if (hasUncachedGame && !gameList) {
+      try {
+        const parsed = JSON.parse(await getEpicProductMapping());
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('invalid Epic product mapping');
+        gameList = parsed;
+      } catch (err) {
+        debug.log(`[epic] product mapping unavailable; uncached games will be retried next scan => ${err.message || err}`);
+      }
+    }
+
+    let ipcRenderer = null;
+    if (hasUncachedGame && gameList) {
+      try {
+        ({ ipcRenderer } = require('electron'));
+      } catch {}
+    }
+
+    let updateCache = false;
+    for (const game of games) {
       let steamid;
-      let cached = cache.find((g) => g.epicid === game.appid);
+      const cached = cachedByEpicId.get(String(game.appid));
       if (cached) {
         steamid = cached.steamid;
-      } else {
+      } else if (gameList) {
         try {
-          const title = await getGameTitleFromMapping(gameList[game.appid]);
-          // invoke, not sendSync: this resolves through a hidden-BrowserWindow store scrape that
-          // can take up to 30s, once per uncached game — blocking the renderer froze the whole scan.
-          steamid = await ipcRenderer.invoke('get-steam-appid-from-title', { title });
-          cache.push({ epicid: game.appid, steamid });
+          const gameSlug = gameList[game.appid];
+          let entry;
+          if (!gameSlug) {
+            entry = { epicid: game.appid };
+          } else {
+            const title = await getGameTitleFromMapping(gameSlug);
+            // IPC keeps the hidden store lookup off the renderer's synchronous path.
+            if (!ipcRenderer || typeof ipcRenderer.invoke !== 'function') throw new Error('Epic title resolver unavailable');
+            steamid = await ipcRenderer.invoke('get-steam-appid-from-title', { title });
+            entry = steamid ? { epicid: game.appid, steamid } : { epicid: game.appid };
+          }
+          cache.push(entry);
+          cachedByEpicId.set(String(game.appid), entry);
+          updateCache = true;
         } catch (err) {
-          //appid not found on mapping, either a new game or using custom appid
-          //lets assume its new and treat it as exclusive
-          cache.push({ epicid: game.appid });
+          // A failed resolver is transient; do not turn it into a permanent Epic-only result.
+          debug.log(`[epic ${game.appid}] Steam mapping unavailable; retrying => ${err.message || err}`);
         }
       }
+
       game.steamappid = steamid;
-      game.appid = game.appid;
       data.push(game);
     }
-    fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
-    fs.writeFileSync(cacheFile, JSON.stringify(cache, null, 2));
+    if (updateCache) {
+      fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
+      fs.writeFileSync(cacheFile, JSON.stringify(cache, null, 2));
+    }
     return data;
   } catch (err) {
     throw err;
   }
 };
 
-module.exports.getCachedData = async (cfg) => {
-  let result;
-  return result;
+function resetProductMappingCache() {
+  gameList = undefined;
+}
+
+module.exports._internal = {
+  readEpicMappingCache,
+  mappingByEpicId,
+  resetProductMappingCache,
 };
+
+module.exports.getCachedData = async () => undefined;
 
 module.exports.getGameData = async (cfg) => {
   const { ipcRenderer } = require('electron');
-  const cache = path.join(cacheRoot, 'steam_cache/schema', cfg.lang);
-  let filePath = path.join(`${cache}`, `${cfg.appID}.db`);
+  const filePath = path.join(cacheRoot, 'steam_cache', 'schema', cfg.lang, `${cfg.appID}.db`);
   let result;
   try {
     if (fs.existsSync(filePath)) {
@@ -122,11 +175,7 @@ module.exports.getGameData = async (cfg) => {
   let list = [];
   let title;
 
-  // Resolve the real Epic namespace/title from the artifact id via egdata.app's public index first —
-  // far more reliable than the store-content productmapping below (dead for many delisted/renamed
-  // titles) and it lets us reuse epicOfficial's cached, localized, rarity-annotated schema fetchers
-  // instead of a direct achievements-by-id lookup (which is often mis-targeted: `cfg.appID` here is
-  // the artifact id, not the Epic productId the public achievements endpoint expects).
+  // Resolve the artifact through egdata first, then reuse the official Epic schema path.
   let identity = null;
   try {
     identity = await epicIdentity.resolveEpicArtifactIdentity(cfg.appID);
@@ -151,8 +200,7 @@ module.exports.getGameData = async (cfg) => {
       if (!gameSlug) throw !gameSlug; //return result;
       title = await getGameTitleFromMapping(gameSlug);
     } catch (err) {
-      //appid not found on mapping, either a new game or using custom appid
-      //lets assume its new and search for it on the epic games store
+      // The mapping may not contain new or custom ids; fall back to the store lookup.
       title = (await ipcRenderer.invoke('get-title-from-epic-id', { appid: cfg.appID })) || 'Unknown game';
     }
   }
@@ -178,7 +226,7 @@ module.exports.getGameData = async (cfg) => {
         });
       }
     } catch (err) {
-      // probably hidden achievements, lets try to get steam's data
+      // Hidden or unavailable Epic data: try the Steam schema when possible.
       if (err.code !== 404) debug.log(err);
       if (!cfg.steamappid) return result;
       const achs = await ipcRenderer.invoke('get-steam-data', { appid: cfg.steamappid, type: 'steamhunters' });
@@ -206,7 +254,7 @@ module.exports.getGameData = async (cfg) => {
     };
     if (links.background) ipcRenderer.send('stylize-background-for-appid', { background: links.background, appid: cfg.appID });
   } else {
-    let imgs = (await ipcRenderer.invoke('get-steam-data', { appid: cfg.steamappid, type: 'common' })) || {};
+    const imgs = (await ipcRenderer.invoke('get-steam-data', { appid: cfg.steamappid, type: 'common' })) || {};
     result.img = {
       header: imgs.header || 'header',
       background: imgs.background || 'page_bg_generated_v6b.jpg',
@@ -214,9 +262,7 @@ module.exports.getGameData = async (cfg) => {
       icon: imgs.icon,
     };
   }
-  // Don't persist an empty result: an empty achievement list is almost always a transient fetch
-  // failure (Epic API / steamhunters down), and caching it would hide the game until the cache is
-  // cleared — the same trap as the permanent blacklist (#55). Cache only when we have data.
+  // Do not cache an empty result; it is usually a transient fetch failure.
   if (list.length > 0) {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, JSON.stringify(result, null, 2));

@@ -1,16 +1,7 @@
 'use strict';
 
-// Resolve Steam library asset URLs (portrait/header/hero) from the *local* product-info dump that
-// GBE/Goldberg writes next to a game's emulator config: steam_settings/steam_misc/app_info/
-// app_product_info.json. That file embeds the store's own `library_assets_full` metadata, so for
-// games that ship it we get the real, localized cover art without any store lookup — including
-// delisted titles whose store page is gone.
-//
-// Pure fs/JSON, no dependencies.
-//
-// Asset values in the dump are either full URLs or store-relative basenames
-// ("library_600x900.jpg", "en/library_header.jpg"); relative ones are expanded against the
-// shared Steam CDNs, legacy hosts only for root-level basenames (they don't serve subdirs).
+// Resolve cover and header URLs from Goldberg's local product-info dump.
+// Relative asset names are expanded against Steam's shared CDNs.
 
 const fs = require('fs');
 const path = require('path');

@@ -1,14 +1,7 @@
 'use strict';
 
-/*
-  Goldberg / GBE Fork install validation & repair helpers.
-
-  These are pure, side-effect-light functions (one optional network download in repair) so the
-  achievement logic can be unit-tested without the Electron UI. They let the app answer
-  "is this game's emulator achievement setup actually correct, and what's missing?" and
-  produce a GBE-Fork-compatible achievements.json (verified field shape against
-  Detanup01/gbe_fork steam_settings.EXAMPLE: name/displayName/description/hidden("0"|"1")/icon/icongray).
-*/
+// Validate and repair Goldberg/GBE Fork achievement setups.
+// Most helpers are side-effect-light so they can run without the Electron UI.
 
 const fs = require('fs');
 const path = require('path');

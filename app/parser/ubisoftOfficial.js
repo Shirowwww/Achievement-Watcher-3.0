@@ -1,23 +1,7 @@
 'use strict';
 
-// Ubisoft Connect OFFICIAL achievement source. Unlike parser/uplay.js (LumaPlay emulator saves),
-// this reads the real Ubisoft Connect client data, entirely offline:
-//   %LOCALAPPDATA%\Ubisoft Game Launcher\spool\<userGuid>\<productId>.spool
-//       ← unlock state: protobuf records of {achievementId, earnedTime} appended by the client
-//   %ProgramData%\Ubisoft\Ubisoft Game Launcher\cache\achievements\<productId>_<spec>[.zip]
-//       ← schema: a ZIP holding <locale>_loc.txt (id ⇥ name ⇥ description) + <id>.png icons,
-//         cached by the client when the game's achievements page is opened
-//   %LOCALAPPDATA%\Ubisoft Game Launcher\cache\configuration\configurations
-//       ← game titles / process names (plain-text blocks)
-// A game with a spool but no cached achievements archive can't be displayed meaningfully (the
-// schema is the display) — it is skipped with a log; opening its achievements page once in
-// Ubisoft Connect populates the cache.
-//
-// assets/uplay-steam.json (productId → steam appid/name) supplies offline titles, Steam cover art
-// URLs and the Steam rarity bridge.
-//
-// Adapted to Achievement Watcher's parser contract; icons are extracted once into steam_cache/ubisoftOfficial/<appid>/img and served as
-// local paths; rarity is seeded into the shared sidecar cache through the uplay↔steam name bridge.
+// Read Ubisoft Connect's local spool, achievement archive and title cache.
+// The parser is offline; entries without a cached schema are skipped.
 
 const fs = require('fs');
 const path = require('path');
@@ -782,21 +766,7 @@ async function scanLocalSteamLibrary(options = {}) {
   return scan;
 }
 
-// One resolved identity per Ubisoft product (cache keyed by the raw product id). Resolution is a
-// chain, not a per-game patch:
-//
-//   installdir → the product's registered install folder sits inside a Steam library, which names
-//                the Steam release with no title involved at all (the strongest signal, and the one
-//                that works for a storefront block carrying no game name whatsoever),
-//   asset      → the bundled uplay↔steam mapping,
-//   uplay-name → the mapping asset searched by title (the archive spec names the game even when
-//                the configurations index does not),
-//   library    → a confident name match against the installed Steam manifests,
-//   name       → a confident name match against the full Steam catalog.
-//
-// A Steam purchase that launches Ubisoft Connect (issues #7/#14) is resolved generically — by the
-// first step, or from the achievements archive's own spec ("971_FarCry4") through the library or
-// catalog — with no per-game asset edit.
+// Resolve and cache one Steam identity per Ubisoft product.
 let identityCache = new Map();
 
 // Whether a Ubisoft product id is really on disk. Ubisoft Connect registers every product under

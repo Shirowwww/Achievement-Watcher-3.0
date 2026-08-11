@@ -8,7 +8,7 @@ const request = require('request-zero');
 let cacheRoot;
 let debug;
 module.exports.initDebug = ({ isDev, userDataPath }) => {
-  this.setUserDataPath(userDataPath);
+  module.exports.setUserDataPath(userDataPath);
   debug = new (require('../util/logger'))({
     console: isDev || false,
     file: path.join(userDataPath, 'logs/parser.log'),
@@ -19,19 +19,35 @@ module.exports.setUserDataPath = (p) => {
   cacheRoot = p;
 };
 
+// A broken optional cache must not block the GOG scan.
+function readGogMappingCache(cacheFile) {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(cacheFile, { encoding: 'utf8' }));
+    return Array.isArray(parsed) ? parsed.filter((entry) => entry && typeof entry === 'object') : [];
+  } catch {
+    return [];
+  }
+}
+
+function mappingByGogId(cache) {
+  const byGogId = new Map();
+  for (const entry of Array.isArray(cache) ? cache : []) {
+    const gogid = String(entry?.gogid || '').trim();
+    if (gogid && !byGogId.has(gogid)) byGogId.set(gogid, entry);
+  }
+  return byGogId;
+}
+
 module.exports.getCachedData = async (cfg) => {
   const cacheFile = path.join(cacheRoot, 'steam_cache', 'gog.db');
-  let cache;
-  if (fs.existsSync(cacheFile)) {
-    cache = JSON.parse(fs.readFileSync(cacheFile, { encoding: 'utf8' }));
-  }
-  let cached = cache.find((g) => g.gogid === cfg.appID);
+  const cache = readGogMappingCache(cacheFile);
+  const cached = mappingByGogId(cache).get(String(cfg.appID));
   if (!cached) return;
 
-  cache = path.join(cacheRoot, 'steam_cache/schema', cfg.lang);
+  const schemaCache = path.join(cacheRoot, 'steam_cache/schema', cfg.lang);
   let result;
   try {
-    let filePath = path.join(`${cache}`, `${cached.steamid}.db`);
+    const filePath = path.join(schemaCache, `${cached.steamid}.db`);
 
     if (fs.existsSync(filePath)) {
       result = JSON.parse(fs.readFileSync(filePath));
@@ -45,16 +61,13 @@ module.exports.getCachedData = async (cfg) => {
 
 module.exports.scan = async (dir) => {
   const cacheFile = path.join(cacheRoot, 'steam_cache', 'gog.db');
-  let data = [];
-  let cache = [];
-  let update_cache = false;
-
-  if (fs.existsSync(cacheFile)) {
-    cache = JSON.parse(fs.readFileSync(cacheFile, { encoding: 'utf8' }));
-  }
+  const data = [];
+  const cache = readGogMappingCache(cacheFile);
+  let updateCache = false;
+  const cachedByGogId = mappingByGogId(cache);
 
   try {
-    for (let dir of await glob(path.join(process.env['APPDATA'], 'NemirtingasGalaxyEmu', '*/*/').replace(/\\/g, '/'), {
+    for (const dir of await glob(path.join(process.env['APPDATA'], 'NemirtingasGalaxyEmu', '*/*/').replace(/\\/g, '/'), {
       onlyDirectories: true,
       absolute: true,
     })) {
@@ -67,29 +80,35 @@ module.exports.scan = async (dir) => {
         },
       };
       let steamid;
-      let cached = cache.find((g) => g.gogid === game.appid);
+      const cached = cachedByGogId.get(String(game.appid));
       if (cached) {
         steamid = cached.steamid;
       } else {
-        const url = `https://gamesdb.gog.com/platforms/gog/external_releases/${game.appid}`;
-        let gameinfo = await request.getJson(url);
-        if (gameinfo) {
-          steamid = gameinfo.game.releases.find((r) => r.platform_id === 'steam').external_id;
+        try {
+          const url = `https://gamesdb.gog.com/platforms/gog/external_releases/${game.appid}`;
+          const gameinfo = await request.getJson(url);
+          const releases = Array.isArray(gameinfo?.game?.releases) ? gameinfo.game.releases : [];
+          const steamRelease = releases.find((release) => String(release?.platform_id || '').toLowerCase() === 'steam');
+          steamid = steamRelease?.external_id;
           if (steamid) {
-            cache.push({ gogid: game.appid, steamid });
-            update_cache = true;
+            const entry = { gogid: game.appid, steamid };
+            cache.push(entry);
+            cachedByGogId.set(String(game.appid), entry);
+            updateCache = true;
           }
-        }
+        } catch {}
       }
       if (steamid) {
-        game.appid = steamid || game.appid;
+        game.appid = steamid;
         data.push(game);
       }
     }
     fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
-    if (update_cache) fs.writeFileSync(cacheFile, JSON.stringify(cache, null, 2));
+    if (updateCache) fs.writeFileSync(cacheFile, JSON.stringify(cache, null, 2));
     return data;
   } catch (err) {
     throw err;
   }
 };
+
+module.exports._internal = { readGogMappingCache, mappingByGogId };

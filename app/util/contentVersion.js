@@ -1,15 +1,7 @@
 'use strict';
 
-// Deterministic content fingerprint of a folder tree: SHA-256 over sorted relative paths + file
-// contents, rendered as "<prefix>-<hex16>". Two folders with identical content always produce the
-// same version string, and any file added/removed/renamed/edited changes it — unlike mtime-based
-// checks, which miss in-place rewrites and false-positive on touch. Use it to decide whether a
-// derived cache (generated schema, setup attempt, migrated assets) is still current.
-//
-// Pure crypto/fs, no dependencies.
-//
-// NB: this reads every file under rootDir — cheap for config-sized folders (steam_settings,
-// presets), not meant for game install dirs.
+// Hash a folder's sorted paths and contents for stable cache invalidation.
+// Intended for small config folders, not full game installs.
 
 const crypto = require('crypto');
 const fs = require('fs');

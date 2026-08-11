@@ -1,24 +1,7 @@
 'use strict';
 
-/*
-  Goldberg Uplay R2 ("demde" build) install validation & repair helpers — the Ubisoft/uPlay
-  counterpart of goldberg.js, used instead of GBE Fork for Ubisoft-sourced games (there is no
-  steam_api.dll in a uPlay game, so the Steam emulator fix never applies there).
-
-  The trick (reverse-engineered from a community setup script, verified against the actual emulator
-  binary's strings and its default uplay_r2.ini): the emulator writes achievement unlock state to
-  achievements.json (earned/earned_time — literally GBE Fork's own field names) in a save directory it
-  fully controls via AchSaveType/AchSavePath. If we redirect that path to
-  %APPDATA%\GSE Saves\<steamAppid> — the exact folder AW's existing Steam/GBE scan
-  (app/parser/steam.js -> app/parser/saveRoots.js) already reads — and make the local
-  achievements_schema.json use the REAL Steam achievement api-names as keys, AW displays these
-  Ubisoft-only unlocks with zero changes to the read path: icons, descriptions and notifications all
-  come from the ordinary Steam/GBE pipeline. The Ubisoft game is looked up against its Steam release via
-  app/assets/uplay-steam.json (uplay_id <-> steam_appid), and the mapping only works when this
-  particular game's Steam api-names end in "<prefix><digits>" — the digits are the internal Ubisoft
-  objective id the game itself passes to UPC_AchievementUnlock. Not every game follows that
-  convention; diagnose() reports UNSUPPORTED_ID_SCHEME instead of guessing when it doesn't.
-*/
+// Validate and repair Goldberg Uplay R2 setups.
+// Unlocks are redirected to GSE Saves/<Steam AppID> and keyed by Steam api-names.
 
 const fs = require('fs');
 const path = require('path');

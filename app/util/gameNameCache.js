@@ -1,15 +1,7 @@
 'use strict';
 
-// Offline appid → game-name lookup over a local JSON dump, with an in-memory cache revalidated by
-// file mtime+size so repeated lookups never re-read or re-parse an unchanged file.
-//
-// Instead of bundling a large static name-lookup snapshot, the fallback source is the GetAppList
-// dump the app already maintains at steam_cache/schema/appList.json (identical [{appid, name}]
-// shape, refreshed every 3 days by the renderer, see steam.js findInAppList). An optional
-// user-provided cfg/steamdb.json (same shape) takes precedence when present.
-//
-// Known limitation: revalidation keys on mtime+size, so a same-size rewrite
-// within the mtime granularity is not detected — fine for these slow-moving dumps.
+// Offline appid-to-name lookup with an mtime/size cache.
+// cfg/steamdb.json overrides the appList dump when present.
 
 const fs = require('fs');
 const path = require('path');

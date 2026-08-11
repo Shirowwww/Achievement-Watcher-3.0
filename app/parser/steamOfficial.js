@@ -1,16 +1,6 @@
 'use strict';
 
-// Legit-Steam LOCAL achievement state, read straight from the Steam client's own appcache:
-//   <Steam>\appcache\stats\UserGameStatsSchema_<appid>.bin   ← binary KV: per-achievement apiname,
-//                                                              statId/bit mapping, progress stats
-//   <Steam>\appcache\stats\UserGameStats_<account>_<appid>.bin ← binary KV: packed unlock bitfields,
-//                                                              unlock times, raw stat values
-// Steam rewrites the user bin the moment an achievement pops, so parsing these two files yields the
-// player's real unlock state with no Web API key, no login and no network — including achievement
-// progress (statvalue-driven bars). Used by parser/steam.js as the local-first path for the legit
-// Steam source; the old steamcommunity/WebAPI round-trip remains the fallback.
-//
-// The binary KV reader (parseKVBinary) is byte-for-byte faithful to Valve's appcache binary format.
+// Read Steam achievement state from the client's local appcache.
 
 const fs = require('fs');
 const path = require('path');

@@ -1,17 +1,7 @@
 'use strict';
 
-// Resolves a NemirtingasEpicEmu-style Epic "artifact id" (the hex folder name under
-// %APPDATA%\NemirtingasEpicEmu\*\*\, read by parser/epic.js) to its real Epic namespace,
-// catalogItemId and display name, via egdata.app's public, unauthenticated asset index.
-//
-// parser/epic.js previously resolved titles through Epic's own store-content productmapping (dead
-// for many delisted/renamed titles) with a full Epic-store catalog scrape as the only fallback
-// (electron/init.js searchForGameName — up to 100 paginated store pages via puppeteer). Once we have
-// the real namespace here, parser/epicOfficial.js's existing sandbox/public-product schema fetchers
-// give us the same rich, localized, rarity-annotated achievement list real Epic installs get.
-//
-// Moved off axios onto the runtime's global fetch (no new dependency),
-// matching parser/epicOfficial.js's convention.
+// Resolve NemirtingasEpicEmu artifact ids through egdata.app.
+// The result supplies the namespace and title used by the official Epic parser.
 
 const EGDATA_API_BASE = 'https://api.egdata.app';
 const POSITIVE_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // resolved identities rarely change

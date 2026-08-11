@@ -1,20 +1,7 @@
 'use strict';
 
-// GOG Galaxy OFFICIAL achievement source. Unlike parser/gog.js (NemirtingasGalaxyEmu saves mapped
-// onto Steam appids), this reads the real GOG Galaxy client data, entirely offline:
-//   %ProgramData%\GOG.com\Galaxy\storage\galaxy-2.0.db      ← owned/installed products, titles,
-//                                                             install dirs, launch tasks (SQLite)
-//   %LOCALAPPDATA%\GOG.com\Galaxy\Applications\<clientId>\Gameplay\<userId>\gameplay.db
-//                                                           ← per-game achievement schema + unlock
-//                                                             state + rarity, localized (SQLite)
-// So GOG games get their native achievement set (names/descriptions in the Galaxy language, GOG CDN
-// icons, real unlock times) with no Steam mapping and no network — covers/rarity work offline too
-// (rarity is baked into gameplay.db and seeded into the shared rarity sidecar cache).
-//
-// Adapted to Achievement Watcher's parser contract (scan / getGameData / getAchievements
-// / initDebug); axios dropped for request-zero; the schema-file writer (ensureGogOfficialSchema) is
-// not needed here because the schema is served straight from the DB on every scan. SQLite access
-// uses the runtime's built-in node:sqlite (Electron 43 / Node ≥22.5) — no native dependency.
+// Read GOG Galaxy's local catalog and gameplay databases.
+// Native schemas, unlocks, icons and rarity are available without Steam mapping or network access.
 
 const fs = require('fs');
 const path = require('path');

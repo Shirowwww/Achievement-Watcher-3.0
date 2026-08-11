@@ -1,18 +1,6 @@
 'use strict';
 
-// SteamDB library-capsule cover fallback. Steam's guessable CDN paths
-// (`.../steam/apps/<appid>/library_600x900.jpg`) only exist for older titles: modern store assets
-// live under a HASHED path (`store_item_assets/steam/apps/<appid>/<hash>/library_600x900.jpg`) that
-// cannot be derived from the appid. When every guessable portrait URL 404s, AW ends up with no
-// cover. SteamDB's app-info page lists the real (hashed) asset links, so scraping it recovers the
-// genuine library capsule.
-//
-// SteamDB 403s plain HTTP (Cloudflare) but loads through AW's puppeteer-extra + stealth browser, so
-// the page fetch lives in the main process (init.js `get-steamdb-cover`, same browser as the
-// SteamDB launch-metadata scrape). This module is the pure logic — resolve a cover URL out of the
-// page HTML — so it stays unit-testable offline.
-//
-// Playwright's page.evaluate() is replaced by node-html-parser + regex over the captured HTML.
+// Parse SteamDB HTML to recover hashed library-cover URLs.
 
 const htmlParser = require('node-html-parser');
 

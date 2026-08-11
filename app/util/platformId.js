@@ -1,18 +1,7 @@
 'use strict';
 
-// Platform-aware appid identity: validates that an appid matches its platform's id shape.
-//
-// AW keys its shared caches (rarity sidecars, cover overrides, watchdog gameIndex) by bare appid.
-// Most sources map onto a Steam appid, so sharing a key is correct. But the official-launcher
-// sources added in Tier 2/3 carry NATIVE ids in their own number space:
-//   - GOG official     → GOG productId (10-digit, e.g. 1423049311)
-//   - Ubisoft official → Ubisoft productId (SMALL int, e.g. 1843/6100/8006)
-//   - Epic official    → Epic namespace (32-hex string)
-// A Ubisoft productId like 1843 collides with the real Steam appid 1843 (Space Empires V): their
-// rarity/cover/gameIndex entries would clobber each other. `officialAppId` namespaces the
-// collision-prone native ids so each platform gets its own cache key. (Epic's hex namespace and
-// GOG's 10-digit ids don't realistically collide with Steam's sequential appids, but namespacing
-// them is harmless and future-proof.)
+// Validate appids and namespace native ids before they enter shared caches.
+// This prevents official GOG/Ubisoft entries from colliding with Steam appids.
 
 // Map an internal parser `data.type` / source to a stable short platform tag.
 const SOURCE_TO_PLATFORM = {
