@@ -3,6 +3,19 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 3.8.4 - 2026-08-11
+
+### Fixed
+
+- The in-game notification overlay now sits 6 px from the chosen screen edge instead of 12 px.
+- Reloading the library no longer shows a single fast-loading game alone for seconds: skeleton
+  tiles fill the grid while games stream in, and the folder index used to resolve installs by name
+  is built once per scan instead of once per parallel worker.
+- "Recently played" sorting works again. The Watchdog's async registry writer crashed under the
+  bundled koffi runtime after storing `total`, killing the Watchdog before the `last` timestamp was
+  written. Playtime tracking now uses the synchronous registry API, so games played since 3.8.3 get
+  a real last-played date.
+
 ## 3.8.3 - 2026-08-11
 
 ### Fixed
