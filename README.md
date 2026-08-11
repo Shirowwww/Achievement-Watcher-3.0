@@ -82,7 +82,7 @@ This fork focuses on an all-in-one library, a quiet tray workflow, native Window
 | Source | Support |
 |---|---|
 | **Steam** | Local appcache state, public-profile data, schemas and cached product metadata |
-| **Steam-compatible saves** | Goldberg, GBE Fork, GreenLuma, SmartSteamEmu, TENOKE and compatible layouts |
+| **Steam-compatible saves** | Goldberg, GBE Fork, GreenLuma, SmartSteamEmu, TENOKE, RLD!, CreamAPI and compatible layouts |
 | **GOG Galaxy** | Native local Galaxy databases and compatible legacy saves |
 | **Epic Games** | Local installations and official achievement state after optional account connection |
 | **Ubisoft Connect** | Native local data, legacy Uplay formats and compatible Uplay R2 setups, with Steam global percentages bridged onto native achievement ids |

@@ -1,30 +1,34 @@
-# Achievement Watcher 3.8.3
+# Achievement Watcher 3.8.4
 
-A hotfix release: the automatic emulator fix no longer breaks games already made to work by their
-own crack loader, the Steam API Check Bypass feature actually works now, and the CodeQL sanitization
-hardening previously (and incorrectly) credited to 3.8.2 is included here for real.
+A patch release: "Recently played" sorting works again, reloading the library no longer flashes a
+single fast-loading game before the rest arrive, the notification overlay sits closer to the screen
+edge, the automatic emulator fix leaves uninstalled games alone, and RLD!/CreamAPI save roots are
+watched out of the box.
 
 ## Highlights
 
-- **Automatic emulator fix no longer breaks already-working crack loaders.** A game made to run by a
-  loader that hooks its existing `steam_api(64).dll` in place instead of replacing it (OnlineFix
-  confirmed) is now left alone: the automatic fix used to swap that DLL for a GBE Fork build and
-  break the loader's own Steamworks/EOS emulation, causing an activation prompt or an
-  `EOS_Connect_CreateDeviceId` failure on the next launch. The manual "Apply emulator fix" menu
-  action can still override this for an edge case.
-- **Steam API Check Bypass actually works now.** Its proxy-DLL download always failed silently
-  because the RAR extraction ran in the renderer process, which blocks it by policy; it now runs in
-  the main process.
-- **Hardened sanitization.** A stable tag-stripping pass now loops until the string stops changing,
-  theme/preset CSS `url()` values are built through the shared backslash-safe helper everywhere, the
-  Exophase image-proxy host check requires an exact or subdomain match, and line-separator
-  characters are stripped before the Epic login redirect URL is spliced into injected page script.
+- **"Recently played" sorting is fixed.** The Watchdog crashed while saving playtime to the
+  registry — after writing total time, but before writing the last-played timestamp — and was
+  silently restarted. Games played since 3.8.3 had no last-played date, so they sorted to the
+  bottom. Playtime now uses the stable registry path and the sort is correct again.
+- **Library reloads are smoother.** Skeleton tiles fill the grid while games stream in, instead of
+  one fast-loading game sitting alone for a few seconds, the folder scan that resolves installs by
+  name now runs once per reload instead of once per game, and the shimmer stays fluid on every
+  theme.
+- **Notification overlay hugs the edge.** The popup's default margin is halved (12 px to 6 px) for
+  every corner, edge and centered position.
+- **More emulator saves are watched automatically.** RLD! roots in Public Documents and AppData
+  plus the AppData CreamAPI root are detected out of the box, and user-added folders are classified
+  by file signature so GOG `.info` and UniverseLAN installs keep their dedicated watchers.
+- **Uninstalled games are left alone.** The automatic emulator fix no longer applies to a folder
+  that no longer contains a real game executable, so a background repair cannot recreate an
+  uninstalled game's folder or announce a misleading "ready" notification.
 
 ## Install
 
-Download `Achievement.Watcher.Setup.3.8.3.exe` from the
-[v3.8.3 release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/tag/v3.8.3).
+Download `Achievement.Watcher.Setup.3.8.4.exe` from the
+[v3.8.4 release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/tag/v3.8.4).
 
 The `.blockmap` and `latest.yml` assets are used by automatic updates. Upgrading preserves data.
 
-See the [changelog](CHANGELOG.md#383---2026-08-11) for the full list of changes.
+See the [changelog](CHANGELOG.md#384---2026-08-11) for the full list of changes.

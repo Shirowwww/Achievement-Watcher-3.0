@@ -3,6 +3,29 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## 3.8.4 - 2026-08-11
+
+### Added
+
+- RLD! and CreamAPI emulator save roots are watched automatically (Public Documents and AppData
+  for RLD!, AppData for CreamAPI), and user-added folders that carry a GOG `.info` or UniverseLAN
+  configuration keep their dedicated watcher instead of falling back to a generic numeric scan.
+
+### Fixed
+
+- The in-game notification overlay now sits 6 px from the chosen screen edge instead of 12 px.
+- Reloading the library no longer shows a single fast-loading game alone for seconds: skeleton
+  tiles fill the grid while games stream in, and the folder index used to resolve installs by name
+  is built once per scan instead of once per parallel worker. The shimmer stays fluid on every
+  theme instead of pulsing in hard bands.
+- "Recently played" sorting works again. The Watchdog's async registry writer crashed under the
+  bundled koffi runtime after storing `total`, killing the Watchdog before the `last` timestamp was
+  written. Playtime tracking now uses the synchronous registry API, so games played since 3.8.3 get
+  a real last-played date.
+- The automatic emulator fix no longer applies to a folder that no longer contains a real game
+  executable, so uninstalling a game while a background repair is running no longer recreates the
+  folder or fires a misleading "ready" notification.
+
 ## 3.8.3 - 2026-08-11
 
 ### Fixed
