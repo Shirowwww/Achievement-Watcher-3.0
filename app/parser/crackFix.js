@@ -238,11 +238,51 @@ async function fetchList({ cacheDir, force = false, log = noopLog } = {}) {
 
 // Rank CrakFiles entries against a game name (reusing the fuzzy AppID matcher over entry names).
 // Returns the best matching entries, best first, each with a _score/_tier.
+/*
+  Words that only ever mark an edition/re-release, never which game it is. A candidate may introduce
+  these without becoming a different game ("Black Flag" vs "Black Flag Remastered"); anything else it
+  introduces is a distinguishing word and has to be present in the query too.
+*/
+const EDITION_TOKENS = new Set([
+  'remaster', 'remastered', 'remake', 'resynced', 'redux', 'definitive', 'complete', 'ultimate', 'deluxe',
+  'enhanced', 'anniversary', 'goty', 'edition', 'directors', 'director', 'cut', 'gold', 'premium', 'legacy',
+  'classic', 'hd', 'vr', 'reloaded', 'refreshed', 'the', 'of', 'and', 'a', 'ii', 'iii', 'iv', 'v', 'vi',
+  'vii', 'viii', 'ix', 'x', 'xi', 'xii', 'part', 'chapter', 'episode', 'game', 'pc', 'windows',
+]);
+
+function distinctiveTokens(name) {
+  const { tokens } = fuzzy.cleanGameName(name);
+  return tokens.filter((token) => token.length >= 4 && !EDITION_TOKENS.has(token));
+}
+
+/*
+  A shared franchise is not a match.
+
+  Ranking alone scores "Assassin's Creed: Mirage" at ~0.57 against "Assassin's Creed Black Flag
+  Resynced" purely on the words the whole franchise shares, which is above the 0.5 floor — so an
+  unrelated game was proposed as "fix found" with real confidence. A candidate is rejected when it
+  carries a distinguishing word of its own ("mirage") that the query never mentions.
+
+  Deliberately one-directional: the QUERY may add words the candidate lacks ("resynced", a repack
+  tag), which is the normal shape of a local folder name and must stay a match.
+*/
+function candidateContradictsQuery(queryName, candidateName) {
+  const queryTokens = new Set(distinctiveTokens(queryName));
+  if (queryTokens.size === 0) return false;
+  const candidateTokens = distinctiveTokens(candidateName);
+  if (candidateTokens.length === 0) return false;
+  return candidateTokens.some((token) => !queryTokens.has(token));
+}
+
 function findFixes(list, gameName, { limit = 5 } = {}) {
   if (!Array.isArray(list) || !gameName) return [];
   const apps = list.map((entry, i) => ({ appid: i, name: entry && entry.name }));
-  const ranked = fuzzy.rankAppidCandidates(gameName, apps, { limit, minScore: 0.5 });
-  return ranked.map((r) => ({ ...list[r.appid], _score: r.score, _tier: r.tier }));
+  // Ask for extra candidates so the contradiction filter below still has a full list to trim.
+  const ranked = fuzzy.rankAppidCandidates(gameName, apps, { limit: limit * 4, minScore: 0.5 });
+  return ranked
+    .filter((r) => r.tier === 'exact' || !candidateContradictsQuery(gameName, r.name))
+    .slice(0, limit)
+    .map((r) => ({ ...list[r.appid], _score: r.score, _tier: r.tier }));
 }
 
 // The single best entry for AUTOMATIC use, or null. Unlike findFixes (which returns ranked candidates

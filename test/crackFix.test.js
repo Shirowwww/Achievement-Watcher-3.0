@@ -99,6 +99,27 @@ ok(m2.length > 0 && m2[0].name === 'Cyberpunk 2077', 'scene-tagged name matches 
 eq(crackFix.findFixes(list, 'Totally Unrelated Game Zzz').length, 0, 'no match for an unrelated name');
 eq(crackFix.findFixes([], 'anything').length, 0, 'empty list → []');
 eq(crackFix.findFixes(list, '').length, 0, 'empty name → []');
+
+// ---- a shared franchise is not a match ---------------------------------------------------------
+// Ranking alone scores "Assassin's Creed: Mirage" ~0.57 against "Assassin's Creed Black Flag
+// Resynced" on the words the franchise shares — above the 0.5 floor, so an unrelated game was
+// offered as "fix found". A candidate that carries a distinguishing word the query never mentions
+// is rejected; the query is still free to add its own (repack tags, re-release words).
+const franchise = [
+  { buildid: '10', name: "Assassin's Creed: Mirage", fixes: [{ href: 'https://pixeldrain.com/u/m', filename: 'm.rar' }] },
+  { buildid: '11', name: "Assassin's Creed IV: Black Flag", fixes: [{ href: 'https://pixeldrain.com/u/bf', filename: 'bf.rar' }] },
+  { buildid: '12', name: 'Hogwarts Legacy', fixes: [{ href: 'https://pixeldrain.com/u/h', filename: 'h.rar' }] },
+];
+
+const resynced = crackFix.findFixes(franchise, "Assassin's Creed Black Flag Resynced");
+ok(
+  !resynced.some((f) => f.name === "Assassin's Creed: Mirage"),
+  'a different game in the same franchise is never offered'
+);
+ok(resynced.length > 0 && resynced[0].name === "Assassin's Creed IV: Black Flag", 'the right entry in the franchise still matches');
+
+eq(crackFix.findFixes(franchise, "Assassin's Creed Valhalla").length, 0, 'a franchise entry with no listed fix matches nothing');
+ok(crackFix.findFixes(franchise, 'Hogwarts Legacy Deluxe Edition').length > 0, 'edition words in the query stay a match');
 eq(crackFix.findFixes(null, 'x').length, 0, 'non-array list → []');
 
 const withNull = [{ name: null, fixes: [] }, { name: 'Cyberpunk 2077', fixes: [{ href: 'https://pixeldrain.com/u/z' }] }];

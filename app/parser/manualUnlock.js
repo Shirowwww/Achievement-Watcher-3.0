@@ -71,6 +71,9 @@ function applyToGame(game, map, appid, source) {
     if (hasOverrides && entry && typeof entry === 'object') {
       if (!achievement.Achieved) {
         achievement.Achieved = true;
+        // Remember that the unlock exists only because of this override, so clearing it can take
+        // the unlock back. Without it, `manual` alone cannot say whether the real save had it too.
+        achievement.manualForced = true;
         changed++;
       }
       if (!achievement.UnlockTime && Number(entry.earned_time) > 0) {
@@ -83,8 +86,13 @@ function applyToGame(game, map, appid, source) {
         changed++;
       }
     } else if (achievement.manual) {
-      // Override cleared — drop the marker; the real save's unlock state (if any) stays.
+      // Override cleared — drop the marker, and take the unlock back when the override is what
+      // created it. The real save's own unlock state is left alone: only a forced one is undone.
       delete achievement.manual;
+      if (achievement.manualForced) {
+        achievement.Achieved = false;
+        delete achievement.manualForced;
+      }
       changed++;
     }
   }

@@ -803,7 +803,60 @@ function repair({ dir, steamAppid, schema, prefix, accountName, language } = {})
   return summary;
 }
 
+/*
+  Every repair() copies the schema and the ini files it is about to overwrite into
+  `<gameDir>/.aw-backups/<timestamp>/` first. Those snapshots were write-only until now: the Steam
+  side has had "restore a GBE backup" in its right-click menu from the start, while the Ubisoft side
+  could apply a fix with no way back short of editing the game folder by hand.
+
+  Newest first, so the caller can offer "undo the last repair" without inspecting the layout.
+*/
+const BACKUP_DIR_NAME = '.aw-backups';
+
+function listConfigBackups(dir) {
+  if (!dir) return [];
+  const root = path.join(dir, BACKUP_DIR_NAME);
+  let entries;
+  try {
+    entries = fs.readdirSync(root, { withFileTypes: true });
+  } catch {
+    return []; // nothing has ever been repaired here
+  }
+  return entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => {
+      const full = path.join(root, entry.name);
+      let files = [];
+      let createdAt = null;
+      try {
+        files = fs.readdirSync(full).filter((name) => name === ACH_SCHEMA_FILE || INI_NAMES.includes(name));
+        createdAt = fs.statSync(full).mtime;
+      } catch {
+        /* unreadable snapshot — reported with no files so the caller can skip it */
+      }
+      return { name: entry.name, dir: full, files, createdAt };
+    })
+    .filter((backup) => backup.files.length > 0)
+    .sort((a, b) => String(b.name).localeCompare(String(a.name)));
+}
+
+// Copy one snapshot's files back over the live ones. Returns what was restored.
+function restoreConfigBackup({ dir, backup } = {}) {
+  if (!dir) throw new Error('restoreConfigBackup: dir is required');
+  const snapshot = backup || listConfigBackups(dir)[0];
+  if (!snapshot) throw new Error('restoreConfigBackup: no backup available');
+  const restored = [];
+  for (const name of snapshot.files) {
+    fs.copyFileSync(path.join(snapshot.dir, name), path.join(dir, name));
+    restored.push(name);
+  }
+  return { dir, backup: snapshot.name, restored };
+}
+
 module.exports = {
+  BACKUP_DIR_NAME,
+  listConfigBackups,
+  restoreConfigBackup,
   EMU_DLL_NAMES,
   INI_NAMES,
   UPLAY_INSTALL_MARKERS,

@@ -74,3 +74,45 @@ test('unknown action or empty name is a no-op', () => {
   assert.equal(manualUnlock.update(map, '1', 's', 'x', 'bogus').changed, false);
   assert.deepEqual(map, {});
 });
+
+/*
+  Clearing a manual unlock has to take the unlock back, or the library keeps counting it.
+
+  applyToGame used to only drop the `manual` marker and leave Achieved true, so the achievement
+  stayed unlocked (and the game's percentage stayed up) until the next full rescan re-read the real
+  save. It must still never undo an unlock the save itself reported.
+*/
+test('clearing a manual unlock lowers the count, but never undoes a real unlock', () => {
+  const game = {
+    achievement: {
+      total: 4,
+      unlocked: 1,
+      list: [
+        { name: 'REAL', Achieved: true },
+        { name: 'FORCED', Achieved: false },
+        { name: 'OTHER', Achieved: false },
+        { name: 'LOCKED', Achieved: false },
+      ],
+    },
+  };
+
+  let map = {};
+  map = manualUnlock.update(map, '123', 'steamEmu', 'FORCED', 'mark-unlocked').map;
+  map = manualUnlock.update(map, '123', 'steamEmu', 'OTHER', 'mark-unlocked').map;
+  manualUnlock.applyToGame(game, map, '123', 'steamEmu');
+  assert.equal(game.achievement.unlocked, 3, 'two manual unlocks on top of one real one');
+
+  map = manualUnlock.update(map, '123', 'steamEmu', 'FORCED', 'clear-manual').map;
+  manualUnlock.applyToGame(game, map, '123', 'steamEmu');
+  assert.equal(game.achievement.unlocked, 2, 'clearing a forced unlock lowers the count');
+  assert.equal(game.achievement.list[1].Achieved, false, 'the forced achievement is locked again');
+  assert.equal(game.achievement.list[1].manual, undefined, 'and loses its manual marker');
+
+  // Marking, then clearing, an achievement the save already reported must leave it unlocked.
+  map = manualUnlock.update(map, '123', 'steamEmu', 'REAL', 'mark-unlocked').map;
+  manualUnlock.applyToGame(game, map, '123', 'steamEmu');
+  map = manualUnlock.update(map, '123', 'steamEmu', 'REAL', 'clear-manual').map;
+  manualUnlock.applyToGame(game, map, '123', 'steamEmu');
+  assert.equal(game.achievement.list[0].Achieved, true, 'a real unlock survives clearing its override');
+  assert.equal(game.achievement.unlocked, 2, 'and the count is unchanged by that round trip');
+});
