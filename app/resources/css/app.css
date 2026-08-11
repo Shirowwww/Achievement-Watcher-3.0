@@ -729,21 +729,19 @@ main {
    their own palette. */
 #game-list .game-box.skeleton {
   pointer-events: none;
-  animation: aw-skeleton-pulse 1.5s ease-in-out infinite;
+  animation: aw-skeleton-pulse 1.4s ease-in-out infinite;
 }
 #game-list .game-box.skeleton .header,
 #game-list .game-box.skeleton .info .title,
 #game-list .game-box.skeleton .info .progressBar .meter {
   background: linear-gradient(
     110deg,
-    var(--surface-sunken) 0%,
-    var(--surface) 35%,
-    var(--border) 50%,
-    var(--surface) 65%,
-    var(--surface-sunken) 100%
+    var(--surface-sunken) 8%,
+    var(--surface) 18%,
+    var(--surface-sunken) 33%
   ) !important;
-  background-size: 220% 100% !important;
-  animation: aw-skeleton-shimmer 1.5s linear infinite;
+  background-size: 200% 100% !important;
+  animation: aw-skeleton-shimmer 1.4s linear infinite;
 }
 #game-list .game-box.skeleton .info {
   min-height: 57px; /* match a real tile's info block so the grid does not reflow */
@@ -782,10 +780,10 @@ main {
 
 @keyframes aw-skeleton-shimmer {
   0% {
-    background-position: 120% 0;
+    background-position: 200% 0;
   }
   100% {
-    background-position: -120% 0;
+    background-position: -200% 0;
   }
 }
 

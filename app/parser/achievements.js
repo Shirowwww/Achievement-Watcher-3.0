@@ -464,11 +464,16 @@ module.exports.setEmulatorFixedHandler = (fn) => {
 
 // Shared by the per-scan fixer and Settings > Advanced > Fix all games.
 module.exports.autoApplyEmulatorFix = autoApplyEmulatorFix;
-async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, option, detectedEmu = null, detectedExe = null, skipAdvanced = false, schema = null } = {}) {
+async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, option, detectedEmu = null, detectedExe = null, skipAdvanced = false, schema = null, requireGameExecutable = false } = {}) {
   if (!gameDir || !_userDataPath) throw new Error('game folder/user data path unavailable');
   const cfg = option.emulator || {};
   detectedEmu = detectedEmu || goldberg.detectEmulator(gameDir);
   detectedExe = detectedExe || exeDetect.detect(gameDir, gameName || '', { dllPaths: detectedEmu.dll });
+  const gameExePresent = () => !!(detectedExe && detectedExe.full && fs.existsSync(detectedExe.full));
+  if (requireGameExecutable && !gameExePresent()) {
+    debug.log(`[${appid}] automatic emulator fix skipped — no game executable found in ${gameDir}`);
+    return { skipped: true, reason: 'no-game-executable', tag: '', steamSettingsDirs: [], emulator: detectedEmu };
+  }
   // Apply a confident CrakFiles fix first; it is opt-in, backed up, and idempotent.
   const pspc = isPspcGame(gameDir);
   if (pspc) debug.log(`[${appid}] PlayStation-PSPC game detected — applying Goldberg/GBE anyway, plus trying a community crack; note PSN trophies never reach the Steam API, so live tracking needs a RUNE release`);
@@ -547,9 +552,17 @@ async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, o
     detectedEmu.dll.some(
       (file) => path.basename(file).toLowerCase() === wantedFile && runtimeDirKeys.has(path.resolve(path.dirname(file)).toLowerCase())
     );
+  if (requireGameExecutable && !gameExePresent()) {
+    debug.log(`[${appid}] automatic emulator fix cancelled — game executable disappeared from ${gameDir}`);
+    return { skipped: true, reason: 'game-executable-gone', tag: '', steamSettingsDirs: [], emulator: detectedEmu };
+  }
   gbeInstaller.installDlls({ dllDirs, dlls, writeIfMissing: wantedArch, log: debug });
   if (wantedArch && wantedFile && detectedEmu.dll.length > 0 && !hasWantedDll) {
     const exeDir = detectedExe && detectedExe.full ? path.dirname(detectedExe.full) : fallbackDllDir;
+    if (requireGameExecutable && !gameExePresent()) {
+      debug.log(`[${appid}] automatic emulator fix cancelled — game executable disappeared from ${gameDir}`);
+      return { skipped: true, reason: 'game-executable-gone', tag: '', steamSettingsDirs: [], emulator: detectedEmu };
+    }
     gbeInstaller.installDlls({ dllDirs: [exeDir], dlls, ensureArch: wantedArch, log: debug });
     if (!dllDirs.some((dir) => dir.toLowerCase() === exeDir.toLowerCase())) dllDirs.push(exeDir);
     debug.log(`[${appid}] seeded missing ${wantedFile} beside ${detectedExe && detectedExe.name ? detectedExe.name : 'the detected executable'}`);
@@ -1714,6 +1727,12 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       }
     }
 
+    // Auto-repair needs a real game binary; an uninstalled folder may only keep emulator files.
+    if (resolvedGameDir && !(appid.data && appid.data.type === 'socialclub')) {
+      resolvedExe = resolvedExe || exeDetect.detect(resolvedGameDir, game.name || '', { dllPaths: resolvedEmu ? resolvedEmu.dll : [] });
+    }
+    const realGameExePresent = () => !!(resolvedExe && resolvedExe.full && fs.existsSync(resolvedExe.full));
+
     // Repair missing emulator schemas and backfill blank descriptions from local files.
     if (appid.data && appid.data.steamSettings && game.achievement && Array.isArray(game.achievement.list)) {
       const showHidden = !!(option.achievement && option.achievement.showHidden);
@@ -1748,7 +1767,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     // game. Previously they lived inside the needsSchema block, so a valid schema permanently skipped
     // DLC + identity/language generation. Create missing files independently and keep user identity
     // synchronized without repatching the emulator DLL or rewriting the achievement schema.
-    if (appid.data && appid.data.steamSettings && /^[0-9]+$/.test(String(appid.appid))) {
+    if (appid.data && appid.data.steamSettings && /^[0-9]+$/.test(String(appid.appid)) && realGameExePresent()) {
       const steamSettings = appid.data.steamSettings;
       try {
         const appConfigFile = path.join(steamSettings, 'configs.app.ini');
@@ -1760,17 +1779,23 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
         if (needsDlcConfig) {
           let dlcs = [];
           try { dlcs = await steam.getDLCList(appid.appid); } catch {}
-          const dlc = goldberg.writeDlcConfig({ steamSettings, dlcs, unlockAll: true });
-          debug.log(`[${appid.appid}] created configs.app.ini (unlock_all=1, ${dlc.count} DLC(s))`);
+          if (realGameExePresent()) {
+            const dlc = goldberg.writeDlcConfig({ steamSettings, dlcs, unlockAll: true });
+            debug.log(`[${appid.appid}] created configs.app.ini (unlock_all=1, ${dlc.count} DLC(s))`);
+          }
         }
-        const main = goldberg.writeMainConfig({ steamSettings });
-        if (main && main.changed) debug.log(`[${appid.appid}] updated configs.main.ini (new_app_ticket=1, gc_token=1)`);
-        const user = goldberg.writeUserConfig({
-          steamSettings,
-          accountName: option.general && option.general.username,
-          language: option.achievement && option.achievement.lang,
-        });
-        if (user && user.changed) debug.log(`[${appid.appid}] updated configs.user.ini (${user.accountName || 'default'}, ${user.language || 'default'})`);
+        if (realGameExePresent()) {
+          const main = goldberg.writeMainConfig({ steamSettings });
+          if (main && main.changed) debug.log(`[${appid.appid}] updated configs.main.ini (new_app_ticket=1, gc_token=1)`);
+        }
+        if (realGameExePresent()) {
+          const user = goldberg.writeUserConfig({
+            steamSettings,
+            accountName: option.general && option.general.username,
+            language: option.achievement && option.achievement.lang,
+          });
+          if (user && user.changed) debug.log(`[${appid.appid}] updated configs.user.ini (${user.accountName || 'default'}, ${user.language || 'default'})`);
+        }
       } catch (err) {
         debug.log(`[${appid.appid}] runtime GSE config generation failed => ${err}`);
       }
@@ -1880,6 +1905,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
         option.emulator &&
         option.emulator.autoApplyNewGames !== false &&
         resolvedGameDir &&
+        realGameExePresent() &&
         _userDataPath &&
         !workingCrackLoader
       );
@@ -1894,7 +1920,9 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
         debug.log(`[${appid.appid}] steam_settings content-version failed => ${err}`);
       }
       const lastAttempt = settingsVersion ? _emuSetupAttempts.get(fixKey) : null;
-      if (_emuFixInFlight.has(fixKey)) {
+      if (!realGameExePresent()) {
+        debug.log(`[${appid.appid}] automatic emulator fix skipped — no game executable found in ${resolvedGameDir}`);
+      } else if (_emuFixInFlight.has(fixKey)) {
         debug.log(`[${appid.appid}] emulator setup already running in background — will appear fixed on a later scan`);
       } else if (lastAttempt && lastAttempt.version === settingsVersion && Date.now() - lastAttempt.at < EMU_SETUP_RETRY_MS) {
         debug.log(`[${appid.appid}] emulator setup skipped — steam_settings unchanged since the last attempt (cool-down)`);
@@ -1932,21 +1960,27 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
                 detectedEmu: bgEmu,
                 detectedExe: bgExe,
                 schema: bgSchema,
+                requireGameExecutable: true,
               });
               fixedSteamSettingsDirs = setup.steamSettingsDirs || [];
-              fixApplied = true;
-              debug.log(
-                `[${bgAppid}] automatic emulator fix complete (GBE Fork ${setup.tag || 'cached'}${runtimeFixReason ? `, ${runtimeFixReason}` : ''})`
-              );
+              fixApplied = !setup.skipped;
+              if (setup.skipped) {
+                debug.log(`[${bgAppid}] automatic emulator fix skipped — ${setup.reason}`);
+              } else {
+                debug.log(
+                  `[${bgAppid}] automatic emulator fix complete (GBE Fork ${setup.tag || 'cached'}${runtimeFixReason ? `, ${runtimeFixReason}` : ''})`
+                );
+              }
             } catch (err) {
               debug.log(`[${bgAppid}] automatic emulator fix failed => ${err}`);
             }
           }
 
           const schemaRepairDirs = new Set();
-          if (!bgWorkingCrackLoader && bgNeedsSchema && goldberg.readLocalSchema(bgSteamSettings).length === 0) schemaRepairDirs.add(bgSteamSettings);
+          const gameExeStillPresent = () => !!(bgExe && bgExe.full && fs.existsSync(bgExe.full));
+          if (!bgWorkingCrackLoader && bgNeedsSchema && gameExeStillPresent() && goldberg.readLocalSchema(bgSteamSettings).length === 0) schemaRepairDirs.add(bgSteamSettings);
           for (const dir of fixedSteamSettingsDirs) {
-            if (dir && goldberg.readLocalSchema(dir).length === 0) schemaRepairDirs.add(dir);
+            if (dir && gameExeStillPresent() && goldberg.readLocalSchema(dir).length === 0) schemaRepairDirs.add(dir);
           }
 
           if (schemaRepairDirs.size > 0) {
