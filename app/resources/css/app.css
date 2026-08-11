@@ -723,6 +723,72 @@ main {
   box-shadow: 0 18px 34px rgba(0, 0, 0, 0.42), 0 0 0 1px color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
+/* Skeleton tiles shown while the library scan streams real games in. They keep the grid from
+   showing one fast-loading game alone for seconds; they are inert and removed as real tiles
+   arrive. Only theme tokens are used (no hardcoded colors), so built-in and user themes keep
+   their own palette. */
+#game-list .game-box.skeleton {
+  pointer-events: none;
+  animation: aw-skeleton-pulse 1.5s ease-in-out infinite;
+}
+#game-list .game-box.skeleton .header,
+#game-list .game-box.skeleton .info .title,
+#game-list .game-box.skeleton .info .progressBar .meter {
+  background: linear-gradient(
+    110deg,
+    var(--surface-sunken) 0%,
+    var(--surface) 35%,
+    var(--border) 50%,
+    var(--surface) 65%,
+    var(--surface-sunken) 100%
+  ) !important;
+  background-size: 220% 100% !important;
+  animation: aw-skeleton-shimmer 1.5s linear infinite;
+}
+#game-list .game-box.skeleton .info {
+  min-height: 57px; /* match a real tile's info block so the grid does not reflow */
+}
+#game-list .game-box.skeleton .info .title {
+  width: 62%;
+  height: 11px;
+  margin: 0 0 9px;
+  border-radius: 4px;
+  padding: 0;
+}
+#game-list .game-box.skeleton .info .progressBar {
+  background: var(--surface-sunken);
+  border: 0;
+  padding: 0;
+}
+#game-list .game-box.skeleton .info .progressBar .meter {
+  width: 100%;
+  height: 5px;
+  border-radius: 3px;
+}
+#game-list .game-box.skeleton .info .progressBar:before,
+#game-list .game-box.skeleton .info .progressBar .meter:after {
+  content: none;
+}
+
+@keyframes aw-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.72;
+  }
+}
+
+@keyframes aw-skeleton-shimmer {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+
 #game-list .game-box .header {
   background-color: var(--surface);
   background-size: cover !important;

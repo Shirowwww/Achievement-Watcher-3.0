@@ -297,6 +297,8 @@ async function goldbergScanRoots(scope = _activeScanScope) {
 
 // Index direct child folders so name-only installs can resolve their game directory.
 let _folderIndex = null;
+// Concurrent workers must share one folder-index build instead of each walking the same roots.
+let _folderIndexPromise = null;
 // Do not let name matching steal folders already linked by an authoritative appid.
 let _claimedDirs = new Set();
 // Keep the active scope with the folder index so later matching stays selective.
@@ -328,12 +330,14 @@ async function discoverWithCache(option, steamAccFilter) {
   if (cacheKey && _discoverCache && _discoverCache.key === cacheKey && Date.now() - _discoverCache.time < DISCOVER_TTL_MS) {
     _activeScanScope = activeScope;
     _folderIndex = _discoverCache.folderIndex;
+    _folderIndexPromise = null;
     _claimedDirs = _discoverCache.claimedDirs;
     debug.log(`[discover] reusing cached scan (${((Date.now() - _discoverCache.time) / 1000).toFixed(1)}s old)`);
     return _discoverCache.appidList;
   }
   _activeScanScope = activeScope;
   _folderIndex = null;
+  _folderIndexPromise = null;
   _claimedDirs = new Set();
   const appidList = await discover(option.achievement_source, steamAccFilter, activeScope);
   if (cacheKey) _discoverCache = { key: cacheKey, time: Date.now(), appidList, folderIndex: _folderIndex, claimedDirs: _claimedDirs };
@@ -639,44 +643,53 @@ function detectEmulatorCached(gameDir) {
 
 async function getFolderIndex() {
   if (_folderIndex) return _folderIndex;
-  const index = [];
-  const seen = new Set();
-  const desktopSet = new Set(desktopRoots().map((d) => d.toLowerCase()));
-  const addDir = (dir) => {
-    const key = dir.toLowerCase();
-    if (seen.has(key)) return;
-    if (_claimedDirs.has(key)) return; // already linked by appid — never name-match it
-    seen.add(key);
-    index.push({ dir, name: path.basename(dir) });
-  };
-  for (const root of await goldbergScanRoots()) {
-    let entries;
-    try {
-      entries = fs.readdirSync(root, { withFileTypes: true });
-    } catch {
-      continue;
-    }
-    for (const e of entries) {
-      if (!e.isDirectory()) continue;
-      const dir = path.join(root, e.name);
-      addDir(dir);
-      // One safe extra level under Desktop: only descend into library-like subfolders
-      // (Desktop\Jeux\<game>), never loose Desktop folders.
-      if (desktopSet.has(root.toLowerCase()) && saveRoots.isLibraryLikeFolderName(e.name)) {
-        let children;
+  if (!_folderIndexPromise) {
+    _folderIndexPromise = (async () => {
+      const index = [];
+      const seen = new Set();
+      const desktopSet = new Set(desktopRoots().map((d) => d.toLowerCase()));
+      const addDir = (dir) => {
+        const key = dir.toLowerCase();
+        if (seen.has(key)) return;
+        if (_claimedDirs.has(key)) return; // already linked by appid — never name-match it
+        seen.add(key);
+        index.push({ dir, name: path.basename(dir) });
+      };
+      for (const root of await goldbergScanRoots()) {
+        let entries;
         try {
-          children = fs.readdirSync(dir, { withFileTypes: true });
+          entries = fs.readdirSync(root, { withFileTypes: true });
         } catch {
           continue;
         }
-        for (const child of children) {
-          if (child.isDirectory()) addDir(path.join(dir, child.name));
+        for (const e of entries) {
+          if (!e.isDirectory()) continue;
+          const dir = path.join(root, e.name);
+          addDir(dir);
+          // One safe extra level under Desktop: only descend into library-like subfolders
+          // (Desktop\Jeux\<game>), never loose Desktop folders.
+          if (desktopSet.has(root.toLowerCase()) && saveRoots.isLibraryLikeFolderName(e.name)) {
+            let children;
+            try {
+              children = fs.readdirSync(dir, { withFileTypes: true });
+            } catch {
+              continue;
+            }
+            for (const child of children) {
+              if (child.isDirectory()) addDir(path.join(dir, child.name));
+            }
+          }
         }
       }
-    }
+      _folderIndex = index;
+      return index;
+    })().catch((err) => {
+      // A failed build must not poison the cache for the rest of the scan; retry next time.
+      _folderIndexPromise = null;
+      throw err;
+    });
   }
-  _folderIndex = index;
-  return index;
+  return _folderIndexPromise;
 }
 
 function desktopRoots() {

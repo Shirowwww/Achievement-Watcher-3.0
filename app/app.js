@@ -188,6 +188,41 @@ function setLibraryBusyCursor(busy) {
   }
 }
 
+// Skeleton tiles fill the grid while a scan streams real games in. Without them a fast local
+// install (Big Walk loads in ~30ms, network-backed games take seconds) sits alone on screen,
+// then the whole rest of the library pops in at once. They are inert and removed as real tiles
+// arrive (and any leftover at the end of the scan).
+const MAX_SKELETON_TILES = 18;
+const DEFAULT_SKELETON_TILES = 12;
+
+function skeletonTileHtml() {
+  return `
+    <li>
+      <div class="game-box skeleton" aria-hidden="true">
+        <div class="header"></div>
+        <div class="info">
+          <div class="info-head"><div class="title"></div></div>
+          <div class="progressBar"><span class="meter"></span></div>
+        </div>
+      </div>
+    </li>`;
+}
+
+function addSkeletonTiles(count) {
+  const list = $('#game-list ul');
+  for (let i = 0; i < count; i++) list.append(skeletonTileHtml());
+}
+
+function replaceSkeletonWith(item) {
+  const skeleton = $('#game-list ul li:has(.game-box.skeleton)').first();
+  if (skeleton.length) skeleton.replaceWith(item);
+  else $('#game-list ul').append(item);
+}
+
+function clearSkeletonTiles() {
+  $('#game-list ul li:has(.game-box.skeleton)').remove();
+}
+
 // Repaint one tile and the header counters from the current in-memory list.
 function refreshLibraryProgressFor(appid, games) {
   const list = Array.isArray(games) ? games : [];
@@ -991,10 +1026,14 @@ var app = {
       const file = manualUnlock.sidecarFile();
       return file ? manualUnlock.readMap(file) : {};
     })();
+    const previousGameCount = gameList.length;
     gameList = [];
     const renderedAppids = new Set();
     // Reset the list and handlers so onStart() stays idempotent.
     $('#game-list ul').empty();
+    addSkeletonTiles(
+      previousGameCount > 0 ? Math.min(MAX_SKELETON_TILES, Math.max(previousGameCount, 6)) : DEFAULT_SKELETON_TILES
+    );
     gameElements.clear();
     // Remove only handlers owned by this scan.
     $('#game-list').off('.awLibrary');
@@ -1011,7 +1050,6 @@ var app = {
         },
         (renderGame = (game) => {
           manualUnlock.applyToGame(game, manualUnlockMap, game.appid, game.source);
-          let elem = $('#game-list ul');
           if (game.achievement.unlocked > 0 || self.config.achievement.hideZero == false) {
             const appidKey = String(game.appid);
             if (renderedAppids.has(appidKey)) {
@@ -1103,7 +1141,7 @@ var app = {
             `;
 
             const item = $(template);
-            elem.append(item);
+            replaceSkeletonWith(item);
             const headerEl = item.find('.header').first();
             gameList.push(game);
 
@@ -1162,6 +1200,7 @@ var app = {
 
         if (list.length == 0) {
           debug.log('No game found !');
+          clearSkeletonTiles();
           $('#game-list .isEmpty').show();
           return;
         }
@@ -1169,6 +1208,7 @@ var app = {
         debug.log('Populating game list ...');
 
         // Sort once after all tiles have loaded.
+        clearSkeletonTiles();
         sort($('#game-list ul'), sortOptions());
 
         // Remove duplicate executable assignments before playtime tracking.
@@ -3366,6 +3406,7 @@ var app = {
         loadingElem.elem.hide();
         $('#main-footer').addClass('done');
         setLibraryBusyCursor(false);
+        clearSkeletonTiles();
         $('#game-list .isEmpty').show();
         remote.dialog.showMessageBoxSync({
           type: 'error',
