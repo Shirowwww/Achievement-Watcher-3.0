@@ -35,9 +35,9 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 | **More real sources** | Local Steam appcache, GOG Galaxy and Ubisoft Connect readers; optional Epic account connection; EA Desktop; Xbox PC (Game Pass / Microsoft Store) account import; Goldberg SocialClub; RPCS3, ShadPS4 and Xenia — each one individually switchable |
 | **Goldberg / GBE / Uplay R2 tools** | Read-only diagnosis, `steam_settings` repair, matched GBE Fork runtime install, loader-version-aware Uplay R2 support, Steamless support, opt-in API-check bypass, backups/restore and opt-in background setup |
 | **Better library** | Game and achievement search, installed-only filtering, blacklist restore, rarity tiers, progress achievements, persistent manual achievement unlocks, smarter covers with a per-game SteamDB/SteamGridDB gallery, automatic launch-executable detection, a shortcut to each entry's achievement-data folder and right-click uninstall |
-| **Live tracking** | Tray-first background Watchdog, Xenia/ShadPS4/GOG/Ubisoft unlock monitoring, safer startup baselines and duplicate suppression |
+| **Live tracking** | Tray-first background Watchdog, Xenia/ShadPS4/GOG/Ubisoft unlock monitoring, playtime and last-played dates for every tracked source (Steam, Ubisoft, Epic, GOG, EA, Xbox PC and standalone installs), safer startup baselines and duplicate suppression |
 | **Notifications** | Native Windows notifications + a customizable, localized in-game overlay (stats bar, instant search, status filters, rarity badges, progress bars, density/icon-size/accent/zoom), preset library, custom builder, custom sounds, 0–200% volume, separate rare/completion styles and optional priority delivery that survives Do Not Disturb |
-| **Controller and UI** | Full controller navigation (XInput plus native PlayStation/Switch input), controller control of the in-game overlay, mouse Back/Forward, resizable interface, collapsible settings sections that remember what you folded away, seven built-in themes plus a Custom theme with per-layer colors/images/gradients, 18 complete UI languages and a localized installer |
+| **Controller and UI** | Full controller navigation (XInput plus native PlayStation/Switch input), controller control of the in-game overlay, mouse Back/Forward, resizable interface, collapsible settings sections that remember what you folded away, seventeen built-in themes plus a Custom theme with per-layer colors/images/gradients, 18 complete UI languages and a localized installer |
 | **Local-first reliability** | Own data directory isolated from the original 1.6.8 app, migration-safe settings and avatar, offline names and artwork, local schemas, platform-aware cache IDs, bounded caches, self-healing folders, quiet update prompts and durable diagnostics |
 
 ---
@@ -62,7 +62,7 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 | Live RPCS3 / ShadPS4 / Xenia unlocks | ✅ | ✅ | ⚠️ RPCS3 only |
 | Full controller navigation | ✅ App + overlay | ✅ App + overlay | ❌ Planned only |
 | Screenshot souvenirs | ✅ | ✅ | ✅ |
-| Multiple UI themes | ✅ 7 + Custom | ✅ 8 | ❌ |
+| Multiple UI themes | ✅ 17 + Custom | ✅ 8 | ❌ |
 | Interface languages | ✅ 18 complete | ✅ 30 locales | ✅ 18 locales |
 | Xbox PC (Game Pass / Store) | ✅ Account import | ✅ Account import | ❌ |
 | Manual achievement unlock | ✅ | ✅ | ❌ |
@@ -101,6 +101,9 @@ The optional Steam Web API key can improve some lookups, but local sources and c
 3. Use the first-run guide to choose your language, sources, folders and notification mode.
 4. Run **Settings → Folders → Smart Find** and add any custom game or save location.
 5. Leave the app in the system tray for live notifications and playtime tracking.
+
+Everything else is covered by the in-app **Settings → Help** tab and the
+[documentation](docs/README.md).
 
 <div align="center">
 <img src="screenshot/settings.png" width="680" alt="Achievement Watcher settings"><br>
@@ -159,6 +162,7 @@ Those games show the same Steam community percentage column as native Steam game
 
 - [Getting started](docs/getting-started.md)
 - [Notifications](docs/notifications.md)
+- [Controller (gamepad)](docs/controller.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Contributing](CONTRIBUTING.md)
 - [Build guide](BUILD.md)

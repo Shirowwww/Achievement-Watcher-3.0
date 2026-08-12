@@ -1,28 +1,10 @@
 'use strict';
 
 /*
-  Emulator-DLL installer — the runtime "crack" half of the achievement pipeline.
-
-  Downloads the upstream Detanup01/gbe_fork Windows release once (the most actively-maintained
-  Goldberg/GBE continuation, whose steam_api tracks Steamworks closely and ships far more often than
-  the downstream alex47exe/gse_fork), caches the extracted steam_api.dll (32-bit) and steam_api64.dll
-  (64-bit) and the generate_interfaces tools, and drops them into a game's install folder(s) —
-  replacing whatever steam_api(64).dll is already there and keeping a one-time .bak of the original.
-  Taking the WHOLE runtime from one matched build (rather than mixing forks) is the most compatible,
-  least-breakage option. AW applies the emulator standalone (DLL swap) — there is no ColdClient path.
-
-  The achievement-schema generator (generate_emu_config) is deliberately NOT here — it lives in
-  genEmuConfig.js and uses alex47exe/gse_fork_tools, the maintained "improved" config tool (Detanup01
-  froze their own gbe_fork_tools, shipping it as "..._old"). So: gbe for the emulator runtime, gse for
-  the config tooling — best of both.
-
-  Release layout (shared by both forks): steam_api under release/regular/<arch>/, generate_interfaces
-  under release/tools/generate_interfaces/. Interface-tool basenames tolerate both gbe ("x86") and gse
-  ("x32") spellings, so a future asset reshuffle still resolves.
-
-  This module is renderer-side (it uses request-zero / node-7z / 7zip-bin); the pure, unit-tested
-  achievement logic stays in goldberg.js. Nothing here ever throws for a "couldn't reach the network"
-  case when a usable cached build already exists — installs degrade gracefully to the cached version.
+  Emulator-DLL installer — the runtime "crack" half of the pipeline. Downloads the maintained
+  Detanup01/gbe_fork release once, caches steam_api(64).dll + generate_interfaces, and drops them into
+  game folders (one-time .bak of the original), always from one matched build. The config tooling
+  lives in genEmuConfig.js; network failures degrade to the cached build.
 */
 
 const fs = require('fs');
@@ -344,14 +326,8 @@ function runtimeDllDirs({ gameDir, dllPaths = [], exePath = null, steamSettings 
 }
 
 /*
-  Ensure the GBE Fork DLLs are available locally and return { tag, dir, x64, x86, interfaces } (paths
-  may be null if a piece is missing from the release). Hits GitHub at most once per day; otherwise
-  reuses the cached build, so the per-scan automatic installer is effectively offline after the first
-  download.
-
-  cacheDir   where to keep <tag>/steam_api(64).dll + tools/ + latest.txt + .last-check
-  force      ignore the daily re-check throttle and ask GitHub now (used by the manual action)
-  log        optional @xan105/log-style logger
+  Ensure the GBE Fork DLLs are cached locally ({ tag, dir, x64, x86, interfaces }); re-checks GitHub
+  at most once a day unless force is set.
 */
 async function ensureEmulatorDlls({ cacheDir, force = false, log = noopLog } = {}) {
   if (!cacheDir) throw new Error('ensureEmulatorDlls: cacheDir is required');
@@ -420,20 +396,9 @@ async function ensureEmulatorDlls({ cacheDir, force = false, log = noopLog } = {
 }
 
 /*
-  Install the cached DLLs into one or more directories. In each dir, every emulator DLL already
-  present (steam_api.dll and/or steam_api64.dll) is replaced with the matching-arch GBE Fork build,
-  backing up the original as <name>.bak the first time only (so the .bak always holds the genuine
-  pre-GBE DLL, never a previously-installed GBE one). When a dir has neither DLL and writeIfMissing is
-  set ('x64'/'x86'), that arch is written fresh. ensureArch can additionally seed a required arch
-  even when the directory already contains only the opposite Steam API DLL.
-
-  dllDirs         array of absolute directory paths
-  dlls            result of ensureEmulatorDlls() ({ x64, x86, tag })
-  writeIfMissing  arch key to drop into dirs that have no emulator DLL yet (default: none)
-  ensureArch      arch key that must exist after install, even if another arch was already present
-  log             optional logger
-
-  Returns { installed, backedUp, tag, perDir: [{ dir, wrote: [...], backedUp: [...] }] }.
+  Install the cached GBE DLLs into one or more dirs, backing up replaced originals as <name>.bak once.
+  writeIfMissing drops an arch into DLL-less dirs; ensureArch seeds an arch even when only the other
+  one is present. Returns { installed, backedUp, tag, perDir }.
 */
 function installDlls({ dllDirs, dlls, writeIfMissing = null, ensureArch = null, log = noopLog } = {}) {
   if (!dlls || (!dlls.x64 && !dlls.x86)) throw new Error('installDlls: no cached GBE Fork DLLs available');

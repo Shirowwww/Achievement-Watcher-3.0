@@ -16,13 +16,9 @@ const LIST_SOURCES = [
 ];
 const LIST_TTL_MS = 6 * 60 * 60 * 1000; // re-fetch the lists at most every 6h
 
-// Auto-updating pixeldrain proxy list (LAST-RESORT download fallback only — see downloadAndApply). When
-// BOTH pixeldrain-owned hosts (.com + .net) fail for a file, AW can fall back to a community proxy that
-// re-serves the pixeldrain CDN past the rate limit. Those proxy domains die/rotate over time (the old
-// `cdn.pd8.workers.dev` was taken down), so instead of hardcoding one we pull the current list from the
-// same auto-updating source the "Pixeldrain Download Bypass Enhanced" userscript uses, cached for 24h
-// (matching that script) with a stale-cache + hardcoded fallback. Kept last in the host order so the vast
-// majority of downloads go through pixeldrain itself and never touch a third party.
+// Auto-updating pixeldrain proxy list (last-resort fallback when both pixeldrain hosts fail): proxy
+// domains rotate, so pull the current list from the same source the bypass userscript uses, cached 24h
+// with a stale-cache + hardcoded fallback, and keep it last in the host order.
 const PIXELDRAIN_PROXY_LIST_URL = 'https://pixeldrain-bypass.gamedrive.org/api/proxy.json';
 const PIXELDRAIN_PROXY_TTL_MS = 24 * 60 * 60 * 1000;
 const PIXELDRAIN_PROXY_FALLBACK = ['https://cdn.pixeldrain.eu.cc/']; // used only if the list fetch + cache both fail
@@ -56,13 +52,9 @@ function availabilityMessage(reason) {
   return `pixeldrain blocked this file (${r})`;
 }
 
-// Pixeldrain throttles heavily-downloaded ("hotlinked") files: once a file is flagged, the direct API
-// download returns 403 (`file_rate_limited_captcha_required`, `virus_detected`, …) and only a browser
-// (captcha) or a paid account can fetch it — a Referer/User-Agent won't help. The /info endpoint reports
-// this up-front via `availability` ('' = freely downloadable), so we probe it before attempting a
-// download and surface an actionable error instead of a bare 403. Returns { available, reason }; a probe
-// that can't reach /info is treated as available (don't block on a transient failure — let the download
-// try and fail loudly).
+// Pixeldrain throttles hotlinked files (403 + captcha); probe /info's `availability` up-front and
+// surface an actionable error instead of a bare 403. Returns { available, reason }; an unreachable
+// /info counts as available so a transient failure doesn't block the download.
 async function pixeldrainAvailability(href, { log = noopLog } = {}) {
   const id = pixeldrainFileId(href);
   if (!id) return { available: true, reason: '' };
@@ -233,15 +225,9 @@ function distinctiveTokens(name) {
 }
 
 /*
-  A shared franchise is not a match.
-
-  Ranking alone scores "Assassin's Creed: Mirage" at ~0.57 against "Assassin's Creed Black Flag
-  Resynced" purely on the words the whole franchise shares, which is above the 0.5 floor — so an
-  unrelated game was proposed as "fix found" with real confidence. A candidate is rejected when it
-  carries a distinguishing word of its own ("mirage") that the query never mentions.
-
-  Deliberately one-directional: the QUERY may add words the candidate lacks ("resynced", a repack
-  tag), which is the normal shape of a local folder name and must stay a match.
+  A shared franchise is not a match: reject a candidate carrying a distinguishing word the query never
+  mentions (e.g. "Mirage" vs "Assassin's Creed Black Flag Resynced"). One-directional — the query may
+  add words ("resynced") the candidate lacks.
 */
 function candidateContradictsQuery(queryName, candidateName) {
   const queryTokens = new Set(distinctiveTokens(queryName));
@@ -304,14 +290,9 @@ const ARCH_HINT = {
   x86: /(x86|win32|32\s*bit|32-bit|ia32)/,
 };
 
-// Pick the best single fix from an entry's `fixes` array (which can hold several variants: a full
-// crack, a steam_api emu, an arch-specific build, an "update only" file, etc.). Ranking, high → low:
-//   * auto-installable (a pixeldrain link AW can download+apply) over a host that needs a browser
-//   * matches the game's architecture when `arch` is known (and penalised for the opposite arch)
-//   * looks like a real crack/bypass/emu over a bare "update"
-// With requireApplicable, non-pixeldrain fixes are excluded entirely (the automatic path can only act
-// on links it can fetch). Ties keep the first listed (the list's own preferred order). Returns a fix
-// object or null.
+// Pick the best single fix from an entry's fixes array: auto-installable over browser-needed hosts,
+// matching the game's arch, real crack/emu over bare "update". requireApplicable excludes
+// non-pixeldrain fixes; ties keep the first listed.
 function pickBestFix(entry, { arch = null, requireApplicable = false } = {}) {
   if (!entry || !Array.isArray(entry.fixes)) return null;
   let best = null;
@@ -384,13 +365,8 @@ function ts() {
 }
 
 /*
-  Download a single fix and apply it into the game folder. Files that already exist are backed up to
-  <gameDir>/.aw-crackfix-backups/<ts>/ before being overwritten. Returns { applied:[...], backupDir }.
-
-  fix       one entry from a CrakFiles `fixes` array ({ href, filename })
-  gameDir   the game install folder
-  cacheDir  scratch/download dir
-  entryName the matched CrakFiles entry name, recorded in the idempotency marker (optional)
+  Download one fix and apply it into the game folder, backing up overwritten files under
+  <gameDir>/.aw-crackfix-backups/<ts>/. Returns { applied:[...], backupDir }.
 */
 async function downloadAndApply({ fix, gameDir, cacheDir, entryName = '', proxyFallback = true, log = noopLog } = {}) {
   if (!fix || !fix.href) throw new Error('crackfix: fix has no download link');
@@ -510,17 +486,8 @@ async function extractArchive(archivePath, destDir, { log = noopLog } = {}) {
 }
 
 /*
-  Extract an already-downloaded crack archive (.rar/.zip/.7z) and apply its files into the game folder —
-  the local-file counterpart of downloadAndApply's second half, factored out so both share one code path.
-  This is what powers the "pixeldrain wants a captcha → open the page, download it yourself, then point AW
-  at the file" flow: the human solves the captcha, AW still does the tedious part (extract + back up
-  overwritten files under <gameDir>/.aw-crackfix-backups/<ts>/ + install + idempotency marker).
-
-  archivePath  path to the downloaded archive on disk
-  gameDir      the game install folder
-  fix          the CrakFiles fix object, for the idempotency marker (optional — synthesized from the file
-               name when absent, e.g. a manually-picked archive)
-  entryName    matched CrakFiles entry name recorded in the marker (optional)
+  Apply an already-downloaded crack archive to the game folder: extract, back up overwritten files,
+  install, and record the idempotency marker. Backs the "captcha → download manually" flow.
   Returns { applied:[...], backedUp, backupDir }.
 */
 async function applyLocalArchive({ archivePath, gameDir, fix = null, entryName = '', log = noopLog } = {}) {
@@ -572,27 +539,9 @@ async function applyLocalArchive({ archivePath, gameDir, fix = null, entryName =
 }
 
 /*
-  High-level automatic entry point used by the per-scan / background auto-fix flow. Fetches (or reuses)
-  the list, finds a CONFIDENT name match, picks the best auto-installable fix for the game's arch, skips
-  it if the same fix was already applied, then downloads + applies it. Every "did nothing" path returns
-  a structured reason instead of throwing, so the caller can log it and continue with the emulator fix.
-
-  list      pre-fetched crackfiles.json (optional; fetched via cacheDir when omitted — lets tests run
-            offline)
-  gameName  the game's display name (matched against entry names)
-  gameNames optional local name candidates (display name, folder name, exe basename)
-  gameDir   the game install folder (also where the idempotency marker lives)
-  arch      'x64' | 'x86' | null — biases fix selection toward the matching-arch build
-  force     re-apply even if the marker shows this exact fix was already applied
-  cacheDir  list cache + download scratch dir
-
-  Returns one of:
-    { applied:true, entry, fix, files:[...], backedUp, backupDir }
-    { applied:false, skipped:true, reason:'already-applied', entry, fix }
-    { applied:false, reason:'no-game-name' | 'no-game-dir' | 'no-confident-match' }
-    { applied:false, reason:'no-applicable-fix', entry, fixes }   (a match exists but only via links
-                                                                    that need a browser — caller may
-                                                                    surface it to the user)
+  Automatic entry point for per-scan / background auto-fix: fetch the list, find a CONFIDENT match,
+  pick the best arch fix, skip already-applied ones, then download + apply. Every no-op path returns
+  a structured reason instead of throwing. Args: list, gameName(s), gameDir, arch, force, cacheDir.
 */
 async function applyBestFix({ list = null, cacheDir, gameName, gameNames = [], gameDir, arch = null, force = false, proxyFallback = true, log = noopLog } = {}) {
   const names = uniqueGameNames([...(Array.isArray(gameNames) ? gameNames : [gameNames]), gameName]);

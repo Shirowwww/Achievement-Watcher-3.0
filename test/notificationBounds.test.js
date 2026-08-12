@@ -15,14 +15,14 @@ function assertInside(bounds) {
 
 test('every named notification position is anchored to the corresponding work-area edge', () => {
   const expected = {
-    'center-top': { x: -1260, y: 46 },
-    'top-left': { x: -1914, y: 46 },
-    'top-right': { x: -606, y: 46 },
-    'middle-left': { x: -1914, y: 460 },
-    'middle-right': { x: -606, y: 460 },
-    'bottom-left': { x: -1914, y: 874 },
-    'bottom-right': { x: -606, y: 874 },
-    'center-bottom': { x: -1260, y: 874 },
+    'center-top': { x: -1260, y: 42 },
+    'top-left': { x: -1918, y: 42 },
+    'top-right': { x: -602, y: 42 },
+    'middle-left': { x: -1918, y: 460 },
+    'middle-right': { x: -602, y: 460 },
+    'bottom-left': { x: -1918, y: 878 },
+    'bottom-right': { x: -602, y: 878 },
+    'center-bottom': { x: -1260, y: 878 },
   };
 
   for (const [position, anchor] of Object.entries(expected)) {
@@ -46,12 +46,12 @@ test('a large preset is reduced to the active work area before it is positioned'
     workArea: { x: 0, y: 0, width: 1000, height: 700 },
   });
 
-  assert.equal(fitted.scale, 1.0977777777777777);
-  assert.equal(fitted.width, 988);
-  assert.equal(fitted.height, 659);
-  assert.deepEqual({ x: bounds.x, y: bounds.y }, { x: 6, y: 35 });
-  assert.equal(bounds.x + bounds.width, 994);
-  assert.equal(bounds.y + bounds.height, 694);
+  assert.equal(fitted.scale, 1.1066666666666667);
+  assert.equal(fitted.width, 996);
+  assert.equal(fitted.height, 664);
+  assert.deepEqual({ x: bounds.x, y: bounds.y }, { x: 2, y: 34 });
+  assert.equal(bounds.x + bounds.width, 998);
+  assert.equal(bounds.y + bounds.height, 698);
 });
 
 test('custom notification positions are clamped back inside the current monitor', () => {
@@ -63,6 +63,6 @@ test('custom notification positions are clamped back inside the current monitor'
     custom: { x: 9000, y: -9000 },
   });
 
-  assert.deepEqual({ x: bounds.x, y: bounds.y }, { x: -646, y: 46 });
+  assert.deepEqual({ x: bounds.x, y: bounds.y }, { x: -642, y: 42 });
   assertInside(bounds);
 });

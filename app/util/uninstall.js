@@ -125,12 +125,8 @@ function findLocalUninstaller(gameDir) {
 }
 
 /**
- * Best-effort cleanup after a silent Inno/NSIS uninstall (`local.silent === true`).
- * The `_?=` argument that lets us wait on the process (instead of it copying itself
- * to %TEMP% and detaching) is documented — for NSIS officially, for Inno by the same
- * convention — to also stop the uninstaller from deleting itself. Without this, a
- * leftover unins000.exe/.dat (or Uninstall.exe) sits in the game folder forever even
- * though the "uninstall" reported success.
+ * Best-effort cleanup after a silent Inno/NSIS uninstall. The `_?=` wait argument also stops the
+ * uninstaller from deleting itself, which would otherwise leave unins000.exe/.dat behind forever.
  */
 function cleanupSilentUninstaller(local) {
   if (!local || !local.silent || !local.file) return;

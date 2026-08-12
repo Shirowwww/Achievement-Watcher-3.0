@@ -1,17 +1,9 @@
 'use strict';
 
 /*
-  Steam DRM (SteamStub) removal via atom0s/Steamless — the same tool ARMGDDN Autocracker bundles.
-
-  Some cracked games ship an exe still wrapped in Valve's SteamStub DRM; the GBE/Goldberg DLL alone
-  won't make them run because the stub phones home before the replaced steam_api is ever loaded.
-  Steamless unpacks that stub. This module downloads the official Steamless CLI release once, caches
-  it, and runs it on a game exe — producing `<exe>.unpacked.exe`, which we swap in after keeping the
-  original as `<exe>.steamstub.bak`. If the exe has no SteamStub, Steamless produces nothing and we
-  leave it untouched (a safe no-op).
-
-  Renderer-side (request-zero / node-7z / child_process). Steamless is .NET Framework 4.5.2, which is
-  present on every modern Windows, so there's no runtime to install. Windows-only.
+  Steam DRM (SteamStub) removal via atom0s/Steamless — the same tool ARMGDDN bundles. Downloads and
+  caches the CLI once, runs it on a game exe, and swaps in the unpacked exe (original kept as .bak).
+  A clean exe is a safe no-op. Windows-only.
 */
 
 const fs = require('fs');
@@ -157,16 +149,9 @@ function runCli(cli, args, cwd, timeout = 120000) {
 }
 
 /*
-  Strip SteamStub DRM from a single executable. Returns
-    { stripped, exe, backup, reason, output }
-  where `stripped` is true only when Steamless actually unpacked a stub and we swapped the exe in.
-  A clean exe (no stub) returns stripped:false with reason 'no-steamstub' and is left untouched.
-
-  steamless     result of ensureSteamless() ({ cli, dir })
-  exePath       absolute path to the game executable
-  experimental  also pass --realign — realigns the unpacked sections, which improves compatibility on
-                heavily-protected/repacked EXEs (Steamless' "experimental" knob isn't exposed on the CLI
-                otherwise). Off by default since the plain unpack is enough for most games.
+  Strip SteamStub DRM from one executable. Returns { stripped, exe, backup, reason, output };
+  stripped is true only when Steamless unpacked a stub and we swapped the exe in. experimental passes
+  --realign for heavily-protected/repacked EXEs.
 */
 async function stripDrm({ steamless, exePath, experimental = false, log = noopLog } = {}) {
   if (!steamless || !steamless.cli) throw new Error('stripDrm: Steamless CLI is not available');

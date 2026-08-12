@@ -208,14 +208,9 @@ function hasAchievementFileDirect(dir) {
   return ACHIEVEMENT_FILE_GLOB.some((f) => names.has(String(f).toLowerCase()));
 }
 
-// Accept the SocialClub root, a game folder (contains hex profile subfolders), or a profile folder.
-//
-// The acceptance must be conservative OUTSIDE the SocialClub root. A folder that merely contains
-// hex-looking subfolders is not proof of SocialClub: Steam emulator save roots (SmartSteamEmu,
-// CODEX, OnlineFix, GSE Saves, …) are full of numeric Steam AppID folders such as 311210, which
-// also match the hex profile shape. Treating them as SocialClub made the library list the watched
-// folders themselves as fake games (issue: "folders appear next to the other games"). Only the
-// real root (or a path under it) and folders with hard Rockstar profile evidence qualify.
+// Accept the SocialClub root, a game folder, or a profile folder — conservatively OUTSIDE the root:
+// hex-looking subfolders alone are not proof (Steam emu roots are full of numeric AppIDs that also
+// match), so hard Rockstar profile evidence is required.
 function isSocialClubPath(dir) {
   if (!dir) return false;
   const resolved = path.resolve(String(dir));

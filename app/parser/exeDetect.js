@@ -95,14 +95,9 @@ const PENALTY_SOFT = 30;
 const PENALTY_DEPTH = 2;
 const PENALTY_SHADOWED_L_SUFFIX = 5; // foo-l.exe next to foo.exe is usually a launcher/helper variant
 
-// Confidence thresholds for auto-filling the launch panel. A detection is only "confident"
-// (and therefore auto-assigned to a game) when one of these holds:
-//   - the caller supplied an authoritative exe (launcher manifest/DB), or
-//   - there is exactly one plausible exe in the folder, or
-//   - the exe name matches the game name (or the install folder name) strongly, or
-//   - the exe sits next to the Steam emulator dll AND matches name/folder decently, or
-//   - the winner beats every other candidate by a clear margin AND matches decently.
-// Anything else is left for the user to pick manually — the launch panel must never guess.
+// Confidence thresholds for auto-filling the launch panel: an authoritative exe, a single plausible
+// exe, a strong name/folder match, a decent match beside the emulator dll, or a clear margin win.
+// Anything else is left for the user — the launch panel never guesses.
 const CONFIDENCE = {
   STRONG_NAME: 0.85,
   DLL_NAME: 0.6,
@@ -224,13 +219,8 @@ function confidenceFor(best, candidates, gameDir, gameName, opts = {}) {
 }
 
 /*
-  Find the most likely game executable inside gameDir.
-
-  opts.dllPaths : full paths to the detected steam_api dll(s) — candidates in the same folder get a bonus.
-  opts.taken    : iterable/Set of full exe paths already assigned to OTHER games — never returned (no
-                  duplicate auto-association). If every candidate is taken, returns null.
-  opts.takenGameDirs : iterable/Set of install folders already assigned to OTHER games — never returns
-                  a second exe from the same game folder.
+  Find the most likely game executable inside gameDir. opts.taken avoids reusing exes assigned to other
+  games; opts.takenGameDirs avoids returning a second exe from an already-claimed folder.
 */
 function detect(gameDir, gameName, opts = {}) {
   if (!gameDir || !fs.existsSync(gameDir)) return null;

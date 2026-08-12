@@ -1,15 +1,8 @@
 'use strict';
 
 /*
- * Renderer-side translation helper for imperative strings (dialogs, menus,
- * notifications, busy labels).
- *
- * Each call carries an explicit English fallback and, when available, the
- * existing French fallback used by the legacy `fr ? '…' : '…'` ternaries.
- * Once a locale file provides a real translation under `dialogs.<key>`
- * (added to every bundled locale, per locale/README.md), that value wins.
- * Before that, French users keep the French fallback and every other
- * language keeps English — exactly the behaviour of the old ternaries.
+ * Renderer-side translation helper with explicit English/French fallbacks. A real `dialogs.<key>`
+ * translation wins once bundled; until then French keeps French, others keep English.
  */
 
 function currentLanguage() {

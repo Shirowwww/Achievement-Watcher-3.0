@@ -1,11 +1,8 @@
 'use strict';
 
-// Regression (issue #10): a locally uploaded avatar used to live only in localStorage (Chromium
-// profile state), which the one-time %APPDATA%\Achievement Watcher 3.0 migration deliberately never
-// imports — so it silently vanished on upgrade. avatarStore.js persists it as a plain file under
-// `cfg/` instead, which the existing `{ rel: 'cfg', mode: 'copy' }` migration-plan entry already
-// covers with no changes needed there. This test stubs Electron's ipcRenderer (unavailable outside
-// the Electron runtime) and asserts the store round-trips through exactly that path.
+// Regression (issue #10): avatars used to live in localStorage, which the migration never imports;
+// avatarStore.js persists them under cfg/ so the existing migration-plan entry covers them. This
+// stubs Electron's ipcRenderer and asserts the store round-trips through that path.
 
 const assert = require('node:assert/strict');
 const fs = require('node:fs');

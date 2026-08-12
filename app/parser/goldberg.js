@@ -40,14 +40,9 @@ const AUXILIARY_SETTINGS_DIRS = new Set([
   'tools',
 ]);
 
-// Subfolder name fragments that mark a *companion tool* shipped beside a game (with its own Steam app
-// id) rather than the game itself: modding editors, SDKs, level/world editors, creation/dev kits,
-// authoring & workshop tools, dedicated servers, benchmarks. The nested-appid walk never descends into
-// these, so e.g. "The Divinity Engine 2" (435730, bundled inside Divinity: Original Sin 2 = 435150)
-// can't hijack the game's identity. Each fragment is matched on word boundaries and tolerates
-// space/underscore/hyphen separators. Multi-word fragments are *qualified* (e.g. "creation kit",
-// "dedicated server" — never a bare "kit"/"server"/"tools") so a real game's own folder, or a game
-// whose title merely contains one of these words, is not mistaken for a tool and hidden.
+// Companion-tool subfolder fragments (modding editors, SDKs, kits, servers, benchmarks): the
+// nested-appid walk never descends into these so a bundled tool can't hijack the game's identity.
+// Multi-word fragments are qualified to avoid hiding real games.
 const TOOL_SUBDIR = new RegExp(
   [
     '\\bengine\\b',
@@ -597,16 +592,8 @@ function diagnose({ gameDir, appid, schema, savesRoots }) {
 }
 
 /*
-  Write/merge steam_settings/configs.app.ini so GBE Fork reports every DLC as owned.
-
-  GBE's [app::dlcs] has two complementary mechanisms:
-    - unlock_all=1 makes BIsDlcInstalled/BIsSubscribedApp return true for any id (covers games that
-      just query "do I own DLC X?");
-    - the id=name list is what the enumeration APIs (GetDLCCount/BGetDLCDataByIndex) return, so games
-      that *list* their DLCs only see the ones spelled out here.
-  We set both: unlock_all=1 plus the full id=name list (existing entries are preserved and unioned
-  with the fetched ones, so a curated list a cracker shipped is never lost). Verified against
-  Detanup01/gbe_fork steam_settings.EXAMPLE/configs.app.EXAMPLE.ini.
+  Write/merge configs.app.ini so GBE Fork reports every DLC as owned: unlock_all=1 for ownership
+  queries plus the id=name list for enumeration APIs. Existing entries are preserved and unioned.
 */
 function writeDlcConfig({ steamSettings, dlcs = [], unlockAll = true } = {}) {
   if (!steamSettings) throw new Error('writeDlcConfig: steamSettings path is required');
@@ -689,13 +676,9 @@ function ensureSupportedLanguage(steamSettings, language) {
 }
 
 /*
-  GBE's steam_settings.EXAMPLE/configs.user.EXAMPLE.ini ships [user::saves] with the example value
-  local_save_path=./path/relative/to/dll. Repacks that copy the template verbatim leave it active, and
-  GBE then "completely ignores the global settings folder" (its own words) — writing the save to that
-  bogus relative path instead of %APPDATA%\GSE Saves\<appid>. AW's watchdog only watches the global emu
-  roots, so it never sees an unlock there and never notifies. Blank the placeholder so saves land back
-  in the monitored folder. Only the known template placeholder is matched — a custom save path the user
-  set on purpose is left untouched. Returns true if a line was changed.
+  Blank the template local_save_path=./… placeholder GBE ships in configs.user.EXAMPLE.ini: leaving
+  it active redirects saves away from the monitored emu roots, so unlocks are never seen. A custom
+  save path the user set is left untouched.
 */
 function neutralizePlaceholderSavePath(doc) {
   const section = getIniSection(doc, 'user::saves');
@@ -713,12 +696,8 @@ function neutralizePlaceholderSavePath(doc) {
 }
 
 /*
-  Write/merge steam_settings/configs.user.ini so the emulator reports the identity configured in
-  Achievement Watcher: account_name = the app's username, language = the app's achievement language
-  (options.achievement.lang is already a Steam API language code like "french"/"english", which is
-  exactly what GBE wants here). account_steamid and every other existing key are preserved untouched —
-  changing the steamid would orphan the runtime save folder. Verified against
-  Detanup01/gbe_fork steam_settings.EXAMPLE/configs.user.EXAMPLE.ini ([user::general]).
+  Write/merge configs.user.ini with the app's account_name and achievement language, preserving
+  account_steamid and every other key (changing the steamid would orphan the save folder).
 */
 function writeUserConfig({ steamSettings, accountName, language } = {}) {
   if (!steamSettings) throw new Error('writeUserConfig: steamSettings path is required');
@@ -754,24 +733,9 @@ function writeUserConfig({ steamSettings, accountName, language } = {}) {
 }
 
 /*
-  Repair / auto-configure a game's steam_settings so GBE Fork can show every achievement with its
-  icon and description. Pure except for the injected `downloadIcon` so it stays unit-testable.
-
-  cfg:
-    steamSettings  destination steam_settings folder (created if missing)
-    appid          steam appid (written to steam_appid.txt when missing)
-    schema         AW game object with achievement.list (the source of truth)
-    imagePrefix    icon subfolder name inside steam_settings (default "images")
-    downloadIcon   async (url, destDir) => savedAbsolutePath | null  (skipped when omitted)
-    writeAppId     also write steam_appid.txt (default true)
-    writeDlc       also write configs.app.ini to unlock all DLCs (default true)
-    dlcs           pre-resolved DLC list [{ appid, name }] to write (optional)
-    fetchDlc       async (appid) => [{ appid, name }] used to fetch the DLC list when `dlcs` is omitted
-    unlockAllDlc   value of [app::dlcs] unlock_all (default true)
-    accountName    written to configs.user.ini [user::general] account_name (optional)
-    language       written to configs.user.ini [user::general] language — a Steam API code (optional)
-
-  Returns { steamSettings, achievementsJson, wroteAppId, icons, dlc, main, user }.
+  Repair / auto-configure a game's steam_settings so GBE Fork shows every achievement with its icon
+  and description. Pure except for the injected downloadIcon; cfg carries the steamSettings path,
+  appid, schema, icon/image options, DLC and account/language values. Returns the write report.
 */
 async function repair({
   steamSettings,
@@ -901,13 +865,10 @@ function readLocalSchema(steamSettings) {
 }
 
 /*
-  Walk one or more library roots and report Steam-emulator game installs, flagging the ones that are
-  compatible but not properly configured (no schema achievements.json). A folder is treated as a game
-  install root when it directly contains a replaced Steam API dll (steam_api(64).dll) OR a
-  steam_settings subfolder — the dll is the authoritative "this is an emulated game" signal, so games
-  whose appid lives in a root-level steam_appid.txt (no steam_settings) are caught too. The appid is
-  read from the game root's steam_appid.txt, falling back to steam_settings/steam_appid.txt.
-  Bounded depth keeps it cheap. Returns [{ gameDir, steamSettings, appid, emulator, hasSchema, schemaCount }].
+  Walk library roots and report Steam-emulator game installs, flagging ones without a schema. A root
+  is a game when it directly holds a replaced steam_api(64).dll or a steam_settings folder; the appid
+  comes from steam_appid.txt. Bounded depth. Returns [{ gameDir, steamSettings, appid, emulator,
+  hasSchema, schemaCount }].
 */
 function findCompatibleGames(roots, { maxDepth = 5 } = {}) {
   const list = Array.isArray(roots) ? roots : [roots];
@@ -1011,19 +972,9 @@ function findCompatibleGames(roots, { maxDepth = 5 } = {}) {
     found.push({ gameDir: resolvedGameDir, steamSettings, appid, emulator: emu.type, hasSchema, schemaCount });
   };
 
-  // A game's install root is where its identity files live: a steam_settings folder or a
-  // steam_appid.txt. The replaced steam_api dll usually sits here too, but the dll alone is NOT used
-  // as the anchor — it frequently lives in a nested engine folder (bin/, Binaries/, x86_64/), which
-  // would mis-anchor gameDir and miss the root-level appid. A dll with no nearby appid file can't be
-  // identified anyway.
-  //
-  // The identity files themselves can also live inside one of those nested engine folders (Unity ships
-  // steam_settings under "<Game>_Data/Plugins/x86_64/", not next to "<Game>.exe"). Anchoring gameDir
-  // there would strand it in a folder with no executable, so walk up like the dll+config case does —
-  // but only when the marker sits in a folder that is itself named like a generic engine-internals
-  // directory AND has no plausible exe of its own. Both conditions must hold: the name check keeps this
-  // from ever firing on an ordinary top-level game folder that simply lacks a recognizable exe (e.g. a
-  // Dolphin build whose only .exe's are on the known-non-game list).
+  // Anchor gameDir on identity files (steam_settings / steam_appid.txt), not the dll: the dll often
+  // lives in a nested engine folder and would mis-anchor the root. Nested markers are walked up only
+  // when the marker folder looks like engine internals AND has no plausible exe of its own.
   const NESTED_ENGINE_DIR = /^(x86|x64|x86_64|win32|win64|binaries|bin|plugins)$/i;
   const anchorDir = (dir) => (NESTED_ENGINE_DIR.test(path.basename(dir)) && !exeDetect.shallowGameExe(dir) ? parentGameRootFor(dir) : dir);
   const gameRootMarker = (dir, entries) => {

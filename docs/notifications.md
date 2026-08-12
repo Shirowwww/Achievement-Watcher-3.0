@@ -70,7 +70,7 @@ Only presets this builder generated can be re-opened or deleted: it stores its s
 
 Choose a corner, edge or centered position from the Notification settings. The custom position can be moved with **Reposition** and is stored for later sessions.
 
-The in-game overlay also supports configured keyboard shortcuts for moving, snapping and click-through behavior, plus optional controller navigation (enable it under **Settings → General → Controller**). See the [Overlay guide](overlay.md#controller-gamepad) for the full control scheme.
+The in-game overlay also supports configured keyboard shortcuts for moving, snapping and click-through behavior, plus optional controller navigation (enable it and customize the shortcuts under **Settings → Controller**). See the [Overlay guide](overlay.md#controller-gamepad) for the full control scheme.
 
 ## Per-game behavior
 

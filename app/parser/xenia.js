@@ -1,13 +1,7 @@
 'use strict';
 
-// Xenia (Xbox 360 emulator) achievement reader. A title's achievements — both the schema and the
-// unlock state — live in a single binary GPD (Gamer Profile Data / XDBF) file:
-//   <root>/content/<XUID>/<titleID>/00000001/<titleID>.gpd
-// The XDBF container also embeds the achievement icons (PNG), which are extracted to the icon cache
-// and referenced via file:/// so the UI can render them.
-//
-// The XDBF/GPD binary parser below is adapted to Achievement Watcher's
-// scan/getGameData/getAchievements data model.
+// Xenia (Xbox 360 emulator) reader: schema, unlock state and icons all live in the binary GPD/XDBF
+// file; icons are extracted to the cache and served via file://.
 
 const fs = require('fs');
 const fsp = fs.promises;

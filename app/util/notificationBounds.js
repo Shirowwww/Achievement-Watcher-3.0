@@ -3,7 +3,7 @@
 // Notification presets are independent HTML documents: their meta dimensions and their scale can
 // differ substantially. Keep their host BrowserWindow inside the usable desktop area before the
 // preset is loaded, so an edge choice remains an edge choice for every theme.
-const DEFAULT_MARGIN = 6;
+const DEFAULT_MARGIN = 2;
 
 function number(value, fallback = 0) {
   const parsed = Number(value);

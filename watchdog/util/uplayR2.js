@@ -1,18 +1,9 @@
 'use strict';
 
 /*
-  Watchdog-side helpers for Goldberg Uplay R2 saves.
-
-  Two things make a Ubisoft unlock unreadable to the watchdog without help. The emulator names its
-  save folder with the UBISOFT product id rather than a Steam AppID, and on a loader build without
-  AchKeyPrefix support it keys the unlocks by the bare objective id rather than by the achievement's
-  Steam api-name. Neither can be resolved here on its own: the Ubisoft→Steam table lives in
-  app/assets/uplay-steam.json, inside app.asar, on the other side of the process boundary.
-
-  So the app records the id pair on the game's `gameIndex.json` entry — a file both processes already
-  share — and the objective ids are matched against the schema the watchdog has already loaded.
-
-  Kept dependency-free (fs/path only) so it can be unit-tested without starting the daemon.
+  Watchdog-side helpers for Goldberg Uplay R2 saves: the emulator saves under the Ubisoft product id
+  with bare objective keys, so the app records the uplayId/steamappid pair on the shared gameIndex.json
+  entry and this module matches unlocks against the loaded schema. Dependency-free (fs/path only).
 */
 
 const fs = require('fs');

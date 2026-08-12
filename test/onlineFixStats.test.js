@@ -1,11 +1,7 @@
 'use strict';
 
-// Online-Fix (and other Goldberg-family repacks) split raw stat values into a sibling Stats.ini next
-// to achievements.ini, instead of embedding progress inline like a plain GBE achievements.json save
-// does. steam.getAchievementsFromFile must merge that sibling file's [Stats] values into its flat
-// result so parser/statProgress.js's applyLocalStatProgress (already exercised end-to-end by
-// tlouStatProgress.test.js) can resolve progress-type achievements through the local GBE schema's
-// stat_name (progress.value.operand1).
+// Online-Fix repacks keep raw stat values in a sibling Stats.ini; getAchievementsFromFile must merge
+// them so statProgress can resolve progress-type achievements through the local GBE schema.
 
 const assert = require('node:assert/strict');
 const fs = require('node:fs');

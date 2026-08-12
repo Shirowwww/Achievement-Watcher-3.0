@@ -1,19 +1,10 @@
 'use strict';
 
 /*
-  Minimal INI section editor, originally written for GBE Fork's configs.*.ini and reused by the
-  Uplay R2 emulator's uplay_r2.ini. It preserves everything it doesn't explicitly touch — unknown
-  sections, comments, blank lines and key order — so merging AW's settings into a config a cracker
-  already shipped never clobbers their other keys. A full INI library would reorder/strip comments;
-  both emulators' parsers are line-based and section-scoped, so a line-faithful editor is both safer
-  and simpler here.
-
-  Not to be confused with app/util/ini.js, which wraps the `ini` npm package for AW's own
-  options.ini settings file — a different format/purpose entirely.
-
-  A "doc" is { preamble: [lines before the first [section]], sections: [{ key, header, body: [lines] }] }.
-  `key` is the lower-cased section name (e.g. "app::dlcs" or "settings"); `header` is the original
-  "[…]" line.
+  Minimal, line-faithful INI section editor (GBE configs.*.ini and uplay_r2.ini): preserves unknown
+  sections, comments, blank lines and key order, unlike a full INI library. Not to be confused with
+  app/util/ini.js, which wraps the `ini` package for AW's own options.ini. A "doc" is
+  { preamble, sections: [{ key, header, body }] }.
 */
 
 function parseIni(text) {

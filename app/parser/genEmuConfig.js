@@ -1,23 +1,10 @@
 'use strict';
 
 /*
-  GBE Fork "generate_emu_config" integration — the Advanced (complete) steam_settings path.
-
-  Achievement Watcher's own repair already writes achievements.json + DLCs anonymously (the Simple
-  path). For deeper coverage (depots, supported languages, inventory/stats, branches) we shell out to
-  alex47exe/gse_fork_tools' generate_emu_config — the canonical config generator — downloaded and
-  cached like the other tools. It runs anonymously by default; an optional Steam login pulls data
-  Steam doesn't expose anonymously (DLCs of unowned games, depots).
-
-  ⚠ Steam login: credentials are passed via the GSE_CFG_USERNAME/GSE_CFG_PASSWORD env vars the tool
-  documents (never written to disk by us, never persisted in AW). Steam Guard 2FA is an interactive
-  prompt forwarded to onPrompt(). Use a THROWAWAY account — never your main. A refresh_tokens.json the
-  tool writes beside its exe means 2FA is only needed once.
-
-  Renderer-side (request-zero / node-7z / child_process). Windows-only. Verified against the
-  Modern builds work best for PSPC/newer Steamworks titles with:
-  `-name -clean -cve -reldir -token <appid>`, output under <tool>/_OUTPUT/<appid>/steam_settings/.
-  Older cached builds are still tolerated through a legacy fallback.
+  GBE Fork "generate_emu_config" integration — the Advanced steam_settings path. Shells out to the
+  cached alex47exe/gse_fork_tools generator for deeper coverage (depots, languages, inventory…).
+  Anonymous by default; an optional Steam login (env vars, never persisted) pulls private data.
+  Use a throwaway account; 2FA prompts are forwarded to onPrompt. Windows-only.
 */
 
 const fs = require('fs');
@@ -210,15 +197,8 @@ function legacyArgs(id, login) {
 }
 
 /*
-  Run generate_emu_config for one appid and return the generated steam_settings folder (under a temp
-  work dir the caller can copy from). Anonymous unless `login` is given.
-
-  tool         result of ensureGenerateEmuConfig()
-  appid        steam appid
-  login        { username, password } | null  (null = anonymous, passes -anon)
-  onPrompt     async (question) => answer   — forwards interactive prompts (Steam Guard 2FA, etc.)
-  timeout      ms (default 300000)
-
+  Run generate_emu_config for one appid and return the generated steam_settings folder under a temp
+  work dir. Anonymous unless login is given; onPrompt forwards interactive prompts (Steam Guard 2FA).
   Returns { steamSettings, workDir, output }.
 */
 async function generate({ tool, appid, login = null, onPrompt, timeout = 300000, log = noopLog, profile = 'modern', allowLegacyFallback = true } = {}) {

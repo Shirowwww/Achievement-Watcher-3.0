@@ -21,10 +21,11 @@ function isSocialClubWatchPath(dirPath) {
 }
 
 // regodit is ESM-only (koffi) since v2; load it lazily via dynamic import (cached by Node's module
-// registry) and use the async `regodit/promises` subpath (the `.promises` namespace was dropped and
-// the functions were renamed PascalCase -> camelCase in v2).
+// registry). We deliberately use the synchronous API, not `regodit/promises`: under the pinned
+// koffi 3.x the async DWORD write segfaults (0xC0000005) and kills the Watchdog. The sync calls
+// on the same DLL are unaffected, and the reads here run once per startup.
 let regeditPromise = null;
-const loadRegedit = () => regeditPromise || (regeditPromise = import('regodit/promises'));
+const loadRegedit = () => regeditPromise || (regeditPromise = import('regodit'));
 
 const files = {
   achievement: [
@@ -143,7 +144,7 @@ module.exports.getFolders = async (userDir_file) => {
 
   try {
     const regedit = await loadRegedit();
-    const mydocs = await regedit.regQueryStringValueAndExpand(
+    const mydocs = regedit.regQueryStringValueAndExpand(
       'HKCU',
       'Software/Microsoft/Windows/CurrentVersion/Explorer/User Shell Folders',
       'Personal'

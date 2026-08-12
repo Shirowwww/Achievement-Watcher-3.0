@@ -5,17 +5,8 @@ const path = require('path');
 const util = require('util');
 
 /*
-  Log files are opened in APPEND mode, never truncated.
-
-  They used to open with flags 'w', and the stream is created while the module loads — before the
-  single-instance check. So launching the app while it was already running (routine for a tray app:
-  a double click, the login item, a toast activation) truncated the running instance's log, while
-  that instance carried on writing at its old offset. The gap between the two became a hole that
-  reads back as NUL bytes, shredding everything logged before it. It also meant a crash was erased
-  by the very next launch — exactly when the log matters most.
-
-  Appending fixes both, so the size is bounded here instead: past the limit the file is rotated to
-  `<name>.1` (one generation kept) and a fresh one is started.
+  Log files are opened in APPEND mode, never truncated: 'w' truncated the running instance's log on
+  second launches (routine for a tray app) and erased crashes. Size is bounded by rotating to <name>.1.
 */
 const MAX_BYTES = 2 * 1024 * 1024;
 

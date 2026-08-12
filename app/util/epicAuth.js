@@ -1,11 +1,7 @@
 'use strict';
 
-// Epic Games OAuth for the "Connect Epic" flow. Uses the public EpicGamesLauncher client id/basic
-// token (the same the launcher itself presents), an authorization-code grant captured from the
-// Epic redirect page, and a refresh-token loop. Tokens are stored AES-256-GCM encrypted at
-// <userData>/epic_tokens.enc so a stolen file is useless without the machine's passphrase.
-//
-// Rewritten off axios onto the runtime's global fetch (no new dependency).
+// Epic OAuth for "Connect Epic": public launcher client id, authorization-code grant, refresh-token
+// loop, tokens stored AES-256-GCM encrypted. Uses the runtime's global fetch (no axios dependency).
 
 const fs = require('fs');
 const fsp = require('fs/promises');

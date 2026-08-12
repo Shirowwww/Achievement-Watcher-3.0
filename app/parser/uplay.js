@@ -151,12 +151,9 @@ module.exports.getGameData = async (appid, lang) => {
       schema = JSON.parse(fs.readFileSync(cacheFile));
     } else {
       try {
-        // request-zero's socket timeout (request.cjs) calls req.destroy() with no error argument,
-        // which per Node's http docs does NOT emit 'error' on the request. So a stalled connection
-        // (server accepts but never responds, e.g. an uncached/newly-released appid like AC Shadows)
-        // leaves this promise neither resolved nor rejected forever, hanging the whole game list
-        // (makeList awaits every game via Promise.all). Race it against our own timeout so a stuck
-        // server always falls through to the local-cache fallback below instead of freezing the UI.
+        // request-zero's socket timeout destroys the request without emitting 'error', leaving the
+        // promise pending forever; race it against our own timeout so a stalled server falls back
+        // to the local cache instead of freezing the game list.
         schema = await withTimeout(getUplayDataFromSRV(appid), 15000, `Timed out fetching UPLAY${appid} schema from server`);
       } catch (err) {
         debug.log(`Failed to get schema from server for UPLAY${appid}; Trying to generate from local Uplay installation ...`);

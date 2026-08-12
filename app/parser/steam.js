@@ -71,12 +71,9 @@ module.exports.scan = async (additionalSearch = []) => {
       } else if (dirKeyLower.includes('onlinefix')) {
         game.source = 'OnlineFix';
       } else if (dirKeyLower.includes('goldberg uplayemu')) {
-        // Folders under "Goldberg UplayEmu Saves" are named with the UBISOFT product id, not a Steam
-        // AppID. Handing that number to the Steam pipeline asks the store/Web API about an app that
-        // does not exist: every scan burned a full 30s per-game timeout on it, parking the loading bar
-        // at its last percent, and the entry that never loaded then read as a brand-new install to the
-        // background detector, which refreshed the whole library every few minutes. Translate the id
-        // through uplay-steam.json and skip the folder when there is no Steam counterpart.
+        // "Goldberg UplayEmu Saves" folders are named with the Ubisoft product id, not a Steam AppID —
+        // asking Steam about them burned a 30s timeout per game and re-triggered full refreshes.
+        // Translate the id via uplay-steam.json and skip folders with no Steam counterpart.
         const mapping = uplayR2.resolveSteamMapping({ appid: `UPLAY${game.appid}` });
         if (!mapping) {
           // scan() can run before initDebug() (the watchdog seeds its index straight from it).
@@ -277,6 +274,7 @@ module.exports.getGameData = async (cfg) => {
   }
   let result;
   let needSaving = false;
+  const fastStart = cfg.fastStart === true;
   const cache = path.join(cacheRoot, 'steam_cache/schema', cfg.lang);
   let filePath = path.join(`${cache}`, `${cfg.appID}.db`);
 
@@ -287,12 +285,8 @@ module.exports.getGameData = async (cfg) => {
       return;
     }
     if (!result || !result.name) {
-      // A brand-new appid (e.g. a just-released remaster) may not be in the GetAppList dump yet —
-      // it is only refreshed every few days and can 404. getProductInfo / the store appdetails call
-      // still resolve such an appid's name + cover, so don't bail on the appList miss up front: try
-      // the fetch, and only give up if it comes back empty AND the id was never listed (i.e. it is
-      // almost certainly not a real Steam app). This is what let cracked new titles show with no
-      // cover and a bare-appid name.
+      // A brand-new appid may not be in the GetAppList dump yet; getProductInfo/store still resolve
+      // it, so only give up when the fetch comes back empty AND the id was never listed.
       const inAppList = await findInAppList(+cfg.appID);
       if (cfg.key) {
         result = await getSteamData(cfg);
@@ -326,7 +320,7 @@ module.exports.getGameData = async (cfg) => {
       result.achievement &&
       Array.isArray(result.achievement.list) &&
       result.achievement.list.some((ac) => ac.hidden == 1 && (!ac.description || String(ac.description).trim() === ''));
-    if (cfg.key && (hasBlankVisibleDesc || hasBlankHiddenDesc) && !triedRecently) {
+    if (!fastStart && cfg.key && (hasBlankVisibleDesc || hasBlankHiddenDesc) && !triedRecently) {
       try {
         const fresh = await getSchemaAchievements(cfg);
         const freshByName = new Map(fresh.filter((a) => a && a.name != null).map((a) => [String(a.name).toUpperCase(), a]));
@@ -344,7 +338,7 @@ module.exports.getGameData = async (cfg) => {
       needSaving = true;
     }
 
-    needSaving = needSaving || (await GetMissingData(result, cfg.showHidden, cfg.lang, cfg.steamSettings));
+    needSaving = needSaving || (!fastStart && (await GetMissingData(result, cfg.showHidden, cfg.lang, cfg.steamSettings)));
     if (needSaving) {
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
       fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
@@ -419,14 +413,9 @@ module.exports.getAchievementsFromFile = async (filePath) => {
         }
       }
     } else if (local.ACHIEVEMENTS) {
-      //TENOKE
-      // user_stats.ini also carries a sibling [STATS] section (raw stat values for progress-type
-      // achievements, e.g. "kill 100 enemies"). Tenoke ties an achievement's progress stat to its OWN
-      // key name (no separate stat-name indirection like the GBE/Goldberg schema's operand1), so a
-      // same-key lookup is enough — cross-referenced here since achievements.js has no other chance to
-      // see the STATS section once this function returns only the ACHIEVEMENTS-derived result.
-      // The `ini` package preserves section casing as written, and repacks don't agree on it
-      // (`[STATS]` vs `[Stats]`) — find the section case-insensitively.
+      // TENOKE: cross-reference the sibling [STATS] section (raw stat values) by the achievement's own
+      // key, since achievements.js can't see it once this function returns. Section casing varies, so
+      // match it case-insensitively.
       const statsSectionKey = Object.keys(local).find((k) => String(k).toLowerCase() === 'stats');
       const statsSection = statsSectionKey && typeof local[statsSectionKey] === 'object' ? local[statsSectionKey] : {};
       const tenokeStatValues = {};
@@ -898,7 +887,7 @@ async function getSteamData(cfg) {
       }
     }
   } catch (err) {
-    console.log(err);
+    debug.log(err);
   }
   return result;
 }

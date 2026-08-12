@@ -1,14 +1,8 @@
 'use strict';
 
-// ShadPS4 (PS4 emulator) trophy reader. Modelled on rpcs3.js, but ShadPS4 keeps both the trophy
-// schema AND the unlock state inside the per-game TROP*.XML files (unlockstate / timestamp
-// attributes), so there is no separate binary save file to decode (unlike RPCS3's TROPUSR.DAT).
-//
-// On-disk layout (portable or %APPDATA%\shadPS4):
-//   <root>/game_data/<CUSA#####>/TrophyFiles/trophy00/Xml/TROP.XML        (+ TROP_NN.XML per language)
-//   <root>/game_data/<CUSA#####>/TrophyFiles/trophy00/Icons/TROP000.PNG   (trophy icons, id padded to 3)
-// User scoping: ShadPS4 stores trophies under either <root>/game_data or <root>/user/game_data; both
-// are enumerated and de-duplicated by CUSA id (first wins).
+// ShadPS4 (PS4 emulator) trophy reader: schema + unlock state live in per-game TROP*.XML files (no
+// binary save to decode, unlike RPCS3). Layout: <root>/game_data/<CUSA#####>/TrophyFiles/...; both
+// game_data and user/game_data are enumerated and de-duplicated by CUSA id.
 
 const path = require('path');
 const util = require('util');

@@ -69,17 +69,9 @@ module.exports.add = async (app) => {
 };
 
 /*
-  Reconcile the stored launch list against the currently-installed games (the renderer gameList).
-
-  For every stored entry:
-    - drop a dead exe path (file no longer exists) so it can be re-detected;
-    - resolve collisions: when one exe is shared by several appids, keep it on the game whose name
-      best matches the binary and clear it from the others;
-    - re-detect a now-empty exe when we know the game's install folder (gameDir), respecting the
-      anti-collision rule (never reuse an exe or game folder already taken by another appid).
-
-  games: [{ appid, name, gameDir }] — best-effort; entries without a gameDir are left for the user
-  to configure manually. Returns the number of entries changed.
+  Reconcile the stored launch list against the installed games: drop dead exe paths, resolve one-exe-
+  shared-by-many collisions by name match, and re-detect empty entries from a known gameDir (respecting
+  anti-collision). Returns the number of entries changed.
 */
 module.exports.reconcile = async (games) => {
   const goldberg = require(path.join(__dirname, 'goldberg.js'));

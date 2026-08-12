@@ -1,13 +1,8 @@
 'use strict';
 
 /*
- * Root detection cascade for the Watchdog.
- *
- * Given a folder, this module classifies the platform from file signatures
- * (GPD, trophies, emulator configs, official launcher data…) and returns
- * monitor-style watch entries ({ dir, options }). It only *discovers*; it
- * never generates configs, seeds caches or writes preferences — that stays
- * in the app.
+ * Root detection cascade for the Watchdog: classify a folder from file signatures and return
+ * monitor-style watch entries. Discovery only — it never generates configs or writes preferences.
  */
 
 const fs = require('fs');

@@ -15,11 +15,12 @@ Practical guides for setup, daily use and maintenance.
 | Install the app, choose sources and find games | [Getting started](getting-started.md) |
 | Configure Windows notifications or the in-game overlay | [Notifications](notifications.md) |
 | Use the overlay list, search, filters and rarity | [Overlay](overlay.md) |
+| Drive the app or the in-game overlay with a gamepad | [Controller](controller.md) |
 | Fix discovery, progress, notification or playtime issues | [Troubleshooting](troubleshooting.md) |
 | Diagnose or repair Goldberg / GBE Fork | [Goldberg / GBE setup](emulator-setup.md) |
 | Configure a compatible Ubisoft Uplay R2 game | [Uplay R2 setup](uplay-r2.md) |
 
-The in-app **Settings → Guide** tab is the quickest reference for normal use.
+The in-app **Settings → Help** tab is the quickest reference for normal use.
 
 ## Build and reference
 

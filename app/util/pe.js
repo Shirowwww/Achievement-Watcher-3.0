@@ -1,13 +1,8 @@
 'use strict';
 
 /*
-  Tiny read-only PE (Portable Executable) helpers used by the emulator-fix pipeline:
-    - exeArch(exePath)        → 'x64' | 'x86' | null   (COFF machine type)
-    - detectSteamStub(exePath)→ true | false           (Valve SteamStub DRM, ".bind" section)
-
-  Both are pure header reads — no execution, no writes. They were previously housed in coldclient.js;
-  now that AW applies the emulator standalone (no ColdClient), they live here as a neutral utility
-  shared by achievements.js (background auto-fix) and app.js (right-click fix).
+  Tiny read-only PE helpers: exeArch() → 'x64'|'x86'|null, detectSteamStub() → boolean. Pure header
+  reads shared by the background auto-fix and the right-click fix.
 */
 
 const fs = require('fs');

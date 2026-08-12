@@ -1,20 +1,9 @@
 'use strict';
 
 /*
-  Whether an available update may interrupt the user.
-
-  The app is a resident tray daemon that re-checks for updates every hour, so anything the update
-  prompt fails to remember becomes a dialog every hour, all day. That is what "Later" used to be:
-  the answer was dropped the moment the dialog closed. The two answers are now durable:
-
-    Skip this version — permanent, for this version and anything older.
-    Later            — this version (and older) stay silent until a deadline passes.
-
-  Neither ever hides a NEWER release: both comparisons are `remembered >= offered`, so the next
-  version gets through even while a postpone is live.
-
-  Pure and dependency-light on purpose (semver only), so test/updateGate.test.js can pin the exact
-  nagging behaviour without an Electron main process.
+  Whether an available update may interrupt the user. Answers are durable so the hourly re-check stops
+  nagging: "Skip this version" is permanent, "Later" silences until a deadline. Neither ever hides a
+  NEWER release (comparisons are remembered >= offered).
 */
 
 const semver = require('semver');

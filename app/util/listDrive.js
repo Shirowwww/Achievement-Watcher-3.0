@@ -4,14 +4,8 @@ const { execFile } = require('child_process');
 const fs = require('fs');
 
 /*
-  List local fixed drive letters (e.g. ["C:", "D:"]).
-
-  The legacy implementation shelled out to WMIC, which is deprecated and has been
-  REMOVED from Windows 11 24H2+ — there the custom-folder scan used to fail outright.
-  We now query CIM via PowerShell (accurate DriveType=3 / fixed-disk filtering) and
-  fall back to a dependency-free drive-letter probe if PowerShell is unavailable or
-  returns nothing. Output format ("C:") is kept identical to the old behaviour so the
-  callers (glob cwd) are unaffected.
+  List local fixed drive letters. WMIC is gone on Windows 11 24H2+, so query CIM via PowerShell and
+  fall back to a drive-letter probe; the "C:" output format is unchanged.
 */
 module.exports = (option = {}) => {
   const ignoreSystemDrive = option.ignoreSystemDrive || false;

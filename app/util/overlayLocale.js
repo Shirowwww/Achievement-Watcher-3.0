@@ -4,14 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const merge = require('deepmerge');
 
-// Builds the payload for the `overlay-language` IPC channel consumed by
-// app/view/overlay.html. The renderer applies `strings` to its header columns,
-// status labels and empty/fallback messages, and uses `lang` when picking a
-// localized achievement name/description.
-//
-// English is the base and every locale is merged over it, so a missing or
-// broken per-language file degrades to English exactly like locale/loader.js
-// and the onboarding guide.
+// Builds the overlay-language payload: strings for headers/status/empty labels plus the lang used for
+// localized names. English is the base and every locale merges over it, degrading gracefully.
 function loadOverlayLocale({ localeDir, lang } = {}) {
   const language = String(lang || 'english');
   const english = JSON.parse(fs.readFileSync(path.join(localeDir, 'english.json'), 'utf8'));

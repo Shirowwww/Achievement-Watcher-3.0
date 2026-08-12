@@ -6,16 +6,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 /*
-  makeList streams each loaded game to its caller, and the renderer builds `gameList` — the array the
-  periodic new-game check diffs against — inside that callback.
-
-  Deferring the call to requestAnimationFrame breaks that in a way nothing else catches: rAF is only
-  delivered to a VISIBLE document, and this is a tray app whose main window is usually hidden and runs
-  with backgroundThrottling enabled. A background scan then completed having appended nothing, so the
-  next check saw the whole library as newly installed and refreshed it — every three minutes forever.
-
-  This is a source-level guard on purpose: the defect is re-introducing the defer, not the runtime
-  behaviour of any one call, and reproducing it needs a hidden Electron window.
+  makeList streams each game to the caller inside the callback that builds `gameList`. Deferring it to
+  requestAnimationFrame breaks background scans (rAF never fires on a hidden, throttled window), so
+  this guards the source against reintroducing the defer.
 */
 
 const achievements = fs.readFileSync(path.join(__dirname, '..', 'app', 'parser', 'achievements.js'), 'utf8');

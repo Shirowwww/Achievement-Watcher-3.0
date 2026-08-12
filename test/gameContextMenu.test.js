@@ -1,13 +1,9 @@
 'use strict';
 
 /*
-  Which right-click entries every game gets, regardless of where it came from.
-
-  "Launch game" and "Configure executable…" were built inside the `if (isUbisoftSource)` branch, so
-  right-clicking a Steam, GOG, Epic or emulated game offered no way to start it — even with the
-  executable already configured, and even though the tile's own play button works for every source.
-  Balanced braces hide that kind of mistake, so this walks the brace depth to find the conditions
-  actually enclosing each entry.
+  Which right-click entries every game gets, regardless of source. "Launch game" / "Configure
+  executable…" used to be inside the Ubisoft-only branch; brace-depth walking finds the conditions
+  that actually enclose each entry.
 */
 
 const assert = require('node:assert/strict');

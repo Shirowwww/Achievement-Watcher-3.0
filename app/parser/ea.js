@@ -1,13 +1,8 @@
 'use strict';
 
-// EA Desktop (official) achievement source. EA Desktop has no per-game save file like the Steam emus;
-// instead it logs achievement schemas (<AchievementSet>) and unlock events (<Response><Achievement/>)
-// into %LOCALAPPDATA%/Electronic Arts/EA Desktop/Logs/EADesktopVerbose.log (+ .bak after rotation).
-// This parser reads that log to build both the schema and the unlock state.
-//
-// The log-parsing core (regexes, set/snapshot building) is adapted to Achievement
-// Watcher's parser contract (scan / getGameData / getAchievements) and to request-zero for icons; the
-// online icon download is dropped in favour of the EA icon CDN URL used directly by the renderer.
+// EA Desktop (official) source: reads achievement schemas and unlock events from
+// EADesktopVerbose.log, building the parser contract (scan/getGameData/getAchievements). Icons use
+// the EA CDN URL directly.
 
 const fs = require('fs');
 const path = require('path');

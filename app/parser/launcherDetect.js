@@ -1,22 +1,10 @@
 'use strict';
 
 /*
-  Distinguish launcher-managed (legit/official) game installs from emulated or unconfigured ones.
-
-  The "Unconfigured" scan matches on "this folder contains a game .exe", which is intentionally
-  broad — that is how bare cracks get found. But a legit install from Ubisoft Connect, GOG Galaxy,
-  Epic Games or the Microsoft Store ALSO matches that rule, and surfacing those as "Unconfigured"
-  produces duplicates (the official sources already list them) and offers useless repairs. This
-  module recognises the official launchers by their on-disk markers, so those folders are skipped
-  no matter where they live (custom library roots included).
-
-  Markers:
-    - Ubisoft Connect : uplay_install.state / uplay_install.manifest / upc.cfg, WITHOUT a Uplay R2
-      loader dll. A cracked Uplay R2 install keeps the launcher markers AND ships the loader, so the
-      loader is what tells the two apart.
-    - GOG Galaxy       : goggame-<id>.info / goggame-<id>.id files.
-    - Epic Games       : a .egstore metadata folder inside the install.
-    - Microsoft Store  : AppxManifest.xml (MSIX package root).
+  Recognise official launcher installs (Ubisoft Connect, GOG Galaxy, Epic, Microsoft Store) by their
+  on-disk markers so the broad "Unconfigured" scan skips them — they are already listed by the official
+  sources. A cracked Uplay R2 install keeps launcher markers but also ships its loader DLL, which is
+  what tells the two apart.
 */
 
 const fs = require('fs');

@@ -30,19 +30,35 @@ and stays on top of the game.
 ## Controller (gamepad)
 
 The in-game overlay can be driven entirely from a controller. Enable
-**Settings → General → Controller** first:
+**Settings → Controller** first. All shortcuts are configurable there, with button
+names shown in the Xbox, PlayStation or Switch vocabulary (or **Auto**, which
+follows the connected pad when it can be identified). Each shortcut accepts one
+to three buttons. The defaults are:
+
+The same section also has **Control the app with a controller**, which enables
+gamepad navigation of the main Achievement Watcher window (library, game details,
+settings and searches) independently from the in-game overlay.
 
 - **BACK + START** opens/closes the overlay.
 - **LB + X** toggles in-overlay navigation (a focus ring shows where you are).
-- **RB + Y** toggles window move/resize mode.
+- **LB + RB** held moves the overlay with the left stick and scrolls with the
+  right stick.
 - In navigation mode: D-pad/left stick move the focus, **A** confirms,
   **B** cancels, **X** focuses the search, **Y** opens the options panel.
-- In window mode: the left stick moves the overlay, **LB/RB** resize it, and
-  the D-pad moves it too when navigation is off.
 
 Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro
-controllers. A small **UI / WIN** badge in the overlay header shows which mode
-is active.
+controllers. A small **UI** badge in the overlay header shows when navigation is
+active. The overlay's controller hint always shows your chosen shortcuts and
+layout.
+
+> **Controller priority:** Windows does not allow a third-party app to capture
+> a controller exclusively, so buttons may still reach the game while the
+> overlay is open. If you want the game to pause, enable **Focus overlay when it
+> opens** in Settings → Controller — most games pause when they lose focus. You
+> can also enable **Send Escape to the game when opening with controller** there:
+> it sends an Escape key press to the game (only for controller-triggered opens
+> while a game is running), which makes many games open their pause menu or
+> pause automatically.
 
 ## Customization
 
@@ -68,6 +84,9 @@ reopening the overlay. **Reset defaults** restores the original look.
 ## Notes
 
 - The overlay follows the interface language selected in the app.
+- After the first open, the overlay window is kept hidden and reused for 5 minutes, so toggling
+  it again during a session is near-instant; while hidden it pauses its controller/gamepad polling
+  and the window is released after 5 minutes of inactivity to free its memory.
 - Row content is escaped before rendering; achievement data is only displayed,
   never executed.
 - The overlay list is separate from the one-shot overlay *notification*

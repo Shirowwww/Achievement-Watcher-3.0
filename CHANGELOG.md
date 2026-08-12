@@ -3,6 +3,78 @@
 All notable changes to Achievement Watcher (3.0 fork) are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+
+- The built-in theme set now includes Catppuccin Mocha, Rosé Pine, Synthwave '84,
+  Everforest, Cyberpunk, Ember, Ocean, Hacker, Burgundy and Champagne (replacing the
+  earlier Solarized, One Dark and Monokai additions). The theme picker in Settings >
+  General is now a dropdown as well as the existing arrow controls, matching the
+  notification-overlay selectors.
+- Settings → Controller gains an optional **Send Escape to the game when opening
+  with controller** action: when the overlay is opened with a controller while a
+  game is running, the watchdog sends an Escape key press to the focused game
+  window first, so many games open their pause menu or pause automatically. It
+  is opt-in, off by default, and never runs for keyboard-hotkey opens.
+- Controller support now also covers the main window: **Control the app with a
+  controller** navigates the library, game details, settings and searches with a
+  gamepad. The Controller settings were moved to their own tab and gained a
+  button-layout selector (Auto/Xbox/PlayStation/Switch), fully configurable
+  one-to-three-button bindings, and a **Focus overlay when it opens** option for
+  games that pause when they lose focus.
+- Non-Steam games (official Ubisoft Connect, Uplay R2, Epic, GOG, EA, Xbox PC and
+  standalone installs) now show their tracked playtime and last-played date in the
+  achievements page header, like Steam games already did.
+- The overlay window is kept hidden and reused for five minutes after its first
+  open, so toggling it during a session is near-instant and its controller
+  polling pauses while hidden. The first library scan of a session also serves
+  cached data immediately instead of waiting for every cover and description,
+  so the grid appears fast.
+
+### Fixed
+
+- Notification artwork now prefers the high-resolution Steam art already cached by the app
+  (schema, store and SteamDB covers) instead of the predictable CDN URLs, which 404 on newer
+  titles whose assets live under hashed `store_item_assets` paths — the playtime/launch icon
+  was falling back to Steam's 32×32 clienticon (e.g. Assassin's Creed Black Flag Resynced).
+  Playtime toast icons are then center-cropped to a square, as the Windows toast logo slot
+  requires.
+- Native select dropdown popups now use the Settings surface palette instead of the app
+  window background, so the Custom theme no longer paints every open menu with its
+  `bg` layer color.
+- The title-bar separator, drop shadow and window-control button backgrounds are now
+  much more transparent, so no square or line stands out under the settings, minimize,
+  maximize and close buttons anymore.
+- The playtime monitor no longer logs `No entry found for ...` on every process creation:
+  unknown processes are now reported once per name, so background helpers no longer flood
+  `playtime.log`.
+- A Ubisoft Connect metadata seed could wipe the detected game executable from
+  `cfg/gameIndex.json`, silently disabling playtime tracking for official Ubisoft titles.
+  Metadata-only seeds no longer overwrite the binary, name or icon a scan already found.
+- The Watchdog now reloads its playtime game index when the app finishes a library scan, so
+  a newly added non-Steam game is tracked immediately instead of only after a Watchdog
+  restart.
+- The Watchdog now uses the synchronous regodit API for its remaining registry
+  reads (Documents-folder lookup and controller-rumble settings), closing the
+  same koffi crash path that was already fixed for playtime registry writes.
+
+### Performance
+
+- The library skips rendering off-screen game tiles, so cover images stay undecoded until
+  they scroll into view, and the renderer frees its decoded image/font/code caches when the
+  window hides to the tray. The V8 heap ceiling is also lowered to 192 MB and Chromium's
+  unused video-decode path is disabled, trimming resident RAM across the app processes.
+- Skeleton tiles now animate with a GPU-composited shimmer instead of repainting a moving
+  background, and the library scan progress bar eases instead of moving at a fixed linear
+  rate, so both loaders feel smoother during refreshes.
+
+### Security
+
+- The Epic account login no longer injects the redirect URL into an `executeJavaScript`
+  script body. The redirect endpoint is fetched from the main process with the login
+  window's own session cookies, closing the CodeQL "improper code sanitization" finding.
+
 ## 3.8.4 - 2026-08-11
 
 ### Added

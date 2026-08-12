@@ -93,15 +93,8 @@ function lookupGameIndexName(cfgDir, id) {
 }
 
 /*
-  Unconfigured local installs get a synthetic id, `local-<crc32 of the install folder, lowercased>`
-  (achievements.js). No Steam-side source can ever name one, and blacklisting drops it from
-  gameIndex — so an entry hidden before its name was recorded had nothing left to identify it and
-  stayed a bare id forever.
-
-  The id is derived from the path, so the path can be found again: recompute the hash for the
-  folders the scanner walks and look for the one that produces this id. Bounded by depth and a node
-  budget; the roots are read straight from this install's config so the resolver keeps working
-  wherever it is loaded from.
+  Unconfigured installs get a synthetic `local-<crc32 of the install folder>` id, so a hidden entry can
+  be found again by recomputing the hash over the scanned roots (bounded by depth/node budget).
 */
 const LOCAL_ID_MAX_DEPTH = 4; // matches the scanner's own walk limit
 const LOCAL_ID_MAX_DIRS = 6000; // safety valve for a pathological root (a huge Desktop tree)

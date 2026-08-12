@@ -1,11 +1,8 @@
 'use strict';
 
-// Per-game manual override for which emulator family the context menu offers: 'steam' (GBE Fork)
-// or 'ubisoft' (Uplay R2). uplayR2.isUbisoftGame() guesses from on-disk markers, which can be wrong
-// for a Ubisoft title repacked with both a steam_api dll and leftover Ubisoft engine files (e.g. a
-// Steam-store Ubisoft remaster) — this lets the user force the correct tool from the right-click
-// menu instead of fighting the heuristic. A small JSON map living next to options.ini
-// (<userData>/cfg/emulatorSourceOverride.json), read/written only by the renderer's context menu.
+// Per-game manual override for which emulator family the context menu offers ('steam' or 'ubisoft'),
+// for Ubisoft repacks where the on-disk heuristic guesses wrong. Stored in a small JSON next to
+// options.ini and read/written only by the renderer's context menu.
 
 const fs = require('fs');
 const path = require('path');

@@ -115,21 +115,10 @@ function detectEmulator(gameDir) {
 }
 
 /*
-  Which optional [Settings] keys does THIS loader build understand?
-
-  The achievement redirect (AchSaveType/AchSavePath/AchKeyPrefix) is a comparatively recent addition
-  to the demde loader. Builds from late 2025 and earlier parse none of those keys: they read
-  achievements_schema.json keyed by the BARE objective id and write achievements.json into the
-  ordinary save dir, silently ignoring a redirect written into the ini. Configuring such a build the
-  modern way looks like it worked — the ini says exactly what we wrote — while nothing is ever
-  written where AW reads, which is precisely the "achievements don't work" report this exists to fix.
-
-  A loader's ini parser looks its keys up by literal name, so the names are present verbatim in the
-  binary. Probing for them is a cheap, exact capability test that needs no version numbers (the
-  builds carry none) and degrades safely: a dll we can't read is assumed capable, matching the
-  behaviour before this check existed.
-
-  Returns { path, exists, supportsAchRedirect, supportsAchKeyPrefix }.
+  Which optional [Settings] keys does THIS loader build understand? The redirect keys are recent
+  additions; older builds silently ignore them, so probe the DLL's literal key names (exact, cheap,
+  no version numbers). A dll we can't read is assumed capable. Returns { path, exists,
+  supportsAchRedirect, supportsAchKeyPrefix }.
 */
 const _loaderCapabilities = new Map();
 function inspectLoader(dllPath) {
@@ -199,16 +188,9 @@ function uplayDefaultSaveRoot() {
 }
 
 /*
-  Every directory the emulator could be writing achievements.json into, most-likely first.
-
-  The emulator resolves its save dir from SaveType (0 = %APPDATA%\Goldberg UplayEmu Saves\<uplayId>,
-  1 = <gameDir>\saves\<uplayId>, 2 = <SavePath>\<uplayId>) and then, on builds that support it,
-  overrides the achievement file's location with AchSavePath when AchSaveType=1.
-
-  All plausible locations are returned rather than just the configured one, because the ini and the
-  data on disk routinely disagree: a game update re-extracts the repack's own ini over ours, and the
-  unlocks already earned stay where the previous configuration put them. Reading every candidate
-  costs a few stat calls and means unlocks survive a config that changed under us.
+  Every directory the emulator could write achievements.json into, most-likely first (SaveType +
+  AchSavePath, plus leftovers from reconfigs/repack updates — reading all of them costs a few stats
+  and survives an ini that changed under us).
 */
 function resolveAchievementSaveDirs({ gameDir, runtimeDir, uplayId, steamAppid, iniFile } = {}) {
   const dirs = [];
@@ -259,20 +241,9 @@ function entryUnlockTime(entry) {
 }
 
 /*
-  Read the emulator's runtime unlock state, MERGED across every candidate directory.
-
-  Format (all builds): { "<key>": { displayName, description, earned: 0|1, earned_time?: <epoch> } }
-  where <key> is "<AchKeyPrefix><objectiveId>" on builds that support the prefix and the bare
-  objective id on those that don't.
-
-  Merging rather than taking the first hit that exists is what makes this survive a reconfiguration.
-  Several of these folders routinely hold a file at once: the emulator seeds a fully-locked copy from
-  the schema, a previous SaveType left one behind, and AW's own repair pre-creates the redirect
-  target. Stopping at the first file found would let any of those stale, all-zero copies mask the one
-  the game is really writing. An unlock is never un-earned, so "earned wins, newest timestamp wins"
-  is always the safe reconciliation.
-
-  Returns { dir, file, files, entries } | null — `dir`/`file` name the richest source, for logging.
+  Read the emulator's runtime unlock state, MERGED across every candidate directory. Stale all-zero
+  copies (schema seed, previous SaveType, pre-created redirect target) must not mask the live file, so
+  "earned wins, newest timestamp wins". Returns { dir, file, files, entries } | null.
 */
 function readAchievementSave(dirs) {
   const merged = {};
@@ -315,13 +286,9 @@ function readAchievementSave(dirs) {
 }
 
 /*
-  Re-key an emulator save onto the Steam schema's api-names.
-
-  The emulator knows achievements by Ubisoft objective id; AW's schema (and everything downstream:
-  icons, descriptions, notifications) is keyed by Steam api-name. For the games this mapping supports
-  the api-name IS "<prefix><objectiveId>" (see derivePrefixedIds), so the translation is exact rather
-  than heuristic: try the key as-is, then prefixed, then match on the trailing digits. Entries that
-  resolve to nothing are dropped instead of guessed at.
+  Re-key an emulator save onto the Steam schema's api-names. For supported games the api-name IS
+  "<prefix><objectiveId>", so the translation is exact: try as-is, then prefixed, then trailing digits.
+  Unresolvable entries are dropped.
 */
 function mapSaveToSchemaKeys(entries, { prefix = '', apiNames = [] } = {}) {
   const out = {};
@@ -475,12 +442,9 @@ function resolveMappingFromInstallState(gameDir, map) {
   }
 }
 
-// Resolve a Ubisoft game's Steam equivalent via app/assets/uplay-steam.json. Prefers an exact
-// uplay_id match (the numeric id the game itself passes to UPC_Init — also the appid used in
-// UPLAY<id> and the raw Ubisoft folder name under "Goldberg UplayEmu Saves"); falls back to a
-// exact title embedded in uplay_install.state, then a high-confidence fuzzy name match, same tiering
-// steam.findAppidByName uses. The install-state lookup makes renamed repack folders deterministic.
-// Returns { uplay_id, steam_appid, steam_name } | null.
+// Resolve a Ubisoft game's Steam equivalent via uplay-steam.json: exact uplay_id, then the
+// uplay_install.state title, then a high-confidence fuzzy name match. Returns { uplay_id,
+// steam_appid, steam_name } | null.
 function resolveSteamMapping({ appid, name, gameDir } = {}) {
   const map = loadUplaySteamMap();
   if (map.length === 0) return null;
@@ -526,17 +490,8 @@ function derivePrefixedIds(achievementList) {
 }
 
 /*
-  Build the demde achievements_schema.json from an AW schema (schema.achievement.list).
-
-  The emulator looks an unlock up by "<AchKeyPrefix><objectiveId>", so the schema keys must match
-  whatever the loader will build at runtime:
-
-  - keyed:true  (loader supports AchKeyPrefix) → keys are the REAL Steam api-names
-    ("<prefix><digits>", validated by derivePrefixedIds), which is also what the ini's AchKeyPrefix
-    is set to. AW's read path then matches them with no transform at all.
-  - keyed:false (older loader, no AchKeyPrefix support) → keys are the BARE objective ids, the only
-    thing such a build looks for. Writing prefixed keys there means every UPC_AchievementUnlock misses
-    and the game unlocks nothing. mapSaveToSchemaKeys() puts the prefix back when reading.
+  Build demde achievements_schema.json from the AW schema. keyed:true → real Steam api-names (loader
+  with AchKeyPrefix); keyed:false → bare objective ids (older loader that would otherwise never match).
 */
 function buildAchievementsSchemaJson(schema, { keyed = true } = {}) {
   const list = (schema && schema.achievement && Array.isArray(schema.achievement.list) && schema.achievement.list) || [];
@@ -566,17 +521,9 @@ function defaultSavePath(steamAppid) {
 }
 
 /*
-  Read-modify-write BOTH upc_r2.ini and uplay_r2.ini beside the loader dll — the loader reads the
-  first of the two that exists, and a repack can ship either, so writing both is cheap and always
-  covers the one actually in use. Preserves every other key (UserId in particular — changing it would
-  orphan the runtime save, same rule goldberg.writeUserConfig follows for account_steamid) and every
-  unrelated section ([DLC]/[Items]/[Chunks]).
-
-  Only keys the installed loader actually parses are written. On a build without redirect support the
-  three redirect keys are deliberately left out: writing them produces an ini that *looks* configured
-  while the emulator keeps saving to its default folder — the failure mode that makes "achievements
-  don't work" so hard to spot. Instead we just switch achievements on and let AW read the emulator's
-  own save location (resolveAchievementSaveDirs).
+  Read-modify-write BOTH upc_r2.ini and uplay_r2.ini beside the loader dll, preserving every other key
+  (UserId in particular) and section. Only keys the installed loader parses are written: redirect keys
+  are left out on builds without support, or the ini would look configured while saves stay elsewhere.
 */
 function writeSettingsConfig({ dir, steamAppid, prefix, accountName, language, capabilities } = {}) {
   if (!dir) throw new Error('writeSettingsConfig: dir is required');
@@ -736,17 +683,8 @@ function diagnose({ gameDir, appid, name } = {}) {
 }
 
 /*
-  Repair / auto-configure a Ubisoft game's Goldberg Uplay R2 setup so unlocks land in
-  GSE Saves\<steamAppid> with real Steam api-name keys.
-
-  cfg:
-    dir          folder containing the loader dll (achievements_schema.json + ini are written here)
-    steamAppid   the mapped Steam appid (from resolveSteamMapping)
-    schema       AW game object with achievement.list (the source of truth — the Steam schema)
-    prefix       pre-derived AchKeyPrefix (from derivePrefixedIds); required
-    accountName  written to Username (optional)
-    language     written to Language (optional)
-
+  Repair / auto-configure a Goldberg Uplay R2 setup so unlocks land in GSE Saves\<steamAppid> with real
+  Steam api-name keys. cfg: dir (loader folder), steamAppid, schema, prefix, accountName, language.
   Returns { dir, achievementsSchemaJson, ini, wroteSchema, backupDir }.
 */
 function repair({ dir, steamAppid, schema, prefix, accountName, language } = {}) {

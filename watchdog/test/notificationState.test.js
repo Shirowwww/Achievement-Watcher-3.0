@@ -53,12 +53,8 @@ test('quiet hours is not treated as a running full-screen app', () => {
   );
 });
 
-// The regression this file exists for. The previous version of this test asserted that the query
-// returns null and explained it with "cannot answer off Windows" — but it could not answer ON
-// Windows either (it shelled out to `Add-Type -AssemblyName shell32`, an assembly that does not
-// exist), so it passed everywhere while every caller silently answered "false" on every machine.
-// Asserting a real state on the platform the feature targets is what makes that impossible to
-// reintroduce; a null here means the query is broken again, not that the machine is unusual.
+// This regression test asserts a real state on Windows: the old version shelled out to a nonexistent
+// assembly, so it passed everywhere while callers silently answered false.
 test('on Windows the query returns a real notification state', { skip: process.platform !== 'win32' ? 'Windows-only' : false }, async () => {
   state._resetCache();
   const current = await state.queryUserNotificationState();

@@ -1,23 +1,9 @@
 'use strict';
 
 /*
-  SteamAPICheckBypass — optional, opt-in port of SteamAutoCrack's "Steam API Check Bypass".
-
-  Some games run an extra ownership / integrity check on top of the Steam API: after you swap
-  steam_api(64).dll for GBE Fork's, the game still reads the *original* DLL (or its own exe) to verify
-  it, sees the emulator, and refuses to launch or never unlocks. The bypass is a proxy DLL
-  (SteamAutoCracks/Steam-API-Check-Bypass) dropped into the game folder under a hijack name
-  (winmm.dll / version.dll / winhttp.dll — auto-loaded by the game) plus a SteamAPICheckBypass.json
-  that virtualises file access: it redirects reads of steam_api(64).dll to the kept ".bak" original,
-  redirects the exe to its backup, and hides the steam_settings folder from the game's own checks.
-
-  This mirrors SteamAutoCrack's ApplySteamAPICheckBypass (SteamStubUnpacker.cs) — same proxy DLLs (from
-  the official release), same JSON rules. It is OFF by default (as in SteamAutoCrack); it does NOT help
-  PlayStation-PSPC titles (their trophies never hit the Steam API). Renderer-side; fs + request-zero +
-  node-unrar-js (the release ships the DLLs in a RAR5, which 7za can't open). The RAR extraction itself
-  cannot run in the renderer (CSP forbids node-unrar-js's `new Function()`) — extractDllsFromRar routes
-  it to the main process over the `apicheckbypass-extract-rar` IPC handler; see extractDllsFromRarDirect.
-  Reverts cleanly.
+  Optional SteamAutoCrack "Steam API Check Bypass": a proxy DLL + JSON rules that redirect the game's
+  integrity checks back to the original DLL/exe and hide steam_settings. Off by default; does not help
+  PlayStation-PSPC titles. RAR extraction is routed to the main process.
 */
 
 const fs = require('fs');
@@ -74,12 +60,9 @@ function pickBypassDllEntries(files) {
   return picked;
 }
 
-// Extract the two proxy DLLs out of the release RAR5 with node-unrar-js (loaded lazily — only this
-// feature needs it, and only when the user opts in). MUST run in a Node context (Electron main process
-// — NEVER the Chromium renderer: node-unrar-js's Emscripten/Embind glue calls `new Function()`, which the
-// renderer's strict CSP forbids (same issue crackFix.js's extractRarToDir works around). Only call this
-// directly from main-process code (e.g. the `apicheckbypass-extract-rar` IPC handler) or a plain-Node
-// context (tests); a renderer must go through extractDllsFromRar below.
+// Extract the proxy DLLs from the release RAR5 with node-unrar-js, loaded lazily. Must run in a Node
+// context: its Emscripten glue uses new Function(), which the renderer CSP forbids — a renderer goes
+// through extractDllsFromRar / the IPC handler.
 async function extractDllsFromRarDirect(rarPath, destDir) {
   const { createExtractorFromData } = require('node-unrar-js');
   const buf = fs.readFileSync(rarPath);
@@ -165,17 +148,8 @@ async function ensureBypassDlls({ cacheDir, force = false, log = noopLog } = {})
 }
 
 /*
-  Build the SteamAPICheckBypass.json object (pure — unit-tested). Keys are paths relative to the game
-  exe, using Windows separators (what the proxy matches against). Mirrors SteamAutoCrack's rules:
-    - exe        -> file_redirect to its kept backup (so integrity checks read the original)
-    - steam_api  -> file_redirect to <dll>.bak, gated by hook_times_mode/hook_time_n
-    - steam_settings dir + known files -> file_hide (revealed once so the emu can still read them)
-
-  exeName        basename of the game exe (e.g. "game.exe")
-  exeBackup      basename of the kept exe backup, or null to skip the exe rule
-  steamApiDlls   array of steam_api(64).dll paths relative to the exe dir (e.g. ["steam_api64.dll"])
-  mode           "nth_time_only" | "not_nth_time_only" | "all"
-  nthTimes       array of 1-based occurrence numbers (e.g. [1])
+  Build SteamAPICheckBypass.json (pure): redirects the exe to its backup and steam_api to <dll>.bak,
+  hides steam_settings, using Windows-relative paths per SteamAutoCrack's rules.
 */
 function buildBypassConfig({ exeName, exeBackup = null, steamApiDlls = [], mode = 'nth_time_only', nthTimes = [1] } = {}) {
   const cfg = {};
@@ -209,15 +183,8 @@ function findExeBackup(exePath) {
 }
 
 /*
-  Apply the bypass to a game folder. Picks the proxy DLL matching the exe arch, drops it under the
-  hijack name (default winmm.dll), and writes SteamAPICheckBypass.json next to the exe. No-op (returns
-  applied:false) if a hijack DLL is already present, so it never double-applies or clobbers a real one.
-
-  gameDir       install folder (steam_api + steam_settings live here for the common case)
-  exePath       absolute path to the game exe (arch + config base dir)
-  dlls          { x64, x86 } from ensureBypassDlls
-  dllVariant    'winmm' | 'version' | 'winhttp' (default winmm)
-  mode          bypass mode (default 'nth_time_only'); nthTimes default [1]
+  Apply the bypass to a game folder: drop the arch-matching proxy DLL under the hijack name and write
+  SteamAPICheckBypass.json beside the exe. No-op when a hijack DLL already exists.
 */
 function applyBypass({ gameDir, exePath, dlls, dllVariant = 'winmm', mode = 'nth_time_only', nthTimes = [1], log = noopLog } = {}) {
   if (!dlls || !dlls.x64 || !dlls.x86) throw new Error('applyBypass: bypass DLLs unavailable');

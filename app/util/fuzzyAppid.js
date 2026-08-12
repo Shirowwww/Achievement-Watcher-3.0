@@ -1,15 +1,9 @@
 'use strict';
 
 /*
-  Resolve a Steam AppID from a messy folder/exe/game name by matching it against the Steam app list.
-
-  Inspired by ARMGDDN Autocracker's three-tier search ("exact / token / fuzzy" — typing "cyberpnuk"
-  finds "Cyberpunk 2077"), but tuned for safety: the *automatic* path only ever auto-commits a
-  high-confidence match (exact, or every cleaned query word present in the store name), because
-  writing the wrong AppID into steam_appid.txt corrupts a game's identity. Low-confidence fuzzy hits
-  are returned as ranked *candidates* for the user to confirm in the manual flow, never auto-applied.
-
-  Pure + dependency-free so it can be unit-tested without the Steam app list or Electron.
+  Resolve a Steam AppID from a messy folder/exe/game name (three-tier exact/token/fuzzy search). The
+  automatic path only auto-commits high-confidence matches — writing a wrong AppID corrupts a game's
+  identity; fuzzy hits are returned as candidates for manual confirmation. Pure + dependency-free.
 */
 
 // Scene/repack groups, store/source tags and packaging words that wrap a real title in a folder name.
@@ -69,12 +63,8 @@ function diceCoefficient(a, b) {
 
 const lenRatio = (a, b) => (a && b ? Math.min(a, b) / Math.max(a, b) : 0);
 
-// Score a candidate store name against an already-cleaned query. tiers, high → low:
-//   exact   normalized-alphanumeric equality (auto-commit safe)
-//   token   one side's words are fully contained in the other's (folder has extra repack/edition
-//           words, or vice-versa); score scales with how close the lengths are
-//   fuzzy   bigram-similar (typos) — only computed when a cheap prefilter says it's worth it
-// Returns { score, tier } or { score: 0, tier: null }.
+// Score a candidate store name against a cleaned query, high → low: exact (auto-commit safe), token
+// containment, fuzzy bigram (typos). Returns { score, tier } or { score: 0, tier: null }.
 function scoreName(queryClean, queryTokens, queryNorm, longTok, name) {
   const nNorm = normAlnum(name);
   if (!queryNorm || !nNorm) return { score: 0, tier: null };

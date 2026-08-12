@@ -1,15 +1,9 @@
 'use strict';
 
 /*
-  Manual achievement unlocks.
-
-  Some saves don't carry unlock state for every achievement (or the schema does not match the save),
-  so the app lets the user mark an achievement as manually unlocked. The override lives in a small
-  sidecar (`cfg/manual-unlocks.json`) keyed by `appid::source` then achievement name — it never
-  touches the game's own save files.
-
-  The module is renderer-friendly (synchronous fs, no Electron dependency when a path is injected)
-  so the pure logic stays unit-testable.
+  Manual achievement unlocks: the user can mark an achievement unlocked via a small sidecar
+  (cfg/manual-unlocks.json) keyed by appid::source + achievement name — game saves are never touched.
+  Renderer-friendly so the pure logic stays unit-testable.
 */
 
 const fs = require('fs');

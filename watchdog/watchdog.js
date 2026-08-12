@@ -485,7 +485,7 @@ var app = {
         self.pipeServer = net.createServer(() => {});
         self.pipeServer.on('error', (err) => debug.error(`[pipe] ${err}`));
         self.pipeServer.listen(PIPE_NAME, () => {
-          console.log('Watchdog process running, pipe open');
+          debug.log('Watchdog process running, pipe open');
         });
       }
       processPriority

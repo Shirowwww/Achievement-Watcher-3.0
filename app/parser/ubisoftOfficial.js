@@ -227,12 +227,8 @@ function normalizeAchievementsSpec(value) {
   return prefixed ? prefixed[1] : base;
 }
 
-// The configurations index mixes launcher metadata into each game block. `root.name` (and
-// sometimes `display_name`/`game_identifier`) can be the *launcher's* name ("Steam",
-// "Ubisoft Connect", …) rather than the game's — using it as the game title produced library
-// entries literally titled "Steam" with no cover (Far Cry 4, uplay-971). Treat known launcher
-// names as "no title" so the real title comes from the game's own fields, the generic Steam
-// name resolution, the mapping asset or the fallback.
+// The configurations index can name the LAUNCHER ("Steam", "Ubisoft Connect") instead of the game —
+// treat known launcher names as "no title" so the real title wins.
 const LAUNCHER_TITLE_BLOCKLIST = new Set([
   'steam',
   'uplay',
@@ -1178,15 +1174,9 @@ module.exports.getAchievements = (appid) => {
   return buildUbisoftOfficialSnapshot(spool.records);
 };
 
-// True when the copy Ubisoft Connect launches was bought on Steam. Such an entry is an officially
-// owned Steam title in every sense the user cares about, so the "official Steam games" library
-// filter has to govern it even though the achievement data is read from Ubisoft (issue #20).
-//
-// Two independent signals, because neither is always present:
-//   - the configuration blocks name Steam (`third_party_platform`, or a storefront-only sibling
-//     block) — absent when the launcher's configurations index has no entry for the product;
-//   - Ubisoft Connect registered the install inside a Steam library. `steamapps\common` is Steam's
-//     own fixed layout, so a product installed there was installed by Steam, whatever the index says.
+// True when the copy Ubisoft Connect launches was bought on Steam: the "official Steam games" filter
+// must govern it even though the data comes from Ubisoft (issue #20). Signals: configuration blocks
+// naming Steam, or an install registered inside a Steam library (steamapps\common).
 const STEAM_LIBRARY_DIR = /[\\/]steamapps[\\/]common[\\/]/i;
 module.exports.isSteamPurchase = (data) =>
   (Array.isArray(data?.storefronts) && data.storefronts.includes('steam')) || STEAM_LIBRARY_DIR.test(String(data?.gameDir || ''));

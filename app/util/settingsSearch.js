@@ -71,14 +71,8 @@ function haystackFor($, row) {
 }
 
 /*
-  Hide every settings row that doesn't match, in every tab, and collapse the blocks left empty.
-  Rows are hidden with a class and never moved or removed — locale/loader.js binds most labels with
-  `li:nth-child(n)`, and :nth-child counts elements regardless of display, so the DOM order must
-  survive filtering untouched or the panel mistranslates itself.
-
-  Returns { total, perView } so the caller can drive the per-tab counters and the empty state.
-  Kept here rather than in ui/settings.js so the browser test can run this exact code over the real
-  app.html markup.
+  Hide every non-matching settings row and collapse empty blocks. Rows are hidden with a class, never
+  moved — positional i18n breaks if the DOM order changes. Returns { total, perView }.
 */
 // The rows of one tab: matches of ROW_SELECTOR with no other match between them and the tab.
 function rowsIn($, section) {

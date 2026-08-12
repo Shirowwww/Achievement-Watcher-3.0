@@ -1,17 +1,9 @@
 'use strict';
 
 /*
-  Uplay R2 emulator-DLL installer — the Ubisoft counterpart of gbeInstaller.js.
-
-  Unlike GBE Fork (downloaded from Detanup01/gbe_fork's GitHub releases), the working
-  achievement-persisting "demde" build of Goldberg Uplay R2 has no stable public/versioned download —
-  it's forum-distributed. So there is no network step here: the user seeds cacheDir ONCE with the 4
-  loader dll files from their own copy, and this module reads that cache and drops the matching-name
-  dll into a game's install folder — replacing whatever loader stub is already there and keeping a
-  one-time .bak of the original, same rule gbeInstaller.installDlls follows for steam_api(64).dll.
-
-  This module is renderer-side only (fs); it never throws for "cache not seeded yet" — callers check
-  `seeded` and show setup instructions instead of failing.
+  Uplay R2 emulator-DLL installer — the Ubisoft counterpart of gbeInstaller.js. The demde build has no
+  stable download, so the user seeds cacheDir once; this module then drops the matching loader dll into
+  game folders with a one-time .bak. Never throws for an unseeded cache — callers check `seeded`.
 */
 
 const fs = require('fs');
@@ -41,17 +33,8 @@ function ensureEmulatorDlls({ cacheDir } = {}) {
 }
 
 /*
-  Install the cached dll(s) into one or more directories. In each dir, every loader dll basename
-  already present (from EMU_DLL_NAMES) is replaced by the matching cached file, backing up the
-  original as <name>.bak the first time only. When a dir has none of the known basenames yet and
-  writeIfMissing is set, that basename is written fresh (default 'uplay_r2_loader64.dll').
-
-  dllDirs         array of absolute directory paths (where the cracked game's loader stub lives)
-  dlls            result of ensureEmulatorDlls()
-  writeIfMissing  basename to drop into dirs that have no loader dll yet (default: 'uplay_r2_loader64.dll')
-  log             optional logger
-
-  Returns { installed, backedUp, perDir: [{ dir, wrote: [...], backedUp: [...] }] }.
+  Install the cached loader dll(s) into one or more dirs, backing up replaced originals as <name>.bak
+  once. writeIfMissing drops a basename into dirs that have none. Returns { installed, backedUp, perDir }.
 */
 function installDlls({ dllDirs, dlls, writeIfMissing = 'uplay_r2_loader64.dll', log = noopLog } = {}) {
   if (!dlls || !dlls.seeded) throw new Error('installDlls: the Uplay R2 dll cache is not seeded yet');

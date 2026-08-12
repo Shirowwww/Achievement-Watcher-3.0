@@ -1,18 +1,9 @@
 'use strict';
 
 /*
-  Xbox PC support.
-
-  Flow:
-  1. The user connects a Microsoft / Xbox Network account (Settings > Sources). The OAuth code is
-     exchanged for an Xbox Live session (XSTS token) and stored encrypted in cfg/xbox-auth.json.
-  2. "Import Xbox PC library" lists local Xbox PC installs (XboxGames folders, .GamingRoot markers,
-     Appx packages) plus the account's title history, fetches each PC title's achievements from the
-     Xbox Live API and caches them under steam_cache/xbox/<titleId>/ (schema.json + state.json).
-  3. The normal library scan reads those caches like any other local source.
-
-  Live polling of running titles (watchdog notifications) is intentionally not part of this first
-  port; a library refresh/import re-syncs unlock state.
+  Xbox PC support: OAuth → XSTS session stored in cfg/xbox-auth.json, then "Import Xbox PC library"
+  lists local installs + title history and caches achievements under steam_cache/xbox/<titleId>/.
+  Live polling of running titles is not part of this first port; a refresh/import re-syncs state.
 */
 
 const fs = require('fs');

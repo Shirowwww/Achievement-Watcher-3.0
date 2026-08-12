@@ -8,14 +8,8 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
 /*
-  Runs the real settings filter, through the real jQuery, over the real app.html markup in a real
-  browser engine — the layer a DOM-less parser cannot check. The filter's selectors (`:not`,
-  descendant `.find`, `toggleClass`) and its promise to never restructure the panel only mean
-  something against a live DOM, and the panel is translated positionally, so a filter that reordered
-  or removed rows would mistranslate every label without failing anything else.
-
-  Skipped (not failed) when no Chromium-family browser is installed: the suite must stay runnable on
-  a machine that has none, the same way the app falls back when its scrape browser is missing.
+  Runs the real filter over the real app.html in a real browser engine — the only layer that proves the
+  selector/toggle behaviour and the no-restructure promise. Skipped when no Chromium browser is present.
 */
 
 const appDir = path.join(__dirname, '..', 'app');
@@ -38,12 +32,8 @@ function findBrowsers() {
   });
 }
 
-// A browser that fails to launch can still leave processes behind: Edge re-execs itself and
-// detaches, so puppeteer reports "Failed to launch the browser process: Code: 0" while six live
-// msedge.exe stay parked on the profile it was given. Nothing owns them afterwards, and the next
-// run's Edge attempt then blocks on that stale profile until the launch timeout — which is how one
-// unusable browser turned into an 80-second suite and a failing file. Each attempt therefore gets a
-// profile directory we control, so a failure can clean up after itself by pid.
+// A browser that fails to launch can leave detached processes behind (Edge re-execs itself), so each
+// attempt gets its own profile directory that a failure can clean up by pid.
 function killProcessesUsing(userDataDir) {
   if (process.platform !== 'win32') return;
   try {

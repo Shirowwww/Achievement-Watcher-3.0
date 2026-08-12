@@ -1055,14 +1055,12 @@ ipcMain.handle('epic:login', async () => {
       const wc = contents && !contents.isDestroyed() ? contents : epicLoginWindow && !epicLoginWindow.isDestroyed() ? epicLoginWindow.webContents : null;
       if (settled || !wc) return;
       try {
-        // encodeURIComponent() restricts the spliced value to a fixed, code-safe character set
-        // (letters, digits, -_.!~*'()% ) before it is quoted with JSON.stringify() -- unlike a
-        // hand-picked blacklist, it can't miss a character that breaks out of the script body.
-        const redirectUrlLiteral = JSON.stringify(encodeURIComponent(redirectUrl));
-        const code = await wc.executeJavaScript(
-          `(async () => { try { const r = await fetch(decodeURIComponent(${redirectUrlLiteral}), { credentials: 'include' }); const j = await r.json(); return (j && (j.authorizationCode || j.code)) || ''; } catch { return ''; } })()`,
-          true
-        );
+        // Fetch the redirect endpoint from the main process through the login window's session,
+        // so cookies behave exactly like the page's own fetch without splicing the URL into an
+        // injected script body.
+        const res = await wc.session.fetch(redirectUrl, { credentials: 'include' });
+        const json = await res.json().catch(() => ({}));
+        const code = (json && (json.authorizationCode || json.code)) || '';
         if (code) {
           const token = await epicAuth.authenticateEpicWithCode(code, { userDataDir: userData });
           debug.log('[epic] account connected');
@@ -1242,15 +1240,9 @@ function killWatchdog() {
   }
 }
 
-// Supervise the Watchdog monitor as a child of this (resident, tray-resident) main process.
-//
-// The monitor runs under Electron's OWN runtime: we spawn this very executable in ELECTRON_RUN_AS_NODE
-// mode (so it behaves as plain Node) with an 'ipc' stdio channel. Since the A2 koffi migration, the
-// monitor's native deps (wql-process-monitor, regodit, xinput-ffi) are ABI-stable (koffi) and load
-// fine under Electron's Node ABI, so the bundled portable node.exe (Node 14) is gone. The monitor
-// forwards overlay/notification window requests over IPC (see watchdog SpawnOverlayNotification)
-// straight into parseArgs() here, instead of spawning a second Electron process. The child is
-// supervised (re-spawned on unexpected exit) and killed when the app quits.
+// Supervise the Watchdog monitor: we re-launch this executable in ELECTRON_RUN_AS_NODE mode with an
+// 'ipc' channel (koffi native deps are ABI-stable), forward its overlay/notification requests here,
+// and re-spawn it on unexpected exit.
 let monitorProc = null;
 let monitorRespawnTimer = null;
 let watchdogStatusInterval = null;
@@ -1269,12 +1261,8 @@ function handleMonitorMessage(msg) {
   }
 }
 
-// Tell the monitor whether the overlay is on screen. It owns the hotkey and keeps its own
-// open/closed flag, so a change it did not initiate would leave that flag stale and the next hotkey
-// press would send the wrong request — a close for a window that is already gone, or an open for
-// one that is already up. Reported from the window's own 'closed'/creation points rather than from
-// the close button alone, so Alt+F4, a crash-close and the game-changed reopen are all covered.
-// Sends the monitor already agrees with are dropped on its side, so the redundant ones are free.
+// Tell the monitor whether the overlay is on screen: it owns the hotkey flag, so a change it did not
+// initiate must be reported from the window's own lifecycle events (redundant sends are dropped).
 function notifyMonitorOverlayState(opened) {
   if (!monitorProc || monitorProc.exitCode !== null || monitorProc.killed || !monitorProc.connected) return;
   try {
@@ -1326,12 +1314,8 @@ function launchWatchdog() {
     }
   }
 
-  // Run the monitor under Electron's own Node by re-launching this executable in ELECTRON_RUN_AS_NODE
-  // mode (replaces the old bundled portable node.exe). The 'ipc' stdio channel and the child's
-  // process.send()/'message' path are unchanged.
-  // Cap the monitor's V8 old-space (NODE_OPTIONS is honored under ELECTRON_RUN_AS_NODE): the watchdog
-  // is a lightweight event-driven node process (file watchers + WMI + toasts), so a 128 MB ceiling
-  // bounds heap growth and makes the GC reclaim earlier without risking the occasional HTML-parse work.
+  // Run the monitor under Electron's own Node (ELECTRON_RUN_AS_NODE; replaces the bundled node.exe),
+  // with a 128 MB V8 ceiling — the watchdog is a lightweight event-driven process.
   const nodeOpts = [process.env.NODE_OPTIONS, '--max-old-space-size=128'].filter(Boolean).join(' ');
   const env = {
     ...process.env,
@@ -2272,12 +2256,8 @@ function createMainWindow() {
       callback({ cancel: false, requestHeaders: details.requestHeaders });
     });
 
-    //External open links
-    // Only http(s) is handed to the OS. shell.openExternal() launches whatever handler Windows has
-    // registered for a scheme, so forwarding "anything that is not file:///" turned a stray in-page
-    // navigation into an arbitrary protocol launch (ms-msdt:, search-ms:, a UNC path...). This now
-    // matches the setWindowOpenHandler below, which already filtered on http(s); an unknown scheme is
-    // simply blocked rather than opened.
+    // External open links: only http(s) reaches the OS — forwarding anything else turned in-page
+    // navigation into arbitrary protocol launches (ms-msdt:, search-ms:, UNC…).
     const openExternal = function (event, url) {
       if (url.startsWith('file:///')) return;
       event.preventDefault();
@@ -2917,14 +2897,9 @@ function openGameFromLaunchArgs(args) {
   tryOpen();
 }
 
-// --- Overlay notification (optional transport) — Wave 3 ----------------------
-// Spawns a frameless, transparent, click-through window that renders a notification
-// using a preset (preset = index.html + style.css, copied from the reference project).
-// The preset's own script receives the payload through overlayPreload's `window.api`,
-// animates, then calls window.api.closeNotificationWindow() (handled in ipc.js).
-// Toasts remain the default transport; this only runs when explicitly triggered.
-// Resolve a preset by name from the bundled library (Default Presets, then Users Presets),
-// falling back to "Shirow". Mirrors the reference project's preset folder lookup.
+// --- Overlay notification (optional transport) -----------------------------------
+// Spawns a frameless click-through window rendering a preset via window.api; toasts remain the
+// default transport. Resolves presets from the bundled library, falling back to "Shirow".
 function resolvePresetFolder(presetName) {
   const requestedRaw = String(presetName || 'Shirow');
   const requested = requestedRaw === 'Raposo' ? 'Shirow' : requestedRaw;
@@ -3282,9 +3257,8 @@ async function enqueueNotificationFromArgs(args) {
   let cfg = configJS;
   if (!cfg) {
     try {
-      // settings.load() is async — it must be awaited, otherwise cfg is a pending Promise and the
-      // user's overlay preset/position/scale/sound are silently ignored (always falling back to the
-      // 'Default' preset, which also raises the risk of an unresolvable preset → no window).
+      // settings.load() is async and must be awaited, or the overlay preset/position/scale/sound are
+      // silently ignored (falling back to 'Default', which can be unresolvable → no window).
       cfg = await require(path.join(__dirname, '../settings.js')).load();
     } catch {
       cfg = {};
