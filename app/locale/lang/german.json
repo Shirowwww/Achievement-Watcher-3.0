@@ -86,12 +86,10 @@
     "title": "Einstellungen",
     "sideMenu": {
       "general": "Allgemein",
-      "overlay": "In-Game-Overlay",
       "notification": "Benachrichtigung",
       "souvenir": "Souvenir",
       "folder": "Ordner",
       "source": "Quelle",
-      "guide": "Anleitung",
       "advanced": "Erweitert"
     },
     "common": {
@@ -262,7 +260,7 @@
       "loginTestFailed": "Steam-Anmeldung fehlgeschlagen",
       "autoApply": {
         "name": "Neu erkannte Spiele automatisch reparieren",
-        "description": "Führt die komplette „Emulator-Fix anwenden“-Kette einmal für ein neu erkanntes, nicht konfiguriertes emuliertes Spiel aus: SteamStub-Behandlung, GBE Fork, Erfolge, DLCs, Identität/Sprache und erweiterte Daten, falls aktiviert. Standardmäßig aktiviert.",
+        "description": "Führt die komplette „Emulator-Fix anwenden“-Kette einmal für ein neu erkanntes, nicht konfiguriertes emuliertes Spiel aus: SteamStub-Behandlung, GBE Fork, Erfolge, DLCs, Identität/Sprache und erweiterte Daten, falls aktiviert. Standardmäßig deaktiviert.",
         "value": {
           "false": "Deaktiviert",
           "true": "Aktiviert"
@@ -358,7 +356,7 @@
         "chromium": "Chromium-Benachrichtigung",
         "watchdog": "Watchdog",
         "test": "Test",
-        "overlay": "In-Game-Overlay"
+        "overlay": "Benachrichtigung"
       },
       "info": {
         "toast": "Einige Funktionen sind nur unter Windows 10 verfügbar",
@@ -1010,9 +1008,9 @@
     "disk-scan": "Datenträgerscan",
     "found-automatically-via-x": "Automatisch gefunden über {source}.",
     "checking-watchdog-status": "Watchdog-Status wird geprüft...",
-    "watchdog-stopped": "Der Watchdog läuft nicht! (In-Game-Overlay/Windows-Benachrichtigungen werden nicht ausgelöst.)",
+    "watchdog-stopped": "Der Watchdog läuft nicht! (In-Game-Overlay/Benachrichtigungen werden nicht ausgelöst.)",
     "i-class-fas-fa-shield-alt-i-click-to-start-watchdog": "<i class=\"fas fa-shield-alt\"></i> Klicken, um den Watchdog zu starten!",
-    "watchdog-is-running-in-game-overlay-windows-notifications-should": "Der Watchdog läuft (In-Game-Overlay/Windows-Benachrichtigungen sollten ordnungsgemäß funktionieren)",
+    "watchdog-is-running-in-game-overlay-windows-notifications-should": "Der Watchdog läuft (In-Game-Overlay/Benachrichtigungen sollten ordnungsgemäß funktionieren)",
     "unexpected-error": "Unerwarteter Fehler",
     "choose-the-game-executable": "Ausführbare Datei des Spiels auswählen",
     "select": "Auswählen",

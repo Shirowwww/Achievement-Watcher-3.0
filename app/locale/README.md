@@ -67,13 +67,13 @@ toasts, busy labels) go through the `t()` helper (`app/locale/t.js` in the
 renderer, its counterpart in `electron/init.js` for the main process) instead
 of hardcoding `fr ? '…' : '…'` ternaries. Every `t()` slug lives under
 `dialogs` in `english.json` (the structural reference) and is translated in
-every bundled locale, per the parity rule above — e.g.
+every bundled locale, per the parity rule above - e.g.
 `t('steamless-detail', …)` → `dialogs.steamless-detail`.
 
 Values may contain `{name}` placeholders that `t()` substitutes from the
 optional fourth argument; the placeholder set must match the English value
 (the locale test enforces this). The English/French fallbacks still embedded
-in the `t()` calls are only a safety net for catastrophic locale failures —
+in the `t()` calls are only a safety net for catastrophic locale failures -
 the locale files are the source of truth.
 
 ## Watchdog strings
@@ -81,7 +81,7 @@ the locale files are the source of truth.
 The standalone Watchdog process cannot load the renderer locale files, so the
 small `watchdog` section of every locale is mirrored in `watchdog/locale.json`
 (same keys, generated from `app/locale/lang`). When adding or changing a
-`watchdog.*` key, update `watchdog/locale.json` too — the
+`watchdog.*` key, update `watchdog/locale.json` too - the
 `test/watchdogLocale.test.js` suite enforces the mirror.
 
 ## Translation credits

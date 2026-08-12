@@ -8,7 +8,7 @@ watched out of the box.
 ## Highlights
 
 - **"Recently played" sorting is fixed.** The Watchdog crashed while saving playtime to the
-  registry — after writing total time, but before writing the last-played timestamp — and was
+  registry - after writing total time, but before writing the last-played timestamp - and was
   silently restarted. Games played since 3.8.3 had no last-played date, so they sorted to the
   bottom. Playtime now uses the stable registry path and the sort is correct again.
 - **Library reloads are smoother.** Skeleton tiles fill the grid while games stream in, instead of

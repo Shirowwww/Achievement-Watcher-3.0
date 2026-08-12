@@ -32,6 +32,33 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   cached data immediately instead of waiting for every cover and description,
   so the grid appears fast.
 
+### Removed
+
+- `watchdog/util/toastAudio.js`, orphaned since the toast transport stopped requiring it.
+  Nothing in the app or the Watchdog referenced it any more, so it was dead weight in the
+  packaged build.
+
+### Changed
+
+- The watchdog status line no longer calls the delivery "Windows notifications": the
+  transport can be a toast, the in-game overlay or both, so the wording now covers all three.
+- Dropped the unused **In-game overlay** and **Guide** settings side-menu strings, which no
+  longer have a tab, from all 18 locales.
+- The documentation and screenshots were refreshed: the first-run guide, custom theme editor,
+  controller tab, custom notification-preset builder and the Emulator & tools context menu are
+  now shown, and the emulator-setup guide describes where the `steam_settings` repair actually
+  lives (a button on the diagnosis report, not a context-menu entry). The auto-fix setting is
+  documented as disabled by default, which is what it has always been.
+- The documentation now reads as an ordered path: the index numbers the seven user guides and
+  every page ends with a link to the next one. The controller guide became the single source of
+  truth for gamepad control - the overlay guide's duplicate copy of it (which still documented
+  the old two-button **Back + Start** overlay toggle, replaced by **Back + Start + LB**) is now
+  a short summary that links to it. The controller guide also documents what was missing: app
+  navigation being on by default while overlay control is opt-in, the LB/RB page scroll outside
+  Settings, the backend selector, that shortcuts may deliberately share a button, and the
+  `[controller] debugLogging` flag for bug reports. Notification sounds are listed as
+  `.wav/.mp3/.ogg/.flac/.m4a/.aac`, the three formats added later having never been documented.
+
 ### Fixed
 
 - A game whose cached Steam schema resolved a name but no achievement list stayed empty for
@@ -39,10 +66,13 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   store page but not the schema froze the game at zero achievements. Such an entry is now
   re-checked at most once a week, and the check is stamped on the record so a game that
   genuinely has no achievements is not looked up again on every scan. A re-check that cannot
-  run — offline, rate-limited — hands the cached entry back untouched instead of dropping it.
+  run - offline, rate-limited - hands the cached entry back untouched instead of dropping it.
+- The settings and per-game configuration modals are now inset below the custom title bar,
+  and the settings side navigation scrolls on its own. On short windows its 14 entries used
+  to stretch the modal past the viewport and drag it off-screen.
 - Notification artwork now prefers the high-resolution Steam art already cached by the app
   (schema, store and SteamDB covers) instead of the predictable CDN URLs, which 404 on newer
-  titles whose assets live under hashed `store_item_assets` paths — the playtime/launch icon
+  titles whose assets live under hashed `store_item_assets` paths - the playtime/launch icon
   was falling back to Steam's 32×32 clienticon (e.g. Assassin's Creed Black Flag Resynced).
   Playtime toast icons are then center-cropped to a square, as the Windows toast logo slot
   requires.
@@ -89,8 +119,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 - Locating an emulator's local achievement schema no longer walks the whole game install on
   every scan. The handful of directories an emulator actually writes those files to are probed
-  first, and the outcome — including "not here", which is the answer that used to cost a full
-  synchronous six-level walk per game — is remembered. Both layouts are probed before anything
+  first, and the outcome - including "not here", which is the answer that used to cost a full
+  synchronous six-level walk per game - is remembered. Both layouts are probed before anything
   is walked, so a non-TENOKE install no longer pays a complete walk just to prove `tenoke.ini`
   is absent. The memo is dropped when the app writes a schema itself or the library is
   refreshed, so a hand-added schema is still picked up at once.
@@ -209,15 +239,15 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 - Every section of the Settings panel folds away under its own header, with a chevron that points
   down when open and sideways when closed. Each section remembers its state, so a tab can be kept
-  reduced to the few sections actually being used. The **Custom preset** builder — the largest
-  section, and the one needed least often — starts closed. Searching still looks through closed
+  reduced to the few sections actually being used. The **Custom preset** builder - the largest
+  section, and the one needed least often - starts closed. Searching still looks through closed
   sections, so a match is never buried in one.
 - Presets made in the builder can be deleted from it. It could only ever add to the preset list, so
   a throwaway attempt had to be removed from Explorer. Only presets the builder generated can be
-  deleted — bundled and hand-written ones are refused.
+  deleted - bundled and hand-written ones are refused.
 - **Find a community fix** is offered for Ubisoft installs too, and now names its source
   (**CrakFiles**) so it can be found. The list is matched by game name and a fix is just files
-  dropped into the install folder, so nothing about it was ever Steam-specific — the entry simply
+  dropped into the install folder, so nothing about it was ever Steam-specific - the entry simply
   sat inside the Steam-only branch of the menu.
 - Uplay R2 setups can restore the snapshot taken before the last repair. Every repair already saved
   one; nothing could read it back, which is most of why that submenu looked so much thinner than the
@@ -226,7 +256,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   stores the settings that produced it, so **Edit a preset** loads its colours and sliders back into
   the builder and the button becomes **Update preset** instead of silently replacing the old one.
 - **Preview** renders the design being edited as a real overlay popup, at full size and with the
-  configured position, scale and animation — without saving it first, so trying ideas no longer
+  configured position, scale and animation - without saving it first, so trying ideas no longer
   fills the preset list with throwaway attempts.
 - The builder gained a **Width** control for the popup, and each slider now shows its value.
 - Downloading an update drives the taskbar progress bar. The download starts once the prompt is
@@ -249,22 +279,22 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   buttons next to it.
 - A window closed while it was still starting no longer breaks the next one. The main process gates
   "ready to show" on a one-shot handler that is only unregistered when it fires, and registering it
-  a second time throws — which would have taken the whole window creation down with it. The
+  a second time throws - which would have taken the whole window creation down with it. The
   watchdog-status handlers are also guarded against arriving before the title bar exists.
 - The **EA Desktop** source now reads "Read EA Desktop's local achievement log (for games outside
   EA's managed folders)".
 - The onboarding's recommended-settings step points at how to find things afterwards: the search box
   at the top of the panel, the foldable sections, and the Help tab.
-- Every launch writes a `[diag]` block to the log — versions, install and data paths, how the app
-  was started, language, theme and the geometry of every display — followed by a `[MainWindow]` line
+- Every launch writes a `[diag]` block to the log - versions, install and data paths, how the app
+  was started, language, theme and the geometry of every display - followed by a `[MainWindow]` line
   each time the window is shown, moved, resized or closed. It is the block to paste into an issue.
 - Testing an overlay notification no longer blacks out the screen. The popup is its own
-  always-on-top window and never needed the fullscreen backdrop that stood in for a running game —
+  always-on-top window and never needed the fullscreen backdrop that stood in for a running game -
   all it did was hide the settings panel whose presets you were comparing, for several seconds per
   click.
 
 - The installer shows what it is doing again. The status line above the progress bar was blank and
-  the details pane empty for the whole install, including the steps the installer prints itself —
+  the details pane empty for the whole install, including the steps the installer prints itself -
   closing the background monitor, and the settings folder it preserves. The build now keeps NSIS's
   default reporting instead of suppressing it.
 
@@ -272,7 +302,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 - The custom notification-preset builder can save and preview at all. Both wrote the generated
   preset into the app's own `presets` folder, which is packed inside `app.asar` once the app is
-  installed — an archive file, not a directory — so creating a folder in it failed with `ENOTDIR`
+  installed - an archive file, not a directory - so creating a folder in it failed with `ENOTDIR`
   and **Preview** and **Save** did nothing on an installed build. Only a development run, where that
   path is a real directory, ever worked. Generated presets now live in
   `%APPDATA%\Achievement Watcher 3.0\presets\Users Presets`, next to imported sounds and user
@@ -281,11 +311,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   a bundled name shadows it rather than being ignored.
 - The layer controls in the custom theme editor stop sliding left. Switching an effect on and then
   off hides its two sub-groups, which shrank the collapsed panel enough for it to fit back on the
-  controls' line — a collapsed panel has no height but still had a width — and the whole colour /
+  controls' line - a collapsed panel has no height but still had a width - and the whole colour /
   gradient / effect block jumped 130px toward the middle of the row.
 - **Launch game** and **Configure executable…** are offered for every game, not only Ubisoft ones.
   Both entries were built inside the Ubisoft branch of the right-click menu, so a Steam, GOG, Epic
-  or emulated game could not be started from it even with its executable already configured — while
+  or emulated game could not be started from it even with its executable already configured - while
   the tile's own play button, which runs the very same code, worked fine.
 - A manual unlock raises the game's percentage straight away. The tile and the profile counters are
   accumulated while the library is scanned and nothing recomputed them afterwards, so the library
@@ -294,7 +324,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   unlock the save itself reported is never undone.
 - Scanning the library shows a busy pointer, so a long scan is not mistaken for a frozen window.
 - Log files are no longer shredded by a second launch. They were opened truncating, and the stream
-  is created before the single-instance check — so starting the app while it was already running
+  is created before the single-instance check - so starting the app while it was already running
   emptied the running instance's log, which then kept writing at its old offset and left a hole of
   NUL bytes over everything before it. A crash was also erased by the very next launch. Logs now
   append, mark each run with a session line, and rotate at 2 MB.
@@ -302,7 +332,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   wreath, and the progress row was drawn at full width while the popup was still expanding, so it
   hung outside the pill. Sunset, Batman and TigerDX Award were clipped too.
 - The window buttons cannot stack on top of each other. They sit in a shrink-to-fit row that wrapped
-  once the available width got small enough — reachable on a display/scaling change.
+  once the available width got small enough - reachable on a display/scaling change.
 - A community fix is no longer proposed for a different game in the same franchise. Ranking scored
   "Assassin's Creed: Mirage" above the match floor against "Assassin's Creed Black Flag Resynced" on
   the words the whole franchise shares, so an unrelated fix was offered as found. A candidate that
@@ -313,28 +343,28 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   the emulator fix, cleared on success, on failure and on a launch error alike.
 - Update prompts no longer interrupt a game. The dialog is modal and has no parent window, so it
   landed on top of whatever was on screen, fullscreen sessions included. The background monitor now
-  tells the app how many games are running, and while any are, the check is skipped entirely — no
+  tells the app how many games are running, and while any are, the check is skipped entirely - no
   dialog and no network. The offer comes back shortly after the session ends, and a download that
   finished mid-session re-opens its own "install now?" prompt rather than asking about the download
   again. Nothing is recorded when a prompt is only held back, and an explicit **Check for updates**
   always answers immediately.
-- The update prompt stops nagging. Answering **Later** recorded nothing at all, and the app — a tray
-  daemon that stays resident and re-checks every hour — reopened the same dialog an hour later, and
+- The update prompt stops nagging. Answering **Later** recorded nothing at all, and the app - a tray
+  daemon that stays resident and re-checks every hour - reopened the same dialog an hour later, and
   every hour after that. **Later** now silences that version for a day; **Skip this version** stays
   permanent; neither ever hides a newer release, and **Check for updates** in Settings overrules a
   postpone. Declining the "install now?" prompt is remembered too, instead of coming straight back
   through a re-download on the next check.
 - Two update checks landing together can no longer stack two dialogs. Both prompt handlers tested
-  their "a prompt is already open" flag, then awaited, and only then set it — so the hourly check
+  their "a prompt is already open" flag, then awaited, and only then set it - so the hourly check
   racing the Settings button walked past the guard twice. Answers are also written to disk before
   the handler moves on, so a "skip" or "later" is not lost if the app closes right after the click.
 - **Start with Windows** stays on. Windows' login-item query matches the registered command line
-  against the running build, so it answers "not registered" whenever the two drift apart — after an
-  update that moved the executable, or in a development run — and opening Settings adopted that
+  against the running build, so it answers "not registered" whenever the two drift apart - after an
+  update that moved the executable, or in a development run - and opening Settings adopted that
   answer, flipping the setting to No and persisting it on the next save. The saved preference now
   wins and is re-applied to Windows when the two disagree.
 - Hidden games are listed by name instead of a bare App ID. Names are resolved from the app's own
-  game index and cached game data first — the only local sources that cover non-Steam entries — then
+  game index and cached game data first - the only local sources that cover non-Steam entries - then
   from Steam for anything left, and the answer is remembered. A game hidden from the right-click
   menu also records its name before it is dropped from the index. A local install whose id is a hash
   of its folder is traced back to that folder, which is the only thing that can still name an entry
@@ -349,7 +379,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - Help now includes direct, localized shortcuts to the Folders, Sources and Notifications settings,
   so the most common setup and troubleshooting steps are one click away.
 - Achievement toasts can be marked urgent, which is the only way Windows 11 (22H2 and later) puts a
-  notification on screen while Do Not Disturb is on — including the automatic "playing a game" and
+  notification on screen while Do Not Disturb is on - including the automatic "playing a game" and
   "app in full screen" rules that make an in-game unlock invisible for a whole session. It is off by
   default and available as **Priority notifications** under **Settings → Notification**. Windows asks
   once, per app, before honouring it and keeps the answer in Settings > Notifications, so nothing is
@@ -358,7 +388,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   grouped into short submenus instead of one long flat list.
 - The Sources tab now has a switch for every source the scanner reads. Ubisoft Connect, GOG Galaxy,
   Epic Games, the Nemirtingas GOG/Epic emulators, shadPS4 and Xenia were all on by default with no
-  way to turn them off short of hand-editing `options.ini` — which is why a Ubisoft entry could not
+  way to turn them off short of hand-editing `options.ini` - which is why a Ubisoft entry could not
   be hidden through the interface (issue #20).
 - The in-game overlay has a close (×) button in its header, next to the options gear. The overlay is
   a frameless always-on-top window with no system title bar, so closing it previously meant pressing
@@ -367,7 +397,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   their `appmanifest`/`libraryfolders.vdf` folders, GOG Galaxy launch tasks, Epic manifests, EA
   Desktop logs and Xbox configs provide the exact launcher exe, and every other known install folder
   is detected with a conservative confidence gate (single plausible exe, strong name/folder match,
-  or Steam-dll adjacency). Ambiguous folders stay empty for a manual pick — no guessing — and a
+  or Steam-dll adjacency). Ambiguous folders stay empty for a manual pick - no guessing - and a
   manually configured exe is never overwritten.
 
 ### Fixed
@@ -381,7 +411,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   blank; **Use another Steam AppID…** could also save that failure as a permanent cover override
   instead of warning that the AppID has no art.
 - Covers, achievement icons and game backgrounds no longer disappear when their path contains an
-  apostrophe or parentheses — an ordinary game folder ("Assassin's Creed", `Program Files (x86)`)
+  apostrophe or parentheses - an ordinary game folder ("Assassin's Creed", `Program Files (x86)`)
   or a Windows account name with an apostrophe was enough to drop the image silently.
 - Per-game launch arguments keep quoted values intact. `-savedir "D:\My Games\Save"` reached the
   game with the quotes still attached, so the path did not resolve; an unmatched quote no longer
@@ -389,19 +419,19 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - Epic backgrounds are blurred and tinted again. The image was fetched through an API the bundled
   runtime does not provide, so the step failed on every game and the error was swallowed.
 - Scanning Epic games no longer freezes the interface. Looking up a title's Steam AppID and its
-  artwork blocked the whole window for up to 30 seconds per game — several minutes on a first
-  scan — and artwork requests are now time-boxed instead of hanging on an unreachable network.
+  artwork blocked the whole window for up to 30 seconds per game - several minutes on a first
+  scan - and artwork requests are now time-boxed instead of hanging on an unreachable network.
 - Saving settings twice in quick succession no longer leaks file watchers in the background
   monitor.
 - Links are only opened in a browser when they are web addresses. In-app navigation and the links
-  carried by CrakFiles community-fix entries — which come from a remote catalog — were both passed
+  carried by CrakFiles community-fix entries - which come from a remote catalog - were both passed
   to Windows as-is, which would launch whatever program is registered for the scheme.
 - Updates signed with the local Shirow certificate no longer fail on PCs that do not trust that
   self-signed root. The updater verifies the matching publisher name and the release SHA-512
   manifest instead of showing the misleading “not signed by the application owner” error.
 - In-game notification popups now use the real dimensions of the selected theme and scale before
-  anchoring. Every preset is kept inside the active monitor's work area — including custom saved
-  positions — so bottom/right choices stay bottom/right and oversized themes shrink to fit instead
+  anchoring. Every preset is kept inside the active monitor's work area - including custom saved
+  positions - so bottom/right choices stay bottom/right and oversized themes shrink to fit instead
   of being clipped off screen.
 - Native Windows notification artwork is square; playtime cards use the game logo in that compact
   slot and always show the game's wide header above their message.
@@ -420,7 +450,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - The Settings notification test finally shows a Windows toast. It never did: the payload grouped
   toasts by game with the appid as-is, and the test's appid is a number, while powertoast accepts a
   group only when both its id and title are non-empty strings. Given anything else it stored a null
-  group and then dereferenced it, throwing before the toast was ever shown — and the failure landed
+  group and then dereferenced it, throwing before the toast was ever shown - and the failure landed
   in the tray-balloon fallback, so the test reported success, the gamepad still rumbled, and the
   only symptom was that nothing appeared. That is exactly how it was reported (issue #18). The id is
   now coerced and a game with no resolved name loses its grouping rather than its notification, so
@@ -429,14 +459,14 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - Windows full-screen and quiet-hours detection works at all. `SHQueryUserNotificationState` was
   read through `Add-Type -AssemblyName shell32`, which is not a real assembly: PowerShell wrote two
   errors to stderr, left the state at 0 and still exited 0, so the reader parsed "0", matched no
-  state (the enum starts at 1) and returned null on every Windows machine — without ever reaching
+  state (the enum starts at 1) and returned null on every Windows machine - without ever reaching
   its error handler. Both callers therefore always answered "no". The state is now read with a real
   `DllImport` and its `HRESULT` is checked, so the Watchdog log finally reports when Windows is
   swallowing achievement toasts (issue #18), and an unreadable state is warned about once instead of
   failing silently forever.
 - The overlay hotkey stays in step with the overlay however it was closed. The app reported closes
-  only from the × button, so any other way the window went away — Escape, the game-changed reopen,
-  an external close — left the Watchdog's flag stale and the next hotkey press sent the wrong
+  only from the × button, so any other way the window went away - Escape, the game-changed reopen,
+  an external close - left the Watchdog's flag stale and the next hotkey press sent the wrong
   request. Open and close are now both reported from the overlay window's own lifecycle events.
 - The main process no longer logs "opening overlay window" for requests that open nothing: an
   incoming close or refresh was announced as an open before the decision was even taken, which made
@@ -461,8 +491,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - Ubisoft Connect titles bought on Steam no longer need a per-game row in the uplay↔Steam mapping
   asset: the cached achievements archive's own spec name (`971_FarCry4` → "far cry 4") is now a
   resolution candidate when the registered install folder is unavailable and the configurations
-  index has no usable title. The game resolves through the same generic chain as before — mapping
-  asset by title, installed Steam library, then Steam catalog — and the Steam release's canonical
+  index has no usable title. The game resolves through the same generic chain as before - mapping
+  asset by title, installed Steam library, then Steam catalog - and the Steam release's canonical
   name wins for display. This replaces the 3.7.0 per-product id row for Far Cry 4 (uplay 971),
   which has been removed (issues #7/#14).
 
@@ -500,7 +530,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - In-app updates no longer fail with "App is not signed" on intentionally unsigned releases: the
   signature verifier now accepts a file with no Authenticode signature (the release feed's SHA-512
   still authenticates it) and keeps rejecting only a signature that belongs to another publisher.
-- The game-page header icon is reset to a neutral placeholder when the opened game has no artwork —
+- The game-page header icon is reset to a neutral placeholder when the opened game has no artwork -
   it no longer keeps the previous game's icon, which made the page look like it belonged to
   another title (issue #15).
 - A Steam purchase that launches Ubisoft Connect now resolves again when its registered install
@@ -513,14 +543,14 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   boundary-aware, separator-normalized matching instead of a raw prefix check.
 - The Watchdog no longer fails to start when `options.ini` has a missing or partial `[overlay]`
   section: the hotkey and notification-sound defaults now match the app-side loader.
-- A busy WebSocket port no longer crash-loops the Watchdog — it logs the error and keeps
+- A busy WebSocket port no longer crash-loops the Watchdog - it logs the error and keeps
   notifications working without the websocket broadcast.
 - The `fetch-icon` IPC handler now returns `null` on failure like its synchronous twin, instead
   of surfacing an unhandled rejection to the renderer.
 - Removed dead Watchdog code: the never-called `getFoldersLuma` registry walker (which referenced
   an undefined logger) and the stale `exeList.json` reader that nothing consumed.
 - An enabled per-layer gradient now replaces the layer's base color entirely, in the app and in the
-  in-game overlay — previously the base color/backdrop was still painted over the gradient. Layer
+  in-game overlay - previously the base color/backdrop was still painted over the gradient. Layer
   images keep rendering above the gradient. The base color is fully cut: no translucent tint of it
   remains over the gradient.
 - The watchdog status dot no longer pulses forever once the watchdog is running: the pulse only
@@ -532,19 +562,19 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   whole layer, the image keeps its own fit/repeat), and enabling a fresh gradient follows the
   layer's color instead of falling back to a fixed default.
 - "Merge duplicate games" now also drops a same-name Steam save phantom when a GOG Galaxy entry
-  exists for the same game — Cyberpunk 2077 no longer appears twice (stale CODEX/Goldberg save +
+  exists for the same game - Cyberpunk 2077 no longer appears twice (stale CODEX/Goldberg save +
   real GOG copy). Genuinely installed Steam copies are still kept.
 - The "Choose another cover…" gallery opens reliably again: a scope bug (wrong variable reference)
   could abort it before the modal appeared, and the modal is now shown before the cover fetch so a
   failed lookup always leaves a visible state.
 - The cover gallery never hangs: picking a cover is bounded by a 15s download timeout and falls
   back to the remote URL when a CDN stalls (previously the click could silently do nothing).
-- SteamDB is only queried for real Steam releases — a non-Steam id (GOG/Xbox/local) no longer
+- SteamDB is only queried for real Steam releases - a non-Steam id (GOG/Xbox/local) no longer
   triggers a pointless 45s SteamDB scrape that delayed the gallery.
-- Games without cover art are checked against the network again on every scan, as before — the
+- Games without cover art are checked against the network again on every scan, as before - the
   temporary "fast-scan" skip that cached those lookups for a week was removed.
 - A stale "configure executable" entry pointing at a known non-game program (e.g. R.exe from IBM
-  SPSS, Steam's streaming_client.exe, DiskSpd64, Dolphin) no longer marks a game as installed —
+  SPSS, Steam's streaming_client.exe, DiskSpd64, Dolphin) no longer marks a game as installed -
   this is what made The Last of Us Part II appear installed after it was uninstalled.
 - The "download icons" emulator setting no longer falls back to a missing locale path (its label,
   description and option values were already fully translated under `settings.emulator`).
@@ -559,7 +589,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   `uplay_install.state` or a mapping-by-name fallback, and Assassin's Creed Black Flag Resynced
   (Ubisoft product 66088, the Steam variant) is now mapped to its Steam release (3751950).
 - Ubisoft Connect games are kept by the "Show installed games only" filter when the launcher
-  registry proves they are installed — previously the Ubisoft 66088 entry disappeared as soon as
+  registry proves they are installed - previously the Ubisoft 66088 entry disappeared as soon as
   the filter was enabled.
 - Ubisoft games resolved to a modern Steam release get their real portrait via the SteamDB cover
   fallback, so vertical (portrait) view no longer shows blank tiles for covers that live under a
@@ -568,7 +598,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   missing from the product info now recover the real hashed capsule through SteamDB at load time
   (e.g. Yakuza 0 Director's Cut), and the library grid falls back to the header when no portrait
   exists instead of rendering a blank tile.
-- SteamGridDB cover lookups require an exact or token-level title match — an unrelated first
+- SteamGridDB cover lookups require an exact or token-level title match - an unrelated first
   autocomplete result is never used as a cover.
 - Generic executable descriptors ("Installer", "Launcher", "Application", …) are ignored when
   naming an unconfigured install; the folder/exe name is used instead.
@@ -591,7 +621,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   (surfaces, borders, accent, fonts and radii) instead of its own inline styles, and exposes proper
   dialog/aria attributes.
 - Installed-game folder detection now merges smart-discovered library roots on every scan (common
-  neutral folder names on all drives — Games/Jeux/Juegos/Spiele, Games Library/GameLibrary,
+  neutral folder names on all drives - Games/Jeux/Juegos/Spiele, Games Library/GameLibrary,
   Repacks, plus GOG Games and Epic Games as before) without requiring the user to add them in
   Settings. Launcher-managed install roots (Ubisoft Game Launcher/games, GOG Galaxy, Origin/EA,
   Epic Games under Program Files) are deliberately NOT auto-added: they contain legit launcher
@@ -602,7 +632,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   folders/shortcuts are still ignored. The name-based folder index follows the same rule.
 - Per-user game libraries are probed too: portable/repack installs under
   %USERPROFILE%\Games/Jeux, %APPDATA%\Games/Jeux and %LOCALAPPDATA%\Games/Jeux (library-like
-  names only — the raw AppData roots are never scanned, so application config stays out of the
+  names only - the raw AppData roots are never scanned, so application config stays out of the
   game list).
 - Library-folder name detection now understands localized names in many languages (Игры, Jogos,
   游戏/遊戲, ゲーム, 게임, Hry, Gry, Oyunlar, Játékok, Jocuri, Spellen, Pelit, Trò chơi, …) for
@@ -610,7 +640,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Removed
 
-- The dedicated "Playtime scale / size of playtime popups" option in the notification settings —
+- The dedicated "Playtime scale / size of playtime popups" option in the notification settings -
   playtime popups now always use the main notification scale.
 - The Windows installer now shows installation/uninstallation progress details by default, uses
   refreshed Steam Blue header/sidebar artwork (also on the uninstaller), and explicitly creates
@@ -623,8 +653,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 - Themes are truly global and layer-based: built-in themes (Steam Blue, OLED
   Black, Dracula, Graphite, and the new Nord, Gruvbox and Tokyo Night) and the
-  "Custom…" theme recolor the whole app — window, library, game cards,
-  achievement rows, dialogs — and the in-game overlay follows the active theme
+  "Custom…" theme recolor the whole app - window, library, game cards,
+  achievement rows, dialogs - and the in-game overlay follows the active theme
   through a "Use app theme" toggle (off by default). Steam Blue stays the
   default.
 - The Custom theme lets you pick a color and, per layer (window, header,
@@ -649,7 +679,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - The "Cards & rows" theme layer was leaking into Settings and the executable
-  configuration modal — header, sidebar, panels and controls all inherited the
+  configuration modal - header, sidebar, panels and controls all inherited the
   card color instead of the dedicated Settings layer. Settings now uses its
   own surface tokens, fully independent from cards.
 - Custom-theme background images were barely visible under opaque layer colors
@@ -705,7 +735,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   `dialogs.<key>` entry to `locale/lang/*.json`.
 - The installer now shows the LGPL licence before installing and, at
   uninstall, asks whether to also delete the app's settings, cache and saved
-  data (default: keep — the legacy 1.6.8 data folder is never touched).
+  data (default: keep - the legacy 1.6.8 data folder is never touched).
 - The in-game achievement overlay got a visual refresh and is now
   customizable: a stats bar (unlocked/total + completion %), instant search
   and status filters, community-rarity badges when the source provides them,
@@ -726,7 +756,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - The in-game overlay list works again under the current Electron runtime and follows the
   selected locale: its preload required app modules that fail in the sandboxed window context
   (so `window.api` was never exposed and the page script crashed), and the `overlay-language`
-  channel had a renderer listener but nothing in the main process ever sent it — the list stayed
+  channel had a renderer listener but nothing in the main process ever sent it - the list stayed
   empty/English even with a localized UI.
 - The overlay now loads the app's own `view/overlay.html` instead of a stale copy in the user-data
   folder, so shipped fixes and localization actually reach it without waiting for the next install.
@@ -753,7 +783,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   `%APPDATA%\Achievement Watcher 3.0` (it's rebuilt on launch); the avatar now persists in a
   migration-covered `cfg\avatar.txt` file instead, with a one-time carry-over from `localStorage`
   for sessions that already had one set. Separately, the "show installed games only" library filter
-  also lives in that same Chromium storage and defaults to ON when unset — on a fresh post-migration
+  also lives in that same Chromium storage and defaults to ON when unset - on a fresh post-migration
   profile that silently hid every game without an on-disk-confirmed install (which is most of an
   emulated/cracked library), even though the underlying watched folders and settings had migrated
   correctly. The filter now only defaults to ON for a genuinely new install, not one carried over
@@ -765,8 +795,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 - New Goldberg Social Club emulator source: `%APPDATA%\Goldberg SocialClub Emu Saves` is now
   accepted in Settings, auto-scanned and monitored like the other emulator save roots. Games are
-  discovered by their real layout — hex profile folders and Rockstar save/profile files
-  (SGTA*/SRDR*, `settings\cfg.dat`, `SAVE\…`) as well as standard emulator achievement files —
+  discovered by their real layout - hex profile folders and Rockstar save/profile files
+  (SGTA*/SRDR*, `settings\cfg.dat`, `SAVE\…`) as well as standard emulator achievement files -
   resolved to their Steam release for title/cover/schema, and labelled "Goldberg SocialClub" in the
   library and source filters, with a dedicated source toggle. When a profile only contains
   Rockstar's proprietary save files (which no local tracker can decode), the game is still listed
@@ -787,17 +817,17 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   configuration, caches or playtime. The import is selective and near-instant: settings and themes
   are copied, the large write-once payloads (icon cache, GBE backups, downloaded tool caches) are
   hard-linked so they cost no extra disk yet survive the legacy folder being deleted, and Chromium's
-  own profile — the bulk of the old directory, rebuilt on launch anyway — is skipped entirely. A new
+  own profile - the bulk of the old directory, rebuilt on launch anyway - is skipped entirely. A new
   directory that already exists because the Watchdog wrote a log into it is still imported. The
   Watchdog also gets its own single-instance mutex, so both versions can run side by side.
 - Achievement toasts never appeared, from two stacked faults. powertoast reads the AUMID from its
   `aumid` option, but every toast payload (achievement, progress, playtime, platinum and the
-  Settings tests) sent `appID`, so each toast was posted under powertoast's own fallback — the
-  Microsoft Store's identity — instead of the selected one; and the selected one was the classic
+  Settings tests) sent `appID`, so each toast was posted under powertoast's own fallback - the
+  Microsoft Store's identity - instead of the selected one; and the selected one was the classic
   Xbox app, which Windows 11 no longer ships. Windows discards a toast whose app id no installed app
   owns, silently, which is why the controller still rumbled and nothing was logged. The correct key
   is used everywhere, the WinRT-off flag is forwarded the way powertoast expects it, and the app id
-  is now verified to exist against the Start Menu instead of being checked for shape only — the old
+  is now verified to exist against the Start Menu instead of being checked for shape only - the old
   check also rejected Achievement Watcher's own (non-packaged) identity as "not a valid AUMID".
 - Toast identity and rendering were audited end to end. Notifications now appear under Achievement
   Watcher's own name when the installer's Start Menu identity is registered (falling back to the
@@ -808,7 +838,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   mean anything other than a working toast. Achievement/progress/rare toasts no longer embed the
   game header image (playtime and platinum keep it), every achievement toast shows the game name in
   the attribution line (with the rare percentage when applicable), and clicking a toast now opens
-  the corresponding game page in the library — including when the app was not running yet, through
+  the corresponding game page in the library - including when the app was not running yet, through
   an `achievement-watcher://` scheme re-registered at every launch (the legacy `ach:` scheme was
   left behind by 1.6.8 pointing at its own, now uninstalled, executable). The payload was also
   aligned with the powertoast contract: `time` (unlock timestamp), `heroImg` / `inlineImg` for the
@@ -817,8 +847,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   builder.
 - Ubisoft Connect games can no longer end up titled "Steam" with no cover (Far Cry 4, uplay id 971).
   A title sold on several storefronts gets several blocks in the Ubisoft configurations index that
-  share one achievements spec — the real game block, plus one per storefront whose only name is the
-  storefront itself — and the parser kept whichever came first, so the displayed title depended on
+  share one achievements spec - the real game block, plus one per storefront whose only name is the
+  storefront itself - and the parser kept whichever came first, so the displayed title depended on
   file order. Blocks sharing a spec are now merged with the real game name winning, storefront
   names and unresolved localization keys (`l1`, `NAME`, `RELATED_GAMENAME_116`) are never used as
   titles, and the index is decoded as UTF-8 instead of latin1 so accented titles stop rendering as
@@ -826,8 +856,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   signal first: the product's registered install folder when it sits inside a Steam library (which
   identifies a Steam purchase launching Ubisoft Connect with no name involved at all), then the
   uplay↔Steam catalog, then a confident name match against the installed Steam manifests, then the
-  full catalog. Candidates that cannot identify a game — content-hash specs and franchise-level
-  sort keys — are no longer searched, because a confident match on those resolves to the wrong
+  full catalog. Candidates that cannot identify a game - content-hash specs and franchise-level
+  sort keys - are no longer searched, because a confident match on those resolves to the wrong
   game. No per-game asset mapping is needed for future releases.
 - Right-click context menus (game tiles and the avatar menu) now render their
   icons at the standard 16×16 size instead of the bundled 32×32 images, which
@@ -951,7 +981,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- Fixed the real cause of the library reloading itself and of scans feeling slow. Each loaded game was handed to the interface from inside a `requestAnimationFrame` callback, which the browser engine only delivers to a *visible* window. Achievement Watcher lives in the tray with its window hidden, so a background scan finished having added nothing to the on-screen list; the periodic new-game check then saw the entire library as newly installed and started a full refresh — every three minutes, indefinitely. Real logs showed `54 new game(s) detected` on every tick for a 52-game library. Games are now handed over directly, so the list is correct whether or not the window is open.
+- Fixed the real cause of the library reloading itself and of scans feeling slow. Each loaded game was handed to the interface from inside a `requestAnimationFrame` callback, which the browser engine only delivers to a *visible* window. Achievement Watcher lives in the tray with its window hidden, so a background scan finished having added nothing to the on-screen list; the periodic new-game check then saw the entire library as newly installed and started a full refresh - every three minutes, indefinitely. Real logs showed `54 new game(s) detected` on every tick for a 52-game library. Games are now handed over directly, so the list is correct whether or not the window is open.
 
 ### Security
 
@@ -969,16 +999,16 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- Ubisoft (Goldberg Uplay R2) games no longer report 0% when the emulator is recording unlocks somewhere else. Achievement Watcher now reads the unlock file from wherever the emulator actually writes it — its own `Goldberg UplayEmu Saves` folder, the game's `saves` folder, or a custom `SavePath` — instead of only the `GSE Saves\<AppID>` folder the fix redirects to, and translates the Ubisoft objective ids back to the game's Steam achievement names.
+- Ubisoft (Goldberg Uplay R2) games no longer report 0% when the emulator is recording unlocks somewhere else. Achievement Watcher now reads the unlock file from wherever the emulator actually writes it - its own `Goldberg UplayEmu Saves` folder, the game's `saves` folder, or a custom `SavePath` - instead of only the `GSE Saves\<AppID>` folder the fix redirects to, and translates the Ubisoft objective ids back to the game's Steam achievement names.
 - The Uplay R2 fix now adapts to the loader build that is installed. Loader builds released before `AchSaveType`/`AchSavePath`/`AchKeyPrefix` existed silently ignored those keys, so the configuration looked correct while nothing was ever written where Achievement Watcher reads. Such builds now get a configuration they understand (achievements enabled, schema keyed by bare objective id) and their unlocks are read from their own save folder.
 - A Ubisoft game update that re-extracts the repack removes `achievements_schema.json` and restores an ini with achievements disabled, silently breaking a working setup. The setup is now re-applied automatically on scan (like the Goldberg/GBE schema already was), and "Diagnose Uplay R2 setup" reports the missing schema, the disabled ini and the loader's limitations explicitly.
 - "Apply emulator fix (Uplay R2)" now offers to update a loader that is too old to redirect achievements, when a newer one is in the local loader cache. The offer is an explicit prompt that defaults to keeping the current loader, since the fix works either way and the game already launches with the installed DLL; the original is kept as `.bak`. Previously a loader was only ever installed when the game had none at all.
 - "Open Ubisoft achievement saves" opens the folder that actually holds the unlock file rather than always opening the redirect target, which is empty on a loader without redirect support.
-- Fixed the library reloading itself every few minutes. An appid that discovery keeps finding but that never reaches the list — a failed load, a game hidden by "hide 0%" or by a disabled source — was counted as a brand-new install on every background check and triggered a full refresh each time.
+- Fixed the library reloading itself every few minutes. An appid that discovery keeps finding but that never reaches the list - a failed load, a game hidden by "hide 0%" or by a disabled source - was counted as a brand-new install on every background check and triggered a full refresh each time.
 - Fixed the loading bar stalling near 100%. Folders under `Goldberg UplayEmu Saves` are named with the Ubisoft product id, which was being looked up as if it were a Steam AppID: every scan spent up to 30 seconds waiting for a Steam lookup that could never succeed. Those folders are now mapped to their Steam release, and any appid that genuinely resolves to nothing on Steam is remembered for three days instead of being re-fetched on every scan.
 - Keys appended to an emulator ini kept the lower-cased spelling used to look them up (`achkeyprefix` instead of `AchKeyPrefix`), which the Uplay R2 loader ignores.
 - Ubisoft (Uplay R2) games now fire live achievement notifications while you play. The Watchdog never watched the emulator's save folder at all, so these unlocks only ever appeared after a manual library refresh. It now watches `Goldberg UplayEmu Saves`, resolves the Ubisoft product id in the folder name to the game's Steam AppID, and maps the objective ids in the save onto the game's achievement names.
-- Unlock state is read from all of the emulator's possible save folders and merged instead of stopping at the first file found. Several of them routinely hold a file at once — the emulator seeds a fully-locked copy from the schema, a previous save location leaves one behind — and a stale all-zero copy could hide real unlocks. An unlock now always wins over a lock, and the most recent timestamp wins.
+- Unlock state is read from all of the emulator's possible save folders and merged instead of stopping at the first file found. Several of them routinely hold a file at once - the emulator seeds a fully-locked copy from the schema, a previous save location leaves one behind - and a stale all-zero copy could hide real unlocks. An unlock now always wins over a lock, and the most recent timestamp wins.
 - Fixed a serious flaw in the new "unresolvable appid" memo: a single scan started with no internet (or with Steam's app-list endpoint down and no cached copy) would have recorded *every* uncached game as "not a Steam app" and hidden the whole library for three days. A miss is now only remembered when the app-list was actually available to miss against.
 
 ## 3.3.1 - 2026-08-03
@@ -1053,11 +1083,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Notification volume is now a real slider (0–200%, live preview at the chosen loudness — including the >100% overlay boost); custom toast sounds follow the same setting instead of playing at a fixed half volume.
+- Notification volume is now a real slider (0–200%, live preview at the chosen loudness - including the >100% overlay boost); custom toast sounds follow the same setting instead of playing at a fixed half volume.
 - New "Rare" notification test button, firing a random gold/silver/bronze rarity through both the overlay and toast transports, exactly like a real rare unlock.
 - 7 new overlay notification presets imported from the reference Achievements project: the full Xbox Series family (base, Purple, Rare ×2, Platinum ×2 with the animated diamond) and Game Cover (uses the game's header art as background).
-- Rare unlocks and the platinum (100%) popup can each use their own overlay preset (Settings → Notifications, "Same as main" by default) — pairs naturally with the Xbox Series Rare/Platinum presets.
-- App color themes (Settings → General): Steam Blue (default), OLED Black, Dracula, Graphite — previewed live, applied at startup.
+- Rare unlocks and the platinum (100%) popup can each use their own overlay preset (Settings → Notifications, "Same as main" by default) - pairs naturally with the Xbox Series Rare/Platinum presets.
+- App color themes (Settings → General): Steam Blue (default), OLED Black, Dracula, Graphite - previewed live, applied at startup.
 - Achievement search box in the game view: filter the unlocked/locked lists by title or description.
 - Mouse side-button navigation everywhere: Back closes Settings or returns to the library; Forward reopens the game you just left.
 - Live Xenia (Xbox 360) achievement notifications: each title's GPD is watched while you play, with baseline seeding (no replay of old unlocks at startup) and duplicate-event suppression.
@@ -1103,7 +1133,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - Notifications now display the game's cover/header art (toast hero image and overlay game art).
-- The GBE/Goldberg backup now snapshots `steam_settings` and `steam_api(64).dll`, and a restore point is created automatically before any emulator fix runs — "Restore latest GBE/Goldberg backup" rolls it back. Backup/restore menu wording is localized in every UI language.
+- The GBE/Goldberg backup now snapshots `steam_settings` and `steam_api(64).dll`, and a restore point is created automatically before any emulator fix runs - "Restore latest GBE/Goldberg backup" rolls it back. Backup/restore menu wording is localized in every UI language.
 - Name → Steam app id lookup falls back to Steam's live app search when the cached app list is unreachable or stale, so brand-new releases resolve too.
 - Automatic community-fix (CrakFiles) matching also tries the install-folder and executable names, not just the display name.
 - Faster repeat scans (short-lived discovery cache); background new-game detection now runs every 3 minutes.
@@ -1161,50 +1191,50 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- **Fixed: the app froze on a fresh install (no Steam Web API key, empty cache).** Without an API key, Achievement Watcher reads each game's achievement data by scraping the Steam pages, which can take several seconds per game. That scrape was run over a *blocking* channel, so the whole window locked up — most painfully on a brand-new install where every game has to be scraped from scratch, leaving the UI frozen from the very first game. The scrape now runs in the background: the window stays responsive and the library fills in as each game's data arrives.
-- **A Steam Web API key set during the first-run guide now speeds up that very first load.** The first library scan is held until you finish (or skip) onboarding, so the key you just entered is used from the first game instead of after a slow key-less pass — far faster loading and more accurate data (real hidden-achievement descriptions). Setting or changing the key later in Settings now also takes effect immediately, without restarting the app. Without a key the load is necessarily slower (it scrapes), but the window stays fully interactive and games appear progressively as they load. The onboarding **API-key step now prominently warns** that skipping the key makes the first load very slow.
-- **Fixed: the library could show every game twice (one copy loaded, one stuck on the loading spinner).** A second scan starting before the first finished (e.g. the 15-minute background new-game check firing during the initial load) appended a duplicate set of tiles. Scans are now coalesced — a refresh requested while one is running queues a single follow-up pass instead of running concurrently.
+- **Fixed: the app froze on a fresh install (no Steam Web API key, empty cache).** Without an API key, Achievement Watcher reads each game's achievement data by scraping the Steam pages, which can take several seconds per game. That scrape was run over a *blocking* channel, so the whole window locked up - most painfully on a brand-new install where every game has to be scraped from scratch, leaving the UI frozen from the very first game. The scrape now runs in the background: the window stays responsive and the library fills in as each game's data arrives.
+- **A Steam Web API key set during the first-run guide now speeds up that very first load.** The first library scan is held until you finish (or skip) onboarding, so the key you just entered is used from the first game instead of after a slow key-less pass - far faster loading and more accurate data (real hidden-achievement descriptions). Setting or changing the key later in Settings now also takes effect immediately, without restarting the app. Without a key the load is necessarily slower (it scrapes), but the window stays fully interactive and games appear progressively as they load. The onboarding **API-key step now prominently warns** that skipping the key makes the first load very slow.
+- **Fixed: the library could show every game twice (one copy loaded, one stuck on the loading spinner).** A second scan starting before the first finished (e.g. the 15-minute background new-game check firing during the initial load) appended a duplicate set of tiles. Scans are now coalesced - a refresh requested while one is running queues a single follow-up pass instead of running concurrently.
 - **Fixed: the background monitor crashed on a fresh install (no playtime tracking, game-launch detection or live notifications).** It tried to load an optional process-blacklist file (`filter.json`) that doesn't exist on a clean install, threw, and restarted in a loop. It now falls back to empty lists and starts normally.
 
 ## 3.0.0
 
-First public release of the modernized 3.0 fork — a large stability, security,
+First public release of the modernized 3.0 fork - a large stability, security,
 compatibility and feature pass on top of the upstream
 [darktakayanagi](https://github.com/darktakayanagi/Achievement-Watcher) base.
 
 ### Added
 
-- **System-tray app** — runs in the tray with no window; the library/settings open on demand and closing the window no longer quits. Tracking, playtime and notifications keep running in the background.
-- **In-game overlay notifications** — a styled popup drawn on top of the game (presets + sounds), selectable as toast / overlay / both. Works with only the background tracker running.
-- **Custom notification preset builder** — pick colours, opacity, font/icon size and corners with a live preview, no HTML needed. Plus custom imported sounds and adjustable overlay volume & duration.
+- **System-tray app** - runs in the tray with no window; the library/settings open on demand and closing the window no longer quits. Tracking, playtime and notifications keep running in the background.
+- **In-game overlay notifications** - a styled popup drawn on top of the game (presets + sounds), selectable as toast / overlay / both. Works with only the background tracker running.
+- **Custom notification preset builder** - pick colours, opacity, font/icon size and corners with a live preview, no HTML needed. Plus custom imported sounds and adjustable overlay volume & duration.
 - **"Rare · X%" labels** for sub-10% unlocks, platinum toasts, a 3-tier rarity display, and persistent rarity cached per game (instant and offline).
 - **"Installed games only"** filter to hide phantom entries (orphaned saves, owned-but-not-installed games).
-- **Automatic new-game detection** — fresh installs are picked up in the background and registered for playtime tracking.
-- **New sources** — ShadPS4 (PS4) with live trophy toasts, Xenia (Xbox 360) achievements, and EA Desktop achievements.
-- **Goldberg / GBE tooling** — Diagnose and Repair `steam_settings`, install the GBE Fork `steam_api(64).dll`, strip Steam DRM (Steamless), back up / restore the emulator config, and auto-fix new emulated games in the background.
-- **Advanced cover management** — re-download art, pull it from an alternate Steam AppID, or set a local image.
-- **Souvenir screenshots** — optionally capture the screen on unlock, saved per game.
+- **Automatic new-game detection** - fresh installs are picked up in the background and registered for playtime tracking.
+- **New sources** - ShadPS4 (PS4) with live trophy toasts, Xenia (Xbox 360) achievements, and EA Desktop achievements.
+- **Goldberg / GBE tooling** - Diagnose and Repair `steam_settings`, install the GBE Fork `steam_api(64).dll`, strip Steam DRM (Steamless), back up / restore the emulator config, and auto-fix new emulated games in the background.
+- **Advanced cover management** - re-download art, pull it from an alternate Steam AppID, or set a local image.
+- **Souvenir screenshots** - optionally capture the screen on unlock, saved per game.
 - **Guide links** in the right-click menu (SteamHunters, Steam Community guides).
 
 ### Improved
 
-- **Platform modernized** — Electron 12 → 42 (Chromium 148, Node 24) with every major dependency updated.
-- **Faster, lighter loading** — bounded-concurrency scanning, an optional browser-free data path with a Steam Web API key, a roughly halved emulator scan, and a size-capped (LRU) icon cache.
-- **~80 MB smaller install** — dropped Chromium UI locale packs and other-platform native binaries the app never loads; the background tracker now shares the app's runtime instead of bundling its own Node.
-- **Lower idle footprint** — the hidden main window lets Chromium throttle background timers; the keyless scraper can reuse an installed Edge/Chrome instead of downloading a 170 MB Chromium.
-- **More resilient background tracker** — auto-launches at sign-in, keeps running after the window closes, and seeds playtime from the install folder so tracking works on a game's first launch.
+- **Platform modernized** - Electron 12 → 42 (Chromium 148, Node 24) with every major dependency updated.
+- **Faster, lighter loading** - bounded-concurrency scanning, an optional browser-free data path with a Steam Web API key, a roughly halved emulator scan, and a size-capped (LRU) icon cache.
+- **~80 MB smaller install** - dropped Chromium UI locale packs and other-platform native binaries the app never loads; the background tracker now shares the app's runtime instead of bundling its own Node.
+- **Lower idle footprint** - the hidden main window lets Chromium throttle background timers; the keyless scraper can reuse an installed Edge/Chrome instead of downloading a 170 MB Chromium.
+- **More resilient background tracker** - auto-launches at sign-in, keeps running after the window closes, and seeds playtime from the install folder so tracking works on a game's first launch.
 - **Modern dark UI** across the library, details, settings and dialogs; resizable window (down to 900 × 600); broader French / English localization.
-- **Security hardening** — untrusted text is HTML-escaped before reaching the DOM, a tightened Content-Security-Policy (no inline/eval), jQuery 3.7.1, and a hardened main window.
+- **Security hardening** - untrusted text is HTML-escaped before reaching the DOM, a tightened Content-Security-Policy (no inline/eval), jQuery 3.7.1, and a hardened main window.
 
 ### Fixed
 
-- **Windows 11 24H2+ compatibility** — every `WMIC` call (removed by Microsoft) was replaced, so folder scanning, drive listing and process priority work again.
+- **Windows 11 24H2+ compatibility** - every `WMIC` call (removed by Microsoft) was replaced, so folder scanning, drive listing and process priority work again.
 - **Hidden achievement descriptions** now resolve correctly even with a Steam Web API key, and stale blank entries are repaired in place.
 - **GreenLuma, Uplay, RPCS3 and Epic** first-load failures fixed; no more permanent blacklisting after a single transient error.
 - **Emulator notification edge cases** (3DM, TENOKE, GOG/Nemirtingas, `[object Object]` titles) now notify correctly.
 - **Playtime tracking** is correct for games whose process name differs from the store index, and store launchers / helper processes are no longer tracked as games.
 - Several **CPU and memory-leak** issues (busy-loops during scraping, orphaned browser instances, a tracker pipe leak) resolved.
-- **Self-healing config** — a corrupted folder database is quarantined and defaults restored instead of silently disabling your folders.
+- **Self-healing config** - a corrupted folder database is quarantined and defaults restored instead of silently disabling your folders.
 - The main window can no longer get stuck **invisible** at startup; launch failures now show a clear dialog instead of failing silently.
 
 ### Changed

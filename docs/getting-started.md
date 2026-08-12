@@ -14,6 +14,11 @@ Achievement Watcher is a Windows desktop application. Packaged releases include 
 
 ## First launch
 
+<div align="center">
+<img src="../screenshot/onboarding.png" width="600" alt="First-run guide"><br>
+<sub>The first-run guide walks through language, sources, folders and notifications</sub>
+</div>
+
 The first-run guide asks for the main choices needed to populate the library:
 
 - **Language** controls the interface and the preferred language for game metadata when the source provides it.
@@ -23,14 +28,14 @@ The first-run guide asks for the main choices needed to populate the library:
 
 You can revisit every option later from **Settings**.
 
-The search field at the top of **Settings** filters every tab at once, and the side menu shows how many options each tab matches — useful when you remember what an option does but not where it lives. It matches labels, descriptions, the values an option offers and its internal name, so `hideZero` finds the same row in any interface language. Press `Ctrl+F` to jump to it and `Esc` to clear it.
+The search field at the top of **Settings** filters every tab at once, and the side menu shows how many options each tab matches - useful when you remember what an option does but not where it lives. It matches labels, descriptions, the values an option offers and its internal name, so `hideZero` finds the same row in any interface language. Press `Ctrl+F` to jump to it and `Esc` to clear it.
 
 ## Find games and saves
 
 Open **Settings → Folders** and choose one of these paths:
 
 - **Smart Find** checks common launcher, emulator, save and game-library locations.
-- **Add folder** watches a location you select.
+- **Add a Folder** watches a location you select.
 - **Generate configs** performs a fuller scan and can apply enabled emulator setup options.
 
 If a folder is rejected, select the directory that directly contains the supported save folders, AppID folders, `steam_settings`, or the relevant emulator configuration. The [troubleshooting guide](troubleshooting.md#a-game-is-missing) lists the first checks to make.
@@ -57,7 +62,7 @@ Starting with Windows and closing to the tray can be changed under **Settings �
 
 ## Updates and existing data
 
-Installed releases check the project's GitHub release feed for a newer version. When one is found, the app asks first whether you want to download and install it — nothing is downloaded without your OK. Once the download finishes, it asks again before restarting to apply the update.
+Installed releases check the project's GitHub release feed for a newer version. When one is found, the app asks first whether you want to download and install it - nothing is downloaded without your OK. Once the download finishes, it asks again before restarting to apply the update.
 
 Installing a newer build over an older one replaces program files but preserves user data in:
 
@@ -67,11 +72,12 @@ Installing a newer build over an older one replaces program files but preserves 
 
 This directory contains settings, watched folders, caches, playtime, logs, notification assets and local account data. If you're upgrading from a 3.0 build that shared the legacy folder, Achievement Watcher copies the old `%APPDATA%\Achievement Watcher` data once on first launch, without touching or deleting the original. Uninstalling does not remove the data directory by default. Delete it manually only when you intentionally want a completely fresh profile.
 
-## Next steps
+---
 
-- [Configure notifications](notifications.md)
-- [Set up Goldberg or GBE Fork](emulator-setup.md)
-- [Set up Goldberg Uplay R2](uplay-r2.md)
-- [Troubleshoot a problem](troubleshooting.md)
+**Next:** [Notifications](notifications.md) - choose how unlocks are announced and
+test them before you launch a game.
+
+*Jump ahead if you already know what you need: [Goldberg / GBE setup](emulator-setup.md) ·
+[Uplay R2 setup](uplay-r2.md) · [Troubleshooting](troubleshooting.md)*
 
 <p align="center"><a href="README.md">← Documentation</a> · <a href="../README.md">Project home</a></p>

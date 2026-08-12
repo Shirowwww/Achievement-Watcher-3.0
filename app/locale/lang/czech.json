@@ -86,12 +86,10 @@
     "title": "Nastavení",
     "sideMenu": {
       "general": "Obecné",
-      "overlay": "Overlay ve hře",
       "notification": "Oznámení",
       "souvenir": "Vzpomínka",
       "folder": "Složky",
       "source": "Zdroj",
-      "guide": "Průvodce",
       "advanced": "Pokročilé"
     },
     "common": {
@@ -262,7 +260,7 @@
       "loginTestFailed": "Přihlášení do Steamu selhalo",
       "autoApply": {
         "name": "Automaticky opravovat nově zjištěné hry",
-        "description": "Jednorázově spustí celý řetězec Použít opravu emulátoru pro nově zjištěnou, nenakonfigurovanou emulovanou hru: zpracování SteamStub, GBE Fork, achievementy, DLC, identita/jazyk a pokročilá data, pokud jsou zapnutá. Ve výchozím nastavení zapnuto.",
+        "description": "Jednorázově spustí celý řetězec Použít opravu emulátoru pro nově zjištěnou, nenakonfigurovanou emulovanou hru: zpracování SteamStub, GBE Fork, achievementy, DLC, identita/jazyk a pokročilá data, pokud jsou zapnutá. Ve výchozím nastavení vypnuto.",
         "value": {
           "false": "Vypnuto",
           "true": "Zapnuto"
@@ -358,7 +356,7 @@
         "chromium": "Oznámení Chromium",
         "watchdog": "Watchdog",
         "test": "Test",
-        "overlay": "Overlay ve hře"
+        "overlay": "Oznámení"
       },
       "info": {
         "toast": "Některé funkce jsou dostupné pouze ve Windows 10",
@@ -1010,9 +1008,9 @@
     "disk-scan": "sken disku",
     "found-automatically-via-x": "Nalezeno automaticky přes {source}.",
     "checking-watchdog-status": "Kontrola stavu Watchdogu...",
-    "watchdog-stopped": "Watchdog neběží! (Overlay ve hře/oznámení Windows se nespustí.)",
+    "watchdog-stopped": "Watchdog neběží! (Overlay ve hře/oznámení se nespustí.)",
     "i-class-fas-fa-shield-alt-i-click-to-start-watchdog": "<i class=\"fas fa-shield-alt\"></i> Kliknutím spustíte Watchdog!",
-    "watchdog-is-running-in-game-overlay-windows-notifications-should": "Watchdog běží (overlay ve hře/oznámení Windows by měly fungovat správně)",
+    "watchdog-is-running-in-game-overlay-windows-notifications-should": "Watchdog běží (overlay ve hře/oznámení by měly fungovat správně)",
     "unexpected-error": "Neočekávaná chyba",
     "choose-the-game-executable": "Vyberte spustitelný soubor hry",
     "select": "Vybrat",

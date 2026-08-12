@@ -603,7 +603,6 @@ function translateUI(lang, locale, template) {
   $('#settings .box .footer .notice p:nth-child(3) a:first').text(clear(template.settings.common.original));
   $("#settingNav li[data-view='general'] span").text(clear(template.settings.sideMenu.general));
   $("#settingNav li[data-view='controller'] span").text(clear(template.settings.general.controller.title));
-  $("#settingNav li[data-view='overlay'] span").text(clear(template.settings.sideMenu.overlay));
   $("#settingNav li[data-view='notification'] span").text(clear(template.settings.sideMenu.notification));
   $("#settingNav li[data-view='folder'] span").text(clear(template.settings.sideMenu.folder));
   $("#settingNav li[data-view='source'] span").text(clear(template.settings.sideMenu.source));

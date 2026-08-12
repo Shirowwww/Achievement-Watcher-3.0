@@ -86,12 +86,10 @@
     "title": "Ayarlar",
     "sideMenu": {
       "general": "Genel",
-      "overlay": "Oyun içi yer paylaşımı",
       "notification": "Bildirim",
       "souvenir": "Anı",
       "folder": "Klasörler",
       "source": "Kaynak",
-      "guide": "Kılavuz",
       "advanced": "Gelişmiş"
     },
     "common": {
@@ -262,7 +260,7 @@
       "loginTestFailed": "Steam girişi başarısız",
       "autoApply": {
         "name": "Yeni algılanan oyunları otomatik düzelt",
-        "description": "Yeni algılanan, yapılandırılmamış bir emüle oyun için tüm Emülatör düzeltmesini uygula zincirini bir kez çalıştırır: SteamStub işleme, GBE Fork, başarımlar, DLC'ler, kimlik/dil ve etkinse Gelişmiş veriler. Varsayılan olarak etkin.",
+        "description": "Yeni algılanan, yapılandırılmamış bir emüle oyun için tüm Emülatör düzeltmesini uygula zincirini bir kez çalıştırır: SteamStub işleme, GBE Fork, başarımlar, DLC'ler, kimlik/dil ve etkinse Gelişmiş veriler. Varsayılan olarak devre dışı.",
         "value": {
           "false": "Devre dışı",
           "true": "Etkin"
@@ -358,7 +356,7 @@
         "chromium": "Chromium bildirimi",
         "watchdog": "Watchdog",
         "test": "Test",
-        "overlay": "Oyun içi yer paylaşımı"
+        "overlay": "Bildirim"
       },
       "info": {
         "toast": "Bazı özellikler yalnızca Windows 10'da kullanılabilir",
@@ -1010,9 +1008,9 @@
     "disk-scan": "disk taraması",
     "found-automatically-via-x": "{source} üzerinden otomatik bulundu.",
     "checking-watchdog-status": "Watchdog durumu kontrol ediliyor...",
-    "watchdog-stopped": "Watchdog çalışmıyor! (Oyun içi overlay/Windows bildirimleri tetiklenmeyecek.)",
+    "watchdog-stopped": "Watchdog çalışmıyor! (Oyun içi overlay/bildirimler tetiklenmeyecek.)",
     "i-class-fas-fa-shield-alt-i-click-to-start-watchdog": "<i class=\"fas fa-shield-alt\"></i> Watchdog’u başlatmak için tıklayın!",
-    "watchdog-is-running-in-game-overlay-windows-notifications-should": "Watchdog çalışıyor (oyun içi overlay/Windows bildirimleri düzgün çalışmalı)",
+    "watchdog-is-running-in-game-overlay-windows-notifications-should": "Watchdog çalışıyor (oyun içi overlay/bildirimler düzgün çalışmalı)",
     "unexpected-error": "Beklenmeyen hata",
     "choose-the-game-executable": "Oyunun çalıştırılabilir dosyasını seç",
     "select": "Seç",

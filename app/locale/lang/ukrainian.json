@@ -86,12 +86,10 @@
     "title": "Налаштування",
     "sideMenu": {
       "general": "Загальні",
-      "overlay": "Внутрішньоігровий оверлей",
       "notification": "Сповіщення",
       "souvenir": "Сувенір",
       "folder": "Папки",
       "source": "Джерело",
-      "guide": "Посібник",
       "advanced": "Додатково"
     },
     "common": {
@@ -262,7 +260,7 @@
       "loginTestFailed": "Не вдалося увійти в Steam",
       "autoApply": {
         "name": "Автоматично виправляти нові виявлені ігри",
-        "description": "Одноразово виконує весь ланцюжок Застосувати виправлення емулятора для нової виявленої неналаштованої емульованої гри: обробка SteamStub, GBE Fork, досягнення, DLC, ідентичність/мова та розширені дані, якщо ввімкнено. Увімкнено за замовчуванням.",
+        "description": "Одноразово виконує весь ланцюжок Застосувати виправлення емулятора для нової виявленої неналаштованої емульованої гри: обробка SteamStub, GBE Fork, досягнення, DLC, ідентичність/мова та розширені дані, якщо ввімкнено. Вимкнено за замовчуванням.",
         "value": {
           "false": "Вимкнено",
           "true": "Увімкнено"
@@ -358,7 +356,7 @@
         "chromium": "Сповіщення Chromium",
         "watchdog": "Watchdog",
         "test": "Тест",
-        "overlay": "Внутрішньоігровий оверлей"
+        "overlay": "Сповіщення"
       },
       "info": {
         "toast": "Деякі функції доступні лише у Windows 10",
@@ -1010,9 +1008,9 @@
     "disk-scan": "сканування диска",
     "found-automatically-via-x": "Знайдено автоматично через {source}.",
     "checking-watchdog-status": "Перевірка стану Watchdog...",
-    "watchdog-stopped": "Watchdog не запущено! (Оверлей у грі та сповіщення Windows не спрацьовуватимуть.)",
+    "watchdog-stopped": "Watchdog не запущено! (Оверлей у грі та сповіщення не спрацьовуватимуть.)",
     "i-class-fas-fa-shield-alt-i-click-to-start-watchdog": "<i class=\"fas fa-shield-alt\"></i> Натисніть, щоб запустити Watchdog!",
-    "watchdog-is-running-in-game-overlay-windows-notifications-should": "Watchdog запущено (оверлей у грі та сповіщення Windows мають працювати коректно)",
+    "watchdog-is-running-in-game-overlay-windows-notifications-should": "Watchdog запущено (оверлей у грі та сповіщення мають працювати коректно)",
     "unexpected-error": "Неочікувана помилка",
     "choose-the-game-executable": "Виберіть виконуваний файл гри",
     "select": "Вибрати",

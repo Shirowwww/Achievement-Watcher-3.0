@@ -86,12 +86,10 @@
     "title": "Beállítások",
     "sideMenu": {
       "general": "Általános",
-      "overlay": "Játékon belüli overlay",
       "notification": "Értesítés",
       "souvenir": "Emlék",
       "folder": "Mappák",
       "source": "Forrás",
-      "guide": "Útmutató",
       "advanced": "Speciális"
     },
     "common": {
@@ -262,7 +260,7 @@
       "loginTestFailed": "Steam bejelentkezés sikertelen",
       "autoApply": {
         "name": "Újonnan észlelt játékok automatikus javítása",
-        "description": "Egyszer lefuttatja a teljes Emulátorjavítás alkalmazása láncot egy újonnan észlelt, beállítatlan emulált játékhoz: SteamStub kezelés, GBE Fork, teljesítmények, DLC-k, identitás/nyelv, és Speciális adatok, ha engedélyezve. Alapértelmezetten bekapcsolva.",
+        "description": "Egyszer lefuttatja a teljes Emulátorjavítás alkalmazása láncot egy újonnan észlelt, beállítatlan emulált játékhoz: SteamStub kezelés, GBE Fork, teljesítmények, DLC-k, identitás/nyelv, és Speciális adatok, ha engedélyezve. Alapértelmezetten kikapcsolva.",
         "value": {
           "false": "Kikapcsolva",
           "true": "Bekapcsolva"
@@ -358,7 +356,7 @@
         "chromium": "Chromium értesítés",
         "watchdog": "Watchdog",
         "test": "Teszt",
-        "overlay": "Játékon belüli overlay"
+        "overlay": "Értesítés"
       },
       "info": {
         "toast": "Egyes funkciók csak Windows 10-en érhetők el",
@@ -1010,9 +1008,9 @@
     "disk-scan": "lemezvizsgálat",
     "found-automatically-via-x": "Automatikusan megtalálva: {source}.",
     "checking-watchdog-status": "Watchdog állapotának ellenőrzése...",
-    "watchdog-stopped": "A Watchdog nem fut! (A játékbeli overlay és a Windows-értesítések nem fognak elindulni.)",
+    "watchdog-stopped": "A Watchdog nem fut! (A játékbeli overlay és az értesítések nem fognak elindulni.)",
     "i-class-fas-fa-shield-alt-i-click-to-start-watchdog": "<i class=\"fas fa-shield-alt\"></i> Kattints a Watchdog indításához!",
-    "watchdog-is-running-in-game-overlay-windows-notifications-should": "A Watchdog fut (a játékbeli overlay és a Windows-értesítések megfelelően működnek)",
+    "watchdog-is-running-in-game-overlay-windows-notifications-should": "A Watchdog fut (a játékbeli overlay és az értesítések megfelelően működnek)",
     "unexpected-error": "Váratlan hiba",
     "choose-the-game-executable": "A játék futtatható fájljának kiválasztása",
     "select": "Kiválasztás",

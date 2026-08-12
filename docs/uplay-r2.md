@@ -75,7 +75,7 @@ The achievement redirect (`AchSaveType` / `AchSavePath` / `AchKeyPrefix`) was ad
 | With redirect support | `Achievements`, `AchKeyPrefix`, `AchSaveType`, `AchSavePath` | Steam API names (`<prefix><id>`) | `%APPDATA%\GSE Saves\<steamAppid>` |
 | Without redirect support | `Achievements` only | bare objective IDs (`<id>`) | the emulator's own save folder |
 
-In both cases the unlock file is read from every plausible location — the configured `AchSavePath`, `%APPDATA%\Goldberg UplayEmu Saves\<uplayId>`, the game's `saves\<uplayId>` folder and any custom `SavePath` — and the objective IDs are translated back to the game's Steam achievement names. Updating the loader to a build with redirect support is worthwhile but not required.
+In both cases the unlock file is read from every plausible location - the configured `AchSavePath`, `%APPDATA%\Goldberg UplayEmu Saves\<uplayId>`, the game's `saves\<uplayId>` folder and any custom `SavePath` - and the objective IDs are translated back to the game's Steam achievement names. Updating the loader to a build with redirect support is worthwhile but not required.
 
 ## Compatibility limits
 
@@ -88,9 +88,14 @@ An empty or missing runtime save is expected until the game records an unlock. I
 1. Run **Diagnose Uplay R2 setup** again. It names the INI the loader actually reads, whether that loader supports the redirect, and every folder that was searched for a save.
 2. Check for `NO_SCHEMA_JSON` or `ACHIEVEMENTS_DISABLED`. **A Ubisoft game update commonly causes both**: re-extracting the repack deletes `achievements_schema.json` and restores an INI with `Achievements = 0`. Achievement Watcher re-applies the setup automatically on the next scan when *Automatically fix newly detected games* is enabled; otherwise run **Apply emulator fix (Uplay R2)** again.
 3. Confirm the installed loader architecture matches the game.
-4. Set `Logging = 1` in the INI the diagnosis reported and check `upc_r2.log` next to the game executable — `Achievements disabled or achievements.json file not found!` confirms the emulator never armed achievements.
+4. Set `Logging = 1` in the INI the diagnosis reported and check `upc_r2.log` next to the game executable - `Achievements disabled or achievements.json file not found!` confirms the emulator never armed achievements.
 5. Review `%APPDATA%\Achievement Watcher 3.0\logs\parser.log`.
 
 For general schema/save distinctions, see the [Goldberg and GBE Fork guide](emulator-setup.md#schema-and-save-files-are-different).
+
+---
+
+**Next:** [Troubleshooting](troubleshooting.md) - what to check, and what to collect,
+when something still does not work.
 
 <p align="center"><a href="README.md">← Documentation</a> · <a href="emulator-setup.md">Goldberg / GBE setup</a> · <a href="../README.md">Project home</a></p>

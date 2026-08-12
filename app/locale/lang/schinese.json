@@ -86,12 +86,10 @@
     "title": "设置",
     "sideMenu": {
       "general": "常规",
-      "overlay": "游戏内叠加层",
       "notification": "通知",
       "souvenir": "纪念",
       "folder": "文件夹",
       "source": "来源",
-      "guide": "指南",
       "advanced": "高级"
     },
     "common": {
@@ -262,7 +260,7 @@
       "loginTestFailed": "Steam 登录失败",
       "autoApply": {
         "name": "自动修复新检测到的游戏",
-        "description": "对新检测到的、未配置的模拟游戏运行一次完整的「应用模拟器修复」流程：SteamStub 处理、GBE Fork、成就、DLC、身份/语言，以及启用时的高级数据。默认启用。",
+        "description": "对新检测到的、未配置的模拟游戏运行一次完整的「应用模拟器修复」流程：SteamStub 处理、GBE Fork、成就、DLC、身份/语言，以及启用时的高级数据。默认关闭。",
         "value": {
           "false": "已禁用",
           "true": "已启用"
@@ -358,7 +356,7 @@
         "chromium": "Chromium 通知",
         "watchdog": "Watchdog",
         "test": "测试",
-        "overlay": "游戏内叠加层"
+        "overlay": "通知"
       },
       "info": {
         "toast": "部分功能仅在 Windows 10 中可用",
@@ -1010,9 +1008,9 @@
     "disk-scan": "磁盘扫描",
     "found-automatically-via-x": "通过 {source} 自动找到。",
     "checking-watchdog-status": "正在检查 Watchdog 状态...",
-    "watchdog-stopped": "Watchdog 未运行！（游戏内浮层/Windows 通知不会触发。）",
+    "watchdog-stopped": "Watchdog 未运行！（游戏内浮层/通知不会触发。）",
     "i-class-fas-fa-shield-alt-i-click-to-start-watchdog": "<i class=\"fas fa-shield-alt\"></i> 点击启动 Watchdog！",
-    "watchdog-is-running-in-game-overlay-windows-notifications-should": "Watchdog 正在运行（游戏内浮层/Windows 通知应正常工作）",
+    "watchdog-is-running-in-game-overlay-windows-notifications-should": "Watchdog 正在运行（游戏内浮层/通知应正常工作）",
     "unexpected-error": "意外错误",
     "choose-the-game-executable": "选择游戏的可执行文件",
     "select": "选择",

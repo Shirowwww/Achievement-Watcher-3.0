@@ -86,12 +86,10 @@
     "title": "設定",
     "sideMenu": {
       "general": "一般",
-      "overlay": "ゲーム内オーバーレイ",
       "notification": "通知",
       "souvenir": "記念",
       "folder": "フォルダー",
       "source": "ソース",
-      "guide": "ガイド",
       "advanced": "詳細"
     },
     "common": {
@@ -262,7 +260,7 @@
       "loginTestFailed": "Steam ログインに失敗しました",
       "autoApply": {
         "name": "新しく検出されたゲームを自動修正",
-        "description": "新しく検出された未設定のエミュレートゲームに対し、「エミュレーター修正を適用」の全工程を一度実行します：SteamStub 処理、GBE Fork、実績、DLC、ID／言語、有効な場合は詳細データ。既定で有効。",
+        "description": "新しく検出された未設定のエミュレートゲームに対し、「エミュレーター修正を適用」の全工程を一度実行します：SteamStub 処理、GBE Fork、実績、DLC、ID／言語、有効な場合は詳細データ。既定で無効。",
         "value": {
           "false": "無効",
           "true": "有効"
@@ -358,7 +356,7 @@
         "chromium": "Chromium 通知",
         "watchdog": "Watchdog",
         "test": "テスト",
-        "overlay": "ゲーム内オーバーレイ"
+        "overlay": "通知"
       },
       "info": {
         "toast": "一部の機能は Windows 10 でのみ利用できます",
@@ -1010,9 +1008,9 @@
     "disk-scan": "ディスクスキャン",
     "found-automatically-via-x": "{source} により自動的に見つかりました。",
     "checking-watchdog-status": "Watchdog の状態を確認中...",
-    "watchdog-stopped": "Watchdog が実行されていません！（ゲーム内オーバーレイ/Windows 通知は動作しません。）",
+    "watchdog-stopped": "Watchdog が実行されていません！（ゲーム内オーバーレイ/通知は動作しません。）",
     "i-class-fas-fa-shield-alt-i-click-to-start-watchdog": "<i class=\"fas fa-shield-alt\"></i> クリックして Watchdog を起動！",
-    "watchdog-is-running-in-game-overlay-windows-notifications-should": "Watchdog は実行中です（ゲーム内オーバーレイ/Windows 通知は正常に動作するはずです）",
+    "watchdog-is-running-in-game-overlay-windows-notifications-should": "Watchdog は実行中です（ゲーム内オーバーレイ/通知は正常に動作するはずです）",
     "unexpected-error": "予期しないエラー",
     "choose-the-game-executable": "ゲームの実行ファイルを選択",
     "select": "選択",

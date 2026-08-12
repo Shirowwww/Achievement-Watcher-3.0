@@ -6,19 +6,23 @@ Practical guides for setup, daily use and maintenance.
 
 [🏠 Project home](../README.md) · [⬇️ Download](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/latest) · [📋 Changelog](../CHANGELOG.md) · [🔐 Security](../SECURITY.md) · [💬 Report an issue](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues)
 
+<img src="../screenshot/home.png" width="560" alt="Achievement Watcher library">
+
 </div>
 
 ## Start here
 
-| Need | Guide |
-|---|---|
-| Install the app, choose sources and find games | [Getting started](getting-started.md) |
-| Configure Windows notifications or the in-game overlay | [Notifications](notifications.md) |
-| Use the overlay list, search, filters and rarity | [Overlay](overlay.md) |
-| Drive the app or the in-game overlay with a gamepad | [Controller](controller.md) |
-| Fix discovery, progress, notification or playtime issues | [Troubleshooting](troubleshooting.md) |
-| Diagnose or repair Goldberg / GBE Fork | [Goldberg / GBE setup](emulator-setup.md) |
-| Configure a compatible Ubisoft Uplay R2 game | [Uplay R2 setup](uplay-r2.md) |
+Read in order, or jump to what you need - every page ends with a link to the next one.
+
+| # | Guide | What it covers |
+|---|---|---|
+| 1 | [Getting started](getting-started.md) | Install the app, choose sources, find games and saves |
+| 2 | [Notifications](notifications.md) | Windows toasts, overlay popups, presets and sounds |
+| 3 | [Overlay](overlay.md) | The in-game list: search, filters, rarity and customization |
+| 4 | [Controller](controller.md) | Drive the app and the overlay with a gamepad |
+| 5 | [Goldberg / GBE setup](emulator-setup.md) | Diagnose or repair an emulated Steam game |
+| 6 | [Uplay R2 setup](uplay-r2.md) | The Ubisoft equivalent, for compatible titles |
+| 7 | [Troubleshooting](troubleshooting.md) | Discovery, progress, notification and playtime issues |
 
 The in-app **Settings → Help** tab is the quickest reference for normal use.
 

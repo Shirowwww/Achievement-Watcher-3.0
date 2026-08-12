@@ -5,6 +5,11 @@ achievement list of the running game without leaving it: names, descriptions,
 lock state, unlock dates and progress. The window is draggable by its header
 and stays on top of the game.
 
+<div align="center">
+<img src="../screenshot/overlay.png" width="360" alt="In-game overlay achievement list"><br>
+<sub>Status, rarity and date columns, with search and filters</sub>
+</div>
+
 ## What it shows
 
 - A stats bar with `unlocked / total` and the completion percentage.
@@ -29,46 +34,32 @@ and stays on top of the game.
 
 ## Controller (gamepad)
 
-The in-game overlay can be driven entirely from a controller. Enable
-**Settings → Controller** first. All shortcuts are configurable there, with button
-names shown in the Xbox, PlayStation or Switch vocabulary (or **Auto**, which
-follows the connected pad when it can be identified). Each shortcut accepts one
-to three buttons. The defaults are:
+The overlay can be driven entirely from a controller once **Control the in-game
+overlay with a controller** is enabled in **Settings → Controller**. With the
+default bindings:
 
-The same section also has **Control the app with a controller**, which enables
-gamepad navigation of the main Achievement Watcher window (library, game details,
-settings and searches) independently from the in-game overlay.
-
-- **BACK + START** opens/closes the overlay.
-- **LB + X** toggles in-overlay navigation (a focus ring shows where you are).
-- **LB + RB** held moves the overlay with the left stick and scrolls with the
-  right stick.
-- In navigation mode: D-pad/left stick move the focus, **A** confirms,
+- **Back + Start + LB** opens or closes the overlay.
+- **LB + X** toggles navigation mode - a focus ring shows where you are, and a
+  small **UI** badge appears in the overlay header.
+- In navigation mode: D-pad or left stick move the focus, **A** confirms,
   **B** cancels, **X** focuses the search, **Y** opens the options panel.
+- Holding **LB + RB** moves the overlay with the left stick and scrolls the list
+  with the right stick.
 
-Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro
-controllers. A small **UI** badge in the overlay header shows when navigation is
-active. The overlay's controller hint always shows your chosen shortcuts and
-layout.
-
-> **Controller priority:** Windows does not allow a third-party app to capture
-> a controller exclusively, so buttons may still reach the game while the
-> overlay is open. If you want the game to pause, enable **Focus overlay when it
-> opens** in Settings → Controller — most games pause when they lose focus. You
-> can also enable **Send Escape to the game when opening with controller** there:
-> it sends an Escape key press to the game (only for controller-triggered opens
-> while a game is running), which makes many games open their pause menu or
-> pause automatically.
+Every shortcut is configurable, button names follow the layout you pick, and the
+overlay's hint bar always shows your own bindings rather than these defaults.
+The [controller guide](controller.md) covers the settings, the supported pads and
+the Windows caveat about the game still seeing your button presses.
 
 ## Customization
 
 Open the **⚙** button in the overlay header to customize the list:
 
-- **Accent** — five color presets or a custom color picker (used for progress,
+- **Accent** - five color presets or a custom color picker (used for progress,
   active filters, focus rings and unlocked-row glow).
-- **Density** — Compact, Cozy or Spacious row spacing.
-- **Icon size** — Small, Medium or Large.
-- **Zoom** — 80% to 125% of the panel size.
+- **Density** - Compact, Cozy or Spacious row spacing.
+- **Icon size** - Small, Medium or Large.
+- **Zoom** - 80% to 125% of the panel size.
 - **Show/hide toggles** for the stats bar, progress bars, rarity badges and
   descriptions.
 
@@ -77,9 +68,9 @@ reopening the overlay. **Reset defaults** restores the original look.
 
 ## Keyboard shortcuts (overlay open)
 
-- `Ctrl+Alt+Shift+Arrows` — nudge the overlay window.
-- `Ctrl+Alt+Shift+1` … `5` — snap to a preset position.
-- `Ctrl+Alt+Shift+C` — toggle click-through.
+- `Ctrl+Alt+Shift+Arrows` - nudge the overlay window.
+- `Ctrl+Alt+Shift+1` … `5` - snap to a preset position.
+- `Ctrl+Alt+Shift+C` - toggle click-through.
 
 ## Notes
 
@@ -91,5 +82,10 @@ reopening the overlay. **Reset defaults** restores the original look.
   never executed.
 - The overlay list is separate from the one-shot overlay *notification*
   presets (Settings → Notification). Preset appearance is configured there.
+
+---
+
+**Next:** [Controller guide](controller.md) - drive the overlay and the app with a
+gamepad.
 
 <p align="center"><a href="README.md">← Documentation</a> · <a href="notifications.md">Notification guide</a> · <a href="../README.md">Project home</a></p>

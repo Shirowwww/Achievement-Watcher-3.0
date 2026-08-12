@@ -4,6 +4,11 @@ Start with the checks below. If a problem remains, include the app version, Wind
 
 ## Open logs and local data
 
+<div align="center">
+<img src="../screenshot/diagnostic.png" width="560" alt="Settings - Advanced Diagnostics"><br>
+<sub>App/runtime versions and quick access to logs, data and update checks</sub>
+</div>
+
 Use **Settings → Advanced → Diagnostics** to open the log or data directory. The default log path is:
 
 ```text
@@ -18,7 +23,7 @@ Logs are appended, never truncated, so a crash survives the next launch. Each ru
 ===== session 2026-08-11T00:53:31.890Z pid=19276 =====
 ```
 
-Right after it, a `[diag]` block records everything a bug report needs and nobody should have to collect by hand — versions, install and data paths, how the app was started, the active language and theme, and the geometry of every display:
+Right after it, a `[diag]` block records everything a bug report needs and nobody should have to collect by hand - versions, install and data paths, how the app was started, the active language and theme, and the geometry of every display:
 
 ```text
 [diag] app: Achievement Watcher 3.8.0 (packaged)
@@ -27,7 +32,7 @@ Right after it, a `[diag]` block records everything a bug report needs and nobod
 [diag] display: 3933707034 (primary) 2048x1152 @1.25x work=2048x1104 rotation=0
 ```
 
-Paste that block into an issue. Window size and placement problems are almost always a display-scaling or multi-monitor story, and the `[MainWindow]` lines that follow record the window's bounds every time it is shown, moved, resized or closed — including which display it was on.
+Paste that block into an issue. Window size and placement problems are almost always a display-scaling or multi-monitor story, and the `[MainWindow]` lines that follow record the window's bounds every time it is shown, moved, resized or closed - including which display it was on.
 
 Each log file rotates to `<name>.log.1` past 2 MB, so one older generation is always kept.
 
@@ -114,5 +119,11 @@ If the issue disappears, restore only the data you need or attach the relevant c
 ## Report the problem
 
 Search the [existing issues](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues) first. If no report matches, open a bug using the repository template and attach logs after removing any information you do not want to share publicly.
+
+---
+
+**That's the end of the user path.** From here the documentation turns technical:
+[Goldberg/GBE reference](goldberg-gbe.md) for file formats and detection rules, and
+[Architecture](architecture.md) for the app / renderer / Watchdog boundaries.
 
 <p align="center"><a href="README.md">← Documentation</a> · <a href="getting-started.md">Getting started</a> · <a href="../README.md">Project home</a></p>

@@ -28,9 +28,14 @@ A schema file does not prove that anything has unlocked. A runtime save that con
 6. Use **Apply emulator fix (GBE Fork)** only when the game needs a matching runtime DLL as well.
 7. Launch the game and unlock an achievement, then refresh Achievement Watcher if needed.
 
-Automatic setup for newly discovered games is opt-in under **Settings → Emulator**. When disabled, scanning does not perform the full runtime installation in the background.
+Automatic setup for newly discovered games is opt-in under **Settings → Steam emulator**. When disabled, scanning does not perform the full runtime installation in the background.
 
 ## Context-menu actions
+
+<div align="center">
+<img src="../screenshot/emulator-tools.png" width="560" alt="Emulator & tools context menu"><br>
+<sub>Right-click a game → Emulator &amp; tools</sub>
+</div>
 
 ### Diagnose
 
@@ -38,7 +43,7 @@ Reports the detected emulator type, AppID, `steam_settings` location, schema and
 
 ### Repair `steam_settings`
 
-Builds a schema that matches the detected Steam achievement names, refreshes relevant configuration files, writes the AppID when missing, and can download icons. Existing files are snapshotted before replacement.
+Offered as a button on the diagnosis report itself when problems were found - it is not a separate context-menu entry. It builds a schema that matches the detected Steam achievement names, refreshes relevant configuration files, writes the AppID when missing, and can download icons. Existing files are snapshotted before replacement.
 
 ### Apply emulator fix (GBE Fork)
 
@@ -92,5 +97,13 @@ Review the [technical Goldberg/GBE reference](goldberg-gbe.md) for file formats,
 ## Limitations
 
 Some games do not report achievements through Steamworks at all, even when sold on Steam. Those titles cannot be tracked through a Goldberg/GBE save path. Achievement Watcher also cannot repair a game whose real identity or achievement schema cannot be resolved safely.
+
+---
+
+**Next:** [Uplay R2 setup](uplay-r2.md) - the Ubisoft equivalent, for games that do
+not load `steam_api.dll`.
+
+*Going deeper: [Goldberg/GBE technical reference](goldberg-gbe.md) for file formats
+and detection rules.*
 
 <p align="center"><a href="README.md">← Documentation</a> · <a href="goldberg-gbe.md">Technical reference</a> · <a href="../README.md">Project home</a></p>

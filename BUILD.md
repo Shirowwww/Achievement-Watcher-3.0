@@ -82,7 +82,7 @@ To navigate the interface itself, `Click` and `Scroll` take coordinates relative
 
 Take a screenshot after every step rather than chaining clicks blindly: several panels re-layout as settings change (the Notifications tab grows overlay-only sections when the transport is set to the in-game overlay), so a coordinate read a moment ago can land somewhere else entirely. Native context menus are not part of the Electron window, so capture them with `-Screen`.
 
-`Send` works because the single-instance lock forwards argv to the running instance — the same channel the Watchdog uses. Window enumeration, not the log files, is the reliable answer to "is the overlay on screen?": the main process logs an incoming overlay *request* before deciding what to do with it.
+`Send` works because the single-instance lock forwards argv to the running instance - the same channel the Watchdog uses. Window enumeration, not the log files, is the reliable answer to "is the overlay on screen?": the main process logs an incoming overlay *request* before deciding what to do with it.
 
 Dev and the installed app share `%APPDATA%\Achievement Watcher 3.0`. Back up `cfg\options.ini` before a test that changes settings, and restore it afterwards.
 
@@ -100,7 +100,7 @@ Pop-Location
 
 The app suite includes parser, discovery, install-state and locale-completeness checks. The Watchdog suite covers monitoring, notifications and related helpers.
 
-The app suite includes a real-DOM check of the settings filter that needs a Chromium-family browser. It tries each installed candidate in turn (an installed browser is not always a launchable one) and skips — printing why — only when none will start. Point it at a specific binary with `PUPPETEER_EXECUTABLE_PATH`.
+The app suite includes a real-DOM check of the settings filter that needs a Chromium-family browser. It tries each installed candidate in turn (an installed browser is not always a launchable one) and skips - printing why - only when none will start. Point it at a specific binary with `PUPPETEER_EXECUTABLE_PATH`.
 
 Before handing off a change, also run:
 

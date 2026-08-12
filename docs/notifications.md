@@ -44,13 +44,18 @@ rich payload: rare achievements tint the popup with a gold/silver/bronze tier (b
 
 The builder is the **Custom preset** section of **Settings → Notification**. It starts collapsed: open it with its header.
 
-Set the background, text and accent colors, then the opacity, font size, corner radius, icon size and popup width. Each slider shows its current value, and the sample popup under the controls updates as you go — it is painted from your colors, not from the app theme, so it shows what the notification will look like in a game.
+<div align="center">
+<img src="../screenshot/notification-preset.png" width="480" alt="Custom notification preset builder"><br>
+<sub>Colors, sizing and a live sample popup that updates as you go</sub>
+</div>
+
+Set the background, text and accent colors, then the opacity, font size, corner radius, icon size and popup width. Each slider shows its current value, and the sample popup under the controls updates as you go - it is painted from your colors, not from the app theme, so it shows what the notification will look like in a game.
 
 | Action | What it does |
 | --- | --- |
 | **Preview** | Renders the design as a real overlay popup, at full size and in the configured position, **without saving it**. Use it to compare ideas without filling the preset list. |
 | **Create preset** | Saves it and selects it as the active preset. |
-| **Update preset** | The same button, once the name matches a preset the builder made — it replaces that preset instead of adding another. |
+| **Update preset** | The same button, once the name matches a preset the builder made - it replaces that preset instead of adding another. |
 | **Edit a preset** | Loads one of your generated presets back into the controls. Every value returns exactly as saved. |
 | **Delete** | Appears once a generated preset is loaded, and removes it after a confirmation. |
 
@@ -61,7 +66,7 @@ Only presets this builder generated can be re-opened or deleted: it stores its s
 
 ## Sounds, volume and duration
 
-- Import `.wav`, `.mp3` or `.ogg` files from the Notification settings.
+- Import `.wav`, `.mp3`, `.ogg`, `.flac`, `.m4a` or `.aac` files from the Notification settings.
 - Overlay volume ranges from 0% to 200%. Values above 100% apply an overlay-side boost; Windows notification playback is limited by the system audio path.
 - Duration can follow the preset automatically or use a fixed cap.
 - Playtime notifications are silent by design.
@@ -70,7 +75,7 @@ Only presets this builder generated can be re-opened or deleted: it stores its s
 
 Choose a corner, edge or centered position from the Notification settings. The custom position can be moved with **Reposition** and is stored for later sessions.
 
-The in-game overlay also supports configured keyboard shortcuts for moving, snapping and click-through behavior, plus optional controller navigation (enable it and customize the shortcuts under **Settings → Controller**). See the [Overlay guide](overlay.md#controller-gamepad) for the full control scheme.
+The in-game overlay also supports keyboard shortcuts for moving, snapping and click-through behavior - see the [Overlay guide](overlay.md#keyboard-shortcuts-overlay-open) - plus optional gamepad control, covered in the [Controller guide](controller.md).
 
 ## Per-game behavior
 
@@ -89,5 +94,10 @@ Achievements with a global unlock rate below the configured rare threshold displ
 6. Open **Settings → Advanced → Diagnostics** and inspect the logs.
 
 Continue with [Troubleshooting](troubleshooting.md#notifications-do-not-appear) if the problem remains.
+
+---
+
+**Next:** [Overlay guide](overlay.md) - the in-game achievement list, its search,
+filters and customization.
 
 <p align="center"><a href="README.md">← Documentation</a> · <a href="../README.md">Project home</a></p>

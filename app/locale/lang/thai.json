@@ -86,12 +86,10 @@
     "title": "การตั้งค่า",
     "sideMenu": {
       "general": "ทั่วไป",
-      "overlay": "โอเวอร์เลย์ในเกม",
       "notification": "การแจ้งเตือน",
       "souvenir": "ของที่ระลึก",
       "folder": "โฟลเดอร์",
       "source": "แหล่งที่มา",
-      "guide": "คู่มือ",
       "advanced": "ขั้นสูง"
     },
     "common": {
@@ -262,7 +260,7 @@
       "loginTestFailed": "เข้าสู่ระบบ Steam ล้มเหลว",
       "autoApply": {
         "name": "แก้ไขเกมที่ตรวจพบใหม่โดยอัตโนมัติ",
-        "description": "เรียกใช้ขั้นตอนการแก้ไขอีมูเลเตอร์ทั้งหมดหนึ่งครั้งสำหรับเกมจำลองที่ตรวจพบใหม่และยังไม่ได้กำหนดค่า: การจัดการ SteamStub, GBE Fork, ความสำเร็จ, DLC, ตัวตน/ภาษา และข้อมูลขั้นสูงเมื่อเปิดใช้งาน เปิดใช้งานตามค่าเริ่มต้น",
+        "description": "เรียกใช้ขั้นตอนการแก้ไขอีมูเลเตอร์ทั้งหมดหนึ่งครั้งสำหรับเกมจำลองที่ตรวจพบใหม่และยังไม่ได้กำหนดค่า: การจัดการ SteamStub, GBE Fork, ความสำเร็จ, DLC, ตัวตน/ภาษา และข้อมูลขั้นสูงเมื่อเปิดใช้งาน ปิดใช้งานตามค่าเริ่มต้น",
         "value": {
           "false": "ปิดใช้งาน",
           "true": "เปิดใช้งาน"
@@ -358,7 +356,7 @@
         "chromium": "การแจ้งเตือน Chromium",
         "watchdog": "Watchdog",
         "test": "ทดสอบ",
-        "overlay": "โอเวอร์เลย์ในเกม"
+        "overlay": "การแจ้งเตือน"
       },
       "info": {
         "toast": "บางฟีเจอร์ใช้ได้เฉพาะใน Windows 10",
@@ -1010,9 +1008,9 @@
     "disk-scan": "สแกนดิสก์",
     "found-automatically-via-x": "พบโดยอัตโนมัติผ่าน {source}",
     "checking-watchdog-status": "กำลังตรวจสอบสถานะ Watchdog...",
-    "watchdog-stopped": "Watchdog ไม่ได้ทำงาน! (โอเวอร์เลย์ในเกม/การแจ้งเตือนของ Windows จะไม่ทำงาน)",
+    "watchdog-stopped": "Watchdog ไม่ได้ทำงาน! (โอเวอร์เลย์ในเกม/การแจ้งเตือนจะไม่ทำงาน)",
     "i-class-fas-fa-shield-alt-i-click-to-start-watchdog": "<i class=\"fas fa-shield-alt\"></i> คลิกเพื่อเริ่ม Watchdog!",
-    "watchdog-is-running-in-game-overlay-windows-notifications-should": "Watchdog กำลังทำงาน (โอเวอร์เลย์ในเกม/การแจ้งเตือนของ Windows ควรทำงานอย่างถูกต้อง)",
+    "watchdog-is-running-in-game-overlay-windows-notifications-should": "Watchdog กำลังทำงาน (โอเวอร์เลย์ในเกม/การแจ้งเตือนควรทำงานอย่างถูกต้อง)",
     "unexpected-error": "ข้อผิดพลาดที่ไม่คาดคิด",
     "choose-the-game-executable": "เลือกไฟล์เรียกใช้งานของเกม",
     "select": "เลือก",

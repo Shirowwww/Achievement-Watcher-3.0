@@ -38,32 +38,32 @@ Do not hand-edit generated `app/dist/latest.yml`; the build creates it.
 
 ## Documentation accuracy check
 
-Do this for every release, not only ones that "feel" doc-worthy — stale docs accumulate silently
+Do this for every release, not only ones that "feel" doc-worthy - stale docs accumulate silently
 between releases otherwise:
 
 - **`README.md` "What this fork adds" table**: add a phrase for any genuinely new capability this
   release ships (a new source, a new tool, a reliability/data-safety change). Bug fixes belong in
   `CHANGELOG.md`, not this table. If nothing table-worthy shipped, leave it alone.
 - **`README.md` "Quick comparison" table**: only touch a row if this release changed the behavior
-  it describes. Do not re-verify the whole table on every release — that is a separate, occasional
+  it describes. Do not re-verify the whole table on every release - that is a separate, occasional
   audit (see below), not a per-release step.
 - **Stale absolute paths**: if this release changed a user-data path, filename or directory (the
   3.5.3 `%APPDATA%\Achievement Watcher 3.0` split from the legacy `%APPDATA%\Achievement Watcher`
-  is the precedent), grep the whole repo for the old form — public docs, `.github/ISSUE_TEMPLATE/`,
+  is the precedent), grep the whole repo for the old form - public docs, `.github/ISSUE_TEMPLATE/`,
   and the local `CLAUDE.md`/`AGENTS.md` notes all drift independently and have shipped stale paths
   before.
 - **Broken doc links**: confirm every `[text](path#anchor)` added or touched this release actually
   resolves (a moved/renamed file or a renamed heading breaks the anchor silently). A quick script
   that resolves every relative link in every tracked `.md` file against the filesystem is cheap
-  insurance — see git history around 2026-08-05 for one.
+  insurance - see git history around 2026-08-05 for one.
 
 ### Occasional: re-verifying the comparison table against competing projects
 
-Do this only when asked, or when a competing project's fork clearly changed — not every release.
+Do this only when asked, or when a competing project's fork clearly changed - not every release.
 When you do it: **check the competitor's actual source (`main.js`/`preload.js`/renderer HTML,
 fetched via `gh api repos/<owner>/<repo>/contents/<path> -H "Accept: application/vnd.github.raw"`),
 not just their README.** A README is a marketing summary and routinely under-describes real
-features. A missing README mention is not evidence of a missing feature — grep the code before
+features. A missing README mention is not evidence of a missing feature - grep the code before
 downgrading a ✅ to a ❌.
 
 ## Clean validation

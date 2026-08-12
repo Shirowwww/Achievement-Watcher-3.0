@@ -151,4 +151,9 @@ Background attempts are keyed by game and content version so an unchanged broken
 - Keep manual and background setup paths on the same repair functions.
 - Prefer a safe partial result over hiding a game after a transient metadata failure.
 
+---
+
+**Next:** [Architecture](architecture.md) - where this code runs, and which process
+owns which responsibility.
+
 <p align="center"><a href="README.md">← Documentation</a> · <a href="emulator-setup.md">Setup guide</a> · <a href="../README.md">Project home</a></p>

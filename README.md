@@ -4,7 +4,7 @@
 
 <p><strong>All your PC achievements in one modern Windows library.</strong></p>
 
-Track achievements, rarity and playtime across launchers, local saves and supported emulators — with live Windows notifications or an in-game overlay.
+Track achievements, rarity and playtime across launchers, local saves and supported emulators - with live Windows notifications or an in-game overlay.
 
 [![Latest release](https://img.shields.io/github/v/release/Shirowwww/Achievement-Watcher-3.0?display_name=tag&sort=semver&style=flat-square)](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/Shirowwww/Achievement-Watcher-3.0/total?style=flat-square)](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases)
@@ -32,7 +32,7 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 | Area | Main improvements since Achievement Watcher 2.x |
 |---|---|
 | **Modern foundation** | Electron 12 → 43, a current Node runtime, refreshed dependencies, tighter renderer security and Windows 10/11 support without WMIC |
-| **More real sources** | Local Steam appcache, GOG Galaxy and Ubisoft Connect readers; optional Epic account connection; EA Desktop; Xbox PC (Game Pass / Microsoft Store) account import; Goldberg SocialClub; RPCS3, ShadPS4 and Xenia — each one individually switchable |
+| **More real sources** | Local Steam appcache, GOG Galaxy and Ubisoft Connect readers; optional Epic account connection; EA Desktop; Xbox PC (Game Pass / Microsoft Store) account import; Goldberg SocialClub; RPCS3, ShadPS4 and Xenia - each one individually switchable |
 | **Goldberg / GBE / Uplay R2 tools** | Read-only diagnosis, `steam_settings` repair, matched GBE Fork runtime install, loader-version-aware Uplay R2 support, Steamless support, opt-in API-check bypass, backups/restore and opt-in background setup |
 | **Better library** | Game and achievement search, installed-only filtering, blacklist restore, rarity tiers, progress achievements, persistent manual achievement unlocks, smarter covers with a per-game SteamDB/SteamGridDB gallery, automatic launch-executable detection, a shortcut to each entry's achievement-data folder and right-click uninstall |
 | **Live tracking** | Tray-first background Watchdog, Xenia/ShadPS4/GOG/Ubisoft unlock monitoring, playtime and last-played dates for every tracked source (Steam, Ubisoft, Epic, GOG, EA, Xbox PC and standalone installs), safer startup baselines and duplicate suppression |
@@ -105,10 +105,13 @@ The optional Steam Web API key can improve some lookups, but local sources and c
 Everything else is covered by the in-app **Settings → Help** tab and the
 [documentation](docs/README.md).
 
-<div align="center">
-<img src="screenshot/settings.png" width="680" alt="Achievement Watcher settings"><br>
-<sub>Sources, folders, notifications, appearance and diagnostics in one place</sub>
-</div>
+<table>
+<tr>
+<td align="center"><img src="screenshot/onboarding.png" width="300" alt="First-run guide"><br><sub>Guided first-run setup</sub></td>
+<td align="center"><img src="screenshot/settings.png" width="300" alt="Achievement Watcher settings"><br><sub>Sources, folders, notifications and diagnostics in one place</sub></td>
+<td align="center"><img src="screenshot/custom_theme.png" width="300" alt="Custom theme editor"><br><sub>Per-layer colors, gradients, images and effects</sub></td>
+</tr>
+</table>
 
 Updating over an older build keeps settings, cache, playtime and achievement data under `%APPDATA%\Achievement Watcher 3.0`. The first launch after upgrading imports the legacy `%APPDATA%\Achievement Watcher` folder once (copied, never moved), so the original 1.6.8 app and its uninstaller stay fully independent. See [Getting started](docs/getting-started.md) for the full first-run and update guide.
 
@@ -120,7 +123,7 @@ Choose **Windows notification**, **In-game overlay** or **Both** under **Setting
 
 - Presets for clean desktop, Steam, PlayStation, Xbox, rare and completion styles.
 - A no-code preset builder with live preview: try a design as a real popup before saving it, reopen a saved preset to tweak it, and delete the ones you do not keep.
-- Custom `.wav`, `.mp3` and `.ogg` sounds.
+- Custom `.wav`, `.mp3`, `.ogg`, `.flac`, `.m4a` and `.aac` sounds.
 - Position, scale, duration and overlay volume up to 200%.
 - Separate presets for normal, rare and 100% completion events.
 - Per-game progress mute without hiding real unlocks.
@@ -129,8 +132,9 @@ Choose **Windows notification**, **In-game overlay** or **Both** under **Setting
 
 <table>
 <tr>
-<td align="center"><img src="screenshot/notifications.png" width="470" alt="Notification settings"><br><sub>Preset library and custom builder</sub></td>
-<td align="center"><img src="screenshot/overlay.png" width="330" alt="In-game overlay"><br><sub>In-game achievement overlay</sub></td>
+<td align="center"><img src="screenshot/notifications.png" width="300" alt="Notification settings"><br><sub>Delivery mode and per-context presets</sub></td>
+<td align="center"><img src="screenshot/notification-preset.png" width="300" alt="Custom notification preset builder"><br><sub>No-code custom preset builder with live preview</sub></td>
+<td align="center"><img src="screenshot/overlay.png" width="220" alt="In-game overlay"><br><sub>In-game achievement overlay</sub></td>
 </tr>
 </table>
 
@@ -147,6 +151,11 @@ Normal achievement reading is read-only. Extra actions appear under **Emulator &
 - **Apply GBE Fork** with the matching 32-bit or 64-bit runtime.
 - **Back up and restore** DLLs and configuration files.
 - **Use Steamless** after confirmation when SteamStub prevents a DLL replacement from loading.
+
+<div align="center">
+<img src="screenshot/emulator-tools.png" width="520" alt="Emulator & tools context menu"><br>
+<sub>Right-click a game for diagnosis, repair and backup actions</sub>
+</div>
 
 Full background setup is **off by default**. Repairs create backups, but they still modify game files; use them only with games you own.
 
@@ -193,7 +202,7 @@ The installer and updater files are written to `app\dist`. See [BUILD.md](BUILD.
 
 ## 🔐 Security and support
 
-Found a problem, have an idea, or simply want something improved? Please [open an issue](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues) — reports and suggestions are what help Achievement Watcher become better. For a vulnerability, use the private process in the [security policy](SECURITY.md), not a public issue.
+Found a problem, have an idea, or simply want something improved? Please [open an issue](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues) - reports and suggestions are what help Achievement Watcher become better. For a vulnerability, use the private process in the [security policy](SECURITY.md), not a public issue.
 
 - Download builds only from the [official Releases page](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases).
 - Releases are currently unsigned, so SmartScreen or antivirus warnings are possible.

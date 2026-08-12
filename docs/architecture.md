@@ -112,4 +112,9 @@ When changing a parser or watcher, verify:
 - logs and user-facing diagnostics;
 - both app and Watchdog tests when the boundary crosses processes.
 
+---
+
+**Next:** [Build guide](../BUILD.md) - running from source, packaging and the native-module
+gotchas · [Contributing](../CONTRIBUTING.md) · [Release workflow](RELEASE_WORKFLOW.md).
+
 <p align="center"><a href="README.md">← Documentation</a> · <a href="../BUILD.md">Build guide</a> · <a href="../README.md">Project home</a></p>
