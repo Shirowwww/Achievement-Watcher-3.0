@@ -1,24 +1,10 @@
 'use strict';
 
 /*
-  Manages the user-override game index (cfg/gameIndex.json) that the watchdog playtime monitor
-  reads at startup to match running processes to game appids.
-
-  Shape of an entry: { appid: string, name: string, binary: string, icon: string, source?: string,
-                       steamappid?: string, uplayId?: string }
-    - binary is the executable filename (no path, e.g. "GameName.exe"), matched case-insensitively
-    - icon is the Steam CDN icon hash (filename without extension)
-    - source is the human-readable source label ("GBE Fork", "Xbox PC", ...) used by the Watchdog to
-      pick per-platform notification presets and start source-specific polling (e.g. Xbox Network)
-    - steamappid is the Steam AppID a non-Steam source resolves to (Goldberg SocialClub), used by the
-      Watchdog to load the schema/cover for a namespaced appid
-    - uplayId is the Ubisoft product id for a Goldberg Uplay R2 game. The emulator names its save
-      folder with that id, not the Steam AppID, so the Watchdog needs the pair to attribute an unlock
-      under "Goldberg UplayEmu Saves\<uplayId>" to this game. Carrying it here keeps the mapping table
-      (app/assets/uplay-steam.json, inside app.asar) on the app side of the process boundary.
-
-  The watchdog also reads a larger system cache at steam_cache/schema/gameIndex.json;
-  this module only manages the smaller per-user override that seeds auto-detected installs.
+  Manages the user-override game index (cfg/gameIndex.json) that the watchdog playtime monitor reads
+  at startup to match running processes to appids. Entry shape: { appid, name, binary, icon, source?,
+  steamappid?, uplayId? }. source drives per-platform presets; steamappid/uplayId let the watchdog
+  attribute namespaced SocialClub / Uplay R2 games to their Steam data.
 */
 
 const { app } = process.type === 'browser' ? require('electron') : require('@electron/remote');
@@ -67,19 +53,19 @@ module.exports.upsert = (entry) => {
     if (!next.uplayId) delete next.uplayId;
     const existing = list.find((g) => String(g.appid) === appid);
     if (existing) {
-      if (
-        existing.binary === next.binary &&
-        existing.name === next.name &&
-        existing.icon === next.icon &&
-        String(existing.source || '') === next.source &&
-        String(existing.steamappid || '') === String(next.steamappid || '') &&
-        String(existing.uplayId || '') === String(next.uplayId || '')
-      ) {
-        return;
-      }
-      existing.binary = next.binary;
-      existing.name = next.name;
-      existing.icon = next.icon;
+      // Metadata-only seeds (e.g. the Ubisoft Connect row that carries uplayId/steamappid) must
+      // never wipe fields the generic exe-detection seed already filled.
+      const changed =
+        (next.binary && existing.binary !== next.binary) ||
+        (next.name && existing.name !== next.name) ||
+        (next.icon && existing.icon !== next.icon) ||
+        (next.source && String(existing.source || '') !== next.source) ||
+        (next.steamappid && String(existing.steamappid || '') !== next.steamappid) ||
+        (next.uplayId && String(existing.uplayId || '') !== next.uplayId);
+      if (!changed) return;
+      if (next.binary) existing.binary = next.binary;
+      if (next.name) existing.name = next.name;
+      if (next.icon) existing.icon = next.icon;
       if (next.source) existing.source = next.source;
       if (next.steamappid) existing.steamappid = next.steamappid;
       if (next.uplayId) existing.uplayId = next.uplayId;

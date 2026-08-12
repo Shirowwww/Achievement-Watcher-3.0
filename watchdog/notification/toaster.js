@@ -5,6 +5,7 @@ const fs = require('fs');
 const toast = require('./transport/toast.js');
 const balloon = require('../util/powerballoon');
 const fetch = require('./prefetch.js');
+const { makeSquareIcon } = require('../util/squareIcon.js');
 const notificationSound = require('../util/notificationSound.js');
 const { broadcast } = require('../websocket.js');
 const { arePopupsSuppressed } = require('../queryUserNotificationState.js');
@@ -21,9 +22,11 @@ function normalizeProgress(progress) {
   return { current, max, percent };
 }
 
-// Load ESM-only controller dependencies lazily; rumble remains best effort.
+// Load ESM-only controller dependencies lazily; rumble remains best effort. regodit is loaded
+// through its synchronous API only — the `regodit/promises` subpath segfaults (0xC0000005) under
+// the pinned koffi 3.x when writing DWORDs, so the Watchdog must never import it.
 let regeditPromise = null;
-const loadRegedit = () => regeditPromise || (regeditPromise = import('regodit/promises'));
+const loadRegedit = () => regeditPromise || (regeditPromise = import('regodit'));
 
 let xinputPromise = null;
 const loadXinput = () =>
@@ -180,6 +183,21 @@ module.exports = async (message, option = {}) => {
         }
       }
 
+      // The toast's app-logo slot is square. Steam library art is portrait/landscape, so center-
+      // crop a high-res local copy for playtime cards; overlay/websocket keep the original art.
+      // Only local sources are cropped — forcing a download when the user disabled prefetch would
+      // add latency/offline failures for no benefit on the square requirement.
+      if (options.transport.toast && message.notificationType === 'playtime') {
+        const squareSource = message.gameIcon || message.image;
+        const isLocal =
+          typeof squareSource === 'string' &&
+          (squareSource.startsWith('file:///') || (!/^https?:\/\//i.test(squareSource) && fs.existsSync(squareSource)));
+        if (isLocal) {
+          const square = await makeSquareIcon(squareSource, message.appid).catch(() => null);
+          if (square) message.gameIcon = square;
+        }
+      }
+
       if (options.transport.toast) {
         debug.log('Toast notification');
         try {
@@ -214,10 +232,10 @@ module.exports = async (message, option = {}) => {
         if (xinput) {
           if (!options.transport.toast) message.delay = 0;
           const regedit = await loadRegedit();
-          const duration =
-            +(await regedit.regQueryIntegerValue('HKCU', 'Control Panel/Accessibility', 'MessageDuration').catch(() => {
-              return null;
-            })) || 5;
+          let duration = 5;
+          try {
+            duration = +regedit.regQueryIntegerValue('HKCU', 'Control Panel/Accessibility', 'MessageDuration') || 5;
+          } catch {}
           setTimeout(function () {
             debug.log('XInput Rumble');
             xinput.rumble({ forceStateWhileRumble: true }).catch((err) => {

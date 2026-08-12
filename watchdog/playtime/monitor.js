@@ -34,6 +34,9 @@ let gameIndex;
 let gameIndexByBinary;
 let appidByDirCache;
 let ignoredAppidsCache = { mtimeMs: null, set: new Set() };
+// Unknown processes are logged once per name, not on every creation event: background helpers and
+// one-shot tools otherwise fill playtime.log with "No entry found for ..." lines on a busy machine.
+const loggedUnknownProcesses = new Set();
 
 const systemTempDir = os.tmpdir() || process.env['TEMP'] || process.env['TMP'];
 const userExclusionFile = path.join(userDataDir(), 'cfg/exclusion.db');
@@ -138,6 +141,21 @@ async function init() {
   let nowPlaying = [];
   // Expose startup sessions without replaying launch notifications.
   emitter.getActiveGames = () => snapshotActiveGames(nowPlaying);
+  // The app re-seeds cfg/gameIndex.json after a library scan (e.g. a freshly installed non-Steam
+  // game); reloading here lets the monitor track it without a full Watchdog restart.
+  emitter.reloadGameIndex = async () => {
+    const next = await getGameIndex();
+    // A transient read failure can surface as an empty list while the Watchdog's own auto-detect is
+    // writing the same file; never replace a working index with an empty one.
+    if (next.length === 0 && gameIndex && gameIndex.length > 0) {
+      debug.warn('[Playtime] gameIndex reload returned an empty index; keeping the current one');
+      return gameIndex.length;
+    }
+    gameIndex = next;
+    gameIndexByBinary = buildBinaryIndex(next);
+    debug.log(`[Playtime] gameIndex reloaded ! ${next.length} game(s)`);
+    return next.length;
+  };
   appidByDirCache = new Map();
   gameIndex = await getGameIndex();
   gameIndexByBinary = buildBinaryIndex(gameIndex);
@@ -188,8 +206,14 @@ async function init() {
       //single hit
       game = games[0];
     } else {
-      //more than one entry or it's a new game
-      debug.log(games.length > 1 ? `More than 1 entry for "${process}"` : `No entry found for ${process}`);
+      // More than one entry is always worth logging; unknown processes are logged once per name.
+      if (games.length > 1) {
+        debug.log(`More than 1 entry for "${process}"`);
+      } else if (!loggedUnknownProcesses.has(process)) {
+        loggedUnknownProcesses.add(process);
+        if (loggedUnknownProcesses.size > 200) loggedUnknownProcesses.clear();
+        debug.log(`No entry found for ${process}`);
+      }
       if (!filepath) return;
       const gameDir = path.parse(filepath).dir;
       debug.log(`Try to find appid from a cfg file in "${gameDir}"`);

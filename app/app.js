@@ -195,10 +195,11 @@ function setLibraryBusyCursor(busy) {
 const MAX_SKELETON_TILES = 18;
 const DEFAULT_SKELETON_TILES = 12;
 
-function skeletonTileHtml() {
+function skeletonTileHtml(index) {
+  const delay = ((index || 0) % 6 * -0.2).toFixed(1);
   return `
     <li>
-      <div class="game-box skeleton" aria-hidden="true">
+      <div class="game-box skeleton" aria-hidden="true" style="--skeleton-delay:${delay}s">
         <div class="header"></div>
         <div class="info">
           <div class="info-head"><div class="title"></div></div>
@@ -210,7 +211,7 @@ function skeletonTileHtml() {
 
 function addSkeletonTiles(count) {
   const list = $('#game-list ul');
-  for (let i = 0; i < count; i++) list.append(skeletonTileHtml());
+  for (let i = 0; i < count; i++) list.append(skeletonTileHtml(i));
 }
 
 function replaceSkeletonWith(item) {
@@ -1019,7 +1020,12 @@ var app = {
     $('title-bar')[0].inSettings = false;
     // A scoped refresh replaces only entries under the selected roots.
     const previousGames = activeScanScope ? gameList.slice() : [];
-    const scanConfig = activeScanScope ? { ...self.config, scanScope: activeScanScope } : self.config;
+    // First scan of the session: serve cached data immediately (no cover/description re-fetch per
+    // game) so the library appears fast; details refresh themselves when opened.
+    const fastStart = !self.hasCompletedFirstScan;
+    const scanConfig = activeScanScope
+      ? { ...self.config, scanScope: activeScanScope, fastStart }
+      : { ...self.config, fastStart };
     // Read the manual-unlock sidecar once for this scan. Applying it in the streamed callback makes
     // tile percentages and profile counters survive an app restart without doing sync I/O per game.
     const manualUnlockMap = (() => {
@@ -1184,6 +1190,7 @@ var app = {
           self.listRescanScope = undefined;
           return self.onStart(nextScope ? { scanScope: nextScope } : {});
         }
+        self.hasCompletedFirstScan = true;
         if (activeScanScope && previousGames.length > 0 && Array.isArray(list)) {
           const freshAppids = new Set(list.map((game) => String(game && game.appid)));
           const preserved = previousGames.filter(
@@ -1218,6 +1225,9 @@ var app = {
         } catch (err) {
           debug.log(err);
         }
+        // The scan just (re)seeded cfg/gameIndex.json; let the Watchdog reload it so freshly added
+        // non-Steam games are tracked without waiting for a Watchdog restart.
+        ipcRenderer.invoke('watchdog-reload-playtime-index').catch((err) => debug.log(err));
 
         // Reconcile launch paths with the installed games.
         exeList
@@ -2524,12 +2534,9 @@ var app = {
             }
             }
 
-            // Ubisoft/uPlay counterpart of the GBE Fork block above — "instead of GBE" for a game
-            // with no steam_api.dll. Maps the game to its Steam equivalent (uplay-steam.json), fetches
-            // the real Steam achievement schema, generates a matching achievements_schema.json for the
-            // Goldberg Uplay R2 ("demde" build) emulator and redirects its save path into
-            // %AppData%\GSE Saves\<steamAppid> — the folder AW's existing Steam/GBE scan already reads,
-            // so no changes are needed on the read side. See app/parser/uplayR2.js.
+            // Ubisoft/uPlay counterpart of the GBE Fork block above: maps the game to its Steam
+            // equivalent, writes a matching achievements_schema.json for the Uplay R2 loader, and
+            // redirects its save path into %AppData%\GSE Saves\<steamAppid> — already read by AW.
             if (isUbisoftSource) {
               if (emulatorMenu.items.length) {
                 emulatorMenu.append(new MenuItem({ type: 'separator' }));
@@ -3515,7 +3522,9 @@ var app = {
 
       $('#achievement .wrapper > .header .playtime').hide();
       $('#achievement .wrapper > .header .lastplayed').hide();
-      if (game.system !== 'playstation' && game.system !== 'uplay') {
+      // PlayStation emulators have no per-game process to attribute; every other source (Steam,
+      // official Ubisoft Connect, Uplay R2, Epic, GOG, EA, Xbox PC, ...) can be tracked by exe.
+      if (game.system !== 'playstation') {
         PlaytimeTracking(game.appid)
           .then(({ playtime, lastplayed }) => {
             if (playtime > 0) {

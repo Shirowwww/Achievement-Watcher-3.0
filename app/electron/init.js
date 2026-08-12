@@ -20,11 +20,12 @@ const cliUserDataDir = (() => {
 app.setPath('userData', cliUserDataDir || path.join(app.getPath('appData'), APP_DATA_DIR_NAME));
 migrateLegacyUserData(app.getPath('userData'));
 // Keep GPU acceleration enabled, but avoid Chromium background services AW does not use in tray mode.
-for (const sw of ['disable-extensions', 'disable-component-extensions-with-background-pages', 'disable-default-apps', 'disable-background-networking']) {
+for (const sw of ['disable-extensions', 'disable-component-extensions-with-background-pages', 'disable-default-apps', 'disable-background-networking', 'disable-accelerated-video-decode']) {
   app.commandLine.appendSwitch(sw);
 }
-// Bound heap growth while the app sits in the tray.
-app.commandLine.appendSwitch('js-flags', '--max-old-space-size=256');
+// Bound heap growth while the app sits in the tray: the renderer's measured heap stays near 20 MB,
+// so a 192 MB ceiling makes V8 collect earlier instead of letting every process grow toward 256 MB.
+app.commandLine.appendSwitch('js-flags', '--max-old-space-size=192');
 const { BrowserWindow, dialog, session, shell, ipcMain, globalShortcut, Tray, Menu, nativeImage, Notification } = require('electron');
 const os = require('os');
 const { autoUpdater } = require('electron-updater');
@@ -1438,12 +1439,23 @@ ipcMain.handle('start-watchdog', async (event) => {
   return restartWatchdog();
 });
 
+// The renderer re-seeds cfg/gameIndex.json at the end of every library scan. Ask the running
+// Watchdog to reload it so non-Steam games added while it is already up are tracked without a
+// restart. No-op when the Watchdog is down; the next launch reads the fresh index anyway.
+ipcMain.handle('watchdog-reload-playtime-index', () => {
+  if (!monitorProc || monitorProc.exitCode !== null || monitorProc.killed || !monitorProc.connected) return false;
+  try {
+    monitorProc.send({ reloadPlaytimeIndex: true });
+    return true;
+  } catch (err) {
+    debug.log(`[monitor] playtime index reload request failed: ${err.message}`);
+    return false;
+  }
+});
+
 // --- Background emulator auto-fix (daemon) -----------------------------------
-// When the app runs headless in the tray (no window), periodically apply the same one-shot GBE/GSE
-// emulator fix the UI scan does, so a newly-installed emulated game gets configured without the user
-// opening the app. Mirrors the renderer's 15-min new-game poll (app.js scheduleNewGameScan), but only
-// runs while the window is CLOSED — when it's open the renderer handles it. Gated by the existing
-// emulator.autoApplyNewGames opt-out. Fires a Windows toast for each game it actually fixes.
+// While the window is closed, periodically apply the same one-shot emulator fix the UI scan does,
+// gated by emulator.autoApplyNewGames, and toast each game actually fixed.
 let bgAutoFixTimer = null;
 let bgAutoFixInFlight = false;
 let bgKnownAppids = null; // baseline of discovered appids; null until the first full pass seeds it

@@ -84,6 +84,9 @@ const appRoot = path.join(__dirname, '../');
 let isDev = process.env.NODE_ENV === 'development';
 let runningAppid;
 let overlayOpened = false;
+// The playtime monitor instance once init() resolves; used to reload the game index on request.
+let playtimeMonitorEmitter = null;
+let playtimeIndexReloadQueued = false;
 let xboxPollState = null;
 const XBOX_POLL_INTERVAL_MS = 30000;
 
@@ -418,7 +421,19 @@ module.exports = { SpawnOverlayNotification };
 // already gone (and a stale "closed" would ask to open one that is already up). Transitions we
 // caused ourselves arrive here too and are dropped by the equality check below.
 process.on('message', (msg) => {
-  if (!msg || !msg.overlayState) return;
+  if (!msg || typeof msg !== 'object') return;
+  if (msg.reloadPlaytimeIndex === true) {
+    if (playtimeMonitorEmitter && typeof playtimeMonitorEmitter.reloadGameIndex === 'function') {
+      playtimeMonitorEmitter.reloadGameIndex().catch((err) => {
+        debug.warn(`[Playtime] gameIndex reload failed => ${err}`);
+      });
+    } else {
+      // The monitor may still be initializing; flush the reload once it is ready.
+      playtimeIndexReloadQueued = true;
+    }
+    return;
+  }
+  if (!msg.overlayState) return;
   const opened = msg.overlayState.opened === true;
   if (opened === overlayOpened) return;
   overlayOpened = opened;
@@ -1111,6 +1126,13 @@ var app = {
       .init()
       .then((monitor) => {
         debug.log('Playtime monitoring activated');
+        playtimeMonitorEmitter = monitor;
+        if (playtimeIndexReloadQueued) {
+          playtimeIndexReloadQueued = false;
+          monitor.reloadGameIndex().catch((err) => {
+            debug.warn(`[Playtime] queued gameIndex reload failed => ${err}`);
+          });
+        }
 
         monitor.on('disable-overlay', () => {
           runningAppid = null;
@@ -1166,7 +1188,9 @@ var app = {
                 gameDisplayName: game.name,
                 achievementDisplayName: game.name || wdStrings.playtime,
                 achievementDescription: description,
-                icon: `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${game.appid}/${game.icon}.jpg`,
+                icon: game.icon
+                  ? `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${game.appid}/${game.icon}.jpg`
+                  : undefined,
                 gameIcon: steamLibraryImage(game.steamappid || game.appid),
                 image: steamHeaderImage(game.steamappid || game.appid),
                 silent: true, // playtime overlay notifications never play a sound

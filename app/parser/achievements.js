@@ -953,12 +953,8 @@ async function scanUnconfiguredInstalls(linkedExes = [], scope = _activeScanScop
     const folderName = path.basename(dir);
     const name = unconfiguredDisplayName(folderName, exe.name, productName && productName.trim().length >= 3 ? productName.trim() : '');
     const id = 'local-' + (crc32(dir.toLowerCase()) >>> 0).toString(16);
-    // hasDll(entries) only looks at this folder's own top-level files. A Unity/UE install ships its
-    // Goldberg files under a nested engine folder ("<Game>_Data/Plugins/x86_64/", "Binaries/Win64/"),
-    // so a shallow check here would miss it and the record below would carry no Steam evidence at all —
-    // which is what the caller uses to decide whether to even attempt merging this install into an
-    // already-known appid instead of surfacing it as a brand-new "Unconfigured" duplicate. Recursive
-    // detection (same one goldberg-scan itself uses) finds that evidence regardless of nesting depth.
+    // A shallow hasDll() check misses Goldberg files under nested Unity/UE engine folders; use the
+    // same recursive detection as the Goldberg scan so the record carries its Steam evidence.
     const emu = detectEmulatorCached(dir);
     out.push({
       appid: id,
@@ -1044,13 +1040,9 @@ async function resolveUnconfiguredSteamAppid(u) {
 }
 
 /*
-  A Ubisoft install found by the unconfigured scan has no steam_api.dll and no steam_appid.txt, so the
-  Steam-app-list resolver above can never identify it — it would stay a nameless "local-<crc>" box with
-  no icon and no achievements. Identify it the way the Uplay R2 fix already does instead: match its
-  folder/exe name against uplay-steam.json to get the game's Steam release, which is exactly the appid
-  whose schema (title, art, achievement list) the emulator's unlocks are keyed on once the fix is
-  applied. Returns the mapping | null (null = Ubisoft install we can't map; it stays unconfigured but is
-  still flagged so the app offers the Uplay R2 fix rather than GBE Fork).
+  A Ubisoft install found by the unconfigured scan has no Steam markers, so resolve it via
+  uplay-steam.json like the Uplay R2 fix does. Returns the Steam mapping or null (still surfaced so the
+  app offers the Uplay R2 fix rather than GBE Fork).
 */
 function resolveUplayR2Mapping(u) {
   const byInstallState = uplayR2.resolveSteamMapping({ gameDir: u && u.data && u.data.gameDir });
@@ -1612,6 +1604,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
         lang: option.achievement.lang,
         key: option.steam.apiKey,
         showHidden: !!(option.achievement && option.achievement.showHidden),
+        fastStart: option.fastStart === true,
         // Known emulator config dir (Goldberg discover) — lets the schema fetch resolve cover art
         // from the local app_product_info.json dump before hitting the network.
         steamSettings: (appid.data && appid.data.steamSettings) || null,
@@ -1804,14 +1797,9 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     const hasSteamAchievementSchema = !!(game.achievement && Array.isArray(game.achievement.list) && game.achievement.list.length > 0);
 
     /*
-      Keep a Uplay R2 setup alive across game updates.
-
-      A Ubisoft repack update re-extracts its own files: achievements_schema.json disappears and the
-      repack's ini (with Achievements off) replaces the configured one. Nothing announces that — the
-      game simply stops recording unlocks and AW keeps showing 0%, which is what the "achievements
-      don't work" report turned out to be. The GBE side already self-heals a missing schema on scan;
-      this is the same idea for the Ubisoft side, and it is purely local: the Steam schema is already
-      in hand at this point, so re-applying is a couple of file writes with no download.
+      Keep a Uplay R2 setup alive across game updates: a repack update re-extracts its own files and
+      disables achievements. Re-apply the already-in-hand Steam schema locally, like the GBE side
+      self-heals.
     */
     if (
       appid.data &&
@@ -1891,12 +1879,9 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       hasSteamAchievementSchema &&
       (appid.data.needsSchema || needsRuntimeFix)
     ) {
-      // Run slow emulator repair in the background so the game appears immediately.
-      // Never silently touch a game a loader like OnlineFix already hooks in place — swapping
-      // steam_api(64).dll for GBE Fork's breaks the loader's own Steamworks/EOS emulation (see
-      // crackLoaderDetect.js). Both the DLL swap (canAutoApply below) and the steam_settings
-      // schema/config write further down (bgWorkingCrackLoader) are skipped for it; the manual
-      // "Apply emulator fix" menu action can still override this for an edge case.
+      // Run slow emulator repair in the background, but never on a game a loader like OnlineFix
+      // already hooks in place — swapping the DLL breaks its emulation. The manual "Apply emulator
+      // fix" action can still override.
       const workingCrackLoader = resolvedGameDir ? crackLoaderDetect.detectWorkingCrackLoader(resolvedGameDir) : null;
       if (workingCrackLoader) {
         debug.log(`[${appid.appid}] automatic emulator fix skipped — ${workingCrackLoader.name} loader already present in ${resolvedGameDir}`);
@@ -2491,20 +2476,10 @@ module.exports.makeList = async (option, callbackProgress, onGame = () => {}) =>
           if (game && (game.unconfigured || game.installed || (game.achievement && game.achievement.total > 0))) {
             result.push(game);
             /*
-              Hand the game to the caller. This must NOT be deferred to a frame callback.
-
-              requestAnimationFrame is only delivered to a VISIBLE document. Achievement Watcher is a
-              tray app whose main window spends most of its life hidden, and that window runs with
-              backgroundThrottling enabled, so while it is hidden the frame callbacks never fire. The
-              renderer builds its `gameList` inside this callback, which meant a scan could complete
-              in the background having appended nothing: the list stayed empty, so the periodic
-              new-game check saw the ENTIRE library as newly installed and triggered a full refresh —
-              every three minutes, indefinitely (observed in the wild: "54 new game(s) detected" on
-              every tick, for a 52-game library).
-
-              Calling straight through costs one DOM append per game, spread across a loop that is
-              already awaiting disk and network between games, and it keeps the caller's state correct
-              whether or not anyone is looking at the window.
+              Hand the game straight to the caller — never via requestAnimationFrame: rAF only fires for
+              a VISIBLE document, and this tray window is usually hidden with backgroundThrottling, so
+              deferred callbacks never run and a background scan would look empty, retriggering full
+              refreshes every few minutes.
             */
             onGame?.(game);
 

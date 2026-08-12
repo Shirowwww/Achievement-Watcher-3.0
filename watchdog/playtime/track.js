@@ -1,11 +1,7 @@
 'use strict';
 
-// regodit is ESM-only (koffi) since v2; load it lazily via dynamic import (cached by Node's module
-// registry). We deliberately use the synchronous API, not `regodit/promises`: under the pinned
-// koffi 3.x the async DWORD write completes but then segfaults (0xC0000005), killing the Watchdog
-// right after `total` is stored — which is why `last` never made it to the registry and the
-// "recently played" sort stayed empty. The sync calls on the same DLL are unaffected, and this
-// runs once per game exit.
+// regodit is ESM-only (koffi); load it lazily and use the SYNC API — under the pinned koffi the async
+// DWORD write segfaults after storing `total`, which is why `last` never reached the registry.
 let regeditPromise = null;
 const loadRegedit = () => regeditPromise || (regeditPromise = import('regodit'));
 

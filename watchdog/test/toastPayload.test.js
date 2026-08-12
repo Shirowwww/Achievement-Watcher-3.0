@@ -138,7 +138,7 @@ test('playtime payload uses its square game logo and always promotes its header 
     // Playtime is a session card: it gets a hero header even if ordinary toast images are off.
     toastOptions({ imageIntegration: '0' })
   );
-  assert.strictEqual(notification.icon, 'https://example.com/tiny.jpg');
+  assert.strictEqual(notification.icon, 'https://example.com/library.jpg');
   assert.strictEqual(notification.cropIcon, false);
   assert.strictEqual(notification.heroImg, 'https://example.com/header.jpg');
   assert.ok(!('headerImg' in notification), 'the unsupported headerImg key must not be sent to powertoast');
