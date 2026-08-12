@@ -225,8 +225,6 @@
           "toggleDescription": "Przyciski wciśnięte razem otwierają lub zamykają nakładkę w grze.",
           "ui": "Sterowanie nakładką",
           "uiDescription": "Przełącza nawigację w nakładce: pierścień fokusu, wyszukiwanie i opcje.",
-          "window": "Sterowanie oknem",
-          "windowDescription": "Przełącza tryb przesuwania/zmiany rozmiaru okna, gdy nakładka jest otwarta.",
           "move": "Przesuwanie i przewijanie",
           "moveDescription": "Przytrzymaj te przyciski, aby przesuwać nakładkę lewą gałką i przewijać prawą."
         },
@@ -960,7 +958,7 @@
     "controller": "Kontroler",
     "controllerWindow": "Sterowanie oknem",
     "controllerUi": "Sterowanie interfejsem",
-    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerHint": "Otwórz: Back + Start + LB · Sterowanie interfejsem: LB + X · Przesuwanie i przewijanie: LB + RB",
     "controllerOpen": "Otwórz",
     "controllerMove": "Przesuń/przewiń"
   },

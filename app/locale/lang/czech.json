@@ -225,8 +225,6 @@
           "toggleDescription": "Tlačítka stisknutá společně pro otevření nebo zavření overlaye ve hře.",
           "ui": "Ovládání rozhraní",
           "uiDescription": "Přepíná navigaci v overlayi: fokusový kroužek, vyhledávání a možnosti.",
-          "window": "Ovládání okna",
-          "windowDescription": "Přepíná režim pohybu/změny velikosti okna, dokud je overlay otevřený.",
           "move": "Pohyb a rolování",
           "moveDescription": "Drž tato tlačítka pro pohyb overlaye levou páčkou a rolování pravou páčkou."
         },
@@ -960,7 +958,7 @@
     "controller": "Ovladač",
     "controllerWindow": "Ovládání okna",
     "controllerUi": "Ovládání rozhraní",
-    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerHint": "Otevřít: Back + Start + LB · Ovládání rozhraní: LB + X · Pohyb a rolování: LB + RB",
     "controllerOpen": "Otevřít",
     "controllerMove": "Pohyb/rolování"
   },

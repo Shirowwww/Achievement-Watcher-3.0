@@ -75,15 +75,22 @@ const CONTROLLER_MODE_ALLOWED = new Set([
 ]);
 
 function normalizeControllerBindingSetting(value, allowedButtons, fallback) {
+  // An unknown/disallowed button anywhere rejects the whole binding (strict=false -> fallback), but
+  // a repeated valid button is just deduplicated, not rejected — matching app/settings.js's
+  // normalizeControllerBindingSetting() (backed by controllerLabels.normalizeControllerBinding()).
+  // The two used to disagree here: the app would save "A+A" as the single-button binding "A", but
+  // the watchdog would reject that same on-disk value and silently fall back to the hardcoded
+  // default, so the setting shown as saved was not what the watchdog actually enforced.
   const seen = new Set();
   const out = [];
   let strict = true;
   for (const raw of String(value || '').split('+')) {
     const name = String(raw || '').trim().toUpperCase();
-    if (!CONTROLLER_BUTTONS.has(name) || !allowedButtons.has(name) || seen.has(name)) {
+    if (!CONTROLLER_BUTTONS.has(name) || !allowedButtons.has(name)) {
       strict = false;
       continue;
     }
+    if (seen.has(name)) continue;
     seen.add(name);
     out.push(name);
   }
@@ -410,7 +417,7 @@ module.exports.load = async (cfg_file) => {
     const toggleBinding = normalizeControllerBindingSetting(
       options.controller.toggleBinding,
       CONTROLLER_TOGGLE_ALLOWED,
-      'BACK+START'
+      'BACK+START+LEFT_SHOULDER'
     );
     if (toggleBinding !== options.controller.toggleBinding) {
       options.controller.toggleBinding = toggleBinding;
@@ -551,7 +558,7 @@ module.exports.load = async (cfg_file) => {
         appNavigation: true,
         backend: 'auto',
         layout: 'auto',
-        toggleBinding: 'BACK+START',
+        toggleBinding: 'BACK+START+LEFT_SHOULDER',
         uiModeBinding: 'LEFT_SHOULDER+X',
         controlModeBinding: 'LEFT_SHOULDER+RIGHT_SHOULDER',
         focusOverlay: false,

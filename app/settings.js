@@ -173,7 +173,7 @@ module.exports.load = () => {
     options.controller.toggleBinding = normalizeControllerBindingSetting(
       options.controller.toggleBinding,
       controllerLabels.TOGGLE_ALLOWED,
-      'BACK+START'
+      'BACK+START+LEFT_SHOULDER'
     );
     options.controller.uiModeBinding = normalizeControllerBindingSetting(
       options.controller.uiModeBinding,
@@ -544,7 +544,7 @@ module.exports.load = () => {
         appNavigation: true,
         backend: 'auto',
         layout: 'auto',
-        toggleBinding: 'BACK+START',
+        toggleBinding: 'BACK+START+LEFT_SHOULDER',
         uiModeBinding: 'LEFT_SHOULDER+X',
         controlModeBinding: 'LEFT_SHOULDER+RIGHT_SHOULDER',
         focusOverlay: false,

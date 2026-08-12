@@ -225,8 +225,6 @@
           "toggleDescription": "一起按下以打开或关闭游戏内覆盖层的按钮。",
           "ui": "覆盖层控制",
           "uiDescription": "切换覆盖层内导航：焦点环、搜索和选项。",
-          "window": "窗口控制",
-          "windowDescription": "覆盖层打开时切换窗口移动/缩放模式。",
           "move": "移动与滚动",
           "moveDescription": "按住这些按钮，用左摇杆移动覆盖层，用右摇杆滚动。"
         },
@@ -960,7 +958,7 @@
     "controller": "控制器",
     "controllerWindow": "窗口控制",
     "controllerUi": "覆盖层控制",
-    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerHint": "打开：Back + Start + LB · 界面控制：LB + X · 移动与滚动：LB + RB",
     "controllerOpen": "打开",
     "controllerMove": "移动/滚动"
   },

@@ -16,8 +16,9 @@ a controller**. The same section also has:
   button names: **Auto** (follows the connected pad when it can be
   identified), **Xbox**, **PlayStation** or **Switch**.
 - **Bindings** — each shortcut accepts one to three buttons. The defaults are
-  **Back + Start** to open/close the overlay, **LB + X** to toggle overlay
-  navigation, and **LB + RB** (held) to move and scroll the overlay.
+  **Back + Start + LB** to open/close the overlay (three buttons on purpose, so
+  it does not open by accident), **LB + X** to toggle overlay navigation, and
+  **LB + RB** (held) to move and scroll the overlay.
 - **Focus overlay when it opens** — gives the overlay keyboard focus when it
   opens. Many games pause when they lose focus.
 - **Send Escape to the game when opening with controller** — sends an Escape
@@ -37,7 +38,7 @@ and keyboard.
 ## In-game overlay
 
 The overlay defaults are covered in the [overlay guide](overlay.md#controller-gamepad).
-In short: **Back + Start** opens or closes the overlay, **LB + X** toggles
+In short: **Back + Start + LB** opens or closes the overlay, **LB + X** toggles
 navigation mode (D-pad/left stick move the focus, **A** confirms, **B** cancels,
 **X** searches, **Y** opens the options), and holding **LB + RB** moves the
 overlay with the left stick and scrolls with the right stick. The header shows

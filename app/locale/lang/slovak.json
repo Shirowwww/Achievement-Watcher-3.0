@@ -225,8 +225,6 @@
           "toggleDescription": "Tlačidlá stlačené spoločne na otvorenie alebo zatvorenie overlayu v hre.",
           "ui": "Ovládanie rozhrania",
           "uiDescription": "Prepína navigáciu v overlayi: fokusový kruh, vyhľadávanie a možnosti.",
-          "window": "Ovládanie okna",
-          "windowDescription": "Prepína režim pohybu/zmeny veľkosti okna, kým je overlay otvorený.",
           "move": "Pohyb a rolovanie",
           "moveDescription": "Podrž tieto tlačidlá na pohyb overlayu ľavou páčkou a rolovanie pravou páčkou."
         },
@@ -960,7 +958,7 @@
     "controller": "Ovládač",
     "controllerWindow": "Ovládanie okna",
     "controllerUi": "Ovládanie rozhrania",
-    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerHint": "Otvoriť: Back + Start + LB · Ovládanie rozhrania: LB + X · Pohyb a rolovanie: LB + RB",
     "controllerOpen": "Otvoriť",
     "controllerMove": "Pohyb/rolovanie"
   },

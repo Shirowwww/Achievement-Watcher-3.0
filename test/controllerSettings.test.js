@@ -38,7 +38,7 @@ test('defaults the controller section when absent', async (t) => {
   assert.equal(opts.controller.appNavigation, true);
   assert.equal(opts.controller.backend, 'auto');
   assert.equal(opts.controller.layout, 'auto');
-  assert.equal(opts.controller.toggleBinding, 'BACK+START');
+  assert.equal(opts.controller.toggleBinding, 'BACK+START+LEFT_SHOULDER');
   assert.equal(opts.controller.uiModeBinding, 'LEFT_SHOULDER+X');
   assert.equal(opts.controller.controlModeBinding, 'LEFT_SHOULDER+RIGHT_SHOULDER');
   assert.equal(opts.controller.focusOverlay, false);
@@ -79,7 +79,7 @@ test('coerces invalid controller settings back to defaults', async (t) => {
     sendEscapeOnControllerOpen: 'yes',
   }, t);
   assert.equal(opts.controller.layout, 'auto');
-  assert.equal(opts.controller.toggleBinding, 'BACK+START');
+  assert.equal(opts.controller.toggleBinding, 'BACK+START+LEFT_SHOULDER');
   assert.equal(opts.controller.uiModeBinding, 'LEFT_SHOULDER+X');
   assert.equal(opts.controller.controlModeBinding, 'A');
   assert.equal(opts.controller.focusOverlay, false);
@@ -96,8 +96,25 @@ test('rejects bindings with more than three buttons', async (t) => {
     toggleBinding: 'BACK+START+GUIDE+A',
     controlModeBinding: 'A+B+X+Y',
   }, t);
-  assert.equal(opts.controller.toggleBinding, 'BACK+START');
+  assert.equal(opts.controller.toggleBinding, 'BACK+START+LEFT_SHOULDER');
   assert.equal(opts.controller.controlModeBinding, 'LEFT_SHOULDER+RIGHT_SHOULDER');
+});
+
+test('a repeated valid button is deduplicated, not rejected, matching the app-side normalizer', async (t) => {
+  // app/settings.js's normalizeControllerBindingSetting (backed by controllerLabels) has always
+  // deduplicated "A+A" into "A" instead of rejecting it. The watchdog's own copy used to treat a
+  // duplicate the same as an unknown button and fall back to the hardcoded default, so the same
+  // on-disk value produced a different effective binding depending on which process read it.
+  const opts = await loadWithController({ controlModeBinding: 'A+A' }, t);
+  assert.equal(opts.controller.controlModeBinding, 'A');
+
+  const fromApp = controllerLabels.normalizeControllerBinding('A+A', { allowSingle: true, maxButtons: 3 });
+  assert.deepEqual(fromApp, ['A'], 'sanity: the app-side normalizer agrees on the deduplicated result');
+});
+
+test('an unknown button still rejects the whole binding, even alongside a valid one', async (t) => {
+  const opts = await loadWithController({ controlModeBinding: 'A+ZZZ' }, t);
+  assert.equal(opts.controller.controlModeBinding, 'LEFT_SHOULDER+RIGHT_SHOULDER', 'falls back to the default');
 });
 
 test('Share + Square (BACK + X) survives settings and matches the Gamepad API', async (t) => {

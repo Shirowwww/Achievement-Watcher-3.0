@@ -111,6 +111,58 @@ test('injects normally when the focused window belongs to the game', () => {
   assert.equal(calls.length, 2);
 });
 
+test('addExcludedPid extends the exclusion set after creation (renderer PID arriving late over IPC)', () => {
+  const calls = [];
+  const fakeKoffi = {
+    load() {
+      return {
+        func() {
+          return (...args) => calls.push(args);
+        },
+      };
+    },
+  };
+  const sender = createKeySender({
+    koffi: fakeKoffi,
+    platform: 'win32',
+    excludePids: [111],
+    getForegroundPid: () => 9999,
+  });
+  assert.equal(sender.sendEscape(), true, 'not excluded yet');
+  assert.equal(calls.length, 2);
+
+  sender.addExcludedPid(9999);
+  assert.equal(sender.sendEscape(), false, 'now excluded');
+  assert.equal(calls.length, 2, 'no extra injection happened');
+});
+
+test('addExcludedPid ignores non-positive or non-finite values instead of excluding pid 0', () => {
+  const calls = [];
+  const fakeKoffi = {
+    load() {
+      return {
+        func() {
+          return (...args) => calls.push(args);
+        },
+      };
+    },
+  };
+  const sender = createKeySender({
+    koffi: fakeKoffi,
+    platform: 'win32',
+    excludePids: [],
+    getForegroundPid: () => 0,
+  });
+  sender.addExcludedPid(0);
+  sender.addExcludedPid(-5);
+  sender.addExcludedPid(NaN);
+  sender.addExcludedPid('nope');
+  // foregroundBelongsToExcludedPid() only short-circuits on a non-empty set; junk input must not
+  // have added anything, or a foreground pid of 0 (no window) would wrongly count as excluded.
+  assert.equal(sender.sendEscape(), true);
+  assert.equal(calls.length, 2);
+});
+
 test('exposes the Escape virtual-key and scancode constants', () => {
   assert.equal(VK_ESCAPE, 0x1b);
   assert.equal(ESCAPE_SCAN_CODE, 0x01);

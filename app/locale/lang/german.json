@@ -225,8 +225,6 @@
           "toggleDescription": "Gleichzeitig gedrückte Tasten zum Öffnen oder Schließen des In-Game-Overlays.",
           "ui": "Overlay-Steuerung",
           "uiDescription": "Schaltet die Navigation im Overlay um: Fokusring, Suche und Optionen.",
-          "window": "Fenstersteuerung",
-          "windowDescription": "Schaltet den Modus zum Verschieben/Größenändern des Fensters um, solange das Overlay offen ist.",
           "move": "Bewegen & scrollen",
           "moveDescription": "Halte diese Tasten gedrückt, um das Overlay mit dem linken Stick zu bewegen und mit dem rechten Stick zu scrollen."
         },
@@ -960,7 +958,7 @@
     "controller": "Controller",
     "controllerWindow": "Fenstersteuerung",
     "controllerUi": "Overlay-Steuerung",
-    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerHint": "Öffnen: Back + Start + LB · Overlay-Steuerung: LB + X · Bewegen & scrollen: LB + RB",
     "controllerOpen": "Öffnen",
     "controllerMove": "Bewegen/scrollen"
   },

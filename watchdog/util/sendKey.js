@@ -92,6 +92,13 @@ function createKeySender({
         return false;
       }
     },
+    // The main window's renderer OS PID does not exist yet at watchdog spawn time on a fresh
+    // launch (createMainWindow() runs after launchWatchdog()), so AW_APP_PIDS alone cannot cover
+    // it. The main process calls this once the window is actually created.
+    addExcludedPid(pid) {
+      const value = Number(pid);
+      if (Number.isFinite(value) && value > 0) excluded.add(value);
+    },
   };
 }
 
@@ -111,9 +118,14 @@ function sendEscapeToFocusedWindow() {
   return defaultSender.sendEscape();
 }
 
+function addExcludedPid(pid) {
+  defaultSender.addExcludedPid(pid);
+}
+
 module.exports = {
   createKeySender,
   sendEscapeToFocusedWindow,
+  addExcludedPid,
   VK_ESCAPE,
   KEYEVENTF_SCANCODE,
   KEYEVENTF_KEYUP,

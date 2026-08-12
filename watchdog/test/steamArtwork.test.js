@@ -151,6 +151,42 @@ test('legacy URLs remain the fallback when no cache exists', () => {
   }
 });
 
+test('store and SteamDB cover json are read from disk once per file, then served from cache', () => {
+  const root = fixture();
+  try {
+    writeJson(root, 'steam_cache/store/3751950.json', {
+      header: 'https://cdn.example/3751950/hash/capsule_616x353.jpg',
+      portrait: 'https://cdn.example/3751950/hash/library_capsule.jpg',
+    });
+    writeJson(root, 'steam_cache/steamdb_cover/3751950.json', {
+      appid: '3751950',
+      url: 'https://cdn.example/3751950/hash/library_600x900.jpg',
+    });
+
+    const original = fs.readFileSync;
+    let reads = 0;
+    fs.readFileSync = (...args) => {
+      if (String(args[0]).includes('3751950')) reads += 1;
+      return original.apply(fs, args);
+    };
+    try {
+      // Each call touches both header (store) and portrait (store + steamdb cover) lookups; a
+      // second unlock notification for the same game must not re-parse either json file.
+      steamHeaderImage('3751950', { userDataRoot: root });
+      steamLibraryImage('3751950', { userDataRoot: root });
+      const readsAfterFirstPass = reads;
+      steamHeaderImage('3751950', { userDataRoot: root });
+      steamLibraryImage('3751950', { userDataRoot: root });
+      assert.equal(reads, readsAfterFirstPass, 'a repeated lookup must be served from cache, not re-read from disk');
+      assert.ok(reads > 0, 'sanity: the spy actually observed the initial reads');
+    } finally {
+      fs.readFileSync = original;
+    }
+  } finally {
+    cleanup(root);
+  }
+});
+
 test('non-numeric appids never produce a broken Steam CDN URL', () => {
   assert.equal(steamHeaderImage('socialclub-smartsteamemu'), undefined);
   assert.equal(steamLibraryImage('socialclub-smartsteamemu'), undefined);

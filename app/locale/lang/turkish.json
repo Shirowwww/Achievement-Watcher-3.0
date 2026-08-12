@@ -225,8 +225,6 @@
           "toggleDescription": "Oyundaki overlayi açmak veya kapatmak için birlikte basılan düğmeler.",
           "ui": "Arayüz kontrolü",
           "uiDescription": "Overlay içinde gezinmeyi açar: odak halkası, arama ve seçenekler.",
-          "window": "Pencere kontrolü",
-          "windowDescription": "Overlay açıkken pencereyi taşıma/boyutlandırma modunu açar.",
           "move": "Taşı ve kaydır",
           "moveDescription": "Overlayi sol çubukla taşımak ve sağ çubukla kaydırmak için bu düğmeleri basılı tut."
         },
@@ -960,7 +958,7 @@
     "controller": "Kumanda",
     "controllerWindow": "Pencere kontrolü",
     "controllerUi": "Arayüz kontrolü",
-    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerHint": "Aç: Back + Start + LB · Arayüz kontrolü: LB + X · Taşı ve kaydır: LB + RB",
     "controllerOpen": "Aç",
     "controllerMove": "Taşı/kaydır"
   },

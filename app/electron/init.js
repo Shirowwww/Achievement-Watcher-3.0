@@ -289,7 +289,7 @@ function overlayControllerConfigPayload() {
     layout: String(c.layout || 'auto'),
     nativeModeToggles: c.enabled === true,
     bindings: {
-      toggle: split(c.toggleBinding, ['BACK', 'START']),
+      toggle: split(c.toggleBinding, ['BACK', 'START', 'LEFT_SHOULDER']),
       ui: split(c.uiModeBinding, ['LEFT_SHOULDER', 'X']),
       move: split(c.controlModeBinding, ['LEFT_SHOULDER', 'RIGHT_SHOULDER']),
     },
@@ -1286,6 +1286,31 @@ function scheduleMonitorRespawn() {
   debug.log(`[monitor] respawn scheduled in ${delay}ms`);
 }
 
+// The main window is usually not created yet when this first runs (createMainWindow() runs after
+// launchWatchdog() on a fresh start), so callers must not assume a non-null result means "no window".
+function getRendererPid() {
+  try {
+    if (MainWin && !MainWin.isDestroyed() && MainWin.webContents && !MainWin.webContents.isDestroyed()) {
+      const rendererPid = MainWin.webContents.getOSProcessId();
+      if (Number.isInteger(rendererPid) && rendererPid > 0) return rendererPid;
+    }
+  } catch {}
+  return null;
+}
+
+// Covers the gap AW_APP_PIDS cannot: on a fresh launch the watchdog is already running (and has
+// already read its env) by the time createMainWindow() gives the renderer its OS PID. Without this,
+// the "send Escape to the game, never to AW itself" safeguard would not protect the main window
+// until the next watchdog respawn.
+function notifyWatchdogOfAppPid() {
+  const rendererPid = getRendererPid();
+  if (!rendererPid) return;
+  if (!monitorProc || monitorProc.exitCode !== null || monitorProc.killed || !monitorProc.connected) return;
+  try {
+    monitorProc.send({ appPid: rendererPid });
+  } catch {}
+}
+
 function launchWatchdog() {
   // Clearing the handle is not enough: scheduleMonitorRespawn() treats a non-null monitorRespawnTimer
   // as "a respawn is already pending" and returns early. A manual restart (tray/Settings) landing
@@ -1336,18 +1361,9 @@ function launchWatchdog() {
     // input into the Achievement Watcher window itself (e.g. when the combo is pressed while the
     // app has focus instead of the game). Covers both the browser process and the main window's
     // renderer, whichever owns the foreground HWND.
-    AW_APP_PIDS: [
-      String(process.pid),
-      (() => {
-        try {
-          if (MainWin && !MainWin.isDestroyed() && MainWin.webContents && !MainWin.webContents.isDestroyed()) {
-            const rendererPid = MainWin.webContents.getOSProcessId();
-            if (Number.isInteger(rendererPid) && rendererPid > 0) return String(rendererPid);
-          }
-        } catch {}
-        return null;
-      })(),
-    ]
+    // MainWin usually does not exist yet on a fresh launch (createMainWindow() runs after this),
+    // so this only covers the common respawn/restart case. notifyWatchdogOfAppPid() covers the gap.
+    AW_APP_PIDS: [String(process.pid), getRendererPid()]
       .filter(Boolean)
       .join(','),
   };
@@ -2206,6 +2222,7 @@ function createMainWindow() {
     //getSteamData({ appid: 2321470, type: 'user' });
     MainWin = new BrowserWindow(options);
     getRemoteMain().enable(MainWin.webContents);
+    notifyWatchdogOfAppPid();
 
     // A download started while the app was tray-only has no taskbar button to draw on. Opening the
     // window creates one, so hand it the progress that is already running.
@@ -2507,6 +2524,9 @@ function scrollOverlayPage(direction) {
     .catch(() => {});
 }
 function setOverlayControlMode(active) {
+  // No overlayVisible check here on purpose: hideOverlayWindow() calls this to reset click-through
+  // state during the hide transition itself, after overlayVisible has already been set false but
+  // while the window is still valid — an overlayVisible guard would silently skip that reset.
   if (!overlayWindow || overlayWindow.isDestroyed()) return;
   // In control mode the overlay must receive stick/dpad-driven moves, so force it interactive
   // (not click-through). Leaving control mode restores the last click-through state.
@@ -3608,12 +3628,11 @@ ipcMain.handle('pick-theme-image', async (event, layer) => {
 // Forward a theme change (Settings > General, or the Custom theme editor) to an
 // already-open in-game overlay so it recolors without reopening.
 ipcMain.on('theme-changed', (event, name) => {
-  if (overlayVisible && !overlayWindow.webContents.isDestroyed()) {
-    try {
-      overlayWindow.webContents.send('overlay-theme', currentThemePayload(name));
-    } catch (err) {
-      debug.log(`[overlay-theme] broadcast failed: ${err.message || err}`);
-    }
+  if (!overlayVisible || !overlayWindow || overlayWindow.isDestroyed() || overlayWindow.webContents.isDestroyed()) return;
+  try {
+    overlayWindow.webContents.send('overlay-theme', currentThemePayload(name));
+  } catch (err) {
+    debug.log(`[overlay-theme] broadcast failed: ${err.message || err}`);
   }
 });
 

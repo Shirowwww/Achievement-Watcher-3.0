@@ -279,7 +279,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#option_controllerBackend').val(app.config.controller.backend || 'auto').change();
       $('#option_controllerLayout').val(app.config.controller.layout || 'auto');
       populateControllerBindingOptions();
-      setControllerBinding('#option_controllerToggle1', '#option_controllerToggle2', '#option_controllerToggle3', app.config.controller.toggleBinding || 'BACK+START');
+      setControllerBinding('#option_controllerToggle1', '#option_controllerToggle2', '#option_controllerToggle3', app.config.controller.toggleBinding || 'BACK+START+LEFT_SHOULDER');
       setControllerBinding('#option_controllerUi1', '#option_controllerUi2', '#option_controllerUi3', app.config.controller.uiModeBinding || 'LEFT_SHOULDER+X');
       setControllerBinding('#option_controllerMove1', '#option_controllerMove2', '#option_controllerMove3', app.config.controller.controlModeBinding || 'LEFT_SHOULDER+RIGHT_SHOULDER');
       $('#option_controllerFocusOverlay').val(String(app.config.controller.focusOverlay === true)).change();
@@ -660,7 +660,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       app.config.controller.appNavigation = $('#option_controllerAppNavigation').val() === 'true';
       app.config.controller.backend = $('#option_controllerBackend').val() || 'auto';
       app.config.controller.layout = $('#option_controllerLayout').val() || 'auto';
-      app.config.controller.toggleBinding = readControllerBinding('#option_controllerToggle1', '#option_controllerToggle2', '#option_controllerToggle3', 'BACK+START');
+      app.config.controller.toggleBinding = readControllerBinding('#option_controllerToggle1', '#option_controllerToggle2', '#option_controllerToggle3', 'BACK+START+LEFT_SHOULDER');
       app.config.controller.uiModeBinding = readControllerBinding('#option_controllerUi1', '#option_controllerUi2', '#option_controllerUi3', 'LEFT_SHOULDER+X');
       app.config.controller.controlModeBinding = readControllerBinding('#option_controllerMove1', '#option_controllerMove2', '#option_controllerMove3', 'LEFT_SHOULDER+RIGHT_SHOULDER');
       app.config.controller.focusOverlay = $('#option_controllerFocusOverlay').val() === 'true';

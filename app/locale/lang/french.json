@@ -209,8 +209,6 @@
           "toggleDescription": "Boutons pressés ensemble pour ouvrir ou fermer l’overlay en jeu.",
           "ui": "Contrôle de l’interface",
           "uiDescription": "Active/désactive la navigation dans l’overlay : anneau de focus, recherche et options.",
-          "window": "Contrôle de la fenêtre",
-          "windowDescription": "Active/désactive le déplacement et le redimensionnement de la fenêtre quand l’overlay est ouvert.",
           "move": "Déplacer et défiler",
           "moveDescription": "Maintenez ces boutons pour déplacer l’overlay avec le stick gauche et défiler avec le stick droit."
         },
@@ -960,7 +958,7 @@
     "controller": "Manette",
     "controllerWindow": "Contrôle de la fenêtre",
     "controllerUi": "Contrôle de l’interface",
-    "controllerHint": "Ouvrir : Select + Start · Contrôle interface : LB + X · Déplacer/défiler : LB + RB",
+    "controllerHint": "Ouvrir : Select + Start + LB · Contrôle interface : LB + X · Déplacer/défiler : LB + RB",
     "controllerOpen": "Ouvrir",
     "controllerMove": "Déplacer/défiler"
   },

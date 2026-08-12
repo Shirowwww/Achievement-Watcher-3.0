@@ -192,8 +192,12 @@ switch ($Command) {
     }
     # Remove the flag that disables Electron's GUI.
     Remove-Item Env:\ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
-    # Launch Electron directly so the shell is not kept alive.
-    Start-Process -FilePath $Electron -ArgumentList '.' -WorkingDirectory $AppDir -WindowStyle Hidden
+    # Launch Electron directly so the shell is not kept alive. -WindowStyle Hidden must NOT be used
+    # here: Windows applies that show-state hint to the child process's own first top-level window,
+    # so the app's main window comes up with isVisible()=false and never recovers on its own (the
+    # app's later BrowserWindow.show() does not override it) — electron.exe has no console window to
+    # hide in the first place, so the flag serves no purpose here and only breaks the launch.
+    Start-Process -FilePath $Electron -ArgumentList '.' -WorkingDirectory $AppDir
 
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ((Get-Date) -lt $deadline) {

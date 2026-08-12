@@ -218,7 +218,10 @@ const CONTROLLER_BUTTON_ORDER = [
   "DPAD_RIGHT",
 ];
 
-const DEFAULT_OVERLAY_CONTROLLER_TOGGLE_BINDING = ["BACK", "START"];
+// Three buttons on purpose: Back+Start alone is comfortable to hit by accident during normal
+// play (both sit in the same thumb-reach zone), so the shipped default adds a shoulder button
+// (a different digit entirely) to make an accidental open/close far less likely.
+const DEFAULT_OVERLAY_CONTROLLER_TOGGLE_BINDING = ["BACK", "START", "LEFT_SHOULDER"];
 const OVERLAY_CONTROLLER_TOGGLE_ALLOWED_BUTTONS = [
   "BACK",
   "START",
@@ -257,8 +260,6 @@ const OVERLAY_CONTROLLER_CONTROL_MODE_ALLOWED_BUTTONS = [
   "DPAD_RIGHT",
 ];
 const DEFAULT_OVERLAY_CONTROLLER_UI_MODE_BINDING = ["LEFT_SHOULDER", "X"];
-const OVERLAY_CONTROLLER_MODE_ALLOWED_BUTTONS =
-  OVERLAY_CONTROLLER_CONTROL_MODE_ALLOWED_BUTTONS;
 
 const DEFAULTS = {
   pollIntervalMs: 16,
@@ -423,11 +424,10 @@ function normalizeControllerBinding(value, options = {}) {
   return null;
 }
 
-function matchesControllerBinding(buttonState, binding) {
-  const normalized = normalizeControllerBinding(binding, {
-    allowSingle: true,
-    maxButtons: 3,
-  });
+// Split out of matchesControllerBinding() so hot paths that poll the same binding ~60 times/sec
+// (the toggle/ui-mode/control-mode combo checks) can normalize once per settings change and reuse
+// the result, instead of paying normalizeControllerBinding()'s Set-rebuild-and-sort cost every tick.
+function matchesNormalizedBinding(buttonState, normalized) {
   if (!normalized || !normalized.length) return false;
   const buttons = Number(
     buttonState && typeof buttonState === "object"
@@ -449,6 +449,30 @@ function matchesControllerBinding(buttonState, binding) {
     const mask = CONTROLLER_BUTTON_MASKS[buttonName];
     return Number.isFinite(mask) && hasButtons(buttons, mask);
   });
+}
+
+function matchesControllerBinding(buttonState, binding) {
+  const normalized = normalizeControllerBinding(binding, {
+    allowSingle: true,
+    maxButtons: 3,
+  });
+  return matchesNormalizedBinding(buttonState, normalized);
+}
+
+// Caches the normalized form of a binding whose raw source (an options.ini string, refreshed by a
+// getter) rarely changes, so a hot poll-tick path only re-normalizes when the raw value itself
+// changes rather than on every call.
+function createNormalizedBindingCache() {
+  let lastRaw;
+  let lastNormalized = null;
+  let primed = false;
+  return function getNormalized(raw) {
+    if (primed && raw === lastRaw) return lastNormalized;
+    lastRaw = raw;
+    lastNormalized = normalizeControllerBinding(raw, { allowSingle: true, maxButtons: 3 });
+    primed = true;
+    return lastNormalized;
+  };
 }
 
 function normalizeAxis(rawValue, deadzone) {
@@ -1313,18 +1337,27 @@ function createXInputPollingBackend(logger, options = {}) {
         if (connectedIndexes.length > 0) {
           const targetIndex = connectedIndexes[0];
           const current = states[targetIndex];
-          states[targetIndex] = normalizeGamepadState({
-            ...current,
-            packetNumber: Math.max(
-              Number(current?.packetNumber || 0),
-              Number(rawState?.packetNumber || 0),
-            ),
-            systemButtons:
-              (Number(current?.systemButtons || 0) |
-                Number(rawState?.systemButtons || 0)) >>>
-              0,
-            deviceKey: current?.deviceKey || rawState?.deviceKey || `xinput:${targetIndex}`,
-          });
+          if (isSonyRawHidSnapshot(rawHidSnapshot)) {
+            // Mirrors the GameInput backend's Sony correction: XInput quantizes/drifts a DS4's
+            // analog sticks more than the raw HID report does, so prefer the raw-HID sticks here
+            // too instead of only merging the system (Guide) button.
+            states[targetIndex] = mergeSonyRawHidStandardState(current, rawState, {
+              profileId: rawHidSnapshot?.profileId || null,
+            });
+          } else {
+            states[targetIndex] = normalizeGamepadState({
+              ...current,
+              packetNumber: Math.max(
+                Number(current?.packetNumber || 0),
+                Number(rawState?.packetNumber || 0),
+              ),
+              systemButtons:
+                (Number(current?.systemButtons || 0) |
+                  Number(rawState?.systemButtons || 0)) >>>
+                0,
+              deviceKey: current?.deviceKey || rawState?.deviceKey || `xinput:${targetIndex}`,
+            });
+          }
         }
       }
       return states;
@@ -2765,6 +2798,11 @@ function createControllerInputManager(options = {}) {
     typeof options.getOverlayUiModeBinding === "function"
       ? options.getOverlayUiModeBinding
       : () => DEFAULT_OVERLAY_CONTROLLER_UI_MODE_BINDING;
+  // One cache per binding kind: each is re-normalized only when its raw (options.ini) value
+  // actually changes, instead of on every poll tick for every connected slot.
+  const normalizedToggleBinding = createNormalizedBindingCache();
+  const normalizedControlModeBinding = createNormalizedBindingCache();
+  const normalizedUiModeBinding = createNormalizedBindingCache();
   const isOverlayPresented =
     typeof options.isOverlayPresented === "function"
       ? options.isOverlayPresented
@@ -3091,25 +3129,19 @@ function createControllerInputManager(options = {}) {
   }
 
   function isToggleComboPressed(buttons) {
-    return matchesControllerBinding(
-      buttons,
-      getOverlayToggleBinding?.() || DEFAULT_OVERLAY_CONTROLLER_TOGGLE_BINDING,
-    );
+    const raw = getOverlayToggleBinding?.() || DEFAULT_OVERLAY_CONTROLLER_TOGGLE_BINDING;
+    return matchesNormalizedBinding(buttons, normalizedToggleBinding(raw));
   }
 
   function isControlModeHoldPressed(buttons) {
-    return matchesControllerBinding(
-      buttons,
-      getOverlayControlModeBinding?.() ||
-        DEFAULT_OVERLAY_CONTROLLER_CONTROL_MODE_BINDING,
-    );
+    const raw =
+      getOverlayControlModeBinding?.() || DEFAULT_OVERLAY_CONTROLLER_CONTROL_MODE_BINDING;
+    return matchesNormalizedBinding(buttons, normalizedControlModeBinding(raw));
   }
 
   function isOverlayUiModePressed(buttons) {
-    return matchesControllerBinding(
-      buttons,
-      getOverlayUiModeBinding?.() || DEFAULT_OVERLAY_CONTROLLER_UI_MODE_BINDING,
-    );
+    const raw = getOverlayUiModeBinding?.() || DEFAULT_OVERLAY_CONTROLLER_UI_MODE_BINDING;
+    return matchesNormalizedBinding(buttons, normalizedUiModeBinding(raw));
   }
 
   function processModeToggleCombo(slot, mode, pressed, now) {
@@ -3161,10 +3193,14 @@ function createControllerInputManager(options = {}) {
     for (let userIndex = 0; userIndex < slots.length; userIndex += 1) {
       const slot = slots[userIndex];
       if (!slot.connected || !slot.current) continue;
+      // The shipped defaults (LEFT_SHOULDER+X for ui-mode, LEFT_SHOULDER+RIGHT_SHOULDER for
+      // control-mode) share a button, so a 3-button hold can satisfy both at once. Control-mode
+      // wins: it's the hold-based binding, and updateControlMode() below re-checks it every tick.
       processModeToggleCombo(
         slot,
         "ui",
-        isOverlayUiModePressed(slot.current),
+        isOverlayUiModePressed(slot.current) &&
+          !isControlModeHoldPressed(slot.current),
         now,
       );
     }
@@ -3695,12 +3731,15 @@ module.exports = {
   normalizeBackendPreference,
   normalizeControllerBinding,
   matchesControllerBinding,
+  matchesNormalizedBinding,
+  createNormalizedBindingCache,
+  isSonyRawHidSnapshot,
+  mergeSonyRawHidStandardState,
   normalizeControllerButtonName,
   DEFAULT_OVERLAY_CONTROLLER_TOGGLE_BINDING,
   DEFAULT_OVERLAY_CONTROLLER_CONTROL_MODE_BINDING,
   DEFAULT_OVERLAY_CONTROLLER_UI_MODE_BINDING,
   OVERLAY_CONTROLLER_TOGGLE_ALLOWED_BUTTONS,
   OVERLAY_CONTROLLER_CONTROL_MODE_ALLOWED_BUTTONS,
-  OVERLAY_CONTROLLER_MODE_ALLOWED_BUTTONS,
   XINPUT_BUTTONS,
 };

@@ -58,6 +58,26 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - The Watchdog now uses the synchronous regodit API for its remaining registry
   reads (Documents-folder lookup and controller-rumble settings), closing the
   same koffi crash path that was already fixed for playtime registry writes.
+- The default **Overlay control** (LB+X) and **Move & scroll** (LB+RB) controller combos
+  shared the Left Shoulder button, so holding all three buttons at once triggered both
+  actions together; the interface-navigation toggle now yields to move/scroll mode when
+  both combos are held.
+- The default overlay open/close combo is now **Back + Start + LB** instead of just
+  **Back + Start**, which sat close enough together that some pads could trigger it by
+  accident; new setups get the safer three-button combo, existing custom bindings are
+  unaffected.
+- The "never send Escape to Achievement Watcher's own window" controller safeguard did not
+  protect the main window on a fresh launch, since the window did not exist yet when the
+  Watchdog first started; it now updates the moment the window is created.
+- A duplicated button in a custom controller binding (e.g. the same button picked twice)
+  was accepted by the app but rejected by the Watchdog, which silently fell back to the
+  default combo instead of the one shown as saved in Settings.
+- A DualShock 4's analog-stick drift/quantization correction only applied when the app used
+  the GameInput controller backend; it now applies for the XInput backend too.
+- Removed stale controller help text describing a window move/resize mode that no longer
+  exists.
+- 16 of the 18 bundled locales showed the in-game controller hint ("Open: Back + Start ·
+  ...") in English instead of their own language.
 
 ### Performance
 
@@ -68,6 +88,11 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - Skeleton tiles now animate with a GPU-composited shimmer instead of repainting a moving
   background, and the library scan progress bar eases instead of moving at a fixed linear
   rate, so both loaders feel smoother during refreshes.
+- Notification artwork lookups (Steam header/portrait) are now cached per source file
+  instead of re-reading and re-parsing the same store/SteamDB JSON from disk for every
+  achievement processed in one scan.
+- Controller bindings are now normalized once per settings change instead of on every
+  poll tick (up to ~60 times a second per connected controller).
 
 ### Security
 

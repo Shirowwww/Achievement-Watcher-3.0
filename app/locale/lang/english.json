@@ -225,8 +225,6 @@
           "toggleDescription": "Buttons pressed together to open or close the in-game overlay.",
           "ui": "Overlay control",
           "uiDescription": "Toggles in-overlay navigation: focus ring, search and options.",
-          "window": "Window control",
-          "windowDescription": "Toggles window move/resize mode while the overlay is open.",
           "move": "Move & scroll",
           "moveDescription": "Hold these buttons to move the overlay with the left stick and scroll with the right stick."
         },
@@ -960,7 +958,7 @@
     "controller": "Controller",
     "controllerWindow": "Window control",
     "controllerUi": "Overlay control",
-    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerHint": "Open: Back + Start + LB · Overlay control: LB + X · Move/scroll: LB + RB",
     "controllerOpen": "Open",
     "controllerMove": "Move/scroll"
   },

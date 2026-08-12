@@ -225,8 +225,6 @@
           "toggleDescription": "Egyszerre nyomott gombok az overlay megnyitásához vagy bezárásához a játékban.",
           "ui": "Felületvezérlés",
           "uiDescription": "Váltja az overlayben a navigációt: fókuszgyűrű, keresés és opciók.",
-          "window": "Ablakvezérlés",
-          "windowDescription": "Váltja az ablak mozgatás/átméretezés módját, amíg az overlay nyitva van.",
           "move": "Mozgatás és görgetés",
           "moveDescription": "Tartsd ezeket a gombokat az overlay mozgatásához a bal karral, a görgetéshez pedig a jobb karral."
         },
@@ -960,7 +958,7 @@
     "controller": "Kontroller",
     "controllerWindow": "Ablakvezérlés",
     "controllerUi": "Felületvezérlés",
-    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerHint": "Megnyitás: Back + Start + LB · Felületvezérlés: LB + X · Mozgatás és görgetés: LB + RB",
     "controllerOpen": "Megnyitás",
     "controllerMove": "Mozgatás/görgetés"
   },

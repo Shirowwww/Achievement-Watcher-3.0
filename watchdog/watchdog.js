@@ -63,7 +63,7 @@ const GlobalHotkey = require('./util/globalHotkey.js');
 const { createOverlayControllerService } = require('./console/controller/overlay-controller-service.js');
 const humanizeDuration = require('humanize-duration');
 const { resolvePowerShell } = require('./util/powershell.js');
-const { sendEscapeToFocusedWindow } = require('./util/sendKey.js');
+const { sendEscapeToFocusedWindow, addExcludedPid } = require('./util/sendKey.js');
 const toastIdentity = require('./util/toastIdentity.js');
 const { userDataDir } = require('./util/userData.js');
 const { steamHeaderImage, steamLibraryImage } = require('./util/steamArtwork.js');
@@ -357,7 +357,8 @@ function syncOverlayController() {
       isSupportEnabled: () => controllerOptions().enabled === true,
       getPreferredBackend: () => controllerOptions().backend || 'auto',
       isDebugLoggingEnabled: () => controllerOptions().debugLogging === true,
-      getOverlayToggleBinding: () => parseControllerBinding(controllerOptions().toggleBinding, ['BACK', 'START']),
+      getOverlayToggleBinding: () =>
+        parseControllerBinding(controllerOptions().toggleBinding, ['BACK', 'START', 'LEFT_SHOULDER']),
       getOverlayControlModeBinding: () =>
         parseControllerBinding(controllerOptions().controlModeBinding, ['LEFT_SHOULDER', 'RIGHT_SHOULDER']),
       getOverlayUiModeBinding: () =>
@@ -422,6 +423,13 @@ module.exports = { SpawnOverlayNotification };
 // caused ourselves arrive here too and are dropped by the equality check below.
 process.on('message', (msg) => {
   if (!msg || typeof msg !== 'object') return;
+  if (msg.appPid !== undefined) {
+    // The main window's renderer OS PID does not exist yet when the watchdog is first spawned
+    // (createMainWindow() runs after launchWatchdog()), so AW_APP_PIDS alone misses it on a fresh
+    // launch. The main process sends it as soon as the window is actually created.
+    addExcludedPid(msg.appPid);
+    return;
+  }
   if (msg.reloadPlaytimeIndex === true) {
     if (playtimeMonitorEmitter && typeof playtimeMonitorEmitter.reloadGameIndex === 'function') {
       playtimeMonitorEmitter.reloadGameIndex().catch((err) => {

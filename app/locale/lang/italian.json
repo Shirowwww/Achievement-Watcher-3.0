@@ -225,8 +225,6 @@
           "toggleDescription": "Pulsanti premuti insieme per aprire o chiudere l’overlay nel gioco.",
           "ui": "Controllo overlay",
           "uiDescription": "Attiva la navigazione nell’overlay: anello di focus, ricerca e opzioni.",
-          "window": "Controllo finestra",
-          "windowDescription": "Attiva la modalità di spostamento/ridimensionamento della finestra mentre l’overlay è aperto.",
           "move": "Sposta e scorri",
           "moveDescription": "Tieni premuti questi pulsanti per spostare l’overlay con lo stick sinistro e scorrere con il destro."
         },
@@ -960,7 +958,7 @@
     "controller": "Controller",
     "controllerWindow": "Controllo finestra",
     "controllerUi": "Controllo interfaccia",
-    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerHint": "Apri: Back + Start + LB · Controllo interfaccia: LB + X · Sposta e scorri: LB + RB",
     "controllerOpen": "Apri",
     "controllerMove": "Sposta/scorri"
   },

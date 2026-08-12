@@ -225,8 +225,6 @@
           "toggleDescription": "ゲーム内オーバーレイを開いたり閉じたりするために一緒に押すボタン。",
           "ui": "オーバーレイ操作",
           "uiDescription": "オーバーレイ内のナビゲーション（フォーカスリング、検索、オプション）を切り替えます。",
-          "window": "ウィンドウ操作",
-          "windowDescription": "オーバーレイ表示中にウィンドウの移動・サイズ変更モードを切り替えます。",
           "move": "移動とスクロール",
           "moveDescription": "左スティックでオーバーレイを移動し、右スティックでスクロールする間、これらのボタンを押し続けます。"
         },
@@ -960,7 +958,7 @@
     "controller": "コントローラー",
     "controllerWindow": "ウィンドウ操作",
     "controllerUi": "オーバーレイ操作",
-    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerHint": "開く: Back + Start + LB · オーバーレイ操作: LB + X · 移動とスクロール: LB + RB",
     "controllerOpen": "開く",
     "controllerMove": "移動/スクロール"
   },

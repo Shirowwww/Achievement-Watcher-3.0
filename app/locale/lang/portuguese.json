@@ -225,8 +225,6 @@
           "toggleDescription": "Botões premidos em conjunto para abrir ou fechar a sobreposição no jogo.",
           "ui": "Controlo da interface",
           "uiDescription": "Ativa a navegação na sobreposição: anel de foco, pesquisa e opções.",
-          "window": "Controlo da janela",
-          "windowDescription": "Ativa o modo de mover/redimensionar a janela enquanto a sobreposição está aberta.",
           "move": "Mover e deslocar",
           "moveDescription": "Mantém estes botões premidos para mover a sobreposição com o stick esquerdo e deslocar com o direito."
         },
@@ -960,7 +958,7 @@
     "controller": "Controlador",
     "controllerWindow": "Controlo da janela",
     "controllerUi": "Controlo da interface",
-    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerHint": "Abrir: Back + Start + LB · Controlo da interface: LB + X · Mover e deslocar: LB + RB",
     "controllerOpen": "Abrir",
     "controllerMove": "Mover/deslocar"
   },

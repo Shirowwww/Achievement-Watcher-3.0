@@ -36,8 +36,34 @@ function isPredictableLegacySteamUrl(value) {
   );
 }
 
-// Keyed by schema file path so tests using temp roots never see stale schema art.
-const schemaArtCache = new Map();
+// A real, non-placeholder image URL — worth using, but may still be a legacy-shaped guess.
+function isUsableArt(value) {
+  return isImageUrl(value) && !isKnownPlaceholder(value);
+}
+
+// Usable *and* not a legacy-shaped guess likely to 404 on modern titles — the best tier.
+function isResolvedArt(value) {
+  return isUsableArt(value) && !isPredictableLegacySteamUrl(value);
+}
+
+// Keyed by resolved file path so tests using temp roots never see stale cached art, and so a game
+// re-scanned mid-session (new schema/store/cover json written) picks up the change on its next read.
+const jsonFileCache = new Map();
+
+function readJsonCached(filePath) {
+  let stat;
+  try {
+    stat = fs.statSync(filePath);
+  } catch {
+    return null;
+  }
+  const key = path.resolve(filePath);
+  const cached = jsonFileCache.get(key);
+  if (cached && cached.mtimeMs === stat.mtimeMs) return cached.data;
+  const data = readJson(filePath);
+  jsonFileCache.set(key, { mtimeMs: stat.mtimeMs, data });
+  return data;
+}
 
 // The app normally caches the english schema, but a fresh install may only have the user's
 // language. Search any language directory so the resolved header/portrait is still found.
@@ -61,30 +87,19 @@ function findSchemaArtFile(root, appid) {
 function cachedSchemaArt(appid, root) {
   const file = findSchemaArtFile(root, appid);
   if (!file) return null;
-  let stat;
-  try {
-    stat = fs.statSync(file);
-  } catch {
-    return null;
-  }
-  const key = path.resolve(file);
-  const cached = schemaArtCache.get(key);
-  if (cached && cached.mtimeMs === stat.mtimeMs) return cached.img;
-  const data = readJson(file);
-  const img = data && typeof data.img === 'object' && data.img ? data.img : null;
-  schemaArtCache.set(key, { mtimeMs: stat.mtimeMs, img });
-  return img;
+  const data = readJsonCached(file);
+  return data && typeof data.img === 'object' && data.img ? data.img : null;
 }
 
 function cachedStoreArt(appid, root) {
-  return readJson(path.join(root, 'steam_cache', 'store', `${appid}.json`)) || null;
+  return readJsonCached(path.join(root, 'steam_cache', 'store', `${appid}.json`));
 }
 
 function cachedSteamDbPortrait(appid, root) {
-  const single = readJson(path.join(root, 'steam_cache', 'steamdb_cover', `${appid}.json`));
+  const single = readJsonCached(path.join(root, 'steam_cache', 'steamdb_cover', `${appid}.json`));
   if (single && isImageUrl(single.url)) return single.url;
 
-  const list = readJson(path.join(root, 'steam_cache', 'steamdb_covers', `${appid}.json`));
+  const list = readJsonCached(path.join(root, 'steam_cache', 'steamdb_covers', `${appid}.json`));
   if (list && Array.isArray(list.urls)) {
     const urls = list.urls.filter(isImageUrl);
     return (
@@ -108,16 +123,13 @@ function steamHeaderImage(appid, options = {}) {
   const root = options.userDataRoot || userDataDir();
 
   const schemaImg = cachedSchemaArt(id, root);
-  const schemaHeader =
-    schemaImg && isImageUrl(schemaImg.header) && !isKnownPlaceholder(schemaImg.header) ? schemaImg.header : null;
-  if (schemaHeader && !isPredictableLegacySteamUrl(schemaHeader)) return schemaHeader;
+  const schemaHeader = schemaImg && isUsableArt(schemaImg.header) ? schemaImg.header : null;
+  if (schemaHeader && isResolvedArt(schemaHeader)) return schemaHeader;
 
   const store = cachedStoreArt(id, root);
-  if (store && isImageUrl(store.header) && !isKnownPlaceholder(store.header) && !isPredictableLegacySteamUrl(store.header)) {
-    return store.header;
-  }
+  if (store && isResolvedArt(store.header)) return store.header;
   if (schemaHeader) return schemaHeader;
-  if (store && isImageUrl(store.header) && !isKnownPlaceholder(store.header)) return store.header;
+  if (store && isUsableArt(store.header)) return store.header;
 
   return `https://cdn.cloudflare.steamstatic.com/steam/apps/${id}/header.jpg`;
 }
@@ -128,29 +140,19 @@ function steamLibraryImage(appid, options = {}) {
   const root = options.userDataRoot || userDataDir();
 
   const schemaImg = cachedSchemaArt(id, root);
-  const schemaPortrait =
-    schemaImg && isImageUrl(schemaImg.portrait) && !isKnownPlaceholder(schemaImg.portrait) ? schemaImg.portrait : null;
-  if (schemaPortrait && !isPredictableLegacySteamUrl(schemaPortrait)) return schemaPortrait;
+  const schemaPortrait = schemaImg && isUsableArt(schemaImg.portrait) ? schemaImg.portrait : null;
+  if (schemaPortrait && isResolvedArt(schemaPortrait)) return schemaPortrait;
 
   const steamdb = cachedSteamDbPortrait(id, root);
   if (steamdb) return steamdb;
   if (schemaPortrait) return schemaPortrait;
 
   const store = cachedStoreArt(id, root);
-  if (store && isImageUrl(store.portrait) && !isKnownPlaceholder(store.portrait) && !isPredictableLegacySteamUrl(store.portrait)) {
-    return store.portrait;
-  }
+  if (store && isResolvedArt(store.portrait)) return store.portrait;
 
   // Modern titles put their real (hashed) store assets under store_item_assets. When no portrait
   // has been resolved yet, the landscape header is still far sharper than Steam's 32×32 clienticon.
-  if (
-    store &&
-    isImageUrl(store.header) &&
-    !isKnownPlaceholder(store.header) &&
-    !isPredictableLegacySteamUrl(store.header)
-  ) {
-    return store.header;
-  }
+  if (store && isResolvedArt(store.header)) return store.header;
 
   return `https://cdn.cloudflare.steamstatic.com/steam/apps/${id}/library_600x900.jpg`;
 }

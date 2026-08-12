@@ -225,8 +225,6 @@
           "toggleDescription": "Botões pressionados juntos para abrir ou fechar o overlay no jogo.",
           "ui": "Controle do overlay",
           "uiDescription": "Ativa a navegação no overlay: anel de foco, pesquisa e opções.",
-          "window": "Controle da janela",
-          "windowDescription": "Ativa o modo de mover/redimensionar a janela enquanto o overlay está aberto.",
           "move": "Mover e rolar",
           "moveDescription": "Segure estes botões para mover o overlay com o stick esquerdo e rolar com o direito."
         },
@@ -960,7 +958,7 @@
     "controller": "Controles",
     "controllerWindow": "Controle da janela",
     "controllerUi": "Controle do overlay",
-    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerHint": "Abrir: Back + Start + LB · Controle da interface: LB + X · Mover e rolar: LB + RB",
     "controllerOpen": "Abrir",
     "controllerMove": "Mover/rolar"
   },

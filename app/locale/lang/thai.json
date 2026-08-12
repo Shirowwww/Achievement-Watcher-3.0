@@ -225,8 +225,6 @@
           "toggleDescription": "ปุ่มที่กดพร้อมกันเพื่อเปิดหรือปิดโอเวอร์เลย์ในเกม",
           "ui": "ควบคุมโอเวอร์เลย์",
           "uiDescription": "เปิด/ปิดการนำทางในโอเวอร์เลย์: วงแหวนโฟกัส ค้นหา และตัวเลือก",
-          "window": "ควบคุมหน้าต่าง",
-          "windowDescription": "เปิดโหมดย้าย/ปรับขนาดหน้าต่างเมื่อโอเวอร์เลย์เปิดอยู่",
           "move": "ย้ายและเลื่อน",
           "moveDescription": "กดปุ่มเหล่านี้ค้างไว้เพื่อย้ายโอเวอร์เลย์ด้วยสติ๊กซ้ายและเลื่อนด้วยสติ๊กขวา"
         },
@@ -960,7 +958,7 @@
     "controller": "คอนโทรลเลอร์",
     "controllerWindow": "ควบคุมหน้าต่าง",
     "controllerUi": "ควบคุมอินเทอร์เฟซ",
-    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerHint": "เปิด: Back + Start + LB · ควบคุมอินเทอร์เฟซ: LB + X · ย้ายและเลื่อน: LB + RB",
     "controllerOpen": "เปิด",
     "controllerMove": "ย้าย/เลื่อน"
   },
