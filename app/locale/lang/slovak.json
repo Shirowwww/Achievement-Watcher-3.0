@@ -210,6 +210,33 @@
           "auto": "Automaticky",
           "xinput": "XInput",
           "gameinput": "GameInput"
+        },
+        "appNavigation": {
+          "name": "Ovládať aplikáciu ovládačom",
+          "description": "Prechádzaj okno Achievement Watcher ovládačom: knižnica, detaily hry, nastavenia a vyhľadávanie."
+        },
+        "layout": {
+          "auto": "Automaticky",
+          "name": "Rozloženie ovládača",
+          "description": "Vyber názvy tlačidiel zobrazované pri skratkách ovládača. Auto sleduje pripojený ovládač, keď ho možno rozpoznať."
+        },
+        "bindings": {
+          "toggle": "Otvoriť/zavrieť overlay",
+          "toggleDescription": "Tlačidlá stlačené spoločne na otvorenie alebo zatvorenie overlayu v hre.",
+          "ui": "Ovládanie rozhrania",
+          "uiDescription": "Prepína navigáciu v overlayi: fokusový kruh, vyhľadávanie a možnosti.",
+          "window": "Ovládanie okna",
+          "windowDescription": "Prepína režim pohybu/zmeny veľkosti okna, kým je overlay otvorený.",
+          "move": "Pohyb a rolovanie",
+          "moveDescription": "Podrž tieto tlačidlá na pohyb overlayu ľavou páčkou a rolovanie pravou páčkou."
+        },
+        "priority": {
+          "name": "Zaostriť overlay pri otvorení",
+          "description": "Pri otvorení dá overlayu fokus klávesnice. Mnoho hier sa pri strate fokusu pozastaví. Vstupné API systému Windows neumožňujú aplikáciám tretích strán exkluzívne zachytiť ovládač, takže hra môže tlačidlá stále vidieť."
+        },
+        "escape": {
+          "name": "Poslať Esc do hry pri otvorení ovládačom",
+          "description": "Po otvorení prekrytia ovládačom pošle do hry Esc, takže mnoho hier pozastaví alebo otvorí ponuku."
         }
       },
       "uninstallMenu": {
@@ -700,15 +727,15 @@
       ],
       "controllerTitle": "Ovládač (gamepad)",
       "controller": [
-        "Enable Settings > General > Controller first, then BACK+START opens the in-game overlay.",
-        "LB+X toggles in-overlay navigation; RB+Y toggles window move/resize.",
+        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
+        "LB + X toggles in-overlay navigation.",
         "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Window mode: left stick moves, LB/RB resizes, D-pad also moves when navigation is off.",
+        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
         "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
       ],
       "overlayTitle": "Overlay v hre",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or BACK+START on a controller.",
+        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
         "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
         "Press / to focus the search, Esc to clear it or close the options panel.",
         "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
@@ -933,7 +960,9 @@
     "controller": "Ovládač",
     "controllerWindow": "Ovládanie okna",
     "controllerUi": "Ovládanie rozhrania",
-    "controllerHint": "Otvoriť: BACK+START · Ovládanie rozhrania: LB+X · Ovládanie okna: RB+Y"
+    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerOpen": "Otvoriť",
+    "controllerMove": "Pohyb/rolovanie"
   },
   "dialogs": {
     "game-config-title": "Nastavenie spustiteľného súboru",

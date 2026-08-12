@@ -202,7 +202,7 @@
         "title": "Controller",
         "enabled": {
           "name": "Control the in-game overlay with a controller",
-          "description": "Toggle and move the in-game overlay with a gamepad (Back+Start to open; hold LB+RB to move/scroll). Supports Xbox, PlayStation (DualSense/DualShock) and Switch Pro controllers."
+          "description": "Control the in-game overlay with a gamepad. The shortcuts and the Xbox/PlayStation/Switch button layout are configured below."
         },
         "backend": {
           "name": "Controller backend",
@@ -210,6 +210,33 @@
           "auto": "Auto",
           "xinput": "XInput",
           "gameinput": "GameInput"
+        },
+        "appNavigation": {
+          "name": "Control the app with a controller",
+          "description": "Navigate the Achievement Watcher window with a gamepad: library, game details, settings and searches."
+        },
+        "layout": {
+          "auto": "Auto",
+          "name": "Controller layout",
+          "description": "Choose which button names are shown for controller shortcuts. Auto follows the connected controller when it can be identified."
+        },
+        "bindings": {
+          "toggle": "Open/close overlay",
+          "toggleDescription": "Buttons pressed together to open or close the in-game overlay.",
+          "ui": "Overlay control",
+          "uiDescription": "Toggles in-overlay navigation: focus ring, search and options.",
+          "window": "Window control",
+          "windowDescription": "Toggles window move/resize mode while the overlay is open.",
+          "move": "Move & scroll",
+          "moveDescription": "Hold these buttons to move the overlay with the left stick and scroll with the right stick."
+        },
+        "priority": {
+          "name": "Focus overlay when it opens",
+          "description": "Give the overlay keyboard focus when it opens. Many games pause when they lose focus. Windows input APIs do not let a third-party app capture a controller exclusively, so the game may still see the buttons."
+        },
+        "escape": {
+          "name": "Send Escape to the game when opening with controller",
+          "description": "Sends Escape to the game when you open the overlay with a controller, so many games pause or open their menu."
         }
       },
       "uninstallMenu": {
@@ -700,15 +727,15 @@
       ],
       "controllerTitle": "Controller (gamepad)",
       "controller": [
-        "Enable Settings > General > Controller first, then BACK+START opens the in-game overlay.",
-        "LB+X toggles in-overlay navigation; RB+Y toggles window move/resize.",
+        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
+        "LB + X toggles in-overlay navigation.",
         "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Window mode: left stick moves, LB/RB resizes, D-pad also moves when navigation is off.",
+        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
         "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
       ],
       "overlayTitle": "In-game overlay",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or BACK+START on a controller.",
+        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
         "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
         "Press / to focus the search, Esc to clear it or close the options panel.",
         "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
@@ -933,7 +960,9 @@
     "controller": "Controller",
     "controllerWindow": "Window control",
     "controllerUi": "Overlay control",
-    "controllerHint": "Open: BACK+START · Overlay control: LB+X · Window control: RB+Y"
+    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerOpen": "Open",
+    "controllerMove": "Move/scroll"
   },
   "dialogs": {
     "game-config-title": "Executable configuration",

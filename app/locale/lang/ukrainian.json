@@ -210,6 +210,33 @@
           "auto": "Авто",
           "xinput": "XInput",
           "gameinput": "GameInput"
+        },
+        "appNavigation": {
+          "name": "Керувати застосунком геймпадом",
+          "description": "Керуйте вікном Achievement Watcher геймпадом: бібліотека, деталі гри, налаштування та пошук."
+        },
+        "layout": {
+          "auto": "Авто",
+          "name": "Розкладка геймпада",
+          "description": "Виберіть назви кнопок для відображення в комбінаціях геймпада. Auto слідує за підключеним геймпадом, коли його можна визначити."
+        },
+        "bindings": {
+          "toggle": "Відкрити/закрити оверлей",
+          "toggleDescription": "Кнопки, які натискаються разом, щоб відкрити або закрити оверлей у грі.",
+          "ui": "Керування інтерфейсом",
+          "uiDescription": "Перемикає навігацію в оверлеї: кільце фокуса, пошук і параметри.",
+          "window": "Керування вікном",
+          "windowDescription": "Перемикає режим переміщення/зміни розміру вікна, поки оверлей відкритий.",
+          "move": "Переміщення та прокрутка",
+          "moveDescription": "Утримуйте ці кнопки, щоб переміщати оверлей лівим стіком і прокручувати правим."
+        },
+        "priority": {
+          "name": "Фокусувати оверлей під час відкриття",
+          "description": "Дає оверлею фокус клавіатури під час відкриття. Багато ігор ставляться на паузу, коли втрачають фокус. Вхідні API Windows не дозволяють сторонньому застосунку ексклюзивно захоплювати геймпад, тому гра може продовжувати бачити кнопки."
+        },
+        "escape": {
+          "name": "Надсилати Esc у гру при відкритті геймпадом",
+          "description": "Надсилає Esc у гру при відкритті оверлея геймпадом — багато ігор ставляться на паузу або відкривають меню."
         }
       },
       "uninstallMenu": {
@@ -700,15 +727,15 @@
       ],
       "controllerTitle": "Геймпад",
       "controller": [
-        "Enable Settings > General > Controller first, then BACK+START opens the in-game overlay.",
-        "LB+X toggles in-overlay navigation; RB+Y toggles window move/resize.",
+        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
+        "LB + X toggles in-overlay navigation.",
         "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Window mode: left stick moves, LB/RB resizes, D-pad also moves when navigation is off.",
+        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
         "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
       ],
       "overlayTitle": "Оверлей у грі",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or BACK+START on a controller.",
+        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
         "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
         "Press / to focus the search, Esc to clear it or close the options panel.",
         "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
@@ -933,7 +960,9 @@
     "controller": "Контролер",
     "controllerWindow": "Керування вікном",
     "controllerUi": "Керування інтерфейсом",
-    "controllerHint": "Відкрити: BACK+START · Керування інтерфейсом: LB+X · Керування вікном: RB+Y"
+    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerOpen": "Відкрити",
+    "controllerMove": "Перемістити/прокрутити"
   },
   "dialogs": {
     "game-config-title": "Налаштування виконуваного файлу",

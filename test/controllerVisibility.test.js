@@ -14,7 +14,10 @@ test('renderer-side controller polling follows the main tray-window visibility s
   assert.match(init, /did-finish-load', \(\) => sendMainWindowVisibility\(MainWin\.isVisible\(\)\)/);
   assert.match(source, /let mainWindowVisible = false;/);
   assert.match(source, /main-window-visibility/);
-  assert.match(source, /return mainWindowVisible && document\.visibilityState === 'visible';/);
+  assert.match(source, /return isAppControllerEnabled\(\) && mainWindowVisible && document\.visibilityState === 'visible';/);
+  assert.match(source, /isAppControllerEnabled\(\)/);
+  assert.match(source, /controller-settings-changed/);
+  assert.match(source, /appNavigation/);
   assert.match(source, /if \(pollFrame !== null\) cancelAnimationFrame\(pollFrame\);/);
   assert.match(source, /if \(pollFrame !== null \|\| !canPoll\(\)\) return;/);
 });

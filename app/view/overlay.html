@@ -733,6 +733,34 @@
         color: var(--muted);
       }
 
+      .controller-hint .binding {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        margin: 0 1px;
+      }
+
+      .controller-hint .binding + .binding-label {
+        margin-left: 5px;
+      }
+
+      .gamepad-key {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 18px;
+        padding: 0 5px;
+        border: 1px solid rgba(var(--accent-rgb), 0.35);
+        border-radius: 4px;
+        background: rgba(var(--accent-rgb), 0.10);
+        color: var(--text);
+        font-size: 9px;
+        font-weight: 700;
+        line-height: 1;
+        box-sizing: border-box;
+      }
+
       .overlay-mode-badge {
         display: inline-flex;
         align-items: center;
@@ -801,6 +829,10 @@
         box-shadow: 0 0 0 5px rgba(var(--accent-rgb), 0.16), 0 0 16px var(--accent) !important;
         position: relative;
         z-index: 20;
+      }
+
+      html[data-controller-active='true'] .overlay-row.controller-focus {
+        background: var(--bg-hover);
       }
     </style>
   </head>
@@ -940,6 +972,7 @@
     </div>
 
     <script src="../util/overlayUi.js"></script>
+    <script src="../util/controllerLabels.js"></script>
     <script>
       (function () {
         'use strict';
@@ -953,6 +986,15 @@
         let sortState = { status: null, rarity: null, time: null };
         let filter = 'all';
         let query = '';
+        let controllerConfig = {
+          layout: 'auto',
+          nativeModeToggles: false,
+          bindings: {
+            toggle: ['BACK', 'START'],
+            ui: ['LEFT_SHOULDER', 'X'],
+            move: ['LEFT_SHOULDER', 'RIGHT_SHOULDER'],
+          },
+        };
 
         const overlayStrings = {
           icon: 'Icon',
@@ -1002,8 +1044,8 @@
           accentOrange: 'Orange',
           accentCustom: 'Custom',
           controller: 'Controller',
-          controllerHint:
-            'Open: BACK+START · Overlay control: LB+X · Window control: RB+Y',
+          controllerOpen: 'Open',
+          controllerMove: 'Move/scroll',
         };
 
         const SETTINGS_KEY = 'aw-overlay-settings-v1';
@@ -1014,6 +1056,68 @@
           '#e84393': '232, 67, 147',
           '#fd9644': '253, 150, 68',
         };
+        const DEFAULT_CONTROLLER_BINDINGS = {
+          toggle: ['BACK', 'START'],
+          ui: ['LEFT_SHOULDER', 'X'],
+          move: ['LEFT_SHOULDER', 'RIGHT_SHOULDER'],
+        };
+
+        function normalizeControllerBinding(value, fallback) {
+          const parsed = window.ControllerLabels && window.ControllerLabels.normalizeControllerBinding
+            ? window.ControllerLabels.normalizeControllerBinding(value, { allowSingle: true, maxButtons: 3 })
+            : null;
+          return parsed && parsed.length ? parsed : fallback;
+        }
+
+        function applyControllerConfig(config) {
+          if (!config || typeof config !== 'object') return;
+          controllerConfig = {
+            layout: window.ControllerLabels ? window.ControllerLabels.normalizeControllerLayout(config.layout) : 'auto',
+            nativeModeToggles: config.nativeModeToggles === true,
+            bindings: {
+              toggle: normalizeControllerBinding(config.bindings && config.bindings.toggle, DEFAULT_CONTROLLER_BINDINGS.toggle),
+              ui: normalizeControllerBinding(config.bindings && config.bindings.ui, DEFAULT_CONTROLLER_BINDINGS.ui),
+              move: normalizeControllerBinding(config.bindings && config.bindings.move, DEFAULT_CONTROLLER_BINDINGS.move),
+            },
+          };
+          updateControllerHint();
+        }
+
+        function controllerButtonLabel(button) {
+          const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+          return window.ControllerLabels
+            ? window.ControllerLabels.buttonLabel(controllerConfig.layout, button, gamepads, overlayLang)
+            : button;
+        }
+
+        function appendBinding(parent, binding) {
+          const wrap = document.createElement('span');
+          wrap.className = 'binding';
+          binding.forEach((button, index) => {
+            if (index > 0) wrap.appendChild(document.createTextNode(' + '));
+            const key = document.createElement('span');
+            key.className = 'gamepad-key';
+            key.textContent = controllerButtonLabel(button);
+            wrap.appendChild(key);
+          });
+          parent.appendChild(wrap);
+        }
+
+        function updateControllerHint() {
+          const hint = $('controller-hint');
+          if (!hint) return;
+          hint.textContent = '';
+          const groups = [
+            [overlayStrings.controllerOpen, controllerConfig.bindings.toggle],
+            [overlayStrings.controllerUi, controllerConfig.bindings.ui],
+            [overlayStrings.controllerMove, controllerConfig.bindings.move],
+          ];
+          groups.forEach(([label, binding], index) => {
+            if (index > 0) hint.appendChild(document.createTextNode(' · '));
+            hint.appendChild(document.createTextNode(`${label}: `));
+            appendBinding(hint, binding);
+          });
+        }
         const DEFAULT_SETTINGS = {
           accent: '#4aa3ff',
           density: 'cozy',
@@ -1138,7 +1242,7 @@
           $('toggle-descriptions-label').textContent = overlayStrings.settingsShowDescriptions;
           $('toggle-use-theme-label').textContent = overlayStrings.settingsUseTheme;
           $('settings-controller-label').textContent = overlayStrings.controller;
-          $('controller-hint').textContent = overlayStrings.controllerHint;
+          updateControllerHint();
           $('settings-reset').textContent = overlayStrings.settingsReset;
           $('overlay-settings-toggle').title = overlayStrings.settingsTitle;
           $('overlay-settings-toggle').setAttribute('aria-label', overlayStrings.settingsTitle);
@@ -1448,12 +1552,42 @@
           applyOverlayStrings();
         });
 
+        window.api.onControllerConfig((data) => {
+          applyControllerConfig(data);
+        });
+
+        window.api.onControllerMode((data) => {
+          if (window.__overlayGamepad && data && data.mode) {
+            window.__overlayGamepad.toggleControllerMode(data.mode);
+          }
+        });
+
+        window.api.onOverlayVisibility((visible) => {
+          if (window.__overlayGamepad && window.__overlayGamepad.setOverlayActive) {
+            window.__overlayGamepad.setOverlayActive(visible === true);
+          }
+        });
+
+        window.addEventListener('gamepadconnected', updateControllerHint);
+        window.addEventListener('gamepaddisconnected', updateControllerHint);
+
         window.api.onOverlayTheme((data) => {
           applyThemePayload(data);
         });
 
         window.api.onOverlay((game) => {
           isLoading = false;
+          query = '';
+          filter = 'all';
+          sortState = { status: null, rarity: null, time: null };
+          $('overlay-search').value = '';
+          $('overlay-search-box').classList.remove('has-text');
+          document.querySelectorAll('.filter-pill').forEach((pill) => {
+            pill.classList.toggle('active', pill.dataset.filter === 'all');
+          });
+          if (window.__overlayGamepad && window.__overlayGamepad.resetForReopen) {
+            window.__overlayGamepad.resetForReopen();
+          }
           loadTableData(game);
         });
 
@@ -1472,6 +1606,7 @@
           const SELECTOR = [
             '.filter-pill',
             '.sort-btn',
+            '.overlay-row',
             '#overlay-settings-toggle',
             '#overlay-close',
             '#overlay-search',
@@ -1486,15 +1621,31 @@
             '#settings-reset',
           ].join(',');
           let active = false;
+          let overlayActive = true;
+          let pollFrame = null;
           let selected = null;
           const held = new Map();
-          let lastWindowMoveAt = 0;
           let lastScrollAt = 0;
-          const WINDOW_STEP = 9;
-          const NUDGE_STEP = 20;
-          const RESIZE_STEP = 40;
-          const controllerModes = { ui: false, window: false };
-          const comboLatches = { ui: false, window: false };
+          const controllerModes = { ui: false };
+          const comboLatches = { ui: false };
+          const comboReleaseAt = { ui: 0 };
+          const COMBO_RELEASE_DEBOUNCE_MS = 120;
+          const BUTTON_INDEX = {
+            A: 0,
+            B: 1,
+            X: 2,
+            Y: 3,
+            LEFT_SHOULDER: 4,
+            RIGHT_SHOULDER: 5,
+            BACK: 8,
+            START: 9,
+            LEFT_THUMB: 10,
+            RIGHT_THUMB: 11,
+            DPAD_UP: 12,
+            DPAD_DOWN: 13,
+            DPAD_LEFT: 14,
+            DPAD_RIGHT: 15,
+          };
 
           function isVisible(el) {
             if (!el || !el.isConnected || el.hidden || el.disabled) return false;
@@ -1625,31 +1776,6 @@
             setTimeout(() => ensureSelected(), 120);
           }
 
-          function moveWindow(dx, dy) {
-            if ((!dx && !dy) || !window.customApi || !window.customApi.moveWindowBy) return;
-            const now = performance.now();
-            if (now - lastWindowMoveAt < 30) return;
-            lastWindowMoveAt = now;
-            window.customApi.moveWindowBy(dx, dy);
-          }
-
-          function nudgeWindow(direction) {
-            const map = {
-              up: [0, -NUDGE_STEP],
-              down: [0, NUDGE_STEP],
-              left: [-NUDGE_STEP, 0],
-              right: [NUDGE_STEP, 0],
-            };
-            const d = map[direction];
-            if (d) moveWindow(d[0], d[1]);
-          }
-
-          function resizeWindow(direction) {
-            if (!window.customApi || !window.customApi.resizeWindowBy) return;
-            const step = direction > 0 ? RESIZE_STEP : -RESIZE_STEP;
-            window.customApi.resizeWindowBy(step, step);
-          }
-
           function scrollList(amount) {
             const now = performance.now();
             if (now - lastScrollAt < 30) return;
@@ -1676,23 +1802,47 @@
             if (!badge) return;
             const parts = [];
             if (controllerModes.ui) parts.push('UI');
-            if (controllerModes.window) parts.push('WIN');
             badge.textContent = parts.join(' · ');
             badge.hidden = parts.length === 0;
           }
 
           function setControllerMode(mode, on) {
-            if (mode !== 'ui' && mode !== 'window') return;
+            if (mode !== 'ui') return;
             controllerModes[mode] = on === true;
             updateModeBadge();
+            if (controllerModes.ui) showFocus();
+            else clearFocus();
+          }
+
+          function toggleControllerMode(mode) {
             if (mode === 'ui') {
-              if (controllerModes.ui) showFocus();
-              else clearFocus();
+              setControllerMode(mode, !controllerModes[mode]);
             }
+          }
+
+          function resetForReopen() {
+            controllerModes.ui = false;
+            comboLatches.ui = false;
+            comboReleaseAt.ui = 0;
+            clearFocus();
+            updateModeBadge();
+            try {
+              toggleSettings(false);
+            } catch {}
           }
 
           function pressed(gamepad, button) {
             return Boolean(gamepad.buttons[button] && gamepad.buttons[button].pressed);
+          }
+
+          function pressedCombo(gamepad, binding) {
+            if (window.ControllerLabels && window.ControllerLabels.comboPressed) {
+              return window.ControllerLabels.comboPressed(gamepad, binding);
+            }
+            return Array.isArray(binding) && binding.length > 0 && binding.every((button) => {
+              const index = BUTTON_INDEX[button];
+              return index !== undefined && pressed(gamepad, index);
+            });
           }
 
           function repeat(name, down, callback, repeatable) {
@@ -1721,7 +1871,26 @@
             held.clear();
           }
 
+          function schedulePoll() {
+            if (pollFrame !== null || !overlayActive) return;
+            pollFrame = requestAnimationFrame(poll);
+          }
+
+          function setOverlayActive(next) {
+            overlayActive = next === true;
+            if (!overlayActive) {
+              if (pollFrame !== null) cancelAnimationFrame(pollFrame);
+              pollFrame = null;
+              held.clear();
+              leaveControllerMode();
+              return;
+            }
+            schedulePoll();
+          }
+
           function poll() {
+            pollFrame = null;
+            if (!overlayActive) return;
             const gamepad = Array.from(navigator.getGamepads ? navigator.getGamepads() : []).find(Boolean);
             if (gamepad) {
               const stickX = gamepad.axes[0] || 0;
@@ -1736,46 +1905,33 @@
               const b = pressed(gamepad, BUTTON.B);
               const x = pressed(gamepad, BUTTON.X);
               const y = pressed(gamepad, BUTTON.Y);
-              const lb = pressed(gamepad, BUTTON.LB);
-              const rb = pressed(gamepad, BUTTON.RB);
 
-              // Niche combos toggle the two control modes (rising edge only).
-              const uiCombo = lb && x;
-              const windowCombo = rb && y;
-              if (uiCombo && !comboLatches.ui) {
-                comboLatches.ui = true;
-                setControllerMode('ui', !controllerModes.ui);
-              }
-              if (!uiCombo) comboLatches.ui = false;
-              if (windowCombo && !comboLatches.window) {
-                comboLatches.window = true;
-                setControllerMode('window', !controllerModes.window);
-              }
-              if (!windowCombo) comboLatches.window = false;
-
-              // Window mode: left stick moves, LB/RB resize (except while the toggle combo is
-              // held), D-pad nudges when UI mode is off.
-              if (controllerModes.window) {
-                const lx = Math.abs(stickX) >= 0.3 ? stickX : 0;
-                const ly = Math.abs(stickY) >= 0.3 ? stickY : 0;
-                if (lx || ly) moveWindow(Math.round(lx * WINDOW_STEP), Math.round(ly * WINDOW_STEP));
-                if (!uiCombo) repeat('lb', lb, () => resizeWindow(-1), true);
-                if (!windowCombo) repeat('rb', rb, () => resizeWindow(1), true);
-                if (!controllerModes.ui) {
-                  repeat('up', dpadUp, () => nudgeWindow('up'), true);
-                  repeat('down', dpadDown, () => nudgeWindow('down'), true);
-                  repeat('left', dpadLeft, () => nudgeWindow('left'), true);
-                  repeat('right', dpadRight, () => nudgeWindow('right'), true);
+              // The UI navigation mode is a rising-edge combo.
+              const uiCombo = !controllerConfig.nativeModeToggles && pressedCombo(gamepad, controllerConfig.bindings.ui);
+              if (uiCombo) {
+                comboReleaseAt.ui = 0;
+                if (!comboLatches.ui) {
+                  comboLatches.ui = true;
+                  setControllerMode('ui', !controllerModes.ui);
                 }
+              } else if (comboLatches.ui) {
+                const now = performance.now();
+                if (!comboReleaseAt.ui) comboReleaseAt.ui = now;
+                else if (now - comboReleaseAt.ui >= COMBO_RELEASE_DEBOUNCE_MS) {
+                  comboLatches.ui = false;
+                  comboReleaseAt.ui = 0;
+                }
+              } else {
+                comboReleaseAt.ui = 0;
               }
 
               // UI mode: navigate the overlay; the right stick scrolls the list.
               if (controllerModes.ui) {
-                const up = dpadUp || (!controllerModes.window && axisY < 0);
-                const down = dpadDown || (!controllerModes.window && axisY > 0);
-                const left = dpadLeft || (!controllerModes.window && axisX < 0);
-                const right = dpadRight || (!controllerModes.window && axisX > 0);
-                const anyInput = up || down || left || right || a || b || (x && !uiCombo) || (y && !windowCombo);
+                const up = dpadUp || axisY < 0;
+                const down = dpadDown || axisY > 0;
+                const left = dpadLeft || axisX < 0;
+                const right = dpadRight || axisX > 0;
+                const anyInput = up || down || left || right || a || b || (x && !uiCombo) || y;
                 if (anyInput && !active) showFocus();
                 if (active) {
                   repeat('up', up, () => move(0, -1), true);
@@ -1785,7 +1941,7 @@
                   repeat('a', a, activate);
                   repeat('b', b, back);
                   repeat('x', x && !uiCombo, focusSearch);
-                  repeat('y', y && !windowCombo, toggleSettingsPanel);
+                  repeat('y', y, toggleSettingsPanel);
                   const ry = Math.abs(gamepad.axes[3] || 0) >= 0.3 ? gamepad.axes[3] : 0;
                   if (ry) scrollList(Math.round(ry * 12));
                 }
@@ -1795,10 +1951,10 @@
             } else if (active) {
               leaveControllerMode();
             }
-            requestAnimationFrame(poll);
+            schedulePoll();
           }
 
-          window.__overlayGamepad = { setControllerMode, showFocus };
+          window.__overlayGamepad = { setControllerMode, showFocus, toggleControllerMode, resetForReopen, setOverlayActive };
           window.addEventListener('gamepadconnected', () => {
             if (controllerModes.ui) showFocus();
           });
@@ -1809,7 +1965,7 @@
             showFocus();
           }
           updateModeBadge();
-          requestAnimationFrame(poll);
+          schedulePoll();
         })();
 
         applySettings();

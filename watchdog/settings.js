@@ -21,6 +21,75 @@ const REQUIRED_OBJECT_SECTIONS = [
   'action',
 ];
 
+const CONTROLLER_BUTTONS = new Set([
+  'BACK',
+  'START',
+  'GUIDE',
+  'A',
+  'B',
+  'X',
+  'Y',
+  'LEFT_SHOULDER',
+  'RIGHT_SHOULDER',
+  'LEFT_THUMB',
+  'RIGHT_THUMB',
+  'DPAD_UP',
+  'DPAD_DOWN',
+  'DPAD_LEFT',
+  'DPAD_RIGHT',
+]);
+
+const CONTROLLER_TOGGLE_ALLOWED = new Set([
+  'BACK',
+  'START',
+  'GUIDE',
+  'A',
+  'B',
+  'X',
+  'Y',
+  'LEFT_THUMB',
+  'RIGHT_THUMB',
+  'LEFT_SHOULDER',
+  'RIGHT_SHOULDER',
+  'DPAD_UP',
+  'DPAD_DOWN',
+  'DPAD_LEFT',
+  'DPAD_RIGHT',
+]);
+
+const CONTROLLER_MODE_ALLOWED = new Set([
+  'BACK',
+  'START',
+  'A',
+  'B',
+  'X',
+  'Y',
+  'LEFT_SHOULDER',
+  'RIGHT_SHOULDER',
+  'LEFT_THUMB',
+  'RIGHT_THUMB',
+  'DPAD_UP',
+  'DPAD_DOWN',
+  'DPAD_LEFT',
+  'DPAD_RIGHT',
+]);
+
+function normalizeControllerBindingSetting(value, allowedButtons, fallback) {
+  const seen = new Set();
+  const out = [];
+  let strict = true;
+  for (const raw of String(value || '').split('+')) {
+    const name = String(raw || '').trim().toUpperCase();
+    if (!CONTROLLER_BUTTONS.has(name) || !allowedButtons.has(name) || seen.has(name)) {
+      strict = false;
+      continue;
+    }
+    seen.add(name);
+    out.push(name);
+  }
+  return strict && out.length >= 1 && out.length <= 3 ? out.join('+') : fallback;
+}
+
 function normalizeSectionObjects(options) {
   let changed = false;
   for (const section of REQUIRED_OBJECT_SECTIONS) {
@@ -321,20 +390,60 @@ module.exports.load = async (cfg_file) => {
     }
 
     //Controller (native → overlay control, Tier 4). Opt-in; the koffi/HID stack loads only when enabled.
+    // Bindings are stored as "BUTTON+BUTTON+BUTTON" strings (one to three buttons).
     if (typeof options.controller.enabled !== 'boolean') {
       options.controller.enabled = false;
+      fixFile = true;
+    }
+    if (typeof options.controller.appNavigation !== 'boolean') {
+      options.controller.appNavigation = true;
       fixFile = true;
     }
     if (!['auto', 'xinput', 'gameinput'].includes(options.controller.backend)) {
       options.controller.backend = 'auto';
       fixFile = true;
     }
-    if (typeof options.controller.toggleBinding !== 'string' || !options.controller.toggleBinding) {
-      options.controller.toggleBinding = 'BACK+START';
+    if (!['auto', 'xbox', 'playstation', 'switch'].includes(options.controller.layout)) {
+      options.controller.layout = 'auto';
       fixFile = true;
     }
-    if (typeof options.controller.controlModeBinding !== 'string' || !options.controller.controlModeBinding) {
-      options.controller.controlModeBinding = 'LEFT_SHOULDER+RIGHT_SHOULDER';
+    const toggleBinding = normalizeControllerBindingSetting(
+      options.controller.toggleBinding,
+      CONTROLLER_TOGGLE_ALLOWED,
+      'BACK+START'
+    );
+    if (toggleBinding !== options.controller.toggleBinding) {
+      options.controller.toggleBinding = toggleBinding;
+      fixFile = true;
+    }
+    const uiModeBinding = normalizeControllerBindingSetting(
+      options.controller.uiModeBinding,
+      CONTROLLER_MODE_ALLOWED,
+      'LEFT_SHOULDER+X'
+    );
+    if (uiModeBinding !== options.controller.uiModeBinding) {
+      options.controller.uiModeBinding = uiModeBinding;
+      fixFile = true;
+    }
+    const controlModeBinding = normalizeControllerBindingSetting(
+      options.controller.controlModeBinding,
+      CONTROLLER_MODE_ALLOWED,
+      'LEFT_SHOULDER+RIGHT_SHOULDER'
+    );
+    if (controlModeBinding !== options.controller.controlModeBinding) {
+      options.controller.controlModeBinding = controlModeBinding;
+      fixFile = true;
+    }
+    if ('windowModeBinding' in options.controller) {
+      delete options.controller.windowModeBinding;
+      fixFile = true;
+    }
+    if (typeof options.controller.focusOverlay !== 'boolean') {
+      options.controller.focusOverlay = false;
+      fixFile = true;
+    }
+    if (typeof options.controller.sendEscapeOnControllerOpen !== 'boolean') {
+      options.controller.sendEscapeOnControllerOpen = false;
       fixFile = true;
     }
     if (typeof options.controller.debugLogging !== 'boolean') {
@@ -439,9 +548,14 @@ module.exports.load = async (cfg_file) => {
       },
       controller: {
         enabled: false,
+        appNavigation: true,
         backend: 'auto',
+        layout: 'auto',
         toggleBinding: 'BACK+START',
+        uiModeBinding: 'LEFT_SHOULDER+X',
         controlModeBinding: 'LEFT_SHOULDER+RIGHT_SHOULDER',
+        focusOverlay: false,
+        sendEscapeOnControllerOpen: false,
         debugLogging: false,
       },
       action: {

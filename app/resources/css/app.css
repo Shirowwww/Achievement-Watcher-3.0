@@ -2481,6 +2481,34 @@ main {
   cursor: pointer;
 }
 
+/* Controller shortcut rows: up to three small dropdowns joined by "+" instead of
+   the single arrow/select combo used by the rest of the panel. */
+.arrow-list li .right.controller-binding {
+  display: flex;
+  align-items: center;
+  width: min(440px, 100%);
+  min-width: 300px;
+  flex-shrink: 1;
+  gap: 4px;
+}
+
+.arrow-list li .right.controller-binding select {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  margin: 0;
+  text-align-last: center;
+  pointer-events: initial;
+}
+
+.arrow-list li .right.controller-binding .controller-binding-plus {
+  flex: 0 0 18px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 30px;
+  text-align: center;
+}
+
 /* Volume row: a range slider (0–200%) with a live value readout replaces the arrow/select combo. */
 .arrow-list li .right.volume-slider {
   display: flex;

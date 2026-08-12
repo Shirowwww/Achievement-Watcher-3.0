@@ -210,6 +210,33 @@
           "auto": "自动",
           "xinput": "XInput",
           "gameinput": "GameInput"
+        },
+        "appNavigation": {
+          "name": "用手柄控制应用",
+          "description": "用手柄浏览 Achievement Watcher 窗口：游戏库、游戏详情、设置和搜索。"
+        },
+        "layout": {
+          "auto": "自动",
+          "name": "手柄布局",
+          "description": "选择手柄快捷键显示的按钮名称。自动模式会在可识别时跟随已连接的手柄。"
+        },
+        "bindings": {
+          "toggle": "打开/关闭覆盖层",
+          "toggleDescription": "一起按下以打开或关闭游戏内覆盖层的按钮。",
+          "ui": "覆盖层控制",
+          "uiDescription": "切换覆盖层内导航：焦点环、搜索和选项。",
+          "window": "窗口控制",
+          "windowDescription": "覆盖层打开时切换窗口移动/缩放模式。",
+          "move": "移动与滚动",
+          "moveDescription": "按住这些按钮，用左摇杆移动覆盖层，用右摇杆滚动。"
+        },
+        "priority": {
+          "name": "打开时聚焦覆盖层",
+          "description": "打开时给予覆盖层键盘焦点。许多游戏失去焦点时会暂停。Windows 输入 API 不允许第三方应用独占捕获手柄，因此游戏仍可能看到按钮。"
+        },
+        "escape": {
+          "name": "用控制器打开时向游戏发送 Esc",
+          "description": "用控制器打开悬浮层时向游戏发送 Esc，使许多游戏暂停或打开菜单。"
         }
       },
       "uninstallMenu": {
@@ -700,15 +727,15 @@
       ],
       "controllerTitle": "控制器（手柄）",
       "controller": [
-        "Enable Settings > General > Controller first, then BACK+START opens the in-game overlay.",
-        "LB+X toggles in-overlay navigation; RB+Y toggles window move/resize.",
+        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
+        "LB + X toggles in-overlay navigation.",
         "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Window mode: left stick moves, LB/RB resizes, D-pad also moves when navigation is off.",
+        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
         "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
       ],
       "overlayTitle": "游戏内悬浮窗",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or BACK+START on a controller.",
+        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
         "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
         "Press / to focus the search, Esc to clear it or close the options panel.",
         "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
@@ -933,7 +960,9 @@
     "controller": "控制器",
     "controllerWindow": "窗口控制",
     "controllerUi": "覆盖层控制",
-    "controllerHint": "打开：BACK+START · 界面控制：LB+X · 窗口控制：RB+Y"
+    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerOpen": "打开",
+    "controllerMove": "移动/滚动"
   },
   "dialogs": {
     "game-config-title": "可执行文件配置",

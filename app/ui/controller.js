@@ -271,7 +271,16 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     }
 
     function canPoll() {
-      return mainWindowVisible && document.visibilityState === 'visible';
+      return isAppControllerEnabled() && mainWindowVisible && document.visibilityState === 'visible';
+    }
+
+    function isAppControllerEnabled() {
+      try {
+        const controller = window.app && window.app.config && window.app.config.controller;
+        return !controller || controller.appNavigation !== false;
+      } catch {
+        return true;
+      }
     }
 
     function schedulePoll() {
@@ -303,8 +312,16 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     window.addEventListener('pointerdown', leaveControllerMode, { passive: true });
     window.addEventListener('keydown', leaveControllerMode, { passive: true });
     document.addEventListener('visibilitychange', updatePollingState);
+    document.addEventListener('controller-settings-changed', updatePollingState);
     require('electron').ipcRenderer.on('main-window-visibility', (_event, visible) => {
       mainWindowVisible = visible === true;
+      if (!mainWindowVisible) {
+        // Tray-resident mode: release decoded images, fonts and compiled-code caches the UI no
+        // longer paints, instead of keeping the whole library's rendering alive in memory.
+        try {
+          require('electron').webFrame.clearCache();
+        } catch {}
+      }
       updatePollingState();
     });
     schedulePoll();

@@ -210,6 +210,33 @@
           "auto": "Otomatik",
           "xinput": "XInput",
           "gameinput": "GameInput"
+        },
+        "appNavigation": {
+          "name": "Uygulamayı kumandayla kontrol et",
+          "description": "Achievement Watcher penceresinde kumandayla gezin: kütüphane, oyun ayrıntıları, ayarlar ve aramalar."
+        },
+        "layout": {
+          "auto": "Otomatik",
+          "name": "Kumanda düzeni",
+          "description": "Kumanda kısayolları için gösterilen düğme adlarını seç. Auto, tanımlanabildiğinde bağlı kumandayı takip eder."
+        },
+        "bindings": {
+          "toggle": "Overlay aç/kapat",
+          "toggleDescription": "Oyundaki overlayi açmak veya kapatmak için birlikte basılan düğmeler.",
+          "ui": "Arayüz kontrolü",
+          "uiDescription": "Overlay içinde gezinmeyi açar: odak halkası, arama ve seçenekler.",
+          "window": "Pencere kontrolü",
+          "windowDescription": "Overlay açıkken pencereyi taşıma/boyutlandırma modunu açar.",
+          "move": "Taşı ve kaydır",
+          "moveDescription": "Overlayi sol çubukla taşımak ve sağ çubukla kaydırmak için bu düğmeleri basılı tut."
+        },
+        "priority": {
+          "name": "Overlay açılırken odakla",
+          "description": "Overlay açıldığında klavye odağını ona verir. Birçok oyun odağı kaybedince duraklar. Windows giriş API’leri üçüncü taraf bir uygulamanın kumandayı özel olarak yakalamasına izin vermez, bu yüzden oyun düğmeleri görmeye devam edebilir."
+        },
+        "escape": {
+          "name": "Kumandayla açarken oyuna Esc gönder",
+          "description": "Overlay kumandayla açıldığında oyuna Esc gönderir; böylece birçok oyun duraklar veya menüsünü açar."
         }
       },
       "uninstallMenu": {
@@ -700,15 +727,15 @@
       ],
       "controllerTitle": "Kumanda (gamepad)",
       "controller": [
-        "Enable Settings > General > Controller first, then BACK+START opens the in-game overlay.",
-        "LB+X toggles in-overlay navigation; RB+Y toggles window move/resize.",
+        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
+        "LB + X toggles in-overlay navigation.",
         "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Window mode: left stick moves, LB/RB resizes, D-pad also moves when navigation is off.",
+        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
         "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
       ],
       "overlayTitle": "Oyun içi overlay",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or BACK+START on a controller.",
+        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
         "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
         "Press / to focus the search, Esc to clear it or close the options panel.",
         "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
@@ -933,7 +960,9 @@
     "controller": "Kumanda",
     "controllerWindow": "Pencere kontrolü",
     "controllerUi": "Arayüz kontrolü",
-    "controllerHint": "Aç: BACK+START · Arayüz kontrolü: LB+X · Pencere kontrolü: RB+Y"
+    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerOpen": "Aç",
+    "controllerMove": "Taşı/kaydır"
   },
   "dialogs": {
     "game-config-title": "Yürütülebilir dosya yapılandırması",

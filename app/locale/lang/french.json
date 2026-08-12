@@ -186,7 +186,7 @@
         "title": "Manette",
         "enabled": {
           "name": "Contrôler l'overlay en jeu à la manette",
-          "description": "Ouvrez et déplacez l'overlay en jeu à la manette (Back+Start pour ouvrir ; maintenez LB+RB pour déplacer/faire défiler). Compatible Xbox, PlayStation (DualSense/DualShock) et Switch Pro."
+          "description": "Contrôlez l'overlay en jeu à la manette. Les raccourcis et les noms de boutons Xbox/PlayStation/Switch se configurent ci-dessous."
         },
         "backend": {
           "name": "Backend de la manette",
@@ -194,6 +194,33 @@
           "auto": "Auto",
           "xinput": "XInput",
           "gameinput": "GameInput"
+        },
+        "appNavigation": {
+          "name": "Contrôler l’app à la manette",
+          "description": "Navigue dans la fenêtre d’Achievement Watcher à la manette : bibliothèque, détails des jeux, paramètres et recherches."
+        },
+        "layout": {
+          "auto": "Automatique",
+          "name": "Type de manette",
+          "description": "Choisis les noms des boutons affichés pour les raccourcis manette. Auto suit la manette connectée quand elle est identifiable."
+        },
+        "bindings": {
+          "toggle": "Ouvrir/fermer l’overlay",
+          "toggleDescription": "Boutons pressés ensemble pour ouvrir ou fermer l’overlay en jeu.",
+          "ui": "Contrôle de l’interface",
+          "uiDescription": "Active/désactive la navigation dans l’overlay : anneau de focus, recherche et options.",
+          "window": "Contrôle de la fenêtre",
+          "windowDescription": "Active/désactive le déplacement et le redimensionnement de la fenêtre quand l’overlay est ouvert.",
+          "move": "Déplacer et défiler",
+          "moveDescription": "Maintenez ces boutons pour déplacer l’overlay avec le stick gauche et défiler avec le stick droit."
+        },
+        "priority": {
+          "name": "Donner le focus à l’overlay à l’ouverture",
+          "description": "Donne le focus clavier à l’overlay quand il s’ouvre. Beaucoup de jeux se mettent en pause quand ils perdent le focus. Les API d’entrée Windows ne permettent pas à une app tierce de capturer la manette en exclusif : le jeu peut donc continuer de recevoir les boutons."
+        },
+        "escape": {
+          "name": "Envoyer Échap au jeu à l’ouverture par manette",
+          "description": "Envoie Échap au jeu quand tu ouvres l’overlay à la manette : beaucoup de jeux se mettent en pause ou ouvrent leur menu."
         }
       },
       "uninstallMenu": {
@@ -700,15 +727,15 @@
       ],
       "controllerTitle": "Manette",
       "controller": [
-        "Active d'abord Paramètres > Général > Manette, puis BACK+START ouvre l'overlay en jeu.",
-        "LB+X active/désactive la navigation dans l'overlay ; RB+Y active/désactive le contrôle de la fenêtre.",
+        "Active d’abord Paramètres > Manette, puis Select + Start ouvre l’overlay en jeu.",
+        "LB + X active/désactive la navigation dans l’overlay.",
         "Mode navigation : croix/stick gauche déplacent le focus, A valide, B annule, X recherche, Y ouvre les options.",
-        "Mode fenêtre : stick gauche déplace, LB/RB redimensionne, la croix déplace aussi si la navigation est coupée.",
+        "Maintenez LB + RB pour déplacer l’overlay avec le stick gauche et défiler avec le stick droit.",
         "Compatible Xbox, PlayStation (DualShock 4 / DualSense) et Switch Pro."
       ],
       "overlayTitle": "Overlay en jeu",
       "overlay": [
-        "Ouvre-le avec le raccourci overlay (Ctrl+Shift+K par défaut) ou BACK+START à la manette.",
+        "Ouvre-le avec le raccourci overlay (Ctrl+Shift+K par défaut) ou Select + Start à la manette.",
         "Trie par une seule colonne à la fois : Rareté, Date ou Statut (croissant / décroissant / aucun).",
         "Appuie sur / pour chercher, Échap pour effacer ou fermer le panneau d'options.",
         "Le panneau engrenage change l'accent, la densité, le zoom, l'opacité et les éléments affichés ; « Utiliser le thème de l'app » suit le thème actif.",
@@ -933,7 +960,9 @@
     "controller": "Manette",
     "controllerWindow": "Contrôle de la fenêtre",
     "controllerUi": "Contrôle de l’interface",
-    "controllerHint": "Ouvrir : BACK+START · Contrôle interface : LB+X · Contrôle fenêtre : RB+Y"
+    "controllerHint": "Ouvrir : Select + Start · Contrôle interface : LB + X · Déplacer/défiler : LB + RB",
+    "controllerOpen": "Ouvrir",
+    "controllerMove": "Déplacer/défiler"
   },
   "dialogs": {
     "game-config-title": "Configuration de l'exécutable",

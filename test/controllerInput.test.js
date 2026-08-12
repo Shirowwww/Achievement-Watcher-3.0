@@ -23,10 +23,16 @@ test('normalizeControllerButtonName accepts known names case-insensitively and r
 test('normalizeControllerBinding parses "BACK+START" into a canonical, order-normalized array', () => {
   assert.deepEqual(normalizeControllerBinding('START+BACK'), ['BACK', 'START']);
   assert.deepEqual(normalizeControllerBinding(['LEFT_SHOULDER', 'RIGHT_SHOULDER']), ['LEFT_SHOULDER', 'RIGHT_SHOULDER']);
+  assert.deepEqual(normalizeControllerBinding('X+LEFT_SHOULDER+A'), ['A', 'X', 'LEFT_SHOULDER']);
 });
 
 test('normalizeControllerBinding de-duplicates and drops unknown buttons', () => {
   assert.deepEqual(normalizeControllerBinding('A+A+ZZZ'), ['A']);
+});
+
+test('normalizeControllerBinding accepts up to three buttons and rejects a fourth', () => {
+  assert.deepEqual(normalizeControllerBinding('A+B+X'), ['A', 'B', 'X']);
+  assert.equal(normalizeControllerBinding('A+B+X+Y'), null);
 });
 
 test('normalizeControllerBinding falls back to the default when the value is unusable', () => {
@@ -41,6 +47,9 @@ test('matchesControllerBinding is true only when every bound button is pressed',
   assert.equal(matchesControllerBinding({ buttons: both }, ['BACK', 'START']), true);
   assert.equal(matchesControllerBinding({ buttons: XINPUT_BUTTONS.BACK }, ['BACK', 'START']), false);
   assert.equal(matchesControllerBinding({ buttons: XINPUT_BUTTONS.A }, ['A']), true);
+  const three = XINPUT_BUTTONS.A | XINPUT_BUTTONS.B | XINPUT_BUTTONS.X;
+  assert.equal(matchesControllerBinding({ buttons: three }, ['A', 'B', 'X']), true);
+  assert.equal(matchesControllerBinding({ buttons: three }, ['A', 'B', 'Y']), false);
 });
 
 test('matchesControllerBinding reads the GUIDE (system) button from systemButtons', () => {

@@ -210,6 +210,33 @@
           "auto": "Automatycznie",
           "xinput": "XInput",
           "gameinput": "GameInput"
+        },
+        "appNavigation": {
+          "name": "Steruj aplikacją kontrolerem",
+          "description": "Przeglądaj okno Achievement Watcher kontrolerem: biblioteka, szczegóły gry, ustawienia i wyszukiwanie."
+        },
+        "layout": {
+          "auto": "Automatycznie",
+          "name": "Układ kontrolera",
+          "description": "Wybierz nazwy przycisków wyświetlane dla skrótów kontrolera. Auto podąża za podłączonym kontrolerem, gdy można go zidentyfikować."
+        },
+        "bindings": {
+          "toggle": "Otwórz/zamknij nakładkę",
+          "toggleDescription": "Przyciski wciśnięte razem otwierają lub zamykają nakładkę w grze.",
+          "ui": "Sterowanie nakładką",
+          "uiDescription": "Przełącza nawigację w nakładce: pierścień fokusu, wyszukiwanie i opcje.",
+          "window": "Sterowanie oknem",
+          "windowDescription": "Przełącza tryb przesuwania/zmiany rozmiaru okna, gdy nakładka jest otwarta.",
+          "move": "Przesuwanie i przewijanie",
+          "moveDescription": "Przytrzymaj te przyciski, aby przesuwać nakładkę lewą gałką i przewijać prawą."
+        },
+        "priority": {
+          "name": "Skup na nakładce po otwarciu",
+          "description": "Nadaje nakładce fokus klawiatury po otwarciu. Wiele gier pauzuje po utracie fokusu. Interfejsy wejścia Windows nie pozwalają aplikacjom innych firm na wyłączne przechwycenie kontrolera, więc gra może nadal widzieć przyciski."
+        },
+        "escape": {
+          "name": "Wyślij Esc do gry przy otwieraniu kontrolerem",
+          "description": "Wysyła Esc do gry po otwarciu nakładki kontrolerem, dzięki czemu wiele gier pauzuje lub otwiera menu."
         }
       },
       "uninstallMenu": {
@@ -700,15 +727,15 @@
       ],
       "controllerTitle": "Kontroler (gamepad)",
       "controller": [
-        "Enable Settings > General > Controller first, then BACK+START opens the in-game overlay.",
-        "LB+X toggles in-overlay navigation; RB+Y toggles window move/resize.",
+        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
+        "LB + X toggles in-overlay navigation.",
         "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Window mode: left stick moves, LB/RB resizes, D-pad also moves when navigation is off.",
+        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
         "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
       ],
       "overlayTitle": "Nakładka w grze",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or BACK+START on a controller.",
+        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
         "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
         "Press / to focus the search, Esc to clear it or close the options panel.",
         "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
@@ -933,7 +960,9 @@
     "controller": "Kontroler",
     "controllerWindow": "Sterowanie oknem",
     "controllerUi": "Sterowanie interfejsem",
-    "controllerHint": "Otwórz: BACK+START · Sterowanie interfejsem: LB+X · Sterowanie oknem: RB+Y"
+    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerOpen": "Otwórz",
+    "controllerMove": "Przesuń/przewiń"
   },
   "dialogs": {
     "game-config-title": "Konfiguracja pliku wykonywalnego",

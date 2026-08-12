@@ -210,6 +210,33 @@
           "auto": "อัตโนมัติ",
           "xinput": "XInput",
           "gameinput": "GameInput"
+        },
+        "appNavigation": {
+          "name": "ควบคุมแอปด้วยคอนโทรลเลอร์",
+          "description": "นำทางหน้าต่าง Achievement Watcher ด้วยคอนโทรลเลอร์: คลังเกม รายละเอียดเกม การตั้งค่า และการค้นหา"
+        },
+        "layout": {
+          "auto": "อัตโนมัติ",
+          "name": "รูปแบบคอนโทรลเลอร์",
+          "description": "เลือกชื่อปุ่มที่แสดงสำหรับคีย์ลัดคอนโทรลเลอร์ Auto ใช้คอนโทรลเลอร์ที่เชื่อมต่ออยู่เมื่อระบุได้"
+        },
+        "bindings": {
+          "toggle": "เปิด/ปิดโอเวอร์เลย์",
+          "toggleDescription": "ปุ่มที่กดพร้อมกันเพื่อเปิดหรือปิดโอเวอร์เลย์ในเกม",
+          "ui": "ควบคุมโอเวอร์เลย์",
+          "uiDescription": "เปิด/ปิดการนำทางในโอเวอร์เลย์: วงแหวนโฟกัส ค้นหา และตัวเลือก",
+          "window": "ควบคุมหน้าต่าง",
+          "windowDescription": "เปิดโหมดย้าย/ปรับขนาดหน้าต่างเมื่อโอเวอร์เลย์เปิดอยู่",
+          "move": "ย้ายและเลื่อน",
+          "moveDescription": "กดปุ่มเหล่านี้ค้างไว้เพื่อย้ายโอเวอร์เลย์ด้วยสติ๊กซ้ายและเลื่อนด้วยสติ๊กขวา"
+        },
+        "priority": {
+          "name": "โฟกัสโอเวอร์เลย์เมื่อเปิด",
+          "description": "ให้โฟกัสคีย์บอร์ดกับโอเวอร์เลย์เมื่อเปิด เกมหลายเกมหยุดชั่วคราวเมื่อเสียโฟกัส API อินพุตของ Windows ไม่อนุญาตให้แอปของบุคคลที่สามจับคอนโทรลเลอร์แบบเอกสิทธิ์ เกมจึงอาจยังเห็นปุ่มอยู่"
+        },
+        "escape": {
+          "name": "ส่งปุ่ม Esc ไปยังเกมเมื่อเปิดด้วยคอนโทรลเลอร์",
+          "description": "ส่ง Esc ไปยังเกมเมื่อเปิดโอเวอร์เลย์ด้วยคอนโทรลเลอร์ เพื่อให้เกมหลายเกมหยุดชั่วคราวหรือเปิดเมนู"
         }
       },
       "uninstallMenu": {
@@ -700,15 +727,15 @@
       ],
       "controllerTitle": "คอนโทรลเลอร์ (เกมแพด)",
       "controller": [
-        "Enable Settings > General > Controller first, then BACK+START opens the in-game overlay.",
-        "LB+X toggles in-overlay navigation; RB+Y toggles window move/resize.",
+        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
+        "LB + X toggles in-overlay navigation.",
         "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Window mode: left stick moves, LB/RB resizes, D-pad also moves when navigation is off.",
+        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
         "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
       ],
       "overlayTitle": "โอเวอร์เลย์ในเกม",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or BACK+START on a controller.",
+        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
         "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
         "Press / to focus the search, Esc to clear it or close the options panel.",
         "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
@@ -933,7 +960,9 @@
     "controller": "คอนโทรลเลอร์",
     "controllerWindow": "ควบคุมหน้าต่าง",
     "controllerUi": "ควบคุมอินเทอร์เฟซ",
-    "controllerHint": "เปิด: BACK+START · ควบคุมอินเทอร์เฟซ: LB+X · ควบคุมหน้าต่าง: RB+Y"
+    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerOpen": "เปิด",
+    "controllerMove": "ย้าย/เลื่อน"
   },
   "dialogs": {
     "game-config-title": "ตั้งค่าไฟล์ปฏิบัติการ",

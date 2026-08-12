@@ -1,13 +1,7 @@
 'use strict';
 
-// Minimal preload for the in-game overlay list window (app/view/overlay.html).
-// Intentionally requires ONLY electron (sandbox-safe), like notificationPreload.js:
-// the previous preload pulled app modules (e.g. ./parser/achievements) that fail to
-// load in this window's sandboxed preload context, which took the whole bridge down
-// — overlay.html never got `window.api`, its script crashed on the first call, and
-// the list could not render achievements. Game data is already fetched by the main
-// process (createOverlayWindow -> achievementsJS.getSavedAchievementsForAppid) and
-// pushed over `show-overlay`, so the renderer only needs icon lookup + those pushes.
+// Minimal sandbox-safe preload for the overlay window: requires only electron (the old preload pulled
+// app modules that failed in this context). Game data arrives via show-overlay from the main process.
 const { contextBridge, ipcRenderer, webFrame } = require('electron');
 
 contextBridge.exposeInMainWorld('customApi', {
@@ -15,9 +9,6 @@ contextBridge.exposeInMainWorld('customApi', {
   // title bar to close it with. (The old minimize/maximize/close bridge was dead code: the
   // main process never registered handlers for those channels.)
   closeOverlay: () => ipcRenderer.send('overlay-close'),
-  // Gamepad window control from the in-game overlay (move / resize).
-  moveWindowBy: (dx, dy) => ipcRenderer.send('overlay-move-by', { dx: Number(dx) || 0, dy: Number(dy) || 0 }),
-  resizeWindowBy: (dw, dh) => ipcRenderer.send('overlay-resize-by', { dw: Number(dw) || 0, dh: Number(dh) || 0 }),
 });
 
 ipcRenderer.on('set-window-scale', (event, scale) => {
@@ -35,5 +26,8 @@ contextBridge.exposeInMainWorld('api', {
   onOverlay: (callback) => ipcRenderer.on('show-overlay', (event, data) => callback(data)),
   onOverlayLanguage: (callback) => ipcRenderer.on('overlay-language', (event, data) => callback(data)),
   onOverlayTheme: (callback) => ipcRenderer.on('overlay-theme', (event, data) => callback(data)),
+  onControllerConfig: (callback) => ipcRenderer.on('overlay-controller-config', (event, data) => callback(data)),
+  onControllerMode: (callback) => ipcRenderer.on('overlay-controller-mode', (event, data) => callback(data)),
+  onOverlayVisibility: (callback) => ipcRenderer.on('overlay-visibility', (event, data) => callback(data)),
   onRefreshAchievementsTable: (callback) => ipcRenderer.on('refresh-achievements-table', (event, data) => callback(data)),
 });

@@ -40,6 +40,10 @@ function createOverlayControllerService(options = {}) {
     typeof options.getOverlayControlModeBinding === "function"
       ? options.getOverlayControlModeBinding
       : () => [];
+  const getOverlayUiModeBinding =
+    typeof options.getOverlayUiModeBinding === "function"
+      ? options.getOverlayUiModeBinding
+      : () => [];
   const canEnterOverlayControlMode =
     typeof options.canEnterOverlayControlMode === "function"
       ? options.canEnterOverlayControlMode
@@ -60,6 +64,7 @@ function createOverlayControllerService(options = {}) {
     return [
       getOverlayToggleBinding(prefs),
       getOverlayControlModeBinding(prefs),
+      getOverlayUiModeBinding(prefs),
     ].some(bindingRequiresSystemButtons);
   }
 
@@ -88,6 +93,7 @@ function createOverlayControllerService(options = {}) {
       getPreferredBackend: () => preferredBackend,
       getOverlayToggleBinding: () => getOverlayToggleBinding(),
       getOverlayControlModeBinding: () => getOverlayControlModeBinding(),
+      getOverlayUiModeBinding: () => getOverlayUiModeBinding(),
     });
     return manager;
   }

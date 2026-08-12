@@ -7,6 +7,21 @@ const fs = require('fs');
 const os = require('os');
 const aes = require(path.join(appPath, 'util/aes.js'));
 const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
+const controllerLabels = require(path.join(appPath, 'util/controllerLabels.js'));
+
+function normalizeControllerBindingSetting(value, allowedButtons, fallback) {
+  const parsed = controllerLabels.normalizeControllerBinding(value, {
+    allowSingle: true,
+    maxButtons: 3,
+    allowedButtons,
+  });
+  const rawParts = String(value || '').split('+').filter(Boolean);
+  const strict = rawParts.every((part) => {
+    const name = controllerLabels.normalizeButtonName(part);
+    return name && allowedButtons.includes(name);
+  });
+  return parsed && parsed.length && strict ? parsed.join('+') : fallback;
+}
 
 let filename;
 module.exports.setUserDataPath = (p) => {
@@ -68,7 +83,7 @@ module.exports.load = () => {
     // (stored as "user:<name>").
     if (
       typeof options.general.theme !== 'string' ||
-      (!['default', 'oled', 'dracula', 'graphite', 'nord', 'gruvbox', 'tokyonight', 'custom'].includes(options.general.theme) &&
+      (!['default', 'oled', 'dracula', 'graphite', 'nord', 'gruvbox', 'tokyonight', 'catppuccin', 'rosepine', 'synthwave', 'everforest', 'cyberpunk', 'ember', 'ocean', 'hacker', 'burgundy', 'champagne', 'custom'].includes(options.general.theme) &&
         !/^user:.+$/i.test(options.general.theme))
     ) {
       options.general.theme = 'default';
@@ -143,19 +158,39 @@ module.exports.load = () => {
     delete options.overlay.duration;
 
     // Native controller → overlay control (Tier 4). Opt-in: loads the koffi/HID stack in the Watchdog
-    // only when enabled. Bindings are stored as "BUTTON+BUTTON" strings the watchdog parses.
+    // only when enabled. Bindings are stored as "BUTTON+BUTTON+BUTTON" strings the watchdog parses.
     if (!options.controller || typeof options.controller !== 'object') options.controller = {};
     if (typeof options.controller.enabled !== 'boolean') {
       options.controller.enabled = false;
     }
+    if (typeof options.controller.appNavigation !== 'boolean') {
+      options.controller.appNavigation = true;
+    }
     if (!['auto', 'xinput', 'gameinput'].includes(options.controller.backend)) {
       options.controller.backend = 'auto';
     }
-    if (typeof options.controller.toggleBinding !== 'string' || !options.controller.toggleBinding) {
-      options.controller.toggleBinding = 'BACK+START';
+    options.controller.layout = controllerLabels.normalizeControllerLayout(options.controller.layout);
+    options.controller.toggleBinding = normalizeControllerBindingSetting(
+      options.controller.toggleBinding,
+      controllerLabels.TOGGLE_ALLOWED,
+      'BACK+START'
+    );
+    options.controller.uiModeBinding = normalizeControllerBindingSetting(
+      options.controller.uiModeBinding,
+      controllerLabels.MODE_ALLOWED,
+      'LEFT_SHOULDER+X'
+    );
+    options.controller.controlModeBinding = normalizeControllerBindingSetting(
+      options.controller.controlModeBinding,
+      controllerLabels.MODE_ALLOWED,
+      'LEFT_SHOULDER+RIGHT_SHOULDER'
+    );
+    delete options.controller.windowModeBinding;
+    if (typeof options.controller.focusOverlay !== 'boolean') {
+      options.controller.focusOverlay = false;
     }
-    if (typeof options.controller.controlModeBinding !== 'string' || !options.controller.controlModeBinding) {
-      options.controller.controlModeBinding = 'LEFT_SHOULDER+RIGHT_SHOULDER';
+    if (typeof options.controller.sendEscapeOnControllerOpen !== 'boolean') {
+      options.controller.sendEscapeOnControllerOpen = false;
     }
     if (typeof options.controller.debugLogging !== 'boolean') {
       options.controller.debugLogging = false;
@@ -503,6 +538,18 @@ module.exports.load = () => {
         tick: 600,
         checkIfProcessIsRunning: true,
         iconPrefetch: true,
+      },
+      controller: {
+        enabled: false,
+        appNavigation: true,
+        backend: 'auto',
+        layout: 'auto',
+        toggleBinding: 'BACK+START',
+        uiModeBinding: 'LEFT_SHOULDER+X',
+        controlModeBinding: 'LEFT_SHOULDER+RIGHT_SHOULDER',
+        focusOverlay: false,
+        sendEscapeOnControllerOpen: false,
+        debugLogging: false,
       },
       souvenir: {
         screenshot: false,

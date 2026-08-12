@@ -210,6 +210,33 @@
           "auto": "Automatikus",
           "xinput": "XInput",
           "gameinput": "GameInput"
+        },
+        "appNavigation": {
+          "name": "Alkalmazás vezérlése kontrollerrel",
+          "description": "Navigálj a Achievement Watcher ablakában kontrollerrel: könyvtár, játékrészletek, beállítások és keresés."
+        },
+        "layout": {
+          "auto": "Automatikus",
+          "name": "Kontroller-elrendezés",
+          "description": "Válaszd ki a gombneveket, amelyek a kontroller-gyorsbillentyűknél megjelennek. Az Auto a csatlakoztatott kontrollert követi, ha az azonosítható."
+        },
+        "bindings": {
+          "toggle": "Overlay megnyitása/bezárása",
+          "toggleDescription": "Egyszerre nyomott gombok az overlay megnyitásához vagy bezárásához a játékban.",
+          "ui": "Felületvezérlés",
+          "uiDescription": "Váltja az overlayben a navigációt: fókuszgyűrű, keresés és opciók.",
+          "window": "Ablakvezérlés",
+          "windowDescription": "Váltja az ablak mozgatás/átméretezés módját, amíg az overlay nyitva van.",
+          "move": "Mozgatás és görgetés",
+          "moveDescription": "Tartsd ezeket a gombokat az overlay mozgatásához a bal karral, a görgetéshez pedig a jobb karral."
+        },
+        "priority": {
+          "name": "Overlay fókuszálása megnyitáskor",
+          "description": "Megnyitáskor billentyűzet-fókuszt ad az overlaynek. Sok játék szünetel, ha elveszíti a fókuszt. A Windows beviteli API-i nem teszik lehetővé, hogy egy harmadik féltől származó alkalmazás kizárólagosan elfogja a kontrollert, így a játék továbbra is láthatja a gombokat."
+        },
+        "escape": {
+          "name": "Esc küldése a játéknak kontrolleres nyitáskor",
+          "description": "Esc-t küld a játéknak, amikor az overlay kontrollerrel nyílik meg, így sok játék szünetel vagy menüt nyit."
         }
       },
       "uninstallMenu": {
@@ -700,15 +727,15 @@
       ],
       "controllerTitle": "Kontroller (gamepad)",
       "controller": [
-        "Enable Settings > General > Controller first, then BACK+START opens the in-game overlay.",
-        "LB+X toggles in-overlay navigation; RB+Y toggles window move/resize.",
+        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
+        "LB + X toggles in-overlay navigation.",
         "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Window mode: left stick moves, LB/RB resizes, D-pad also moves when navigation is off.",
+        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
         "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
       ],
       "overlayTitle": "Játék közbeni overlay",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or BACK+START on a controller.",
+        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
         "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
         "Press / to focus the search, Esc to clear it or close the options panel.",
         "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
@@ -933,7 +960,9 @@
     "controller": "Kontroller",
     "controllerWindow": "Ablakvezérlés",
     "controllerUi": "Felületvezérlés",
-    "controllerHint": "Megnyitás: BACK+START · Felületvezérlés: LB+X · Ablakvezérlés: RB+Y"
+    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerOpen": "Megnyitás",
+    "controllerMove": "Mozgatás/görgetés"
   },
   "dialogs": {
     "game-config-title": "Futtatható fájl beállítása",

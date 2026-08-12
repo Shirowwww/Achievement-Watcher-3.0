@@ -63,8 +63,10 @@ const GlobalHotkey = require('./util/globalHotkey.js');
 const { createOverlayControllerService } = require('./console/controller/overlay-controller-service.js');
 const humanizeDuration = require('humanize-duration');
 const { resolvePowerShell } = require('./util/powershell.js');
+const { sendEscapeToFocusedWindow } = require('./util/sendKey.js');
 const toastIdentity = require('./util/toastIdentity.js');
 const { userDataDir } = require('./util/userData.js');
+const { steamHeaderImage, steamLibraryImage } = require('./util/steamArtwork.js');
 const { findIndexedSocialClubGame } = require('./util/socialClub.js');
 const notifyStrings = require('./util/notifyStrings.js');
 const { spawnDetached } = require('./util/spawnDetached.js');
@@ -256,14 +258,6 @@ function mergeIndexedGameMetadata(game, appID) {
   return game;
 }
 
-function steamHeaderImage(appid) {
-  return appid ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/header.jpg` : undefined;
-}
-
-function steamLibraryImage(appid) {
-  return appid ? `https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/library_600x900.jpg` : undefined;
-}
-
 function RegisterOverlayHotkey(hotkey) {
   overlayHotkey.register(hotkey, () => {
     toggleOverlayForRunningGame();
@@ -272,12 +266,25 @@ function RegisterOverlayHotkey(hotkey) {
 
 // Shared open/close path for the overlay of the currently running game — used by both the keyboard
 // hotkey and the controller "overlay.toggle" action so they stay in sync (overlayOpened tracks state).
-function toggleOverlayForRunningGame() {
+function toggleOverlayForRunningGame(fromController = false) {
+  const opening = !overlayOpened;
+  // "Pause the game" helper: before the overlay is shown (and can take focus), send Escape to the
+  // focused window so many games open their pause/menu. Only runs for a controller-triggered open,
+  // only when a game is actually running, and only when the user enabled the option.
+  if (
+    fromController &&
+    opening &&
+    runningAppid &&
+    controllerOptions().sendEscapeOnControllerOpen === true
+  ) {
+    debug.log('[controller] sending Escape to the game on overlay open');
+    sendEscapeToFocusedWindow();
+  }
   // With a game running, the overlay follows it. Without one, the main process
   // resolves the currently open (or first) game from the app window so the
   // hotkey still toggles the overlay from anywhere.
   const appid = runningAppid || '0';
-  SpawnOverlayNotification([`--wintype=overlay`, `--appid=${appid}`, `--description=${overlayOpened ? 'close' : 'open'}`]);
+  SpawnOverlayNotification([`--wintype=overlay`, `--appid=${appid}`, `--description=${opening ? 'open' : 'close'}`]);
   overlayOpened = !overlayOpened;
   overlayControllerService?.notifyOverlayPresentationChanged(overlayOpened, 'overlay-toggled');
 }
@@ -312,11 +319,14 @@ function handleControllerAction(type, payload = {}) {
   const action = String(type || '');
   switch (action) {
     case 'overlay.toggle':
-      toggleOverlayForRunningGame();
+      toggleOverlayForRunningGame(true);
       return;
     case 'overlay.control-mode':
       // Control mode makes stick and d-pad input interactive.
       forwardOverlayControl('control-mode', { active: payload.active === true });
+      return;
+    case 'overlay.ui-mode-toggle':
+      forwardOverlayControl(action.replace('overlay.', ''), payload);
       return;
     case 'overlay.move-relative':
     case 'overlay.scroll-page':
@@ -347,6 +357,8 @@ function syncOverlayController() {
       getOverlayToggleBinding: () => parseControllerBinding(controllerOptions().toggleBinding, ['BACK', 'START']),
       getOverlayControlModeBinding: () =>
         parseControllerBinding(controllerOptions().controlModeBinding, ['LEFT_SHOULDER', 'RIGHT_SHOULDER']),
+      getOverlayUiModeBinding: () =>
+        parseControllerBinding(controllerOptions().uiModeBinding, ['LEFT_SHOULDER', 'X']),
       canEnterOverlayControlMode: () => overlayOpened === true,
       isOverlayPresented: () => overlayOpened === true,
       onAction: handleControllerAction,

@@ -226,8 +226,15 @@ const OVERLAY_CONTROLLER_TOGGLE_ALLOWED_BUTTONS = [
   "A",
   "B",
   "X",
+  "Y",
+  "LEFT_SHOULDER",
+  "RIGHT_SHOULDER",
   "LEFT_THUMB",
   "RIGHT_THUMB",
+  "DPAD_UP",
+  "DPAD_DOWN",
+  "DPAD_LEFT",
+  "DPAD_RIGHT",
 ];
 const DEFAULT_OVERLAY_CONTROLLER_CONTROL_MODE_BINDING = [
   "LEFT_SHOULDER",
@@ -239,11 +246,19 @@ const OVERLAY_CONTROLLER_CONTROL_MODE_ALLOWED_BUTTONS = [
   "A",
   "B",
   "X",
+  "Y",
   "LEFT_SHOULDER",
   "RIGHT_SHOULDER",
   "LEFT_THUMB",
   "RIGHT_THUMB",
+  "DPAD_UP",
+  "DPAD_DOWN",
+  "DPAD_LEFT",
+  "DPAD_RIGHT",
 ];
+const DEFAULT_OVERLAY_CONTROLLER_UI_MODE_BINDING = ["LEFT_SHOULDER", "X"];
+const OVERLAY_CONTROLLER_MODE_ALLOWED_BUTTONS =
+  OVERLAY_CONTROLLER_CONTROL_MODE_ALLOWED_BUTTONS;
 
 const DEFAULTS = {
   pollIntervalMs: 16,
@@ -258,6 +273,8 @@ const DEFAULTS = {
   toggleReleaseDebounceMs: 120,
   controlModeSnapCooldownMs: 220,
   controlModeSnapReleaseDebounceMs: 80,
+  modeToggleCooldownMs: 300,
+  modeToggleReleaseDebounceMs: 120,
   dpadInitialRepeatMs: 220,
   dpadRepeatMs: 90,
   gameInputLeftStickDeadzone: 0.18,
@@ -353,7 +370,7 @@ function normalizeControllerButtonName(value) {
 
 function normalizeControllerBinding(value, options = {}) {
   const allowSingle = options.allowSingle !== false;
-  const maxButtons = Math.max(1, Number(options.maxButtons) || 2);
+  const maxButtons = Math.max(1, Number(options.maxButtons) || 3);
   const defaultBinding = Array.isArray(options.defaultBinding)
     ? options.defaultBinding
     : null;
@@ -409,7 +426,7 @@ function normalizeControllerBinding(value, options = {}) {
 function matchesControllerBinding(buttonState, binding) {
   const normalized = normalizeControllerBinding(binding, {
     allowSingle: true,
-    maxButtons: 2,
+    maxButtons: 3,
   });
   if (!normalized || !normalized.length) return false;
   const buttons = Number(
@@ -512,6 +529,9 @@ function createSlotState() {
     current: null,
     lastPacketNumber: null,
     deviceKey: null,
+    modeToggles: {
+      ui: { latched: false, releaseCandidateAt: 0, lastAt: 0 },
+    },
   };
 }
 
@@ -2699,6 +2719,15 @@ function createControllerInputManager(options = {}) {
     controlModeSnapReleaseDebounceMs,
     controlModeSnapCooldownMs,
   );
+  const modeToggleCooldownMs = Math.max(
+    150,
+    Number(options.modeToggleCooldownMs) || DEFAULTS.modeToggleCooldownMs,
+  );
+  const modeToggleReleaseDebounceMs = Math.max(
+    60,
+    Number(options.modeToggleReleaseDebounceMs) ||
+      DEFAULTS.modeToggleReleaseDebounceMs,
+  );
   const gameInputLeftStickDeadzone = Math.max(
     0,
     Math.min(
@@ -2732,6 +2761,10 @@ function createControllerInputManager(options = {}) {
     typeof options.getOverlayControlModeBinding === "function"
       ? options.getOverlayControlModeBinding
       : () => DEFAULT_OVERLAY_CONTROLLER_CONTROL_MODE_BINDING;
+  const getOverlayUiModeBinding =
+    typeof options.getOverlayUiModeBinding === "function"
+      ? options.getOverlayUiModeBinding
+      : () => DEFAULT_OVERLAY_CONTROLLER_UI_MODE_BINDING;
   const isOverlayPresented =
     typeof options.isOverlayPresented === "function"
       ? options.isOverlayPresented
@@ -2878,6 +2911,10 @@ function createControllerInputManager(options = {}) {
       slot.previousSystemButtons = 0;
       slot.toggleLatched = false;
       slot.toggleReleaseCandidateAt = 0;
+      if (slot.modeToggles) {
+        slot.modeToggles.ui.latched = false;
+        slot.modeToggles.ui.releaseCandidateAt = 0;
+      }
       slot.current = null;
       slot.lastPacketNumber = null;
       slot.deviceKey = null;
@@ -2918,7 +2955,7 @@ function createControllerInputManager(options = {}) {
       getOverlayToggleBinding?.() || DEFAULT_OVERLAY_CONTROLLER_TOGGLE_BINDING,
       {
         allowSingle: true,
-        maxButtons: 2,
+        maxButtons: 3,
         defaultBinding: DEFAULT_OVERLAY_CONTROLLER_TOGGLE_BINDING,
       },
     );
@@ -3066,6 +3103,71 @@ function createControllerInputManager(options = {}) {
       getOverlayControlModeBinding?.() ||
         DEFAULT_OVERLAY_CONTROLLER_CONTROL_MODE_BINDING,
     );
+  }
+
+  function isOverlayUiModePressed(buttons) {
+    return matchesControllerBinding(
+      buttons,
+      getOverlayUiModeBinding?.() || DEFAULT_OVERLAY_CONTROLLER_UI_MODE_BINDING,
+    );
+  }
+
+  function processModeToggleCombo(slot, mode, pressed, now) {
+    const state = slot.modeToggles && slot.modeToggles[mode];
+    if (!state) return;
+    if (pressed) {
+      state.releaseCandidateAt = 0;
+      if (!state.latched && now - state.lastAt >= modeToggleCooldownMs) {
+        state.latched = true;
+        state.lastAt = now;
+        logger.info("controller:overlay-mode-toggle", {
+          mode,
+          userIndex: slots.indexOf(slot),
+          backendType: backend?.type || null,
+          deviceKey: slot.deviceKey,
+        });
+        emitAction(`overlay.${mode}-mode-toggle`, {
+          userIndex: slots.indexOf(slot),
+          mode,
+        });
+      }
+      return;
+    }
+    if (state.latched) {
+      if (!state.releaseCandidateAt) {
+        state.releaseCandidateAt = now;
+      } else if (now - state.releaseCandidateAt >= modeToggleReleaseDebounceMs) {
+        state.latched = false;
+        state.releaseCandidateAt = 0;
+      }
+    } else {
+      state.releaseCandidateAt = 0;
+    }
+  }
+
+  function resetModeToggleLatches() {
+    for (const slot of slots) {
+      if (!slot.modeToggles) continue;
+      slot.modeToggles.ui.latched = false;
+      slot.modeToggles.ui.releaseCandidateAt = 0;
+    }
+  }
+
+  function processModeToggleActions(now) {
+    if (!isOverlayPresented()) {
+      resetModeToggleLatches();
+      return;
+    }
+    for (let userIndex = 0; userIndex < slots.length; userIndex += 1) {
+      const slot = slots[userIndex];
+      if (!slot.connected || !slot.current) continue;
+      processModeToggleCombo(
+        slot,
+        "ui",
+        isOverlayUiModePressed(slot.current),
+        now,
+      );
+    }
   }
 
   function wasButtonPressed(previousButtons, buttons, mask) {
@@ -3400,6 +3502,10 @@ function createControllerInputManager(options = {}) {
       slot.previousSystemButtons = 0;
       slot.toggleLatched = false;
       slot.toggleReleaseCandidateAt = 0;
+      if (slot.modeToggles) {
+        slot.modeToggles.ui.latched = false;
+        slot.modeToggles.ui.releaseCandidateAt = 0;
+      }
     }
   }
 
@@ -3459,6 +3565,7 @@ function createControllerInputManager(options = {}) {
       noControllerRefreshPerformed = false;
     }
     processToggleActions(now);
+    processModeToggleActions(now);
     updateControlMode(now);
     processControlModeActions(now, deltaMs);
     storePreviousButtons();
@@ -3591,7 +3698,9 @@ module.exports = {
   normalizeControllerButtonName,
   DEFAULT_OVERLAY_CONTROLLER_TOGGLE_BINDING,
   DEFAULT_OVERLAY_CONTROLLER_CONTROL_MODE_BINDING,
+  DEFAULT_OVERLAY_CONTROLLER_UI_MODE_BINDING,
   OVERLAY_CONTROLLER_TOGGLE_ALLOWED_BUTTONS,
   OVERLAY_CONTROLLER_CONTROL_MODE_ALLOWED_BUTTONS,
+  OVERLAY_CONTROLLER_MODE_ALLOWED_BUTTONS,
   XINPUT_BUTTONS,
 };

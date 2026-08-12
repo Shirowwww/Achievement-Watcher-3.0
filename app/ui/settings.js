@@ -165,6 +165,65 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       });
     }
 
+    function splitControllerBinding(value) {
+      return String(value || '').split('+').map((part) => part.trim().toUpperCase()).filter(Boolean);
+    }
+
+    function fillControllerBindingSelect(select, allowedButtons, includeNone) {
+      const layout = $('#option_controllerLayout').val() || 'auto';
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+      const locale = String(
+        (window.app && window.app.config && window.app.config.achievement && window.app.config.achievement.lang) ||
+          'english'
+      );
+      const previous = select.val();
+      select.empty();
+      if (includeNone) {
+        select.append($('<option>').attr('value', '').text(select.attr('data-none') || '—'));
+      }
+      allowedButtons.forEach((button) => {
+        select.append(
+          $('<option>')
+            .attr('value', button)
+            .text(window.ControllerLabels.buttonLabel(layout, button, gamepads, locale))
+        );
+      });
+      if (previous && select.find(`option[value="${previous}"]`).length) select.val(previous);
+    }
+
+    function populateControllerBindingOptions() {
+      const labels = window.ControllerLabels;
+      if (!labels) return;
+      [
+        ['#option_controllerToggle1', '#option_controllerToggle2', '#option_controllerToggle3', labels.TOGGLE_ALLOWED],
+        ['#option_controllerUi1', '#option_controllerUi2', '#option_controllerUi3', labels.MODE_ALLOWED],
+        ['#option_controllerMove1', '#option_controllerMove2', '#option_controllerMove3', labels.MODE_ALLOWED],
+      ].forEach(([firstId, secondId, thirdId, allowed]) => {
+        fillControllerBindingSelect($(firstId), allowed, false);
+        fillControllerBindingSelect($(secondId), allowed, true);
+        fillControllerBindingSelect($(thirdId), allowed, true);
+      });
+    }
+
+    function setControllerBinding(firstId, secondId, thirdId, value) {
+      const parts = splitControllerBinding(value);
+      $(firstId).val(parts[0] || '');
+      $(secondId).val(parts[1] || '');
+      $(thirdId).val(parts[2] || '');
+    }
+
+    function readControllerBinding(firstId, secondId, thirdId, fallback) {
+      const first = $(firstId).val();
+      const second = $(secondId).val();
+      const third = $(thirdId).val();
+      const buttons = [first, second, third].filter(Boolean);
+      return buttons.length ? buttons.join('+') : fallback;
+    }
+
+    window.addEventListener('gamepadconnected', populateControllerBindingOptions);
+    window.addEventListener('gamepaddisconnected', populateControllerBindingOptions);
+    $(document).on('customiser-labels-changed', populateControllerBindingOptions);
+
     $('#btn-onboarding-open')
       .off('click.awOnboardingOpen')
       .on('click.awOnboardingOpen', function (event) {
@@ -216,7 +275,16 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#option_uninstallContextMenu').val(String(app.config.general.uninstallContextMenu !== false)).change();
       if (!app.config.controller) app.config.controller = {};
       $('#option_controllerEnabled').val(String(app.config.controller.enabled === true)).change();
+      $('#option_controllerAppNavigation').val(String(app.config.controller.appNavigation !== false)).change();
       $('#option_controllerBackend').val(app.config.controller.backend || 'auto').change();
+      $('#option_controllerLayout').val(app.config.controller.layout || 'auto');
+      populateControllerBindingOptions();
+      setControllerBinding('#option_controllerToggle1', '#option_controllerToggle2', '#option_controllerToggle3', app.config.controller.toggleBinding || 'BACK+START');
+      setControllerBinding('#option_controllerUi1', '#option_controllerUi2', '#option_controllerUi3', app.config.controller.uiModeBinding || 'LEFT_SHOULDER+X');
+      setControllerBinding('#option_controllerMove1', '#option_controllerMove2', '#option_controllerMove3', app.config.controller.controlModeBinding || 'LEFT_SHOULDER+RIGHT_SHOULDER');
+      $('#option_controllerFocusOverlay').val(String(app.config.controller.focusOverlay === true)).change();
+      $('#option_controllerSendEscape').val(String(app.config.controller.sendEscapeOnControllerOpen === true)).change();
+      $('#option_controllerLayout').off('.controllerBindings').on('change.controllerBindings', populateControllerBindingOptions);
       populateThemeSelect();
       // The saved startup preference is authoritative; repair a mismatched login item.
       const startupPreference = app.config.general.startWithWindows !== false;
@@ -589,7 +657,15 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
       if (!app.config.controller) app.config.controller = {};
       app.config.controller.enabled = $('#option_controllerEnabled').val() === 'true';
+      app.config.controller.appNavigation = $('#option_controllerAppNavigation').val() === 'true';
       app.config.controller.backend = $('#option_controllerBackend').val() || 'auto';
+      app.config.controller.layout = $('#option_controllerLayout').val() || 'auto';
+      app.config.controller.toggleBinding = readControllerBinding('#option_controllerToggle1', '#option_controllerToggle2', '#option_controllerToggle3', 'BACK+START');
+      app.config.controller.uiModeBinding = readControllerBinding('#option_controllerUi1', '#option_controllerUi2', '#option_controllerUi3', 'LEFT_SHOULDER+X');
+      app.config.controller.controlModeBinding = readControllerBinding('#option_controllerMove1', '#option_controllerMove2', '#option_controllerMove3', 'LEFT_SHOULDER+RIGHT_SHOULDER');
+      app.config.controller.focusOverlay = $('#option_controllerFocusOverlay').val() === 'true';
+      app.config.controller.sendEscapeOnControllerOpen = $('#option_controllerSendEscape').val() === 'true';
+      document.dispatchEvent(new Event('controller-settings-changed'));
 
       $('#options-source .right')
         .children('select')
@@ -1487,14 +1563,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     });
 
     /* ---- Collapsible sections ----------------------------------------------
-       Every section card folds away under its own header, so a long tab can be
-       reduced to the handful of sections being worked on. State is per section
-       and remembered across sessions.
-
-       Nothing is wrapped, moved or removed: the header gains a chevron and the
-       card gains a class, and CSS hides the card's non-header children. That is
-       forced by the same constraint as the search filter below — the i18n loader
-       binds labels positionally, so the DOM structure has to survive untouched.
+       Cards fold under their header; state is per section and persisted. Nothing is moved or
+       removed — the i18n loader binds labels positionally, so the DOM must survive untouched.
     */
     const sectionRules = require(path.join(appPath, 'util/settingsSections.js'));
     const SECTION_STATE_KEY = 'settingsCollapsedSections';
@@ -1568,19 +1638,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     });
 
     /* ---- Settings search ---------------------------------------------------
-       Seven tabs and roughly a hundred rows means the hardest part of changing a
-       setting is remembering which tab owns it. Typing here filters the rows of
-       every tab at once and the nav counters show where the matches are, so a
-       half-remembered word is enough to find an option.
-
-       A search sees through collapsed sections: `#settings.searching` suspends
-       the collapse in CSS, so a match is never hidden inside a folded card, and
-       every section returns to its own state when the query is cleared.
-
-       Rows are hidden with a class rather than removed: the i18n loader binds
-       most labels positionally (`li:nth-child(n)`), and :nth-child counts
-       elements whether or not they are displayed, so filtering must never touch
-       the DOM structure. */
+       Typing filters every tab at once and nav counters show where the matches are. Search sees
+       through collapsed sections, and rows are hidden with a class, never removed — positional i18n
+       requires the DOM structure to survive. */
     const searchRules = require(path.join(appPath, 'util/settingsSearch.js'));
 
     function clearSettingsSearch() {

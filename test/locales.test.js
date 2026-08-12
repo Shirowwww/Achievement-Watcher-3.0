@@ -28,6 +28,8 @@ test('all bundled locales have the complete English key set', () => {
     'achievementSearchPlaceholder',
     'settings.general.theme.name',
     'settings.general.theme.description',
+    'settings.general.controller.escape.name',
+    'settings.general.controller.escape.description',
     'settings.notification.test.rare',
     'settings.notification.option.overlayPresetRare',
     'settings.notification.option.overlayPresetPlatinum',

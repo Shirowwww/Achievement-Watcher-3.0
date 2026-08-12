@@ -210,6 +210,33 @@
           "auto": "自動",
           "xinput": "XInput",
           "gameinput": "GameInput"
+        },
+        "appNavigation": {
+          "name": "アプリをコントローラーで操作",
+          "description": "コントローラーでAchievement Watcherウィンドウを操作します：ライブラリ、ゲーム詳細、設定、検索。"
+        },
+        "layout": {
+          "auto": "自動",
+          "name": "コントローラーレイアウト",
+          "description": "コントローラーショートカットに表示するボタン名を選択します。Autoは接続中のコントローラーが識別できる場合にそれに従います。"
+        },
+        "bindings": {
+          "toggle": "オーバーレイを開く/閉じる",
+          "toggleDescription": "ゲーム内オーバーレイを開いたり閉じたりするために一緒に押すボタン。",
+          "ui": "オーバーレイ操作",
+          "uiDescription": "オーバーレイ内のナビゲーション（フォーカスリング、検索、オプション）を切り替えます。",
+          "window": "ウィンドウ操作",
+          "windowDescription": "オーバーレイ表示中にウィンドウの移動・サイズ変更モードを切り替えます。",
+          "move": "移動とスクロール",
+          "moveDescription": "左スティックでオーバーレイを移動し、右スティックでスクロールする間、これらのボタンを押し続けます。"
+        },
+        "priority": {
+          "name": "開いたときにオーバーレイにフォーカス",
+          "description": "オーバーレイを開いたときにキーボードフォーカスを与えます。多くのゲームはフォーカスを失うと一時停止します。Windowsの入力APIではサードパーティアプリがコントローラーを排他的に取得できないため、ゲーム側でもボタンが認識される場合があります。"
+        },
+        "escape": {
+          "name": "コントローラーで開くときにゲームへ Esc を送信",
+          "description": "コントローラーでオーバーレイを開いたときにゲームへ Esc を送信し、多くのゲームが一時停止するかメニューを開きます。"
         }
       },
       "uninstallMenu": {
@@ -700,15 +727,15 @@
       ],
       "controllerTitle": "コントローラー（ゲームパッド）",
       "controller": [
-        "Enable Settings > General > Controller first, then BACK+START opens the in-game overlay.",
-        "LB+X toggles in-overlay navigation; RB+Y toggles window move/resize.",
+        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
+        "LB + X toggles in-overlay navigation.",
         "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Window mode: left stick moves, LB/RB resizes, D-pad also moves when navigation is off.",
+        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
         "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
       ],
       "overlayTitle": "ゲーム内オーバーレイ",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or BACK+START on a controller.",
+        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
         "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
         "Press / to focus the search, Esc to clear it or close the options panel.",
         "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
@@ -933,7 +960,9 @@
     "controller": "コントローラー",
     "controllerWindow": "ウィンドウ操作",
     "controllerUi": "オーバーレイ操作",
-    "controllerHint": "開く: BACK+START · オーバーレイ操作: LB+X · ウィンドウ操作: RB+Y"
+    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerOpen": "開く",
+    "controllerMove": "移動/スクロール"
   },
   "dialogs": {
     "game-config-title": "実行ファイルの設定",

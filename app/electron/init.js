@@ -258,14 +258,41 @@ function t(key, english, french, params) {
 }
 
 // Build the locale payload sent to the in-game overlay.
+let cachedOverlayLanguagePayload = null;
 function overlayLanguagePayload() {
   const lang = String((configJS && configJS.achievement && configJS.achievement.lang) || 'english');
+  if (cachedOverlayLanguagePayload && cachedOverlayLanguagePayload.lang === lang) {
+    return cachedOverlayLanguagePayload;
+  }
   try {
-    return overlayLocale.loadOverlayLocale({ localeDir: path.join(__dirname, '../locale/lang'), lang });
+    cachedOverlayLanguagePayload = overlayLocale.loadOverlayLocale({ localeDir: path.join(__dirname, '../locale/lang'), lang });
+    return cachedOverlayLanguagePayload;
   } catch (err) {
     debug.log(`[overlay] language payload failed: ${err.message || err}`);
+    cachedOverlayLanguagePayload = null;
     return { lang, strings: {} };
   }
+}
+
+// Controller shortcuts + button layout are sent to the overlay as a small config payload.
+function overlayControllerConfigPayload() {
+  const c = (configJS && configJS.controller) || {};
+  const split = (value, fallback) => {
+    const parts = String(value || '')
+      .split('+')
+      .map((part) => part.trim().toUpperCase())
+      .filter(Boolean);
+    return parts.length ? parts : fallback;
+  };
+  return {
+    layout: String(c.layout || 'auto'),
+    nativeModeToggles: c.enabled === true,
+    bindings: {
+      toggle: split(c.toggleBinding, ['BACK', 'START']),
+      ui: split(c.uiModeBinding, ['LEFT_SHOULDER', 'X']),
+      move: split(c.controlModeBinding, ['LEFT_SHOULDER', 'RIGHT_SHOULDER']),
+    },
+  };
 }
 
 // Resolve the current theme for the main window and overlay.
@@ -370,6 +397,9 @@ if (!manifest.config.debug) {
 let puppeteerWindow = {};
 let MainWin = null;
 let overlayWindow = null;
+let overlayVisible = false;
+let overlayWarmupTimer = null;
+const OVERLAY_WARMUP_KEEP_MS = 300000;
 let debug = new (require('../util/logger'))({
   console: manifest.config.debug || false,
   file: path.join(userData, `logs/renderer.log`),
@@ -724,6 +754,9 @@ ipcMain.on('get-steam-data', async (event, arg) => {
 ipcMain.on('config-saved', async () => {
   try {
     await startEngines(); // re-reads options.ini into configJS
+    if (overlayVisible) {
+      overlayWindow.webContents.send('overlay-controller-config', overlayControllerConfigPayload());
+    }
   } catch (err) {
     debug.log('[config-saved] config reload failed: ' + (err.message || err));
   }
@@ -1314,6 +1347,24 @@ function launchWatchdog() {
     // URI scheme a toast click activates. Empty when registration failed (or in a dev run), in
     // which case the Watchdog omits the activation instead of emitting one that goes nowhere.
     AW_TOAST_PROTOCOL: toastProtocolReady ? TOAST_PROTOCOL : '',
+    // Lets the Watchdog's "send Escape on controller overlay open" helper avoid ever injecting
+    // input into the Achievement Watcher window itself (e.g. when the combo is pressed while the
+    // app has focus instead of the game). Covers both the browser process and the main window's
+    // renderer, whichever owns the foreground HWND.
+    AW_APP_PIDS: [
+      String(process.pid),
+      (() => {
+        try {
+          if (MainWin && !MainWin.isDestroyed() && MainWin.webContents && !MainWin.webContents.isDestroyed()) {
+            const rendererPid = MainWin.webContents.getOSProcessId();
+            if (Number.isInteger(rendererPid) && rendererPid > 0) return String(rendererPid);
+          }
+        } catch {}
+        return null;
+      })(),
+    ]
+      .filter(Boolean)
+      .join(','),
   };
 
   try {
@@ -2108,26 +2159,6 @@ function searchForSteamAppId(info = { name: '' }) {
           })();
         `);
 
-        /* // this is for steamdb
-        games = await win.webContents.executeJavaScript(`
-          (() => {
-            const rows = document.querySelectorAll('#table-sortable tbody tr.app');
-            const matches = [];
-            debug.log(rows);
-            rows.forEach(row => {
-              const appid = row.getAttribute('data-appid');
-              const nameLink = row.querySelector('td:nth-child(3) a');
-              const name = nameLink?.innerText.trim();
-
-              if (appid && name) {
-                matches.push({ appid, name });
-              }
-            });
-
-            return matches;
-          })();
-        `);
-        */
         await delay(500);
       }
       info.games = games;
@@ -2430,13 +2461,13 @@ function persistInGameBounds() {
   if (overlayWindow && !overlayWindow.isDestroyed()) writeOverlayBounds({ inGame: overlayWindow.getBounds() });
 }
 function nudgeOverlay(dx, dy) {
-  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  if (!overlayVisible || !overlayWindow || overlayWindow.isDestroyed()) return;
   const b = overlayWindow.getBounds();
   overlayWindow.setBounds({ x: b.x + dx, y: b.y + dy, width: b.width, height: b.height });
   persistInGameBounds();
 }
 function snapOverlay(corner) {
-  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  if (!overlayVisible || !overlayWindow || overlayWindow.isDestroyed()) return;
   const { x: ax, y: ay, width: aw, height: ah } = require('electron').screen.getPrimaryDisplay().workArea;
   const b = overlayWindow.getBounds();
   let x = ax;
@@ -2452,7 +2483,7 @@ function snapOverlay(corner) {
   persistInGameBounds();
 }
 function toggleOverlayClickThrough() {
-  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  if (!overlayVisible || !overlayWindow || overlayWindow.isDestroyed()) return;
   overlayClickThrough = !overlayClickThrough;
   overlayWindow.setIgnoreMouseEvents(overlayClickThrough, { forward: true });
 }
@@ -2472,7 +2503,7 @@ function cycleOverlaySnapPreset() {
   snapOverlay(overlaySnapIndex);
 }
 function scrollOverlayPage(direction) {
-  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  if (!overlayVisible || !overlayWindow || overlayWindow.isDestroyed()) return;
   const sign = direction === 'up' ? -1 : 1;
   // The overlay content scrolls inside .scroll-container; nudge it by ~55% of the viewport per repeat.
   overlayWindow.webContents
@@ -2513,6 +2544,11 @@ function handleOverlayControl(action, payload = {}) {
       return;
     case 'control-mode':
       setOverlayControlMode(payload.active === true);
+      return;
+    case 'ui-mode-toggle':
+      if (overlayVisible) {
+        overlayWindow.webContents.send('overlay-controller-mode', { mode: 'ui' });
+      }
       return;
     default:
       return;
@@ -2566,47 +2602,125 @@ async function resolveOverlayFallbackAppid() {
   }
 }
 
+// The overlay is kept alive (hidden) between opens so toggling it is nearly instant.
+// "Closing" therefore means hiding; the BrowserWindow itself is only destroyed on app quit,
+// a crash, or an explicit recreate (e.g. the overlay HTML changed in dev).
+function hideOverlayWindow(reason = 'close') {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  const wasVisible = overlayVisible;
+  overlayVisible = false;
+  overlayAppid = null;
+  overlayClickThrough = false;
+  unregisterOverlayShortcuts();
+  setOverlayControlMode(false);
+  try {
+    overlayWindow.webContents.send('overlay-visibility', false);
+  } catch {}
+  try {
+    // Drop the loaded achievement DOM while hidden so the reused window stays light.
+    overlayWindow.webContents.send('show-overlay', null);
+  } catch {}
+  try {
+    overlayWindow.hide();
+  } catch {}
+  if (overlayWarmupTimer) clearTimeout(overlayWarmupTimer);
+  overlayWarmupTimer = setTimeout(() => {
+    overlayWarmupTimer = null;
+    if (!overlayVisible && overlayWindow && !overlayWindow.isDestroyed()) {
+      debug.log('[overlay] warm window released after idle');
+      overlayWindow.destroy();
+    }
+  }, OVERLAY_WARMUP_KEEP_MS);
+  if (typeof overlayWarmupTimer.unref === 'function') overlayWarmupTimer.unref();
+  if (wasVisible) notifyMonitorOverlayState(false);
+  debug.log(`[overlay] hidden (${reason})`);
+}
+
+function sendOverlayPayloads(info) {
+  if (!overlayWindow || overlayWindow.isDestroyed() || !overlayVisible) return;
+  overlayWindow.webContents.send('overlay-language', overlayLanguagePayload());
+  overlayWindow.webContents.send('overlay-theme', currentThemePayload());
+  overlayWindow.webContents.send('overlay-controller-config', overlayControllerConfigPayload());
+  overlayWindow.webContents.send('show-overlay', info.game);
+}
+
+function showOverlayAfterLoad(info) {
+  if (!overlayWindow || overlayWindow.isDestroyed() || !overlayVisible) return;
+  if (overlayWarmupTimer) {
+    clearTimeout(overlayWarmupTimer);
+    overlayWarmupTimer = null;
+  }
+  sendOverlayPayloads(info);
+  try {
+    overlayWindow.webContents.send('overlay-visibility', true);
+  } catch {}
+  if ((configJS && configJS.controller && configJS.controller.focusOverlay) === true) {
+    overlayWindow.show();
+    overlayWindow.focus();
+  } else {
+    overlayWindow.showInactive();
+  }
+  registerOverlayShortcuts();
+  notifyMonitorOverlayState(true);
+}
+
 /**
  * @param {{appid: string, action:string}} info
  */
 async function createOverlayWindow(info) {
   try {
     if (!info.action) info.action = 'open';
-    const isOpen = !!(overlayWindow && !overlayWindow.isDestroyed());
+    const isOpen = overlayVisible;
     const request = resolveOverlayRequest({ action: info.action, appid: info.appid, isOpen, openAppid: overlayAppid });
 
     if (request.action === 'ignore') return;
     if (request.action === 'close') {
-      overlayWindow.close();
+      hideOverlayWindow('close');
       return;
     }
     if (request.action === 'refresh') {
+      if (!overlayVisible) return;
       overlayWindow.webContents.send('refresh-achievements-table', String(info.appid));
       return;
     }
     if (request.action === 'reopen') {
-      // The active game changed while the overlay was open: close the old one cleanly, then fall
-      // through and open the new game's achievements.
-      const old = overlayWindow;
-      overlayWindow = null;
-      await new Promise((resolve) => {
-        old.once('closed', resolve);
-        old.close();
-      });
+      // The active game changed while the overlay was open: hide the old contents, then fall
+      // through and swap in the new game's achievements without recreating the window.
+      hideOverlayWindow('reopen');
     }
     if (request.action === 'fallback') {
       const fallback = await resolveOverlayFallbackAppid();
       if (!fallback) return;
       info.appid = fallback;
     }
-    overlayAppid = String(info.appid);
     const { width, height } = require('electron').screen.getPrimaryDisplay().workAreaSize;
 
-    await startEngines();
+    // Avoid re-reading options.ini + re-initializing the achievements parser on every toggle.
+    // Settings saves already call startEngines(), so a loaded configJS is fresh enough here.
+    if (!configJS || !achievementsJS) await startEngines();
     await getCachedData(info);
     info.game = await achievementsJS.getSavedAchievementsForAppid(configJS, { appid: info.appid });
     attachOverlayRarity(info.game);
 
+    // Fast path: the window already exists (hidden) from a previous open. Swap the data and show.
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+      overlayVisible = true;
+      overlayAppid = String(info.appid);
+      overlayClickThrough = false;
+      const savedInGame = readOverlayBounds().inGame;
+      if (savedInGame && Number.isFinite(savedInGame.x) && Number.isFinite(savedInGame.y)) {
+        overlayWindow.setBounds({
+          x: savedInGame.x,
+          y: savedInGame.y,
+          width: savedInGame.width || 450,
+          height: savedInGame.height || 800,
+        });
+      }
+      showOverlayAfterLoad(info);
+      return;
+    }
+
+    overlayAppid = String(info.appid);
     overlayWindow = new BrowserWindow({
       width: 450,
       height: 800,
@@ -2683,13 +2797,10 @@ async function createOverlayWindow(info) {
 
     // Load the bundled overlay (same policy as the main window): a userData copy can be stale and
     // would drift from the app's own view/overlay.html + util/overlayUi.js.
+    overlayVisible = true;
     overlayWindow.loadFile(path.join(__dirname, '../view/overlay.html'));
     overlayWindow.webContents.on('did-finish-load', () => {
-      overlayWindow.webContents.send('overlay-language', overlayLanguagePayload());
-      overlayWindow.webContents.send('overlay-theme', currentThemePayload());
-      overlayWindow.webContents.send('show-overlay', info.game);
-      overlayWindow.showInactive();
-      registerOverlayShortcuts(); // nudge / snap / click-through, active only while the overlay is open
+      showOverlayAfterLoad(info);
     });
 
     // Persist position/size after a drag (app-region move fires 'moved') or an edge/corner resize.
@@ -2698,19 +2809,18 @@ async function createOverlayWindow(info) {
 
     overlayWindow.on('closed', () => {
       overlayWindow = null;
+      overlayVisible = false;
+      if (overlayWarmupTimer) {
+        clearTimeout(overlayWarmupTimer);
+        overlayWarmupTimer = null;
+      }
       overlayAppid = null;
       overlayClickThrough = false;
       unregisterOverlayShortcuts();
-      // Every close funnels through here — the × button, Escape, Alt+F4, the game-changed reopen —
-      // so this is the one place the monitor's flag can be kept true to the screen.
+      // Only a real destroy lands here now (app quit / crash / dev reload); normal toggles hide.
       notifyMonitorOverlayState(false);
     });
 
-    // ... and the matching "it is up again" edge. The reopen path closes the previous window first,
-    // which reports `false` above; without this the monitor would believe the overlay is gone while
-    // the new game's overlay is on screen, and the next hotkey press would ask to open an overlay
-    // that is already there (resolved as "ignore" — the hotkey would look dead).
-    notifyMonitorOverlayState(true);
   } catch (e) {
     debug.log(`Error creating overlay window, ${e}`);
     if (shouldQuitApp()) app.quit();
@@ -3114,34 +3224,18 @@ ipcMain.on('spawn-overlay-notification', (event, data) => {
 // without a game actually running. Toggles like the hotkey itself — a second click while it is open
 // closes it rather than stacking a duplicate window.
 ipcMain.on('overlay-preview', (event, appid) => {
-  if (overlayWindow && !overlayWindow.isDestroyed()) {
-    overlayWindow.close();
+  if (overlayVisible) {
+    hideOverlayWindow('preview-toggle');
     return;
   }
   if (!appid) return;
   createOverlayWindow({ appid: String(appid), source: 'steam', action: 'open' });
 });
 
-// Gamepad window control from the overlay renderer (window-control toggle): move by a delta,
-// or resize by a delta (clamped so the panel never collapses or becomes unwieldy). Bounds are
-// persisted by the overlay's existing moved/resize listeners.
-ipcMain.on('overlay-move-by', (event, { dx = 0, dy = 0 } = {}) => {
-  if (!overlayWindow || overlayWindow.isDestroyed()) return;
-  nudgeOverlay(Number(dx) || 0, Number(dy) || 0);
-});
-ipcMain.on('overlay-resize-by', (event, { dw = 0, dh = 0 } = {}) => {
-  if (!overlayWindow || overlayWindow.isDestroyed()) return;
-  const b = overlayWindow.getBounds();
-  const width = Math.max(360, Math.min(1920, b.width + (Number(dw) || 0)));
-  const height = Math.max(240, Math.min(1080, b.height + (Number(dh) || 0)));
-  overlayWindow.setBounds({ x: b.x, y: b.y, width, height });
-});
-
 // The overlay header's × button (and Escape, which shares this path). Closing the window is all
 // that is needed: its 'closed' handler reports the new state to the monitor, whatever triggered it.
 ipcMain.on('overlay-close', () => {
-  if (!overlayWindow || overlayWindow.isDestroyed()) return;
-  overlayWindow.close();
+  hideOverlayWindow('close');
 });
 
 function normalizeNotificationProgress(args) {
@@ -3528,7 +3622,7 @@ ipcMain.handle('pick-theme-image', async (event, layer) => {
 // Forward a theme change (Settings > General, or the Custom theme editor) to an
 // already-open in-game overlay so it recolors without reopening.
 ipcMain.on('theme-changed', (event, name) => {
-  if (overlayWindow && !overlayWindow.isDestroyed() && !overlayWindow.webContents.isDestroyed()) {
+  if (overlayVisible && !overlayWindow.webContents.isDestroyed()) {
     try {
       overlayWindow.webContents.send('overlay-theme', currentThemePayload(name));
     } catch (err) {

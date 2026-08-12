@@ -210,6 +210,33 @@
           "auto": "Automatisch",
           "xinput": "XInput",
           "gameinput": "GameInput"
+        },
+        "appNavigation": {
+          "name": "App mit Controller steuern",
+          "description": "Navigiere mit einem Gamepad durch das Achievement-Watcher-Fenster: Bibliothek, Spieldetails, Einstellungen und Suche."
+        },
+        "layout": {
+          "auto": "Auto",
+          "name": "Controller-Layout",
+          "description": "Wähle die angezeigten Tastennamen für Controller-Verknüpfungen. Auto folgt dem verbundenen Controller, wenn er erkannt werden kann."
+        },
+        "bindings": {
+          "toggle": "Overlay öffnen/schließen",
+          "toggleDescription": "Gleichzeitig gedrückte Tasten zum Öffnen oder Schließen des In-Game-Overlays.",
+          "ui": "Overlay-Steuerung",
+          "uiDescription": "Schaltet die Navigation im Overlay um: Fokusring, Suche und Optionen.",
+          "window": "Fenstersteuerung",
+          "windowDescription": "Schaltet den Modus zum Verschieben/Größenändern des Fensters um, solange das Overlay offen ist.",
+          "move": "Bewegen & scrollen",
+          "moveDescription": "Halte diese Tasten gedrückt, um das Overlay mit dem linken Stick zu bewegen und mit dem rechten Stick zu scrollen."
+        },
+        "priority": {
+          "name": "Overlay beim Öffnen fokussieren",
+          "description": "Gibt dem Overlay beim Öffnen den Tastaturfokus. Viele Spiele pausieren, wenn sie den Fokus verlieren. Windows-Eingabe-APIs erlauben Drittanbietern keine exklusive Controller-Erfassung, daher kann das Spiel die Tasten weiterhin sehen."
+        },
+        "escape": {
+          "name": "Escape-Taste an das Spiel senden, wenn per Controller geöffnet wird",
+          "description": "Sendet beim Öffnen des Overlays per Controller Escape an das Spiel, damit viele Spiele pausieren oder ihr Menü öffnen."
         }
       },
       "uninstallMenu": {
@@ -700,15 +727,15 @@
       ],
       "controllerTitle": "Controller (Gamepad)",
       "controller": [
-        "Enable Settings > General > Controller first, then BACK+START opens the in-game overlay.",
-        "LB+X toggles in-overlay navigation; RB+Y toggles window move/resize.",
+        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
+        "LB + X toggles in-overlay navigation.",
         "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Window mode: left stick moves, LB/RB resizes, D-pad also moves when navigation is off.",
+        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
         "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
       ],
       "overlayTitle": "In-Game-Overlay",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or BACK+START on a controller.",
+        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
         "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
         "Press / to focus the search, Esc to clear it or close the options panel.",
         "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
@@ -933,7 +960,9 @@
     "controller": "Controller",
     "controllerWindow": "Fenstersteuerung",
     "controllerUi": "Overlay-Steuerung",
-    "controllerHint": "Öffnen: BACK+START · Overlay-Steuerung: LB+X · Fenstersteuerung: RB+Y"
+    "controllerHint": "Open: Back + Start · Overlay control: LB + X · Move/scroll: LB + RB",
+    "controllerOpen": "Öffnen",
+    "controllerMove": "Bewegen/scrollen"
   },
   "dialogs": {
     "game-config-title": "Ausführbare Datei konfigurieren",
