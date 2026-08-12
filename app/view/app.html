@@ -464,37 +464,6 @@
                 </ul>
               </div>
 
-              <div class="arrow-list" id="controller-card">
-                <div class="title"><i class="fas fa-gamepad"></i> <span id="controller-settings-title">Controller</span></div>
-                <ul>
-                <li class="hasHelper">
-                  <div class="left"><i class="fas fa-gamepad"></i> <span id="controller-enabled-label">Control the in-game overlay with a controller</span></div>
-                  <div class="right">
-                    <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
-                    <select autocomplete="off" id="option_controllerEnabled">
-                      <option value="false" selected>Disabled</option>
-                      <option value="true">Enabled</option>
-                    </select>
-                    <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
-                  </div>
-                  <div class="help" id="controller-enabled-help">Toggle and move the in-game overlay with a gamepad (Back+Start to open; hold LB+RB to move/scroll). Supports Xbox, PlayStation (DualSense/DualShock) and Switch Pro controllers.</div>
-                </li>
-                <li class="hasHelper">
-                  <div class="left"><i class="fas fa-microchip"></i> <span id="controller-backend-label">Controller backend</span></div>
-                  <div class="right">
-                    <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
-                    <select autocomplete="off" id="option_controllerBackend">
-                      <option value="auto" selected>Auto</option>
-                      <option value="xinput">XInput</option>
-                      <option value="gameinput">GameInput</option>
-                    </select>
-                    <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
-                  </div>
-                  <div class="help" id="controller-backend-help">Auto picks the best available input backend. Choose XInput for maximum compatibility, or GameInput on newer Windows builds.</div>
-                </li>
-                </ul>
-              </div>
-
               <div class="arrow-list">
                 <div class="title"><i class="fas fa-ban"></i> <span id="advanced-blacklist-title"></span></div>
                 <ul>
@@ -1705,7 +1674,7 @@
                       <div class="previous">
                         <span class="arrow"><i class="fas fa-chevron-left"></i></span>
                       </div>
-                      <select autocomplete="off" id="option_theme">
+                      <select autocomplete="off" class="dropdown" id="option_theme">
                         <option value="default" selected>Steam Blue</option>
                         <option value="oled">OLED Black</option>
                         <option value="dracula">Dracula</option>
@@ -1713,6 +1682,16 @@
                         <option value="nord">Nord</option>
                         <option value="gruvbox">Gruvbox</option>
                         <option value="tokyonight">Tokyo Night</option>
+                        <option value="catppuccin">Catppuccin Mocha</option>
+                        <option value="rosepine">Rosé Pine</option>
+                        <option value="synthwave">Synthwave '84</option>
+                        <option value="everforest">Everforest</option>
+                        <option value="cyberpunk">Cyberpunk</option>
+                        <option value="ember">Ember</option>
+                        <option value="ocean">Ocean</option>
+                        <option value="hacker">Hacker</option>
+                        <option value="burgundy">Burgundy</option>
+                        <option value="champagne">Champagne</option>
                       </select>
                       <div class="next">
                         <span class="arrow"><i class="fas fa-chevron-right"></i></span>

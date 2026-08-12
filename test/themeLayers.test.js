@@ -115,9 +115,17 @@ test('custom theme defaults to the Steam Blue palette', () => {
 });
 
 test('built-in overlay CSS mirrors each theme', () => {
-  for (const name of ['default', 'oled', 'dracula', 'graphite', 'nord', 'gruvbox', 'tokyonight']) {
+  for (const name of Object.keys(themeLayers.BUILTIN_COLORS)) {
     const css = themeLayers.buildBuiltinOverlayCss(name);
     assert.match(css, new RegExp(`--aw-theme-bg: ${themeLayers.BUILTIN_COLORS[name].bg}`));
+  }
+});
+
+test('every built-in theme has an app.css token block', () => {
+  const css = fs.readFileSync(path.join(__dirname, '../app/resources/css/app.css'), 'utf8');
+  for (const name of Object.keys(themeLayers.BUILTIN_COLORS)) {
+    if (name === 'default') continue;
+    assert.match(css, new RegExp(`:root\\[data-theme='${name}'\\]`));
   }
 });
 

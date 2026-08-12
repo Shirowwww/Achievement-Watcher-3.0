@@ -88,8 +88,8 @@
   background-size: cover, var(--aw-img-header-size, cover);
   background-repeat: no-repeat, var(--aw-img-header-repeat, no-repeat);
   background-position: center;
-  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.04));
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.02), 0 10px 30px rgba(0, 0, 0, 0.18);
+  border-bottom: 1px solid color-mix(in srgb, var(--border, rgba(255, 255, 255, 0.04)) 15%, transparent);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
 }
 
 ul {
@@ -166,11 +166,11 @@ ul > li#btn-minimize i {
   transform: translateY(-4px);
 }
 ul > li {
-  background-color: color-mix(in srgb, var(--surface-sunken, #101a27) 72%, transparent);
+  background-color: color-mix(in srgb, var(--surface-sunken, #101a27) 15%, transparent);
 }
 ul > li:hover,
 #start-watchdog:hover {
-  background-color: color-mix(in srgb, var(--text, #ffffff) 9%, transparent);
+  background-color: color-mix(in srgb, var(--text, #ffffff) 4%, transparent);
   color: var(--text, #ffffff);
 }
 ul > li#btn-close {

@@ -196,6 +196,176 @@
   --warning: #e0af68;
   --danger: #f7768e;
 }
+:root[data-theme='catppuccin'] {
+  --bg-base: #1e1e2e;
+  --bg-glow: #313244;
+  --bg-panel: #181825;
+  --bg-panel-translucent: #181825b5;
+  --surface: #313244;
+  --border: #45475a;
+  --text: #cdd6f4;
+  --text-muted: #a6adc8;
+  --accent: #89b4fa;
+  --accent-soft: rgba(137, 180, 250, 0.18);
+  --surface-elevated: #3a3d52;
+  --surface-sunken: #131320;
+  --success: #a6e3a1;
+  --warning: #fab387;
+  --danger: #f38ba8;
+}
+:root[data-theme='rosepine'] {
+  --bg-base: #191724;
+  --bg-glow: #1f1d2e;
+  --bg-panel: #15131d;
+  --bg-panel-translucent: #15131db5;
+  --surface: #26233a;
+  --border: #403d52;
+  --text: #e0def4;
+  --text-muted: #908caa;
+  --accent: #c4a7e7;
+  --accent-soft: rgba(196, 167, 231, 0.18);
+  --surface-elevated: #2d2a44;
+  --surface-sunken: #100e18;
+  --success: #9ccfd8;
+  --warning: #f6c177;
+  --danger: #eb6f92;
+}
+:root[data-theme='synthwave'] {
+  --bg-base: #241b2f;
+  --bg-glow: #2d2440;
+  --bg-panel: #1a1325;
+  --bg-panel-translucent: #1a1325b5;
+  --surface: #372a54;
+  --border: #52407a;
+  --text: #f4efff;
+  --text-muted: #b7a8d9;
+  --accent: #36f9f6;
+  --accent-soft: rgba(54, 249, 246, 0.18);
+  --surface-elevated: #433365;
+  --surface-sunken: #150e1f;
+  --success: #92e4eb;
+  --warning: #fede5d;
+  --danger: #f97e72;
+}
+:root[data-theme='everforest'] {
+  --bg-base: #232a2e;
+  --bg-glow: #2d353b;
+  --bg-panel: #1c2226;
+  --bg-panel-translucent: #1c2226b5;
+  --surface: #343f44;
+  --border: #4a555b;
+  --text: #d3c6aa;
+  --text-muted: #859289;
+  --accent: #a7c080;
+  --accent-soft: rgba(167, 192, 128, 0.18);
+  --surface-elevated: #3d494e;
+  --surface-sunken: #171c20;
+  --success: #a7c080;
+  --warning: #dbbc7f;
+  --danger: #e67e80;
+}
+:root[data-theme='cyberpunk'] {
+  --bg-base: #0d0d1a;
+  --bg-glow: #191936;
+  --bg-panel: #101020;
+  --bg-panel-translucent: #101020b5;
+  --surface: #1e1e3d;
+  --border: #34346e;
+  --text: #e8e8ff;
+  --text-muted: #9494c8;
+  --accent: #ff2a6d;
+  --accent-soft: rgba(255, 42, 109, 0.18);
+  --surface-elevated: #262650;
+  --surface-sunken: #090914;
+  --success: #00ff9f;
+  --warning: #ffd60a;
+  --danger: #ff3860;
+}
+:root[data-theme='ember'] {
+  --bg-base: #20160f;
+  --bg-glow: #2e2016;
+  --bg-panel: #19110c;
+  --bg-panel-translucent: #19110cb5;
+  --surface: #332316;
+  --border: #5a4634;
+  --text: #f5e6d3;
+  --text-muted: #b8a08a;
+  --accent: #ff9e3d;
+  --accent-soft: rgba(255, 158, 61, 0.18);
+  --surface-elevated: #3d2b1c;
+  --surface-sunken: #150e09;
+  --success: #a7c080;
+  --warning: #ffd166;
+  --danger: #e06c5a;
+}
+:root[data-theme='ocean'] {
+  --bg-base: #0b1e26;
+  --bg-glow: #12323d;
+  --bg-panel: #08171c;
+  --bg-panel-translucent: #08171cb5;
+  --surface: #16404d;
+  --border: #2e5a66;
+  --text: #d7f2f5;
+  --text-muted: #8fb4bd;
+  --accent: #35d0ba;
+  --accent-soft: rgba(53, 208, 186, 0.18);
+  --surface-elevated: #1c4c5b;
+  --surface-sunken: #061116;
+  --success: #7fbbb3;
+  --warning: #e6b450;
+  --danger: #e67e80;
+}
+:root[data-theme='hacker'] {
+  --bg-base: #0a0f0a;
+  --bg-glow: #101a10;
+  --bg-panel: #070c07;
+  --bg-panel-translucent: #070c07b5;
+  --surface: #122012;
+  --border: #1f3a1f;
+  --text: #c8ffc8;
+  --text-muted: #5f8f5f;
+  --accent: #33ff66;
+  --accent-soft: rgba(51, 255, 102, 0.18);
+  --surface-elevated: #172917;
+  --surface-sunken: #040804;
+  --success: #33ff66;
+  --warning: #ffd60a;
+  --danger: #ff3860;
+}
+:root[data-theme='burgundy'] {
+  --bg-base: #1a0d12;
+  --bg-glow: #2a1420;
+  --bg-panel: #140a0e;
+  --bg-panel-translucent: #140a0eb5;
+  --surface: #311a24;
+  --border: #553040;
+  --text: #f2dce2;
+  --text-muted: #b58b98;
+  --accent: #e0527a;
+  --accent-soft: rgba(224, 82, 122, 0.18);
+  --surface-elevated: #3a2230;
+  --surface-sunken: #10070b;
+  --success: #a7c080;
+  --warning: #f0b429;
+  --danger: #ff5470;
+}
+:root[data-theme='champagne'] {
+  --bg-base: #0d1526;
+  --bg-glow: #182338;
+  --bg-panel: #0a101d;
+  --bg-panel-translucent: #0a101db5;
+  --surface: #1c2942;
+  --border: #33405c;
+  --text: #ece9dd;
+  --text-muted: #97a0b3;
+  --accent: #f0c96b;
+  --accent-soft: rgba(240, 201, 107, 0.18);
+  --surface-elevated: #233252;
+  --surface-sunken: #070c16;
+  --success: #9ece6a;
+  --warning: #f0c96b;
+  --danger: #e06c75;
+}
 
 html,
 body,
@@ -662,7 +832,7 @@ main {
   height: 100%;
   background: linear-gradient(to right, color-mix(in srgb, var(--accent) 75%, black 10%), var(--accent));
   border-radius: inherit;
-  transition: width 0.3s linear;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   display: block;
   box-sizing: border-box;
 }
@@ -714,6 +884,10 @@ main {
   cursor: pointer;
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
   position: relative;
+  /* Off-screen tiles are skipped by the compositor: their cover images stay undecoded until
+     scrolled into view, which keeps the renderer and GPU processes from caching every cover at once. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 170px;
 }
 
 /* Hover "lift": the card rises and its shadow deepens, making the grid feel tactile. */
@@ -729,19 +903,29 @@ main {
    their own palette. */
 #game-list .game-box.skeleton {
   pointer-events: none;
-  animation: aw-skeleton-pulse 1.4s ease-in-out infinite;
 }
 #game-list .game-box.skeleton .header,
 #game-list .game-box.skeleton .info .title,
 #game-list .game-box.skeleton .info .progressBar .meter {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-sunken) !important;
+}
+#game-list .game-box.skeleton .header::before,
+#game-list .game-box.skeleton .info .title::before,
+#game-list .game-box.skeleton .info .progressBar .meter::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
   background: linear-gradient(
-    110deg,
-    var(--surface-sunken) 8%,
-    var(--surface) 18%,
-    var(--surface-sunken) 33%
-  ) !important;
-  background-size: 200% 100% !important;
-  animation: aw-skeleton-shimmer 1.4s linear infinite;
+    105deg,
+    transparent 25%,
+    color-mix(in srgb, var(--surface) 52%, transparent) 50%,
+    transparent 75%
+  );
+  animation: aw-skeleton-shimmer 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: var(--skeleton-delay, 0s);
 }
 #game-list .game-box.skeleton .info {
   min-height: 57px; /* match a real tile's info block so the grid does not reflow */
@@ -768,22 +952,12 @@ main {
   content: none;
 }
 
-@keyframes aw-skeleton-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.72;
-  }
-}
-
 @keyframes aw-skeleton-shimmer {
   0% {
-    background-position: 200% 0;
+    transform: translateX(-100%);
   }
   100% {
-    background-position: -200% 0;
+    transform: translateX(100%);
   }
 }
 
@@ -2280,8 +2454,13 @@ main {
   grid-column: 2;
 }
 
-.arrow-list li .right select option {
-  background: var(--bg-base);
+.arrow-list li .right select option,
+#settings select option {
+  /* Use the Settings surface instead of the app window background: the native dropdown
+     popup otherwise turns into a slab of the Custom theme's --bg-base color while the
+     settings modal around it uses its own surface palette. */
+  background: var(--set-surface-sunken);
+  color: var(--text);
 }
 
 .arrow-list li .right select {

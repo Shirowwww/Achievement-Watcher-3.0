@@ -53,6 +53,16 @@ function populateThemeSelect() {
     ['nord', 'Nord'],
     ['gruvbox', 'Gruvbox'],
     ['tokyonight', 'Tokyo Night'],
+    ['catppuccin', 'Catppuccin Mocha'],
+    ['rosepine', 'Rosé Pine'],
+    ['synthwave', "Synthwave '84"],
+    ['everforest', 'Everforest'],
+    ['cyberpunk', 'Cyberpunk'],
+    ['ember', 'Ember'],
+    ['ocean', 'Ocean'],
+    ['hacker', 'Hacker'],
+    ['burgundy', 'Burgundy'],
+    ['champagne', 'Champagne'],
   ].forEach(([value, label]) => sel.append($('<option>').attr('value', value).text(label)));
   sel.append($('<option>').attr('value', 'custom').text(t('themeCustom', 'Custom…', 'Personnalisé…')));
   ipcRenderer
