@@ -1996,6 +1996,8 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
                     (summary.dlc ? ` + ${summary.dlc.count} DLC(s)` : '') +
                     (summary.user && summary.user.language ? ` + lang ${summary.user.language}` : '')
                 );
+                // The schema this repair just wrote must not sit behind a remembered "not here".
+                steam.forgetLocalSchemaLocations();
                 try {
                   const runtime = goldberg.seedRuntimeSave({
                     appid: bgAppid,

@@ -34,6 +34,12 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- A game whose cached Steam schema resolved a name but no achievement list stayed empty for
+  good: the cache has no expiry and only the name was ever tested, so a fetch that reached the
+  store page but not the schema froze the game at zero achievements. Such an entry is now
+  re-checked at most once a week, and the check is stamped on the record so a game that
+  genuinely has no achievements is not looked up again on every scan. A re-check that cannot
+  run — offline, rate-limited — hands the cached entry back untouched instead of dropping it.
 - Notification artwork now prefers the high-resolution Steam art already cached by the app
   (schema, store and SteamDB covers) instead of the predictable CDN URLs, which 404 on newer
   titles whose assets live under hashed `store_item_assets` paths — the playtime/launch icon
@@ -81,6 +87,15 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Performance
 
+- Locating an emulator's local achievement schema no longer walks the whole game install on
+  every scan. The handful of directories an emulator actually writes those files to are probed
+  first, and the outcome — including "not here", which is the answer that used to cost a full
+  synchronous six-level walk per game — is remembered. Both layouts are probed before anything
+  is walked, so a non-TENOKE install no longer pays a complete walk just to prove `tenoke.ini`
+  is absent. The memo is dropped when the app writes a schema itself or the library is
+  refreshed, so a hand-added schema is still picked up at once.
+- The playtime monitor no longer logs every process it does not recognize; on a busy machine
+  most running processes are not games, and the log filled with them.
 - The library skips rendering off-screen game tiles, so cover images stay undecoded until
   they scroll into view, and the renderer frees its decoded image/font/code caches when the
   window hides to the tray. The V8 heap ceiling is also lowered to 192 MB and Chromium's

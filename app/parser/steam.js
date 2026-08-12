@@ -210,6 +210,24 @@ module.exports.saveGameToCache = async (cfg) => {
   fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
 };
 
+/*
+  A cached schema whose name resolved but whose achievement list is empty is ambiguous: the game
+  may genuinely have none (UNDERTALE), or the entry was written by a fetch that reached the store
+  page but not the schema. getCachedData has no TTL and getGameData only tests `name`, so the
+  second case used to freeze forever — and every scan then paid a full local-schema walk to
+  compensate. Re-check such an entry at most once per window; the check is stamped on the record
+  so a genuinely achievement-less game costs one lookup per window, not one per scan.
+*/
+const EMPTY_SCHEMA_RECHECK_MS = 7 * 24 * 60 * 60 * 1000;
+
+module.exports.isStaleEmptySchema = (cached, now = Date.now()) => {
+  if (!cached || !cached.name) return false;
+  const list = cached.achievement && cached.achievement.list;
+  if (!Array.isArray(list) || list.length > 0) return false;
+  const at = Number(cached.emptyCheckedAt);
+  return !(Number.isFinite(at) && at > 0 && now - at < EMPTY_SCHEMA_RECHECK_MS);
+};
+
 // Cache definitive Steam misses briefly; never cache a network outage.
 const NEGATIVE_CACHE_TTL_MS = 3 * 24 * 60 * 60 * 1000;
 let _negativeCache = null;
@@ -280,18 +298,38 @@ module.exports.getGameData = async (cfg) => {
 
   try {
     result = this.getCachedData(cfg);
+    // Ambiguous empty entry (see isStaleEmptySchema): fall through to the fetch path below, but
+    // keep the record so a failed re-check can hand it back untouched.
+    const staleEmpty = module.exports.isStaleEmptySchema(result) ? result : undefined;
+    if (staleEmpty) result = undefined;
     if ((!result || !result.name) && isKnownUnresolved(cfg.appID)) {
       debug.log(`[${cfg.appID}] skipped: known to have no Steam data (cached miss)`);
-      return;
+      return staleEmpty;
     }
     if (!result || !result.name) {
       // A brand-new appid may not be in the GetAppList dump yet; getProductInfo/store still resolve
       // it, so only give up when the fetch comes back empty AND the id was never listed.
-      const inAppList = await findInAppList(+cfg.appID);
-      if (cfg.key) {
-        result = await getSteamData(cfg);
-      } else {
-        result = await getSteamDataFromSRV(cfg.appID, cfg.lang);
+      let inAppList = false;
+      try {
+        inAppList = await findInAppList(+cfg.appID);
+        if (cfg.key) {
+          result = await getSteamData(cfg);
+        } else {
+          result = await getSteamDataFromSRV(cfg.appID, cfg.lang);
+        }
+      } catch (err) {
+        // Offline, every one of these lookups throws. This is a re-check of an entry we already
+        // have, so a throw must not be able to lose it — otherwise one offline scan drops every
+        // re-checked game at once. With nothing cached, the original error path is untouched.
+        if (!staleEmpty) throw err;
+        debug.log(`[${cfg.appID}] empty-schema re-check could not run, keeping the cached entry: ${err.code || err}`);
+        return staleEmpty;
+      }
+      if ((!result || !result.name) && staleEmpty) {
+        // The re-check came back empty-handed (offline, rate-limited, store 404). Hand back the
+        // record we already had and leave it unstamped: nothing was verified, so the next scan
+        // is free to try again. Dropping it here would empty the list on every offline scan.
+        return staleEmpty;
       }
       if ((!result || !result.name) && !inAppList) {
         // Only a miss against a list we actually have says anything about this appid (see the
@@ -301,6 +339,14 @@ module.exports.getGameData = async (cfg) => {
         }
         throw `Error trying to load steam data for ${cfg.appID}`;
       }
+      needSaving = true;
+    }
+
+    if (staleEmpty && Array.isArray(result?.achievement?.list) && result.achievement.list.length === 0) {
+      // Verified: this game really has no achievements. Keep the entry we already had — its
+      // artwork may have been resolved over several runs — and stamp the check onto it.
+      result = staleEmpty;
+      result.emptyCheckedAt = Date.now();
       needSaving = true;
     }
 
@@ -1182,11 +1228,84 @@ function localizedTenokeValue(local, key, lang) {
   return stripIniValue(item[language] || item.english || Object.values(item).find((v) => v != null) || '');
 }
 
-function findFileByName(dir, filename, maxDepth = 6) {
+/*
+  Locating a local schema means walking an entire game install (depth 6, synchronous) — 0.3-2.1s on
+  a large install, and it blocks the renderer's event loop while it runs, so makeList's worker pool
+  serializes behind it and every game in the batch ends up reporting the whole batch time. Two
+  guards keep that cost off the per-scan path: probe the handful of places emulators actually drop
+  these files before walking anything, and memoize the outcome — including "not here", which is the
+  expensive answer — so a rescan costs one stat per install instead of one full walk.
+*/
+const LOCATE_MISS_TTL_MS = 10 * 60 * 1000;
+const SCHEMA_WALK_MAX_DEPTH = 6;
+const _locateCache = new Map();
+
+// The directories an emulator actually drops a schema in, nearest first.
+function schemaCandidateDirs(dir) {
+  const dirs = [dir, path.join(dir, 'steam_settings'), path.join(dir, 'SteamData')];
+  let top;
+  try {
+    top = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return dirs;
+  }
+  for (const entry of top) {
+    // Unity keeps the emulator dll — and whatever it dumped beside it — under <Game>_Data/Plugins.
+    if (!entry.isDirectory() || !/_Data$/i.test(entry.name)) continue;
+    const plugins = path.join(dir, entry.name, 'Plugins');
+    dirs.push(plugins);
+    for (const arch of ['x86_64', 'x86', 'x64']) {
+      dirs.push(path.join(plugins, arch));
+      dirs.push(path.join(plugins, arch, 'steam_settings'));
+    }
+  }
+  return dirs;
+}
+
+// `candidates` lets a caller probing several filenames list the install root once instead of per file.
+function probeFileByName(dir, filename, candidates) {
+  if (!dir) return null;
+  for (const candidate of candidates || schemaCandidateDirs(dir)) {
+    const full = path.join(candidate, filename);
+    try {
+      if (fs.statSync(full).isFile()) return full;
+    } catch {
+      /* Not in this spot — try the next one. */
+    }
+  }
+  return null;
+}
+
+// Drop remembered locations (misses included) so a schema the app just wrote, or a manual refresh,
+// is picked up at once instead of waiting out LOCATE_MISS_TTL_MS.
+module.exports.forgetLocalSchemaLocations = (dir) => {
+  if (dir == null) {
+    _locateCache.clear();
+    return;
+  }
+  const prefix = `${dir}\u0000`;
+  for (const key of _locateCache.keys()) if (key.startsWith(prefix)) _locateCache.delete(key);
+};
+
+// `probed` is the caller's own probeFileByName result, so the probe is not repeated here; pass
+// `undefined` when the caller has not probed at all.
+function findFileByName(dir, filename, probed) {
   if (!dir || !fs.existsSync(dir)) return null;
+  const key = `${dir}\u0000${filename}`;
+  const memo = _locateCache.get(key);
+  if (memo) {
+    // A remembered hit is revalidated with a single stat; a remembered miss expires, so a file that
+    // appears later is still found — just not at the price of a walk on every scan in between.
+    if (memo.path) {
+      if (fs.existsSync(memo.path)) return memo.path;
+    } else if (Date.now() - memo.at < LOCATE_MISS_TTL_MS) {
+      return null;
+    }
+    _locateCache.delete(key);
+  }
   const wanted = filename.toLowerCase();
   const walk = (current, depth) => {
-    if (depth > maxDepth) return null;
+    if (depth > SCHEMA_WALK_MAX_DEPTH) return null;
     let entries;
     try {
       entries = fs.readdirSync(current, { withFileTypes: true });
@@ -1204,7 +1323,10 @@ function findFileByName(dir, filename, maxDepth = 6) {
     }
     return null;
   };
-  return walk(dir, 0);
+
+  const found = (probed === undefined ? probeFileByName(dir, filename) : probed) || walk(dir, 0);
+  _locateCache.set(key, { path: found, at: Date.now() });
+  return found;
 }
 
 function getTenokeSchemaFromFile(file, appid, lang = 'english') {
@@ -1291,13 +1413,34 @@ function getGoldbergSchemaFromFile(file, appid, lang = 'english') {
 }
 
 module.exports.getLocalAchievementSchema = (gameDir, appid, lang = 'english') => {
-  const tenoke = findFileByName(gameDir, TENOKE_SCHEMA_FILE);
+  /*
+    Probe the known emulator locations for BOTH layouts before walking anything. tenoke.ini is
+    the rarer file, so looking for it first used to force a full walk of every non-TENOKE
+    install just to prove its absence — the single most expensive thing a scan did. Both files
+    are probed across the same directories, so TENOKE still wins wherever the two sit together,
+    which is the only layout that exists in practice (both land beside the emulator dll).
+  */
+  const candidates = gameDir ? schemaCandidateDirs(gameDir) : [];
+  const probedTenoke = probeFileByName(gameDir, TENOKE_SCHEMA_FILE, candidates);
+  if (probedTenoke) {
+    const schema = getTenokeSchemaFromFile(probedTenoke, appid, lang);
+    if (schema.length > 0) return schema;
+  }
+  const probedGoldberg = probeFileByName(gameDir, 'achievements.json', candidates);
+  if (probedGoldberg) {
+    const schema = getGoldbergSchemaFromFile(probedGoldberg, appid, lang);
+    if (schema.length > 0) return schema;
+  }
+
+  // Unusual layout: fall back to the walk, whose result — hit or miss — is memoized. The probes
+  // above are handed down so neither is repeated.
+  const tenoke = findFileByName(gameDir, TENOKE_SCHEMA_FILE, probedTenoke);
   if (tenoke) {
     const schema = getTenokeSchemaFromFile(tenoke, appid, lang);
     if (schema.length > 0) return schema;
   }
   // Fall back to the emulator's own schema dump (Goldberg / GBE Fork) — present on cracked installs.
-  const goldberg = findFileByName(gameDir, 'achievements.json');
+  const goldberg = findFileByName(gameDir, 'achievements.json', probedGoldberg);
   if (goldberg) return getGoldbergSchemaFromFile(goldberg, appid, lang);
   return [];
 };

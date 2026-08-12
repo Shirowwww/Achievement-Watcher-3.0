@@ -34,9 +34,6 @@ let gameIndex;
 let gameIndexByBinary;
 let appidByDirCache;
 let ignoredAppidsCache = { mtimeMs: null, set: new Set() };
-// Unknown processes are logged once per name, not on every creation event: background helpers and
-// one-shot tools otherwise fill playtime.log with "No entry found for ..." lines on a busy machine.
-const loggedUnknownProcesses = new Set();
 
 const systemTempDir = os.tmpdir() || process.env['TEMP'] || process.env['TMP'];
 const userExclusionFile = path.join(userDataDir(), 'cfg/exclusion.db');
@@ -206,13 +203,10 @@ async function init() {
       //single hit
       game = games[0];
     } else {
-      // More than one entry is always worth logging; unknown processes are logged once per name.
+      // More than one entry is always worth logging; an unmatched process is expected (most running
+      // processes are not games) and is not logged to avoid filling playtime.log on a busy machine.
       if (games.length > 1) {
         debug.log(`More than 1 entry for "${process}"`);
-      } else if (!loggedUnknownProcesses.has(process)) {
-        loggedUnknownProcesses.add(process);
-        if (loggedUnknownProcesses.size > 200) loggedUnknownProcesses.clear();
-        debug.log(`No entry found for ${process}`);
       }
       if (!filepath) return;
       const gameDir = path.parse(filepath).dir;

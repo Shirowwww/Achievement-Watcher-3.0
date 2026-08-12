@@ -148,6 +148,9 @@ function forgetUnrenderedAppids() {
   unrenderedAppids = new Set();
   try {
     steamParser.forgetUnresolved();
+    // Also drop remembered local-schema locations, so a schema added by hand since the last scan
+    // is found now rather than whenever the miss memo happens to expire.
+    steamParser.forgetLocalSchemaLocations();
   } catch (err) {
     debug.log(`[new-game-scan] could not clear the unresolved-appid cache: ${err}`);
   }
