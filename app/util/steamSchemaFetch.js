@@ -63,10 +63,19 @@ function mapSteamHuntersJson(list) {
 }
 
 function stripHtml(value) {
-  return String(value || '')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .trim();
+  const source = String(value || '');
+  let text = '';
+  let inTag = false;
+  for (const character of source) {
+    if (character === '<') {
+      inTag = true;
+    } else if (character === '>') {
+      inTag = false;
+    } else if (!inTag) {
+      text += character;
+    }
+  }
+  return text.replace(/&nbsp;/g, ' ').trim();
 }
 
 // SteamCommunity achievements page -> [{ img, icon, title, description }].
@@ -248,6 +257,7 @@ function applySteamHuntersGroups(achievements, groups) {
 module.exports = {
   mapOfficialAchievements,
   mapSteamHuntersJson,
+  stripHtml,
   parseSteamCommunityRows,
   mapSteamCommunityRows,
   mergeSteamHuntersWithCommunity,

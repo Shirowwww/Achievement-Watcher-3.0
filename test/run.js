@@ -18,9 +18,8 @@ function discoverTests(directory) {
 const files = discoverTests(__dirname);
 if (files.length === 0) throw new Error(`No tests found below ${__dirname}`);
 
-// A small cap keeps the four Chromium suites and native-module integrations from competing for all
-// cores at once on developer machines, while still running the suite substantially in parallel.
-const result = spawnSync(process.execPath, ['--test', '--test-concurrency=4', ...process.argv.slice(2), ...files], {
+// Native registry integrations can race on Windows runners, so keep this aggregate suite serial.
+const result = spawnSync(process.execPath, ['--test', '--test-concurrency=1', ...process.argv.slice(2), ...files], {
   cwd: path.join(__dirname, '..', 'app'),
   stdio: 'inherit',
 });

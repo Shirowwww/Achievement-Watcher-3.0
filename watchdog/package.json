@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "node watchdog.js",
-    "test": "node --test --test-concurrency=4 \"test/*.test.js\"",
+    "test": "node --test --test-concurrency=1 \"test/*.test.js\"",
     "clean": "npm prune --omit=dev --ignore-scripts",
     "prepare": "patch-package"
   },

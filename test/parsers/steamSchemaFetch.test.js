@@ -126,6 +126,10 @@ test('parseSteamCommunityRows extracts icon hash, full URL, title and descriptio
   assert.deepEqual(ssf.parseSteamCommunityRows(''), []);
 });
 
+test('stripHtml removes nested tags without leaving executable markup behind', () => {
+  assert.equal(ssf.stripHtml('<b>Visible</b> <scrip<script>alert(1)</script>&nbsp;'), 'Visible alert(1)');
+});
+
 test('mergeSteamHuntersWithCommunity fills icons and detects hidden via matched titles', () => {
   const sh = [
     { apiName: 'A1', name: 'Public One', description: 'SH desc', steamPercentage: 10 },

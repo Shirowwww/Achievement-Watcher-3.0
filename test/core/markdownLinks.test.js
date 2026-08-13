@@ -21,11 +21,20 @@ function collectMarkdown(dir, output = []) {
 function githubAnchors(source) {
   const anchors = new Set();
   const counts = new Map();
+  const stripHtmlTags = (value) => {
+    let text = '';
+    let inTag = false;
+    for (const character of value) {
+      if (character === '<') inTag = true;
+      else if (character === '>') inTag = false;
+      else if (!inTag) text += character;
+    }
+    return text;
+  };
   for (const line of source.split(/\r?\n/)) {
     const match = /^ {0,3}#{1,6}\s+(.+?)\s*#*\s*$/.exec(line);
     if (!match) continue;
-    const base = match[1]
-      .replace(/<[^>]*>/g, '')
+    const base = stripHtmlTags(match[1])
       .replace(/[`*_~]/g, '')
       .trim()
       .toLowerCase()
