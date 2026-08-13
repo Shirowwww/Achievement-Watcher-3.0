@@ -5,6 +5,68 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- The library now supports manually added games from a title and executable, with an optional
+  platform and Steam AppID. Achievement-less entries remain launchable, track playtime, display
+  **No achievements**, and can adopt a Steam achievement schema later without being
+  recreated.
+- Manual game creation now opens from a discreet `+` beside library search, with explicit game-name
+  and optional Steam AppID fields in a fully theme-aware dialog.
+- First-run and Settings folder lists distinguish manual locations with a compact icon and show
+  Smart Find sources with their detector provenance. Automatic locations remain visible and can be
+  disabled without deleting them.
+
+### Changed
+
+- The final first-run page is a compact set of eight useful choices: app theme, notification mode,
+  notification preset, playtime tracking, Steam-library visibility, emulator auto-fix, hidden
+  achievements, and duplicate merging. New profiles enable playtime tracking by default.
+- Smart Find now probes only real known save locations, launcher/library conventions, stable
+  emulator data folders, and shallow supported-emulator binaries. `C:\Games` / `C:\Jeux` are added
+  only when present, and library-like Desktop folders such as `Desktop\Jeux` are surfaced explicitly
+  instead of being scanned through an invisible Desktop root.
+- Missing artwork now uses a cached SteamGridDB cascade for cover, landscape, hero, logo and icon
+  assets after native/Steam metadata, with conservative title matching and fill-only semantics so a
+  good existing asset is never downgraded. The alternate-cover picker resolves cache tokens before
+  previewing the current cover and uses a game's own numeric AppID for SteamDB alternatives.
+- Accepted updates install through the existing NSIS package in silent upgrade mode and relaunch AW
+  automatically, without a second confirmation prompt or a repeated onboarding flow.
+
+### Fixed
+
+- Notification tests now produce one preview consistent with the selected transport/preset instead
+  of sending both an AW overlay and a differently styled Windows toast. Watchdog warms the expensive
+  first Windows identity/artwork lookup in the background, caches Start-menu enumeration, and shows
+  busy feedback while a cold test is still preparing.
+- Disabled auto-detected folders are excluded consistently from the renderer scan, Watchdog and
+  Xenia watcher. The blacklist name resolver no longer walks hard-coded Desktop or non-existent
+  default game folders behind the Settings list.
+- Library skeletons now retain six animated placeholders while games are still streaming in, then
+  clear only when the scan actually completes.
+- Initial GBE config generation now targets only unconfigured Steam games with no existing fix.
+  OnlineFix, TENOKE, ALI213, SmartSteamEmu, UniverseLAN, scene emulators, GBE/Goldberg, Ubisoft,
+  official-launcher and console-platform installs are protected from that action.
+- Folder provenance is now icon-only with localized tooltips. Manually added PC games retain guarded
+  per-game emulator diagnostics/configuration for advanced use, while destructive Steamless/
+  CrakFiles actions stay hidden, uninstall uses the guarded common submenu, and automatic config
+  generation still ignores them.
+- Games with no achievement set now display **No achievements** instead of `0%` and remain excluded
+  from unlocked-achievement totals, completed-game counts and average completion statistics.
+- Achievement-less games use the normal game-detail page with a localized empty-success state;
+  only their explicit Play
+  control launches them. Manual games stored under Desktop/AppData are eligible for playtime
+  tracking, launch clicks show immediate busy feedback, their real cached artwork is reused by
+  playtime cards, and invalid legacy API-bypass files are disabled with recoverable `.aw-disabled`
+  copies. Windows manual programs use a normal Shell launch environment so .NET GUI applications
+  such as Ryujinx receive valid console handles, and their context menu exposes the same guarded
+  uninstall choices as detected games.
+- Manual emulator tools no longer offer a GBE install for arbitrary programs such as Ryujinx: the
+  selected folder must already contain a real Steam API DLL, while diagnostics remain available.
+- Every bundled locale now uses one consistent native achievement term (including **Succès** in
+  French), and the main scan explanation focuses on known and user-selected locations while keeping
+  format-specific details in Help.
+
 ## 3.8.6 - 2026-08-13
 
 ### Added

@@ -27,11 +27,14 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     if (onboardingTextCache.has(lang)) return onboardingTextCache.get(lang);
 
     try {
-      const english = JSON.parse(onboardingFs.readFileSync(path.join(appPath, 'locale/lang/english.json'), 'utf8')).onboarding || {};
+      const englishBundle = JSON.parse(onboardingFs.readFileSync(path.join(appPath, 'locale/lang/english.json'), 'utf8'));
+      const english = englishBundle.onboarding || {};
+      let requestedBundle = englishBundle;
       let requested = english;
       if (lang !== 'english') {
         try {
-          requested = JSON.parse(onboardingFs.readFileSync(path.join(appPath, `locale/lang/${lang}.json`), 'utf8')).onboarding || {};
+          requestedBundle = JSON.parse(onboardingFs.readFileSync(path.join(appPath, `locale/lang/${lang}.json`), 'utf8'));
+          requested = requestedBundle.onboarding || {};
         } catch (err) {
           // A broken or missing per-language file degrades to English, exactly like locale/loader.js.
           debug.log(err);
@@ -41,6 +44,12 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
         arrayMerge: (dest, src) => src,
         isEmpty: (a) => a === null || a === '',
       });
+      // Reuse the already translated Settings labels without duplicating locale keys.
+      localized.theme = requestedBundle.settings?.general?.theme?.name || englishBundle.settings?.general?.theme?.name || 'Theme';
+      localized.themeHint = requestedBundle.settings?.general?.theme?.description || englishBundle.settings?.general?.theme?.description || '';
+      localized.preset = requestedBundle.settings?.notification?.option?.overlayPreset || englishBundle.settings?.notification?.option?.overlayPreset || 'Preset';
+      localized.presetHint = requestedBundle.settings?.notification?.option?.overlayPresetDesc || englishBundle.settings?.notification?.option?.overlayPresetDesc || '';
+      localized.manualSource = requestedBundle.dialogs?.['manual-source'] || englishBundle.dialogs?.['manual-source'] || 'Manual';
       onboardingTextCache.set(lang, localized);
       return localized;
     } catch (err) {
@@ -148,10 +157,14 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     $('#onboard-library-list-title').text(t.libraryList);
     $('#onboard-settings-title').text(t.settingsTitle);
     $('#onboard-settings-copy').text(t.settingsCopy);
-    $('#onboard-source-label').text(t.source);
+    $('#onboard-theme-label').text(t.theme);
+    $('#onboard-theme-hint').text(t.themeHint);
     $('#onboard-notification-mode-label').text(t.notifications);
     $('#onboard-notification-test span').text(t.notificationTest);
+    $('#onboard-preset-label').text(t.preset);
+    $('#onboard-preset-hint').text(t.presetHint);
     $('#onboard-playtime-label').text(t.playtime);
+    $('#onboard-source-label').text(t.source);
     $('#onboard-auto-fix-label').text(t.autoFix);
     $('#onboard-hidden-label').text(t.hidden);
     $('#onboard-merge-label').text(t.merge);
@@ -228,12 +241,28 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     populateLanguageSelect(app.config.achievement?.lang || 'english');
     $('#onboard-username').val(app.config.general?.username || os.userInfo().username || 'User');
     populateMainSteamSelect(app.config.steam?.main || '0');
-    $('#onboard-legit-steam').val(String(app.config.achievement_source?.legitSteam ?? 0));
     $('#onboard-notification-mode').val(app.config.notification_transport?.mode || 'overlay');
-    $('#onboard-playtime').val(String(app.config.notification?.playtime ?? false));
+    $('#onboard-playtime').val(String(app.config.notification?.playtime ?? true));
+    $('#onboard-legit-steam').val(String(app.config.achievement_source?.legitSteam ?? 0));
     $('#onboard-auto-fix').val(String(app.config.emulator?.autoApplyNewGames ?? false));
     $('#onboard-hidden').val(String(app.config.achievement?.showHidden ?? false));
     $('#onboard-merge').val(String(app.config.achievement?.mergeDuplicate ?? true));
+    const theme = app.config.general?.theme || 'default';
+    const themeSelect = $('#onboard-theme').empty();
+    $('#option_theme option').each(function () {
+      themeSelect.append($('<option>').attr('value', this.value).text($(this).text()));
+    });
+    themeSelect.val(themeSelect.find(`option[value="${theme}"]`).length ? theme : 'default');
+    const presetSelect = $('#onboard-notification-preset').empty();
+    ipcRenderer
+      .invoke('list-presets')
+      .then((presets) => {
+        const list = Array.isArray(presets) && presets.length ? presets : ['Shirow', 'Default'];
+        list.forEach((name) => presetSelect.append($('<option>').attr('value', name).text(name)));
+        const selected = app.config.overlay?.notificationPreset || 'Shirow';
+        presetSelect.val(list.includes(selected) ? selected : list[0]);
+      })
+      .catch(() => presetSelect.append($('<option>').attr('value', 'Shirow').text('Shirow')));
     refreshAvatarPreview();
   }
 
@@ -247,8 +276,16 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
         return;
       }
       rows.forEach((dir, index) => {
-        const item = $('<li>');
-        item.append($('<span>').text(dir.path || dir));
+        const entry = typeof dir === 'string' ? { path: dir, origin: 'manual' } : dir;
+        const item = $('<li>').attr('data-origin', entry.origin || 'manual');
+        item.append($('<span>').text(entry.path));
+        const automatic = entry.origin === 'auto';
+        const origin = $('<small>')
+          .addClass(`folder-origin ${automatic ? 'auto' : 'manual'}`)
+          .attr('title', automatic ? t.smartFind : t.manualSource)
+          .attr('aria-label', automatic ? t.smartFind : t.manualSource)
+          .append($('<i>').addClass(`fas ${automatic ? 'fa-magic' : 'fa-hand-pointer'}`).attr('aria-hidden', 'true'));
+        item.append(origin);
         item.append(
           $('<button>')
             .attr('type', 'button')
@@ -266,17 +303,23 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     render('#onboard-library-dir-list', addedLibraryDirs);
   }
 
-  function addSaveDir(dir) {
-    const normalized = normalizeDir(dir);
+  function addSaveDir(value, metadata = {}) {
+    const entry = typeof value === 'string' ? { path: value, ...metadata } : { ...value };
+    entry.origin = entry.origin || 'manual';
+    entry.enabled = entry.enabled !== false;
+    const normalized = normalizeDir(entry.path);
     if (!normalized || addedSaveDirs.some((item) => normalizeDir(item.path) === normalized)) return;
-    addedSaveDirs.push({ path: dir, notify: true });
+    addedSaveDirs.push({ notify: true, ...entry });
     renderDirLists();
   }
 
-  function addLibraryDir(dir) {
-    const normalized = normalizeDir(dir);
-    if (!normalized || addedLibraryDirs.some((item) => normalizeDir(item) === normalized)) return;
-    addedLibraryDirs.push(dir);
+  function addLibraryDir(value, metadata = {}) {
+    const entry = typeof value === 'string' ? { path: value, ...metadata } : { ...value };
+    entry.origin = entry.origin || 'manual';
+    entry.enabled = entry.enabled !== false;
+    const normalized = normalizeDir(entry.path);
+    if (!normalized || addedLibraryDirs.some((item) => normalizeDir(item.path || item) === normalized)) return;
+    addedLibraryDirs.push(entry);
     renderDirLists();
   }
 
@@ -319,15 +362,17 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     setStatus(text().smartRunning, 'running');
     const before = addedSaveDirs.length + addedLibraryDirs.length;
     try {
-      for (const dir of await userDir.find()) {
+      const foundSaveDirs = userDir.findEntries ? await userDir.findEntries() : (await userDir.find()).map((path) => ({ path, origin: 'auto' }));
+      for (const dir of foundSaveDirs) {
         try {
-          if (await userDir.check(dir)) addSaveDir(dir);
+          if (await userDir.check(dir.path)) addSaveDir(dir);
         } catch (err) {
           debug.log(err);
         }
       }
       if (libraryDirs.find) {
-        for (const dir of await libraryDirs.find()) {
+        const foundLibraryDirs = libraryDirs.findEntries ? await libraryDirs.findEntries() : (await libraryDirs.find()).map((path) => ({ path, origin: 'auto' }));
+        for (const dir of foundLibraryDirs) {
           addLibraryDir(dir);
         }
       }
@@ -410,14 +455,15 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
   function mergeLibraryDirs(existing, additions) {
     const seen = new Set();
     const result = [];
-    for (const dir of existing || []) {
-      const key = normalizeDir(dir);
+    for (const raw of existing || []) {
+      const dir = typeof raw === 'string' ? { path: raw, origin: 'manual', enabled: true } : raw;
+      const key = normalizeDir(dir.path);
       if (!key || seen.has(key)) continue;
       seen.add(key);
       result.push(dir);
     }
     for (const dir of additions) {
-      const key = normalizeDir(dir);
+      const key = normalizeDir(dir.path);
       if (!key || seen.has(key)) continue;
       seen.add(key);
       result.push(dir);
@@ -436,6 +482,7 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
       if (!app.config.achievement_source) app.config.achievement_source = {};
       if (!app.config.notification) app.config.notification = {};
       if (!app.config.notification_transport) app.config.notification_transport = {};
+      if (!app.config.overlay) app.config.overlay = {};
       if (!app.config.emulator) app.config.emulator = {};
       if (!app.config.achievement) app.config.achievement = {};
 
@@ -448,15 +495,20 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
       app.config.general.username = $('#onboard-username').val().trim() || app.config.general.username || os.userInfo().username || 'User';
       app.config.general.onboardingCompleted = markComplete;
       app.config.steam.main = $('#onboard-main-steam').val() || '0';
-      app.config.achievement_source.legitSteam = parseInt($('#onboard-legit-steam').val(), 10) || 0;
       app.config.notification_transport.mode = $('#onboard-notification-mode').val() || 'overlay';
+      app.config.overlay.notificationPreset = $('#onboard-notification-preset').val() || app.config.overlay.notificationPreset || 'Shirow';
+      app.config.general.theme = $('#onboard-theme').val() || 'default';
       app.config.notification.playtime = boolValue($('#onboard-playtime').val());
+      app.config.achievement_source.legitSteam = parseInt($('#onboard-legit-steam').val(), 10) || 0;
       app.config.emulator.autoApplyNewGames = boolValue($('#onboard-auto-fix').val());
       app.config.achievement.showHidden = boolValue($('#onboard-hidden').val());
       app.config.achievement.mergeDuplicate = boolValue($('#onboard-merge').val());
 
       settings.setUserDataPath(ipcRenderer.sendSync('get-user-data-path-sync'));
-      const [currentSaveDirs, currentLibraryDirs] = await Promise.all([userDir.get(), libraryDirs.get()]);
+      const [currentSaveDirs, currentLibraryDirs] = await Promise.all([
+        userDir.getEntries ? userDir.getEntries() : userDir.get(),
+        libraryDirs.getEntries ? libraryDirs.getEntries() : libraryDirs.get(),
+      ]);
       await Promise.all([
         userDir.save(mergeSaveDirs(currentSaveDirs, addedSaveDirs)),
         libraryDirs.save(mergeLibraryDirs(currentLibraryDirs, addedLibraryDirs)),
@@ -572,7 +624,15 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
         debug.log('notification test is not ready yet');
         return;
       }
-      window.testAchievementWatcherNotification($('#onboard-notification-mode').val() || 'overlay', this);
+      window.testAchievementWatcherNotification(
+        $('#onboard-notification-mode').val() || 'overlay',
+        this,
+        $('#onboard-notification-preset').val() || 'Shirow'
+      );
+    });
+    $('#onboard-theme').on('change', function () {
+      const selected = $(this).val() || 'default';
+      document.documentElement.dataset.theme = selected === 'custom' || /^user:/i.test(selected) ? 'default' : selected;
     });
     $('#onboard-language').on('change', function () {
       if (!app.config.achievement) app.config.achievement = {};

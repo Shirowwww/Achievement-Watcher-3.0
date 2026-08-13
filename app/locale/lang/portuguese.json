@@ -44,7 +44,7 @@
   "unlocked": "Desbloqueada",
   "locked": "Bloqueada",
   "globalStat": "dos jogadores têm isto",
-  "achievementSearchPlaceholder": "Pesquisar conquistas…",
+  "achievementSearchPlaceholder": "Pesquisar proezas…",
   "hiddenRemain": "proezas ocultas restantes",
   "revealedOnceUnlocked": "Os detalhes de cada proeza serão revelados após o desbloqueio",
   "hiddenDescriptionPlaceholder": "Oculta — clique para revelar",
@@ -397,7 +397,7 @@
         "overlayPreset": "Predefinição",
         "overlayPresetDesc": "Tema visual do popup overlay no jogo",
         "overlayPresetRare": "Predefinição (rara)",
-        "overlayPresetRareDesc": "Predefinição usada para conquistas raras (10% dos jogadores ou menos)",
+        "overlayPresetRareDesc": "Predefinição usada para proezas raras (10% dos jogadores ou menos)",
         "overlayPresetPlatinum": "Predefinição (platina)",
         "overlayPresetPlatinumDesc": "Predefinição usada para a notificação de conclusão a 100%",
         "overlayPresetXenia": "Predefinição (Xenia)",
@@ -446,8 +446,8 @@
           "errName": "Introduza primeiro um nome",
           "created": "Criada e selecionada:",
           "failed": "Falhou",
-          "previewTitle": "Conquista desbloqueada",
-          "previewDetail": "Exemplo de descrição de conquista"
+          "previewTitle": "Proeza desbloqueada",
+          "previewDetail": "Exemplo de descrição de proeza"
         },
         "souvenirTitle": "Captura de recordação",
         "souvenirScreenshot": "Captura ao desbloquear",
@@ -489,7 +489,7 @@
         },
         "urgent": {
           "name": "Notificações prioritárias",
-          "description": "Permitir que desbloqueios de conquistas apareçam enquanto o Não incomodar está ativo. O Windows pede permissão uma vez."
+          "description": "Permitir que desbloqueios de proezas apareçam enquanto o Não incomodar está ativo. O Windows pede permissão uma vez."
         },
         "useToast": {
           "name": "Notificação do Windows",
@@ -570,7 +570,7 @@
       ],
       "addLibrary": "Adicionar uma pasta de biblioteca",
       "generateConfigs": "Gerar configurações",
-      "generateConfigsHelp": "análise completa + correção automática se ativa"
+      "generateConfigsHelp": "apenas jogos sem correção existente"
     },
     "source": {
       "title": "Fontes de jogos",
@@ -614,7 +614,7 @@
       },
       "socialClub": {
         "name": "Goldberg SocialClub",
-        "description": "Acompanhar conquistas do emulador Goldberg Social Club"
+        "description": "Acompanhar proezas do emulador Goldberg Social Club"
       },
       "ubisoftOfficial": {
         "description": "Dados do cliente oficial Ubisoft Connect"
@@ -685,7 +685,7 @@
         "Ordene por uma coluna de cada vez: Raridade, Data ou Estado (ascendente / descendente / sem ordenação).",
         "Prima / para focar a pesquisa e Esc para a limpar ou fechar o painel de opções.",
         "O painel da engrenagem altera o destaque, a densidade, o zoom, a opacidade e as linhas visíveis; «Usar tema da aplicação» segue o tema ativo.",
-        "Cada conquista com uma taxa conhecida mostra a raridade: cinzento para comuns e ouro/prata/bronze para raras."
+        "Cada proeza com uma taxa conhecida mostra a raridade: cinzento para comuns e ouro/prata/bronze para raras."
       ],
       "themesTitle": "Temas personalizados",
       "themes": [
@@ -696,7 +696,7 @@
       ],
       "configTitle": "Configs geradas",
       "config": [
-        "A correção do emulador no menu de contexto pode adicionar ficheiros GBE Fork, esquemas de conquistas e dados de DLC.",
+        "A correção do emulador no menu de contexto pode adicionar ficheiros GBE Fork, esquemas de proezas e dados de DLC.",
         "O modo Simples é rápido; Avançado executa generate_emu_config para obter dados Steam mais completos e pode demorar vários minutos."
       ],
       "shortcutsTitle": "Atalhos de teclado",
@@ -707,11 +707,11 @@
       ],
       "tipsTitle": "Dicas e truques",
       "tips": [
-        "Clique com o botão direito num cartão de jogo para ações rápidas: correção do emulador, conquistas, página Steam, instalação do GBE Fork e desinstalação.",
+        "Clique com o botão direito num cartão de jogo para ações rápidas: correção do emulador, proezas, página Steam, instalação do GBE Fork e desinstalação.",
         "Clique com o botão direito num jogo e escolha silenciar o progresso para parar esses avisos sem desativar os desbloqueios.",
-        "A correção do emulador (Simples rápida / Avançada completa) instala o GBE Fork, o esquema de conquistas e os dados de DLC.",
+        "A correção do emulador (Simples rápida / Avançada completa) instala o GBE Fork, o esquema de proezas e os dados de DLC.",
         "O tempo de jogo é registado enquanto o jogo está em execução; as notificações de progresso e tempo podem ser ativadas em Notificações.",
-        "As novas conquistas adicionadas por uma atualização do jogo aparecem automaticamente no prazo de 3 dias ou de imediato em Definições > Avançado > Voltar a verificar as listas de conquistas."
+        "As novas proezas adicionadas por uma atualização do jogo aparecem automaticamente no prazo de 3 dias ou de imediato em Definições > Avançado > Voltar a verificar as listas de proezas."
       ],
       "troubleshootTitle": "Resolução de problemas",
       "troubleshoot": [
@@ -758,9 +758,9 @@
         "description": "Elimina caches redescarregáveis: ficheiros de atualização, cache de esquemas e ícones Steam/Ubisoft, e ferramentas de correção de emulador transferidas. Nunca toca nas suas definições, jogos guardados, cópias de segurança ou ficheiros colocados manualmente."
       },
       "forceAchievementRecheck": {
-        "name": "Reverificar listas de conquistas",
+        "name": "Reverificar listas de proezas",
         "button": "Verificar agora",
-        "description": "Verifica junto da Steam se uma atualização do jogo adicionou conquistas desde a última verificação. Ocorre automaticamente a cada 3 dias; isto força a verificação agora."
+        "description": "Verifica junto da Steam se uma atualização do jogo adicionou proezas desde a última verificação. Ocorre automaticamente a cada 3 dias; isto força a verificação agora."
       }
     }
   },
@@ -779,16 +779,16 @@
       "Configurações"
     ],
     "languageTitle": "Escolha o idioma",
-    "languageCopy": "Escolha o idioma antes da primeira digitalização. Jogos, metadados, conquistas e caches do Steam serão carregados neste idioma desde o início.",
+    "languageCopy": "Escolha o idioma antes da primeira digitalização. Jogos, metadados, proezas e caches do Steam serão carregados neste idioma desde o início.",
     "language": "Linguagem do jogo e da interface",
     "languagePlaceholder": "Escolha um idioma...",
     "languageHint": "O primeiro carregamento da biblioteca inicia somente após esta escolha.",
     "introTitle": "Como funciona",
     "introCopy": "O Achievement Watcher verifica pastas guardadas conhecidas e as suas bibliotecas de jogos e, em seguida, o Watchdog continua em execução na bandeja para notificações de desbloqueio e overlay no jogo.",
     "scanTitle": "Analisar",
-    "scanCopy": "As instalações Steam, GOG, Epic, RPCS3/ShadPS4/Xenia e Goldberg/GBE são detetadas através dos ficheiros de conquistas — por exemplo, %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, gravações CODEX/RUNE ou uma pasta de jogo com steam_settings.",
+    "scanCopy": "As instalações Steam, GOG, Epic, RPCS3/ShadPS4/Xenia e Goldberg/GBE são detetadas através dos ficheiros de proezas — por exemplo, %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, gravações CODEX/RUNE ou uma pasta de jogo com steam_settings.",
     "watchTitle": "Monitorizar",
-    "watchCopy": "O Watchdog em segundo plano deteta o executável do jogo quando este inicia, regista o tempo de jogo e monitoriza os ficheiros de conquistas para mostrar os desbloqueios enquanto joga.",
+    "watchCopy": "O Watchdog em segundo plano deteta o executável do jogo quando este inicia, regista o tempo de jogo e monitoriza os ficheiros de proezas para mostrar os desbloqueios enquanto joga.",
     "fixTitle": "Reparar",
     "fixCopy": "Nos jogos Steam emulados, a reparação do menu de contexto (ou a reparação automática) instala o GBE Fork e grava o esquema achievements.json e os dados de DLC na pasta steam_settings do jogo.",
     "overlayTitle": "Overlay no jogo",
@@ -818,15 +818,15 @@
     "notificationTest": "Testar notificação",
     "playtime": "Acompanhamento do tempo de jogo",
     "autoFix": "Correção automática de jogos emulados",
-    "hidden": "Conquistas ocultas",
+    "hidden": "Proezas ocultas",
     "merge": "Mesclar duplicatas",
     "show": "Mostrar",
     "hide": "Esconder",
     "sourceHint": "Também lista seus jogos legítimos do Steam (é necessário perfil público).",
     "notificationsHint": "Onde os desbloqueios aparecem: notificação do Windows, overlay no jogo ou ambos.",
     "playtimeHint": "Rastreia automaticamente o tempo de jogo dos jogos detectados.",
-    "autoFixHint": "Aplica a correção do emulador (GBE Fork, conquistas, DLC) a novos jogos emulados.",
-    "hiddenHint": "Revela nomes e descrições de conquistas ocultas antes de você desbloqueá-las.",
+    "autoFixHint": "Aplica a correção do emulador (GBE Fork, proezas, DLC) a novos jogos emulados.",
+    "hiddenHint": "Revela nomes e descrições de proezas ocultas antes de você desbloqueá-las.",
     "mergeHint": "Combina o mesmo jogo encontrado em diversas fontes em um único bloco.",
     "none": "Nenhum",
     "installed": "Instalado",
@@ -843,14 +843,14 @@
     "saving": "Salvando...",
     "saved": "Configuração salva.",
     "languageRequired": "Escolha um idioma para continuar.",
-    "invalidFolder": "Esta pasta não parece conter conquistas suportadas. Esperado: GSE Saves / Goldberg SteamEmu Saves, gravações CODEX/RUNE, subpastas AppID (por exemplo, 1091500) ou uma pasta de jogo com steam_settings ou um ficheiro .ini de emulador.",
+    "invalidFolder": "Esta pasta não parece conter proezas suportadas. Esperado: GSE Saves / Goldberg SteamEmu Saves, gravações CODEX/RUNE, subpastas AppID (por exemplo, 1091500) ou uma pasta de jogo com steam_settings ou um ficheiro .ini de emulador.",
     "smartRunning": "Procurando...",
     "smartDone": "Pesquisa concluída.",
     "saveError": "Não foi possível salvar a configuração."
   },
   "overlay": {
     "icon": "Ícone",
-    "achievement": "Conquista",
+    "achievement": "Proeza",
     "status": "Estado",
     "rarityColumn": "Raridade",
     "dateColumn": "Data",
@@ -860,8 +860,8 @@
     "progress": "Progresso",
     "hidden": "Oculto",
     "na": "N/D",
-    "title": "Conquistas",
-    "search": "Pesquisar conquistas…",
+    "title": "Proezas",
+    "search": "Pesquisar proezas…",
     "filterAll": "Todas",
     "filterUnlocked": "Desbloqueadas",
     "filterLocked": "Bloqueadas",
@@ -884,7 +884,7 @@
     "settingsShowRarity": "Raridade",
     "settingsShowDescriptions": "Descrições",
     "settingsReset": "Repor predefinições",
-    "noResults": "Nenhuma conquista corresponde à sua pesquisa.",
+    "noResults": "Nenhuma proeza corresponde à sua pesquisa.",
     "settingsUseTheme": "Usar o tema da aplicação",
     "clear": "Limpar",
     "close": "Fechar",
@@ -944,6 +944,14 @@
     "steam-api-64-dll-detected": "steam_api(64).dll detetada",
     "steam-api-64-dll-not-found": "steam_api(64).dll não encontrada",
     "game": "Jogo",
+    "add-game-manually": "Adicionar jogo manualmente",
+    "manual-game-platform": "Plataforma",
+    "manual-game-name": "Nome do jogo",
+    "manual-game-appid-optional": "AppID Steam (opcional)",
+    "manual-game-platform-other": "Outra",
+    "manual-source": "Manual",
+    "no-config-eligible-games": "Não foi encontrado nenhum jogo Steam por configurar sem uma correção existente.",
+    "achievements-not-available": "Sem proezas",
     "backup": "Cópia de segurança",
     "created": "Criado",
     "original-folder": "Pasta original",
@@ -1268,7 +1276,7 @@
     "rescan-started": "A analisar novamente {count} pasta(s) selecionada(s)…",
     "rescan-complete": "Pastas selecionadas analisadas novamente.",
     "rescan-failed": "Falha ao analisar as pastas selecionadas: {error}",
-    "force-recheck-started": "A procurar novas conquistas…",
+    "force-recheck-started": "A procurar novas proezas…",
     "force-recheck-done": "Verificação concluída.",
     "force-recheck-failed": "Falha na verificação: {error}",
     "no-game-found": "Não foi encontrado nenhum jogo.",
@@ -1278,9 +1286,9 @@
     "generate-configs-detail-auto-fix": "Isto inicia agora uma análise completa. Durante a análise, o Achievement Watcher aplica o auto-fix GBE/Goldberg aos jogos detetados com pasta de instalação conhecida. As reparações decorrem em segundo plano: volta a analisar se um jogo acabado de reparar não aparecer ainda como pronto.",
     "generate-configs-detail-scan-only": "Isto apenas inicia uma análise de deteção completa. A reparação automática está desativada em Configuração do emulador > Reparar automaticamente os novos jogos detetados.",
     "generate-configs": "Gerar configurações",
-    "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "{found} jogo(s) emulado(s) encontrado(s) nas tuas bibliotecas — {missing} sem achievements.json.",
+    "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "Foram encontradas {found} instalações compatíveis com Steam — {missing} sem correção existente e elegíveis.",
     "start-scan": "Iniciar análise",
-    "scan-started-auto-fix": "Análise iniciada — {count} jogo(s) sem esquema serão reparados se a pasta de instalação for reconhecida.",
+    "scan-started-auto-fix": "Análise iniciada — {count} jogo(s) elegível(is) por configurar receberão uma configuração GBE inicial.",
     "scan-started-scan-only": "Análise iniciada — reparação automática desativada, nenhum ficheiro será alterado.",
     "generate-configs-failed-x": "Falha ao gerar as configurações: {error}",
     "error-generating-configs": "Erro ao gerar as configurações",
@@ -1329,9 +1337,9 @@
     "diagnosis-emulator-none": "nenhum detetado",
     "diagnosis-steam-settings": "steam_settings: {path}",
     "diagnosis-steam-settings-missing": "steam_settings: não encontrado",
-    "diagnosis-achievements-count": "conquistas: {found} no ficheiro / {expected} no esquema",
+    "diagnosis-achievements-count": "proezas: {found} no ficheiro / {expected} no esquema",
     "diagnosis-no-problems": "Nenhum problema detetado.",
-    "diagnosis-auto-repair-wrote": "A reparação automática escreveu {count} conquistas em {path}",
+    "diagnosis-auto-repair-wrote": "A reparação automática escreveu {count} proezas em {path}",
     "diagnosis-icons-summary": "ícones: {downloaded} transferidos, {failed} com falha, {skipped} ignorados",
     "diagnosis-steam-appid-created": "steam_appid.txt criado",
     "diagnosis-configs-main-updated": "configs.main.ini atualizado (new_app_ticket + gc_token)",
@@ -1358,7 +1366,7 @@
     "diagnosis-advanced-data-login-cancelled": "Dados avançados: início de sessão cancelado",
     "diagnosis-advanced-data-merged": "Dados avançados: {count} ficheiro(s) extra(s) fundido(s) (generate_emu_config {tag})",
     "diagnosis-advanced-data-failed": "Dados avançados: {error}",
-    "achievements-overlay-title": "Sobreposição de conquistas",
+    "achievements-overlay-title": "Sobreposição de proezas",
     "update-retry-failed-message": "A atualização voltou a falhar mesmo depois de limpar os ficheiros em cache em {folder}.",
     "update-retry-failed-detail": "É provável que seja um problema de rede ou da própria versão publicada, que limpar a cache não consegue resolver. Pode transferir e instalar a atualização manualmente a partir da página de lançamentos.",
     "open-release-page": "Abrir página de lançamentos",
@@ -1375,9 +1383,9 @@
     "rare": "Raro {percent}%",
     "platinumTitle": "Platina",
     "platinumDesc": "Platina desbloqueada — 100 % concluído!",
-    "eaAchievement": "Conquista EA",
-    "achievement": "Conquista",
-    "achievementUnlocked": "Conquista desbloqueada",
+    "eaAchievement": "Proeza EA",
+    "achievement": "Proeza",
+    "achievementUnlocked": "Proeza desbloqueada",
     "unknownOperation": "Operação desconhecida",
     "unknownReward": "Recompensa desconhecida",
     "trophy": "Troféu",

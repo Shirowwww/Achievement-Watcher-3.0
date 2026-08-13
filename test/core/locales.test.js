@@ -84,6 +84,16 @@ test('all bundled locales have the complete English key set', () => {
   }
 });
 
+test('each locale uses one native achievement term across library, overlay and notifications', () => {
+  const files = fs.readdirSync(localeDir).filter((file) => file.endsWith('.json')).sort();
+  for (const file of files) {
+    const locale = JSON.parse(fs.readFileSync(path.join(localeDir, file), 'utf8'));
+    assert.strictEqual(locale.overlay.title, locale.achievements, `${file}: plural achievement term must be consistent`);
+    assert.strictEqual(locale.overlay.achievement, locale.settings.notification.test.achievement, `${file}: notification singular must match overlay`);
+    assert.strictEqual(locale.watchdog.achievement, locale.overlay.achievement, `${file}: watchdog singular must match overlay`);
+  }
+});
+
 test('the Help panel is translated instead of silently copying English prose', () => {
   const english = JSON.parse(fs.readFileSync(path.join(localeDir, 'english.json'), 'utf8'));
   const reference = new Map(stringLeaves(english.settings.help));

@@ -12,6 +12,7 @@ const userThemes = require(path.join(appPath, 'util/userThemes.js'));
 const themeLayers = require(path.join(appPath, 'util/themeLayers.js'));
 const DEFAULT_THEME_COLOR = themeLayers.BUILTIN_COLORS.default.bg;
 const scanScopeTools = require(path.join(appPath, 'parser/scanScope.js'));
+const emulatorFixEligibility = require(path.join(appPath, 'util/emulatorFixEligibility.js'));
 const { t } = require(path.join(appPath, 'locale/t.js'));
 let listeningHotkey = false;
 let keysDown = new Set();
@@ -445,12 +446,11 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       populateLegitUsers(app.config.steam.main || '0');
 
       $('#settings #dirlist').empty();
-      userDir
-        .get()
+      (userDir.getEntries ? userDir.getEntries() : userDir.get())
         .then(async (userDirList) => {
           for (let dir of userDirList) {
             try {
-              if (await userDir.check(dir.path)) populateUserDirList({ dir: dir.path, notify: dir.notify, reverse: true });
+              if (await userDir.check(dir.path)) populateUserDirList({ ...dir, dir: dir.path, reverse: true });
             } catch (err) {
               //Do nothing
               debug.log(err);
@@ -463,10 +463,12 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         });
 
       $('#settings #libdirlist').empty();
-      libraryDirs
-        .get()
+      (libraryDirs.getEntries ? libraryDirs.getEntries() : libraryDirs.get())
         .then((libraryDirList) => {
-          for (let dir of libraryDirList) populateLibraryDirList({ dir, reverse: true });
+          for (const entry of libraryDirList) {
+            const dir = typeof entry === 'string' ? entry : entry.path;
+            populateLibraryDirList({ ...(typeof entry === 'object' ? entry : {}), dir, reverse: true });
+          }
         })
         .catch((err) => {
           //Do nothing
@@ -877,13 +879,12 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
       let userDirList = [];
       $('#settings #dirlist > li').each(function () {
-        let dir = $(this).find('.path span').text();
-        userDirList.push({ path: dir, notify: true });
+        userDirList.push(folderEntryFromRow(this));
       });
 
       let libraryDirList = [];
       $('#settings #libdirlist > li').each(function () {
-        libraryDirList.push($(this).find('.path span').text());
+        libraryDirList.push(folderEntryFromRow(this));
       });
 
       const startWithWindows = $('#option_startWithWindows').val() === 'true';
@@ -1871,7 +1872,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           debug.log(`Adding folder: ${dialog.filePaths}`);
 
           if (await userDir.check(dialog.filePaths[0])) {
-            populateUserDirList({ dir: dialog.filePaths[0] });
+            populateUserDirList({ dir: dialog.filePaths[0], origin: 'manual' });
             reportFolderScan(dialog.filePaths[0]);
           } else {
             debug.log('-> Invalid folder');
@@ -1909,7 +1910,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
         if (dialog.filePaths.length > 0) {
           debug.log(`Adding library folder: ${dialog.filePaths}`);
-          populateLibraryDirList({ dir: dialog.filePaths[0] });
+          populateLibraryDirList({ dir: dialog.filePaths[0], origin: 'manual' });
         } else {
           debug.log('Adding library folder: User Cancel');
         }
@@ -1934,11 +1935,11 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         // 1) persist the folders currently listed in the UI so the scan uses them
         let userDirList = [];
         $('#settings #dirlist > li').each(function () {
-          userDirList.push({ path: $(this).find('.path span').text(), notify: true });
+          userDirList.push(folderEntryFromRow(this));
         });
         let libraryDirList = [];
         $('#settings #libdirlist > li').each(function () {
-          libraryDirList.push($(this).find('.path span').text());
+          libraryDirList.push(folderEntryFromRow(this));
         });
         settings.setUserDataPath(ipcRenderer.sendSync('get-user-data-path-sync'));
         await Promise.all([userDir.save(userDirList), libraryDirs.save(libraryDirList)]);
@@ -1948,7 +1949,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         let found = [];
         try {
           const goldberg = require(path.join(appPath, 'parser/goldberg.js'));
-          for (const dir of libraryDirList) {
+          for (const entry of libraryDirList.filter((item) => item.enabled)) {
+            const dir = entry.path;
             try {
               found = found.concat(goldberg.findCompatibleGames(dir));
             } catch (e) {
@@ -1958,7 +1960,13 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         } catch (e) {
           debug.log(e);
         }
-        const unconfigured = found.filter((g) => !g.hasSchema).length;
+        const uniqueFound = [...new Map(found.map((game) => [path.resolve(game.gameDir).toLowerCase(), game])).values()];
+        const eligible = uniqueFound.filter((game) => !game.hasSchema && emulatorFixEligibility.inspect({ gameDir: game.gameDir }).eligible);
+        const unconfigured = eligible.length;
+        if (unconfigured === 0) {
+          result.text(t('no-config-eligible-games', 'No unconfigured Steam game without an existing fix was found.', 'Aucun jeu Steam sans fix existant ne nécessite de configuration.'));
+          return;
+        }
         const autoFixEnabled = app.config?.emulator?.autoApplyNewGames !== false;
         const detail = autoFixEnabled
           ? t(
@@ -1974,8 +1982,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const choice = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
           type: autoFixEnabled ? 'info' : 'warning',
           title: t('generate-configs', 'Generate configs', 'Génération des configs'),
-          message: t('x-emulated-game-s-found-in-your-libraries-x-without-achievements', '{found} emulated game(s) found in your libraries — {missing} without achievements.json.', '{found} jeu(x) émulé(s) détecté(s) dans tes bibliothèques — {missing} sans achievements.json.', {
-            found: found.length,
+          message: t('x-emulated-game-s-found-in-your-libraries-x-without-achievements', '{found} Steam-compatible install(s) found — {missing} have no existing fix and are eligible.', '{found} installation(s) compatible(s) Steam détectée(s) — {missing} sans fix existant et éligible(s).', {
+            found: uniqueFound.length,
             missing: unconfigured,
           }),
           detail,
@@ -1989,7 +1997,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         // 3) full rescan — discovers the folders and applies the one-shot emulator fix to unconfigured games
         result.text(
           autoFixEnabled
-            ? t('scan-started-auto-fix', 'Scan started — {count} game(s) without schema will be repaired if their install folder is recognized.', 'Scan lancé — {count} jeu(x) sans schema seront réparés si leur dossier d\'installation est reconnu.', { count: unconfigured })
+            ? t('scan-started-auto-fix', 'Scan started — {count} eligible unconfigured game(s) will receive an initial GBE config.', 'Scan lancé — {count} jeu(x) éligible(s) sans configuration recevront une config GBE initiale.', { count: unconfigured })
             : t('scan-started-scan-only', 'Scan started — automatic repair is disabled, no files will be changed.', 'Scan lancé — réparation automatique désactivée, aucun fichier ne sera modifié.')
         );
         resetUI();
@@ -2017,10 +2025,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         locations.set(key, record);
       };
       $('#settings #dirlist > li').each(function () {
-        add($(this).find('.path span').text(), 'user');
+        if ($(this).attr('data-enabled') !== 'false') add($(this).find('.path > span').first().text(), 'user');
       });
       $('#settings #libdirlist > li').each(function () {
-        add($(this).find('.path span').text(), 'library');
+        if ($(this).attr('data-enabled') !== 'false') add($(this).find('.path > span').first().text(), 'library');
       });
       return [...locations.values()];
     }
@@ -2079,10 +2087,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const userDirList = [];
       const libraryDirList = [];
       $('#settings #dirlist > li').each(function () {
-        userDirList.push({ path: $(this).find('.path span').text(), notify: true });
+        userDirList.push(folderEntryFromRow(this));
       });
       $('#settings #libdirlist > li').each(function () {
-        libraryDirList.push($(this).find('.path span').text());
+        libraryDirList.push(folderEntryFromRow(this));
       });
       settings.setUserDataPath(ipcRenderer.sendSync('get-user-data-path-sync'));
       return withSettingsTimeout(Promise.all([userDir.save(userDirList), libraryDirs.save(libraryDirList)]), 'Saving folders for selected rescan');
@@ -2144,19 +2152,22 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const before = $('#settings #dirlist > li').length + $('#settings #libdirlist > li').length;
 
       try {
-        for (let dir of await userDir.find()) {
+        const detectedSaveDirs = userDir.findEntries ? await userDir.findEntries() : (await userDir.find()).map((path) => ({ path }));
+        for (const entry of detectedSaveDirs) {
+          const dir = entry.path || entry;
           debug.log(`Found folder: ${dir}`);
           if (await userDir.check(dir)) {
-            //redundant ?
-            populateUserDirList({ dir: dir });
+            populateUserDirList({ ...entry, dir, origin: 'auto' });
           } else {
             debug.log('-> Invalid folder');
           }
         }
         if (libraryDirs.find) {
-          for (let dir of await libraryDirs.find()) {
+          const detectedLibraries = libraryDirs.findEntries ? await libraryDirs.findEntries() : (await libraryDirs.find()).map((path) => ({ path }));
+          for (const entry of detectedLibraries) {
+            const dir = entry.path || entry;
             debug.log(`Found library folder: ${dir}`);
-            populateLibraryDirList({ dir });
+            populateLibraryDirList({ ...entry, dir, origin: 'auto' });
           }
         }
         const added = Math.max(0, $('#settings #dirlist > li').length + $('#settings #libdirlist > li').length - before);
@@ -2353,26 +2364,49 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     updateOverlayOptionsVisibility();
 
     // Send notification test requests through the watchdog websocket.
-    function runNotificationTest(cmd) {
-      setTimeout(() => {
+    function setNotificationTestBusy(btn, busy) {
+      const button = $(btn || []);
+      if (!button.length) return;
+      button.toggleClass('is-running', busy).attr('aria-busy', String(busy)).prop('disabled', busy);
+      const icon = button.find('i').first();
+      if (busy) {
+        if (!icon.attr('data-notification-test-icon')) icon.attr('data-notification-test-icon', icon.attr('class') || 'fas fa-bell');
+        icon.attr('class', 'fas fa-spinner fa-spin');
+      } else {
+        icon.attr('class', icon.attr('data-notification-test-icon') || 'fas fa-bell').removeAttr('data-notification-test-icon');
+      }
+    }
+
+    function runNotificationTest(cmd, btn) {
+      return new Promise((resolve, reject) => setTimeout(() => {
         const ws = new WebSocket('ws://localhost:8082');
+        let settled = false;
+        const finish = (err) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timeout);
+          try { ws.close(); } catch {}
+          if (err) reject(err);
+          else resolve();
+        };
+        const timeout = setTimeout(() => finish(new Error('Notification test timed out')), 15000);
         ws.onerror = (err) => {
-          ws.close();
           remote.dialog.showMessageBoxSync({
             type: 'error',
             title: t('websocket-connection-error', 'WebSocket Connection Error', 'Erreur de connexion WebSocket'),
             message: t('notification-test-failure', 'Notification Test Failure.', 'Échec du test de notification.'),
             detail: t('error-in-connection-establishment-net-err-connection-refused-nis', 'Error in connection establishment: net::ERR_CONNECTION_REFUSED\nIs Watchdog Running ?'),
           });
+          finish(err);
         };
 
         ws.onopen = () => {
           ws.onmessage = (evt) => {
             try {
               let res = JSON.parse(evt.data);
-              if (res.cmd === cmd) {
-                if (res.success === true) {
-                  ws.close();
+                if (res.cmd === cmd) {
+                  if (res.success === true) {
+                  finish();
                 } else if (res.success === false && res.error) {
                   throw res.error;
                 } else {
@@ -2389,6 +2423,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
                 message: t('notification-test-failure', 'Notification Test Failure.', 'Échec du test de notification.'),
                 detail: `${err}`,
               });
+              finish(err);
             }
           };
           try {
@@ -2401,9 +2436,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
               message: t('notification-test-failure', 'Notification Test Failure.', 'Échec du test de notification.'),
               detail: `${err}`,
             });
+            finish(err);
           }
         };
-      }, 200);
+      }, 50));
     }
 
     // Random rarity for the "rare" test: one of the three tiers presets style (gold <3%,
@@ -2482,16 +2518,29 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       );
     }
     // Route a test through whichever transport(s) the user picked (toast / overlay / both).
-    function fireNotificationTest(kind, btn, modeOverride) {
+    async function fireNotificationTest(kind, btn, modeOverride, presetOverride) {
       const mode = modeOverride || $('#option_notifMode').val() || 'overlay';
-      if (mode === 'toast' || mode === 'both') runNotificationTest.call(btn, kind + '-test');
-      if (mode === 'overlay' || mode === 'both') ipcRenderer.send('spawn-overlay-notification', overlayTestData(kind));
+      if ($(btn).hasClass('is-running')) return;
+      setNotificationTestBusy(btn, true);
+      try {
+        // A preview is one notification. In "Both" mode prefer the styled overlay preview; the
+        // Windows transport remains directly testable by selecting Windows notification.
+        if (mode === 'toast') await runNotificationTest(kind + '-test', btn);
+        else {
+          ipcRenderer.send('spawn-overlay-notification', overlayTestData(kind, presetOverride));
+          await new Promise((resolve) => setTimeout(resolve, 900));
+        }
+      } catch (err) {
+        debug.log(`notification test failed: ${err && (err.message || err)}`);
+      } finally {
+        setNotificationTestBusy(btn, false);
+      }
     }
     // The first-run guide shares the exact same test path, while supplying its still-unsaved
     // notification transport choice. Keep the rendering and Watchdog protocol in one place.
-    window.testAchievementWatcherNotification = function (mode, button) {
+    window.testAchievementWatcherNotification = function (mode, button, preset) {
       const transport = ['toast', 'overlay', 'both'].includes(mode) ? mode : 'overlay';
-      fireNotificationTest('toast', button, transport);
+      return fireNotificationTest('toast', button, transport, preset);
     };
     $('#notify_test').click(function () {
       fireNotificationTest('toast', this);
@@ -2935,6 +2984,9 @@ function populateUserDirList(option) {
     dir,
     notify: true,
     reverse: option.reverse || false,
+    origin: option.origin === 'auto' ? 'auto' : 'manual',
+    detector: option.detector || '',
+    enabled: option.enabled !== false,
   };
 
   let alreadyInList = false;
@@ -2968,6 +3020,7 @@ function populateUserDirList(option) {
   }
 
   let elem = options.reverse ? $('#settings #dirlist > li').last() : $('#settings #dirlist > li').first();
+  applyFolderRowMetadata(elem, options, false);
 
   $(document).trigger('folder-rescan-locations-changed');
 
@@ -3031,6 +3084,9 @@ function populateLibraryDirList(option) {
   let options = {
     dir,
     reverse: option.reverse || false,
+    origin: option.origin === 'auto' ? 'auto' : 'manual',
+    detector: option.detector || '',
+    enabled: option.enabled !== false,
   };
 
   let alreadyInList = false;
@@ -3064,6 +3120,7 @@ function populateLibraryDirList(option) {
   }
 
   let elem = options.reverse ? $('#settings #libdirlist > li').last() : $('#settings #libdirlist > li').first();
+  applyFolderRowMetadata(elem, options, true);
 
   $(document).trigger('folder-rescan-locations-changed');
 
@@ -3105,6 +3162,46 @@ function populateLibraryDirList(option) {
       });
     }
   });
+}
+
+function applyFolderRowMetadata(elem, options, library) {
+  elem
+    .attr('data-origin', options.origin)
+    .attr('data-detector', options.detector || '')
+    .attr('data-enabled', String(options.enabled !== false))
+    .toggleClass('source-disabled', options.enabled === false);
+  const detectedLabel = $('#smartFind-label').text() || 'Smart Find';
+  const manualLabel = t('manual-source', 'Manual', 'Manuel');
+  const automatic = options.origin === 'auto';
+  const origin = $('<small>')
+    .addClass(`folder-origin ${automatic ? 'auto' : 'manual'}`)
+    .attr('title', automatic ? detectedLabel : manualLabel)
+    .attr('aria-label', automatic ? detectedLabel : manualLabel)
+    .append($('<i>').addClass(`fas ${automatic ? 'fa-magic' : 'fa-hand-pointer'}`).attr('aria-hidden', 'true'));
+  elem
+    .find('.path')
+    .append(origin);
+  const toggle = $('<li>')
+    .addClass('source-toggle')
+    .append($('<i>').addClass(`fas ${options.enabled === false ? 'fa-toggle-off' : 'fa-toggle-on'}`));
+  elem.find('.controls ul').prepend(toggle);
+  toggle.on('click', function () {
+    const enabled = elem.attr('data-enabled') !== 'true';
+    elem.attr('data-enabled', String(enabled)).toggleClass('source-disabled', !enabled);
+    $(this).find('i').toggleClass('fa-toggle-on', enabled).toggleClass('fa-toggle-off', !enabled);
+    $(document).trigger('folder-rescan-locations-changed');
+  });
+}
+
+function folderEntryFromRow(row) {
+  const elem = $(row);
+  return {
+    path: elem.find('.path > span').first().text(),
+    notify: true,
+    origin: elem.attr('data-origin') === 'auto' ? 'auto' : 'manual',
+    detector: elem.attr('data-detector') || '',
+    enabled: elem.attr('data-enabled') !== 'false',
+  };
 }
 
 function populateLegitUsers(selected) {

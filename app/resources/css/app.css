@@ -602,6 +602,155 @@ main {
   gap: 10px;
 }
 
+.library-add-button {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--border) 22%, transparent);
+  border-radius: 8px;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--surface) 54%, transparent);
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 7%, transparent);
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.library-add-button:hover,
+.library-add-button:focus-visible {
+  outline: none;
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 46%, transparent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  transform: translateY(-1px);
+}
+
+#game-list .progressBar.unavailable .progress-value {
+  width: auto;
+  padding: 0 7px;
+  font-size: 9px;
+  letter-spacing: 0.01em;
+}
+
+.simple-modal {
+  display: none;
+  position: fixed;
+  inset: 30px 0 0;
+  z-index: 120;
+}
+
+.simple-modal > .overlay {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--bg-base) 78%, transparent);
+  backdrop-filter: blur(5px);
+}
+
+.simple-modal > .box {
+  position: relative;
+  width: min(560px, calc(100vw - 40px));
+  margin: min(12vh, 100px) auto 0;
+  border: 1px solid color-mix(in srgb, var(--border) 48%, transparent);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  color: var(--text);
+  background: linear-gradient(155deg, color-mix(in srgb, var(--surface-elevated) 88%, transparent), var(--surface));
+  box-shadow: var(--shadow-dialog);
+}
+
+.simple-modal .header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 22px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 30%, transparent);
+  font: 18px 'Raleway-Bold';
+  background: color-mix(in srgb, var(--surface-sunken) 26%, transparent);
+}
+
+.simple-modal .header > i {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+
+.manual-game-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 22px;
+}
+
+.manual-game-fields label {
+  display: grid;
+  gap: 7px;
+  color: var(--text-muted);
+  font: 12px 'Open-Sans';
+}
+
+.manual-game-fields label:first-child,
+.manual-game-fields .manual-exe-field,
+#manual-game-note {
+  grid-column: 1 / -1;
+}
+
+.manual-game-fields input,
+.manual-game-fields select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--border) 58%, transparent);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface-sunken) 78%, transparent);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.manual-game-fields input:focus,
+.manual-game-fields select:focus {
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  background: color-mix(in srgb, var(--surface-sunken) 88%, transparent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+#manual-game-exe-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#manual-game-note {
+  margin: 2px 0 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--border) 24%, transparent);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--surface-sunken) 34%, transparent);
+  font: 12px 'Open-Sans';
+}
+
+#manual-game-note i {
+  margin-right: 6px;
+  color: var(--accent);
+}
+
+.simple-modal .footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 22px 18px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 30%, transparent);
+}
+
 /* Installed-only filter: a standalone rounded toggle, kept visually apart from the sort group. */
 #sort-box .installed-filter {
   display: flex;
@@ -3015,6 +3164,17 @@ main {
   gap: 14px;
 }
 
+#onboarding-step-4 .onboarding-form-grid {
+  gap: 11px 14px;
+}
+
+#onboarding-step-4 .onboard-field-hint {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
 .onboarding-step label {
   display: grid;
   gap: 7px;
@@ -3245,6 +3405,48 @@ main {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.folder-origin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  margin-left: 8px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: 10px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.folder-origin.manual {
+  border-color: color-mix(in srgb, var(--border) 24%, transparent);
+  color: var(--text-muted);
+  background: transparent;
+}
+
+.source-disabled {
+  opacity: 0.5;
+}
+
+.source-disabled .path > span {
+  text-decoration: line-through;
+}
+
+.source-toggle {
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.onboarding-test-button.is-running,
+#options-notify-test .btn.is-running {
+  opacity: 0.72;
+  pointer-events: none;
 }
 
 .onboarding-lists li button {
@@ -3834,6 +4036,9 @@ main {
   left: var(--library-inset);
   z-index: 1;
   opacity: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 #search-bar-float {
@@ -4827,6 +5032,7 @@ body {
 
 #sort-box .installed-filter,
 #sort-box .sort-group,
+#search-bar .library-add-button,
 #search-bar input[type='search'] {
   background-color: color-mix(in srgb, var(--surface) 66%, transparent);
   border-color: color-mix(in srgb, var(--border) 20%, transparent);

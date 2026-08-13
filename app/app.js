@@ -44,6 +44,8 @@ const uplayR2Installer = require(path.join(appPath, 'parser/uplayR2Installer.js'
 const steamParser = require(path.join(appPath, 'parser/steam.js'));
 const exeList = require(path.join(appPath, 'parser/exeList.js'));
 const manualUnlock = require(path.join(appPath, 'parser/manualUnlock.js'));
+const manualGames = require(path.join(appPath, 'parser/manualGames.js'));
+manualGames.setUserDataPath(getUserDataPath());
 const exeDetect = require(path.join(appPath, 'parser/exeDetect.js'));
 const gameIndex = require(path.join(appPath, 'parser/gameIndex.js'));
 const PlaytimeTracking = require(path.join(appPath, 'parser/playtime.js'));
@@ -54,6 +56,7 @@ emulatorSourceOverride.setUserDataPath(getUserDataPath());
 const l10n = require(path.join(appPath, 'locale/loader.js'));
 const coverStore = require(path.join(appPath, 'util/coverStore.js'));
 const uninstall = require(path.join(appPath, 'util/uninstall.js'));
+const apiCheckBypass = require(path.join(appPath, 'parser/apiCheckBypass.js'));
 const { calculateLibraryStats } = require(path.join(appPath, 'util/libraryStats.js'));
 const { resolveGameRarityContext } = require(path.join(appPath, 'util/rarity.js'));
 // `t` and `escapeHtml` come from ui/settings.js; classic scripts share their lexical scope.
@@ -229,6 +232,9 @@ function setLibraryBusyCursor(busy) {
 // arrive (and any leftover at the end of the scan).
 const MAX_SKELETON_TILES = 18;
 const DEFAULT_SKELETON_TILES = 12;
+const MIN_STREAMING_SKELETON_TILES = 6;
+let skeletonStreamActive = false;
+let skeletonSequence = 0;
 
 function skeletonTileHtml(index) {
   const delay = ((index || 0) % 6 * -0.2).toFixed(1);
@@ -246,16 +252,28 @@ function skeletonTileHtml(index) {
 
 function addSkeletonTiles(count) {
   const list = $('#game-list ul');
-  for (let i = 0; i < count; i++) list.append(skeletonTileHtml(i));
+  skeletonStreamActive = true;
+  skeletonSequence = 0;
+  for (let i = 0; i < count; i++) list.append(skeletonTileHtml(skeletonSequence++));
 }
 
 function replaceSkeletonWith(item) {
   const skeleton = $('#game-list ul li:has(.game-box.skeleton)').first();
   if (skeleton.length) skeleton.replaceWith(item);
   else $('#game-list ul').append(item);
+  // Once the initial placeholders have been consumed, keep a short animated tail until makeList()
+  // actually resolves. Otherwise a large/slow library looks fully loaded after its first 12 games.
+  if (skeletonStreamActive) {
+    const list = $('#game-list ul');
+    const remaining = list.find('li:has(.game-box.skeleton)').length;
+    for (let i = remaining; i < MIN_STREAMING_SKELETON_TILES; i++) {
+      list.append(skeletonTileHtml(skeletonSequence++));
+    }
+  }
 }
 
 function clearSkeletonTiles() {
+  skeletonStreamActive = false;
   $('#game-list ul li:has(.game-box.skeleton)').remove();
 }
 
@@ -348,7 +366,8 @@ function formatErr(err) {
 const sourceImgCache = new Map();
 function getSourceImg(source) {
   if (sourceImgCache.has(source)) return sourceImgCache.get(source);
-  const img = ipcRenderer.sendSync('fetch-source-img', source);
+  const localPath = ipcRenderer.sendSync('fetch-source-img', source);
+  const img = localPath && path.isAbsolute(localPath) ? pathToFileURL(localPath).href : localPath;
   sourceImgCache.set(source, img);
   return img;
 }
@@ -426,7 +445,7 @@ function applyCoverWithFallback(game, headerEl, imgName, tried) {
 function openCoverPicker(game, appid, coverCacheAppid) {
   const portraitView = !!(app.config && app.config.achievement && app.config.achievement.thumbnailPortrait);
   const img = (game && game.img) || {};
-  const currentUrl = portraitView ? img.portrait || img.header : img.header || img.portrait;
+  const currentUrl = coverOverrideFor(appid) || (portraitView ? img.portrait || img.header : img.header || img.portrait);
   const overlay = document.createElement('div');
   overlay.className = 'aw-prompt-overlay aw-cover-picker-overlay';
   const box = document.createElement('div');
@@ -463,7 +482,10 @@ function openCoverPicker(game, appid, coverCacheAppid) {
   box.append(head, status, grid, actions);
   overlay.append(box);
 
-  const done = () => overlay.remove();
+  const done = () => {
+    overlay.remove();
+    document.removeEventListener('keydown', onKey);
+  };
   closeBtn.onclick = done;
   cancelBtn.onclick = done;
   overlay.onmousedown = (ev) => {
@@ -472,7 +494,6 @@ function openCoverPicker(game, appid, coverCacheAppid) {
   const onKey = (e) => {
     if (e.key === 'Escape') {
       done();
-      document.removeEventListener('keydown', onKey);
     }
   };
   document.addEventListener('keydown', onKey);
@@ -480,11 +501,16 @@ function openCoverPicker(game, appid, coverCacheAppid) {
   // Show the gallery even when loading its options fails.
   document.body.append(overlay);
 
-  const addTile = (url, source) => {
+  const seenUrls = new Set();
+  const addTile = (url, source, previewUrl = url) => {
+    const key = String(url || '').trim();
+    if (!key || seenUrls.has(key)) return;
+    seenUrls.add(key);
     const tile = document.createElement('div');
     tile.className = 'aw-cover-picker-tile';
     if (!portraitView) tile.classList.add('aw-landscape');
-    tile.style.backgroundImage = cssUrl(url);
+    const preview = path.isAbsolute(String(previewUrl || '')) ? pathToFileURL(previewUrl).href : previewUrl;
+    tile.style.backgroundImage = cssUrl(preview);
     tile.title = url;
     const tag = document.createElement('span');
     tag.className = 'aw-cover-picker-source';
@@ -512,18 +538,33 @@ function openCoverPicker(game, appid, coverCacheAppid) {
     grid.append(tile);
   };
 
+  // Render the current cover independently from the provider lookup. Schema values such as
+  // "library_600x900.jpg" are fetch-icon tokens, not browser-ready URLs; resolve them first so the
+  // "Current" tile never appears as an empty surface while SteamDB/SteamGridDB are loading.
+  const currentTilePromise = currentUrl
+    ? (async () => {
+        let preview = currentUrl;
+        if (!/^(?:https?|file|data):/i.test(String(preview)) && !path.isAbsolute(String(preview))) {
+          preview = (await ipcRenderer.invoke('fetch-icon', preview, coverCacheAppid).catch(() => null)) || currentUrl;
+        }
+        addTile(currentUrl, t('currentCover', 'Current', 'Actuelle'), preview);
+      })()
+    : Promise.resolve();
+
+  const steamCoverId = /^\d+$/.test(String((game && (game.steamappid || game.appid)) || ''))
+    ? String(game.steamappid || game.appid)
+    : '';
   ipcRenderer
     .invoke('get-cover-options', {
-      appid: coverCacheAppid,
       name: game.name,
       orientation: portraitView ? 'portrait' : 'landscape',
       // Only a real Steam release should hit SteamDB — passing a non-Steam numeric id (GOG/Xbox)
       // would scrape a page with no assets and stall the gallery for up to 45s.
-      steamAppid: /^\d+$/.test(String(game && game.steamappid || '')) ? String(game.steamappid) : '',
+      steamAppid: steamCoverId,
     })
-    .then((opts = {}) => {
+    .then(async (opts = {}) => {
+      await currentTilePromise;
       status.remove();
-      if (currentUrl) addTile(currentUrl, t('currentCover', 'Current', 'Actuelle'));
       for (const url of Array.isArray(opts.steamdb) ? opts.steamdb : []) addTile(url, 'SteamDB');
       for (const url of Array.isArray(opts.grids) ? opts.grids : []) addTile(url, 'SteamGridDB');
       if (!grid.children.length) {
@@ -531,9 +572,11 @@ function openCoverPicker(game, appid, coverCacheAppid) {
         box.append(status);
       }
     })
-    .catch((err) => {
+    .catch(async (err) => {
+      await currentTilePromise;
       debug.warn(`[cover] picker options failed => ${err}`);
-      status.textContent = t('noCoversFound', 'No alternative covers found.', 'Aucune jaquette alternative trouvée.');
+      if (grid.children.length) status.remove();
+      else status.textContent = t('noCoversFound', 'No alternative covers found.', 'Aucune jaquette alternative trouvée.');
     });
 
 }
@@ -613,7 +656,7 @@ window.awPromptText = promptText;
 const EMU_LOCAL_ICON_SOURCES = new Set(['RPCS3 Emulator', 'ShadPS4 Emulator', 'Xenia Emulator']);
 
 function gameHasAchievements(game) {
-  return !!(game && game.achievement && (Number(game.achievement.total) > 0 || (Array.isArray(game.achievement.list) && game.achievement.list.length > 0)));
+  return !!(game && game.achievement && Number(game.achievement.total) > 0);
 }
 
 // Legitimate Steam-library entries already have a Steam appid; do not add a source badge.
@@ -637,6 +680,14 @@ function sourcePresentationFor(game) {
         img: getSourceImg('ubisoft'),
         label: t('ubisoft-game-no-achievements-found', 'Ubisoft game — no achievements found', 'Jeu Ubisoft — aucun succès trouvé'),
         kind: 'ubisoft-empty',
+      };
+    }
+    if (game && game.manual && (system === 'playstation' || system === 'xbox')) {
+      const isPlayStation = system === 'playstation';
+      return {
+        img: getSourceImg(isPlayStation ? 'RPCS3 Emulator' : 'Xenia Emulator'),
+        label: t('achievements-not-available', 'No achievements', 'Pas de succès'),
+        kind: `${system}-empty`,
       };
     }
     return {
@@ -1102,7 +1153,11 @@ var app = {
               return;
             }
             renderedAppids.add(appidKey);
-            let progress = game.achievement.total > 0 ? Math.round((100 * game.achievement.unlocked) / game.achievement.total) : 0;
+            const hasAchievements = Number(game.achievement.total) > 0;
+            let progress = hasAchievements ? Math.round((100 * game.achievement.unlocked) / game.achievement.total) : 0;
+            const progressLabel = !hasAchievements
+              ? t('achievements-not-available', 'No achievements', 'Pas de succès')
+              : `${progress}%`;
 
             let timeMostRecent = Math.max.apply(
               Math,
@@ -1169,7 +1224,7 @@ var app = {
                         }
                       </div>
                     </div>
-                    <div class="progressBar" data-percent="${progress}"><span class="meter" style="width:${progress}%"></span><span class="progress-value">${progress}%</span></div>
+                    <div class="progressBar${!hasAchievements ? ' unavailable' : ''}" data-percent="${progress}"><span class="meter" style="width:${progress}%"></span><span class="progress-value">${escapeHtml(progressLabel)}</span></div>
                     <!--${game.source ? `<div class="source">${game.source}</div>` : ''}-->
                   </div>
                 </div>
@@ -1344,6 +1399,8 @@ var app = {
             this._scrollAnimation = null;
           })
           .on('click.awLibrary', '.game-box', function () {
+            // Achievement-less entries use the exact same detail-page flow as every other game.
+            // Only the explicit play control below launches an executable.
             self.onGameBoxClick($(this), gameList);
           })
           .on('click.awLibrary', '.game-box .play-button', async function (e) {
@@ -1357,7 +1414,7 @@ var app = {
 
         $('#game-config').on('click', '.edit', async function (e) {
           e.stopPropagation();
-          let appid = parseInt($('#game-config .header').attr('title'));
+          let appid = $('#game-config .header').attr('title');
           let cfg = await exeList.get(appid);
           let dialog = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
             title: t('choose-the-game-executable', 'Choose the game executable', 'Choisir l\'exécutable du jeu'),
@@ -1407,7 +1464,7 @@ var app = {
         // Unlink: clear the configured executable for this game and persist immediately.
         $('#game-config').on('click', '.unlink', async function (e) {
           e.stopPropagation();
-          let appid = parseInt($('#game-config .header').attr('title'));
+          let appid = $('#game-config .header').attr('title');
           let cfg = await exeList.get(appid);
           cfg.exe = '';
           await exeList.add(cfg);
@@ -1422,6 +1479,7 @@ var app = {
           let writableAppid = /^[0-9]+$/.test(String(appid)) ? appid : list.find((g) => g.appid == appid)?.steamappid || null;
           const ctxGame = list.find((g) => g.appid == appid);
           const gameSource = ctxGame?.source || '';
+          const isManualGame = !!ctxGame?.manual || gameSource === 'Manual';
           // Offer GBE for non-Steam and non-native-launcher installs.
           const isLegitSteamOwned = gameSource.startsWith('Steam (');
           const isNativeLauncher = gameSource === 'gog' || gameSource === 'epic';
@@ -1435,6 +1493,14 @@ var app = {
           const emulatorSourceForced = emulatorSourceOverride.get(appid);
           const isUbisoftSource =
             emulatorSourceForced === 'ubisoft' ? true : emulatorSourceForced === 'steam' ? false : uplayR2.isUbisoftGame(ctxGame, appid);
+          const initialGbeEligibility = emulatorFixEligibility.inspect({
+            gameDir: ctxGame?.gameDir,
+            source: gameSource,
+            system: rawSystem,
+            isUbisoft: isUbisoftSource,
+            manual: isManualGame,
+            allowManual: isManualGame,
+          });
           const ubisoftTools = isUbisoftSource ? uplayR2.getGameToolPaths(ctxGame, appid) : null;
           const catalogAppid = String(
             (ubisoftTools && ubisoftTools.steamAppid) || ctxGame?.steamappid || writableAppid || (/^[0-9]+$/.test(String(appid)) ? appid : '')
@@ -1856,8 +1922,15 @@ var app = {
             new MenuItem({
               icon: menuIcon('cross.png'),
               label: $('#game-list').attr('data-contextMenu0'),
-              click() {
+              async click() {
                 try {
+                  if (isManualGame) {
+                    manualGames.remove(String(appid));
+                    await exeList.remove(String(appid));
+                    gameIndex.remove(String(appid));
+                    app.onStart();
+                    return;
+                  }
                   // Store the display name alongside the id so the Settings blacklist manager can
                   // show which game each entry is.
                   blacklist.add(appid, list.find((g) => g.appid == appid)?.name || self.find('.info .title span').text() || '');
@@ -1930,7 +2003,7 @@ var app = {
             })
           );
 
-          if (isUbisoftSource) {
+          if (isManualGame || isUbisoftSource) {
             // Non-Ubisoft games get their own reset-playtime entry in the emulator section below.
             gameMenu.append(
               new MenuItem({
@@ -1944,43 +2017,48 @@ var app = {
             );
           }
 
-          gameMenu.append(
-            new MenuItem({
-              label: progressMute.isMuted(appid)
-                ? $('#game-list').attr('data-ctx-unmuteprogress') || ''
-                : $('#game-list').attr('data-ctx-muteprogress') || '',
-              click() {
-                try {
-                  progressMute.toggle(appid);
-                } catch (err) {
-                  debug.error(err);
-                }
-              },
-            })
-          );
+          if (!isManualGame) {
+            gameMenu.append(
+              new MenuItem({
+                label: progressMute.isMuted(appid)
+                  ? $('#game-list').attr('data-ctx-unmuteprogress') || ''
+                  : $('#game-list').attr('data-ctx-muteprogress') || '',
+                click() {
+                  try {
+                    progressMute.toggle(appid);
+                  } catch (err) {
+                    debug.error(err);
+                  }
+                },
+              })
+            );
+          }
 
-          // Native-platform records normally skip Steam-emulator tools. Ubisoft is the exception:
-          // it needs its own Uplay R2 section plus the common folder/catalog/cover actions below.
+          // Native-platform records normally skip Steam-emulator tools. Ubisoft and explicitly
+          // added PC games are exceptions: the latter keep the basic per-game tools as an opt-in,
+          // while automatic/bulk config generation continues to exclude them.
           // Gated on the raw system value (isConsoleSystem), not isUbisoftSource, so forcing a
           // system="uplay" record to 'steam' via the override still opens this block (for the GBE
           // Fork tools) instead of hiding both toolsets.
           if (!isConsoleSystem) {
             if (!isUbisoftSource) {
             // Steam/GBE only
-            gameMenu.append(
-              new MenuItem({
-                label: $('#game-list').attr('data-ctx-resetplaytime') || '',
-                async click() {
-                  self.css('pointer-events', 'none');
-                  await PlaytimeTracking.reset(appid).catch((err) => {
-                    debug.error(err);
-                  });
-                  self.css('pointer-events', 'initial');
-                },
-              })
-            );
+            if (!isManualGame) {
+              gameMenu.append(
+                new MenuItem({
+                  label: $('#game-list').attr('data-ctx-resetplaytime') || '',
+                  async click() {
+                    self.css('pointer-events', 'none');
+                    await PlaytimeTracking.reset(appid).catch((err) => {
+                      debug.error(err);
+                    });
+                    self.css('pointer-events', 'initial');
+                  },
+                })
+              );
+            }
             if (app.config.notification_advanced.iconPrefetch) {
-              emulatorMenu.append(
+              if (!isManualGame) emulatorMenu.append(
                 new MenuItem({
                   icon: menuIcon('image.png'),
                   label: $('#game-list').attr('data-contextMenu1'),
@@ -2220,7 +2298,7 @@ var app = {
             }
 
             // Ubisoft installs use Uplay R2 instead of the Steam GBE fix.
-            if (!isLegitSteamOwned && !isNativeLauncher && !isUbisoftSource) {
+            if (!isLegitSteamOwned && !isNativeLauncher && !isUbisoftSource && initialGbeEligibility.eligible) {
               emulatorMenu.append(new MenuItem({ type: 'separator' }));
               emulatorMenu.append(
                 new MenuItem({
@@ -2570,10 +2648,9 @@ var app = {
                 })
               );
 
-              // Remove Steam DRM (SteamStub) from the game's main exe via atom0s/Steamless — the same
-              // tool ARMGDDN Autocracker bundles. A no-op when the exe has no stub; the original is kept
-              // as <exe>.steamstub.bak. Manual-only since it rewrites the game binary.
-              emulatorMenu.append(
+              // These advanced file-rewriting actions remain hidden for a manually-added library
+              // entry. Its basic GBE diagnosis/config tools above are enough for an explicit opt-in.
+              if (!isManualGame) emulatorMenu.append(
                 new MenuItem({
                   icon: menuIcon('file-text.png'),
                   label: $('#game-list').attr('data-ctx-removedrm') || '',
@@ -2659,7 +2736,7 @@ var app = {
                 })
               );
 
-              appendCrackFixItem();
+              if (!isManualGame) appendCrackFixItem();
             }
             }
 
@@ -3216,7 +3293,44 @@ var app = {
             }
           }
 
+          // Console-style manual entries skip the PC tools above but still need safe navigation and
+          // catalog links. PC manual entries already received those common items in the main block.
+          if (isManualGame && isConsoleSystem) {
+            if (ctxGame?.gameDir && fs.existsSync(ctxGame.gameDir)) {
+              folderMenu.append(
+                new MenuItem({
+                  icon: menuIcon('folder-open.png'),
+                  label: $('#game-list').attr('data-ctx-installloc') || '',
+                  click() {
+                    remote.shell.openPath(ctxGame.gameDir);
+                  },
+                })
+              );
+            }
+            if (/^[0-9]+$/.test(catalogAppid)) {
+              for (const [label, url] of [
+                ['Steam', `https://store.steampowered.com/app/${catalogAppid}/`],
+                ['SteamDB', `https://steamdb.info/app/${catalogAppid}/`],
+                ['PCGamingWiki', `https://pcgamingwiki.com/api/appid.php?appid=${catalogAppid}`],
+              ]) {
+                linkMenu.append(new MenuItem({ icon: menuIcon('globe.png'), label, click: () => remote.shell.openExternal(url) }));
+              }
+            } else if (ctxGame?.name) {
+              const query = encodeURIComponent(ctxGame.name);
+              linkMenu.append(
+                new MenuItem({
+                  icon: menuIcon('globe.png'),
+                  label: 'PCGamingWiki',
+                  click: () => remote.shell.openExternal(`https://pcgamingwiki.com/w/index.php?search=${query}`),
+                })
+              );
+            }
+          }
+
           // ---- Uninstall (opt-in via Settings > General) ----
+          // Manual entries use the same guarded discovery as detected games: Steam only when the
+          // client confirms the AppID, otherwise a real local uninstaller or recoverable Recycle
+          // Bin removal. Removing the AW library entry remains a separate, non-destructive action.
           if (app.config?.general?.uninstallContextMenu !== false) {
             const uninstallCtx = $('#game-list');
             const uninstallGame = list.find((g) => g.appid == appid);
@@ -3827,15 +3941,19 @@ var app = {
       if (game.achievement.list.length === 0) {
         $('#unlock').hide();
         $('#lock').show();
-        const title = t('no-steam-achievements-found', 'No Steam achievements found', 'Aucun succès Steam trouvé');
-        const detail = game.unconfigured
+        const title = game.manual
+          ? t('achievements-not-available', 'No achievements', 'Pas de succès')
+          : t('no-steam-achievements-found', 'No Steam achievements found', 'Aucun succès Steam trouvé');
+        const detail = game.manual
+          ? ''
+          : game.unconfigured
           ? t('no-ach-unconfigured', 'This folder does not have a Goldberg/GBE setup with a reliable Steam AppID yet.', "Ce dossier n'a pas encore de configuration Goldberg/GBE avec un AppID Steam fiable.")
           : t('no-ach-no-schema', 'AW can show the game, but Steam did not provide an achievement schema for this AppID.', 'AW affiche le jeu, mais Steam ne fournit aucun schéma de succès pour cet AppID.');
         lock.append(`
               <li>
                 <div class="notice empty-achievement-notice">
                   <p><i class="fas fa-trophy"></i> ${title}</p>
-                  <p>${detail}</p>
+                  ${detail ? `<p>${detail}</p>` : ''}
                 </div>
               </li>`);
       } else {
@@ -3938,6 +4056,7 @@ var app = {
   },
   onPlayButtonClick: async function (self) {
     let appid = self.closest('.game-box').data('appid');
+    const gameRecord = gameList.find((game) => String(game.appid) === String(appid));
     let cfg = await exeList.get(appid);
     if (!cfg?.exe || cfg.exe === '' || !fs.existsSync(cfg.exe)) {
       const game = gameList.find((g) => g.appid == appid);
@@ -3968,10 +4087,19 @@ var app = {
     }
     if (!cfg.exe || cfg.exe === '' || !fs.existsSync(cfg.exe)) return;
     if (fs.statSync(cfg.exe).isFile()) {
+      const gameBox = self.closest('.game-box');
+      setGameBoxBusy(gameBox, t('launch-game', 'Launch game', 'Lancer le jeu'));
+      if (gameRecord && gameRecord.manual) {
+        const recovery = apiCheckBypass.quarantineBrokenBypass({ exePath: cfg.exe, log: debug });
+        if (recovery.changed) {
+          debug.warn(`[${appid}] disabled broken Steam API bypass before launch: ${recovery.files.map((file) => file.from).join(', ')}`);
+        }
+      }
       // spawn() takes (command, args, options) — there is no callback overload, so the old 4th-arg
       // callback was dead code and launch failures (missing/blocked exe) were swallowed silently.
       // Listen on 'error' and surface it so the user knows the click did something.
       const reportLaunchFailure = (error) => {
+        clearGameBoxBusy(gameBox);
         debug.error(`Failed to launch ${cfg.exe}: ${error}`);
         remote.dialog.showMessageBoxSync({
           type: 'error',
@@ -3981,6 +4109,14 @@ var app = {
         });
       };
       try {
+        if (process.platform === 'win32' && gameRecord && gameRecord.manual) {
+          // ShellExecute gives GUI/.NET programs a normal Windows launch environment. Ryujinx
+          // crashes in Console.Title when started as a detached child with ignored stdio handles.
+          const result = await ipcRenderer.invoke('launch-game-via-shell', { executable: cfg.exe, args: cfg.args || '' });
+          if (!result || !result.ok) throw new Error((result && result.error) || 'Windows shell launch failed');
+          clearGameBoxBusy(gameBox);
+          return;
+        }
         // args_split (argv-split) strips the quotes it uses for grouping; the hand-rolled regex that
         // used to live here kept them, and since spawn() runs without a shell Node re-quoted the token,
         // so a game asked for -savedir "D:\My Games\Save" received the literal quotes as part of the path.
@@ -3989,6 +4125,7 @@ var app = {
           detached: true,
           stdio: 'ignore',
         });
+        game.once('spawn', () => setTimeout(() => clearGameBoxBusy(gameBox), 350));
         game.on('error', reportLaunchFailure);
         game.unref();
       } catch (error) {
@@ -4027,7 +4164,7 @@ var app = {
     });
   },
   onGameConfigSaveClick: async function (self) {
-    let appid = parseInt($('#game-config .header').attr('title'));
+    let appid = $('#game-config .header').attr('title');
     let cfg = await exeList.get(appid);
     let exeLbl = $('#game-config').find('.constant');
     let argsInput = $('#launch-args');
@@ -4070,6 +4207,77 @@ var app = {
       } catch (err) {
         debug.log(`game-config i18n failed: ${err}`);
       }
+
+      // Manual library entries are first-class launch/playtime records even when no achievement
+      // provider supports the game. Metadata and artwork are resolved during the normal scan.
+      let manualExe = '';
+      const closeManualGame = () => {
+        $('#manual-game').attr('aria-hidden', 'true').hide();
+        manualExe = '';
+      };
+      const addManualGameLabel = t('add-game-manually', 'Add game manually', 'Ajouter un jeu manuellement');
+      const manualGameNameLabel = t('manual-game-name', 'Game name', 'Nom du jeu');
+      const manualGameAppidLabel = t('manual-game-appid-optional', 'Steam AppID (optional)', 'AppID Steam (facultatif)');
+      $('#add-game-manually span, #manual-game-title').text(addManualGameLabel);
+      $('#add-game-manually').attr({ title: addManualGameLabel, 'aria-label': addManualGameLabel });
+      $('#manual-game-name-label').text(manualGameNameLabel);
+      $('#manual-game-name').attr('placeholder', manualGameNameLabel);
+      $('#manual-game-exe-label, #manual-game-pick-exe span').text(t('choose-the-game-executable', 'Choose the game executable', "Choisir l'exécutable du jeu"));
+      $('#manual-game-platform-label').text(t('manual-game-platform', 'Platform', 'Plateforme'));
+      $('#manual-game-platform-other').text(t('manual-game-platform-other', 'Other', 'Autre'));
+      $('#manual-game-appid-label').text(manualGameAppidLabel);
+      $('#manual-game-appid').attr('placeholder', manualGameAppidLabel);
+      $('#manual-game-note').html(`<i class="fas fa-info-circle"></i> ${escapeHtml(t('achievements-not-available', 'No achievements', 'Pas de succès'))}`);
+      $('#manual-game-cancel').text(t('cancel', 'Cancel', 'Annuler'));
+      $('#manual-game-save').text(t('blacklist-add-button', 'Add', 'Ajouter'));
+      $('#add-game-manually').on('click', () => {
+        manualExe = '';
+        $('#manual-game-name, #manual-game-appid').val('');
+        $('#manual-game-platform').val('PC');
+        $('#manual-game-exe-path').text('');
+        $('#manual-game').attr('aria-hidden', 'false').show();
+        setTimeout(() => $('#manual-game-name').trigger('focus'), 0);
+      });
+      $('#manual-game-cancel, #manual-game > .overlay').on('click', closeManualGame);
+      $(document).on('keydown.manual-game', (event) => {
+        if (event.key === 'Escape' && $('#manual-game').attr('aria-hidden') === 'false') closeManualGame();
+      });
+      $('#manual-game-pick-exe').on('click', async () => {
+        const dialog = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), {
+          title: t('choose-the-game-executable', 'Choose the game executable', "Choisir l'exécutable du jeu"),
+          filters: [{ name: 'Executables', extensions: ['exe', 'bat', 'cmd'] }],
+          properties: ['openFile', 'showHiddenFiles', 'dontAddToRecent'],
+        });
+        if (!dialog.filePaths || !dialog.filePaths[0]) return;
+        manualExe = dialog.filePaths[0];
+        $('#manual-game-exe-path').text(manualExe).attr('title', manualExe);
+        if (!$('#manual-game-name').val().trim()) {
+          let detectedName = '';
+          try {
+            detectedName = require(path.join(appPath, 'util/pe.js')).readExeProductName(manualExe) || '';
+          } catch {}
+          $('#manual-game-name').val(detectedName || path.basename(manualExe, path.extname(manualExe)));
+        }
+      });
+      $('#manual-game form').on('submit', async (event) => {
+        event.preventDefault();
+        const title = $('#manual-game-name').val().trim();
+        if (!title || !manualExe || !fs.existsSync(manualExe)) {
+          if (!title) $('#manual-game-name').trigger('focus');
+          else $('#manual-game-pick-exe').trigger('focus');
+          return;
+        }
+        const entry = manualGames.upsert({
+          title,
+          exe: manualExe,
+          platform: $('#manual-game-platform').val() || 'PC',
+          storeAppId: $('#manual-game-appid').val().trim(),
+        });
+        await exeList.add({ appid: entry.id, exe: entry.exe, args: '' });
+        gameIndex.upsert({ appid: entry.id, name: entry.title, binary: path.basename(entry.exe), source: 'Manual', steamappid: entry.storeAppId });
+        closeManualGame();
+        app.onStart();
+      });
 
       // On a genuine first run, defer the initial library scan until the onboarding guide is done:
       // onboarding lets the user set their profile (and game folders), and finish()/skip()

@@ -47,6 +47,7 @@
         </div>
 
         <div id="search-bar">
+          <button type="button" id="add-game-manually" class="library-add-button"><i class="fas fa-plus" aria-hidden="true"></i><span class="sr-only">Add game manually</span></button>
           <div class="wrapper">
             <i class="fas fa-search"></i>
             <input type="search" placeholder="" />
@@ -1912,6 +1913,21 @@
         </div>
       </section>
 
+      <section id="manual-game" class="simple-modal" aria-hidden="true">
+        <div class="overlay"></div>
+        <form class="box" role="dialog" aria-modal="true" aria-labelledby="manual-game-title">
+          <div class="header"><i class="fas fa-gamepad"></i> <span id="manual-game-title">Add game manually</span></div>
+          <div class="manual-game-fields">
+            <label><span id="manual-game-name-label">Game name</span><input id="manual-game-name" type="text" required maxlength="160" autocomplete="off" /></label>
+            <label class="manual-exe-field"><span id="manual-game-exe-label">Executable</span><button type="button" id="manual-game-pick-exe" class="inline-action-btn"><i class="fas fa-folder-open"></i> <span></span></button><small id="manual-game-exe-path"></small></label>
+            <label><span id="manual-game-platform-label">Platform</span><select id="manual-game-platform"><option value="PC">PC</option><option value="Steam">Steam</option><option value="Xbox">Xbox</option><option value="PlayStation">PlayStation</option><option value="Nintendo Switch">Nintendo Switch</option><option value="Other" id="manual-game-platform-other">Other</option></select></label>
+            <label><span id="manual-game-appid-label">Steam AppID (optional)</span><input id="manual-game-appid" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" /></label>
+            <p id="manual-game-note"><i class="fas fa-info-circle"></i> No achievements</p>
+          </div>
+          <div class="footer"><button type="button" id="manual-game-cancel" class="inline-action-btn secondary"></button><button type="submit" id="manual-game-save" class="inline-action-btn primary"></button></div>
+        </form>
+      </section>
+
       <section id="onboarding" aria-hidden="true">
         <div class="overlay"></div>
         <div class="box" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
@@ -2049,14 +2065,10 @@
                   </div>
                 </div>
                 <div class="onboarding-form-grid">
-                  <label>
-                    <span id="onboard-source-label">Display Steam games</span>
-                    <select id="onboard-legit-steam">
-                      <option value="0">None</option>
-                      <option value="1">Installed</option>
-                      <option value="2">Owned</option>
-                    </select>
-                    <small class="onboard-field-hint" id="onboard-source-hint"></small>
+                  <label class="onboarding-visual-choice">
+                    <span id="onboard-theme-label">App theme</span>
+                    <select id="onboard-theme"></select>
+                    <small class="onboard-field-hint" id="onboard-theme-hint"></small>
                   </label>
                   <div class="onboarding-notification-field">
                     <label>
@@ -2070,6 +2082,11 @@
                     </label>
                     <button type="button" id="onboard-notification-test" class="onboarding-test-button"><i class="fas fa-bell"></i> <span>Test notification</span></button>
                   </div>
+                  <label class="onboarding-visual-choice">
+                    <span id="onboard-preset-label">Notification preset</span>
+                    <select id="onboard-notification-preset"></select>
+                    <small class="onboard-field-hint" id="onboard-preset-hint"></small>
+                  </label>
                   <label>
                     <span id="onboard-playtime-label">Playtime tracking</span>
                     <select id="onboard-playtime">
@@ -2077,6 +2094,15 @@
                       <option value="false">Disabled</option>
                     </select>
                     <small class="onboard-field-hint" id="onboard-playtime-hint"></small>
+                  </label>
+                  <label>
+                    <span id="onboard-source-label">Display Steam games</span>
+                    <select id="onboard-legit-steam">
+                      <option value="0">None</option>
+                      <option value="1">Installed</option>
+                      <option value="2">Owned</option>
+                    </select>
+                    <small class="onboard-field-hint" id="onboard-source-hint"></small>
                   </label>
                   <label>
                     <span id="onboard-auto-fix-label">Auto-fix emulated games</span>

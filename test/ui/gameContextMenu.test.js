@@ -50,10 +50,10 @@ test('launching a game is offered for every source, not only Ubisoft', () => {
   }
 });
 
-test('reset playtime stays Ubisoft-only, since other sources add their own', () => {
-  // Both branches append it; duplicating it for Ubisoft would show the entry twice.
+test('manual and Ubisoft games get one reset-playtime entry outside emulator tools', () => {
+  // The shared branch covers manual/Ubisoft games; ordinary PC games add theirs in the PC block.
   const chain = enclosingBlocks("data-ctx-resetplaytime");
-  assert.ok(chain.some((line) => line.includes('isUbisoftSource')), 'the first reset-playtime entry is the Ubisoft one');
+  assert.ok(chain.some((line) => line.includes('isManualGame || isUbisoftSource')), 'the first reset-playtime entry covers manual and Ubisoft games');
   assert.equal((source.match(/data-ctx-resetplaytime/g) || []).length, 2, 'exactly one entry per branch');
 });
 
@@ -61,4 +61,14 @@ test('the launch entry drives the same handler as the tile play button', () => {
   const start = source.indexOf("t('launch-game'");
   const body = source.slice(start, start + 400);
   assert.match(body, /app\.onPlayButtonClick\(self\.find\('\.play-button'\)\)/);
+});
+
+test('manual games retain the guarded uninstall submenu', () => {
+  const chain = enclosingBlocks('const uninstallMenu = new Menu()');
+  assert.ok(
+    !chain.some((line) => line.includes('!isManualGame')),
+    `manual games must not be excluded from uninstall detection: ${chain.slice(0, 3).join(' <- ')}`
+  );
+  assert.match(source, /uninstall\.findLocalUninstaller\(uninstallDir\)/);
+  assert.match(source, /uninstall\.isSafeTrashTarget\(uninstallDir\)/);
 });

@@ -1,5 +1,5 @@
 {
-  "achievements": "Achievementy",
+  "achievements": "Úspěchy",
   "perfectGame": "Dokončené hry",
   "completionRate": "Prům. míra dokončení",
   "emptyList": "Žádné hry",
@@ -23,8 +23,8 @@
         "desc": "Postup: vysoký → nízký"
       },
       "time": {
-        "asc": "Achievement: nejstarší → nejnovější",
-        "desc": "Achievement: nejnovější → nejstarší"
+        "asc": "Úspěch: nejstarší → nejnovější",
+        "desc": "Úspěch: nejnovější → nejstarší"
       },
       "played": {
         "asc": "Hráno: nejstarší → nejnovější",
@@ -347,7 +347,7 @@
         "autoSave": "Změny na této kartě se ukládají automaticky."
       },
       "test": {
-        "achievement": "Achievement",
+        "achievement": "Úspěch",
         "rare": "Vzácné",
         "progress": "Postup",
         "playtime": "Doba hraní",
@@ -453,7 +453,7 @@
         "souvenirScreenshot": "Snímek při odemčení",
         "souvenirScreenshotDesc": "Pořídí snímek obrazovky při odemčení achievementu. Ukládá se podle hry.",
         "souvenirDir": "Složka pro ukládání",
-        "souvenirDirHelp": "Snímky se ukládají do <složka>\\<hra>\\<datum> - <achievement>.png. Prázdné = Obrázky\\Achievement Watcher.",
+        "souvenirDirHelp": "Snímky se ukládají do <složka>\\<hra>\\<datum> - <úspěch>.png. Prázdné = Obrázky\\Achievement Watcher.",
         "soundNone": "Žádný",
         "position": {
           "centerBottom": "Dole uprostřed",
@@ -570,7 +570,7 @@
       ],
       "addLibrary": "Přidat složku knihovny",
       "generateConfigs": "Generovat konfigurace",
-      "generateConfigsHelp": "úplné skenování + auto oprava, pokud je zapnutá"
+      "generateConfigsHelp": "jen hry bez existující opravy"
     },
     "source": {
       "title": "Zdroje her",
@@ -944,6 +944,14 @@
     "steam-api-64-dll-detected": "steam_api(64).dll zjištěna",
     "steam-api-64-dll-not-found": "steam_api(64).dll nenalezena",
     "game": "Hra",
+    "add-game-manually": "Přidat hru ručně",
+    "manual-game-platform": "Platforma",
+    "manual-game-name": "Název hry",
+    "manual-game-appid-optional": "Steam AppID (volitelné)",
+    "manual-game-platform-other": "Jiné",
+    "manual-source": "Ručně",
+    "no-config-eligible-games": "Nebyla nalezena žádná nenakonfigurovaná hra Steam bez existující opravy.",
+    "achievements-not-available": "Žádné úspěchy",
     "backup": "Záloha",
     "created": "Vytvořeno",
     "original-folder": "Původní složka",
@@ -1278,9 +1286,9 @@
     "generate-configs-detail-auto-fix": "Tím se nyní spustí úplný sken. Během skenu aplikuje Achievement Watcher automatický fix GBE/Goldberg na zjištěné hry se známou složkou instalace. Opravy běží na pozadí: skenujte znovu, pokud čerstvě opravená hra ještě není zobrazena jako připravená.",
     "generate-configs-detail-scan-only": "Tím se spustí pouze úplný detekční sken. Automatická oprava je vypnutá v Konfigurace emulátoru > Automaticky opravovat nově zjištěné hry.",
     "generate-configs": "Generovat konfigurace",
-    "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "V knihovnách nalezeno {found} emulovaných her — {missing} bez achievements.json.",
+    "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "Nalezeno instalací kompatibilních se Steamem: {found}; {missing} nemá existující opravu a lze je nakonfigurovat.",
     "start-scan": "Spustit sken",
-    "scan-started-auto-fix": "Sken spuštěn — {count} hra/her bez schématu bude opraveno, pokud bude rozpoznána složka instalace.",
+    "scan-started-auto-fix": "Sken spuštěn — {count} způsobilých nenakonfigurovaných her obdrží počáteční konfiguraci GBE.",
     "scan-started-scan-only": "Sken spuštěn — automatická oprava je vypnutá, žádné soubory se nezmění.",
     "generate-configs-failed-x": "Generování konfigurací se nezdařilo: {error}",
     "error-generating-configs": "Chyba při generování konfigurací",
