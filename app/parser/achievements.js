@@ -1158,27 +1158,40 @@ async function discover(source, steamAccFilter, scope = null) {
     try {
       const legit = await steam.scanLegit(source.legitSteam, steamAccFilter);
       // Attach the authoritative install folder from Steam's own library manifests so the Play
-      // button / launch panel can auto-detect the exe instead of asking for one by hand.
-      let localInstalls = new Map();
+      // button / launch panel can auto-detect the exe instead of asking for one by hand. This also
+      // corrects scanLegit's per-app registry "Installed" flag, which can go stale — e.g. a folder
+      // deleted outside Steam, or an interrupted "move install folder" that leaves the manifest
+      // behind pointing at a common\<installdir> that no longer exists — and keep reporting
+      // Installed=1 for a game that is not actually on disk (owned-but-uninstalled games wrongly
+      // staying in "show installed games only").
+      let localInstalls;
+      let localInstallsScanned = false;
       try {
         localInstalls = await steam.scanLocalInstalls();
+        localInstallsScanned = true;
       } catch (err) {
         debug.log(`[steam] local install scan failed => ${err}`);
       }
-      if (localInstalls.size > 0) {
+      if (localInstallsScanned) {
         let attached = 0;
+        let corrected = 0;
         for (const rec of legit) {
           const local = localInstalls.get(String(rec.appid));
-          if (!local) continue;
           rec.data = rec.data || {};
-          if (local.gameDir && fs.existsSync(local.gameDir)) {
-            rec.data.gameDir = local.gameDir;
+          if (local && local.gameDir && fs.existsSync(local.gameDir)) {
             // A live appmanifest is stronger proof than the registry flag: the folder exists.
+            rec.data.gameDir = local.gameDir;
             rec.data.installed = true;
             attached++;
+          } else if (rec.data.installed) {
+            // The registry says installed but Steam's own manifest disagrees (missing entirely, or
+            // its installdir isn't on disk) — trust the manifest over the stale registry flag.
+            rec.data.installed = false;
+            corrected++;
           }
         }
         if (attached > 0) debug.log(`[steam] linked ${attached} installed game(s) to their Steam install folders`);
+        if (corrected > 0) debug.log(`[steam] corrected ${corrected} stale "installed" registry flag(s) with no matching on-disk install`);
       }
       data = data.concat(legit);
     } catch (err) {

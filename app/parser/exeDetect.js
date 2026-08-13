@@ -59,6 +59,15 @@ const KNOWN_NON_GAME_EXE = new Set([
   // storefront/launcher clients
   'steam.exe', 'steamwebhelper.exe', 'epicgameslauncher.exe', 'goggalaxy.exe', 'ubisoftconnect.exe',
   'origin.exe', 'eaapp.exe', 'battle.net.exe', 'riot client.exe', 'riotclient.exe',
+  // Source engine SDK/dev tools bundled in every Source-based game's bin\ folder (Half-Life 2,
+  // Garry's Mod, Team Fortress 2, Counter-Strike: Source, ...). Never the game itself, but often
+  // individually bigger than the real root-level launcher exe, so raw size scoring alone can pick
+  // one of these over the real game (e.g. Garry's Mod's elementviewer.exe beating gmod.exe).
+  'hammer.exe', 'hlmv.exe', 'hlfaceposer.exe', 'elementviewer.exe', 'glview.exe',
+  'studiomdl.exe', 'vbsp.exe', 'vbspinfo.exe', 'vvis.exe', 'vrad.exe', 'vpk.exe', 'vtex.exe',
+  'vtf2tga.exe', 'bspzip.exe', 'captioncompiler.exe', 'demoinfo.exe', 'dmxconvert.exe', 'dmxedit.exe',
+  'height2normal.exe', 'height2ssbump.exe', 'mksheet.exe', 'shadercompile.exe', 'remoteshadercompile.exe',
+  'splitskybox.exe', 'gmad.exe', 'gmpublish.exe', 'awesomium_process.exe',
 ]);
 
 function isKnownNonGameExe(name) {
@@ -117,13 +126,22 @@ function tokenize(s) {
     .filter((t) => t.length >= 2);
 }
 
+// A short string being a mere substring of a much longer one is weak evidence on its own — e.g. a
+// generic "Content" or "Fallout" folder elsewhere on disk must never satisfy "Content Warning" or
+// "Fallout New Vegas" (both real false-positive "installed" reports). Require the shorter side to
+// cover a majority of the longer one before trusting a bare substring match.
+const SUBSTRING_MIN_RATIO = 0.55;
+
 // 0..1 similarity between a game name and an exe basename (extension already stripped).
 function nameSimilarity(gameName, exeBase) {
   const g = normalize(gameName);
   const e = normalize(exeBase);
   if (!g || !e) return 0;
   if (g === e) return 1;
-  if (g.includes(e) || e.includes(g)) return 0.85;
+  if (g.includes(e) || e.includes(g)) {
+    const ratio = Math.min(g.length, e.length) / Math.max(g.length, e.length);
+    if (ratio >= SUBSTRING_MIN_RATIO) return 0.85;
+  }
   const gameTokens = new Set(tokenize(gameName));
   const exeTokens = tokenize(exeBase);
   if (gameTokens.size === 0 || exeTokens.length === 0) return 0;

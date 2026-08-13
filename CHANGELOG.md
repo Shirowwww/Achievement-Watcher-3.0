@@ -114,6 +114,20 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   exists.
 - 16 of the 18 bundled locales showed the in-game controller hint ("Open: Back + Start ·
   ...") in English instead of their own language.
+- Owned Steam games could stay marked "installed" forever after being uninstalled: Steam's
+  own per-app registry flag can go stale (a folder deleted outside Steam, or an interrupted
+  "move install folder" that leaves the manifest pointing at a path that no longer exists),
+  and the "show installed games only" filter trusted it unconditionally. It is now
+  cross-checked against Steam's own library manifests on every scan, the actual source of
+  truth Steam itself uses.
+- A folder name that merely contained a game's title as a substring (e.g. a generic
+  "Content" or "Fallout" folder elsewhere on disk) could satisfy a much longer owned title
+  ("Content Warning", "Fallout New Vegas") and wrongly resolve it to an unrelated install,
+  also contributing to games appearing "installed" when they were not.
+- Source-engine games (Garry's Mod and others) could have their tracked launch executable
+  auto-set to a bundled SDK/dev tool (e.g. `elementviewer.exe`) instead of the real game
+  binary, because those tools sit next to the emulator DLL and can be larger than the actual
+  launcher exe. The known Source SDK tool names are now excluded from executable detection.
 
 ### Performance
 
