@@ -203,14 +203,16 @@ async function generateInterfaces({ dllPath, steamSettings, dlls, log = noopLog 
   const originalName = path.basename(original).replace(/\.bak$/i, '').toLowerCase();
   const arch = originalName === 'steam_api64.dll' ? 'x64' : 'x86';
   const tool = dlls && dlls.interfaces && dlls.interfaces[arch];
-  if (!tool || !fs.existsSync(tool)) return { generated: false, reason: `missing-${arch}-tool` };
+  const toolExe = tool && typeof tool === 'object' ? tool.exe : tool;
+  const toolArgs = tool && typeof tool === 'object' && Array.isArray(tool.args) ? tool.args : [];
+  if (!toolExe || !fs.existsSync(toolExe)) return { generated: false, reason: `missing-${arch}-tool` };
 
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-gse-interfaces-'));
   try {
     const localDll = path.join(workDir, ARCH[arch].file);
     fs.copyFileSync(original, localDll);
     const run = await new Promise((resolve, reject) => {
-      const child = spawn(tool, [localDll], { cwd: workDir, windowsHide: true, shell: /\.(cmd|bat)$/i.test(tool) });
+      const child = spawn(toolExe, [...toolArgs, localDll], { cwd: workDir, windowsHide: true });
       let output = '';
       child.stdout.on('data', (d) => { output += d.toString(); });
       child.stderr.on('data', (d) => { output += d.toString(); });

@@ -33,6 +33,9 @@ git switch -c fix/short-description
 - Put user-visible changes under `Unreleased` in [CHANGELOG.md](CHANGELOG.md).
 - Keep public claims grounded in behavior that exists in the current code.
 - Never commit credentials, tokens, personal paths, game files, build output or local logs.
+- Use LF line endings: the repository normalizes to LF (`.gitattributes` + `.editorconfig`),
+  with `.cmd`/`.bat` files kept as CRLF. Before committing, `git diff --numstat` must match
+  `git diff --numstat --ignore-cr-at-eol`.
 
 ## Translations
 
@@ -55,6 +58,9 @@ Pop-Location
 
 git diff --check
 ```
+
+The app suite also verifies every relative Markdown link and heading anchor, including exact file
+casing so documentation links do not pass on Windows and then break on GitHub.
 
 For UI or integration work, describe the manual path you tested and include screenshots when they help reviewers verify the result.
 

@@ -512,9 +512,9 @@ var app = {
       notify.setOverlayOptions(self.options.overlay || {});
     // Whether an unlock may be marked urgent, i.e. allowed on screen while Do Not Disturb is on.
     // Refreshed on every settings reload, like the sound options above.
-    require('./notification/transport/toast.js').setUrgentUnlocks(self.options.notification_toast?.urgent === true);
+      require('./notification/transport/toast.js').setUrgentUnlocks(self.options.notification_toast?.urgent === true);
       self.cfgOptionPath = cfg_file.option; // used to locate the per-game progress-mute store
-      debug.log(self.options);
+      debug.log('Options loaded');
 
       RegisterOverlayHotkey((self.options.overlay && self.options.overlay.hotkey) || 'Ctrl+Shift+K');
       syncOverlayController();
@@ -1075,7 +1075,7 @@ var app = {
           !/^[0-9]+$/.test(String(appID)) && indexed && /^[0-9]+$/.test(String(indexed.steamappid || ''))
             ? String(indexed.steamappid)
             : String(appID);
-        game = await steam.loadSteamData(steamAppId, self.options.achievement.lang, self.options.steam.apiKey);
+        game = await steam.loadSteamData(steamAppId, self.options.achievement.lang);
         if (steamAppId !== String(appID)) {
           game.appid = String(appID);
           if (indexed && indexed.steamappid) game.steamappid = indexed.steamappid;

@@ -9,6 +9,45 @@ const util = require('util');
   second launches (routine for a tray app) and erased crashes. Size is bounded by rotating to <name>.1.
 */
 const MAX_BYTES = 2 * 1024 * 1024;
+const LOG_ENTRY = '\\[\\d{4}-\\d{2}-\\d{2}T[^\\s\\]\\r\\n]+(?:\\s+(?:INFO|WARN|ERROR))?\\]';
+
+// Older Watchdog builds logged the complete settings object after "Loading Options ...". Redact
+// those object events in place so existing diagnostics keep their offsets and unrelated history,
+// while credentials and account identifiers cannot be copied from an old log later. Keeping the
+// file length unchanged also avoids racing an append-only writer that may already have it open.
+function redactLegacySettingsDumps(file) {
+  try {
+    const source = fs.readFileSync(file, 'utf8');
+    const eventPattern = new RegExp(`(^|\\n)(${LOG_ENTRY} [^\\r\\n]*\\{[\\s\\S]*?)(?=\\n${LOG_ENTRY} |$)`, 'g');
+    const matches = [];
+    let match;
+    while ((match = eventPattern.exec(source))) {
+      const event = match[2];
+      if (!/\b(?:loginPassword|apiKey)\s*:/i.test(event)) continue;
+      const offset = Buffer.byteLength(source.slice(0, match.index + match[1].length), 'utf8');
+      matches.push({ event, offset });
+    }
+    if (!matches.length) return 0;
+
+    const fd = fs.openSync(file, 'r+');
+    try {
+      for (const item of matches) {
+        const original = Buffer.from(item.event, 'utf8');
+        const timestamp = /^([^\r\n]+?\])\s/.exec(item.event)?.[1] || '[legacy]';
+        const marker = Buffer.from(`${timestamp} [legacy settings dump redacted]`, 'utf8');
+        const replacement = Buffer.alloc(original.length, 0x20);
+        marker.copy(replacement, 0, 0, Math.min(marker.length, replacement.length));
+        if (replacement.length) replacement[replacement.length - 1] = 0x0a;
+        fs.writeSync(fd, replacement, 0, replacement.length, item.offset);
+      }
+    } finally {
+      fs.closeSync(fd);
+    }
+    return matches.length;
+  } catch {
+    return 0;
+  }
+}
 
 function rotateIfTooBig(file, maxBytes) {
   try {
@@ -25,6 +64,8 @@ class Logger {
     this.consoleEnabled = Boolean(options.console);
     if (options.file) {
       fs.mkdirSync(path.dirname(options.file), { recursive: true });
+      redactLegacySettingsDumps(options.file);
+      redactLegacySettingsDumps(`${options.file}.1`);
       rotateIfTooBig(options.file, Number(options.maxBytes) > 0 ? Number(options.maxBytes) : MAX_BYTES);
       // 'a' also makes every write land at the real end of file, so several processes sharing one
       // log interleave whole lines instead of overwriting each other.
@@ -47,5 +88,7 @@ class Logger {
   warn(event) { this.log(event, 'warn'); }
   error(event) { this.log(event, 'error'); }
 }
+
+Logger.redactLegacySettingsDumps = redactLegacySettingsDumps;
 
 module.exports = Logger;

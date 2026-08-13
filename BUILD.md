@@ -98,9 +98,12 @@ npm test
 Pop-Location
 ```
 
-The app suite includes parser, discovery, install-state and locale-completeness checks. The Watchdog suite covers monitoring, notifications and related helpers.
+The app suite includes parser, discovery, install-state, locale-completeness and local Markdown
+link/anchor checks. Its categories and focused-run commands are documented in
+[test/README.md](test/README.md). The Watchdog suite covers monitoring, notifications and related
+helpers.
 
-The app suite includes a real-DOM check of the settings filter that needs a Chromium-family browser. It tries each installed candidate in turn (an installed browser is not always a launchable one) and skips - printing why - only when none will start. Point it at a specific binary with `PUPPETEER_EXECUTABLE_PATH`.
+The app suite includes real-DOM checks for the game list, rarity display, settings filter and sorting. They need a Chromium-family browser, try each installed candidate in turn (an installed browser is not always a launchable one), and skip - printing why - only when none will start. Point them at a specific binary with `PUPPETEER_EXECUTABLE_PATH`.
 
 Before handing off a change, also run:
 
@@ -108,7 +111,7 @@ Before handing off a change, also run:
 git diff --check
 ```
 
-This repository stores line endings exactly as committed and its files mix CRLF and LF within a single file, so also confirm that an editor has not silently restyled one:
+The repository is LF-only except for Windows command files (`.cmd` and `.bat`), which stay CRLF. Confirm that an editor has not silently restyled a file:
 
 ```powershell
 $a = git diff --numstat; $b = git diff --numstat --ignore-cr-at-eol
@@ -185,9 +188,10 @@ The Watchdog runs under Electron's bundled Node runtime through `ELECTRON_RUN_AS
 
 ### Signing
 
-No *trusted* code-signing certificate is configured, so public releases may
-still trigger SmartScreen. For local builds, the repository supports signing
-with a self-signed certificate:
+No *publicly trusted* code-signing certificate is configured, so official releases may still
+trigger SmartScreen. Release installers use the project's self-signed `CN=Shirow` certificate;
+the in-app updater accepts that exact identity without requiring users to install the certificate,
+then independently verifies the release SHA-512. Local builds support the same signing setup:
 
 ```powershell
 Push-Location app

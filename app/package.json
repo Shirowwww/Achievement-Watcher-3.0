@@ -9,10 +9,10 @@
   },
   "scripts": {
     "start": "electron .",
-    "test": "node --test \"../test/*.test.js\"",
-    "clean": "npm prune --omit=dev",
+    "test": "node ../test/run.js",
+    "clean": "npm prune --omit=dev --ignore-scripts",
     "prepare": "patch-package",
-    "prepare:watchdog": "cd ../watchdog && npm prune --omit=dev",
+    "prepare:watchdog": "cd ../watchdog && npm prune --omit=dev --ignore-scripts",
     "build": "npm run prepare:watchdog && node build/build.js"
   },
   "author": {
@@ -20,7 +20,7 @@
   },
   "license": "LGPL-3.0-only",
   "devDependencies": {
-    "electron": "^43.3.0",
+    "electron": "^43.4.0",
     "electron-builder": "^26.15.3",
     "electron-context-menu": "^4.1.2",
     "patch-package": "^8.0.1"
@@ -48,7 +48,7 @@
     "node-html-parser": "^9.0.1",
     "node-unrar-js": "^2.0.2",
     "normalize-path": "^3.0.0",
-    "puppeteer-core": "^25.5.0",
+    "puppeteer-core": "^25.6.0",
     "puppeteer-extra": "^3.3.4",
     "puppeteer-extra-plugin-stealth": "^2.11.1",
     "registry-js": "^1.16.1",
@@ -81,7 +81,7 @@
       "height": 800,
       "minWidth": 900,
       "minHeight": 600,
-      "backgroundColor": "#1b2838",
+      "backgroundColor": "#142236",
       "frame": false,
       "icon": "resources/icon/icon.png",
       "view": "./view/app.html"

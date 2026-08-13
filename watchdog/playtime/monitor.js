@@ -231,8 +231,7 @@ async function init() {
           const settings = require('../settings.js');
           const options = await settings.load(path.join(userDataDir(), 'cfg', 'options.ini'));
           const lang = options.achievement.lang;
-          const apikey = options.steam.apiKey;
-          let d = await loadSteamData(appid, lang, apikey, process);
+          let d = await loadSteamData(appid, lang, process);
           // Not every app has a Steam "clienticon" (e.g. brand-new releases) — d.img.icon can be
           // undefined; guard it the same way achievements.js does instead of throwing here.
           const iconHash = d.img && d.img.icon ? String(d.img.icon).split('/').pop().split('.')[0] : '';

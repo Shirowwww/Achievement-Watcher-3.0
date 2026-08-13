@@ -7,6 +7,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const yaml = require("js-yaml");
+const { publisherMatches } = require("../util/updateSignature.js");
 
 const signingDir = path.join(__dirname, "signing");
 const pfx = path.join(signingDir, "Shirow.pfx");
@@ -42,7 +43,7 @@ function verifySignedUpdateArtifacts() {
     );
     if (signature.status !== 0) throw new Error(`Could not inspect installer signature: ${signature.stderr || signature.error || "unknown error"}`);
     const subject = JSON.parse(signature.stdout).SignerCertificate?.Subject || "";
-    if (!subject.includes("CN=Shirow")) throw new Error(`Installer signer must be CN=Shirow, received: ${subject || "none"}`);
+    if (!publisherMatches(subject, ["Shirow"])) throw new Error(`Installer signer must be CN=Shirow, received: ${subject || "none"}`);
 
     const appUpdate = fs.readFileSync(updateConfig, "utf8");
     if (!/publisherName:\s*(?:\r?\n\s*-\s*Shirow\b|Shirow\b)/.test(appUpdate)) {
@@ -71,13 +72,12 @@ else {
 }
 
 const result = spawnSync(
-    "npx",
-    ["electron-builder", "--config", "electron-builder.yml", "--publish", "never"],
+    process.execPath,
+    [require.resolve("electron-builder/cli"), "--config", "electron-builder.yml", "--publish", "never"],
     {
         cwd: path.join(__dirname, ".."),
         env,
         stdio: "inherit",
-        shell: true,
     }
 );
 

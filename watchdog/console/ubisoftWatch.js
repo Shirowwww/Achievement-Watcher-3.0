@@ -371,7 +371,7 @@ async function handleChange(target, ctx) {
             appid: target.appid,
             gameDisplayName: target.name,
             achievementName: record.id,
-            achievementDisplayName: text.displayName || `Achievement ${record.id}`,
+            achievementDisplayName: text.displayName || String(record.id),
             achievementDescription: text.description || '',
             icon: schema.iconFor(record.id),
             time: record.time || moment().unix(),

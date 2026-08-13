@@ -5,6 +5,153 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Added
+
+- Fast keyless Steam schema retrieval: the official `IPlayerService/GetGameAchievements` endpoint
+  now works without a Steam Web API key (hidden descriptions, icons and global rarity included),
+  with an automatic fallback chain to the SteamHunters public JSON API, the SteamCommunity
+  achievements page, and finally the existing browser scrape. Schemas are fetched in parallel with
+  product info and the keyless worker pool is now the same as the keyed one (8 concurrent games).
+- Settings → Help now adapts to the user's actual setup: it shows the current overlay hotkey,
+  the controller layout and real controller bindings (Xbox, PlayStation or Switch wording),
+  the notification mode, the active theme, and a live count of enabled sources. A compact
+  "your setup" strip sits at the top of the Help tab and updates as settings change. Its 11 guides
+  are grouped into compact topic cards with case- and accent-insensitive search; a single result
+  opens automatically while multiple results stay easy to scan.
+- DLC and update achievements are now tagged with their SteamHunters group name (e.g.
+  "The Witcher 3: Wild Hunt - Hearts of Stone") under the achievement title, matching by the
+  schema api-name so base-game and untagged entries are left untouched.
+- The Watchdog's SteamHunters fallback now also reads the SteamCommunity achievements page over
+  plain HTTP, so notifications still get icons and a trustworthy hidden flag when the official
+  endpoint is unreachable. SteamHunters rarity falls back to `estimatedSteamPercentage` for
+  brand-new titles Steam has not measured yet.
+- The translated but previously missing **Generated configs** Help topic is now visible.
+- Settings → Advanced gains a **Clear caches** button: it deletes the updater's own downloaded-update
+  files plus the re-fetchable Steam/Ubisoft schema, icon, cover and downloaded emulator-fix-tool
+  caches, and reports what it cleared. Everything it touches is re-downloaded automatically the next
+  time it's needed; settings, saves, GBE restore-point backups, notification presets, theme images
+  and the user-seeded Uplay R2 loader cache are never included (see `util/clearableCaches.js`'s
+  explicit allowlist).
+- The Steam Web API key is gone from the app: the Settings field, the first-run guide step,
+  the Diagnostics row and every keyed fetch path (renderer and Watchdog) were removed. Steam
+  metadata is always fetched with the keyless chain, and legit Steam user unlocks now use the
+  public profile XML instead of `GetPlayerAchievements`.
+
+### Fixed
+
+- Custom overlay-notification placement now persists from the Windows drag event, stays on the
+  monitor where it was positioned even when the cursor is elsewhere, and locks every real popup to
+  the saved bounds instead of allowing later window activity to move it. Custom coordinates use the
+  full display rather than the taskbar-shortened work area, so a scaled popup can once again sit
+  exactly flush in a screen corner or over the taskbar on HiDPI displays (issue #25).
+- The profile summary (unlocked achievements, completed games and average progress bar) now follows
+  the **Installed games only** filter immediately and uses a short, reduced-motion-safe transition.
+- Settings → Advanced now displays the bundled sync icon for **Recheck achievement lists**. Cache
+  and achievement-recheck results fade away after they have been read instead of permanently
+  occupying a row; the in-progress recheck message remains visible only while the scan is running.
+- Custom covers selected from SteamDB, SteamGridDB or another Steam AppID now survive **Clear
+  caches** and a game-list refresh. New selections are copied to the durable `covers` folder;
+  existing cache-backed selections are promoted before deletion, and an already-broken legacy
+  SteamGridDB reference reconstructs its exact CDN URL from the retained content hash. Any other
+  unrecoverable legacy reference falls back to the normal cover instead of leaving a blank tile.
+- Hard-coded user-facing text is now localized: the Steam-avatar context-menu label, the update-failure tray balloon, the Goldberg/GBE and Uplay R2 diagnostic details, the setup-steps aria-label, the default Watchdog status text, the overlay window title and the technical lines of the install dialogs all use the bundled locale files (18 languages).
+- The last native-dialog bypasses are gone: `OK`, the debug reload action and the fatal startup
+  error now use a locale key or Electron's localized standard role instead of fixed English text.
+- Theme colors no longer drift between the main window, Settings, custom-theme defaults, the
+  in-game overlay and the window's initial paint. The duplicate Steam Blue palette was collapsed
+  into one CSS token block, all 17 built-in palettes now expose their Settings surface, and
+  success/error/warning states plus the title-bar status lights follow semantic theme tokens.
+- Self-signed updates no longer depend on the certificate being installed or trusted on the user's
+  PC. The updater accepts the exact `CN=Shirow` publisher identity even when Windows reports an
+  untrusted root, while rejecting lookalike common names such as `CN=Shirow Evil`; the release
+  SHA-512 remains independently verified.
+- The Watchdog's schema fallback (`api.xan105.com`, offline) is replaced by the same keyless chain,
+  so playtime seeding and game-index lookups work without a key again.
+- Games with zero Steam achievements (e.g. UNDERTALE, Dota 2) are no longer treated as errors by
+  the Watchdog's schema path.
+- Settings → Help no longer documents the old two-button **Back + Start** overlay combo:
+  controller instructions now follow the saved three-button binding and the selected
+  PlayStation/Switch/Xbox layout, and the shortcut text shows the hotkey actually saved.
+- Help, onboarding and the emulator guide no longer claim that the current standalone GBE Fork
+  setup creates ColdClient launch helpers. The two obsolete hidden controls for ColdClient mode
+  and `Launch.bat`, together with their dead translations, were removed from Settings.
+- The LumaPlay source default used by the emergency config fallback disagreed with the normal
+  loader default (`false` vs `true`). Both paths now agree on `true`.
+- An update stuck failing with a sha512 checksum mismatch no longer requires manually deleting the
+  updater's cache folder. Differential (patch) downloads are disabled entirely, removing their
+  never-revalidated cached base file as a failure source; if a checksum still mismatches, the
+  cache is cleared and the full installer is re-downloaded once automatically. If that also fails,
+  a clear dialog names the cache folder and offers to open the release page for a manual install.
+- The Settings → Advanced cache-clearing button always failed in dev builds
+  (`autoUpdater.getOrCreateDownloadHelper()` had no `dev-app-update.yml` to read). A dev-mode
+  config now ships alongside the packaged one (excluded from packaged builds), and the update
+  cache is cleared independently of the app caches so a failure resolving one never blocks the other.
+- Opening the overlay or a toast for an appid that has no library tile (no discovery record) no
+  longer throws while parsing local achievement data; the schema-only game loads instead.
+- The SteamHunters fallback no longer loses icons and hidden status (or stays English-only) for
+  non-English users: icons/hidden are merged from the English SteamCommunity page (whose titles
+  match SteamHunters), then the localized page is overlaid by icon hash. The Watchdog now loads
+  the shared schema module instead of maintaining a private copy that could drift.
+- Settings → Advanced → **Recheck achievement lists** now also works when it is the first scan
+  of the session; the fast-start path no longer suppresses an explicit re-check.
+- A SteamCommunity translation row with an empty image URL can no longer overwrite the title of
+  the first achievement whose icons were missing.
+- Periodic Steam schema repair now uses the complete keyless fallback chain, and a provider response
+  containing the same new API name twice can no longer append a duplicate achievement.
+- The Watchdog no longer stores a temporary numeric AppID as a game's permanent title, treats
+  malformed provider payloads as failures, or caches a total schema outage as a verified game with
+  zero achievements. Its final SteamCommunity fallback is now also used outside notifications.
+- Cache deletion retries transient Windows file locks, and **Clear caches** no longer reports success
+  when the updater cache specifically failed to clear.
+- Browser-backed tests retry removal of locked temporary profiles, eliminating cleanup-only failures
+  after Chromium has already passed the real assertion.
+- The packaging script invokes Electron Builder directly through Node instead of an argument-joining
+  command shell, removing the Node 24 security warning and its avoidable quoting risk.
+- Stale-Watchdog port cleanup now invokes `netstat.exe` and `taskkill.exe` with explicit argument
+  arrays instead of building shell command strings.
+- The advanced GBE configuration and interface generators are launched directly with argument
+  arrays; their remaining batch-shell compatibility path and Node 24 security warnings are gone.
+- Production dependency pruning now explicitly suppresses install scripts; it only removes
+  development packages and no longer emits npm's pending-script warnings during packaging.
+- The Watchdog no longer writes the complete settings object to diagnostics, preventing encrypted
+  credentials and account identifiers from being copied into routine log files. Dumps left by
+  older builds are redacted in place on startup without deleting surrounding diagnostics.
+- The removed Steam Web API credential is now discarded from legacy in-memory settings and erased
+  from `options.ini` by the Watchdog migration instead of surviving indefinitely as an unused secret.
+- The complete Settings → Help panel is now genuinely translated in all 18 bundled locales instead
+  of leaving most of its instructions in English. A locale regression test rejects copied English
+  Help prose; controller bindings, localized button labels and the three-day refresh interval are
+  covered too.
+
+### Changed
+
+- **Analyze selected folders** now uses a simpler compact layout and a thin, theme-aware scrollbar
+  instead of Chromium's bright native scrollbar; its scan button is now a quiet standard action
+  instead of a large filled primary button.
+- Settings → Sources now identifies the directly supported official desktop libraries (Steam,
+  Ubisoft Connect, GOG Galaxy, Epic Games and Xbox PC) with a translated explanation and shield
+  markers, while keeping EA's log-only/non-managed-install scope explicit in the documentation.
+- Opening Settings, switching its tabs and expanding a section now use short compositor-friendly
+  transitions, with the existing reduced-motion preference still disabling every animation.
+- The first-run guide, settings help and documentation no longer mention a Steam Web API key at
+  all; metadata retrieval is automatic and the first scan is fast without one.
+- The getting-started guide and the documentation index now describe the adaptive
+  **Settings → Help** tab, its live setup strip, controller layout and topic search.
+- Relative links and heading anchors across the Markdown documentation now have an automated
+  exact-casing regression test, preventing Windows-only false passes and broken GitHub links.
+- Troubleshooting now describes the release signature accurately: installers use the project's
+  self-signed publisher certificate, which Windows may still treat as untrusted. The user docs now
+  make clear that no certificate installation is required: the updater accepts the exact
+  `CN=Shirow` identity on a fresh PC and separately checks the release SHA-512.
+- Electron, Puppeteer Core and the Watchdog screenshot helper received their latest compatible patch
+  updates (`43.4.0`, `25.6.0` and `1.15.6` respectively).
+
+### Performance
+
+- SteamHunters DLC/update group lookups are deferred until a game actually has achievements and
+  are cached on disk for 30 days, so large libraries no longer fire one extra request per title
+  on every scan.
+
 ## 3.8.5 - 2026-08-13
 
 ### Added

@@ -5,7 +5,6 @@ const ini = require('./util/ini');
 const osLocale = require('./util/osLocale');
 const fs = require('./util/fsAsync');
 const steamLang = require('./steam.json');
-const aes = require('./util/aes.js');
 
 // Complete partial options.ini sections before validating their values.
 const REQUIRED_OBJECT_SECTIONS = [
@@ -474,24 +473,13 @@ module.exports.load = async (cfg_file) => {
       fixFile = true;
     }
 
-    //Steam Key
-
-    let steamKey;
-    if (options.steam) {
-      if (options.steam.apiKey) {
-        if (options.steam.apiKey.includes(':')) {
-          steamKey = aes.decrypt(options.steam.apiKey);
-        } else {
-          fixFile = true;
-        }
-      }
-    } else {
-      options.steam = {};
+    if (!options.steam || typeof options.steam !== 'object' || Array.isArray(options.steam)) options.steam = {};
+    if (Object.prototype.hasOwnProperty.call(options.steam, 'apiKey')) {
+      delete options.steam.apiKey;
+      fixFile = true;
     }
 
     if (fixFile) await fs.writeFile(cfg_file, ini.stringify(options), 'utf8').catch(() => {});
-
-    if (steamKey) options.steam.apiKey = steamKey;
   } catch (err) {
     options = {
       achievement: {
@@ -515,7 +503,7 @@ module.exports.load = async (cfg_file) => {
         rpcs3: true,
         shadps4: true,
         xenia: true,
-        lumaPlay: false,
+        lumaPlay: true,
         gog: true,
         gogOfficial: true,
         ubisoftOfficial: true,
@@ -535,7 +523,7 @@ module.exports.load = async (cfg_file) => {
       notification_toast: {
         customToastAudio: '1',
         groupToast: false,
-      urgent: false,
+        urgent: false,
       },
       notification_transport: {
         winRT: true,

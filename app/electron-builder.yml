@@ -12,6 +12,9 @@ afterPack: ./build/afterPack.js
 asarUnpack:
   - presets/**
   - sounds/**
+  # Shared schema mappers loaded by the standalone Watchdog (which runs from the install dir).
+  - util/steamSchemaFetch.js
+  - parser/achievementTranslations.js
 
 publish:
   provider: github
@@ -83,6 +86,8 @@ files:
   - '!buildme.cmd'
   - '!watchdog/_wip_/**'
   - '!watchdog/patches/**'
+  # Dev-only electron-updater config; packaged builds get their own generated app-update.yml.
+  - '!dev-app-update.yml'
 
 extraFiles:
   # Keep the attribution notice beside the installed application as well as in source releases.

@@ -19,7 +19,10 @@ function publisherMatches(subject, publisherNames) {
   return names
     .map((name) => String(name || '').trim())
     .filter(Boolean)
-    .some((name) => subject.includes(`CN=${name}`));
+    .some((name) => {
+      const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      return new RegExp(`(?:^|,\\s*)CN=${escaped}(?=,|$)`, 'i').test(String(subject || ''));
+    });
 }
 
 function evaluateUpdateSignature(publisherNames, signature) {
@@ -70,6 +73,7 @@ function verifyUpdateCodeSignature(publisherNames, unescapedTempUpdateFile, log 
 }
 
 module.exports = {
+  publisherMatches,
   evaluateUpdateSignature,
   verifyUpdateCodeSignature,
 };

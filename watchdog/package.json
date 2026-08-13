@@ -9,8 +9,8 @@
   },
   "scripts": {
     "start": "node watchdog.js",
-    "test": "node --test \"test/*.test.js\"",
-    "clean": "npm prune --omit=dev",
+    "test": "node --test --test-concurrency=4 \"test/*.test.js\"",
+    "clean": "npm prune --omit=dev --ignore-scripts",
     "prepare": "patch-package"
   },
   "author": "Anthony Beaumont",
@@ -38,7 +38,7 @@
     "powertoast": "^3.0.0",
     "regodit": "^2.4.1",
     "request-zero": "^0.3.2",
-    "screenshot-desktop": "^1.15.4",
+    "screenshot-desktop": "^1.15.6",
     "single-instance": "0.0.1",
     "win-tasklist": "^2.2.0",
     "wql-process-monitor": "^3.0.2",

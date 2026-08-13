@@ -31,19 +31,27 @@ const os = require('os');
 const { autoUpdater } = require('electron-updater');
   const { verifyUpdateCodeSignature } = require('../util/updateSignature.js');
   const { withScrapeLease } = require('../util/scrapeLease.js');
+  const steamSchemaFetch = require(path.join(__dirname, '../util/steamSchemaFetch.js'));
   const { clampWindowBoundsToWorkArea } = require('../util/windowBounds.js');
 // Updates require an explicit download and install confirmation.
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = false;
+// Differential downloads patch a cached copy of the previous installer that is never revalidated
+// between runs. A corrupted base (interrupted download, disk issue, an old stacked-download bug)
+// makes every future patch attempt fail with a sha512 checksum mismatch until someone finds and
+// deletes the cache by hand. Always downloading the full installer removes that whole failure class.
+autoUpdater.disableDifferentialDownload = true;
 // Accept the project's self-signed publisher through the tested verifier.
 autoUpdater.verifyUpdateCodeSignature = (publisherNames, tempUpdateFile) =>
   verifyUpdateCodeSignature(publisherNames, tempUpdateFile, (message) => debug.log(message));
+const UPDATE_RELEASES_URL = 'https://github.com/Shirowwww/Achievement-Watcher-3.0/releases';
 let updateCheckTimer = null;
 let updatePromptOpen = false;
 let updaterErrorNotified = false;
 let manualUpdateCheckPending = false; // Settings requested a check.
 let manualUpdateResult = null; // 'available' | 'uptodate' | 'error'
 let updateDownloading = false; // true from the accepted "Download && Install" until it lands or fails
+let checksumRetryInFlight = false; // guards the one automatic retry after a cache-clearing recovery
 const UPDATE_RECHECK_MS = 60 * 60 * 1000; // silent hourly re-check while the app stays resident
 const UPDATE_RETRY_MS = 30 * 60 * 1000; // slower retry after a failed check
 // Number of games currently reported by the monitor.
@@ -55,6 +63,9 @@ let pendingInstallPrompt = null;
 
 // Update prompt policy lives in the unit-tested update gate.
 const updateGate = require(path.join(__dirname, '../util/updateGate.js'));
+const { isChecksumMismatchError } = require(path.join(__dirname, '../util/updateChecksum.js'));
+const { clearUpdaterCacheDir: clearCacheDirForHelper } = require(path.join(__dirname, '../util/updateCacheClear.js'));
+const { clearSafeCaches } = require(path.join(__dirname, '../util/clearableCaches.js'));
 
 async function applyGeneralPatch(patch) {
   if (!configJS) return;
@@ -134,9 +145,57 @@ function notifyUpdateError(message) {
       tray.displayBalloon({
         iconType: 'warning',
         title: t('achievement-watcher', 'Achievement Watcher'),
-        content: `Update check failed: ${message}`,
+        content: t('update-check-failed-detail', 'Update check failed: {message}', 'Échec de la vérification des mises à jour : {message}', { message }),
       });
     } catch {}
+  }
+}
+
+// Wipes the whole electron-updater cache directory (both the differential-download base files and
+// the pending/ download), and resets the updater's in-memory record of what it has on disk. Shared
+// by the automatic checksum-mismatch recovery and the manual Settings > Advanced button. The actual
+// clearing lives in util/updateCacheClear.js, tested against the real electron-updater cache class.
+async function clearUpdaterCacheDir() {
+  const helper = await autoUpdater.getOrCreateDownloadHelper();
+  return clearCacheDirForHelper(helper, {
+    onHelperClearError: (err) => debug.log(`[updater] could not reset the download helper state: ${err.message || err}`),
+  });
+}
+
+// The one automatic retry (cache cleared, full download re-attempted) also failed: this is no
+// longer a corrupted-cache problem, so stop being quiet about it and offer a manual way out.
+async function notifyChecksumRecoveryFailed(message, cacheDir) {
+  debug.log(`[updater] retry after clearing the update cache also failed: ${message}`);
+  clearUpdateDownloadProgress();
+  updateDownloading = false;
+  manualUpdateResult = 'error';
+  manualUpdateCheckPending = false;
+  if (updatePromptOpen) return; // a real dialog is already up; do not stack another one on top
+  updatePromptOpen = true;
+  try {
+    const { response } = await dialog.showMessageBox({
+      type: 'error',
+      title: t('achievement-watcher', 'Achievement Watcher'),
+      message: t(
+        'update-retry-failed-message',
+        'The update still failed after clearing the cached files in {folder}.',
+        'La mise à jour a encore échoué après avoir vidé les fichiers en cache dans {folder}.',
+        { folder: cacheDir }
+      ),
+      detail: t(
+        'update-retry-failed-detail',
+        'This is likely a network or release problem, not something clearing the cache can fix. You can download and install the update manually from the release page.',
+        'Il s’agit probablement d’un problème réseau ou lié à la publication, que vider le cache ne peut pas résoudre. Vous pouvez télécharger et installer la mise à jour manuellement depuis la page de version.'
+      ),
+      buttons: [t('open-release-page', 'Open Release Page', 'Ouvrir la page de version'), t('ok', 'OK', 'OK')],
+      defaultId: 0,
+      cancelId: 1,
+    });
+    if (response === 0) shell.openExternal(UPDATE_RELEASES_URL).catch(() => {});
+  } catch (err) {
+    debug.log(`[updater] could not show the recovery-failed dialog: ${err.message || err}`);
+  } finally {
+    updatePromptOpen = false;
   }
 }
 
@@ -219,7 +278,7 @@ function setGameActivity(count) {
   scheduleUpdateCheck(updateGate.INTERVALS.afterGame);
 }
 const minimist = require('minimist');
-const { execSync, execFile, spawn } = require('child_process');
+const { execFileSync, execFile, spawn } = require('child_process');
 const fs = require('fs');
 const ipc = require(path.join(__dirname, 'ipc.js'));
 const notificationSounds = require(path.join(__dirname, '../util/notificationSounds.js'));
@@ -346,8 +405,19 @@ function fetchSteamIcon(url, appid) {
   return require(path.join(__dirname, '../parser/steam.js')).fetchIcon(url, appid);
 }
 
+// Plain-HTTP fetches for the keyless schema chain. SteamHunters serves its public JSON API to
+// browser-like clients; SteamCommunity also expects a real UA. Modest timeouts keep a stalled
+// host from blocking a scan (the browser scrape remains the last-resort fallback).
+const STEAM_FETCH_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
+const STEAM_KEYLESS_TIMEOUT_MS = 10000;
+
 let client; //lazyload SteamUser
 let clientLoginPromise;
+// SteamHunters DLC/update groups rarely change; one lookup per appid per session (memory) plus a
+// 30-day disk cache (steam_cache, so "Clear caches" wipes it too) is enough.
+const steamGroupsCache = new Map();
+const STEAM_GROUPS_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 function clientLogOn() {
   const SteamUser = require('steam-user');
@@ -418,24 +488,22 @@ process.on('unhandledRejection', (err) => {
 async function fetchSteamCommunityAchievements(url) {
   // Parse the server-rendered achievements page without launching Chromium.
   try {
-    const htmlParser = require('node-html-parser');
     const res = await fetch(url, {
       headers: {
-        'User-Agent': manifest.config['user-agent'] || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'User-Agent': STEAM_FETCH_UA,
         'Accept-Language': 'en-US,en;q=0.9',
         Cookie: 'birthtime=662716801; wants_mature_content=1', // bypass age gate; ?l= controls language
       },
       redirect: 'follow',
+      signal: AbortSignal.timeout(STEAM_KEYLESS_TIMEOUT_MS),
     });
     if (!res.ok) return [];
-    const html = htmlParser.parse(await res.text());
-    return html.querySelectorAll('.achieveRow').map((row) => {
-      const src = row.querySelector('.achieveImgHolder img')?.getAttribute('src') || '';
-      const img = src ? src.split('/').pop().split('.jpg')[0] : null;
-      const title = row.querySelector('.achieveTxt h3')?.text?.trim() || null;
-      const description = row.querySelector('.achieveTxt h5')?.text?.trim() || null;
-      return { img, title, description };
-    });
+    return steamSchemaFetch.parseSteamCommunityRows(await res.text()).map((row) => ({
+      img: row.img || null,
+      icon: row.icon || '',
+      title: row.title || null,
+      description: row.description || null,
+    }));
   } catch (err) {
     debug.log(`steamcommunity fetch failed: ${err}`);
     return [];
@@ -443,19 +511,19 @@ async function fetchSteamCommunityAchievements(url) {
 }
 
 // Prefer the official Steam API; return null on transport/auth errors so scraping can take over.
-async function getSchemaFromWebAPI(appid, key, lang) {
+async function getSchemaFromWebAPI(appid, lang) {
   const language = (lang && (lang.api || lang)) || 'english';
-  const url = `https://api.steampowered.com/IPlayerService/GetGameAchievements/v1/?key=${key}&appid=${appid}&language=${encodeURIComponent(language)}`;
+  const url = `https://api.steampowered.com/IPlayerService/GetGameAchievements/v1/?appid=${appid}&language=${encodeURIComponent(language)}`;
   let res;
   try {
-    res = await fetch(url);
+    res = await fetch(url, { signal: AbortSignal.timeout(STEAM_KEYLESS_TIMEOUT_MS) });
   } catch (err) {
     debug.log(`[${appid}] GetGameAchievements network error: ${err.message}`);
     return null;
   }
   if (!res.ok) {
     debug.log(`[${appid}] GetGameAchievements HTTP ${res.status}`);
-    return null; // 403 = bad/over-quota key, etc. -> let caller decide to scrape
+    return null; // let the caller decide to scrape
   }
   let json;
   try {
@@ -463,17 +531,124 @@ async function getSchemaFromWebAPI(appid, key, lang) {
   } catch (err) {
     return null;
   }
-  const list = json?.response?.achievements;
-  if (!Array.isArray(list)) return []; // valid response, game just has no achievements
-  return list.map((a) => ({
-    name: a.internal_name,
-    default_value: 0,
-    displayName: a.localized_name,
-    hidden: a.hidden ? 1 : 0,
-    description: a.localized_desc || ' ',
-    icon: `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${appid}/${a.icon}`,
-    icongray: `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${appid}/${a.icon_gray}`,
-  }));
+  return steamSchemaFetch.mapOfficialAchievements(json?.response, appid);
+}
+
+// SteamHunters' public JSON API: full achievement list (apiName/name/description/global rarity)
+// in one plain request. { ok: true } with an empty list is a valid "no achievements" answer.
+async function fetchSteamHuntersJson(appid) {
+  try {
+    const res = await fetch(`https://steamhunters.com/api/apps/${appid}/achievements`, {
+      headers: { 'User-Agent': STEAM_FETCH_UA, Accept: 'application/json' },
+      signal: AbortSignal.timeout(STEAM_KEYLESS_TIMEOUT_MS),
+    });
+    if (!res.ok) return { ok: false, list: [] };
+    const json = await res.json();
+    return Array.isArray(json) ? { ok: true, list: json } : { ok: false, list: [] };
+  } catch (err) {
+    debug.log(`[${appid}] SteamHunters JSON fetch failed: ${err.message}`);
+    return { ok: false, list: [] };
+  }
+}
+
+// Icon-hash -> real apiName lookup, one small file per appid (steam_cache, so "Clear caches" wipes
+// it too). Feeds the degraded SteamCommunity-only fallback below when every apiName source fails.
+function apiNameIndexPath(appid) {
+  return path.join(userData, 'steam_cache/apinames', `${appid}.json`);
+}
+
+function loadApiNameIndex(appid) {
+  try {
+    return JSON.parse(fs.readFileSync(apiNameIndexPath(appid), 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+function rememberApiNameIndex(appid, achievements) {
+  try {
+    const fresh = steamSchemaFetch.buildApiNameIndex(achievements);
+    if (Object.keys(fresh).length === 0) return;
+    const merged = { ...(loadApiNameIndex(appid) || {}), ...fresh };
+    const file = apiNameIndexPath(appid);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(merged));
+  } catch (err) {
+    debug.log(`[${appid}] could not persist the apiName index: ${err.message || err}`);
+  }
+}
+
+function steamGroupsCachePath(appid) {
+  return path.join(userData, 'steam_cache/steamhunters_groups', `${appid}.json`);
+}
+
+function loadSteamGroupsCache(appid) {
+  try {
+    const raw = JSON.parse(fs.readFileSync(steamGroupsCachePath(appid), 'utf8'));
+    if (raw && Array.isArray(raw.groups) && raw.fetchedAt && Date.now() - raw.fetchedAt < STEAM_GROUPS_CACHE_TTL_MS) {
+      return raw.groups;
+    }
+  } catch {}
+  return null;
+}
+
+function saveSteamGroupsCache(appid, groups) {
+  try {
+    const file = steamGroupsCachePath(appid);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify({ fetchedAt: Date.now(), groups }));
+  } catch (err) {
+    debug.log(`[${appid}] could not persist the SteamHunters groups cache: ${err.message || err}`);
+  }
+}
+
+// Fast keyless chain: the official endpoint first (works without a key and is the only source with
+// hidden descriptions + icons + rarity), then SteamHunters JSON enriched with SteamCommunity
+// icons/hidden, then SteamCommunity alone, then nothing (the caller may fall back to the browser).
+async function getAchievementsKeyless(appid, lang) {
+  const official = await getSchemaFromWebAPI(appid, lang);
+  if (official !== null) {
+    rememberApiNameIndex(appid, official);
+    return { achievements: official, source: 'official' };
+  }
+
+  const sh = await fetchSteamHuntersJson(appid);
+  if (sh.ok) {
+    if (sh.list.length === 0) return { achievements: [], source: 'steamhunters' };
+    const language = (lang && (lang.api || lang)) || 'english';
+    // SteamHunters titles are English-only, so icons/hidden come from the English SteamCommunity
+    // page (title match); the localized page is then overlaid by icon hash (language-independent).
+    const achievements = steamSchemaFetch.mapSteamHuntersJson(sh.list);
+    const englishRows = await fetchSteamCommunityAchievements(
+      `https://steamcommunity.com/stats/${appid}/achievements?l=english`
+    );
+    const merged = englishRows.length
+      ? steamSchemaFetch.mergeSteamHuntersWithCommunity(sh.list, englishRows)
+      : achievements;
+    if (language !== 'english') {
+      const localizedRows = await fetchSteamCommunityAchievements(
+        `https://steamcommunity.com/stats/${appid}/achievements?l=${language}`
+      );
+      if (localizedRows.length) {
+        const { mergeTranslatedAchievements } = require('../parser/achievementTranslations.js');
+        mergeTranslatedAchievements(merged, localizedRows);
+      }
+    }
+    // SteamHunters always carries real apiNames, with or without a successful icon merge.
+    rememberApiNameIndex(appid, merged);
+    return { achievements: merged, source: 'steamhunters' };
+  }
+
+  const language = (lang && (lang.api || lang)) || 'english';
+  const rows = await fetchSteamCommunityAchievements(
+    `https://steamcommunity.com/stats/${appid}/achievements?l=${language}`
+  );
+  if (rows.length) {
+    const degraded = steamSchemaFetch.mapSteamCommunityRows(rows);
+    const apiNames = loadApiNameIndex(appid);
+    return { achievements: apiNames ? steamSchemaFetch.applyApiNameIndex(degraded, apiNames) : degraded, source: 'steamcommunity' };
+  }
+  return { achievements: [], source: 'none' };
 }
 
 async function getSteamData(request) {
@@ -484,7 +659,7 @@ async function getSteamData(request) {
   const lang = request.lang || 'english';
   if (!configJS) {
     try {
-      await startEngines(); // makes the Steam Web API key available for the browser-free schema path
+      await startEngines(); // makes the config available for the browser-free schema path
     } catch (err) {
       debug.log('startEngines (getSteamData) failed: ' + err.message);
     }
@@ -563,26 +738,50 @@ async function getSteamData(request) {
 
     if (type === 'data' || type === 'steamhunters') {
       let info = { appid };
-      // Use the official API when a key is configured; it avoids a slow browser scrape.
-      const key = configJS?.steam?.apiKey;
-      if (key) {
-        const ach = await getSchemaFromWebAPI(appid, key, request.lang);
-        if (ach !== null) {
-          info.achievements = ach;
-          return info;
+      // Prefer the official endpoint — Steam serves this schema without a key. null means
+      // transport/auth failure: fall through to the keyless chain, then to the browser scrape.
+      const keyless = await getAchievementsKeyless(appid, request.lang);
+      if (keyless.source === 'none') {
+        await scrapeWithPuppeteer(info, { steamhunters: true });
+        if (type === 'data') {
+          // Bound the fallback so a stalled scrape cannot hang sendSync forever.
+          let waited = 0;
+          while (!info.achievements && waited < 60) {
+            await delay(500);
+            waited++;
+          }
         }
-        // null means the API failed; continue with scraping.
+      } else {
+        info.achievements = keyless.achievements;
+        info.source = keyless.source;
       }
-      await scrapeWithPuppeteer(info, { steamhunters: true });
-      if (type === 'data') {
-        // Bound the fallback so a stalled scrape cannot hang sendSync forever.
-        let waited = 0;
-        while (!info.achievements && waited < 60) {
-          await delay(500);
-          waited++;
-        }
-      }
+      if (!Array.isArray(info.achievements)) info.achievements = [];
       return info;
+    }
+    if (type === 'steamgroups') {
+      const cacheKey = String(appid);
+      if (steamGroupsCache.has(cacheKey)) return { ok: true, groups: steamGroupsCache.get(cacheKey) };
+      const cachedGroups = loadSteamGroupsCache(appid);
+      if (cachedGroups) {
+        steamGroupsCache.set(cacheKey, cachedGroups);
+        return { ok: true, groups: cachedGroups };
+      }
+      try {
+        const res = await fetch(`https://steamhunters.com/api/GetAchievementGroups/v1?appId=${appid}`, {
+          headers: { 'User-Agent': STEAM_FETCH_UA, Accept: 'application/json' },
+          signal: AbortSignal.timeout(STEAM_KEYLESS_TIMEOUT_MS),
+        });
+        if (!res.ok) return { ok: false, groups: [] };
+        const json = await res.json();
+        const groups = Array.isArray(json && json.groups) ? json.groups : [];
+        steamGroupsCache.set(cacheKey, groups);
+        // Persist non-empty answers only: a transient empty response must not hide future groups.
+        if (groups.length) saveSteamGroupsCache(appid, groups);
+        return { ok: true, groups };
+      } catch (err) {
+        debug.log(`[${appid}] SteamHunters groups fetch failed: ${err.message || err}`);
+        return { ok: false, groups: [] };
+      }
     }
     // Resolve names from the local app list first, then fall back to Steam's product info.
     if (type === 'name') {
@@ -982,6 +1181,48 @@ ipcMain.handle('check-for-updates', async () => {
   }
 });
 
+// Settings > Advanced: one action that clears every disposable cache the app knows about — the
+// updater's own download cache (the same corrupted-cache scenario the automatic checksum-mismatch
+// recovery handles on its own, offered here pre-emptively or after the "still failed" dialog above)
+// plus the re-fetchable Steam/Ubisoft schema, icon and emulator-tool caches under userData
+// (util/clearableCaches.js's explicit allowlist). Never touches settings, GBE restore-point
+// backups, notification presets, theme images, or the user-seeded Uplay R2 loader cache (no public
+// download source for that one — see the allowlist file for the full "never add" list).
+ipcMain.handle('clear-update-cache', async () => {
+  if (updateDownloading || checksumRetryInFlight) return { ok: false, error: 'download-in-progress' };
+  const result = { ok: true, error: null, updateFolder: null, updateCleared: false, updateError: null, clearedCaches: [] };
+  try {
+    const helper = await autoUpdater.getOrCreateDownloadHelper();
+    const cacheDir = helper.cacheDir;
+    let hadContents = false;
+    try {
+      const entries = await fs.promises.readdir(cacheDir);
+      hadContents = entries.length > 0;
+    } catch {
+      hadContents = false; // the folder simply doesn't exist yet
+    }
+    await clearUpdaterCacheDir();
+    result.updateFolder = cacheDir;
+    result.updateCleared = hadContents;
+  } catch (err) {
+    // Non-fatal: still clear the other app caches even if the updater cache path could not be
+    // resolved (e.g. a dev build missing dev-app-update.yml).
+    debug.log(`[updater] could not clear the update cache: ${err.message || err}`);
+    result.updateError = err && err.message ? err.message : String(err);
+    result.updateCleared = false;
+    result.ok = false;
+    result.error = 'update-cache-clear-failed';
+  }
+  try {
+    result.clearedCaches = await clearSafeCaches(userData);
+  } catch (err) {
+    debug.log(`[cache] could not clear app caches: ${err.message || err}`);
+    result.ok = false;
+    result.error = err && err.message ? err.message : String(err);
+  }
+  return result;
+});
+
 // ---- Epic account connection ---------------------------------------------------------------
 ipcMain.handle('epic:auth-status', async () => {
   try {
@@ -1227,7 +1468,7 @@ ipcMain.handle('xbox-pc:import', async (event, opts = {}) => {
 // tear the child down explicitly; respawns skip the sweep.
 function killWatchdog() {
   try {
-    const out = execSync('netstat -ano -p tcp', { encoding: 'utf8', windowsHide: true });
+    const out = execFileSync('netstat.exe', ['-ano', '-p', 'tcp'], { encoding: 'utf8', windowsHide: true });
     const pids = new Set();
     for (const line of out.split('\n')) {
       if (line.includes(':8082') && /LISTENING/i.test(line)) {
@@ -1237,7 +1478,7 @@ function killWatchdog() {
     }
     for (const pid of pids) {
       try {
-        execSync(`taskkill /F /PID ${pid}`, { windowsHide: true, stdio: 'ignore' });
+        execFileSync('taskkill.exe', ['/F', '/PID', pid], { windowsHide: true, stdio: 'ignore' });
         debug.log(`[watchdog] killed stale instance PID ${pid} on port 8082`);
       } catch {}
     }
@@ -2259,11 +2500,7 @@ function createMainWindow() {
         if (typeof contextMenuFn === 'function') {
           contextMenuFn({
             append: (defaultActions, params, browserWindow) => [
-              {
-                label: 'Reload',
-                visible: params,
-                click: () => { if (MainWin) MainWin.reload(); },
-              },
+              { role: 'reload', visible: Boolean(params) },
             ],
           });
         }
@@ -2740,6 +2977,7 @@ async function createOverlayWindow(info) {
 
     overlayAppid = String(info.appid);
     overlayWindow = new BrowserWindow({
+      title: t('achievements-overlay-title', 'Achievements Overlay', 'Overlay de succès'),
       width: 450,
       height: 800,
       x: width - 470,
@@ -2775,11 +3013,7 @@ async function createOverlayWindow(info) {
         if (typeof contextMenuFn === 'function') {
           contextMenuFn({
             append: (defaultActions, params, browserWindow) => [
-              {
-                label: 'Reload',
-                visible: params,
-                click: () => { if (overlayWindow) overlayWindow.reload(); },
-              },
+              { role: 'reload', visible: Boolean(params) },
             ],
           });
         }
@@ -2954,26 +3188,41 @@ function getPresetDimensions(presetFolder) {
   return { width: 400, height: 200 };
 }
 
-function notificationWorkArea() {
+function notificationPlacementArea(customAnchor = null) {
   const electronScreen = require('electron').screen;
   try {
+    // A custom popup belongs to the display where the user placed it, regardless of where the
+    // cursor happens to be when a later achievement unlocks. Using the cursor here used to pull a
+    // saved popup onto another monitor before placeNotification() clamped it.
+    if (customAnchor && Number.isFinite(Number(customAnchor.x)) && Number.isFinite(Number(customAnchor.y))) {
+      const savedDisplay = electronScreen.getDisplayNearestPoint({
+        x: Math.round(Number(customAnchor.x)),
+        y: Math.round(Number(customAnchor.y)),
+      });
+      // Custom placement is allowed across the taskbar, matching the draggable witness. Electron
+      // reports these bounds in DIP, so this also stays exact on scaled/HiDPI displays.
+      if (savedDisplay && savedDisplay.bounds) return savedDisplay.bounds;
+    }
     // The cursor is normally over the game that triggered the unlock, so this keeps the popup on
     // that monitor instead of unexpectedly putting it on the primary display.
     const display = electronScreen.getDisplayNearestPoint(electronScreen.getCursorScreenPoint());
     if (display && display.workArea) return display.workArea;
   } catch {}
-  return electronScreen.getPrimaryDisplay().workArea;
+  const primary = electronScreen.getPrimaryDisplay();
+  return customAnchor && primary.bounds ? primary.bounds : primary.workArea;
 }
 
 // Place the window inside the target display's usable area. The shared helper clamps both edges,
 // including a manually repositioned popup, instead of only protecting the left/top edges.
-function computeNotificationBounds(position, width, height, workArea) {
+function computeNotificationBounds(position, width, height, workArea, customAnchor = null) {
   return notificationBounds.placeNotification({
     position,
     width,
     height,
-    workArea: workArea || notificationWorkArea(),
-    custom: position === 'custom' ? readOverlayBounds().notif : null,
+    workArea: workArea || notificationPlacementArea(),
+    custom: position === 'custom' ? customAnchor || readOverlayBounds().notif : null,
+    // A manually placed popup may intentionally overlap the taskbar or sit flush to a screen edge.
+    margin: position === 'custom' ? 0 : undefined,
   });
 }
 
@@ -3012,7 +3261,8 @@ function createNotificationWindow(data = {}) {
   const requestedScale = Number.isFinite(scaleRaw) && scaleRaw > 0 ? scaleRaw : 1;
   const { width: baseW, height: baseH } = getPresetDimensions(presetFolder);
   const position = data.position || 'center-bottom';
-  const workArea = notificationWorkArea();
+  const customAnchor = position === 'custom' ? readOverlayBounds().notif : null;
+  const workArea = notificationPlacementArea(customAnchor);
   // Scale the host window in both directions, then cap the effective scale to the current work
   // area. This keeps small themes tightly anchored and large themes visible instead of clipping.
   const geometry = notificationBounds.fitNotificationScale({
@@ -3020,8 +3270,15 @@ function createNotificationWindow(data = {}) {
     baseHeight: baseH,
     scale: requestedScale,
     workArea,
+    margin: position === 'custom' ? 0 : undefined,
   });
-  const { x, y, width: w, height: h } = computeNotificationBounds(position, geometry.width, geometry.height, workArea);
+  const { x, y, width: w, height: h } = computeNotificationBounds(
+    position,
+    geometry.width,
+    geometry.height,
+    workArea,
+    customAnchor
+  );
   const scale = geometry.scale;
 
   debug.log('[overlay-notif] preset=' + path.basename(presetFolder) + ' pos=' + position + ' scale=' + requestedScale + '→' + scale + ' size=' + w + 'x' + h);
@@ -3050,6 +3307,26 @@ function createNotificationWindow(data = {}) {
 
   notif.setAlwaysOnTop(true, 'screen-saver');
   notif.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  const lockedCustomBounds = position === 'custom' && !data.reposition ? { x, y, width: w, height: h } : null;
+  if (lockedCustomBounds) {
+    // A real custom-position notification is click-through and must never be nudged by a preset,
+    // focus/workspace transition or accidental native move. Reassert its exact saved bounds both
+    // before display and whenever Windows proposes a move.
+    notif.on('will-move', (event) => {
+      event.preventDefault();
+      if (!notif.isDestroyed()) notif.setBounds(lockedCustomBounds, false);
+    });
+    notif.on('show', () => {
+      if (!notif.isDestroyed()) notif.setBounds(lockedCustomBounds, false);
+    });
+    notif.on('move', () => {
+      if (notif.isDestroyed()) return;
+      const current = notif.getBounds();
+      if (current.x !== lockedCustomBounds.x || current.y !== lockedCustomBounds.y) {
+        notif.setBounds(lockedCustomBounds, false);
+      }
+    });
+  }
   // Real notifications are click-through; the reposition witness stays interactive so it can be dragged.
   if (!data.reposition) notif.setIgnoreMouseEvents(true, { forward: true });
   notif.loadFile(presetHtml);
@@ -3138,7 +3415,22 @@ function createNotificationWindow(data = {}) {
   });
 
   if (data.reposition) {
-    notif.on('moved', () => writeOverlayBounds({ notif: { x: notif.getBounds().x, y: notif.getBounds().y } }));
+    let persistPositionTimer = null;
+    const persistNotificationPosition = () => {
+      if (notif.isDestroyed()) return;
+      const bounds = notif.getBounds();
+      writeOverlayBounds({ notif: { x: bounds.x, y: bounds.y } });
+    };
+    // `move` is the cross-platform BrowserWindow event and fires on Windows while dragging.
+    // `moved` is macOS-specific, so listening only to it silently lost the chosen position here.
+    notif.on('move', () => {
+      clearTimeout(persistPositionTimer);
+      persistPositionTimer = setTimeout(persistNotificationPosition, 80);
+    });
+    notif.on('close', () => {
+      clearTimeout(persistPositionTimer);
+      persistNotificationPosition();
+    });
   }
 
   // Safety net: the preset normally closes itself via window.api.closeNotificationWindow(). With a
@@ -3806,7 +4098,11 @@ try {
       if (response === 0) {
         debug.log(`[updater] user accepted download of ${info.version}`);
         updateDownloading = true;
-        autoUpdater.downloadUpdate().catch((err) => notifyUpdateError(`download failed: ${err.message || err}`));
+        autoUpdater.downloadUpdate().catch((err) => {
+          // A checksum mismatch is handled entirely by the 'error' listener below, which clears
+          // the cache and retries once instead of surfacing the raw failure immediately.
+          if (!isChecksumMismatchError(err)) notifyUpdateError(`download failed: ${err.message || err}`);
+        });
       } else if (response === 2) {
         configJS.general.skippedVersion = info.version;
         await settingsJS.save(configJS);
@@ -3850,7 +4146,37 @@ try {
       debug.log(`[updater] downloading: ${percent.toFixed(0)}% (${speed} KB/s)`);
     }
   });
-  autoUpdater.on('error', (err) => notifyUpdateError(err && err.message ? err.message : String(err)));
+  autoUpdater.on('error', (err) => {
+    const message = err && err.message ? err.message : String(err);
+    if (isChecksumMismatchError(err)) {
+      if (checksumRetryInFlight) {
+        // The retry's own downloadUpdate() rejection already goes through the catch block below;
+        // this is electron-updater's duplicate 'error' emission for that same second failure.
+        return;
+      }
+      checksumRetryInFlight = true;
+      debug.log(`[updater] checksum mismatch (${message}); clearing the update cache and retrying the download once`);
+      (async () => {
+        let cacheDir = '';
+        try {
+          cacheDir = await clearUpdaterCacheDir();
+          debug.log(`[updater] update cache cleared: ${cacheDir}`);
+        } catch (clearErr) {
+          debug.log(`[updater] could not clear the update cache: ${clearErr.message || clearErr}`);
+        }
+        try {
+          await autoUpdater.downloadUpdate();
+          updaterErrorNotified = false; // the retry succeeded; let a future failure notify again
+        } catch (retryErr) {
+          await notifyChecksumRecoveryFailed(retryErr && retryErr.message ? retryErr.message : String(retryErr), cacheDir);
+        } finally {
+          checksumRetryInFlight = false;
+        }
+      })();
+      return;
+    }
+    notifyUpdateError(message);
+  });
   autoUpdater.on('update-downloaded', (info) => {
     updateDownloading = false;
     clearUpdateDownloadProgress();
@@ -4004,6 +4330,9 @@ try {
     });
   }
 } catch (err) {
-  dialog.showErrorBox('Critical Error', `Failed to initialize:\n${err}`);
+  dialog.showErrorBox(
+    t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
+    `${t('failed', 'Failed.', 'Échec.')}\n${err}`
+  );
   app.quit();
 }
