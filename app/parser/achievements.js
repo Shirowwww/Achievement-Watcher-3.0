@@ -1498,7 +1498,7 @@ module.exports.getAchievementsForAppid = async (option, requestedAppid) => {
   try {
     let game;
     if (/^[0-9]+$/.test(requestedAppid)) {
-      game = await steam.getGameData({ appID: requestedAppid, lang: option.achievement.lang, key: option.steam.apiKey });
+      game = await steam.getGameData({ appID: requestedAppid, lang: option.achievement.lang });
     } else {
       game = await epic.getGameData({ appID: requestedAppid });
     }
@@ -1615,9 +1615,9 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       game = await steam.getGameData({
         appID: appid.appid,
         lang: option.achievement.lang,
-        key: option.steam.apiKey,
         showHidden: !!(option.achievement && option.achievement.showHidden),
         fastStart: option.fastStart === true,
+        forceRecheck: option.forceAchievementRecheck === true,
         // Known emulator config dir (Goldberg discover) — lets the schema fetch resolve cover art
         // from the local app_product_info.json dump before hitting the network.
         steamSettings: (appid.data && appid.data.steamSettings) || null,
@@ -2183,54 +2183,57 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
 
       let root = {};
       try {
-        if (appid.data.type === 'file') {
+        if (dataType === 'file') {
           root = await steam.getAchievementsFromFile(appid.data.path);
           //Note to self: Empty file should be considered as a 0% game -> do not throw an error just issue a warning
           if (root.constructor === Object && Object.entries(root).length === 0)
             debug.warn(`[${appid.appid}] Warning ! Achievement file in '${appid.data.path}' is probably empty`);
-        } else if (appid.data.type === 'uplayR2') {
+        } else if (dataType === 'uplayR2') {
           // Goldberg Uplay R2. Unlike the Steam emus there is no single well-known folder: the loader
           // resolves its save dir from its own ini (SaveType/SavePath, plus AchSavePath on builds that
           // support the redirect), and a game update that re-extracts the repack's ini moves it without
           // warning. Ask uplayR2 for every plausible location, then translate the emulator's Ubisoft
           // objective ids back onto the Steam api-names the rest of the pipeline is keyed by.
           root = readUplayR2Save(appid, game);
-        } else if (appid.data.type === 'reg') {
+        } else if (dataType === 'reg') {
           root = await greenluma.getAchievements(appid.data.root, appid.data.path);
-        } else if (appid.data.type === 'steamAPI') {
+        } else if (dataType === 'steamAPI') {
           root = await steam.getAchievementsFromAPI({
             appID: appid.appid,
             user: appid.data.userID,
             path: appid.data.cachePath,
-            key: option.steam.apiKey,
           });
-        } else if (appid.data.type === 'rpcs3') {
+        } else if (dataType === 'rpcs3') {
           root = await rpcs3.getAchievements(appid.data.path, game.achievement.total);
-        } else if (appid.data.type === 'shadps4') {
+        } else if (dataType === 'shadps4') {
           root = await shadps4.getAchievements(appid.data.path);
-        } else if (appid.data.type === 'xenia') {
+        } else if (dataType === 'xenia') {
           root = await xenia.getAchievements(appid.data.path);
-        } else if (appid.data.type === 'socialclub') {
+        } else if (dataType === 'socialclub') {
           root = await socialclub.getAchievements(appid);
-        } else if (appid.data.type === 'lumaplay') {
+        } else if (dataType === 'lumaplay') {
           root = uplay.getAchievementsFromLumaPlay(appid.data.root, appid.data.path);
-        } else if (appid.data.type === 'ea') {
+        } else if (dataType === 'ea') {
           root = await ea.getAchievements(appid);
-        } else if (appid.data.type === 'gogOfficial') {
+        } else if (dataType === 'gogOfficial') {
           root = gogOfficial.getAchievements(appid);
-        } else if (appid.data.type === 'ubisoftOfficial') {
+        } else if (dataType === 'ubisoftOfficial') {
           root = ubisoftOfficial.getAchievements(appid);
-        } else if (appid.data.type === 'epicOfficial') {
+        } else if (dataType === 'epicOfficial') {
           root = await epicOfficial.getAchievements(appid);
-        } else if (appid.data.type === 'cached') {
+        } else if (dataType === 'cached') {
           root = await watchdog.getAchievements(appid.appid);
-        } else if (appid.data.type === 'uplay') {
+        } else if (dataType === 'uplay') {
           // Legit Ubisoft Connect exposes no local unlock-state file the way the Steam emus do, so
           // only the schema is available (already loaded into `game`). Show the game with everything
           // locked instead of throwing a misleading "Not yet implemented" FAIL on every scan.
           root = {};
+        } else if (!dataType) {
+          // No discovery record (e.g. the overlay was opened for an appid that is not in the
+          // library): there is no local save to read, so the schema-only game still loads.
+          root = {};
         } else {
-          throw `Unsupported achievement source type "${appid.data ? appid.data.type : 'unknown'}" for appid ${appid.appid}`;
+          throw `Unsupported achievement source type "${dataType}" for appid ${appid.appid}`;
         }
       } catch (err) {
         // A missing save file is the normal 0%-game case (emulator made the folder but nothing is
@@ -2455,11 +2458,13 @@ module.exports.makeList = async (option, callbackProgress, onGame = () => {}) =>
     if (finalList.length > 0) {
       let count = 0;
       // Bounded concurrency. The old code fired every game at once (Promise.all over the whole list,
-      // staggered by 10ms): with a Web API key that is a burst of N parallel fetches, and the disk
-      // reads / sockets / file handles all spike together. A small worker pool caps how many games
-      // load in parallel while they still stream into the UI via onGame as each one resolves.
-      const hasSteamApiKey = !!(option.steam && option.steam.apiKey);
-      const CONCURRENCY = hasSteamApiKey ? 8 : 4;
+      // staggered by 10ms): a burst of N parallel fetches, and the disk reads / sockets / file
+      // handles all spike together. A small worker pool caps how many games load in parallel while
+      // they still stream into the UI via onGame as each one resolves.
+      // The keyless schema path is plain HTTP now (official endpoint -> SteamHunters JSON ->
+      // SteamCommunity), so it no longer needs a reduced pool to protect the Puppeteer browser.
+      // Browser-only fallbacks (SteamDB covers, top-owners) already serialize on their own queues.
+      const CONCURRENCY = 8;
       let cursor = 0;
       const worker = async () => {
         while (cursor < finalList.length) {
@@ -2479,7 +2484,7 @@ module.exports.makeList = async (option, callbackProgress, onGame = () => {}) =>
           const endTime = Date.now();
           if (!game) {
             // Do NOT auto-blacklist on a failed load (issue #55): getGameData() swallows every
-            // error (missing API key, network hiccup, rate-limit, CDN down) and returns undefined,
+            // error (network hiccup, rate-limit, CDN down) and returns undefined,
             // so a single transient failure used to permanently hide a real game. Just skip it for
             // this scan and let it be retried next time. Intentional exclusions (hardcoded bogus
             // list, server list, manual "blacklist" action) keep working untouched.

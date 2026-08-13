@@ -15,6 +15,7 @@ const MIGRATION_PLAN = [
   { rel: 'cfg', mode: 'copy' },
   { rel: 'themes', mode: 'copy' },
   { rel: 'sounds', mode: 'copy' },
+  { rel: 'covers', mode: 'copy' }, // user-selected cover artwork; not reproducible cache data
   { rel: 'steam_cache', mode: 'link' },
   { rel: 'uplay_cache', mode: 'link' },
   { rel: 'backups', mode: 'link' }, // GBE restore points, indexed by cfg/gbe-backups.db

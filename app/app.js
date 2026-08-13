@@ -54,6 +54,7 @@ emulatorSourceOverride.setUserDataPath(getUserDataPath());
 const l10n = require(path.join(appPath, 'locale/loader.js'));
 const coverStore = require(path.join(appPath, 'util/coverStore.js'));
 const uninstall = require(path.join(appPath, 'util/uninstall.js'));
+const { calculateLibraryStats } = require(path.join(appPath, 'util/libraryStats.js'));
 const { resolveGameRarityContext } = require(path.join(appPath, 'util/rarity.js'));
 // `t` and `escapeHtml` come from ui/settings.js; classic scripts share their lexical scope.
 let debug = new (require(path.join(appPath, 'util/logger.js')))({
@@ -75,6 +76,37 @@ window.addEventListener('error', (e) => {
 
 const gameElements = new Map();
 let gameList = [];
+let profileStatsAnimationTimer = null;
+
+function renderProfileStats(stats, { animate = false } = {}) {
+  const values = [String(stats.totalUnlocked), `${stats.completed}/${stats.total}`, String(stats.average)];
+  const dataElements = $('#user-info .info .stats li span.data');
+  let changed = false;
+  dataElements.each(function (index) {
+    if ($(this).text() === values[index]) return;
+    $(this).text(values[index]);
+    changed = true;
+  });
+
+  const distEl = $('#user-info .completion-dist');
+  distEl.find('.fill').css('width', stats.average + '%');
+  distEl.attr('title', stats.average + '%');
+
+  const statsEl = $('#user-info .info .stats');
+  if (!animate || !changed || !statsEl.length) return;
+  statsEl.removeClass('is-updating');
+  void statsEl[0].offsetWidth;
+  statsEl.addClass('is-updating');
+  clearTimeout(profileStatsAnimationTimer);
+  profileStatsAnimationTimer = setTimeout(() => statsEl.removeClass('is-updating'), 220);
+}
+
+function refreshProfileStats({ animate = false } = {}) {
+  const installedOnly = typeof window.installedOnlyEnabled === 'function' && window.installedOnlyEnabled();
+  renderProfileStats(calculateLibraryStats(gameList, { installedOnly }), { animate });
+}
+
+window.refreshProfileStats = refreshProfileStats;
 
 function gameTouchesScanScope(game, scope) {
   const data = (game && game.data) || {};
@@ -248,23 +280,7 @@ function refreshLibraryProgressFor(appid, games) {
     }
   }
 
-  const withAchievements = list.filter((g) => g && g.achievement);
-  if (withAchievements.length === 0) return;
-  const totalUnlocked = withAchievements.reduce((sum, g) => sum + (parseInt(g.achievement.unlocked, 10) || 0), 0);
-  const completed = withAchievements.filter((g) => Number(g.achievement.total) > 0 && g.achievement.unlocked == g.achievement.total).length;
-  const average = Math.floor(
-    withAchievements.reduce((sum, g) => {
-      const total = Number(g.achievement.total) || 0;
-      return sum + (total > 0 ? Math.round((100 * (Number(g.achievement.unlocked) || 0)) / total) : 0);
-    }, 0) / withAchievements.length
-  );
-
-  $('#user-info .info .stats li:eq(0) span.data').text(totalUnlocked);
-  $('#user-info .info .stats li:eq(1) span.data').text(`${completed}/${withAchievements.length}`);
-  $('#user-info .info .stats li:eq(2) span.data').text(average);
-  const distEl = $('#user-info .completion-dist');
-  distEl.find('.fill').css('width', average + '%');
-  distEl.attr('title', average + '%');
+  refreshProfileStats({ animate: true });
 }
 
 // Open catalog links only after validating their http(s) scheme.
@@ -344,7 +360,26 @@ function reloadCoverOverrides() {
   coverOverrides = coverStore.readAll();
 }
 function coverOverrideFor(appid) {
-  return coverOverrides[String(appid)] || null;
+  const id = String(appid);
+  const override = coverOverrides[id] || null;
+  if (override && !coverStore.isUsable(override)) {
+    const recovered = coverStore.recoverRemote(override);
+    if (recovered) {
+      // Old SteamGridDB selections retain their content hash in the deleted cache filename. Restore
+      // the exact CDN URL now; it no longer depends on steam_cache and can be downloaded again.
+      coverStore.set(id, recovered);
+      coverOverrides[id] = recovered;
+      debug.log(`[cover] recovered SteamGridDB override for ${id}`);
+      return recovered;
+    }
+    // A pre-fix covers.db can still reference steam_cache after that cache was already removed.
+    // Drop only the broken reference so the normal cover fallback renders instead of a blank tile.
+    coverStore.remove(id);
+    delete coverOverrides[id];
+    debug.warn(`[cover] removed missing override for ${id}`);
+    return null;
+  }
+  return override;
 }
 function applyCoverBackground(appid, value) {
   const el = $(`#game-header-${appid}`);
@@ -465,8 +500,8 @@ function openCoverPicker(game, appid, coverCacheAppid) {
           debug.warn(`[cover] picker download failed (${err.message || err}) — applying remote URL`);
           return null;
         });
-        const target = local && local !== url ? local : url;
-        coverStore.set(String(appid), target);
+        const target = coverStore.persist(String(appid), local && local !== url ? local : url, getUserDataPath());
+        if (!target) throw new Error('selected cover could not be persisted');
         reloadCoverOverrides();
         applyCoverBackground(String(appid), target);
       } catch (err) {
@@ -961,6 +996,8 @@ var app = {
     // Coalesce overlapping scans so streaming tiles are not duplicated.
     if (self.listLoadInFlight) {
       self.listRescanPending = true;
+      // "Recheck achievement lists" must survive coalescing: carry the force into the follow-up pass.
+      if (options && options.forceAchievementRecheck === true) self.listRescanForceRecheck = true;
       // A full refresh takes precedence over queued selective retries.
       if (!activeScanScope) self.listRescanScope = null;
       else if (self.listRescanScope !== null) self.listRescanScope = activeScanScope;
@@ -972,6 +1009,10 @@ var app = {
     self.listLoadGuardTimer = setTimeout(() => {
       self.listLoadInFlight = false;
     }, 5 * 60 * 1000);
+
+    // The main process may have promoted legacy cache-backed cover overrides while clearing caches.
+    // Refresh this snapshot before rebuilding tiles so the renderer uses the new durable paths.
+    reloadCoverOverrides();
 
     debug.log(`${remote.app.name} loading...`);
 
@@ -1004,18 +1045,11 @@ var app = {
     // Show activity across the whole window while scanning.
     setLibraryBusyCursor(true);
 
-    $('#user-info .info .stats li:eq(0) span.data').text('0');
-    $('#user-info .info .stats li:eq(1) span.data').text('0');
-    $('#user-info .info .stats li:eq(2) span.data').text('0');
+    renderProfileStats(calculateLibraryStats([]));
 
     $('#search-bar input[type=search]').val('').change().blur();
 
-    // Keep header statistics incremental while tiles stream in.
-    let statSumProgress = 0;
-    let statCount = 0;
-    let statTotalUnlocked = 0;
-    let statCompleted = 0;
-    // Keep the average completion bar in sync with the streamed list.
+    // Keep the profile summary in sync with the streamed list and active installed-only filter.
     sortOptions(); // reflect persisted sort state on the sort-box during load (real sort runs once at the end)
     $('#user-info').fadeTo('fast', 1).css('pointer-events', 'initial');
     $('#sort-box').fadeTo('fast', 1).css('pointer-events', 'initial');
@@ -1026,9 +1060,11 @@ var app = {
     // First scan of the session: serve cached data immediately (no cover/description re-fetch per
     // game) so the library appears fast; details refresh themselves when opened.
     const fastStart = !self.hasCompletedFirstScan;
+    // Settings > Advanced > "Check now" bypasses the 3-day achievement-recheck cooldown for this scan.
+    const forceAchievementRecheck = options && options.forceAchievementRecheck === true;
     const scanConfig = activeScanScope
-      ? { ...self.config, scanScope: activeScanScope, fastStart }
-      : { ...self.config, fastStart };
+      ? { ...self.config, scanScope: activeScanScope, fastStart, forceAchievementRecheck }
+      : { ...self.config, fastStart, forceAchievementRecheck };
     // Read the manual-unlock sidecar once for this scan. Applying it in the streamed callback makes
     // tile percentages and profile counters survive an app restart without doing sync I/O per game.
     const manualUnlockMap = (() => {
@@ -1067,15 +1103,6 @@ var app = {
             }
             renderedAppids.add(appidKey);
             let progress = game.achievement.total > 0 ? Math.round((100 * game.achievement.unlocked) / game.achievement.total) : 0;
-
-            statSumProgress += progress;
-            statCount += 1;
-            const avgCompletion = Math.floor(statSumProgress / statCount);
-            $('#user-info .info .stats li:eq(2) span.data').text(avgCompletion);
-
-            const distEl = $('#user-info .completion-dist');
-            distEl.find('.fill').css('width', avgCompletion + '%');
-            distEl.attr('title', avgCompletion + '%');
 
             let timeMostRecent = Math.max.apply(
               Math,
@@ -1153,20 +1180,27 @@ var app = {
             replaceSkeletonWith(item);
             const headerEl = item.find('.header').first();
             gameList.push(game);
-
-            // "completed / total" — a game counts as completed only when it actually has achievements
-            // and every one is unlocked. (statCount mirrors gameList.length; incremented above.)
-            if (game.achievement.total > 0 && game.achievement.unlocked == game.achievement.total) statCompleted += 1;
-            $('#user-info .info .stats li:eq(1) span.data').text(`${statCompleted}/${statCount}`);
-
-            statTotalUnlocked += parseInt(game.achievement.unlocked) || 0;
-            $('#user-info .info .stats li:eq(0) span.data').text(statTotalUnlocked);
+            refreshProfileStats();
 
             setTimeout(() => {
               const coverOverride = coverOverrideFor(game.appid);
               if (coverOverride) {
                 // User-set cover (local image / alternate AppID) wins over every default source.
                 headerEl.css('background', cssUrl(coverOverride));
+                if (/^https?:\/\//i.test(coverOverride)) {
+                  // A download that previously failed, or a recovered SteamGridDB legacy URL, is
+                  // promoted to durable storage as soon as it is reachable again.
+                  ipcRenderer
+                    .invoke('fetch-icon', coverOverride, game.steamappid || game.appid)
+                    .then((local) => {
+                      if (!local) return;
+                      const durable = coverStore.persist(game.appid, local, getUserDataPath());
+                      if (!durable) return;
+                      reloadCoverOverrides();
+                      headerEl.css('background', cssUrl(durable));
+                    })
+                    .catch(() => {});
+                }
                 return;
               }
               if (EMU_LOCAL_ICON_SOURCES.has(game.source)) {
@@ -1190,8 +1224,14 @@ var app = {
         if (self.listRescanPending) {
           self.listRescanPending = false;
           const nextScope = self.listRescanScope;
+          const forceRecheck = self.listRescanForceRecheck === true;
           self.listRescanScope = undefined;
-          return self.onStart(nextScope ? { scanScope: nextScope } : {});
+          self.listRescanForceRecheck = false;
+          return self.onStart(
+            nextScope
+              ? { scanScope: nextScope, forceAchievementRecheck: forceRecheck }
+              : { forceAchievementRecheck: forceRecheck }
+          );
         }
         self.hasCompletedFirstScan = true;
         if (activeScanScope && previousGames.length > 0 && Array.isArray(list)) {
@@ -1248,6 +1288,9 @@ var app = {
               const withExe = new Set(
                 entries.filter((e) => e.exe && !exeDetect.isKnownNonGameExe(path.basename(e.exe))).map((e) => String(e.appid))
               );
+              for (const game of gameList) {
+                if (withExe.has(String(game.appid))) game.installed = true;
+              }
               for (const box of document.querySelectorAll('#game-list .game-box[data-installed="0"]')) {
                 if (withExe.has(String(box.dataset.appid))) box.dataset.installed = '1';
               }
@@ -1444,7 +1487,7 @@ var app = {
                         title: t('crakfiles', 'CrakFiles'),
                         message: t('no-fix-found-for-x', 'No fix found for "{name}".', 'Aucun fix trouvé pour « {name} ».', { name: game.name }),
                         detail: t('the-crakfiles-list-is-community-maintained-and-limited', 'The CrakFiles list is community-maintained and limited.', 'La liste CrakFiles est communautaire et limitée.'),
-                        buttons: ['OK', t('open-crakfiles', 'Open CrakFiles', 'Ouvrir CrakFiles')],
+                        buttons: [t('ok', 'OK', 'OK'), t('open-crakfiles', 'Open CrakFiles', 'Ouvrir CrakFiles')],
                         defaultId: 0,
                         cancelId: 0,
                         noLink: true,
@@ -1515,7 +1558,7 @@ var app = {
                         title: t('crakfiles', 'CrakFiles'),
                         message: t('this-link-cannot-be-applied-automatically', 'This link cannot be applied automatically.', 'Ce lien ne peut pas être appliqué automatiquement.'),
                         detail: t('open-the-download-page-and-apply-it-manually', 'Open the download page and apply it manually.', 'Ouvre la page de téléchargement et applique-le manuellement.'),
-                        buttons: ['OK', t('open', 'Open', 'Ouvrir')],
+                        buttons: [t('ok', 'OK', 'OK'), t('open', 'Open', 'Ouvrir')],
                         defaultId: 1,
                         cancelId: 0,
                         noLink: true,
@@ -1653,16 +1696,29 @@ var app = {
           ];
           const canRepairGoldbergReport = (report) => report.issues.some((i) => diagnosisRepairCodes.includes(i.code));
           const buildGoldbergDiagnosisLines = (report) => {
-            const emuLabel = { gbe: 'GBE Fork', goldberg: 'Goldberg (classic)', none: 'none detected' }[report.emulator] || report.emulator;
+            const emuLabel = {
+              gbe: 'GBE Fork',
+              goldberg: 'Goldberg (classic)',
+              none: t('diagnosis-emulator-none', 'none detected', 'aucun détecté'),
+            }[report.emulator] || report.emulator;
             const lines = [];
-            lines.push(`emulator: ${emuLabel}`);
-            lines.push(report.steamSettings ? `steam_settings: ${report.steamSettings}` : 'steam_settings: not found');
+            lines.push(t('diagnosis-emulator', 'Emulator: {emulator}', 'Émulateur : {emulator}', { emulator: emuLabel }));
+            lines.push(
+              report.steamSettings
+                ? t('diagnosis-steam-settings', 'steam_settings: {path}', 'steam_settings : {path}', { path: report.steamSettings })
+                : t('diagnosis-steam-settings-missing', 'steam_settings: not found', 'steam_settings : introuvable')
+            );
             if (report.achievements.expected != null) {
-              lines.push(`achievements: ${report.achievements.found} in file / ${report.achievements.expected} in schema`);
+              lines.push(
+                t('diagnosis-achievements-count', 'achievements: {found} in file / {expected} in schema', 'succès : {found} dans le fichier / {expected} dans le schéma', {
+                  found: report.achievements.found,
+                  expected: report.achievements.expected,
+                })
+              );
             }
             if (report.issues.length === 0) {
               lines.push('');
-              lines.push('No problems detected.');
+              lines.push(t('diagnosis-no-problems', 'No problems detected.', 'Aucun problème détecté.'));
             } else {
               lines.push('');
               for (const i of report.issues) lines.push(`[${i.level}] ${i.message}`);
@@ -1707,16 +1763,40 @@ var app = {
               const lines = buildGoldbergDiagnosisLines(report);
               if (repaired) {
                 lines.push('');
-                lines.push(`Auto-repair wrote ${repaired.achievementsJson.length} achievements to ${repaired.steamSettings}`);
-                lines.push(`icons: ${repaired.icons.downloaded} downloaded, ${repaired.icons.failed} failed, ${repaired.icons.skipped} skipped`);
-                if (repaired.wroteAppId) lines.push('steam_appid.txt created');
-                if (repaired.main && repaired.main.changed) lines.push('configs.main.ini updated (new_app_ticket + gc_token)');
-                if (repaired.dlc) lines.push(`configs.app.ini updated (${repaired.dlc.count} DLC entries, unlock_all=${repaired.dlc.unlockAll ? '1' : '0'})`);
-                if (repaired.user && repaired.user.changed) lines.push('configs.user.ini updated');
+                lines.push(
+                  t('diagnosis-auto-repair-wrote', 'Auto-repair wrote {count} achievements to {path}', 'La réparation automatique a écrit {count} succès dans {path}', {
+                    count: repaired.achievementsJson.length,
+                    path: repaired.steamSettings,
+                  })
+                );
+                lines.push(
+                  t('diagnosis-icons-summary', 'icons: {downloaded} downloaded, {failed} failed, {skipped} skipped', 'icônes : {downloaded} téléchargées, {failed} en échec, {skipped} ignorées', {
+                    downloaded: repaired.icons.downloaded,
+                    failed: repaired.icons.failed,
+                    skipped: repaired.icons.skipped,
+                  })
+                );
+                if (repaired.wroteAppId) lines.push(t('diagnosis-steam-appid-created', 'steam_appid.txt created', 'steam_appid.txt créé'));
+                if (repaired.main && repaired.main.changed) {
+                  lines.push(t('diagnosis-configs-main-updated', 'configs.main.ini updated (new_app_ticket + gc_token)', 'configs.main.ini mis à jour (new_app_ticket + gc_token)'));
+                }
+                if (repaired.dlc) {
+                  lines.push(
+                    t('diagnosis-configs-app-updated', 'configs.app.ini updated ({count} DLC entries, unlock_all={unlockAll})', 'configs.app.ini mis à jour ({count} entrées DLC, unlock_all={unlockAll})', {
+                      count: repaired.dlc.count,
+                      unlockAll: repaired.dlc.unlockAll ? '1' : '0',
+                    })
+                  );
+                }
+                if (repaired.user && repaired.user.changed) lines.push(t('diagnosis-configs-user-updated', 'configs.user.ini updated', 'configs.user.ini mis à jour'));
               }
               if (repairError) {
                 lines.push('');
-                lines.push(`Auto-repair failed: ${repairError.message || repairError}`);
+                lines.push(
+                  t('diagnosis-auto-repair-failed', 'Auto-repair failed: {error}', 'La réparation automatique a échoué : {error}', {
+                    error: repairError.message || repairError,
+                  })
+                );
               }
 
               const choice = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
@@ -1747,11 +1827,21 @@ var app = {
                       { count: summary.achievementsJson.length, path: summary.steamSettings }
                     ),
                     detail:
-                      `icons: ${summary.icons.downloaded} downloaded, ${summary.icons.failed} failed, ${summary.icons.skipped} skipped` +
-                      (summary.wroteAppId ? '\nsteam_appid.txt created' : '') +
-                      (summary.main && summary.main.changed ? '\nconfigs.main.ini updated (new_app_ticket + gc_token)' : '') +
-                      (summary.dlc ? `\nconfigs.app.ini updated (${summary.dlc.count} DLC entries, unlock_all=${summary.dlc.unlockAll ? '1' : '0'})` : '') +
-                      (summary.user && summary.user.changed ? '\nconfigs.user.ini updated' : ''),
+                      t('diagnosis-icons-summary', 'icons: {downloaded} downloaded, {failed} failed, {skipped} skipped', 'icônes : {downloaded} téléchargées, {failed} en échec, {skipped} ignorées', {
+                        downloaded: summary.icons.downloaded,
+                        failed: summary.icons.failed,
+                        skipped: summary.icons.skipped,
+                      }) +
+                      (summary.wroteAppId ? '\n' + t('diagnosis-steam-appid-created', 'steam_appid.txt created', 'steam_appid.txt créé') : '') +
+                      (summary.main && summary.main.changed ? '\n' + t('diagnosis-configs-main-updated', 'configs.main.ini updated (new_app_ticket + gc_token)', 'configs.main.ini mis à jour (new_app_ticket + gc_token)') : '') +
+                      (summary.dlc
+                        ? '\n' +
+                          t('diagnosis-configs-app-updated', 'configs.app.ini updated ({count} DLC entries, unlock_all={unlockAll})', 'configs.app.ini mis à jour ({count} entrées DLC, unlock_all={unlockAll})', {
+                            count: summary.dlc.count,
+                            unlockAll: summary.dlc.unlockAll ? '1' : '0',
+                          })
+                        : '') +
+                      (summary.user && summary.user.changed ? '\n' + t('diagnosis-configs-user-updated', 'configs.user.ini updated', 'configs.user.ini mis à jour') : ''),
                     noLink: true,
                   });
                 } catch (err) {
@@ -2047,7 +2137,7 @@ var app = {
                         title: t('gbe-goldberg-backup-created', 'GBE/Goldberg backup created', 'Sauvegarde GBE/Goldberg créée'),
                         message: t('backed-up-x-item-s-steam-settings-steam-dlls', 'Backed up {count} item(s): steam_settings + Steam DLLs.', '{count} élément(s) sauvegardé(s) : steam_settings + DLL Steam.', { count: result.files.length }),
                         detail: formatGbeBackupDetail({ backupDir: result.backupDir, manifest: result.manifest, createdAt: result.manifest?.createdAt }, backupGame),
-                        buttons: ['OK', t('open-backup-folder', 'Open backup folder', 'Ouvrir la sauvegarde')],
+                        buttons: [t('ok', 'OK', 'OK'), t('open-backup-folder', 'Open backup folder', 'Ouvrir la sauvegarde')],
                         defaultId: 0,
                         cancelId: 0,
                         noLink: true,
@@ -2269,7 +2359,9 @@ var app = {
                       // Guard prompt is forwarded to the in-app text prompt. Returns a one-line note.
                       const runAdvanced = async (steamSettingsDirs) => {
                         if (emuCfg.steamSettingsMode !== 'advanced') return '';
-                        if (!/^[0-9]+$/.test(String(writableAppid || ''))) return '\nAdvanced data: skipped (no numeric AppID)';
+                        if (!/^[0-9]+$/.test(String(writableAppid || ''))) {
+                          return '\n' + t('diagnosis-advanced-data-skipped', 'Advanced data: skipped (no numeric AppID)', 'Données avancées : ignorées (AppID numérique absent)');
+                        }
                         let login = null;
                         if (emuCfg.login === 'steam') {
                           // Prefer the credentials saved in Settings → Emulator; only prompt for what's missing.
@@ -2280,9 +2372,9 @@ var app = {
                               t('steam-username-throwaway-account-only', 'Steam username (THROWAWAY account only):', 'Identifiant Steam (COMPTE JETABLE uniquement) :'),
                               ''
                             );
-                          if (!user) return '\nAdvanced data: login cancelled';
+                          if (!user) return '\n' + t('diagnosis-advanced-data-login-cancelled', 'Advanced data: login cancelled', 'Données avancées : connexion annulée');
                           if (!pass) pass = await promptText(t('steam-password', 'Steam password:', 'Mot de passe Steam :'), '', 'password');
-                          if (!pass) return '\nAdvanced data: login cancelled';
+                          if (!pass) return '\n' + t('diagnosis-advanced-data-login-cancelled', 'Advanced data: login cancelled', 'Données avancées : connexion annulée');
                           login = { username: user, password: pass };
                         }
                         try {
@@ -2300,9 +2392,15 @@ var app = {
                           try {
                             fs.rmSync(res.workDir, { recursive: true, force: true });
                           } catch {}
-                          return `\nAdvanced data: merged ${added} extra file(s) (generate_emu_config ${tool.tag || ''})`;
+                          return (
+                            '\n' +
+                            t('diagnosis-advanced-data-merged', 'Advanced data: merged {count} extra file(s) (generate_emu_config {tag})', 'Données avancées : {count} fichier(s) supplémentaire(s) fusionné(s) (generate_emu_config {tag})', {
+                              count: added,
+                              tag: tool.tag || '',
+                            })
+                          );
                         } catch (e) {
-                          return `\nAdvanced data: ${e.message || e}`;
+                          return '\n' + t('diagnosis-advanced-data-failed', 'Advanced data: {error}', 'Données avancées : {error}', { error: e.message || e });
                         }
                       };
 
@@ -2405,7 +2503,14 @@ var app = {
                           const result = await diagnoseGoldbergSetup({ game, gameDir: dir, autoRepair: true, showDialog: false });
                           if (result.repaired) repairedDirs++;
                           if (result.repairError) repairErrors.push(`${dir}: ${result.repairError.message || result.repairError}`);
-                          diagnosisLines.push(`${dir}: ${result.report.ok ? 'ok' : 'needs attention'}`);
+                          diagnosisLines.push(
+                            t('diagnosis-dir-status-line', '{dir}: {status}', '{dir} : {status}', {
+                              dir,
+                              status: result.report.ok
+                                ? t('diagnosis-dir-status-ok', 'ok', 'ok')
+                                : t('diagnosis-dir-status-attention', 'needs attention', 'à vérifier'),
+                            })
+                          );
                         }
                         const regAdvNote = await runAdvanced(dllDirs.map((d) => path.join(d, 'steam_settings')));
                         const installedDlls = [...new Set(installResult.perDir.flatMap((d) => d.wrote))].join(', ') || 'steam_api64.dll';
@@ -2418,14 +2523,35 @@ var app = {
                           }),
                           detail:
                             dllDirs.join('\n') +
-                            `\n\nVersion: ${dlls.tag || 'unknown'}` +
-                            (installResult.backedUp > 0 ? `\nExisting dll(s) backed up as *.bak in ${installResult.backedUp} location(s)` : '') +
+                            '\n\n' +
+                            t('diagnosis-version', 'Version: {version}', 'Version : {version}', {
+                              version: dlls.tag || t('diagnosis-version-unknown', 'unknown', 'inconnue'),
+                            }) +
+                            (installResult.backedUp > 0
+                              ? '\n' +
+                                t('diagnosis-dlls-backed-up-locations', 'Existing dll(s) backed up as *.bak in {count} location(s)', 'Dll(s) existante(s) sauvegardée(s) en .bak dans {count} emplacement(s)', {
+                                  count: installResult.backedUp,
+                                })
+                              : '') +
                             preFixBackupNote +
                             crackNote +
                             drmNote +
-                            `\n\nDiagnostic after install:\n${diagnosisLines.join('\n')}` +
-                            (repairedDirs > 0 ? `\n\nAuto-repaired steam_settings (schema + icons + DLCs) in ${repairedDirs} location(s)` : '') +
-                            (repairErrors.length > 0 ? `\nAuto-repair failed for: ${repairErrors.join('; ')}` : '') +
+                            '\n\n' +
+                            t('diagnosis-after-install', 'Diagnostic after install:', 'Diagnostic après installation :') +
+                            '\n' +
+                            diagnosisLines.join('\n') +
+                            (repairedDirs > 0
+                              ? '\n\n' +
+                                t('diagnosis-auto-repaired-steam-settings', 'Auto-repaired steam_settings (schema + icons + DLCs) in {count} location(s)', 'steam_settings réparé automatiquement (schéma + icônes + DLC) dans {count} emplacement(s)', {
+                                  count: repairedDirs,
+                                })
+                              : '') +
+                            (repairErrors.length > 0
+                              ? '\n' +
+                                t('diagnosis-auto-repair-failed-for', 'Auto-repair failed for: {paths}', 'La réparation automatique a échoué pour : {paths}', {
+                                  paths: repairErrors.join('; '),
+                                })
+                              : '') +
                             regAdvNote,
                           noLink: true,
                         });
@@ -2550,7 +2676,12 @@ var app = {
                 if (showDialog) {
                   const lines = [];
                   lines.push(
-                    report.mapping ? `Steam AppID: ${report.mapping.steam_appid} (${report.mapping.steam_name})` : 'Steam AppID: not resolved'
+                    report.mapping
+                      ? t('diagnosis-steam-appid', 'Steam AppID: {appid} ({name})', 'Steam AppID : {appid} ({name})', {
+                          appid: report.mapping.steam_appid,
+                          name: report.mapping.steam_name,
+                        })
+                      : t('diagnosis-steam-appid-not-resolved', 'Steam AppID: not resolved', 'Steam AppID : non résolu')
                   );
                   lines.push('');
                   for (const issue of report.issues) lines.push(`[${issue.level}] ${issue.code}: ${issue.message}`);
@@ -2605,7 +2736,6 @@ var app = {
                         schema = await steamParser.getGameData({
                           appID: mapping.steam_appid,
                           lang: app.config?.achievement?.lang || 'english',
-                          key: app.config?.steam?.apiKey,
                           showHidden: true,
                         });
                       } catch (e) {
@@ -2706,10 +2836,21 @@ var app = {
                         }),
                         detail:
                           targetDir +
-                          `\n\nSteam AppID: ${mapping.steam_appid} (${mapping.steam_name})` +
-                          `\nAchKeyPrefix: ${prefixInfo.prefix || '(none)'}` +
-                          (installResult.backedUp > 0 ? `\nExisting dll(s) backed up as *.bak` : '') +
-                          (summary.backupDir ? `\nPrevious config backed up: ${summary.backupDir}` : ''),
+                          '\n\n' +
+                          t('diagnosis-steam-appid', 'Steam AppID: {appid} ({name})', 'Steam AppID : {appid} ({name})', {
+                            appid: mapping.steam_appid,
+                            name: mapping.steam_name,
+                          }) +
+                          '\n' +
+                          t('diagnosis-ach-key-prefix', 'AchKeyPrefix: {prefix}', 'AchKeyPrefix : {prefix}', {
+                            prefix: prefixInfo.prefix || t('diagnosis-none-parenthesized', '(none)', '(aucun)'),
+                          }) +
+                          (installResult.backedUp > 0
+                            ? '\n' + t('diagnosis-dlls-backed-up', 'Existing dll(s) backed up as *.bak', 'Dll(s) existante(s) sauvegardée(s) en .bak')
+                            : '') +
+                          (summary.backupDir
+                            ? '\n' + t('diagnosis-config-backed-up', 'Previous config backed up: {path}', 'Configuration précédente sauvegardée : {path}', { path: summary.backupDir })
+                            : ''),
                         noLink: true,
                       });
 
@@ -3354,7 +3495,8 @@ var app = {
                     remote.dialog.showMessageBox({ type: 'warning', message: t('no-steam-cover-art-for-appid', 'No Steam cover art found for AppID {appid}.', 'Aucune jaquette Steam trouvée pour l\'AppID {appid}.', { appid: alt }) });
                     return;
                   }
-                  coverStore.set(appid, local);
+                  local = coverStore.persist(appid, local, getUserDataPath());
+                  if (!local) throw new Error('downloaded cover could not be persisted');
                   reloadCoverOverrides();
                   applyCoverBackground(appid, local);
                 },
@@ -3371,14 +3513,8 @@ var app = {
                   });
                   if (!files || !files[0]) return;
                   try {
-                    const src = files[0];
-                    const destDir = path.join(getUserDataPath(), 'covers');
-                    fs.mkdirSync(destDir, { recursive: true });
-                    const ext = path.extname(src) || '.png';
-                    const dest = path.join(destDir, `${String(appid).replace(/[^\w.-]/g, '_')}${ext}`);
-                    fs.copyFileSync(src, dest);
-                    const url = pathToFileURL(dest).href;
-                    coverStore.set(appid, url);
+                    const url = coverStore.persist(appid, pathToFileURL(files[0]).href, getUserDataPath());
+                    if (!url) throw new Error('selected image could not be persisted');
                     reloadCoverOverrides();
                     applyCoverBackground(appid, url);
                   } catch (err) {
@@ -3609,6 +3745,11 @@ var app = {
                                     ? `<i class="fas fa-trophy" data-type="${escapeHtml(achievement.type)}"></i> ${escapeHtml(achievement.displayName)}`
                                     : `${escapeHtml(achievement.displayName)}`
                                 }</div>
+                                ${
+                                  achievement.category
+                                    ? `<div class="ach-category">${escapeHtml(achievement.category)}</div>`
+                                    : ''
+                                }
                                 ${descHtml}
                                 <div class="progressBar" data-current="${progress.current}" data-max="${progressMax}" data-percent="${
           progress.percent
@@ -3931,9 +4072,9 @@ var app = {
       }
 
       // On a genuine first run, defer the initial library scan until the onboarding guide is done:
-      // onboarding lets the user set their Steam Web API key (and game folders), and finish()/skip()
-      // trigger the first scan via resetUI()/onStart(). Scanning here too would run a slow, key-less
-      // scrape pass that the onboarding key is meant to avoid — so the first real scan picks up the key.
+      // onboarding lets the user set their profile (and game folders), and finish()/skip()
+      // trigger the first scan via resetUI()/onStart(). Scanning here too would run a duplicate
+      // pass before the user has chosen folders or sources.
       if (app.config.general?.onboardingCompleted === true) {
         app.onStart();
       }

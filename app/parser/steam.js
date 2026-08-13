@@ -21,6 +21,7 @@ const uplayR2 = require(path.join(appPath, 'parser/uplayR2.js'));
 const emuIni = require(path.join(appPath, 'util/emuIni.js'));
 const { userDataDir } = require(path.join(appPath, 'util/userDataPath.js'));
 const { mergeTranslatedAchievements } = require('./achievementTranslations.js');
+const steamSchemaFetch = require(path.join(appPath, 'util/steamSchemaFetch.js'));
 
 let listReady = true;
 let steamUsersList;
@@ -286,6 +287,45 @@ module.exports.forgetUnresolved = (appID) => {
   }
 };
 
+// Merges a fresh fetch into the cached list (matched by apiName): patches blank fields and appends
+// achievements missing from `list`. Mutates in place; never removes an entry, so a short/failed
+// fetch can't delete unlocked history.
+module.exports.reconcileAchievementList = (list, fresh) => {
+  if (!Array.isArray(list) || !Array.isArray(fresh) || fresh.length === 0) return { changed: false, addedCount: 0 };
+  let changed = false;
+  const freshByName = new Map(fresh.filter((a) => a && a.name != null).map((a) => [String(a.name).toUpperCase(), a]));
+  for (const ach of list) {
+    const f = freshByName.get(String(ach.name).toUpperCase());
+    if (!f) continue;
+    if ((!ach.description || String(ach.description).trim() === '') && f.description) {
+      ach.description = f.description;
+      changed = true;
+    }
+    if ((!ach.displayName || String(ach.displayName).trim() === '') && f.displayName) {
+      ach.displayName = f.displayName;
+      changed = true;
+    }
+    if (ach.hidden == null && f.hidden != null) {
+      ach.hidden = f.hidden;
+      changed = true;
+    }
+  }
+  const knownNames = new Set(list.filter((a) => a && a.name != null).map((a) => String(a.name).toUpperCase()));
+  const added = [];
+  for (const achievement of fresh) {
+    if (!achievement || achievement.name == null) continue;
+    const key = String(achievement.name).toUpperCase();
+    if (knownNames.has(key)) continue;
+    knownNames.add(key);
+    added.push(achievement);
+  }
+  if (added.length) {
+    list.push(...added);
+    changed = true;
+  }
+  return { changed, addedCount: added.length };
+};
+
 module.exports.getGameData = async (cfg) => {
   if (!steamLanguages.some((language) => language.api === cfg.lang)) {
     throw 'Unsupported API language code';
@@ -312,11 +352,7 @@ module.exports.getGameData = async (cfg) => {
       let inAppList = false;
       try {
         inAppList = await findInAppList(+cfg.appID);
-        if (cfg.key) {
-          result = await getSteamData(cfg);
-        } else {
-          result = await getSteamDataFromSRV(cfg.appID, cfg.lang);
-        }
+        result = await getSteamDataFromSRV(cfg.appID, cfg.lang);
       } catch (err) {
         // Offline, every one of these lookups throws. This is a re-check of an entry we already
         // have, so a throw must not be able to lose it — otherwise one offline scan drops every
@@ -350,32 +386,17 @@ module.exports.getGameData = async (cfg) => {
       needSaving = true;
     }
 
-    // Repair blank descriptions in stale schemas, then stamp the attempt to avoid repeated fetches.
-    const DESC_RECHECK_MS = 7 * 24 * 60 * 60 * 1000;
-    const triedRecently = result && result.descBackfilledAt && Date.now() - result.descBackfilledAt < DESC_RECHECK_MS;
-    const hasBlankVisibleDesc =
-      result &&
-      result.achievement &&
-      Array.isArray(result.achievement.list) &&
-      result.achievement.list.some((ac) => ac.hidden != 1 && (!ac.description || String(ac.description).trim() === ''));
-    // Hidden descriptions are backfilled regardless of the "show hidden" setting: the detail view now
-    // lets the user reveal any hidden achievement's description in place (click to reveal), so the real
-    // text must be present even when hidden achievements are masked by default.
-    const hasBlankHiddenDesc =
-      result &&
-      result.achievement &&
-      Array.isArray(result.achievement.list) &&
-      result.achievement.list.some((ac) => ac.hidden == 1 && (!ac.description || String(ac.description).trim() === ''));
-    if (!fastStart && cfg.key && (hasBlankVisibleDesc || hasBlankHiddenDesc) && !triedRecently) {
+    // Self-repair: patch blank fields and pick up achievements a game update added (Steam gives no
+    // change notification). Runs every 3 days, or immediately if forced from Settings > Advanced.
+    const DESC_RECHECK_MS = 3 * 24 * 60 * 60 * 1000;
+    const triedRecently = !cfg.forceRecheck && result && result.descBackfilledAt && Date.now() - result.descBackfilledAt < DESC_RECHECK_MS;
+    if ((!fastStart || cfg.forceRecheck) && result && result.achievement && Array.isArray(result.achievement.list) && !triedRecently) {
       try {
         const fresh = await getSchemaAchievements(cfg);
-        const freshByName = new Map(fresh.filter((a) => a && a.name != null).map((a) => [String(a.name).toUpperCase(), a]));
-        for (const ach of result.achievement.list) {
-          const f = freshByName.get(String(ach.name).toUpperCase());
-          if (!f) continue;
-          if ((!ach.description || String(ach.description).trim() === '') && f.description) ach.description = f.description;
-          if ((!ach.displayName || String(ach.displayName).trim() === '') && f.displayName) ach.displayName = f.displayName;
-          if (ach.hidden == null && f.hidden != null) ach.hidden = f.hidden;
+        const { addedCount } = module.exports.reconcileAchievementList(result.achievement.list, fresh);
+        if (addedCount) {
+          result.achievement.total = result.achievement.list.length;
+          debug.log(`[${cfg.appID}] picked up ${addedCount} new achievement(s) from a game update`);
         }
       } catch (err) {
         debug.log(`Could not refresh schema descriptions [${cfg.appID}]: ${err.code ? `${err.code} - ${err.message}` : err}`);
@@ -599,8 +620,6 @@ module.exports.getAchievementsFromAPI = async (cfg) => {
       result = steamOfficial.readLocalUserStats({ statsDir: cfg.path, appid: cfg.appID, accountId: cfg.user.user });
       if (result) {
         debug.log(`[${cfg.appID}] user stats read locally from appcache (${result.filter((r) => r.achieved).length} unlocked)`);
-      } else if (cfg.key) {
-        result = await getSteamUserStats(cfg);
       } else {
         result = await getSteamUserStatsFromSRV(cfg.user.id, cfg.appID);
       }
@@ -777,40 +796,50 @@ async function getSteamUserStatsFromSRV(user, appID) {
   return result;
 }
 
-async function getSteamUserStats(cfg) {
-  const url = `http://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/?appid=${cfg.appID}&key=${cfg.key}&steamid=${cfg.user.id}`;
-
-  try {
-    let result = await request.getJson(url);
-    return result.playerstats.achievements;
-  } catch (err) {
-    throw err;
-  }
-}
-
 async function getSteamDataFromSRV(appID, lang) {
   const langObj = steamLanguages.find((language) => language.api === lang);
   const { ipcRenderer } = require('electron');
-  const result =
-    (await ipcRenderer.invoke('get-steam-data', {
-      appid: appID,
-      type: 'common',
-      lang: langObj,
-    })) || {};
+  // Product info and achievements are independent: fetch them in parallel so the keyless HTTP
+  // chain (official endpoint / SteamHunters JSON) never waits behind the anonymous Steam login.
+  const [resultRaw, steamhunters] = await Promise.all([
+    ipcRenderer.invoke('get-steam-data', { appid: appID, type: 'common', lang: langObj }),
+    ipcRenderer.invoke('get-steam-data', { appid: appID, type: 'steamhunters', lang }),
+  ]);
+  const result = resultRaw || {};
 
-  // The supplemental scrapers can legitimately come back empty (obscure title, scrape failed,
+  // The supplemental fetchers can legitimately come back empty (obscure title, scrape failed,
   // site unreachable). Default to [] instead of dereferencing `.achievements` on the result, or
   // the whole load throws and the game silently vanishes from the list — same failure as #56.
-  const steamhunters = result.isGame ? await ipcRenderer.invoke('get-steam-data', { appid: appID, type: 'steamhunters' }) : null;
-  const achievements = Array.isArray(steamhunters?.achievements) ? steamhunters.achievements : [];
+  let achievements = result.isGame && Array.isArray(steamhunters?.achievements) ? steamhunters.achievements : [];
 
-  const steamcommunity =
-    !result.isGame || lang == 'english' || !result.translated
-      ? null
-      : await ipcRenderer.invoke('get-steam-data', { appid: appID, type: 'steamcommunity', lang: langObj });
+  // SteamCommunity translations are only needed when the primary source is English-only
+  // (SteamHunters JSON or the browser scrape). The official endpoint is already localized.
+  const needsTranslations =
+    result.isGame &&
+    lang !== 'english' &&
+    result.translated &&
+    steamhunters?.source !== 'official' &&
+    steamhunters?.source !== 'steamcommunity';
+  const steamcommunity = needsTranslations
+    ? await ipcRenderer.invoke('get-steam-data', { appid: appID, type: 'steamcommunity', lang: langObj })
+    : null;
   const translatedAchievements = Array.isArray(steamcommunity?.achievements) ? steamcommunity.achievements : [];
 
   mergeTranslatedAchievements(achievements, translatedAchievements);
+
+  // SteamHunters groups tag DLC/update achievements by apiName (e.g. "The Witcher 3: Hearts of
+  // Stone"). Only worth asking when this is a real game with achievements, so non-games and
+  // zero-achievement titles never cost an extra SteamHunters request. Best-effort: untagged
+  // entries are left untouched and a failure never fails the load.
+  let groupsResult = { ok: false, groups: [] };
+  if (result.isGame && achievements.length > 0) {
+    groupsResult = await ipcRenderer
+      .invoke('get-steam-data', { appid: appID, type: 'steamgroups' })
+      .catch(() => ({ ok: false, groups: [] }));
+  }
+  if (Array.isArray(groupsResult.groups) && groupsResult.groups.length) {
+    achievements = steamSchemaFetch.applySteamHuntersGroups(achievements, groupsResult.groups);
+  }
 
   // No library capsule in the product info (common for brand-new appids) — recover the real hashed
   // cover from SteamDB (main process: stealth browser + 30-day disk cache). Only worth it for an
@@ -856,92 +885,40 @@ async function getSteamDataFromSRV(appID, lang) {
 }
 
 // IPlayerService/GetGameAchievements gives real descriptions for hidden achievements too, unlike
-// the legacy ISteamUserStats/GetSchemaForGame (which always blanks them as a spoiler guard, key or
-// no key — the root cause of hidden achievements being permanently stuck on "…", #57). Mapped here
-// to the same {name, defaultvalue, displayName, hidden, description, icon, icongray} shape
+// the legacy ISteamUserStats/GetSchemaForGame (which always blanks them as a spoiler guard). Mapped
+// here to the same {name, defaultvalue, displayName, hidden, description, icon, icongray} shape
 // GetSchemaForGame's achievement list used, so it's a drop-in replacement for every caller below.
 async function getGameAchievementsFromWebAPI(cfg) {
-  const url = `https://api.steampowered.com/IPlayerService/GetGameAchievements/v1/?key=${cfg.key}&appid=${cfg.appID}&language=${cfg.lang}`;
-  const data = await request.getJson(url);
-  const list = data && data.response && data.response.achievements;
-  if (!Array.isArray(list)) return [];
-  return list.map((a) => ({
-    name: a.internal_name,
-    defaultvalue: 0,
-    displayName: a.localized_name,
-    hidden: a.hidden ? 1 : 0,
-    description: a.localized_desc || '',
-    icon: `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${cfg.appID}/${a.icon}`,
-    icongray: `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${cfg.appID}/${a.icon_gray}`,
-  }));
-}
-
-async function getSteamData(cfg) {
-  const schema = { achievements: await getGameAchievementsFromWebAPI(cfg) };
-  // A game with zero achievements (e.g. UNDERTALE, appid 391540) is still a real, installed game
-  // worth listing — don't throw it away here (that silently dropped such games when a Web API key was
-  // set). Return it with an empty achievement list, mirroring getSteamDataFromSRV; makeList() decides
-  // whether a 0-achievement game is shown (installed) or skipped (phantom).
-
-  const store = await getDataFromSteamStore(+cfg.appID);
-  let portrait_options = [
-    `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${cfg.appID}/portrait.png`,
-    `https://cdn.cloudflare.steamstatic.com/steam/apps/${cfg.appID}/library_600x900.jpg`,
-  ];
-  if (store.portrait) portrait_options.push(store.portrait);
-  portrait_options.push(null);
-
-  const result = {
-    name: store.name || (await findInAppList(+cfg.appID)),
-    appid: cfg.appID,
-    binary: null,
-    img: {
-      header: `https://cdn.akamai.steamstatic.com/steam/apps/${cfg.appID}/header.jpg`,
-      background: `https://cdn.akamai.steamstatic.com/steam/apps/${cfg.appID}/page_bg_generated_v6b.jpg`,
-      portrait: `https://cdn.akamai.steamstatic.com/steam/apps/${cfg.appID}/library_600x900.jpg`,
-      icon: store.icon ? `https://cdn.akamai.steamstatic.com/steamcommunity/public/images/apps/${cfg.appID}/${store.icon}.jpg` : null,
-    },
-    achievement: {
-      total: schema.achievements.length,
-      list: schema.achievements,
-    },
-  };
-
   try {
-    if ((await fetchIcon(result.img.header, result.appid)) === result.img.header) {
-      result.img.header = store.header;
-    }
-    if ((await fetchIcon(result.img.background, result.appid)) === result.img.background) {
-      result.img.background = store.background;
-    }
-    while (portrait_options.length > 0) {
-      if ((await fetchIcon(result.img.portrait, result.appid)) !== result.img.portrait) {
-        break;
-      }
-      result.img.portrait = portrait_options.shift();
-    }
-    // Every guessable portrait URL 404'd — for modern titles the real capsule lives under a hashed
-    // store_item_assets path we cannot derive. Ask SteamDB for the actual asset link (main process:
-    // it needs the stealth browser; result is disk-cached for 30 days).
-    if (!result.img.portrait) {
-      const { ipcRenderer } = require('electron');
-      const steamdbPortrait = await ipcRenderer.invoke('get-steamdb-cover', result.appid).catch(() => null);
-      if (steamdbPortrait) result.img.portrait = steamdbPortrait;
-      else {
-        const sgdbPortrait = await ipcRenderer.invoke('get-steamgriddb-cover', result.name).catch(() => null);
-        if (sgdbPortrait) result.img.portrait = sgdbPortrait;
-      }
-    }
+    const url = `https://api.steampowered.com/IPlayerService/GetGameAchievements/v1/?appid=${cfg.appID}&language=${cfg.lang}`;
+    const data = await request.getJson(url);
+    return steamSchemaFetch.mapOfficialAchievements(data && data.response, cfg.appID);
   } catch (err) {
-    debug.log(err);
+    debug.log(`[${cfg.appID}] keyless GetGameAchievements failed (${err.code || err.message || err})`);
+    return []; // keep the game visible; the local-schema backfill can still fill the list
   }
-  return result;
 }
 
 // Lean, schema-only fetch: just the authoritative achievement list (no Steam store page, no icon
-// downloads). Used to backfill blank descriptions/displayNames into a schema that was cached during
-// the keyless/scrape era, without paying for the full getSteamData() round-trip.
+// downloads). Used to backfill blank descriptions/displayNames into a stale cached schema without
+// paying for the full getSteamDataFromSRV() round-trip.
 async function getSchemaAchievements(cfg) {
+  // In the renderer, reuse the main process's complete official -> SteamHunters ->
+  // SteamCommunity -> browser chain. Plain-Node tests have no ipcRenderer and keep the direct,
+  // browser-free endpoint below.
+  try {
+    const { ipcRenderer } = require('electron');
+    if (ipcRenderer && typeof ipcRenderer.invoke === 'function') {
+      const result = await ipcRenderer.invoke('get-steam-data', {
+        appid: cfg.appID,
+        type: 'steamhunters',
+        lang: cfg.lang,
+      });
+      return result && Array.isArray(result.achievements) ? result.achievements : [];
+    }
+  } catch {
+    /* Standalone tests use the direct request below. */
+  }
   return getGameAchievementsFromWebAPI(cfg);
 }
 
@@ -1531,13 +1508,13 @@ async function GetMissingData(data, showHidden, lang, steamSettings) {
         data.img.icon = data.img.icon || updatedImgs.icon;
       }
     }
-    // Backfill blank descriptions once per week; key-based schemas already include hidden text.
-    const DESC_RECHECK_MS = 7 * 24 * 60 * 60 * 1000;
+    // Backfill blank descriptions every 3 days; key-based schemas already include hidden text.
+    const DESC_RECHECK_MS = 3 * 24 * 60 * 60 * 1000;
     const triedRecently = data.descBackfilledAt && Date.now() - data.descBackfilledAt < DESC_RECHECK_MS;
     const hasBlankVisible = data.achievement.list.some((ac) => ac.hidden != 1 && (!ac.description || String(ac.description).trim() === ''));
     const hasBlankHidden = data.achievement.list.some((ac) => ac.hidden == 1 && (!ac.description || String(ac.description).trim() === ''));
     if (!triedRecently && (hasBlankVisible || hasBlankHidden)) {
-      updatedDesc = await ipcRenderer.invoke('get-steam-data', { appid: data.appid, type: 'steamhunters' });
+      updatedDesc = await ipcRenderer.invoke('get-steam-data', { appid: data.appid, type: 'steamhunters', lang });
       // For obscure titles the supplemental lookup can return nothing, leaving `achievements`
       // undefined. Guard against it so a missing response never throws and drops the game (#56).
       const supplemental = updatedDesc && Array.isArray(updatedDesc.achievements) ? updatedDesc.achievements : [];
@@ -1562,7 +1539,7 @@ async function GetMissingData(data, showHidden, lang, steamSettings) {
       // serves the schema's own language, so a localized schema gets localized text. Matching is by
       // displayName only (localized title first, english title second) — never by list position, so
       // a miss can't attach another achievement's description. Runs inside the same weekly
-      // descBackfilledAt stamp as the SteamHunters attempt, so it adds no recurring cost.
+      // three-day descBackfilledAt stamp as the SteamHunters attempt, so it adds no recurring cost.
       const stillBlank = data.achievement.list.some((ac) => !ac.description || String(ac.description).trim() === '');
       if (stillBlank && data.name) {
         try {

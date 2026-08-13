@@ -357,7 +357,6 @@ async function getGameData(appid, lang, option = {}) {
       game = await steam.getGameData({
         appID: steamAppId,
         lang,
-        key: option && option.steam ? option.steam.apiKey : undefined,
       });
     } catch (err) {
       debug.log(`[socialclub] could not load Steam schema for ${gameName} (${steamAppId}) => ${err}`);

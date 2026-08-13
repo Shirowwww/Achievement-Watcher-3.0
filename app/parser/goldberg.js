@@ -852,8 +852,8 @@ async function repair({
 
 // Read the on-disk GBE/Goldberg SCHEMA (steam_settings/achievements.json — the array of
 // {name, displayName, description, hidden, icon, icongray}). This is a fully offline source of
-// achievement names and descriptions: useful to fill blanks when there's no Steam Web API key and no
-// internet. Returns [] if the file is absent, unreadable, or not a JSON array.
+// achievement names and descriptions: useful to fill blanks when there's no internet. Returns [] if
+// the file is absent, unreadable, or not a JSON array.
 function readLocalSchema(steamSettings) {
   if (!steamSettings) return [];
   try {
