@@ -97,3 +97,17 @@ test('malformed required sections are repaired individually without dropping ext
   assert.equal(Array.isArray(persisted.notification_transport), false);
   assert.equal(persisted.custom_extension.keep, 'untouched');
 });
+
+test('the removed Steam API key is erased during settings migration', async (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-keyless-settings-'));
+  const file = path.join(dir, 'options.ini');
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+
+  fs.writeFileSync(file, '[achievement]\nlang = english\n\n[steam]\nmain = 0\napiKey = legacy-secret\n', 'utf8');
+  const loaded = await settings.load(file);
+  const persisted = ini.parse(fs.readFileSync(file, 'utf8'));
+
+  assert.equal(Object.hasOwn(loaded.steam, 'apiKey'), false);
+  assert.equal(Object.hasOwn(persisted.steam, 'apiKey'), false);
+  assert.equal(persisted.steam.main, '0');
+});

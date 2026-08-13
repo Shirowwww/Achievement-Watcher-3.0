@@ -1,0 +1,35 @@
+'use strict';
+
+const assert = require('assert');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const test = require('node:test');
+const Logger = require('../../app/util/logger');
+
+test('the app logger redacts legacy settings dumps while retaining other diagnostics', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-app-log-privacy-'));
+  const file = path.join(dir, 'renderer.log');
+  try {
+    const source = [
+      '[2026-08-13T08:00:00.001Z INFO] Before',
+      "[2026-08-13T08:00:00.002Z] [Object: null prototype] { steam: { apiKey: 'legacy-secret' },",
+      "  emulator: { loginPassword: 'encrypted-password' }, account: 'identifier' }",
+      '[2026-08-13T08:00:00.003Z INFO] After',
+      '',
+    ].join('\n');
+    fs.writeFileSync(file, source);
+    const originalSize = fs.statSync(file).size;
+
+    assert.strictEqual(Logger.redactLegacySettingsDumps(file), 1);
+    const redacted = fs.readFileSync(file, 'utf8');
+    assert.strictEqual(fs.statSync(file).size, originalSize);
+    assert.doesNotMatch(redacted, /legacy-secret|encrypted-password|identifier|loginPassword|apiKey/);
+    assert.match(redacted, /legacy settings dump redacted/);
+    assert.match(redacted, /Before/);
+    assert.match(redacted, /After/);
+    assert.strictEqual(Logger.redactLegacySettingsDumps(file), 0);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
