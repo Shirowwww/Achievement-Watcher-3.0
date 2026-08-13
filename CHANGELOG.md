@@ -5,6 +5,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+## 3.8.5 - 2026-08-13
+
 ### Added
 
 - The built-in theme set now includes Catppuccin Mocha, Rosé Pine, Synthwave '84,

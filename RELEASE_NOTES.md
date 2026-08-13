@@ -1,34 +1,41 @@
-# Achievement Watcher 3.8.4
+# Achievement Watcher 3.8.5
 
-A patch release: "Recently played" sorting works again, reloading the library no longer flashes a
-single fast-loading game before the rest arrive, the notification overlay sits closer to the screen
-edge, the automatic emulator fix leaves uninstalled games alone, and RLD!/CreamAPI save roots are
-watched out of the box.
+A feature release: full gamepad control for the app and overlay, layer-based themes with ten new
+palettes, playtime tracking for non-Steam games, faster library scans, and a batch of controller,
+detection and appearance fixes.
 
 ## Highlights
 
-- **"Recently played" sorting is fixed.** The Watchdog crashed while saving playtime to the
-  registry - after writing total time, but before writing the last-played timestamp - and was
-  silently restarted. Games played since 3.8.3 had no last-played date, so they sorted to the
-  bottom. Playtime now uses the stable registry path and the sort is correct again.
-- **Library reloads are smoother.** Skeleton tiles fill the grid while games stream in, instead of
-  one fast-loading game sitting alone for a few seconds, the folder scan that resolves installs by
-  name now runs once per reload instead of once per game, and the shimmer stays fluid on every
-  theme.
-- **Notification overlay hugs the edge.** The popup's default margin is halved (12 px to 6 px) for
-  every corner, edge and centered position.
-- **More emulator saves are watched automatically.** RLD! roots in Public Documents and AppData
-  plus the AppData CreamAPI root are detected out of the box, and user-added folders are classified
-  by file signature so GOG `.info` and UniverseLAN installs keep their dedicated watchers.
-- **Uninstalled games are left alone.** The automatic emulator fix no longer applies to a folder
-  that no longer contains a real game executable, so a background repair cannot recreate an
-  uninstalled game's folder or announce a misleading "ready" notification.
+- **Control the whole app with a controller.** Beyond the overlay, a gamepad can now navigate the
+  library, game details, settings and searches. Controller settings moved to their own tab with a
+  button-layout selector (Auto/Xbox/PlayStation/Switch), fully configurable bindings, and a
+  **Focus overlay when it opens** option for games that pause on focus loss. Settings can also send
+  Escape to the game when opening the overlay with a controller, so many games pause automatically.
+- **New layer-based theme system.** Ten new built-in themes - Catppuccin Mocha, Rosé Pine,
+  Synthwave '84, Everforest, Cyberpunk, Ember, Ocean, Hacker, Burgundy and Champagne - replace the
+  earlier Solarized/One Dark/Monokai set, and the theme picker gained a dropdown alongside the
+  arrow controls.
+- **Non-Steam playtime.** Ubisoft Connect, Uplay R2, Epic, GOG, EA, Xbox PC and standalone installs
+  now show tracked playtime and last-played date on the achievements page, matching Steam games.
+- **Faster, smoother library.** The overlay window stays hidden and reused for five minutes so
+  reopening it is near-instant; the first scan of a session serves cached data immediately; off-screen
+  tiles skip image decoding; skeleton shimmer is GPU-composited; and locating an emulator's local
+  achievement schema no longer walks the whole game install on every scan.
+- **Stale "installed" state fixed.** A Steam game left "installed" after being uninstalled (a stale
+  registry flag, or a folder-name substring match) is now cross-checked against Steam's own library
+  manifests, and Source-engine SDK tools are no longer mistaken for the game's real executable.
+- **Controller-binding fixes.** The default overlay combo is now Back + Start + LB (harder to trigger
+  by accident), the overlay-control and move/scroll combos no longer conflict when held together, a
+  duplicated button in a custom binding is now rejected consistently, and DualShock 4 stick correction
+  now applies on the XInput backend too.
+- **Security:** the Epic account login no longer injects the redirect URL into an
+  `executeJavaScript` script body, closing a CodeQL "improper code sanitization" finding.
 
 ## Install
 
-Download `Achievement.Watcher.Setup.3.8.4.exe` from the
-[v3.8.4 release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/tag/v3.8.4).
+Download `Achievement.Watcher.Setup.3.8.5.exe` from the
+[v3.8.5 release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/tag/v3.8.5).
 
 The `.blockmap` and `latest.yml` assets are used by automatic updates. Upgrading preserves data.
 
-See the [changelog](CHANGELOG.md#384---2026-08-11) for the full list of changes.
+See the [changelog](CHANGELOG.md#385---2026-08-13) for the full list of changes.
