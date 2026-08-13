@@ -969,6 +969,7 @@
     "link-not-opened": "Ten odnośnik nie został otwarty, ponieważ nie jest adresem internetowym.",
     "update-unavailable-dev": "Niedostępne w wersji deweloperskiej",
     "update-check-failed": "Sprawdzanie nie powiodło się",
+    "update-download-in-progress": "Pobieranie już trwa…",
     "update-available-short": "Dostępna aktualizacja",
     "update-up-to-date-short": "Aktualne",
     "update-checked": "Sprawdzono",

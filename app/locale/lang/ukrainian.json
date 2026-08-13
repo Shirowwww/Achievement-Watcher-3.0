@@ -969,6 +969,7 @@
     "link-not-opened": "Це посилання не було відкрито, оскільки це не веб-адреса.",
     "update-unavailable-dev": "Недоступно в розробницькій збірці",
     "update-check-failed": "Помилка перевірки",
+    "update-download-in-progress": "Завантаження вже триває…",
     "update-available-short": "Доступне оновлення",
     "update-up-to-date-short": "Актуальна версія",
     "update-checked": "Перевірено",

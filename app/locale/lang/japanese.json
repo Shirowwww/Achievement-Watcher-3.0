@@ -969,6 +969,7 @@
     "link-not-opened": "このリンクはウェブアドレスではないため、開かれませんでした。",
     "update-unavailable-dev": "開発版では利用できません",
     "update-check-failed": "確認に失敗しました",
+    "update-download-in-progress": "ダウンロード中です…",
     "update-available-short": "更新があります",
     "update-up-to-date-short": "最新版です",
     "update-checked": "確認済み",

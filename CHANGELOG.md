@@ -128,6 +128,13 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   auto-set to a bundled SDK/dev tool (e.g. `elementviewer.exe`) instead of the real game
   binary, because those tools sit next to the emulator DLL and can be larger than the actual
   launcher exe. The known Source SDK tool names are now excluded from executable detection.
+- Clicking "Check for updates" again while an accepted update was still downloading called
+  `checkForUpdates()` a second time mid-download, re-firing the "update available" prompt and
+  stacking a second `downloadUpdate()` on top of the running one - which is what corrupted the
+  download. The check is now refused with an "Already downloading…" status while a download is
+  in progress. The download itself was also silent for minutes at a time (the taskbar progress
+  bar needs a visible window, which the resident tray daemon usually doesn't have): the
+  Settings and footer update-status labels now show live "downloading update NN%" text instead.
 
 ### Performance
 

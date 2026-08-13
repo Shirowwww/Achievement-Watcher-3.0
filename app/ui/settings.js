@@ -516,7 +516,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           const msg =
             result && result.error === 'dev-build'
               ? t('update-unavailable-dev', 'Unavailable in dev build', 'Indisponible en version dev')
-              : t('update-check-failed', 'Check failed', 'Échec de la vérification');
+              : result && result.error === 'download-in-progress'
+                ? t('update-download-in-progress', 'Already downloading…', 'Téléchargement déjà en cours…')
+                : t('update-check-failed', 'Check failed', 'Échec de la vérification');
           label.removeClass('update-info').addClass('update-error').text(msg);
         } else if (result.status === 'available') {
           label.removeClass('update-info').addClass('update-ok').text(t('update-available-short', 'Update available', 'Mise à jour disponible'));
@@ -541,6 +543,12 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     });
     $('#footer-check-updates').click(function () {
       runUpdateCheck($(this), $('#footer-update-status'));
+    });
+    // The download runs in the background regardless of which button (if any) started it, so both
+    // status labels track it live — this is the only in-app feedback while it's in progress.
+    ipcRenderer.on('update-download-progress', (event, percent) => {
+      const text = t('downloading-update', 'downloading update {percent}%', 'téléchargement de la mise à jour {percent} %', { percent: Math.round(percent) });
+      $('#check-for-updates-label, #footer-update-status').removeClass('update-ok update-error').addClass('update-info').text(text);
     });
 
     // Scan a library folder for Goldberg/GBE installs and report which ones are missing their schema.

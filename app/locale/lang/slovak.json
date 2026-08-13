@@ -969,6 +969,7 @@
     "link-not-opened": "Tento odkaz nebol otvorený, pretože nejde o webovú adresu.",
     "update-unavailable-dev": "Nedostupné v testovacej verzii",
     "update-check-failed": "Kontrola zlyhala",
+    "update-download-in-progress": "Už sa sťahuje…",
     "update-available-short": "Aktualizácia je k dispozícii",
     "update-up-to-date-short": "Aktuálne",
     "update-checked": "Skontrolované",

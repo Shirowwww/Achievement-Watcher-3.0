@@ -969,6 +969,7 @@
     "link-not-opened": "Эта ссылка не была открыта, так как это не веб-адрес.",
     "update-unavailable-dev": "Недоступно в тестовой сборке",
     "update-check-failed": "Ошибка проверки",
+    "update-download-in-progress": "Загрузка уже выполняется…",
     "update-available-short": "Доступно обновление",
     "update-up-to-date-short": "Актуальная версия",
     "update-checked": "Проверено",

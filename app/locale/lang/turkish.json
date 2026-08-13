@@ -969,6 +969,7 @@
     "link-not-opened": "Bu bağlantı bir web adresi olmadığı için açılmadı.",
     "update-unavailable-dev": "Geliştirici sürümünde kullanılamaz",
     "update-check-failed": "Kontrol başarısız oldu",
+    "update-download-in-progress": "Zaten indiriliyor…",
     "update-available-short": "Güncelleme mevcut",
     "update-up-to-date-short": "Güncel",
     "update-checked": "Kontrol edildi",

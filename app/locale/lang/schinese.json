@@ -969,6 +969,7 @@
     "link-not-opened": "此链接不是网址，因此未被打开。",
     "update-unavailable-dev": "开发版中不可用",
     "update-check-failed": "检查失败",
+    "update-download-in-progress": "正在下载中…",
     "update-available-short": "有可用更新",
     "update-up-to-date-short": "已是最新",
     "update-checked": "已检查",

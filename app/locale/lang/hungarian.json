@@ -969,6 +969,7 @@
     "link-not-opened": "Ez a hivatkozás nem nyílt meg, mert nem webcím.",
     "update-unavailable-dev": "Fejlesztői verzióban nem elérhető",
     "update-check-failed": "Az ellenőrzés sikertelen",
+    "update-download-in-progress": "Már letöltés alatt…",
     "update-available-short": "Frissítés elérhető",
     "update-up-to-date-short": "Naprakész",
     "update-checked": "Ellenőrizve",

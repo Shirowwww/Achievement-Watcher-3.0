@@ -43,6 +43,7 @@ let updatePromptOpen = false;
 let updaterErrorNotified = false;
 let manualUpdateCheckPending = false; // Settings requested a check.
 let manualUpdateResult = null; // 'available' | 'uptodate' | 'error'
+let updateDownloading = false; // true from the accepted "Download && Install" until it lands or fails
 const UPDATE_RECHECK_MS = 60 * 60 * 1000; // silent hourly re-check while the app stays resident
 const UPDATE_RETRY_MS = 30 * 60 * 1000; // slower retry after a failed check
 // Number of games currently reported by the monitor.
@@ -124,6 +125,7 @@ function clearUpdateDownloadProgress() {
 function notifyUpdateError(message) {
   debug.log(`[updater] ${message}`);
   clearUpdateDownloadProgress();
+  updateDownloading = false;
   manualUpdateResult = 'error';
   manualUpdateCheckPending = false;
   if (!updaterErrorNotified && tray) {
@@ -958,6 +960,10 @@ ipcMain.handle('get-achievements', async (event, appid) => {
 ipcMain.handle('check-for-updates', async () => {
   if (!app.isPackaged) return { ok: false, error: 'dev-build' };
   if (updatePromptOpen) return { ok: false, error: 'prompt-open' };
+  // A download is already running from an earlier "Download && Install": calling checkForUpdates()
+  // again while electron-updater is mid-download re-fires update-available and stacks a second
+  // downloadUpdate() on top of it, which is what corrupted the in-progress download.
+  if (updateDownloading) return { ok: false, error: 'download-in-progress' };
   manualUpdateCheckPending = true;
   manualUpdateResult = null;
   updaterErrorNotified = false; // let a still-failing check re-notify even if it already did once
@@ -3799,6 +3805,7 @@ try {
       });
       if (response === 0) {
         debug.log(`[updater] user accepted download of ${info.version}`);
+        updateDownloading = true;
         autoUpdater.downloadUpdate().catch((err) => notifyUpdateError(`download failed: ${err.message || err}`));
       } else if (response === 2) {
         configJS.general.skippedVersion = info.version;
@@ -3832,6 +3839,9 @@ try {
   autoUpdater.on('download-progress', (progress) => {
     const percent = Math.max(0, Math.min(100, Number(progress && progress.percent) || 0));
     setUpdateDownloadProgress(percent / 100);
+    try {
+      if (MainWin && !MainWin.isDestroyed()) MainWin.webContents.send('update-download-progress', percent);
+    } catch {}
     // One line per 10% rather than per chunk, so the log stays readable.
     const step = Math.floor(percent / 10);
     if (step !== updateProgressLogged) {
@@ -3842,6 +3852,7 @@ try {
   });
   autoUpdater.on('error', (err) => notifyUpdateError(err && err.message ? err.message : String(err)));
   autoUpdater.on('update-downloaded', (info) => {
+    updateDownloading = false;
     clearUpdateDownloadProgress();
     promptDownloadedUpdate(info);
   });

@@ -969,6 +969,7 @@
     "link-not-opened": "ลิงก์นี้ไม่ถูกเปิด เนื่องจากไม่ใช่ที่อยู่เว็บ",
     "update-unavailable-dev": "ไม่พร้อมใช้งานในเวอร์ชันพัฒนา",
     "update-check-failed": "การตรวจสอบล้มเหลว",
+    "update-download-in-progress": "กำลังดาวน์โหลดอยู่แล้ว…",
     "update-available-short": "มีการอัปเดต",
     "update-up-to-date-short": "เป็นเวอร์ชันล่าสุด",
     "update-checked": "ตรวจสอบแล้ว",
