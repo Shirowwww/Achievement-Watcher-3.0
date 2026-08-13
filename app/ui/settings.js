@@ -10,6 +10,7 @@ const appPath = remote.app.getAppPath();
 const { escapeHtml } = require(path.join(appPath, 'util/escapeHtml.js'));
 const userThemes = require(path.join(appPath, 'util/userThemes.js'));
 const themeLayers = require(path.join(appPath, 'util/themeLayers.js'));
+const DEFAULT_THEME_COLOR = themeLayers.BUILTIN_COLORS.default.bg;
 const scanScopeTools = require(path.join(appPath, 'parser/scanScope.js'));
 const { t } = require(path.join(appPath, 'locale/t.js'));
 let listeningHotkey = false;
@@ -91,6 +92,36 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
 (function ($, window, document) {
   $(function () {
+    const transientStatusTimers = new WeakMap();
+
+    // Action feedback should be long enough to read, but it must not become permanent UI. Starting
+    // a new action cancels both phases of the previous timeout so an older callback cannot erase the
+    // newer message.
+    function setTransientStatus(result, message, options = {}) {
+      const node = result && result[0];
+      if (!node) return;
+
+      const previousTimer = transientStatusTimers.get(node);
+      if (previousTimer) clearTimeout(previousTimer);
+
+      result.removeClass('is-hiding').text(message || '').attr('aria-hidden', message ? 'false' : 'true');
+      if (!message || options.sticky) {
+        transientStatusTimers.delete(node);
+        return;
+      }
+
+      const visibleFor = Number.isFinite(options.duration) ? options.duration : 4500;
+      const fadeTimer = setTimeout(() => {
+        result.addClass('is-hiding');
+        const clearTimer = setTimeout(() => {
+          result.text('').removeClass('is-hiding').attr('aria-hidden', 'true');
+          transientStatusTimers.delete(node);
+        }, 180);
+        transientStatusTimers.set(node, clearTimer);
+      }, visibleFor);
+      transientStatusTimers.set(node, fadeTimer);
+    }
+
     function forceShowOnboardingDom() {
       $('#settings .box').hide();
       $('#settings').hide();
@@ -163,6 +194,17 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#options-emulator2 select').each(function () {
         $(this).closest('li').toggleClass('is-on', $(this).val() === 'true').toggleClass('is-off', $(this).val() === 'false');
       });
+    }
+
+    // Re-render the Help tab's live values after a user change (never during form population).
+    function refreshHelpPreview() {
+      if (!settingsReady || !$('#settings').is(':visible')) return;
+      if (!window.AchievementHelp || typeof window.AchievementHelp.render !== 'function') return;
+      try {
+        window.AchievementHelp.render($);
+      } catch (err) {
+        debug.log(`help preview refresh failed: ${err}`);
+      }
     }
 
     function splitControllerBinding(value) {
@@ -255,8 +297,13 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#settings .box section.content').removeClass('active');
       $("#settings .box section.content[data-view='general']").addClass('active');
       $('#game-config').hide();
-      $('#settings').show();
-      $('#settings .box').fadeIn();
+      const settingsModal = $('#settings');
+      const settingsBox = $('#settings .box');
+      settingsModal.removeClass('is-opening').show();
+      settingsBox.stop(true, true).show();
+      // Restart the compositor-only entrance animation when Settings is reopened.
+      void settingsModal[0].offsetWidth;
+      settingsModal.addClass('is-opening');
       // Reopening starts from the full list, not from whatever was typed last time.
       if (typeof window.resetSettingsSearch === 'function') window.resetSettingsSearch();
       // Idempotent: sections already wired keep their key and are skipped.
@@ -286,6 +333,13 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#option_controllerSendEscape').val(String(app.config.controller.sendEscapeOnControllerOpen === true)).change();
       $('#option_controllerLayout').off('.controllerBindings').on('change.controllerBindings', populateControllerBindingOptions);
       populateThemeSelect();
+      if (window.AchievementHelp && typeof window.AchievementHelp.render === 'function') {
+        try {
+          window.AchievementHelp.render($);
+        } catch (err) {
+          debug.log(`help render on open failed: ${err}`);
+        }
+      }
       // The saved startup preference is authoritative; repair a mismatched login item.
       const startupPreference = app.config.general.startWithWindows !== false;
       ipcRenderer
@@ -308,7 +362,6 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           $(`#option_${option}`).val(app.config.emulator[option].toString()).change();
         }
       }
-      $('#option_mode').val('regular');
       if (app.config.emulator) {
         $('#emulator-login-user').val(app.config.emulator.loginAccountName || '');
         $('#emulator-login-pass').val(app.config.emulator.loginPassword || '');
@@ -389,11 +442,6 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         })
         .catch(() => {});
 
-      if (app.config.steam) {
-        if (app.config.steam.apiKey) {
-          $('#steamwebapikey').val(app.config.steam.apiKey);
-        }
-      }
       populateLegitUsers(app.config.steam.main || '0');
 
       $('#settings #dirlist').empty();
@@ -425,18 +473,11 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           debug.log(err);
         });
 
-      // Populate the Debug tab's read-only diagnostics (versions + API-key status). Wrapped so a
-      // failure here can never block the settings form from opening.
+      // Populate the Debug tab's read-only diagnostics (versions). Wrapped so a failure here can
+      // never block the settings form from opening.
       try {
         $('#diag-versions').text(
-          `App ${remote.app.getVersion()} · Electron ${process.versions.electron} · Node ${process.versions.node} · Chrome ${process.versions.chrome}`
-        );
-        const hasKey = !!(app.config && app.config.steam && app.config.steam.apiKey);
-        const apikeyEl = $('#diag-apikey');
-        apikeyEl.find('span').last().text(
-          hasKey
-            ? apikeyEl.attr('data-configured') || ''
-            : apikeyEl.attr('data-fallback') || ''
+          `${t('version-app', 'App', 'Application')} ${remote.app.getVersion()} · Electron ${process.versions.electron} · Node ${process.versions.node} · Chrome ${process.versions.chrome}`
         );
       } catch (err) {
         debug.log(err);
@@ -447,6 +488,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       // persisting stale/empty values before the dropdowns have loaded.
       Promise.all([presetsReady, soundsReady]).then(() => {
         settingsReady = true;
+        refreshHelpPreview();
       });
     });
 
@@ -469,6 +511,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       }, 250);
       if (keysDown.size === 0) {
         listeningHotkey = false;
+        refreshHelpPreview();
       }
     });
 
@@ -549,6 +592,87 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     ipcRenderer.on('update-download-progress', (event, percent) => {
       const text = t('downloading-update', 'downloading update {percent}%', 'téléchargement de la mise à jour {percent} %', { percent: Math.round(percent) });
       $('#check-for-updates-label, #footer-update-status').removeClass('update-ok update-error').addClass('update-info').text(text);
+    });
+
+    // Settings > Advanced: clears every disposable cache the app knows about (updater cache +
+    // Steam/Ubisoft schema, icon and downloaded emulator-tool caches — see
+    // util/clearableCaches.js for the exact, individually-verified allowlist). Never touches game
+    // data, settings, backups, presets, theme images, logs, or the user-seeded Uplay R2 loader cache.
+    $('#clear-update-cache').click(async function () {
+      const btn = $(this);
+      const result = $('#clear-update-cache-result');
+      if (btn.hasClass('busy')) return;
+      const confirm = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
+        type: 'question',
+        buttons: [t('clear-cache', 'Clear caches', 'Vider les caches'), t('cancel', 'Cancel', 'Annuler')],
+        defaultId: 0,
+        cancelId: 1,
+        noLink: true,
+        title: t('clear-update-cache-label', 'Clear caches', 'Vider les caches'),
+        message: t(
+          'clear-update-cache-confirm',
+          'Delete every re-downloadable cache (update files, Steam/Ubisoft schema & icon cache, downloaded emulator-fix tools)? Your settings, saves, backups and manually placed files are never touched — everything cleared here is simply re-fetched or re-downloaded automatically when needed.',
+          'Supprimer tous les caches retéléchargeables (fichiers de mise à jour, cache des schémas et icônes Steam/Ubisoft, outils de correction d’émulateur téléchargés) ? Vos réglages, sauvegardes, backups et fichiers placés manuellement ne sont jamais touchés — tout ce qui est vidé ici est simplement retéléchargé automatiquement en cas de besoin.'
+        ),
+      });
+      if (confirm.response !== 0) return;
+      btn.addClass('busy').css('pointer-events', 'none');
+      setTransientStatus(result, '');
+      try {
+        const res = await ipcRenderer.invoke('clear-update-cache');
+        const appCacheCount = (res && Array.isArray(res.clearedCaches) && res.clearedCaches.length) || 0;
+        if (!res || !res.ok) {
+          setTransientStatus(
+            result,
+            res && res.error === 'download-in-progress'
+              ? t('update-download-in-progress', 'Already downloading…', 'Téléchargement déjà en cours…')
+              : t('clear-update-cache-failed', 'Could not clear the update cache.', 'Impossible de vider le cache de mise à jour.'),
+            { duration: 6500 }
+          );
+        } else if (!res.updateCleared && appCacheCount === 0) {
+          setTransientStatus(result, t('clear-update-cache-empty', 'Nothing to clear — no cached update files found.', 'Rien à vider — aucun fichier de mise à jour en cache.'));
+        } else if (res.updateCleared && appCacheCount > 0) {
+          setTransientStatus(
+            result,
+            t(
+              'clear-update-cache-done-all',
+              'Cleared {count} cache folder(s), including the update cache in {folder}.',
+              'Vidé {count} dossier(s) de cache, y compris le cache de mise à jour dans {folder}.',
+              { count: appCacheCount + 1, folder: res.updateFolder }
+            )
+          );
+        } else if (res.updateCleared) {
+          setTransientStatus(result, t('clear-update-cache-done', 'Update cache cleared: {folder}', 'Cache de mise à jour vidé : {folder}', { folder: res.updateFolder }));
+        } else {
+          setTransientStatus(result, t('clear-update-cache-done-apps', 'Cleared {count} cache folder(s).', 'Vidé {count} dossier(s) de cache.', { count: appCacheCount }));
+        }
+      } catch (err) {
+        debug.log(err);
+        setTransientStatus(result, t('clear-update-cache-failed', 'Could not clear the update cache.', 'Impossible de vider le cache de mise à jour.'), { duration: 6500 });
+      } finally {
+        btn.removeClass('busy').css('pointer-events', 'initial');
+      }
+    });
+
+    // Settings > Advanced: forces the achievement self-repair (normally every 3 days) to run right
+    // now for the whole library, via a normal rescan with the cooldown bypassed.
+    $('#force-achievement-recheck').click(async function () {
+      const btn = $(this);
+      const result = $('#force-achievement-recheck-result');
+      if (btn.hasClass('busy')) return;
+      btn.addClass('busy').css('pointer-events', 'none');
+      setTransientStatus(result, t('force-recheck-started', 'Checking for new achievements…', 'Recherche de nouveaux succès…'), { sticky: true });
+      try {
+        await app.onStart({ forceAchievementRecheck: true });
+        setTransientStatus(result, t('force-recheck-done', 'Check complete.', 'Vérification terminée.'));
+      } catch (err) {
+        debug.log(err);
+        setTransientStatus(result, t('force-recheck-failed', 'Check failed: {error}', 'Échec de la vérification : {error}', { error: err && err.message ? err.message : err }), {
+          duration: 6500,
+        });
+      } finally {
+        btn.removeClass('busy').css('pointer-events', 'initial');
+      }
     });
 
     // Scan a library folder for Goldberg/GBE installs and report which ones are missing their schema.
@@ -748,16 +872,6 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
             debug.log('error while reading notification transport settings ui');
           }
         });
-
-      let steamApiKey = $('#steamwebapikey').val().trim();
-      if (steamApiKey.length > 0) {
-        app.config.steam = { apiKey: steamApiKey };
-      } else {
-        // Empty field -> explicit clear. Use '' (not delete) so settings.save() can tell an
-        // intentional removal apart from a partial save that simply omits the key.
-        if (!app.config.steam) app.config.steam = {};
-        app.config.steam.apiKey = '';
-      }
 
       app.config.steam.main = $('#options-mainSteam .right select').val();
 
@@ -1190,15 +1304,15 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const row = $(`#theme-customizer-layers .theme-layer-row[data-layer="${meta.id}"]`);
         if (!row.length) continue;
         const current = (customThemeDraft && customThemeDraft[meta.id]) || {};
-        const layer = { color: row.find('.theme-layer-color').val() || current.color || '#1b2838' };
+        const layer = { color: row.find('.theme-layer-color').val() || current.color || DEFAULT_THEME_COLOR };
         if (CUSTOM_IMAGE_LAYERS.includes(meta.id)) {
           layer.image = current.image || '';
           layer.fit = row.find('.theme-layer-fit').val() || current.fit || 'cover';
           const grad = (current.gradient && typeof current.gradient === 'object' ? current.gradient : {});
           layer.gradient = {
             enabled: row.find('.theme-layer-gradient-enabled').is(':checked'),
-            from: row.find('.theme-layer-gradient-from').val() || grad.from || layer.color || current.color || '#1b2838',
-            to: row.find('.theme-layer-gradient-to').val() || grad.to || grad.from || layer.color || current.color || '#1b2838',
+            from: row.find('.theme-layer-gradient-from').val() || grad.from || layer.color || current.color || DEFAULT_THEME_COLOR,
+            to: row.find('.theme-layer-gradient-to').val() || grad.to || grad.from || layer.color || current.color || DEFAULT_THEME_COLOR,
             angle: gradientAngleFromDom(row),
           };
           layer.effect = {
@@ -1228,10 +1342,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const grad = (layer.gradient && typeof layer.gradient === 'object' ? layer.gradient : {});
         const gradAngle = Number.isFinite(Number(grad.angle)) ? Number(grad.angle) : 180;
         const gradStyle = grad.enabled === true
-          ? `linear-gradient(${gradAngle}deg, ${grad.from || layer.color || '#1b2838'} 0%, ${grad.to || grad.from || layer.color || '#1b2838'} 100%)`
+          ? `linear-gradient(${gradAngle}deg, ${grad.from || layer.color || DEFAULT_THEME_COLOR} 0%, ${grad.to || grad.from || layer.color || DEFAULT_THEME_COLOR} 100%)`
           : '';
         const previewStyle =
-          `background-color:${grad.enabled === true ? 'transparent' : (layer.color || '#1b2838')};` +
+          `background-color:${grad.enabled === true ? 'transparent' : (layer.color || DEFAULT_THEME_COLOR)};` +
           (previewImage
             ? `background-image:${gradStyle ? gradStyle + ',' : ''}${require(path.join(appPath, 'util/cssUrl.js')).cssUrl(require('url').pathToFileURL(previewImage).href)};`
             : gradStyle
@@ -1249,7 +1363,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
               `<div class="theme-layer-hint">${escapeHtml(meta.hint || '')}</div></div>`
           );
         const controls = $('<div>').addClass('theme-layer-controls');
-        controls.append($('<input>').attr('type', 'color').addClass('theme-layer-color').val(layer.color || '#1b2838'));
+        controls.append($('<input>').attr('type', 'color').addClass('theme-layer-color').val(layer.color || DEFAULT_THEME_COLOR));
         if (CUSTOM_IMAGE_LAYERS.includes(meta.id)) {
           const gradientToggle = $('<label>').addClass('theme-layer-effect-toggle');
           gradientToggle.append(
@@ -1259,7 +1373,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           controls.append(gradientToggle);
 
           const gradientPanel = $('<div>').addClass('theme-layer-effect theme-layer-gradient-panel' + (grad.enabled === true ? ' open' : ''));
-          gradientPanel.data('gradient', grad).data('baseColor', layer.color || '#1b2838');
+          gradientPanel.data('gradient', grad).data('baseColor', layer.color || DEFAULT_THEME_COLOR);
           const angleLabels = {
             0: t('theme-gradient-angle-0', 'Bottom → Top', 'Bas → Haut'),
             45: t('theme-gradient-angle-45', 'Bottom-left → Top-right', 'Bas-gauche → Haut-droite'),
@@ -1270,10 +1384,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           };
           const fromGroup = $('<div>').addClass('theme-layer-effect-group');
           fromGroup.append($('<label>').text(t('theme-gradient-from', 'From', 'De')));
-          fromGroup.append($('<input>').attr('type', 'color').addClass('theme-layer-gradient-from').val(grad.from || layer.color || '#1b2838'));
+          fromGroup.append($('<input>').attr('type', 'color').addClass('theme-layer-gradient-from').val(grad.from || layer.color || DEFAULT_THEME_COLOR));
           const toGroup = $('<div>').addClass('theme-layer-effect-group');
           toGroup.append($('<label>').text(t('theme-gradient-to', 'To', 'À')));
-          toGroup.append($('<input>').attr('type', 'color').addClass('theme-layer-gradient-to').val(grad.to || grad.from || layer.color || '#1b2838'));
+          toGroup.append($('<input>').attr('type', 'color').addClass('theme-layer-gradient-to').val(grad.to || grad.from || layer.color || DEFAULT_THEME_COLOR));
           const angleSelect = $('<select>').addClass('theme-layer-gradient-angle theme-layer-effect-type');
           for (const [deg, labelText] of Object.entries(angleLabels)) {
             angleSelect.append($('<option>').attr('value', deg).text(labelText));
@@ -1449,7 +1563,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     // Gradient editor: keep the collapsed panel, the layer preview and the saved theme
     // in sync while the user picks the two colors and the direction.
     function refreshGradientPreview(row) {
-      const baseColor = row.find('.theme-layer-color').val() || '#1b2838';
+      const baseColor = row.find('.theme-layer-color').val() || DEFAULT_THEME_COLOR;
       const enabled = row.find('.theme-layer-gradient-enabled').is(':checked');
       const from = row.find('.theme-layer-gradient-from').val() || baseColor;
       const to = row.find('.theme-layer-gradient-to').val() || from;
@@ -1475,9 +1589,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         // A freshly enabled gradient follows the layer color unless the user already
         // picked custom colors for it (detected by comparing with the stored base color).
         const grad = panel.data('gradient') || {};
-        const base = panel.data('baseColor') || '#1b2838';
+        const base = panel.data('baseColor') || DEFAULT_THEME_COLOR;
         if ((!grad.from || grad.from === base) && (!grad.to || grad.to === base)) {
-          const color = row.find('.theme-layer-color').val() || '#1b2838';
+          const color = row.find('.theme-layer-color').val() || DEFAULT_THEME_COLOR;
           row.find('.theme-layer-gradient-from').val(color);
           row.find('.theme-layer-gradient-to').val(color);
         }
@@ -1551,24 +1665,20 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
     $('#settingNav li[data-view]').click(function () {
       let self = $(this);
+      if (self.hasClass('active')) return;
       self.css('pointer-events', 'none');
       let view = self.data('view');
 
       $('#settingNav li[data-view]').removeClass('active');
       self.addClass('active');
 
-      $('#settings .box section.content').removeClass('active');
-      $("#settings .box section.content[data-view='" + view + "']").addClass('active').scrollTop(0);
+      $('#settings .box section.content').removeClass('active settings-view-opening');
+      $("#settings .box section.content[data-view='" + view + "']").addClass('active settings-view-opening').scrollTop(0);
 
       self.css('pointer-events', 'initial');
     });
 
-    // The help screen points to the settings people most often need when a game or notification is
-    // missing. Reuse the normal sidebar action so it keeps the active state and scroll behaviour.
-    $('#settings [data-help-view]').click(function () {
-      const view = String($(this).data('help-view') || '');
-      $(`#settingNav li[data-view='${view}']`).trigger('click');
-    });
+    $('#settings').on('change.helpPreview', 'select', refreshHelpPreview);
 
     /* ---- Collapsible sections ----------------------------------------------
        Cards fold under their header; state is per section and persisted. Nothing is moved or
@@ -1595,11 +1705,23 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       }
     }
 
-    function setSectionCollapsed(section, collapsed) {
+    function setSectionCollapsed(section, collapsed, animate = false) {
       const el = $(section);
+      const oldTimer = el.data('sectionAnimationTimer');
+      if (oldTimer) clearTimeout(oldTimer);
+      el.removeClass('is-opening');
       el.toggleClass('is-collapsed', collapsed);
       const header = sectionRules.headerFor($, section);
       if (header) header.attr('aria-expanded', collapsed ? 'false' : 'true');
+      if (!collapsed && animate) {
+        // Force a fresh animation even after repeatedly closing and reopening the same card.
+        void el[0].offsetWidth;
+        el.addClass('is-opening');
+        el.data(
+          'sectionAnimationTimer',
+          setTimeout(() => el.removeClass('is-opening').removeData('sectionAnimationTimer'), 200)
+        );
+      }
     }
 
     function initCollapsibleSections() {
@@ -1629,7 +1751,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const nowCollapsed = !$(section).hasClass('is-collapsed');
       if (nowCollapsed) collapsed.add(key);
       else collapsed.delete(key);
-      setSectionCollapsed(section, nowCollapsed);
+      setSectionCollapsed(section, nowCollapsed, true);
       writeCollapsedSections(collapsed);
     }
 

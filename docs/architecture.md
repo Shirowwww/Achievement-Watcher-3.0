@@ -56,7 +56,7 @@ When adding a source:
 - make missing optional files a normal empty state;
 - keep watcher and parser rules aligned so the library and live notifications observe the same files.
 
-Current integrations include Steam, Goldberg/GBE-compatible saves, GOG, Epic, Ubisoft, EA Desktop, GreenLuma, RPCS3, ShadPS4 and Xenia. Some platforms have both a legacy mapped-save parser and a newer official/local parser.
+Current integrations include Steam, Goldberg/GBE-compatible saves, Goldberg SocialClub, GOG, Epic, Ubisoft, EA Desktop, Xbox PC, GreenLuma, RPCS3, ShadPS4 and Xenia. Some platforms have both a legacy mapped-save parser and a newer official/local parser.
 
 ## Important components
 
@@ -96,7 +96,7 @@ English is the reference locale. `app/locale/uiLanguages.js` only exposes langua
 
 ## Packaging boundaries
 
-`app/electron-builder.yml` packages the desktop app and copies the Watchdog beside it. Notification presets and sounds are unpacked from ASAR because overlay windows load them from disk.
+`app/electron-builder.yml` packages the desktop app and copies the Watchdog beside it. Notification presets, sounds and shared Steam-schema mapper modules are unpacked from ASAR because overlay windows and the external Watchdog load them from disk.
 
 `npm run build` prunes Watchdog development dependencies before packaging. Restore them after a build before returning to development. See [BUILD.md](../BUILD.md) and the [release workflow](RELEASE_WORKFLOW.md).
 

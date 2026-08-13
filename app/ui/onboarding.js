@@ -7,8 +7,7 @@ const onboardingAvatarStore = require(path.join(appPath, 'util/avatarStore.js'))
 const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
 
 (function ($, window, document) {
-  const STEAM_API_KEY_URL = 'https://steamcommunity.com/dev/apikey';
-  const STEP_COUNT = 6;
+  const STEP_COUNT = 5;
   const onboardingTextCache = new Map();
   let step = 0;
   let addedSaveDirs = [];
@@ -105,28 +104,6 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     if (!isBusy) updateStepButtons();
   }
 
-  function setApiKeyVisibility(visible) {
-    $('#onboard-api-key').attr('type', visible ? 'text' : 'password');
-    $('#onboard-api-toggle')
-      .attr('aria-pressed', String(visible))
-      .find('i')
-      .toggleClass('fa-eye', !visible)
-      .toggleClass('fa-eye-slash', visible);
-  }
-
-  // A Steam Web API key is exactly 32 hex characters. Strip stray whitespace from a paste and reflect
-  // valid/malformed state visually so a bad key is caught before the first (slow) library load.
-  function updateApiKeyState() {
-    const field = $('#onboard-api-key');
-    const raw = String(field.val() || '');
-    const value = raw.replace(/\s+/g, '');
-    if (raw !== value) field.val(value);
-    const valid = /^[a-fA-F0-9]{32}$/.test(value);
-    $('.onboarding-api-input')
-      .toggleClass('is-valid', valid)
-      .toggleClass('is-invalid', value.length > 0 && !valid);
-  }
-
   function applyText() {
     const t = text();
     $('#onboarding-settings-label').text(t.settingsLabel);
@@ -134,6 +111,7 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     $('#onboarding-settings-help').text(t.settingsHelp);
     $('#onboarding-eyebrow').text(t.eyebrow);
     $('#onboarding-close').attr('title', t.close);
+    $('.onboarding-steps').attr('aria-label', t.navLabel);
     $('.onboarding-steps button').each(function (index) {
       $(this).find('span').text(t.steps[index]);
     });
@@ -158,13 +136,6 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     $('#onboard-avatar-pick span').text(t.avatarPick);
     $('#onboard-avatar-clear span').text(t.avatarDefault);
     $('#onboard-avatar-hint').text(t.avatarHint);
-    $('#onboard-api-title').text(t.apiTitle);
-    $('#onboard-api-copy').text(t.apiCopy);
-    $('#onboard-api-warning-text').text(t.apiWarning);
-    $('#onboard-api-label').text(t.apiLabel);
-    $('#onboard-api-toggle').attr('title', t.apiToggle).attr('aria-label', t.apiToggle);
-    $('#onboard-api-link span').text(t.apiLink);
-    $('#onboard-api-note').text(t.apiNote);
     $('#onboard-folders-title').text(t.foldersTitle);
     $('#onboard-folders-copy').text(t.foldersCopy);
     $('#onboard-add-save-dir span').text(t.addSave);
@@ -256,8 +227,6 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
   function populateValues() {
     populateLanguageSelect(app.config.achievement?.lang || 'english');
     $('#onboard-username').val(app.config.general?.username || os.userInfo().username || 'User');
-    $('#onboard-api-key').val(app.config.steam?.apiKey || '');
-    updateApiKeyState();
     populateMainSteamSelect(app.config.steam?.main || '0');
     $('#onboard-legit-steam').val(String(app.config.achievement_source?.legitSteam ?? 0));
     $('#onboard-notification-mode').val(app.config.notification_transport?.mode || 'overlay');
@@ -478,7 +447,6 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
       app.config.achievement.lang = language;
       app.config.general.username = $('#onboard-username').val().trim() || app.config.general.username || os.userInfo().username || 'User';
       app.config.general.onboardingCompleted = markComplete;
-      app.config.steam.apiKey = $('#onboard-api-key').val().trim();
       app.config.steam.main = $('#onboard-main-steam').val() || '0';
       app.config.achievement_source.legitSteam = parseInt($('#onboard-legit-steam').val(), 10) || 0;
       app.config.notification_transport.mode = $('#onboard-notification-mode').val() || 'overlay';
@@ -540,7 +508,6 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     visitedSteps = new Set([0]);
     applyText();
     populateValues();
-    setApiKeyVisibility(false);
     renderDirLists();
     $('#settings .box').hide();
     $('#settings').hide();
@@ -600,11 +567,6 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
       const avatarEl = document.querySelector('user-avatar');
       if (avatarEl && typeof avatarEl.update === 'function') avatarEl.update();
     });
-    $('#onboard-api-link').attr('href', STEAM_API_KEY_URL);
-    $('#onboard-api-toggle').on('click', function () {
-      setApiKeyVisibility($(this).attr('aria-pressed') !== 'true');
-    });
-    $('#onboard-api-key').on('input', updateApiKeyState);
     $('#onboard-notification-test').on('click', function () {
       if (typeof window.testAchievementWatcherNotification !== 'function') {
         debug.log('notification test is not ready yet');

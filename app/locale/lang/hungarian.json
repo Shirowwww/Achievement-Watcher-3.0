@@ -178,7 +178,7 @@
       "onboarding": {
         "name": "Első indítási útmutató",
         "button": "Útmutató megnyitása",
-        "description": "A beállítási útmutató újranyitása: API-kulcs, profil, mappák, források és értesítések."
+        "description": "Nyissa meg újra a beállítási útmutatót a profilhoz, mappákhoz, forrásokhoz és értesítésekhez."
       },
       "hardwareAccel": {
         "name": "Hardveres gyorsítás kikapcsolása",
@@ -266,14 +266,6 @@
           "true": "Bekapcsolva"
         }
       },
-      "mode": {
-        "name": "Emulátor mód",
-        "description": "A Regular lecseréli a játék steam_api(64).dll fájlját. A ColdClient megtartja és betölti a GBE Fork emulált steamclientjét egy loaderrel — szélesebb lefedettség a makacs játékokhoz.",
-        "value": {
-          "regular": "Regular (DLL csere)",
-          "coldclient": "ColdClient (GBE Fork)"
-        }
-      },
       "steamSettings": {
         "name": "steam_settings adatok",
         "description": "A Simple az Achievement Watcher saját letöltését használja (névtelen). Az Advanced lefuttatja a generate_emu_config-ot a depó/nyelvi lefedettséghez.",
@@ -320,14 +312,6 @@
         "value": {
           "false": "Kikapcsolva",
           "true": "Bekapcsolva"
-        }
-      },
-      "launchBat": {
-        "name": "Launch.bat létrehozása tartalékként",
-        "description": "Ha a Steamless nem tud eltávolítani egy SteamStub exe-t és az AW ColdClientre vált, egy Launch.bat-ot is ír a megfelelő loaderhez.",
-        "value": {
-          "true": "Bekapcsolva",
-          "false": "Kikapcsolva"
         }
       },
       "checkUpdates": {
@@ -590,6 +574,10 @@
     },
     "source": {
       "title": "Játékforrások",
+      "officialPlatforms": {
+        "title": "Hivatalos platformok",
+        "description": "A Steam, Ubisoft Connect, GOG Galaxy, Epic Games és Xbox PC támogatott. Kapcsold be alább a pajzzsal jelölt forrásokat; csak az ezen a gépen észlelt könyvtárak jeleníthetők meg."
+      },
       "legitSteam": {
         "name": "Steam játékok megjelenítése",
         "description": "A Steamnek telepítve kell lennie, a Steam profilodnak pedig nyilvánosnak !",
@@ -650,123 +638,86 @@
         "description": "Xbox 360 emulátor"
       }
     },
-    "guide": {
-      "nav": "Útmutató",
-      "title": "Platform útmutató",
-      "intro": "Mit vizsgál az Achievement Watcher, mely mappák fontosak, és mikor hasznosak a generált emulátor-konfigok.",
-      "quickTitle": "Első lépések",
-      "quick": [
-        "Add hozzá a mentés/konfig mappákat a Beállítások > Mappák alatt, majd kapcsold be a megfelelő forrást a Beállítások > Források alatt.",
-        "Könyvtármappákat használj azokhoz a telepített játékokhoz, amelyek még nem hoztak létre achievement fájlokat.",
-        "A Watchdog csak akkor jelez új változásokat, ha a mappa ismert és a forrás engedélyezve van."
-      ],
-      "steamTitle": "Steam emulátorok",
-      "steam": [
-        "A GBE / Goldberg mentések általában itt vannak: %APPDATA%\\GSE Saves vagy %APPDATA%\\Goldberg SteamEmu Saves.",
-        "A CODEX / RUNE jellegű mentések gyakran itt találhatók: Public Documents\\Steam\\CODEX vagy Public Documents\\Steam\\RUNE.",
-        "A TENOKE, UniverseLAN, SmartSteamEmu, ALI213 és Hoodlum a saját konfig/mentés mappáikból kerül felismerésre."
-      ],
-      "emulatorTitle": "Konzol emulátorok",
-      "emulators": [
-        "Az RPCS3 achievementek a dev_hdd0\\home\\...\\trophy mappából olvashatók az RPCS3 telepítése közelében.",
-        "A shadPS4 trófeák az appadatok game_data/trophy mappáiból olvashatók; megmaradt trófeaadat nem bizonyítja a játék telepítését.",
-        "A Xenia előrehaladás Xbox profilfájlokból, például .gpd fájlokból olvasható."
-      ],
-      "sourcesTitle": "Indítók és források",
-      "sources": [
-        "A Steam nyilvános profil mód listázza a telepített vagy birtokolt Steam játékokat, de a helyi feloldások továbbra is mentésfájlokból jönnek.",
-        "A GOG, Epic, Ubisoft Connect/LumaPlay és EA Desktop külön engedélyezhető a Források alatt.",
-        "A tört EA Desktop telepítések az EADesktopVerbose.log és a tartalék logjai alapján olvashatók."
-      ],
-      "configTitle": "Generált konfigok",
-      "config": [
-        "A jobb kattintásos emulátor-javítás GBE Fork fájlokat, achievement sémákat, DLC-adatokat és indítási segédeket adhat hozzá.",
-        "Az Egyszerű mód gyors és az Achievement Watcher adatait használja; a Haladó generate_emu_config-ot futtat mélyebb Steam adatokhoz.",
-        "A haladó generálás több percig is tarthat, főleg DLC/depot metaadatokkal."
-      ],
-      "troubleshootTitle": "Hibaelhárítás",
-      "troubleshoot": [
-        "Ha hiányzik egy játék, a mappák hozzáadása után vizsgáld újra, majd ellenőrizd a forrás kapcsolóját és a feketelistát.",
-        "Ha hiányoznak az értesítések, ellenőrizd a Windows Fókuszsegédet, és azonos rendszergazdai jogokkal indítsd a játékot/appot.",
-        "A Haladó > Diagnosztika logokat és adatmappákat nyit meg, ha meg kell nézned, mi lett vizsgálva."
-      ]
-    },
     "help": {
       "nav": "Súgó",
       "title": "Súgó és tippek",
       "intro": "Minden hasznos tudnivaló — észlelés, értesítések, kontroller, overlay, témák és hibaelhárítás.",
+      "setupTitle": "Jelenlegi beállításaid",
+      "topicsTitle": "Böngészés témakör szerint",
+      "searchPlaceholder": "Keresés a súgóban…",
+      "noResults": "Egyetlen súgótéma sem felel meg a keresésnek.",
       "quickTitle": "Első lépések",
       "quick": [
-        "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
-        "The Watchdog runs in the background — it must be running for live notifications and playtime.",
-        "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+        "Adja hozzá a mentési/konfigurációs mappákat a Beállítások > Mappák résznél, majd engedélyezze a megfelelő forrást a Beállítások > Források résznél.",
+        "A Watchdog a háttérben fut — az élő értesítésekhez és a játékidő méréséhez futnia kell.",
+        "Minden (beállítások, gyorsítótárak, naplók és egyéni témák) a %APPDATA%\\Achievement Watcher 3.0 mappában található.",
         "Minden beállítási szakasz összecsukható a saját fejlécével — a nyíl lefelé mutat, ha nyitva van, oldalra, ha zárva. A választásai megmaradnak."
       ],
       "steamTitle": "Steam emulátorok",
       "steam": [
-        "GBE / Goldberg saves are usually under %APPDATA%\\GSE Saves or %APPDATA%\\Goldberg SteamEmu Saves.",
-        "CODEX / RUNE saves often live under Public Documents\\Steam\\CODEX or Public Documents\\Steam\\RUNE.",
-        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 and Hoodlum are detected from their config/save folders."
+        "A GBE/Goldberg mentések általában a %APPDATA%\\GSE Saves vagy a %APPDATA%\\Goldberg SteamEmu Saves alatt találhatók.",
+        "A CODEX/RUNE mentések gyakran a Public Documents\\Steam\\CODEX vagy a Public Documents\\Steam\\RUNE alatt találhatók.",
+        "A TENOKE, UniverseLAN, SmartSteamEmu, ALI213 és Hoodlum a konfigurációs/mentési mappáik alapján észlelhető."
       ],
       "emulatorTitle": "Konzolemulátorok",
       "emulators": [
-        "RPCS3 trophies are read from dev_hdd0\\home\\...\\trophy near the RPCS3 install.",
-        "shadPS4 trophies are read from its app data game_data/trophy folders; leftover data is not install proof.",
-        "Xenia progress is read from Xbox profile files such as .gpd."
+        "Az RPCS3 trófeái az RPCS3 telepítése melletti dev_hdd0\\home\\...\\trophy mappából olvashatók.",
+        "A shadPS4 trófeái az alkalmazásadatok game_data/trophy mappáiból olvashatók; a megmaradt adatok nem bizonyítják a telepítést.",
+        "A Xenia előrehaladása Xbox-profilfájlokból, például .gpd fájlokból olvasható."
       ],
       "sourcesTitle": "Indítók és források",
       "sources": [
-        "Steam profile mode lists installed or owned games, but unlocks still come from local save files.",
-        "GOG, Epic, Ubisoft Connect/LumaPlay and EA Desktop can be enabled separately in Sources.",
-        "Owned Steam games count as installed only when Steam's registry confirms it."
+        "A Steam-profilmód felsorolja a telepített vagy birtokolt játékokat, de a feloldások továbbra is a helyi mentési fájlokból származnak.",
+        "A GOG, Epic, Ubisoft Connect/LumaPlay és EA Desktop külön-külön engedélyezhető a Források résznél.",
+        "A birtokolt Steam-játékok csak akkor számítanak telepítettnek, ha ezt a Steam rendszerleíró bejegyzése megerősíti."
       ],
       "controllerTitle": "Kontroller (gamepad)",
       "controller": [
-        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
-        "LB + X toggles in-overlay navigation.",
-        "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
-        "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
+        "Először engedélyezze a Beállítások > Vezérlő lehetőséget; ezután a Back + Start + LB megnyitja a játékon belüli átfedést.",
+        "Az LB + X be- vagy kikapcsolja az overlayen belüli navigációt.",
+        "Navigációs mód: a D-pad/bal kar mozgatja a fókuszt, A megerősít, B megszakít, X keres, Y pedig megnyitja a beállításokat.",
+        "Tartsa lenyomva az LB + RB gombokat az overlay bal karral történő mozgatásához és a jobb karral történő görgetéshez.",
+        "Xbox, PlayStation (DualShock 4 / DualSense) és Switch Pro kontrollerekkel működik."
       ],
       "overlayTitle": "Játék közbeni overlay",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
-        "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
-        "Press / to focus the search, Esc to clear it or close the options panel.",
-        "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
-        "Every achievement with a known rate shows its rarity: gray for common, gold/silver/bronze for rare."
+        "Nyissa meg az átfedés gyorsbillentyűjével (alapértelmezés szerint Ctrl+Shift+K), vagy a vezérlő Back + Start + LB kombinációjával.",
+        "Egyszerre egy oszlop szerint rendezzen: Ritkaság, Dátum vagy Állapot (növekvő / csökkenő / nincs).",
+        "A / megnyomásával a keresésre léphet, az Esc törli azt vagy bezárja a beállításpanelt.",
+        "A fogaskerékpanel módosítja a kiemelőszínt, a sűrűséget, a nagyítást, az átlátszatlanságot és a látható sorokat; az „Alkalmazás témájának használata” az aktív témát követi.",
+        "Minden ismert arányú teljesítmény megjeleníti a ritkaságát: szürke a gyakori, arany/ezüst/bronz a ritka."
       ],
       "themesTitle": "Egyedi témák",
       "themes": [
-        "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
-        "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+        "Az Egyéni téma Steam Blue alapról indul; minden réteg (háttér, fejléc, panelek, kártyák, beállítások, szöveg, szegélyek, kiemelés) szerkeszthető.",
+        "A rétegképek színes fátyol alatt, enyhe matt elmosással jelennek meg; az effektek rétegenként állíthatók.",
+        "Helyezzen egy CSS-témát a <userData>\\themes mappába, és az megjelenik a témalistában.",
         "Az előbeállítás-készítő mentés előtt valódi felugró ablakként mutatja a kinézetet, újra megnyit egy mentett előbeállítást módosításra, és törli azokat, amelyeket nem tart meg."
       ],
       "configTitle": "Generált konfigurációk",
       "config": [
-        "The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.",
-        "Simple mode is fast; Advanced runs generate_emu_config for deeper Steam data and can take minutes."
+        "A jobb gombos emulátorjavítás GBE Fork-fájlokat, teljesítménysémákat és DLC-adatokat adhat hozzá.",
+        "Az Egyszerű mód gyors; a Speciális a generate_emu_config futtatásával részletesebb Steam-adatokat gyűjt, ami több percig is tarthat."
       ],
       "shortcutsTitle": "Billentyűparancsok",
       "shortcuts": [
-        "Ctrl+Shift+K (default): toggle the in-game overlay — configurable in Settings > General.",
-        "Ctrl+Alt+Shift+Arrows move the overlay; Ctrl+Alt+Shift+1–5 snap it to a preset position.",
-        "Ctrl+Alt+Shift+C toggles click-through; Ctrl+F focuses Settings search."
+        "Ctrl+Shift+K (alapértelmezett): a játékon belüli overlay be- vagy kikapcsolása — a Beállítások > Általános résznél módosítható.",
+        "A Ctrl+Alt+Shift+Nyílbillentyűk mozgatják az overlayt; a Ctrl+Alt+Shift+1–5 előre beállított helyre illeszti.",
+        "A Ctrl+Alt+Shift+C kapcsolja az átkattintást; a Ctrl+F a Beállítások keresőjére lép."
       ],
       "tipsTitle": "Tippek és trükkök",
       "tips": [
-        "Right-click a game tile for quick actions: emulator fix, achievements, Steam page, GBE Fork install, uninstall.",
-        "Right-click a game and choose mute progress to stop progress popups without disabling unlocks.",
-        "The emulator fix (Simple fast / Advanced complete) installs GBE Fork, the achievements schema, DLCs and launch helpers.",
-        "Playtime is tracked while the game runs; progress and playtime notifications can be enabled in Notifications."
+        "Kattintson jobb gombbal egy játék csempéjére a gyors műveletekhez: emulátorjavítás, teljesítmények, Steam-oldal, GBE Fork telepítése és eltávolítás.",
+        "Kattintson jobb gombbal egy játékra, és válassza az előrehaladás némítását, hogy leállítsa az előrehaladási értesítéseket a feloldások letiltása nélkül.",
+        "Az emulátorjavítás (Egyszerű gyors / Speciális teljes) telepíti a GBE Forkot, a teljesítménysémát és a DLC-adatokat.",
+        "A játékidő mérése a játék futása közben történik; az előrehaladási és játékidő-értesítések az Értesítések résznél kapcsolhatók be.",
+        "A játékfrissítéssel érkező új teljesítmények 3 napon belül automatikusan megjelennek, vagy azonnal ellenőrizhetők a Beállítások > Speciális > Teljesítménylisták újbóli ellenőrzése menüpontban."
       ],
       "troubleshootTitle": "Hibaelhárítás",
       "troubleshoot": [
-        "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
-        "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+        "Ha egy játék hiányzik: adja hozzá a mappákat, vizsgálja át újra, majd ellenőrizze a forrás kapcsolóját és a tiltólistát.",
+        "Ha nem jelennek meg értesítések: ellenőrizze a Windows Fókuszsegédet, és az alkalmazást a játékokkal azonos jogosultsággal futtassa.",
+        "Speciális > Diagnosztika megnyitja a napló- és adatmappákat; hibajelentéskor csatolja ezeket.",
         "A naplók hozzáfűződnek, így egy összeomlás túléli a következő indítást. Minden futás munkamenet-jelöléssel és egy [diag] blokkal indul (verziók, útvonalak, kijelzők) — illessze be a hibajegybe."
       ]
     },
@@ -784,9 +735,6 @@
       },
       "diag": {
         "title": "Diagnosztika",
-        "apiKeyLabel": "Steam Web API kulcs :",
-        "apiKeyConfigured": "beállítva",
-        "apiKeyFallback": "nincs beállítva — tartalék lekérdezés használata",
         "logsFolder": "Naplómappa megnyitása",
         "dataFolder": "Adatmappa megnyitása",
         "goldbergTitle": "Goldberg / GBE Fork",
@@ -798,34 +746,35 @@
       "blacklistInfo": "Kattints jobb gombbal egy játékcsempére, hogy felvedd a feketelistára.",
       "blacklistEmpty": "Nincsenek rejtett játékok.",
       "blacklistRestore": "Játék visszaállítása",
-      "apiKey": {
-        "title": "Steam Web API kulcs",
-        "description": "Egyes Steam adatokhoz személyes Steam Web API kulcs szükséges.",
-        "fallback": "Hagyd üresen ezt a mezőt az automatikus lekéréshez. Ha az nem sikerül, add meg a saját kulcsodat.",
-        "create": "API kulcs létrehozása",
-        "terms": "Steam API használati feltételek",
-        "label": "A Steam Web API kulcsod",
-        "security": "A kulcs AES-256-CBC titkosítással van ellátva, mielőtt erre a számítógépre mentődik."
-      },
       "mainSteam": {
         "title": "Fő Steam fiók",
         "name": "Szűrés felhasználó szerint",
         "description": "Csak a kiválasztott fiók Steam teljesítményeinek megjelenítése"
       },
-      "checkUpdates": "Frissítések keresése"
+      "checkUpdates": "Frissítések keresése",
+      "clearUpdateCache": {
+        "name": "Gyorsítótárak ürítése",
+        "button": "Gyorsítótárak ürítése",
+        "description": "Törli az újra letölthető gyorsítótárakat: frissítési fájlok, Steam/Ubisoft séma- és ikon-gyorsítótár, valamint letöltött emulátorjavító eszközök. Soha nem érinti a beállításaidat, mentéseidet, biztonsági mentéseidet vagy kézzel elhelyezett fájljaidat."
+      },
+      "forceAchievementRecheck": {
+        "name": "Trófealisták újraellenőrzése",
+        "button": "Ellenőrzés most",
+        "description": "Ellenőrzi a Steamnél, hogy egy játékfrissítés adott-e hozzá trófeákat az utolsó ellenőrzés óta. Ez automatikusan 3 naponta lefut; ez a gomb azonnal kikényszeríti."
+      }
     }
   },
   "onboarding": {
     "settingsLabel": "Első futtatási útmutató",
     "settingsButton": "Nyissa meg az útmutatót",
-    "settingsHelp": "Nyissa meg újra az API-kulcsok, profilok, mappák, források és értesítések beállítási útmutatóját.",
+    "settingsHelp": "Nyissa meg újra a beállítási útmutatót a profilhoz, mappákhoz, forrásokhoz és értesítésekhez.",
+    "navLabel": "Beállítás lépései",
     "eyebrow": "Első beállítás",
     "close": "Bezárás",
     "steps": [
       "Nyelv",
       "Hogyan működik",
       "fiók",
-      "API kulcs",
       "Játékok",
       "Beállítások"
     ],
@@ -841,7 +790,7 @@
     "watchTitle": "Figyelés",
     "watchCopy": "A háttérben futó Watchdog a játék indításakor felismeri a futtatható fájlt, méri a játékidőt és figyeli az eredményfájlokat, hogy játék közben megjelenjenek a feloldások.",
     "fixTitle": "Javítás",
-    "fixCopy": "Emulált Steam-játékoknál a jobb kattintásos javítás (vagy az automatikus javítás) telepíti a GBE Forkot, és az achievements.json sémát, a DLC-adatokat és az indítási segédfájlokat a játék steam_settings mappájába írja.",
+    "fixCopy": "Emulált Steam-játékoknál a jobb kattintásos javítás (vagy az automatikus javítás) telepíti a GBE Forkot, és az achievements.json sémát valamint a DLC-adatokat a játék steam_settings mappájába írja.",
     "overlayTitle": "Játékon belüli overlay",
     "overlayCopy": "Egy kis teljesítmény-panel, amelyet egy gyorsbillentyűvel (alapértelmezett Ctrl+Shift+K) hívhatsz elő a játék fölé. Bármikor módosítható a Beállítások > Általános menüben, a gyorsbillentyű mező mellett.",
     "profileTitle": "Profil",
@@ -851,13 +800,6 @@
     "avatarPick": "Válasszon fényképet",
     "avatarDefault": "Alapértelmezett",
     "avatarHint": "Választható. Helyileg ezen a számítógépen tárolva.",
-    "apiTitle": "Steam Web API kulcs",
-    "apiCopy": "Egy kulcs javítja a Steam metaadatok lekérését. Ezt üresen hagyhatja, és később hozzáadhatja.",
-    "apiWarning": "FONTOS: API-kulcs nélkül a legelső könyvtárbetöltés NAGYON LASSA lesz: minden játék a Steam oldalak lekaparásával történik (játékonként több másodperc). Kulccsal szinte azonnali és pontosabb. Az ablak betöltés közben is használható marad, de erősen ajánlott egy hozzáadása.",
-    "apiLabel": "Steam Web API kulcs",
-    "apiToggle": "API-kulcs megjelenítése vagy elrejtése",
-    "apiLink": "Szerezzen be egy Steam Web API kulcsot",
-    "apiNote": "Használd a hivatalos Steam oldalt. Mentés előtt a kulcs titkosítva van.",
     "foldersTitle": "Játékok hozzáadása a lemezen",
     "foldersCopy": "Adjon hozzá mentési/beállítási mappákat bizonyos emulátorokhoz és könyvtárgyökerekhez, amelyek sok telepített játékot tartalmaznak.",
     "addSave": "Mentésmappa hozzáadása",
@@ -1326,6 +1268,9 @@
     "rescan-started": "{count} kijelölt mappa újraellenőrzése…",
     "rescan-complete": "A kijelölt mappák újraellenőrzése kész.",
     "rescan-failed": "A kijelölt mappák ellenőrzése sikertelen: {error}",
+    "force-recheck-started": "Új trófeák keresése…",
+    "force-recheck-done": "Az ellenőrzés befejeződött.",
+    "force-recheck-failed": "Az ellenőrzés sikertelen: {error}",
     "no-game-found": "Nem található játék.",
     "invalid-folder": "Érvénytelen mappa",
     "error-adding-custom-folder": "Hiba az egyéni mappa hozzáadásakor",
@@ -1377,7 +1322,54 @@
     "theme-gradient-angle-135": "Bal fent → Jobb lent",
     "theme-gradient-angle-180": "Fentről lefelé",
     "theme-gradient-angle-0": "Alulról felfelé",
-    "theme-gradient-angle-270": "Jobb fent → Bal lent"
+    "theme-gradient-angle-270": "Jobb fent → Bal lent",
+    "avatar-import-from-steam-user": "{name} Steam-avatárjának importálása",
+    "update-check-failed-detail": "Frissítés-ellenőrzés sikertelen: {message}",
+    "diagnosis-emulator": "Emulátor: {emulator}",
+    "diagnosis-emulator-none": "nincs észlelve",
+    "diagnosis-steam-settings": "steam_settings: {path}",
+    "diagnosis-steam-settings-missing": "steam_settings: nem található",
+    "diagnosis-achievements-count": "eredmények: {found} a fájlban / {expected} a sémában",
+    "diagnosis-no-problems": "Nem észlelhető probléma.",
+    "diagnosis-auto-repair-wrote": "Az automatikus javítás {count} eredményt írt ide: {path}",
+    "diagnosis-icons-summary": "ikonok: {downloaded} letöltve, {failed} sikertelen, {skipped} kihagyva",
+    "diagnosis-steam-appid-created": "steam_appid.txt létrehozva",
+    "diagnosis-configs-main-updated": "configs.main.ini frissítve (new_app_ticket + gc_token)",
+    "diagnosis-configs-app-updated": "configs.app.ini frissítve ({count} DLC-bejegyzés, unlock_all={unlockAll})",
+    "diagnosis-configs-user-updated": "configs.user.ini frissítve",
+    "diagnosis-auto-repair-failed": "Az automatikus javítás sikertelen: {error}",
+    "diagnosis-steam-appid": "Steam AppID: {appid} ({name})",
+    "diagnosis-steam-appid-not-resolved": "Steam AppID: nem feloldva",
+    "version-app": "Alkalmazás",
+    "diagnosis-dlls-backed-up": "Meglévő DLL-ek mentve *.bak néven",
+    "diagnosis-config-backed-up": "Előző konfiguráció mentve: {path}",
+    "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
+    "diagnosis-none-parenthesized": "(nincs)",
+    "diagnosis-version": "Verzió: {version}",
+    "diagnosis-version-unknown": "ismeretlen",
+    "diagnosis-dlls-backed-up-locations": "Meglévő DLL-ek *.bak néven mentve {count} helyen",
+    "diagnosis-after-install": "Diagnosztika telepítés után:",
+    "diagnosis-auto-repaired-steam-settings": "steam_settings automatikusan javítva (séma + ikonok + DLC) {count} helyen",
+    "diagnosis-auto-repair-failed-for": "Az automatikus javítás sikertelen: {paths}",
+    "diagnosis-dir-status-line": "{dir}: {status}",
+    "diagnosis-dir-status-ok": "ok",
+    "diagnosis-dir-status-attention": "figyelmet igényel",
+    "diagnosis-advanced-data-skipped": "Speciális adatok: kihagyva (nincs numerikus AppID)",
+    "diagnosis-advanced-data-login-cancelled": "Speciális adatok: bejelentkezés megszakítva",
+    "diagnosis-advanced-data-merged": "Speciális adatok: {count} további fájl egyesítve (generate_emu_config {tag})",
+    "diagnosis-advanced-data-failed": "Speciális adatok: {error}",
+    "achievements-overlay-title": "Eredmények átfedés",
+    "update-retry-failed-message": "A frissítés a gyorsítótárazott fájlok {folder} mappából történő törlése után is sikertelen maradt.",
+    "update-retry-failed-detail": "Ez valószínűleg hálózati vagy kiadási probléma, amelyet a gyorsítótár ürítése nem old meg. A frissítést manuálisan is letöltheted és telepítheted a kiadási oldalról.",
+    "open-release-page": "Kiadási oldal megnyitása",
+    "clear-cache": "Gyorsítótárak ürítése",
+    "clear-update-cache-label": "Gyorsítótárak ürítése",
+    "clear-update-cache-confirm": "Törlöd az összes újra letölthető gyorsítótárat (frissítési fájlok, Steam/Ubisoft séma- és ikon-gyorsítótár, letöltött emulátorjavító eszközök)? A beállításaid, mentéseid, biztonsági mentéseid és kézzel elhelyezett fájljaid soha nem érintettek — minden, amit itt kiürítünk, szükség esetén egyszerűen automatikusan újra letöltődik.",
+    "clear-update-cache-failed": "A frissítési gyorsítótárat nem sikerült üríteni.",
+    "clear-update-cache-empty": "Nincs mit üríteni — nem található gyorsítótárazott frissítési fájl.",
+    "clear-update-cache-done": "Frissítési gyorsítótár kiürítve: {folder}",
+    "clear-update-cache-done-apps": "{count} gyorsítótár-mappa kiürítve.",
+    "clear-update-cache-done-all": "{count} gyorsítótár-mappa kiürítve, beleértve a frissítési gyorsítótárat itt: {folder}."
   },
   "watchdog": {
     "rare": "Ritka {percent}%",

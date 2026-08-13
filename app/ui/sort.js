@@ -240,14 +240,16 @@ function updateInstalledEmptyState() {
   $('#game-list .isEmpty').toggle(visible === 0);
 }
 
-function applyInstalledFilter() {
+function applyInstalledFilter({ animateStats = false } = {}) {
   const on = installedOnlyEnabled();
   $('#game-list ul').toggleClass('installed-only', on);
   $('#sort-box .installed-filter').toggleClass('active', on);
   updateInstalledEmptyState();
+  window.refreshProfileStats?.({ animate: animateStats });
 }
 // Exposed so app.js can re-apply after it flips data-installed (exeList signal, post-reconcile).
 window.applyInstalledFilter = applyInstalledFilter;
+window.installedOnlyEnabled = installedOnlyEnabled;
 
 (function ($, window, document) {
   $(function () {
@@ -260,7 +262,7 @@ window.applyInstalledFilter = applyInstalledFilter;
 
       gamelist.fadeOut('fast', () => {
         localStorage.showInstalledOnly = installedOnlyEnabled() ? 'false' : 'true';
-        applyInstalledFilter();
+        applyInstalledFilter({ animateStats: true });
         gamelist.fadeIn('fast', () => button.css('pointer-events', 'initial'));
       });
     });

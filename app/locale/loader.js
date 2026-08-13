@@ -39,6 +39,13 @@ module.exports.load = async (lang = 'english') => {
       // Expose the merged locale so imperative strings (dialogs, menus) can be
       // translated through the same files via locale/t.js.
       window.appLocale = template;
+      // The dynamic Help panel reads the same locale + live settings; refresh it whenever the
+      // language payload is (re)applied so it never shows stale labels or hard-coded shortcuts.
+      if (window.AchievementHelp && typeof window.AchievementHelp.render === 'function') {
+        try {
+          window.AchievementHelp.render($);
+        } catch {}
+      }
     } else {
       throw 'Unexpected Error';
     }
@@ -261,14 +268,12 @@ function translateUI(lang, locale, template) {
       if (t.value) for (const v in t.value) li.find("select option[value='" + v + "']").text(clear(t.value[v]));
     };
     bindEmuRow('option_autoApplyNewGames', emu.autoApply);
-    bindEmuRow('option_mode', emu.mode);
     bindEmuRow('option_steamSettingsMode', emu.steamSettings);
     bindEmuRow('option_login', emu.login);
     bindEmuRow('option_steamlessAutoUnpack', emu.steamless);
     bindEmuRow('option_steamlessExperimental', emu.steamlessExp);
     bindEmuRow('option_autoApplyCrackFix', emu.crackFix);
     bindEmuRow('option_apiCheckBypass', emu.apiCheckBypass);
-    bindEmuRow('option_createLaunchBat', emu.launchBat);
     bindEmuRow('option_checkUpdates', emu.checkUpdates);
     bindEmuRow('option_goldbergDownloadIcons', emu.goldbergIcons);
   }
@@ -289,6 +294,15 @@ function translateUI(lang, locale, template) {
     bindHelpText('help-nav-label', help.nav);
     bindHelpText('help-title', help.title);
     bindHelpText('help-intro', help.intro);
+    bindHelpText('help-setup-title', help.setupTitle);
+    bindHelpText('help-topics-title', help.topicsTitle);
+    bindHelpText('help-no-results', help.noResults);
+    const helpSearchPlaceholder = clear(help.searchPlaceholder);
+    if (helpSearchPlaceholder) {
+      $('#help-search-input').attr('placeholder', helpSearchPlaceholder).attr('aria-label', helpSearchPlaceholder);
+    }
+    const helpSearchClear = clear(template.settings.search && template.settings.search.clear);
+    if (helpSearchClear) $('#help-search-clear').attr('title', helpSearchClear).attr('aria-label', helpSearchClear);
     bindHelpText('help-quick-title', help.quickTitle);
     bindHelpText('help-steam-title', help.steamTitle);
     bindHelpText('help-emulator-title', help.emulatorTitle);
@@ -300,16 +314,6 @@ function translateUI(lang, locale, template) {
     bindHelpText('help-shortcuts-title', help.shortcutsTitle);
     bindHelpText('help-tips-title', help.tipsTitle);
     bindHelpText('help-troubleshoot-title', help.troubleshootTitle);
-    const bindHelpAction = (id, value) => {
-      const action = $('#' + id);
-      const label = clear(value);
-      if (!action.length || !label) return;
-      action.find('span').text(label);
-      action.attr('title', label).attr('aria-label', label);
-    };
-    bindHelpAction('help-action-folder', template.settings.sideMenu.folder);
-    bindHelpAction('help-action-source', template.settings.sideMenu.source);
-    bindHelpAction('help-action-notification', template.settings.sideMenu.notification);
     bindHelpList('help-quick-list', help.quick);
     bindHelpList('help-steam-list', help.steam);
     bindHelpList('help-emulator-list', help.emulators);
@@ -499,6 +503,10 @@ function translateUI(lang, locale, template) {
   }
   selector = $('#options-source');
   $('#source-options-title').text(clear(template.settings.source.title));
+  if (template.settings.source.officialPlatforms) {
+    $('#source-official-title').text(clear(template.settings.source.officialPlatforms.title));
+    $('#source-official-description').text(clear(template.settings.source.officialPlatforms.description));
+  }
   selector.find('li:nth-child(1) .left span').text(clear(template.settings.source.legitSteam.name));
   selector.find("li:nth-child(1) .right select option[value='0']").text(clear(template.settings.source.legitSteam.value.none));
   selector.find("li:nth-child(1) .right select option[value='1']").text(clear(template.settings.source.legitSteam.value.installed));
@@ -563,6 +571,16 @@ function translateUI(lang, locale, template) {
     $('#fix-all-button').text(clear(template.settings.advanced.fixAll.button));
     $('#fix-all-help').text(clear(template.settings.advanced.fixAll.description));
   }
+  if (template.settings.advanced.clearUpdateCache) {
+    $('#clear-update-cache-label').text(clear(template.settings.advanced.clearUpdateCache.name));
+    $('#clear-update-cache-button').text(clear(template.settings.advanced.clearUpdateCache.button));
+    $('#clear-update-cache-help').text(clear(template.settings.advanced.clearUpdateCache.description));
+  }
+  if (template.settings.advanced.forceAchievementRecheck) {
+    $('#force-achievement-recheck-label').text(clear(template.settings.advanced.forceAchievementRecheck.name));
+    $('#force-achievement-recheck-button').text(clear(template.settings.advanced.forceAchievementRecheck.button));
+    $('#force-achievement-recheck-help').text(clear(template.settings.advanced.forceAchievementRecheck.description));
+  }
   if (template.settings.advanced.checkUpdates) {
     $('#check-for-updates-label').text(clear(template.settings.advanced.checkUpdates));
     $('#footer-check-updates')
@@ -573,22 +591,12 @@ function translateUI(lang, locale, template) {
   if (template.settings.advanced.diag) {
     const d = template.settings.advanced.diag;
     $('#adv-diag-title').text(clear(d.title));
-    $('#diag-apikey-label').text(clear(d.apiKeyLabel));
-    if (d.apiKeyConfigured) $('#diag-apikey').attr('data-configured', clear(d.apiKeyConfigured));
-    if (d.apiKeyFallback) $('#diag-apikey').attr('data-fallback', clear(d.apiKeyFallback));
     $('#open-logs span').text(clear(d.logsFolder));
     $('#open-userdata span').text(clear(d.dataFolder));
     $('#adv-goldberg-title').text(clear(d.goldbergTitle));
     $('#adv-goldberg-desc').text(clear(d.goldbergDesc));
     $('#scan-gbe span').text(clear(d.scanFolder));
   }
-  $('#steam-api-title').text(clear(template.settings.advanced.apiKey.title));
-  $('#steam-api-description').text(clear(template.settings.advanced.apiKey.description));
-  $('#steam-api-fallback').text(clear(template.settings.advanced.apiKey.fallback));
-  $('#steam-api-create').text(clear(template.settings.advanced.apiKey.create));
-  $('#steam-api-terms').text(clear(template.settings.advanced.apiKey.terms));
-  $('#steam-api-label').text(clear(template.settings.advanced.apiKey.label));
-  $('#steam-api-security').text(clear(template.settings.advanced.apiKey.security));
   selector = $('#options-mainSteam');
   $('#adv-mainsteam-title span').text(clear(template.settings.advanced.mainSteam.title));
   selector.find('li:nth-child(1) .left span').text(clear(template.settings.advanced.mainSteam.name));
@@ -612,7 +620,7 @@ function translateUI(lang, locale, template) {
   $('#nav-group-general').text(clear(template.settings.sideMenu.general));
   $('#nav-group-notification').text(clear(template.settings.sideMenu.notification));
   $('#nav-group-library').text(clear(template.settings.source.title || template.settings.sideMenu.source));
-  $('#nav-group-help').text(clear((template.settings.help && template.settings.help.nav) || 'Help'));
+  $('#nav-group-help').text(clear(template.settings.help.nav));
   $('#nav-group-advanced').text(clear(template.settings.sideMenu.advanced));
   $('#btn-settings-cancel').text(clear(template.settings.common.cancel));
   $('#btn-settings-save').text(clear(template.settings.common.save));

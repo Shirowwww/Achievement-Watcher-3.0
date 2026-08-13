@@ -8,7 +8,7 @@
 /*
   A section is a card with one of the three card headers; heroes and nested blocks are excluded.
 */
-const SECTION_SELECTOR = '.arrow-list, .emulator-group, .settings-card, #options-steam-api, #epic-connect, .emulator-login';
+const SECTION_SELECTOR = '.arrow-list, .emulator-group, .settings-card, #epic-connect, .emulator-login';
 
 /*
   The clickable header of a section, as a DIRECT child. Three shapes exist:

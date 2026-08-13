@@ -178,7 +178,7 @@
       "onboarding": {
         "name": "Průvodce prvním spuštěním",
         "button": "Otevřít průvodce",
-        "description": "Znovu otevřít průvodce nastavením: API klíč, profil, složky, zdroje a oznámení."
+        "description": "Znovu otevřete průvodce nastavením pro profil, složky, zdroje a oznámení."
       },
       "hardwareAccel": {
         "name": "Vypnout hardwarovou akceleraci",
@@ -266,14 +266,6 @@
           "true": "Zapnuto"
         }
       },
-      "mode": {
-        "name": "Režim emulátoru",
-        "description": "Regular vymění steam_api(64).dll hry. ColdClient ji ponechá a načte emulovaný steamclient z GBE Fork přes loader — širší pokrytí pro tvrdohlavé hry.",
-        "value": {
-          "regular": "Regular (vyměnit DLL)",
-          "coldclient": "ColdClient (GBE Fork)"
-        }
-      },
       "steamSettings": {
         "name": "Data steam_settings",
         "description": "Simple používá vlastní načítání Achievement Watcher (anonymně). Advanced spustí generate_emu_config pro pokrytí depotů/jazyků.",
@@ -320,14 +312,6 @@
         "value": {
           "false": "Vypnuto",
           "true": "Zapnuto"
-        }
-      },
-      "launchBat": {
-        "name": "Vytvořit Launch.bat jako záložní řešení",
-        "description": "Když Steamless nemůže odebrat exe SteamStub a AW přejde na ColdClient, zapíše také Launch.bat pro odpovídající loader.",
-        "value": {
-          "true": "Zapnuto",
-          "false": "Vypnuto"
         }
       },
       "checkUpdates": {
@@ -590,6 +574,10 @@
     },
     "source": {
       "title": "Zdroje her",
+      "officialPlatforms": {
+        "title": "Oficiální platformy",
+        "description": "Podporovány jsou Steam, Ubisoft Connect, GOG Galaxy, Epic Games a Xbox PC. Níže zapněte zdroje označené štítem; zobrazit lze pouze knihovny rozpoznané v tomto počítači."
+      },
       "legitSteam": {
         "name": "Zobrazit hry Steam",
         "description": "Steam musí být nainstalovaný a váš profil Steam veřejný !",
@@ -650,123 +638,86 @@
         "description": "Emulátor Xbox 360"
       }
     },
-    "guide": {
-      "nav": "Průvodce",
-      "title": "Průvodce platformami",
-      "intro": "Co Achievement Watcher skenuje, které složky jsou důležité a kdy se hodí generované konfigurace emulátorů.",
-      "quickTitle": "První kroky",
-      "quick": [
-        "Přidejte složky savů/konfigurací v Nastavení > Složky a potom zapněte odpovídající zdroj v Nastavení > Zdroje.",
-        "Složky knihoven použijte pro nainstalované hry, které zatím nevytvořily soubory achievementů.",
-        "Watchdog upozorňuje na nové změny až poté, co zná složku a zdroj je zapnutý."
-      ],
-      "steamTitle": "Emulátory Steamu",
-      "steam": [
-        "Saves GBE / Goldberg bývají v %APPDATA%\\GSE Saves nebo %APPDATA%\\Goldberg SteamEmu Saves.",
-        "Saves stylu CODEX / RUNE často leží v Public Documents\\Steam\\CODEX nebo Public Documents\\Steam\\RUNE.",
-        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 a Hoodlum se detekují z jejich složek konfigurací/savů."
-      ],
-      "emulatorTitle": "Konzolové emulátory",
-      "emulators": [
-        "Achievementy RPCS3 se čtou z dev_hdd0\\home\\...\\trophy poblíž instalace RPCS3.",
-        "Trofeje shadPS4 se čtou ze složek game_data/trophy v datech aplikace; zbytky trofejí nejsou důkaz instalace hry.",
-        "Postup Xenia se čte ze souborů profilu Xbox, například .gpd."
-      ],
-      "sourcesTitle": "Launchery a zdroje",
-      "sources": [
-        "Režim veřejného profilu Steamu vypíše nainstalované nebo vlastněné hry na Steamu, ale lokální odemčení stále pochází ze souborů savů.",
-        "GOG, Epic, Ubisoft Connect/LumaPlay a EA Desktop lze zapnout samostatně ve Zdroje.",
-        "Cracknuté instalace EA Desktop se čtou z EADesktopVerbose.log a jeho záložních logů."
-      ],
-      "configTitle": "Generované konfigurace",
-      "config": [
-        "Oprava emulátoru přes pravé tlačítko může přidat soubory GBE Fork, schémata achievementů, DLC data a pomocníky pro spuštění.",
-        "Jednoduchý režim je rychlý a používá data Achievement Watcheru; Pokročilý spouští generate_emu_config pro hlubší Steam data.",
-        "Pokročilé generování může trvat několik minut, hlavně s metadaty DLC/depotů."
-      ],
-      "troubleshootTitle": "Řešení problémů",
-      "troubleshoot": [
-        "Pokud hra chybí, po přidání složek spusťte sken znovu a zkontrolujte přepínač zdroje a blacklist.",
-        "Pokud chybí notifikace, zkontrolujte Pomocníka pro soustředění Windows a spusťte hru/app se stejnými právy správce.",
-        "Pokročilé > Diagnostika otevře logy a datové složky, když potřebujete zkontrolovat, co bylo skenováno."
-      ]
-    },
     "help": {
       "nav": "Nápověda",
       "title": "Nápověda a tipy",
       "intro": "Vše, co je užitečné vědět — detekce, oznámení, ovladač, overlay, motivy a řešení problémů.",
+      "setupTitle": "Vaše aktuální nastavení",
+      "topicsTitle": "Procházet podle tématu",
+      "searchPlaceholder": "Hledat v nápovědě…",
+      "noResults": "Vašemu hledání neodpovídá žádné téma nápovědy.",
       "quickTitle": "První kroky",
       "quick": [
-        "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
-        "The Watchdog runs in the background — it must be running for live notifications and playtime.",
-        "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+        "Přidejte složky s uloženými pozicemi/konfigurací v Nastavení > Složky a poté zapněte odpovídající zdroj v Nastavení > Zdroje.",
+        "Watchdog běží na pozadí — pro živá oznámení a měření herní doby musí být spuštěný.",
+        "Vše (nastavení, mezipaměti, protokoly a vlastní motivy) je uloženo v %APPDATA%\\Achievement Watcher 3.0.",
         "Každou sekci nastavení lze sbalit pod její záhlaví — šipka dolů znamená otevřeno, do strany zavřeno. Vaše volby se pamatují."
       ],
       "steamTitle": "Steam emulátory",
       "steam": [
-        "GBE / Goldberg saves are usually under %APPDATA%\\GSE Saves or %APPDATA%\\Goldberg SteamEmu Saves.",
-        "CODEX / RUNE saves often live under Public Documents\\Steam\\CODEX or Public Documents\\Steam\\RUNE.",
-        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 and Hoodlum are detected from their config/save folders."
+        "Uložené pozice GBE/Goldberg bývají v %APPDATA%\\GSE Saves nebo %APPDATA%\\Goldberg SteamEmu Saves.",
+        "Uložené pozice CODEX/RUNE se často nacházejí v Public Documents\\Steam\\CODEX nebo Public Documents\\Steam\\RUNE.",
+        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 a Hoodlum se rozpoznávají podle svých konfiguračních/ukládacích složek."
       ],
       "emulatorTitle": "Emulátory konzolí",
       "emulators": [
-        "RPCS3 trophies are read from dev_hdd0\\home\\...\\trophy near the RPCS3 install.",
-        "shadPS4 trophies are read from its app data game_data/trophy folders; leftover data is not install proof.",
-        "Xenia progress is read from Xbox profile files such as .gpd."
+        "Trofeje RPCS3 se načítají z dev_hdd0\\home\\...\\trophy poblíž instalace RPCS3.",
+        "Trofeje shadPS4 se načítají ze složek game_data/trophy v datech aplikace; zbylá data nejsou důkazem instalace.",
+        "Postup v Xenii se načítá ze souborů profilu Xbox, například .gpd."
       ],
       "sourcesTitle": "Spouštěče a zdroje",
       "sources": [
-        "Steam profile mode lists installed or owned games, but unlocks still come from local save files.",
-        "GOG, Epic, Ubisoft Connect/LumaPlay and EA Desktop can be enabled separately in Sources.",
-        "Owned Steam games count as installed only when Steam's registry confirms it."
+        "Režim profilu Steam zobrazí nainstalované nebo vlastněné hry, odemčení však stále pocházejí z místních uložených souborů.",
+        "GOG, Epic, Ubisoft Connect/LumaPlay a EA Desktop lze zapnout samostatně v části Zdroje.",
+        "Vlastněné hry na Steamu se považují za nainstalované jen tehdy, když to potvrdí registr Steamu."
       ],
       "controllerTitle": "Ovladač (gamepad)",
       "controller": [
-        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
-        "LB + X toggles in-overlay navigation.",
-        "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
-        "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
+        "Nejprve povolte Nastavení > Ovladač; poté Back + Start + LB otevře herní překryvnou vrstvu.",
+        "LB + X zapíná nebo vypíná navigaci v překryvu.",
+        "Režim navigace: směrový kříž/levá páčka přesouvají výběr, A potvrzuje, B ruší, X hledá a Y otevírá možnosti.",
+        "Podržením LB + RB přesunete překryv levou páčkou a pravou páčkou v něm posouváte.",
+        "Funguje s ovladači Xbox, PlayStation (DualShock 4 / DualSense) a Switch Pro."
       ],
       "overlayTitle": "Overlay ve hře",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
-        "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
-        "Press / to focus the search, Esc to clear it or close the options panel.",
-        "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
-        "Every achievement with a known rate shows its rarity: gray for common, gold/silver/bronze for rare."
+        "Otevřete ji klávesovou zkratkou překryvné vrstvy (ve výchozím nastavení Ctrl+Shift+K) nebo kombinací Back + Start + LB na ovladači.",
+        "Řaďte vždy podle jednoho sloupce: Vzácnost, Datum nebo Stav (vzestupně / sestupně / bez řazení).",
+        "Stisknutím / zaměříte hledání, klávesou Esc ho vymažete nebo zavřete panel možností.",
+        "Panel s ozubeným kolem mění zvýraznění, hustotu, přiblížení, průhlednost a viditelné řádky; „Použít motiv aplikace“ následuje aktivní motiv.",
+        "Každý úspěch se známou mírou ukazuje vzácnost: šedá pro běžné a zlatá/stříbrná/bronzová pro vzácné."
       ],
       "themesTitle": "Vlastní motivy",
       "themes": [
-        "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
-        "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+        "Vlastní motiv začíná jako Steam Blue; každou vrstvu (pozadí, záhlaví, panely, karty, nastavení, text, okraje a zvýraznění) lze upravit.",
+        "Obrázky vrstev leží pod barevným závojem s lehkým matným rozostřením; efekty se nastavují pro každou vrstvu.",
+        "Vložte motiv CSS do <userData>\\themes a objeví se v nabídce motivů.",
         "Tvůrce předvoleb umí ukázat návrh jako skutečné oznámení ještě před uložením, znovu otevřít uloženou předvolbu k úpravě a smazat ty, které si nenecháte."
       ],
       "configTitle": "Vygenerované konfigurace",
       "config": [
-        "The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.",
-        "Simple mode is fast; Advanced runs generate_emu_config for deeper Steam data and can take minutes."
+        "Oprava emulátoru v místní nabídce může přidat soubory GBE Fork, schémata úspěchů a data DLC.",
+        "Jednoduchý režim je rychlý; Pokročilý spouští generate_emu_config pro podrobnější data Steamu a může trvat několik minut."
       ],
       "shortcutsTitle": "Klávesové zkratky",
       "shortcuts": [
-        "Ctrl+Shift+K (default): toggle the in-game overlay — configurable in Settings > General.",
-        "Ctrl+Alt+Shift+Arrows move the overlay; Ctrl+Alt+Shift+1–5 snap it to a preset position.",
-        "Ctrl+Alt+Shift+C toggles click-through; Ctrl+F focuses Settings search."
+        "Ctrl+Shift+K (výchozí): zobrazí nebo skryje herní překryv — lze změnit v Nastavení > Obecné.",
+        "Ctrl+Alt+Shift+Šipky přesouvají překryv; Ctrl+Alt+Shift+1–5 ho přichytí na předvolenou pozici.",
+        "Ctrl+Alt+Shift+C přepíná propouštění kliknutí; Ctrl+F zaměří hledání v Nastavení."
       ],
       "tipsTitle": "Tipy a triky",
       "tips": [
-        "Right-click a game tile for quick actions: emulator fix, achievements, Steam page, GBE Fork install, uninstall.",
-        "Right-click a game and choose mute progress to stop progress popups without disabling unlocks.",
-        "The emulator fix (Simple fast / Advanced complete) installs GBE Fork, the achievements schema, DLCs and launch helpers.",
-        "Playtime is tracked while the game runs; progress and playtime notifications can be enabled in Notifications."
+        "Klikněte pravým tlačítkem na dlaždici hry pro rychlé akce: oprava emulátoru, úspěchy, stránka Steamu, instalace GBE Fork a odinstalace.",
+        "Klikněte pravým tlačítkem na hru a zvolte ztlumení postupu, čímž zastavíte oznámení o postupu bez vypnutí odemčení.",
+        "Oprava emulátoru (Jednoduchá rychlá / Pokročilá úplná) nainstaluje GBE Fork, schéma úspěchů a data DLC.",
+        "Herní doba se měří, když hra běží; oznámení o postupu a herní době lze zapnout v Oznámeních.",
+        "Nové úspěchy přidané aktualizací hry se objeví automaticky do 3 dnů nebo ihned přes Nastavení > Pokročilé > Znovu zkontrolovat seznamy úspěchů."
       ],
       "troubleshootTitle": "Řešení problémů",
       "troubleshoot": [
-        "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
-        "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+        "Pokud hra chybí: přidejte složky, spusťte nové hledání a zkontrolujte přepínač zdroje i seznam blokovaných.",
+        "Pokud se oznámení nezobrazují: zkontrolujte Pomocníka pro lepší soustředění ve Windows a spusťte aplikaci se stejnými právy jako hry.",
+        "Pokročilé > Diagnostika otevře protokoly a datové složky; při hlášení problému je přiložte.",
         "Protokoly se připojují, takže pád přežije další spuštění. Každý běh začíná značkou relace a blokem [diag] (verze, cesty, obrazovky) — vložte jej do hlášení."
       ]
     },
@@ -784,9 +735,6 @@
       },
       "diag": {
         "title": "Diagnostika",
-        "apiKeyLabel": "Klíč Steam Web API :",
-        "apiKeyConfigured": "nakonfigurováno",
-        "apiKeyFallback": "nenastaveno — používá se záložní načítání",
         "logsFolder": "Otevřít složku logů",
         "dataFolder": "Otevřít složku dat",
         "goldbergTitle": "Goldberg / GBE Fork",
@@ -798,34 +746,35 @@
       "blacklistInfo": "Klikněte pravým tlačítkem na dlaždici hry pro přidání na černou listinu.",
       "blacklistEmpty": "Žádné skryté hry.",
       "blacklistRestore": "Obnovit tuto hru",
-      "apiKey": {
-        "title": "Klíč Steam Web API",
-        "description": "Některá data Steamu vyžadují osobní klíč Steam Web API.",
-        "fallback": "Ponechte toto pole prázdné pro automatické načtení. Pokud selže, zadejte vlastní klíč.",
-        "create": "Vytvořit klíč API",
-        "terms": "Podmínky použití Steam API",
-        "label": "Váš klíč Steam Web API",
-        "security": "Klíč je před uložením do tohoto počítače šifrován pomocí AES-256-CBC."
-      },
       "mainSteam": {
         "title": "Hlavní účet Steam",
         "name": "Filtrovat podle uživatele",
         "description": "Zobrazit achievementy Steam pouze vybraného účtu"
       },
-      "checkUpdates": "Zkontrolovat aktualizace"
+      "checkUpdates": "Zkontrolovat aktualizace",
+      "clearUpdateCache": {
+        "name": "Vymazat mezipaměti",
+        "button": "Vymazat mezipaměti",
+        "description": "Odstraní znovu stažitelné mezipaměti: soubory aktualizace, mezipaměť schémat a ikon Steam/Ubisoft a stažené nástroje pro opravu emulátoru. Nikdy se nedotkne vašeho nastavení, uložených pozic, záloh ani ručně umístěných souborů."
+      },
+      "forceAchievementRecheck": {
+        "name": "Znovu zkontrolovat seznamy achievementů",
+        "button": "Zkontrolovat nyní",
+        "description": "Zkontroluje u Steamu, zda aktualizace hry nepřidala achievementy od poslední kontroly. Probíhá automaticky každé 3 dny; toto ji vynutí hned."
+      }
     }
   },
   "onboarding": {
     "settingsLabel": "Průvodce prvním spuštěním",
     "settingsButton": "Otevřete průvodce",
-    "settingsHelp": "Znovu otevřete průvodce nastavením pro klíč API, profil, složky, zdroje a oznámení.",
+    "settingsHelp": "Znovu otevřete průvodce nastavením pro profil, složky, zdroje a oznámení.",
+    "navLabel": "Kroky nastavení",
     "eyebrow": "První nastavení",
     "close": "Zavřít",
     "steps": [
       "Jazyk",
       "Jak to funguje",
       "Účet",
-      "API klíč",
       "Hry",
       "Nastavení"
     ],
@@ -841,7 +790,7 @@
     "watchTitle": "Sledovat",
     "watchCopy": "Watchdog na pozadí při spuštění hry rozpozná její spustitelný soubor, sleduje herní čas a soubory úspěchů, aby během hraní zobrazoval odemčení.",
     "fixTitle": "Opravit",
-    "fixCopy": "U emulovaných her Steam oprava z kontextové nabídky (nebo automatická oprava) nainstaluje GBE Fork a zapíše schéma achievements.json, data DLC a pomocné soubory pro spuštění do složky steam_settings hry.",
+    "fixCopy": "U emulovaných her Steam oprava z kontextové nabídky (nebo automatická oprava) nainstaluje GBE Fork a zapíše schéma achievements.json a data DLC do složky steam_settings hry.",
     "overlayTitle": "Overlay ve hře",
     "overlayCopy": "Malý panel achievementů, který můžete zobrazit nad hrou pomocí zkratky (výchozí Ctrl+Shift+K). Kdykoli ji můžete změnit v Nastavení > Obecné, vedle pole zkratky.",
     "profileTitle": "Profil",
@@ -851,13 +800,6 @@
     "avatarPick": "Vyberte fotografii",
     "avatarDefault": "Výchozí",
     "avatarHint": "Volitelné. Uloženo lokálně v tomto počítači.",
-    "apiTitle": "Klíč webového rozhraní API Steam",
-    "apiCopy": "Klíč zlepšuje načítání metadat Steam. Můžete jej nechat prázdné a přidat jej později.",
-    "apiWarning": "DŮLEŽITÉ: bez klíče API bude první načtení knihovny VELMI POMALÉ: každá hra se načte seškrábáním stránek Steam (několik sekund na hru). S klíčem je to téměř okamžité a přesnější. Okno zůstává během načítání použitelné, ale důrazně se doporučuje jedno přidat.",
-    "apiLabel": "Klíč webového rozhraní API Steam",
-    "apiToggle": "Zobrazit nebo skrýt klíč API",
-    "apiLink": "Získejte klíč Steam Web API",
-    "apiNote": "Použijte oficiální stránku Steam. Klíč je před uložením zašifrován.",
     "foldersTitle": "Přidejte hry na disk",
     "foldersCopy": "Přidejte složky pro ukládání/konfiguraci pro konkrétní emulátory a kořeny knihoven, které obsahují mnoho nainstalovaných her.",
     "addSave": "Přidat složku pro uložení",
@@ -1326,6 +1268,9 @@
     "rescan-started": "Znovu se prohledává {count} vybraných složek…",
     "rescan-complete": "Vybrané složky byly znovu prohledány.",
     "rescan-failed": "Sken vybraných složek selhal: {error}",
+    "force-recheck-started": "Hledají se nové achievementy…",
+    "force-recheck-done": "Kontrola dokončena.",
+    "force-recheck-failed": "Kontrola selhala: {error}",
     "no-game-found": "Nebyla nalezena žádná hra.",
     "invalid-folder": "Neplatná složka",
     "error-adding-custom-folder": "Chyba při přidávání vlastní složky",
@@ -1377,7 +1322,54 @@
     "theme-gradient-angle-135": "Nahoře vlevo → Dole vpravo",
     "theme-gradient-angle-180": "Shora dolů",
     "theme-gradient-angle-0": "Zdola nahoru",
-    "theme-gradient-angle-270": "Nahoře vpravo → Dole vlevo"
+    "theme-gradient-angle-270": "Nahoře vpravo → Dole vlevo",
+    "avatar-import-from-steam-user": "Importovat Steam avatara uživatele {name}",
+    "update-check-failed-detail": "Kontrola aktualizací selhala: {message}",
+    "diagnosis-emulator": "Emulátor: {emulator}",
+    "diagnosis-emulator-none": "žádný nenalezen",
+    "diagnosis-steam-settings": "steam_settings: {path}",
+    "diagnosis-steam-settings-missing": "steam_settings: nenalezeno",
+    "diagnosis-achievements-count": "úspěchy: {found} v souboru / {expected} ve schématu",
+    "diagnosis-no-problems": "Nebyly zjištěny žádné problémy.",
+    "diagnosis-auto-repair-wrote": "Automatická oprava zapsala {count} úspěchů do {path}",
+    "diagnosis-icons-summary": "ikony: {downloaded} staženo, {failed} selhalo, {skipped} přeskočeno",
+    "diagnosis-steam-appid-created": "steam_appid.txt vytvořen",
+    "diagnosis-configs-main-updated": "configs.main.ini aktualizován (new_app_ticket + gc_token)",
+    "diagnosis-configs-app-updated": "configs.app.ini aktualizován ({count} záznamů DLC, unlock_all={unlockAll})",
+    "diagnosis-configs-user-updated": "configs.user.ini aktualizován",
+    "diagnosis-auto-repair-failed": "Automatická oprava selhala: {error}",
+    "diagnosis-steam-appid": "Steam AppID: {appid} ({name})",
+    "diagnosis-steam-appid-not-resolved": "Steam AppID: nerozpoznán",
+    "version-app": "Aplikace",
+    "diagnosis-dlls-backed-up": "Stávající DLL uloženy jako *.bak",
+    "diagnosis-config-backed-up": "Předchozí konfigurace zálohována: {path}",
+    "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
+    "diagnosis-none-parenthesized": "(žádný)",
+    "diagnosis-version": "Verze: {version}",
+    "diagnosis-version-unknown": "neznámá",
+    "diagnosis-dlls-backed-up-locations": "Stávající DLL uloženy jako *.bak v {count} umístění",
+    "diagnosis-after-install": "Diagnostika po instalaci:",
+    "diagnosis-auto-repaired-steam-settings": "steam_settings automaticky opraveno (schéma + ikony + DLC) v {count} umístěních",
+    "diagnosis-auto-repair-failed-for": "Automatická oprava selhala pro: {paths}",
+    "diagnosis-dir-status-line": "{dir}: {status}",
+    "diagnosis-dir-status-ok": "ok",
+    "diagnosis-dir-status-attention": "vyžaduje pozornost",
+    "diagnosis-advanced-data-skipped": "Rozšířená data: přeskočeno (bez číselného AppID)",
+    "diagnosis-advanced-data-login-cancelled": "Rozšířená data: přihlášení zrušeno",
+    "diagnosis-advanced-data-merged": "Rozšířená data: {count} dalších souborů sloučeno (generate_emu_config {tag})",
+    "diagnosis-advanced-data-failed": "Rozšířená data: {error}",
+    "achievements-overlay-title": "Překryv úspěchů",
+    "update-retry-failed-message": "Aktualizace se nezdařila ani po vymazání souborů v mezipaměti ve složce {folder}.",
+    "update-retry-failed-detail": "Pravděpodobně jde o problém se sítí nebo vydáním, který vymazání mezipaměti nevyřeší. Aktualizaci můžete stáhnout a nainstalovat ručně ze stránky s vydáními.",
+    "open-release-page": "Otevřít stránku s vydáními",
+    "clear-cache": "Vymazat mezipaměti",
+    "clear-update-cache-label": "Vymazat mezipaměti",
+    "clear-update-cache-confirm": "Odstranit všechny znovu stažitelné mezipaměti (soubory aktualizace, mezipaměť schémat a ikon Steam/Ubisoft, stažené nástroje pro opravu emulátoru)? Vaše nastavení, uložené pozice, zálohy a ručně umístěné soubory nejsou nikdy dotčeny — vše, co je zde vymazáno, se v případě potřeby jednoduše automaticky znovu stáhne.",
+    "clear-update-cache-failed": "Mezipaměť aktualizací se nepodařilo vymazat.",
+    "clear-update-cache-empty": "Není co mazat — v mezipaměti nebyly nalezeny žádné soubory aktualizace.",
+    "clear-update-cache-done": "Mezipaměť aktualizací vymazána: {folder}",
+    "clear-update-cache-done-apps": "Vymazáno {count} složek mezipaměti.",
+    "clear-update-cache-done-all": "Vymazáno {count} složek mezipaměti, včetně mezipaměti aktualizací ve složce {folder}."
   },
   "watchdog": {
     "rare": "Vzácný {percent}%",

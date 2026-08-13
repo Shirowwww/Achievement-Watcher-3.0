@@ -33,6 +33,11 @@ module.exports.load = () => {
   try {
     options = ini.parse(fs.readFileSync(filename, 'utf8'));
 
+    if (!options.steam || typeof options.steam !== 'object' || Array.isArray(options.steam)) options.steam = {};
+    // Steam schemas are fully keyless now. Do not keep a removed credential alive in memory or
+    // write it back the next time another setting is saved.
+    delete options.steam.apiKey;
+
     if (!uiLanguages.has(options.achievement.lang)) {
       try {
         let locale = navigator.language || navigator.userLanguage || 'en';
@@ -423,25 +428,13 @@ module.exports.load = () => {
       options.action.hide = true;
     }
 
-    // Emulator Steam-login password — AES-encrypted on disk like the Steam Web API key.
+    // Emulator Steam-login password — AES-encrypted on disk.
     if (options.emulator && typeof options.emulator.loginPassword === 'string' && options.emulator.loginPassword.includes(':')) {
       try {
         options.emulator.loginPassword = aes.decrypt(options.emulator.loginPassword);
       } catch {
         options.emulator.loginPassword = '';
       }
-    }
-
-    //Steam Key
-
-    if (options.steam) {
-      if (options.steam.apiKey) {
-        if (options.steam.apiKey.includes(':')) {
-          options.steam.apiKey = aes.decrypt(options.steam.apiKey);
-        }
-      }
-    } else {
-      options.steam = {};
     }
 
   } catch (err) {
@@ -490,7 +483,7 @@ module.exports.load = () => {
         rpcs3: true,
         shadps4: true,
         xenia: true,
-        lumaPlay: false,
+        lumaPlay: true,
         gog: true,
         gogOfficial: true,
         ubisoftOfficial: true,
@@ -512,7 +505,7 @@ module.exports.load = () => {
         checkUpdates: true, // force a same-day GBE Fork release re-check before applying
         login: 'anonymous', // 'anonymous' | 'steam' (generate_emu_config richer data — throwaway account!)
         loginAccountName: '', // optional Steam login username (throwaway account)
-        loginPassword: '', // optional Steam login password — AES-encrypted on disk (like steam.apiKey)
+        loginPassword: '', // optional Steam login password — AES-encrypted on disk
         steamId: '', // optional account_steamid override for configs.user.ini ('' = let GBE pick)
       },
       notification: {
@@ -588,21 +581,7 @@ module.exports.save = (config) => {
       }
 
       if (!options.steam) options.steam = {};
-      if (typeof options.steam.apiKey === 'string' && options.steam.apiKey.length > 0) {
-        // A key was provided -> store it encrypted.
-        options.steam.apiKey = aes.encrypt(config.steam.apiKey);
-      } else if (options.steam.apiKey === '') {
-        // Explicit clear (empty string) -> drop it from the saved file.
-        delete options.steam.apiKey;
-      } else {
-        // Key not provided by this (possibly partial) save -> preserve whatever is already on disk.
-        // This prevents a background/partial settings write from silently wiping the user's API key
-        // (which then degrades the whole app to slow/unreliable scraping with no indication why).
-        try {
-          const existing = ini.parse(fs.readFileSync(filename, 'utf8'));
-          if (existing && existing.steam && existing.steam.apiKey) options.steam.apiKey = existing.steam.apiKey;
-        } catch {}
-      }
+      delete options.steam.apiKey;
 
     } catch (err) {
       return reject(err);
@@ -610,9 +589,7 @@ module.exports.save = (config) => {
     fs.mkdirSync(path.dirname(filename), { recursive: true });
     fs.writeFileSync(filename, ini.stringify(options), 'utf8');
     // Tell the main process to reload its cached config. The daemon loads options.ini once at startup
-    // and otherwise keeps the in-memory copy, so a Steam Web API key entered during onboarding (or in
-    // Settings) would not reach the main-process data paths — the key-driven fast schema fetch, the
-    // background emulator auto-fix, overlay/notification lookups — until the next restart. This module
+    // and otherwise keeps the in-memory copy. This module
     // is also require()d by the main process itself (where ipcRenderer is absent), so guard the send.
     try {
       const { ipcRenderer } = require('electron');

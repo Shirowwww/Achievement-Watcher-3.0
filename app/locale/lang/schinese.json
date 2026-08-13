@@ -178,7 +178,7 @@
       "onboarding": {
         "name": "首次运行向导",
         "button": "打开向导",
-        "description": "重新打开设置向导：API 密钥、个人资料、文件夹、来源和通知。"
+        "description": "重新打开设置指南，了解个人资料、文件夹、来源和通知。"
       },
       "hardwareAccel": {
         "name": "禁用硬件加速",
@@ -266,14 +266,6 @@
           "true": "已启用"
         }
       },
-      "mode": {
-        "name": "模拟器模式",
-        "description": "Regular 替换游戏的 steam_api(64).dll。ColdClient 保留它，并通过加载器加载 GBE Fork 的模拟 steamclient — 对顽固游戏覆盖更广。",
-        "value": {
-          "regular": "Regular（替换 DLL）",
-          "coldclient": "ColdClient (GBE Fork)"
-        }
-      },
       "steamSettings": {
         "name": "steam_settings 数据",
         "description": "Simple 使用 Achievement Watcher 自身的获取（匿名）。Advanced 运行 generate_emu_config 以覆盖仓库/语言。",
@@ -320,14 +312,6 @@
         "value": {
           "false": "已禁用",
           "true": "已启用"
-        }
-      },
-      "launchBat": {
-        "name": "创建 Launch.bat 作为后备",
-        "description": "当 Steamless 无法剥离 SteamStub exe 且 AW 回退到 ColdClient 时，同时为对应的加载器写入一个 Launch.bat。",
-        "value": {
-          "true": "已启用",
-          "false": "已禁用"
         }
       },
       "checkUpdates": {
@@ -590,6 +574,10 @@
     },
     "source": {
       "title": "游戏来源",
+      "officialPlatforms": {
+        "title": "官方平台",
+        "description": "这里支持 Steam、Ubisoft Connect、GOG Galaxy、Epic Games 和 Xbox PC。请启用下方带盾牌标记的来源；只能显示此电脑上检测到的游戏库。"
+      },
       "legitSteam": {
         "name": "显示 Steam 游戏",
         "description": "Steam 必须已安装，且你的 Steam 个人资料须为公开！",
@@ -650,123 +638,86 @@
         "description": "Xbox 360 模拟器"
       }
     },
-    "guide": {
-      "nav": "指南",
-      "title": "平台指南",
-      "intro": "Achievement Watcher 会扫描什么、哪些文件夹重要，以及何时需要生成的模拟器配置。",
-      "quickTitle": "第一步",
-      "quick": [
-        "在 设置 > 文件夹 中添加存档/配置文件夹，然后在 设置 > 来源 中启用对应来源。",
-        "对于尚未生成成就文件的已安装游戏，请使用游戏库文件夹。",
-        "Watchdog 只有在文件夹已知且来源已启用后，才会通知新的变化。"
-      ],
-      "steamTitle": "Steam 模拟器",
-      "steam": [
-        "GBE / Goldberg 存档通常位于 %APPDATA%\\GSE Saves 或 %APPDATA%\\Goldberg SteamEmu Saves。",
-        "CODEX / RUNE 风格的存档常位于 Public Documents\\Steam\\CODEX 或 Public Documents\\Steam\\RUNE。",
-        "TENOKE、UniverseLAN、SmartSteamEmu、ALI213 和 Hoodlum 会从各自的配置/存档文件夹中检测。"
-      ],
-      "emulatorTitle": "主机模拟器",
-      "emulators": [
-        "RPCS3 成就会从 RPCS3 安装目录附近的 dev_hdd0\\home\\...\\trophy 读取。",
-        "shadPS4 奖杯会从其 app data 的 game_data/trophy 文件夹读取；残留奖杯数据不能证明游戏已安装。",
-        "Xenia 进度会从 .gpd 等 Xbox 资料文件读取。"
-      ],
-      "sourcesTitle": "启动器和来源",
-      "sources": [
-        "Steam 公开资料模式会列出已安装或拥有的 Steam 游戏，但本地解锁仍来自存档文件。",
-        "GOG、Epic、Ubisoft Connect/LumaPlay 和 EA Desktop 可在 来源 中分别启用。",
-        "破解的 EA Desktop 安装会从 EADesktopVerbose.log 及其备份日志读取。"
-      ],
-      "configTitle": "生成的配置",
-      "config": [
-        "右键模拟器修复可添加 GBE Fork 文件、成就架构、DLC 数据和启动辅助。",
-        "简单模式速度快并使用 Achievement Watcher 数据；高级模式会运行 generate_emu_config 以获取更完整的 Steam 数据。",
-        "高级生成可能需要几分钟，尤其是包含 DLC/depot 元数据时。"
-      ],
-      "troubleshootTitle": "故障排除",
-      "troubleshoot": [
-        "如果缺少游戏，请在添加文件夹后重新扫描，然后检查来源开关和黑名单。",
-        "如果没有通知，请检查 Windows 专注助手，并使用匹配的管理员权限运行游戏/app。",
-        "高级 > 诊断 会在需要检查扫描内容时打开日志和数据文件夹。"
-      ]
-    },
     "help": {
       "nav": "帮助",
       "title": "帮助与提示",
       "intro": "一切有用的信息 — 检测、通知、控制器、悬浮窗、主题和故障排除。",
+      "setupTitle": "当前设置",
+      "topicsTitle": "按主题浏览",
+      "searchPlaceholder": "搜索帮助…",
+      "noResults": "没有与搜索内容匹配的帮助主题。",
       "quickTitle": "快速上手",
       "quick": [
-        "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
-        "The Watchdog runs in the background — it must be running for live notifications and playtime.",
-        "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+      "在“设置 > 文件夹”中添加存档/配置文件夹，然后在“设置 > 来源”中启用相应来源。",
+      "Watchdog 在后台运行；要接收实时通知并记录游戏时间，必须保持其运行。",
+        "所有数据（设置、缓存、日志和自定义主题）都位于 %APPDATA%\\Achievement Watcher 3.0。",
         "每个设置分区都可以在其标题下折叠——展开时箭头朝下，折叠时朝向侧面。你的选择会被记住。"
       ],
       "steamTitle": "Steam 模拟器",
       "steam": [
-        "GBE / Goldberg saves are usually under %APPDATA%\\GSE Saves or %APPDATA%\\Goldberg SteamEmu Saves.",
-        "CODEX / RUNE saves often live under Public Documents\\Steam\\CODEX or Public Documents\\Steam\\RUNE.",
-        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 and Hoodlum are detected from their config/save folders."
+      "GBE / Goldberg 存档通常位于 %APPDATA%\\GSE Saves 或 %APPDATA%\\Goldberg SteamEmu Saves。",
+      "CODEX / RUNE 存档通常位于 Public Documents\\Steam\\CODEX 或 Public Documents\\Steam\\RUNE。",
+      "TENOKE、UniverseLAN、SmartSteamEmu、ALI213 和 Hoodlum 会通过各自的配置/存档文件夹进行检测。"
       ],
       "emulatorTitle": "主机模拟器",
       "emulators": [
-        "RPCS3 trophies are read from dev_hdd0\\home\\...\\trophy near the RPCS3 install.",
-        "shadPS4 trophies are read from its app data game_data/trophy folders; leftover data is not install proof.",
-        "Xenia progress is read from Xbox profile files such as .gpd."
+      "RPCS3 奖杯从 RPCS3 安装目录附近的 dev_hdd0\\home\\...\\trophy 中读取。",
+      "shadPS4 奖杯从其应用数据的 game_data/trophy 文件夹中读取；残留数据不能证明游戏仍已安装。",
+      "Xenia 进度从 .gpd 等 Xbox 配置文件中读取。"
       ],
       "sourcesTitle": "启动器与来源",
       "sources": [
-        "Steam profile mode lists installed or owned games, but unlocks still come from local save files.",
-        "GOG, Epic, Ubisoft Connect/LumaPlay and EA Desktop can be enabled separately in Sources.",
-        "Owned Steam games count as installed only when Steam's registry confirms it."
+      "Steam 个人资料模式会列出已安装或已拥有的游戏，但解锁状态仍来自本地存档文件。",
+      "GOG、Epic、Ubisoft Connect/LumaPlay 和 EA Desktop 可在“来源”中分别启用。",
+      "只有 Steam 注册表确认后，已拥有的 Steam 游戏才会被视为已安装。"
       ],
       "controllerTitle": "控制器（手柄）",
       "controller": [
-        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
-        "LB + X toggles in-overlay navigation.",
-        "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
-        "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
+        "请先启用“设置 > 控制器”，然后按 Back + Start + LB 打开游戏内叠加层。",
+      "LB + X 可切换悬浮窗内导航。",
+      "导航模式：方向键/左摇杆移动焦点，A 确认，B 取消，X 搜索，Y 打开选项。",
+      "按住 LB + RB，用左摇杆移动悬浮窗，用右摇杆滚动。",
+      "支持 Xbox、PlayStation（DualShock 4 / DualSense）和 Switch Pro 控制器。"
       ],
       "overlayTitle": "游戏内悬浮窗",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
-        "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
-        "Press / to focus the search, Esc to clear it or close the options panel.",
-        "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
-        "Every achievement with a known rate shows its rarity: gray for common, gold/silver/bronze for rare."
+        "使用叠加层快捷键（默认为 Ctrl+Shift+K）或控制器上的 Back + Start + LB 打开它。",
+      "每次按一列排序：稀有度、日期或状态（升序/降序/无）。",
+      "按 / 聚焦搜索框；按 Esc 清除搜索或关闭选项面板。",
+      "齿轮面板可调整强调色、密度、缩放、不透明度和可见行数；“使用应用主题”会跟随当前主题。",
+      "所有解锁率已知的成就都会显示稀有度：常见为灰色，稀有为金色/银色/铜色。"
       ],
       "themesTitle": "自定义主题",
       "themes": [
-        "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
-        "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+      "“自定义”以 Steam Blue 为初始样式；每个图层（背景、标题栏、面板、卡片、设置、文本、边框、强调色）均可编辑。",
+      "图层图像位于带轻微毛玻璃模糊的彩色遮罩之下；效果可按图层设置。",
+      "将 CSS 主题放入 <userData>\\themes，它就会出现在主题下拉列表中。",
         "预设创建器可以在保存前以真实弹窗预览设计、重新打开已保存的预设进行修改，并删除不需要的预设。"
       ],
       "configTitle": "生成的配置",
       "config": [
-        "The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.",
-        "Simple mode is fast; Advanced runs generate_emu_config for deeper Steam data and can take minutes."
+      "右键模拟器修复可添加 GBE Fork 文件、成就架构和 DLC 数据。",
+      "简单模式速度快；高级模式会运行 generate_emu_config 以获取更完整的 Steam 数据，可能需要几分钟。"
       ],
       "shortcutsTitle": "键盘快捷键",
       "shortcuts": [
-        "Ctrl+Shift+K (default): toggle the in-game overlay — configurable in Settings > General.",
-        "Ctrl+Alt+Shift+Arrows move the overlay; Ctrl+Alt+Shift+1–5 snap it to a preset position.",
-        "Ctrl+Alt+Shift+C toggles click-through; Ctrl+F focuses Settings search."
+      "Ctrl+Shift+K（默认）：切换游戏内悬浮窗；可在“设置 > 常规”中修改。",
+      "Ctrl+Alt+Shift+方向键移动悬浮窗；Ctrl+Alt+Shift+1–5 将其吸附到预设位置。",
+      "Ctrl+Alt+Shift+C 切换点击穿透；Ctrl+F 聚焦“设置”搜索框。"
       ],
       "tipsTitle": "提示与技巧",
       "tips": [
-        "Right-click a game tile for quick actions: emulator fix, achievements, Steam page, GBE Fork install, uninstall.",
-        "Right-click a game and choose mute progress to stop progress popups without disabling unlocks.",
-        "The emulator fix (Simple fast / Advanced complete) installs GBE Fork, the achievements schema, DLCs and launch helpers.",
-        "Playtime is tracked while the game runs; progress and playtime notifications can be enabled in Notifications."
+      "右键单击游戏磁贴可快速执行：模拟器修复、查看成就、打开 Steam 页面、安装 GBE Fork、卸载。",
+      "右键单击游戏并选择“静音进度”，可停止进度弹窗而不禁用解锁通知。",
+      "模拟器修复（简单：快速/高级：完整）会安装 GBE Fork、成就架构和 DLC 数据。",
+      "游戏运行时会记录游戏时间；可在“通知”中启用进度和游戏时间通知。",
+        "游戏更新新增的成就会在 3 天内自动显示；也可以前往“设置 > 高级 > 重新检查成就列表”立即检查。"
       ],
       "troubleshootTitle": "故障排除",
       "troubleshoot": [
-        "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
-        "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+      "如果缺少游戏：添加文件夹并重新扫描，然后检查来源开关和黑名单。",
+      "如果通知未出现：检查 Windows 专注助手，并以与游戏相同的权限运行应用。",
+      "“高级 > 诊断”可打开日志和数据文件夹；报告问题时请附上这些文件。",
         "日志采用追加写入，因此崩溃记录不会被下次启动覆盖。每次运行都以会话标记和 [diag] 区块（版本、路径、显示器）开头——请粘贴到问题报告中。"
       ]
     },
@@ -784,9 +735,6 @@
       },
       "diag": {
         "title": "诊断",
-        "apiKeyLabel": "Steam Web API 密钥：",
-        "apiKeyConfigured": "已配置",
-        "apiKeyFallback": "未设置 — 使用后备抓取",
         "logsFolder": "打开日志文件夹",
         "dataFolder": "打开数据文件夹",
         "goldbergTitle": "Goldberg / GBE Fork",
@@ -798,34 +746,35 @@
       "blacklistInfo": "右键点击游戏卡片可将其加入黑名单。",
       "blacklistEmpty": "没有隐藏的游戏。",
       "blacklistRestore": "恢复此游戏",
-      "apiKey": {
-        "title": "Steam Web API 密钥",
-        "description": "某些 Steam 数据需要个人的 Steam Web API 密钥。",
-        "fallback": "将此字段留空以使用自动获取。如果失败，请输入你自己的密钥。",
-        "create": "创建 API 密钥",
-        "terms": "Steam API 使用条款",
-        "label": "你的 Steam Web API 密钥",
-        "security": "密钥在保存到此计算机之前会使用 AES-256-CBC 加密。"
-      },
       "mainSteam": {
         "title": "Steam 主账号",
         "name": "按用户筛选",
         "description": "仅显示所选账号的 Steam 成就"
       },
-      "checkUpdates": "检查更新"
+      "checkUpdates": "检查更新",
+      "clearUpdateCache": {
+        "name": "清除缓存",
+        "button": "清除缓存",
+        "description": "删除可重新下载的缓存:更新文件、Steam/Ubisoft 架构和图标缓存,以及已下载的模拟器修复工具。绝不会触碰您的设置、存档、备份或手动放置的文件。"
+      },
+      "forceAchievementRecheck": {
+        "name": "重新检查成就列表",
+        "button": "立即检查",
+        "description": "向 Steam 查询自上次检查以来游戏更新是否新增了成就。此操作通常每 3 天自动执行一次;此按钮会立即强制执行。"
+      }
     }
   },
   "onboarding": {
     "settingsLabel": "首次运行指南",
     "settingsButton": "打开指南",
-    "settingsHelp": "重新打开 API 密钥、配置文件、文件夹、源和通知的设置指南。",
+    "settingsHelp": "重新打开设置指南，了解个人资料、文件夹、来源和通知。",
+    "navLabel": "设置步骤",
     "eyebrow": "首次设置",
     "close": "关闭",
     "steps": [
       "语言",
       "它是如何运作的",
       "帐户",
-      "API密钥",
       "游戏",
       "设置"
     ],
@@ -841,7 +790,7 @@
     "watchTitle": "监控",
     "watchCopy": "后台 Watchdog 会在游戏启动时检测其可执行文件，记录游戏时间并监控成就文件，以便在游玩时显示解锁通知。",
     "fixTitle": "修复",
-    "fixCopy": "对于模拟的 Steam 游戏，右键修复（或自动修复）会安装 GBE Fork，并将 achievements.json 架构、DLC 数据和启动辅助文件写入游戏的 steam_settings 文件夹。",
+    "fixCopy": "对于模拟的 Steam 游戏，右键修复（或自动修复）会安装 GBE Fork，并将 achievements.json 架构和 DLC 数据写入游戏的 steam_settings 文件夹。",
     "overlayTitle": "游戏内叠加层",
     "overlayCopy": "一个可以通过快捷键（默认 Ctrl+Shift+K）呼出的小型成就面板，叠加显示在游戏画面上。可随时在 设置 > 常规 中快捷键字段旁边更改。",
     "profileTitle": "轮廓",
@@ -851,13 +800,6 @@
     "avatarPick": "选择照片",
     "avatarDefault": "默认",
     "avatarHint": "选修的。本地存储在此 PC 上。",
-    "apiTitle": "Steam Web API 密钥",
-    "apiCopy": "一键改进了 Steam 元数据检索。您可以将其留空并稍后添加。",
-    "apiWarning": "重要提示：如果没有 API 密钥，第一次库加载将会非常慢：每个游戏都是通过抓取 Steam 页面来获取的（每个游戏需要几秒钟）。通过按键，它几乎是即时的并且更准确。该窗口在加载时保持可用，但强烈建议添加一个。",
-    "apiLabel": "Steam Web API 密钥",
-    "apiToggle": "显示或隐藏 API 密钥",
-    "apiLink": "获取 Steam Web API 密钥",
-    "apiNote": "使用 Steam 官方页面。密钥在保存之前已加密。",
     "foldersTitle": "在磁盘上添加游戏",
     "foldersCopy": "为特定模拟器添加保存/配置文件夹，以及包含许多已安装游戏的库根目录。",
     "addSave": "添加保存文件夹",
@@ -1326,6 +1268,9 @@
     "rescan-started": "正在重新扫描 {count} 个所选文件夹…",
     "rescan-complete": "已重新扫描所选文件夹。",
     "rescan-failed": "扫描所选文件夹失败：{error}",
+    "force-recheck-started": "正在检查新成就…",
+    "force-recheck-done": "检查完成。",
+    "force-recheck-failed": "检查失败：{error}",
     "no-game-found": "未找到游戏。",
     "invalid-folder": "无效文件夹",
     "error-adding-custom-folder": "添加自定义文件夹时出错",
@@ -1377,7 +1322,54 @@
     "theme-gradient-angle-135": "左上 → 右下",
     "theme-gradient-angle-180": "上 → 下",
     "theme-gradient-angle-0": "下 → 上",
-    "theme-gradient-angle-270": "右上 → 左下"
+    "theme-gradient-angle-270": "右上 → 左下",
+    "avatar-import-from-steam-user": "导入 {name} 的 Steam 头像",
+    "update-check-failed-detail": "检查更新失败：{message}",
+    "diagnosis-emulator": "模拟器：{emulator}",
+    "diagnosis-emulator-none": "未检测到",
+    "diagnosis-steam-settings": "steam_settings：{path}",
+    "diagnosis-steam-settings-missing": "steam_settings：未找到",
+    "diagnosis-achievements-count": "成就：文件内 {found} / 架构内 {expected}",
+    "diagnosis-no-problems": "未检测到问题。",
+    "diagnosis-auto-repair-wrote": "自动修复已将 {count} 个成就写入 {path}",
+    "diagnosis-icons-summary": "图标：{downloaded} 个已下载，{failed} 个失败，{skipped} 个已跳过",
+    "diagnosis-steam-appid-created": "steam_appid.txt 已创建",
+    "diagnosis-configs-main-updated": "configs.main.ini 已更新（new_app_ticket + gc_token）",
+    "diagnosis-configs-app-updated": "configs.app.ini 已更新（{count} 条 DLC 条目，unlock_all={unlockAll}）",
+    "diagnosis-configs-user-updated": "configs.user.ini 已更新",
+    "diagnosis-auto-repair-failed": "自动修复失败：{error}",
+    "diagnosis-steam-appid": "Steam AppID：{appid}（{name}）",
+    "diagnosis-steam-appid-not-resolved": "Steam AppID：未解析",
+    "version-app": "应用",
+    "diagnosis-dlls-backed-up": "现有 DLL 已备份为 *.bak",
+    "diagnosis-config-backed-up": "之前的配置已备份：{path}",
+    "diagnosis-ach-key-prefix": "AchKeyPrefix：{prefix}",
+    "diagnosis-none-parenthesized": "（无）",
+    "diagnosis-version": "版本：{version}",
+    "diagnosis-version-unknown": "未知",
+    "diagnosis-dlls-backed-up-locations": "现有 DLL 已备份为 *.bak，共 {count} 个位置",
+    "diagnosis-after-install": "安装后诊断：",
+    "diagnosis-auto-repaired-steam-settings": "steam_settings 已自动修复（架构 + 图标 + DLC），共 {count} 个位置",
+    "diagnosis-auto-repair-failed-for": "自动修复失败：{paths}",
+    "diagnosis-dir-status-line": "{dir}：{status}",
+    "diagnosis-dir-status-ok": "正常",
+    "diagnosis-dir-status-attention": "需要关注",
+    "diagnosis-advanced-data-skipped": "高级数据：已跳过（无数字 AppID）",
+    "diagnosis-advanced-data-login-cancelled": "高级数据：登录已取消",
+    "diagnosis-advanced-data-merged": "高级数据：已合并 {count} 个额外文件（generate_emu_config {tag}）",
+    "diagnosis-advanced-data-failed": "高级数据：{error}",
+    "achievements-overlay-title": "成就悬浮窗",
+    "update-retry-failed-message": "即使清除了 {folder} 中的缓存文件，更新仍然失败。",
+    "update-retry-failed-detail": "这很可能是网络或发布方面的问题，清除缓存无法解决。您可以从发布页面手动下载并安装更新。",
+    "open-release-page": "打开发布页面",
+    "clear-cache": "清除缓存",
+    "clear-update-cache-label": "清除缓存",
+    "clear-update-cache-confirm": "删除所有可重新下载的缓存(更新文件、Steam/Ubisoft 架构和图标缓存、已下载的模拟器修复工具)？您的设置、存档、备份和手动放置的文件永远不会被触碰——此处清除的所有内容都会在需要时自动重新下载。",
+    "clear-update-cache-failed": "无法清除更新缓存。",
+    "clear-update-cache-empty": "没有可清除的内容——未找到缓存的更新文件。",
+    "clear-update-cache-done": "更新缓存已清除：{folder}",
+    "clear-update-cache-done-apps": "已清除 {count} 个缓存文件夹。",
+    "clear-update-cache-done-all": "已清除 {count} 个缓存文件夹,包括 {folder} 中的更新缓存。"
   },
   "watchdog": {
     "rare": "稀有 {percent}%",

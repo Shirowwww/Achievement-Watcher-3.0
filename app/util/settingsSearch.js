@@ -6,7 +6,7 @@
   Kept DOM-free on purpose. The settings panel is translated positionally — locale/loader.js binds
   most labels with `li:nth-child(n)` — so the filter must hide rows rather than move or remove them,
   and the selectors it walks are as much a part of the contract as the matching itself. Both live
-  here so test/settingsSearch.test.js can exercise them against the real app.html without a browser.
+  here so test/ui/settingsSearch.test.js can exercise them against the real app.html without a browser.
 */
 
 /*
@@ -20,7 +20,7 @@ const ROW_SELECTOR = 'li, .emulator-login, .emulator-hero, .help-panel';
 
 // Blocks that should disappear once every row inside them is filtered out, so a filtered tab shows
 // matching sections instead of a column of empty headers.
-const BLOCK_SELECTOR = 'ul, .arrow-list, .emulator-group, .settings-card, #options-steam-api, #epic-connect';
+const BLOCK_SELECTOR = 'ul, .arrow-list, .emulator-group, .settings-card, #epic-connect';
 
 function normalize(text) {
   return String(text == null ? '' : text)

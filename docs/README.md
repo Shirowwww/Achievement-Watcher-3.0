@@ -24,7 +24,14 @@ Read in order, or jump to what you need - every page ends with a link to the nex
 | 6 | [Uplay R2 setup](uplay-r2.md) | The Ubisoft equivalent, for compatible titles |
 | 7 | [Troubleshooting](troubleshooting.md) | Discovery, progress, notification and playtime issues |
 
-The in-app **Settings → Help** tab is the quickest reference for normal use.
+The in-app **Settings → Help** tab is the quickest reference for normal use. It
+reflects your actual configuration (overlay hotkey, controller layout and
+bindings, notification mode, theme, enabled sources) and filters its compact
+topic cards as you type.
+
+Games with DLC or update achievements show the owning group (e.g. a "Hearts of
+Stone" tag) under each achievement in the detail view; it is fetched keylessly
+from SteamHunters and never affects games without groups.
 
 ## Build and reference
 

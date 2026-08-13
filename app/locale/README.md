@@ -2,8 +2,6 @@
 
 Achievement Watcher loads interface text from `app/locale/lang`. English is the reference locale. When the selected language does not provide game metadata, the upstream game source may return English instead.
 
-The Steam Web API key disclaimer remains in English by design.
-
 <p align="center"><a href="../../README.md">← Project home</a> · <a href="../../CONTRIBUTING.md">Contributing</a></p>
 
 ## Bundled languages
@@ -46,7 +44,9 @@ npm test
 Pop-Location
 ```
 
-The locale test compares recursive key paths and rejects missing or empty values. A top-level object count is not enough to prove parity.
+The locale test compares recursive key paths and rejects missing or empty values. It also rejects
+Help-panel prose copied verbatim from English into another language. A top-level object count is not
+enough to prove parity or a completed translation.
 
 ## Layout overrides
 
@@ -82,7 +82,7 @@ The standalone Watchdog process cannot load the renderer locale files, so the
 small `watchdog` section of every locale is mirrored in `watchdog/locale.json`
 (same keys, generated from `app/locale/lang`). When adding or changing a
 `watchdog.*` key, update `watchdog/locale.json` too - the
-`test/watchdogLocale.test.js` suite enforces the mirror.
+`test/integration/watchdogLocale.test.js` suite enforces the mirror.
 
 ## Translation credits
 
@@ -95,7 +95,7 @@ The current translation set builds on work from the original Achievement Watcher
 | German | Anthony Beaumont, [Shanas377](https://github.com/Shanas377), [shakeyourbunny](https://github.com/shakeyourbunny) |
 | Hungarian | [Roschach96](https://github.com/Roschach96) |
 | Italian | pollolollo9001 |
-| Brazilian Portuguese | [wallis6n](https://github.com/wallis6n), [Ardente07](https://github.com/Ardente07) |
+| Brazilian Portuguese | wallis6n, Ardente07 |
 | Russian | [hugmouse](https://github.com/hugmouse), [kochetov2000](https://github.com/kochetov2000) |
 | Spanish and Latin American Spanish | [1024mb](https://github.com/1024mb) |
 | Thai and early Japanese work | Anthony Beaumont and the original localization sources |

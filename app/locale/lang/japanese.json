@@ -178,7 +178,7 @@
       "onboarding": {
         "name": "初回起動ガイド",
         "button": "ガイドを開く",
-        "description": "API キー、プロフィール、フォルダー、ソース、通知のセットアップガイドを再度開きます。"
+        "description": "プロフィール、フォルダー、ソース、通知のセットアップガイドを再度開きます。"
       },
       "hardwareAccel": {
         "name": "ハードウェアアクセラレーションを無効化",
@@ -266,14 +266,6 @@
           "true": "有効"
         }
       },
-      "mode": {
-        "name": "エミュレーターモード",
-        "description": "Regular はゲームの steam_api(64).dll を差し替えます。ColdClient はそれを残し、ローダー経由で GBE Fork のエミュレート steamclient を読み込みます — 手強いゲームに対してより広い対応。",
-        "value": {
-          "regular": "Regular (DLL を差し替え)",
-          "coldclient": "ColdClient (GBE Fork)"
-        }
-      },
       "steamSettings": {
         "name": "steam_settings データ",
         "description": "Simple は Achievement Watcher 独自の取得（匿名）を使用します。Advanced はデポ／言語対応のため generate_emu_config を実行します。",
@@ -320,14 +312,6 @@
         "value": {
           "false": "無効",
           "true": "有効"
-        }
-      },
-      "launchBat": {
-        "name": "フォールバック用に Launch.bat を作成",
-        "description": "Steamless が SteamStub の exe を解除できず AW が ColdClient にフォールバックする場合、対応するローダー用に Launch.bat も書き込みます。",
-        "value": {
-          "true": "有効",
-          "false": "無効"
         }
       },
       "checkUpdates": {
@@ -590,6 +574,10 @@
     },
     "source": {
       "title": "ゲームソース",
+      "officialPlatforms": {
+        "title": "公式プラットフォーム",
+        "description": "Steam、Ubisoft Connect、GOG Galaxy、Epic Games、Xbox PC に対応しています。下の盾マーク付きソースを有効にしてください。この PC で検出されたライブラリのみ表示できます。"
+      },
       "legitSteam": {
         "name": "Steam ゲームを表示",
         "description": "Steam がインストールされ、Steam プロフィールが公開されている必要があります！",
@@ -650,123 +638,86 @@
         "description": "Xbox 360 エミュレーター"
       }
     },
-    "guide": {
-      "nav": "ガイド",
-      "title": "プラットフォームガイド",
-      "intro": "Achievement Watcher がスキャンするもの、重要なフォルダー、生成されたエミュレーター設定が役立つ場面。",
-      "quickTitle": "最初の手順",
-      "quick": [
-        "設定 > フォルダーでセーブ/設定フォルダーを追加し、設定 > ソースで対応するソースを有効にします。",
-        "まだ実績ファイルを作成していないインストール済みゲームには、ライブラリフォルダーを使います。",
-        "Watchdog はフォルダーが認識され、ソースが有効になってから新しい変更だけを通知します。"
-      ],
-      "steamTitle": "Steam エミュレーター",
-      "steam": [
-        "GBE / Goldberg のセーブは通常 %APPDATA%\\GSE Saves または %APPDATA%\\Goldberg SteamEmu Saves にあります。",
-        "CODEX / RUNE 形式のセーブは Public Documents\\Steam\\CODEX または Public Documents\\Steam\\RUNE にあることが多いです。",
-        "TENOKE、UniverseLAN、SmartSteamEmu、ALI213、Hoodlum はそれぞれの設定/セーブフォルダーから検出されます。"
-      ],
-      "emulatorTitle": "コンソールエミュレーター",
-      "emulators": [
-        "RPCS3 の実績は RPCS3 インストール付近の dev_hdd0\\home\\...\\trophy から読み取られます。",
-        "shadPS4 のトロフィーは app data の game_data/trophy フォルダーから読み取られます。残ったトロフィーデータだけではゲームのインストール証明にはなりません。",
-        "Xenia の進行状況は .gpd などの Xbox プロファイルファイルから読み取られます。"
-      ],
-      "sourcesTitle": "ランチャーとソース",
-      "sources": [
-        "Steam 公開プロフィールモードはインストール済みまたは所有済みの Steam ゲームを一覧しますが、ローカル解除は引き続きセーブファイルから取得されます。",
-        "GOG、Epic、Ubisoft Connect/LumaPlay、EA Desktop はソースで個別に有効化できます。",
-        "クラック版 EA Desktop インストールは EADesktopVerbose.log とそのバックアップログから読み取られます。"
-      ],
-      "configTitle": "生成された設定",
-      "config": [
-        "右クリックのエミュレーター修正は GBE Fork ファイル、実績スキーマ、DLC データ、起動ヘルパーを追加できます。",
-        "シンプルモードは高速で Achievement Watcher のデータを使います。詳細モードはより深い Steam データのため generate_emu_config を実行します。",
-        "詳細生成は、特に DLC/depot メタデータがある場合、数分かかることがあります。"
-      ],
-      "troubleshootTitle": "トラブルシューティング",
-      "troubleshoot": [
-        "ゲームが見つからない場合は、フォルダー追加後に再スキャンし、ソースの切り替えとブラックリストを確認します。",
-        "通知が出ない場合は、Windows 集中モードを確認し、ゲーム/app を同じ管理者権限で実行します。",
-        "詳細 > 診断では、何がスキャンされたか確認するためのログとデータフォルダーを開けます。"
-      ]
-    },
     "help": {
       "nav": "ヘルプ",
       "title": "ヘルプとヒント",
       "intro": "知っておくと便利なことすべて — 検出、通知、コントローラー、オーバーレイ、テーマ、トラブルシューティング。",
+      "setupTitle": "現在の設定",
+      "topicsTitle": "トピックから探す",
+      "searchPlaceholder": "ヘルプを検索…",
+      "noResults": "検索に一致するヘルプトピックはありません。",
       "quickTitle": "最初の手順",
       "quick": [
-        "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
-        "The Watchdog runs in the background — it must be running for live notifications and playtime.",
-        "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+      "［設定］>［フォルダー］でセーブ／設定フォルダーを追加し、［設定］>［ソース］で対応するソースを有効にします。",
+      "Watchdog はバックグラウンドで動作します。リアルタイム通知とプレイ時間の記録には起動している必要があります。",
+        "設定、キャッシュ、ログ、カスタムテーマはすべて %APPDATA%\\Achievement Watcher 3.0 に保存されます。",
         "設定の各セクションは見出しから折りたためます。開いているときは山形が下、閉じているときは横を向きます。選択は記憶されます。"
       ],
       "steamTitle": "Steam エミュレーター",
       "steam": [
-        "GBE / Goldberg saves are usually under %APPDATA%\\GSE Saves or %APPDATA%\\Goldberg SteamEmu Saves.",
-        "CODEX / RUNE saves often live under Public Documents\\Steam\\CODEX or Public Documents\\Steam\\RUNE.",
-        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 and Hoodlum are detected from their config/save folders."
+      "GBE / Goldberg のセーブデータは通常、%APPDATA%\\GSE Saves または %APPDATA%\\Goldberg SteamEmu Saves にあります。",
+      "CODEX / RUNE のセーブデータは、多くの場合 Public Documents\\Steam\\CODEX または Public Documents\\Steam\\RUNE にあります。",
+      "TENOKE、UniverseLAN、SmartSteamEmu、ALI213、Hoodlum は、それぞれの設定／セーブフォルダーから検出されます。"
       ],
       "emulatorTitle": "コンソールエミュレーター",
       "emulators": [
-        "RPCS3 trophies are read from dev_hdd0\\home\\...\\trophy near the RPCS3 install.",
-        "shadPS4 trophies are read from its app data game_data/trophy folders; leftover data is not install proof.",
-        "Xenia progress is read from Xbox profile files such as .gpd."
+      "RPCS3 のトロフィーは、RPCS3 のインストール先付近にある dev_hdd0\\home\\...\\trophy から読み取られます。",
+      "shadPS4 のトロフィーはアプリデータ内の game_data/trophy フォルダーから読み取られます。残ったデータだけではインストール済みとは判断されません。",
+      "Xenia の進行状況は、.gpd などの Xbox プロファイルファイルから読み取られます。"
       ],
       "sourcesTitle": "ランチャーとソース",
       "sources": [
-        "Steam profile mode lists installed or owned games, but unlocks still come from local save files.",
-        "GOG, Epic, Ubisoft Connect/LumaPlay and EA Desktop can be enabled separately in Sources.",
-        "Owned Steam games count as installed only when Steam's registry confirms it."
+      "Steam プロファイルモードではインストール済みまたは所有中のゲームが一覧表示されますが、解除状況は引き続きローカルのセーブファイルから取得されます。",
+      "GOG、Epic、Ubisoft Connect/LumaPlay、EA Desktop は［ソース］で個別に有効化できます。",
+      "所有中の Steam ゲームは、Steam のレジストリで確認できた場合にのみインストール済みとして扱われます。"
       ],
       "controllerTitle": "コントローラー（ゲームパッド）",
       "controller": [
-        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
-        "LB + X toggles in-overlay navigation.",
-        "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
-        "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
+        "最初に［設定］>［コントローラー］を有効にすると、Back + Start + LB でゲーム内オーバーレイを開けます。",
+      "LB + X でオーバーレイ内のナビゲーションを切り替えます。",
+      "ナビゲーションモード：方向パッド／左スティックでフォーカス移動、A で決定、B でキャンセル、X で検索、Y でオプションを開きます。",
+      "LB + RB を押しながら左スティックでオーバーレイを移動し、右スティックでスクロールします。",
+      "Xbox、PlayStation（DualShock 4 / DualSense）、Switch Pro コントローラーに対応しています。"
       ],
       "overlayTitle": "ゲーム内オーバーレイ",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
-        "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
-        "Press / to focus the search, Esc to clear it or close the options panel.",
-        "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
-        "Every achievement with a known rate shows its rarity: gray for common, gold/silver/bronze for rare."
+        "オーバーレイのホットキー（既定は Ctrl+Shift+K）またはコントローラーの Back + Start + LB で開きます。",
+      "一度に並べ替えられる列は1つです：レア度、日付、状態（昇順／降順／なし）。",
+      "/ で検索欄にフォーカスし、Esc で検索を消去するかオプションパネルを閉じます。",
+      "歯車パネルではアクセント、密度、ズーム、不透明度、表示行数を変更できます。［アプリのテーマを使用］は現在のテーマに従います。",
+      "取得率が判明しているすべての実績にレア度を表示します。一般的なものは灰色、珍しいものは金／銀／銅です。"
       ],
       "themesTitle": "カスタムテーマ",
       "themes": [
-        "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
-        "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+      "カスタムは Steam Blue を初期値とし、背景、ヘッダー、パネル、カード、設定、テキスト、境界線、アクセントの各レイヤーを編集できます。",
+      "レイヤー画像には色付きのベールと軽いすりガラス風ぼかしが重なり、効果はレイヤーごとに設定できます。",
+      "CSS テーマを <userData>\\themes に入れると、テーマのドロップダウンに表示されます。",
         "プリセット作成では、保存する前に実際のポップアップとして確認でき、保存済みプリセットを開いて変更したり、不要なものを削除したりできます。"
       ],
       "configTitle": "生成された設定",
       "config": [
-        "The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.",
-        "Simple mode is fast; Advanced runs generate_emu_config for deeper Steam data and can take minutes."
+      "右クリックのエミュレーター修正では、GBE Fork ファイル、実績スキーマ、DLC データを追加できます。",
+      "シンプルモードは高速です。詳細モードは generate_emu_config を実行してより詳しい Steam データを取得するため、数分かかる場合があります。"
       ],
       "shortcutsTitle": "キーボードショートカット",
       "shortcuts": [
-        "Ctrl+Shift+K (default): toggle the in-game overlay — configurable in Settings > General.",
-        "Ctrl+Alt+Shift+Arrows move the overlay; Ctrl+Alt+Shift+1–5 snap it to a preset position.",
-        "Ctrl+Alt+Shift+C toggles click-through; Ctrl+F focuses Settings search."
+      "Ctrl+Shift+K（既定）：ゲーム内オーバーレイを切り替えます。［設定］>［一般］で変更できます。",
+      "Ctrl+Alt+Shift+矢印キーでオーバーレイを移動し、Ctrl+Alt+Shift+1～5 でプリセット位置に合わせます。",
+      "Ctrl+Alt+Shift+C でクリック透過を切り替え、Ctrl+F で設定の検索欄にフォーカスします。"
       ],
       "tipsTitle": "ヒントとコツ",
       "tips": [
-        "Right-click a game tile for quick actions: emulator fix, achievements, Steam page, GBE Fork install, uninstall.",
-        "Right-click a game and choose mute progress to stop progress popups without disabling unlocks.",
-        "The emulator fix (Simple fast / Advanced complete) installs GBE Fork, the achievements schema, DLCs and launch helpers.",
-        "Playtime is tracked while the game runs; progress and playtime notifications can be enabled in Notifications."
+      "ゲームタイルを右クリックすると、エミュレーター修正、実績、Steam ページ、GBE Fork のインストール、アンインストールをすばやく実行できます。",
+      "ゲームを右クリックして［進行状況をミュート］を選ぶと、実績解除を無効にせず進行状況のポップアップだけを停止できます。",
+      "エミュレーター修正（シンプルは高速／詳細は完全）では、GBE Fork、実績スキーマ、DLC データをインストールします。",
+      "ゲームの実行中はプレイ時間が記録されます。進行状況とプレイ時間の通知は［通知］で有効にできます。",
+        "ゲームのアップデートで追加された実績は3日以内に自動表示されます。すぐに確認するには［設定］>［詳細設定］>［実績リストを再確認］を使用します。"
       ],
       "troubleshootTitle": "トラブルシューティング",
       "troubleshoot": [
-        "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
-        "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+      "ゲームが表示されない場合：フォルダーを追加して再スキャンし、ソースの切り替えとブラックリストを確認します。",
+      "通知が表示されない場合：Windows の集中モードを確認し、ゲームと同じ権限でアプリを実行します。",
+      "［詳細設定］>［診断］からログとデータフォルダーを開けます。不具合を報告するときに添付してください。",
         "ログは追記されるため、クラッシュは次回起動後も残ります。各実行はセッション標識と [diag] ブロック（バージョン・パス・ディスプレイ）で始まります。課題に貼り付けてください。"
       ]
     },
@@ -784,9 +735,6 @@
       },
       "diag": {
         "title": "診断",
-        "apiKeyLabel": "Steam Web API キー：",
-        "apiKeyConfigured": "設定済み",
-        "apiKeyFallback": "未設定 — フォールバックのスクレイピングを使用",
         "logsFolder": "ログフォルダーを開く",
         "dataFolder": "データフォルダーを開く",
         "goldbergTitle": "Goldberg / GBE Fork",
@@ -798,34 +746,35 @@
       "blacklistInfo": "ゲームのタイルを右クリックしてブラックリストに追加します。",
       "blacklistEmpty": "非表示のゲームはありません。",
       "blacklistRestore": "このゲームを再表示",
-      "apiKey": {
-        "title": "Steam Web API キー",
-        "description": "一部の Steam データには個人の Steam Web API キーが必要です。",
-        "fallback": "自動取得を使用するには、この欄を空欄のままにしてください。失敗した場合はご自身のキーを入力してください。",
-        "create": "API キーを作成",
-        "terms": "Steam API 利用規約",
-        "label": "あなたの Steam Web API キー",
-        "security": "キーはこのコンピューターに保存される前に AES-256-CBC で暗号化されます。"
-      },
       "mainSteam": {
         "title": "メイン Steam アカウント",
         "name": "ユーザーで絞り込み",
         "description": "選択したアカウントの Steam 実績のみを表示します"
       },
-      "checkUpdates": "更新を確認"
+      "checkUpdates": "更新を確認",
+      "clearUpdateCache": {
+        "name": "キャッシュを消去",
+        "button": "キャッシュを消去",
+        "description": "再ダウンロード可能なキャッシュを削除します:更新ファイル、Steam/Ubisoft のスキーマ・アイコンキャッシュ、ダウンロード済みのエミュレーター修正ツール。設定、セーブデータ、バックアップ、手動で配置したファイルには一切触れません。"
+      },
+      "forceAchievementRecheck": {
+        "name": "実績リストを再確認",
+        "button": "今すぐ確認",
+        "description": "前回の確認以降にゲームのアップデートで実績が追加されていないか Steam に確認します。通常は3日ごとに自動実行されますが、このボタンで今すぐ実行します。"
+      }
     }
   },
   "onboarding": {
     "settingsLabel": "初回版ガイド",
     "settingsButton": "オープンガイド",
-    "settingsHelp": "API キー、プロファイル、フォルダー、ソース、通知のセットアップ ガイドを再度開きます。",
+    "settingsHelp": "プロフィール、フォルダー、ソース、通知のセットアップガイドを再度開きます。",
+    "navLabel": "セットアップの手順",
     "eyebrow": "最初のセットアップ",
     "close": "近い",
     "steps": [
       "言語",
       "仕組み",
       "アカウント",
-      "APIキー",
       "ゲーム",
       "設定"
     ],
@@ -841,7 +790,7 @@
     "watchTitle": "監視",
     "watchCopy": "バックグラウンドの Watchdog がゲーム起動時に実行ファイルを検出し、プレイ時間と実績ファイルを監視して、プレイ中に解除通知を表示します。",
     "fixTitle": "修復",
-    "fixCopy": "エミュレートされた Steam ゲームでは、右クリックの修復（または自動修復）が GBE Fork をインストールし、achievements.json スキーマ、DLC データ、起動補助ファイルをゲームの steam_settings フォルダーに書き込みます。",
+    "fixCopy": "エミュレートされた Steam ゲームでは、右クリックの修復（または自動修復）が GBE Fork をインストールし、achievements.json スキーマと DLC データをゲームの steam_settings フォルダーに書き込みます。",
     "overlayTitle": "ゲーム内オーバーレイ",
     "overlayCopy": "ホットキー（デフォルトは Ctrl+Shift+K）でゲーム画面上に表示できる小さな実績パネルです。設定 > 一般のホットキー欄の隣でいつでも変更できます。",
     "profileTitle": "プロフィール",
@@ -851,13 +800,6 @@
     "avatarPick": "写真を選択してください",
     "avatarDefault": "デフォルト",
     "avatarHint": "オプション。この PC にローカルに保存されます。",
-    "apiTitle": "Steam Web APIキー",
-    "apiCopy": "キーにより Steam メタデータの取得が向上します。空のままにして後で追加することもできます。",
-    "apiWarning": "重要: API キーがないと、最初のライブラリの読み込みが非常に遅くなります。各ゲームは Steam ページをスクレイピングすることによって取得されます (ゲームごとに数秒)。キーを使用すると、ほぼ瞬時に、より正確に実行できます。ウィンドウは読み込み中も使用できますが、ウィンドウを追加することを強くお勧めします。",
-    "apiLabel": "Steam Web APIキー",
-    "apiToggle": "APIキーを表示または非表示",
-    "apiLink": "Steam Web API キーを取得する",
-    "apiNote": "Steamの公式ページをご利用ください。キーは保存前に暗号化されます。",
     "foldersTitle": "ディスクにゲームを追加する",
     "foldersCopy": "特定のエミュレーターの保存/構成フォルダーと、インストールされている多くのゲームを含むライブラリ ルートを追加します。",
     "addSave": "保存フォルダーを追加",
@@ -1326,6 +1268,9 @@
     "rescan-started": "選択した {count} 個のフォルダーを再スキャンしています…",
     "rescan-complete": "選択したフォルダーを再スキャンしました。",
     "rescan-failed": "選択したフォルダーのスキャンに失敗しました: {error}",
+    "force-recheck-started": "新しい実績を確認しています…",
+    "force-recheck-done": "確認が完了しました。",
+    "force-recheck-failed": "確認に失敗しました: {error}",
     "no-game-found": "ゲームが見つかりません。",
     "invalid-folder": "無効なフォルダ",
     "error-adding-custom-folder": "カスタムフォルダの追加中にエラーが発生しました",
@@ -1377,7 +1322,54 @@
     "theme-gradient-angle-135": "左上 → 右下",
     "theme-gradient-angle-180": "上 → 下",
     "theme-gradient-angle-0": "下 → 上",
-    "theme-gradient-angle-270": "右上 → 左下"
+    "theme-gradient-angle-270": "右上 → 左下",
+    "avatar-import-from-steam-user": "{name} の Steam アバターをインポート",
+    "update-check-failed-detail": "アップデートの確認に失敗しました: {message}",
+    "diagnosis-emulator": "エミュレーター: {emulator}",
+    "diagnosis-emulator-none": "検出されませんでした",
+    "diagnosis-steam-settings": "steam_settings: {path}",
+    "diagnosis-steam-settings-missing": "steam_settings: 見つかりません",
+    "diagnosis-achievements-count": "実績: ファイル内 {found} / スキーマ内 {expected}",
+    "diagnosis-no-problems": "問題は検出されませんでした。",
+    "diagnosis-auto-repair-wrote": "自動修復で {count} 件の実績を {path} に書き込みました",
+    "diagnosis-icons-summary": "アイコン: {downloaded} ダウンロード、{failed} 失敗、{skipped} スキップ",
+    "diagnosis-steam-appid-created": "steam_appid.txt を作成しました",
+    "diagnosis-configs-main-updated": "configs.main.ini を更新しました (new_app_ticket + gc_token)",
+    "diagnosis-configs-app-updated": "configs.app.ini を更新しました ({count} 件のDLCエントリー、unlock_all={unlockAll})",
+    "diagnosis-configs-user-updated": "configs.user.ini を更新しました",
+    "diagnosis-auto-repair-failed": "自動修復に失敗しました: {error}",
+    "diagnosis-steam-appid": "Steam AppID: {appid} ({name})",
+    "diagnosis-steam-appid-not-resolved": "Steam AppID: 未解決",
+    "version-app": "アプリ",
+    "diagnosis-dlls-backed-up": "既存のDLLを*.bakとしてバックアップ",
+    "diagnosis-config-backed-up": "以前の設定をバックアップしました: {path}",
+    "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
+    "diagnosis-none-parenthesized": "(なし)",
+    "diagnosis-version": "バージョン: {version}",
+    "diagnosis-version-unknown": "不明",
+    "diagnosis-dlls-backed-up-locations": "既存のDLLを*.bakとして{count}か所にバックアップ",
+    "diagnosis-after-install": "インストール後の診断:",
+    "diagnosis-auto-repaired-steam-settings": "steam_settings を自動修復しました (スキーマ + アイコン + DLC) - {count}か所",
+    "diagnosis-auto-repair-failed-for": "自動修復に失敗: {paths}",
+    "diagnosis-dir-status-line": "{dir}: {status}",
+    "diagnosis-dir-status-ok": "OK",
+    "diagnosis-dir-status-attention": "要確認",
+    "diagnosis-advanced-data-skipped": "詳細データ: スキップ (数値AppIDなし)",
+    "diagnosis-advanced-data-login-cancelled": "詳細データ: ログインがキャンセルされました",
+    "diagnosis-advanced-data-merged": "詳細データ: {count} 個の追加ファイルをマージしました (generate_emu_config {tag})",
+    "diagnosis-advanced-data-failed": "詳細データ: {error}",
+    "achievements-overlay-title": "実績オーバーレイ",
+    "update-retry-failed-message": "{folder} 内のキャッシュファイルを削除した後も、更新は失敗しました。",
+    "update-retry-failed-detail": "これはおそらくネットワークまたはリリースの問題であり、キャッシュを消去しても解決しません。リリースページから手動で更新をダウンロードしてインストールできます。",
+    "open-release-page": "リリースページを開く",
+    "clear-cache": "キャッシュを消去",
+    "clear-update-cache-label": "キャッシュを消去",
+    "clear-update-cache-confirm": "再ダウンロード可能なすべてのキャッシュ(更新ファイル、Steam/Ubisoft のスキーマ・アイコンキャッシュ、ダウンロード済みのエミュレーター修正ツール)を削除しますか？設定、セーブデータ、バックアップ、手動で配置したファイルには一切触れません — ここで消去されるものはすべて、必要に応じて自動的に再ダウンロードされます。",
+    "clear-update-cache-failed": "更新キャッシュを消去できませんでした。",
+    "clear-update-cache-empty": "消去する対象がありません — キャッシュされた更新ファイルは見つかりませんでした。",
+    "clear-update-cache-done": "更新キャッシュを消去しました: {folder}",
+    "clear-update-cache-done-apps": "{count} 個のキャッシュフォルダーを消去しました。",
+    "clear-update-cache-done-all": "{count} 個のキャッシュフォルダーを消去しました({folder} 内の更新キャッシュを含む)。"
   },
   "watchdog": {
     "rare": "レア {percent}%",

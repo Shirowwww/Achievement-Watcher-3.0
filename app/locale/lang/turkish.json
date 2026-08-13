@@ -178,7 +178,7 @@
       "onboarding": {
         "name": "İlk çalıştırma kılavuzu",
         "button": "Kılavuzu aç",
-        "description": "API anahtarı, profil, klasörler, kaynaklar ve bildirimler için kurulum kılavuzunu yeniden aç."
+        "description": "Profil, klasörler, kaynaklar ve bildirimler için kurulum rehberini yeniden açın."
       },
       "hardwareAccel": {
         "name": "Donanım hızlandırmayı devre dışı bırak",
@@ -266,14 +266,6 @@
           "true": "Etkin"
         }
       },
-      "mode": {
-        "name": "Emülatör modu",
-        "description": "Regular, oyunun steam_api(64).dll dosyasını değiştirir. ColdClient onu tutar ve GBE Fork'un emüle steamclient'ını bir loader aracılığıyla yükler — inatçı oyunlar için daha geniş kapsama.",
-        "value": {
-          "regular": "Regular (DLL değiştir)",
-          "coldclient": "ColdClient (GBE Fork)"
-        }
-      },
       "steamSettings": {
         "name": "steam_settings verisi",
         "description": "Simple, Achievement Watcher'ın kendi getirmesini kullanır (anonim). Advanced, depo/dil kapsamı için generate_emu_config çalıştırır.",
@@ -320,14 +312,6 @@
         "value": {
           "false": "Devre dışı",
           "true": "Etkin"
-        }
-      },
-      "launchBat": {
-        "name": "Yedek için Launch.bat oluştur",
-        "description": "Steamless bir SteamStub exe'yi çıkaramadığında ve AW ColdClient'a geri döndüğünde, ilgili loader için ayrıca bir Launch.bat yazar.",
-        "value": {
-          "true": "Etkin",
-          "false": "Devre dışı"
         }
       },
       "checkUpdates": {
@@ -590,6 +574,10 @@
     },
     "source": {
       "title": "Oyun kaynakları",
+      "officialPlatforms": {
+        "title": "Resmî platformlar",
+        "description": "Steam, Ubisoft Connect, GOG Galaxy, Epic Games ve Xbox PC desteklenir. Aşağıdaki kalkan işaretli kaynakları etkinleştirin; yalnızca bu bilgisayarda algılanan kütüphaneler gösterilebilir."
+      },
       "legitSteam": {
         "name": "Steam oyunlarını göster",
         "description": "Steam kurulu ve Steam profilin herkese açık olmalı !",
@@ -650,123 +638,86 @@
         "description": "Xbox 360 öykünücüsü"
       }
     },
-    "guide": {
-      "nav": "Kılavuz",
-      "title": "Platform kılavuzu",
-      "intro": "Achievement Watcher’ın neleri taradığı, hangi klasörlerin önemli olduğu ve üretilen emülatör configlerinin ne zaman işe yaradığı.",
-      "quickTitle": "İlk adımlar",
-      "quick": [
-        "Ayarlar > Klasörler içinde kayıt/config klasörlerini ekleyin, sonra Ayarlar > Kaynaklar içinde eşleşen kaynağı etkinleştirin.",
-        "Henüz achievement dosyası oluşturmamış kurulu oyunlar için kütüphane klasörlerini kullanın.",
-        "Watchdog yalnızca klasör bilindikten ve kaynak etkinleştikten sonra yeni değişiklikleri bildirir."
-      ],
-      "steamTitle": "Steam emülatörleri",
-      "steam": [
-        "GBE / Goldberg kayıtları genelde %APPDATA%\\GSE Saves veya %APPDATA%\\Goldberg SteamEmu Saves altındadır.",
-        "CODEX / RUNE tarzı kayıtlar çoğu zaman Public Documents\\Steam\\CODEX veya Public Documents\\Steam\\RUNE altındadır.",
-        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 ve Hoodlum kendi config/kayıt klasörlerinden algılanır."
-      ],
-      "emulatorTitle": "Konsol emülatörleri",
-      "emulators": [
-        "RPCS3 achievementleri RPCS3 kurulumunun yakınındaki dev_hdd0\\home\\...\\trophy konumundan okunur.",
-        "shadPS4 kupaları app data game_data/trophy klasörlerinden okunur; kalan kupa verisi oyunun kurulu olduğunu kanıtlamaz.",
-        "Xenia ilerlemesi .gpd gibi Xbox profil dosyalarından okunur."
-      ],
-      "sourcesTitle": "Başlatıcılar ve kaynaklar",
-      "sources": [
-        "Steam herkese açık profil modu kurulu veya sahip olunan Steam oyunlarını listeler, ama yerel açılımlar yine kayıt dosyalarından gelir.",
-        "GOG, Epic, Ubisoft Connect/LumaPlay ve EA Desktop Kaynaklar içinde ayrı ayrı etkinleştirilebilir.",
-        "Crackli EA Desktop kurulumları EADesktopVerbose.log ve yedek loglarından okunur."
-      ],
-      "configTitle": "Üretilen configler",
-      "config": [
-        "Sağ tık emülatör düzeltmesi GBE Fork dosyaları, achievement şemaları, DLC verileri ve başlatma yardımcıları ekleyebilir.",
-        "Basit mod hızlıdır ve Achievement Watcher verilerini kullanır; Gelişmiş mod daha derin Steam verisi için generate_emu_config çalıştırır.",
-        "Gelişmiş üretim, özellikle DLC/depot metadatası varsa birkaç dakika sürebilir."
-      ],
-      "troubleshootTitle": "Sorun giderme",
-      "troubleshoot": [
-        "Bir oyun eksikse klasörleri ekledikten sonra yeniden tarayın, ardından kaynak anahtarını ve kara listeyi kontrol edin.",
-        "Bildirimler eksikse Windows Odak Yardımı’nı kontrol edin ve oyunu/appi eşleşen yönetici haklarıyla çalıştırın.",
-        "Gelişmiş > Tanılama, neyin tarandığını incelemeniz gerektiğinde logları ve veri klasörlerini açar."
-      ]
-    },
     "help": {
       "nav": "Yardım",
       "title": "Yardım ve ipuçları",
       "intro": "Bilmeniz gereken her şey — algılama, bildirimler, kumanda, overlay, temalar ve sorun giderme.",
+      "setupTitle": "Geçerli ayarlarınız",
+      "topicsTitle": "Konuya göre göz at",
+      "searchPlaceholder": "Yardımda ara…",
+      "noResults": "Aramanızla eşleşen bir yardım konusu yok.",
       "quickTitle": "İlk adımlar",
       "quick": [
-        "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
-        "The Watchdog runs in the background — it must be running for live notifications and playtime.",
-        "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+      "Ayarlar > Klasörler bölümüne kayıt/yapılandırma klasörlerini ekleyin, ardından Ayarlar > Kaynaklar bölümünde eşleşen kaynağı etkinleştirin.",
+      "Watchdog arka planda çalışır; canlı bildirimler ve oyun süresi için çalışıyor olması gerekir.",
+        "Her şey (ayarlar, önbellekler, günlükler ve özel temalar) %APPDATA%\\Achievement Watcher 3.0 konumunda bulunur.",
         "Her ayar bölümü kendi başlığı altında katlanır — açıkken ok aşağıyı, kapalıyken yana bakar. Seçimleriniz hatırlanır."
       ],
       "steamTitle": "Steam emülatörleri",
       "steam": [
-        "GBE / Goldberg saves are usually under %APPDATA%\\GSE Saves or %APPDATA%\\Goldberg SteamEmu Saves.",
-        "CODEX / RUNE saves often live under Public Documents\\Steam\\CODEX or Public Documents\\Steam\\RUNE.",
-        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 and Hoodlum are detected from their config/save folders."
+      "GBE / Goldberg kayıtları genellikle %APPDATA%\\GSE Saves veya %APPDATA%\\Goldberg SteamEmu Saves altındadır.",
+      "CODEX / RUNE kayıtları çoğunlukla Public Documents\\Steam\\CODEX veya Public Documents\\Steam\\RUNE altındadır.",
+      "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 ve Hoodlum kendi yapılandırma/kayıt klasörlerinden algılanır."
       ],
       "emulatorTitle": "Konsol emülatörleri",
       "emulators": [
-        "RPCS3 trophies are read from dev_hdd0\\home\\...\\trophy near the RPCS3 install.",
-        "shadPS4 trophies are read from its app data game_data/trophy folders; leftover data is not install proof.",
-        "Xenia progress is read from Xbox profile files such as .gpd."
+      "RPCS3 kupaları, RPCS3 kurulumunun yakınındaki dev_hdd0\\home\\...\\trophy konumundan okunur.",
+      "shadPS4 kupaları uygulama verilerindeki game_data/trophy klasörlerinden okunur; artık veriler oyunun kurulu olduğunu kanıtlamaz.",
+      "Xenia ilerlemesi .gpd gibi Xbox profil dosyalarından okunur."
       ],
       "sourcesTitle": "Başlatıcılar ve kaynaklar",
       "sources": [
-        "Steam profile mode lists installed or owned games, but unlocks still come from local save files.",
-        "GOG, Epic, Ubisoft Connect/LumaPlay and EA Desktop can be enabled separately in Sources.",
-        "Owned Steam games count as installed only when Steam's registry confirms it."
+      "Steam profil modu kurulu veya sahip olunan oyunları listeler, ancak kilit açma bilgileri yine yerel kayıt dosyalarından gelir.",
+      "GOG, Epic, Ubisoft Connect/LumaPlay ve EA Desktop, Kaynaklar bölümünde ayrı ayrı etkinleştirilebilir.",
+      "Sahip olunan Steam oyunları yalnızca Steam kayıt defteri doğruladığında kurulu sayılır."
       ],
       "controllerTitle": "Kumanda (gamepad)",
       "controller": [
-        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
-        "LB + X toggles in-overlay navigation.",
-        "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
-        "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
+        "Önce Ayarlar > Kontrolcü seçeneğini etkinleştirin; ardından Back + Start + LB oyun içi katmanı açar.",
+      "LB + X, katman içi gezinmeyi açıp kapatır.",
+      "Gezinme modu: D-pad/sol çubuk odağı taşır, A onaylar, B iptal eder, X arar, Y seçenekleri açar.",
+      "Katmanı sol çubukla taşımak ve sağ çubukla kaydırmak için LB + RB tuşlarını basılı tutun.",
+      "Xbox, PlayStation (DualShock 4 / DualSense) ve Switch Pro kontrolcüleriyle çalışır."
       ],
       "overlayTitle": "Oyun içi overlay",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
-        "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
-        "Press / to focus the search, Esc to clear it or close the options panel.",
-        "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
-        "Every achievement with a known rate shows its rarity: gray for common, gold/silver/bronze for rare."
+        "Katman kısayoluyla (varsayılan Ctrl+Shift+K) veya kontrolcüde Back + Start + LB ile açın.",
+      "Aynı anda tek sütuna göre sıralayın: Nadirlik, Tarih veya Durum (artan / azalan / yok).",
+      "Aramaya odaklanmak için / tuşuna, temizlemek veya seçenekler panelini kapatmak için Esc tuşuna basın.",
+      "Dişli paneli vurgu rengini, yoğunluğu, yakınlaştırmayı, saydamlığı ve görünür satırları değiştirir; 'Uygulama temasını kullan' etkin temayı izler.",
+      "Oranı bilinen her başarımın nadirliği gösterilir: yaygın olanlar gri, nadir olanlar altın/gümüş/bronz."
       ],
       "themesTitle": "Özel temalar",
       "themes": [
-        "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
-        "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+      "Özel tema Steam Blue ile başlar; her katman (arka plan, başlık, paneller, kartlar, ayarlar, metin, kenarlıklar, vurgu) düzenlenebilir.",
+      "Katman görselleri, hafif buzlu bulanıklığa sahip renkli bir perdenin altında yer alır; efektler katman başına ayarlanır.",
+      "Bir CSS temasını <userData>\\themes içine bıraktığınızda tema açılır listesinde görünür.",
         "Ön ayar oluşturucu, kaydetmeden önce tasarımı gerçek bir bildirim olarak gösterebilir, kayıtlı bir ön ayarı düzenlemek için yeniden açabilir ve tutmadıklarınızı silebilir."
       ],
       "configTitle": "Oluşturulan yapılandırmalar",
       "config": [
-        "The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.",
-        "Simple mode is fast; Advanced runs generate_emu_config for deeper Steam data and can take minutes."
+        "Sağ tıklama emülatör düzeltmesi GBE Fork dosyalarını, başarım şemalarını ve DLC verilerini ekleyebilir.",
+      "Basit mod hızlıdır; Gelişmiş mod daha ayrıntılı Steam verileri için generate_emu_config çalıştırır ve birkaç dakika sürebilir."
       ],
       "shortcutsTitle": "Klavye kısayolları",
       "shortcuts": [
-        "Ctrl+Shift+K (default): toggle the in-game overlay — configurable in Settings > General.",
-        "Ctrl+Alt+Shift+Arrows move the overlay; Ctrl+Alt+Shift+1–5 snap it to a preset position.",
-        "Ctrl+Alt+Shift+C toggles click-through; Ctrl+F focuses Settings search."
+      "Ctrl+Shift+K (varsayılan): oyun içi katmanı açıp kapatır; Ayarlar > Genel bölümünden değiştirilebilir.",
+      "Ctrl+Alt+Shift+Ok tuşları katmanı taşır; Ctrl+Alt+Shift+1–5 onu ön ayarlı bir konuma yaslar.",
+      "Ctrl+Alt+Shift+C tıklama geçişini açıp kapatır; Ctrl+F Ayarlar aramasına odaklanır."
       ],
       "tipsTitle": "İpuçları ve püf noktaları",
       "tips": [
-        "Right-click a game tile for quick actions: emulator fix, achievements, Steam page, GBE Fork install, uninstall.",
-        "Right-click a game and choose mute progress to stop progress popups without disabling unlocks.",
-        "The emulator fix (Simple fast / Advanced complete) installs GBE Fork, the achievements schema, DLCs and launch helpers.",
-        "Playtime is tracked while the game runs; progress and playtime notifications can be enabled in Notifications."
+      "Hızlı işlemler için bir oyun kutucuğuna sağ tıklayın: emülatör düzeltmesi, başarımlar, Steam sayfası, GBE Fork kurulumu, kaldırma.",
+      "Kilit açmaları devre dışı bırakmadan ilerleme açılır pencerelerini durdurmak için oyuna sağ tıklayıp ilerlemeyi sessize al seçeneğini seçin.",
+        "Emülatör düzeltmesi (Basit hızlı / Gelişmiş eksiksiz), GBE Fork'u, başarım şemasını ve DLC verilerini kurar.",
+      "Oyun çalışırken oynama süresi izlenir; ilerleme ve oynama süresi bildirimleri Bildirimler bölümünde etkinleştirilebilir.",
+        "Bir oyun güncellemesinin eklediği yeni başarımlar 3 gün içinde otomatik olarak görünür veya Ayarlar > Gelişmiş > Başarım listelerini yeniden denetle yoluyla hemen kontrol edilebilir."
       ],
       "troubleshootTitle": "Sorun giderme",
       "troubleshoot": [
-        "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
-        "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+      "Bir oyun eksikse: klasörleri ekleyin, yeniden tarayın, ardından kaynak anahtarını ve kara listeyi kontrol edin.",
+      "Bildirimler görünmüyorsa: Windows Odaklanma Yardımı'nı kontrol edin ve uygulamayı oyunlarınızla aynı haklarla çalıştırın.",
+      "Gelişmiş > Tanılama, günlük ve veri klasörlerini açar; sorun bildirirken bunları ekleyin.",
         "Günlükler eklenerek yazılır, bu yüzden bir çökme sonraki açılışa kalır. Her çalıştırma bir oturum işareti ve [diag] bloğuyla başlar (sürümler, yollar, ekranlar) — bunu bildirime yapıştırın."
       ]
     },
@@ -784,9 +735,6 @@
       },
       "diag": {
         "title": "Tanılama",
-        "apiKeyLabel": "Steam Web API anahtarı :",
-        "apiKeyConfigured": "yapılandırıldı",
-        "apiKeyFallback": "ayarlanmadı — yedek kazıma kullanılıyor",
         "logsFolder": "Günlük klasörünü aç",
         "dataFolder": "Veri klasörünü aç",
         "goldbergTitle": "Goldberg / GBE Fork",
@@ -798,34 +746,35 @@
       "blacklistInfo": "Bir oyun karosuna sağ tıklayarak kara listeye ekle.",
       "blacklistEmpty": "Gizli oyun yok.",
       "blacklistRestore": "Bu oyunu geri yükle",
-      "apiKey": {
-        "title": "Steam Web API anahtarı",
-        "description": "Bazı Steam verileri kişisel bir Steam Web API anahtarı gerektirir.",
-        "fallback": "Otomatik almayı kullanmak için bu alanı boş bırak. Başarısız olursa kendi anahtarını gir.",
-        "create": "Bir API anahtarı oluştur",
-        "terms": "Steam API Kullanım Koşulları",
-        "label": "Steam Web API anahtarın",
-        "security": "Anahtar, bu bilgisayara kaydedilmeden önce AES-256-CBC ile şifrelenir."
-      },
       "mainSteam": {
         "title": "Ana Steam hesabı",
         "name": "Kullanıcıya göre filtrele",
         "description": "Yalnızca seçili hesabın Steam başarımlarını göster"
       },
-      "checkUpdates": "Güncellemeleri kontrol et"
+      "checkUpdates": "Güncellemeleri kontrol et",
+      "clearUpdateCache": {
+        "name": "Önbellekleri temizle",
+        "button": "Önbellekleri temizle",
+        "description": "Yeniden indirilebilir önbellekleri siler: güncelleme dosyaları, Steam/Ubisoft şema ve simge önbelleği ve indirilen emülatör düzeltme araçları. Ayarlarınıza, kayıtlarınıza, yedeklerinize veya elle yerleştirilen dosyalarınıza asla dokunmaz."
+      },
+      "forceAchievementRecheck": {
+        "name": "Başarım listelerini yeniden kontrol et",
+        "button": "Şimdi kontrol et",
+        "description": "Son kontrolden bu yana bir oyun güncellemesinin başarım eklediğini Steam'den kontrol eder. Normalde her 3 günde bir otomatik çalışır; bu düğme hemen zorlar."
+      }
     }
   },
   "onboarding": {
     "settingsLabel": "İlk çalıştırma kılavuzu",
     "settingsButton": "Kılavuzu aç",
-    "settingsHelp": "API anahtarı, profil, klasörler, kaynaklar ve bildirimler için kurulum kılavuzunu yeniden açın.",
+    "settingsHelp": "Profil, klasörler, kaynaklar ve bildirimler için kurulum rehberini yeniden açın.",
+    "navLabel": "Kurulum adımları",
     "eyebrow": "İlk kurulum",
     "close": "Kapalı",
     "steps": [
       "Dil",
       "Nasıl çalışır?",
       "Hesap",
-      "API anahtarı",
       "Oyunlar",
       "Ayarlar"
     ],
@@ -841,7 +790,7 @@
     "watchTitle": "İzleme",
     "watchCopy": "Arka plandaki Watchdog oyun başlatıldığında çalıştırılabilir dosyayı algılar, oynama süresini kaydeder ve oyun sırasında kilit açma bildirimlerini göstermek için başarım dosyalarını izler.",
     "fixTitle": "Onarma",
-    "fixCopy": "Emüle edilen Steam oyunlarında sağ tık onarımı (veya otomatik onarım) GBE Fork’u kurar ve achievements.json şemasını, DLC verilerini ve başlatma yardımcılarını oyunun steam_settings klasörüne yazar.",
+    "fixCopy": "Emüle edilen Steam oyunlarında sağ tık onarımı (veya otomatik onarım) GBE Fork’u kurar ve achievements.json şemasıyla DLC verilerini oyunun steam_settings klasörüne yazar.",
     "overlayTitle": "Oyun içi overlay",
     "overlayCopy": "Bir kısayolla (varsayılan Ctrl+Shift+K) oyunun üzerinde açabileceğin küçük bir başarım paneli. İstediğin zaman Ayarlar > Genel bölümünde, kısayol alanının yanından değiştirebilirsin.",
     "profileTitle": "Profil",
@@ -851,13 +800,6 @@
     "avatarPick": "Fotoğraf seç",
     "avatarDefault": "Varsayılan",
     "avatarHint": "İsteğe bağlı. Bu bilgisayarda yerel olarak depolanır.",
-    "apiTitle": "Steam Web API anahtarı",
-    "apiCopy": "Bir anahtar, Steam meta verilerinin alınmasını iyileştirir. Boş bırakıp daha sonra ekleyebilirsiniz.",
-    "apiWarning": "ÖNEMLİ: API anahtarı olmadan, ilk kitaplık yüklemesi ÇOK YAVAŞ olacaktır: her oyun Steam sayfaları kazınarak getirilir (oyun başına birkaç saniye). Bir anahtarla bu neredeyse anında ve daha doğrudur. Pencere yüklenirken kullanılabilir durumda kalır ancak bir pencere eklenmesi önemle tavsiye edilir.",
-    "apiLabel": "Steam Web API anahtarı",
-    "apiToggle": "API anahtarını göster veya gizle",
-    "apiLink": "Steam Web API anahtarı edinin",
-    "apiNote": "Resmi Steam sayfasını kullanın. Anahtar kaydetmeden önce şifrelenir.",
     "foldersTitle": "Diske oyun ekleme",
     "foldersCopy": "Belirli öykünücüler için kaydetme/yapılandırma klasörleri ve yüklü birçok oyunu içeren kitaplık kökleri ekleyin.",
     "addSave": "Kaydetme klasörü ekle",
@@ -1326,6 +1268,9 @@
     "rescan-started": "{count} seçili klasör yeniden taranıyor…",
     "rescan-complete": "Seçili klasörler yeniden tarandı.",
     "rescan-failed": "Seçili klasörlerin taraması başarısız oldu: {error}",
+    "force-recheck-started": "Yeni başarımlar aranıyor…",
+    "force-recheck-done": "Kontrol tamamlandı.",
+    "force-recheck-failed": "Kontrol başarısız oldu: {error}",
     "no-game-found": "Oyun bulunamadı.",
     "invalid-folder": "Geçersiz klasör",
     "error-adding-custom-folder": "Özel klasör eklenirken hata",
@@ -1377,7 +1322,54 @@
     "theme-gradient-angle-135": "Sol üst → Sağ alt",
     "theme-gradient-angle-180": "Yukarıdan aşağı",
     "theme-gradient-angle-0": "Aşağıdan yukarıya",
-    "theme-gradient-angle-270": "Sağ üst → Sol alt"
+    "theme-gradient-angle-270": "Sağ üst → Sol alt",
+    "avatar-import-from-steam-user": "{name} Steam avatarını içe aktar",
+    "update-check-failed-detail": "Güncelleme kontrolü başarısız: {message}",
+    "diagnosis-emulator": "Öykünücü: {emulator}",
+    "diagnosis-emulator-none": "hiçbiri algılanmadı",
+    "diagnosis-steam-settings": "steam_settings: {path}",
+    "diagnosis-steam-settings-missing": "steam_settings: bulunamadı",
+    "diagnosis-achievements-count": "başarımlar: dosyada {found} / şemada {expected}",
+    "diagnosis-no-problems": "Sorun algılanmadı.",
+    "diagnosis-auto-repair-wrote": "Otomatik onarım {count} başarımı {path} konumuna yazdı",
+    "diagnosis-icons-summary": "simgeler: {downloaded} indirildi, {failed} başarısız, {skipped} atlandı",
+    "diagnosis-steam-appid-created": "steam_appid.txt oluşturuldu",
+    "diagnosis-configs-main-updated": "configs.main.ini güncellendi (new_app_ticket + gc_token)",
+    "diagnosis-configs-app-updated": "configs.app.ini güncellendi ({count} DLC girişi, unlock_all={unlockAll})",
+    "diagnosis-configs-user-updated": "configs.user.ini güncellendi",
+    "diagnosis-auto-repair-failed": "Otomatik onarım başarısız: {error}",
+    "diagnosis-steam-appid": "Steam AppID: {appid} ({name})",
+    "diagnosis-steam-appid-not-resolved": "Steam AppID: çözümlenemedi",
+    "version-app": "Uygulama",
+    "diagnosis-dlls-backed-up": "Mevcut DLL dosyaları *.bak olarak yedeklendi",
+    "diagnosis-config-backed-up": "Önceki yapılandırma yedeklendi: {path}",
+    "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
+    "diagnosis-none-parenthesized": "(yok)",
+    "diagnosis-version": "Sürüm: {version}",
+    "diagnosis-version-unknown": "bilinmiyor",
+    "diagnosis-dlls-backed-up-locations": "Mevcut DLL dosyaları *.bak olarak {count} konumda yedeklendi",
+    "diagnosis-after-install": "Kurulum sonrası tanılama:",
+    "diagnosis-auto-repaired-steam-settings": "steam_settings otomatik onarıldı (şema + simgeler + DLC) - {count} konum",
+    "diagnosis-auto-repair-failed-for": "Otomatik onarım şunlar için başarısız: {paths}",
+    "diagnosis-dir-status-line": "{dir}: {status}",
+    "diagnosis-dir-status-ok": "tamam",
+    "diagnosis-dir-status-attention": "dikkat gerekiyor",
+    "diagnosis-advanced-data-skipped": "Gelişmiş veriler: atlandı (sayısal AppID yok)",
+    "diagnosis-advanced-data-login-cancelled": "Gelişmiş veriler: oturum açma iptal edildi",
+    "diagnosis-advanced-data-merged": "Gelişmiş veriler: {count} ek dosya birleştirildi (generate_emu_config {tag})",
+    "diagnosis-advanced-data-failed": "Gelişmiş veriler: {error}",
+    "achievements-overlay-title": "Başarımlar yerleşimi",
+    "update-retry-failed-message": "{folder} klasöründeki önbelleğe alınmış dosyalar temizlendikten sonra bile güncelleme yine başarısız oldu.",
+    "update-retry-failed-detail": "Bu muhtemelen önbelleği temizlemenin çözemeyeceği bir ağ veya sürüm sorunu. Güncellemeyi sürüm sayfasından manuel olarak indirip yükleyebilirsiniz.",
+    "open-release-page": "Sürüm Sayfasını Aç",
+    "clear-cache": "Önbellekleri temizle",
+    "clear-update-cache-label": "Önbellekleri temizle",
+    "clear-update-cache-confirm": "Yeniden indirilebilir tüm önbellekler silinsin mi (güncelleme dosyaları, Steam/Ubisoft şema ve simge önbelleği, indirilen emülatör düzeltme araçları)? Ayarlarınıza, kayıtlarınıza, yedeklerinize ve elle yerleştirilen dosyalarınıza asla dokunulmaz — burada temizlenen her şey gerektiğinde otomatik olarak yeniden indirilir.",
+    "clear-update-cache-failed": "Güncelleme önbelleği temizlenemedi.",
+    "clear-update-cache-empty": "Temizlenecek bir şey yok — önbelleğe alınmış güncelleme dosyası bulunamadı.",
+    "clear-update-cache-done": "Güncelleme önbelleği temizlendi: {folder}",
+    "clear-update-cache-done-apps": "{count} önbellek klasörü temizlendi.",
+    "clear-update-cache-done-all": "{count} önbellek klasörü temizlendi ({folder} içindeki güncelleme önbelleği dahil)."
   },
   "watchdog": {
     "rare": "Nadir {percent}%",

@@ -10,7 +10,9 @@ Achievement Watcher is a Windows desktop application. Packaged releases include 
 4. Open Achievement Watcher from the Start menu or desktop shortcut.
 
 > [!WARNING]
-> The installer is currently unsigned. Windows SmartScreen may therefore ask for confirmation even when the file came from the official Releases page.
+> The installer is self-signed by `CN=Shirow`. You do not need to install its certificate, and
+> in-app updates accept it on a fresh PC while still checking the release SHA-512. Windows
+> SmartScreen may nevertheless ask for confirmation because the certificate is not publicly trusted.
 
 ## First launch
 
@@ -28,7 +30,51 @@ The first-run guide asks for the main choices needed to populate the library:
 
 You can revisit every option later from **Settings**.
 
+In **Settings → Sources**, the shield marks the official desktop libraries supported directly:
+Steam, Ubisoft Connect, GOG Galaxy, Epic Games and Xbox PC. Enable the relevant row and refresh the
+library; only libraries detected on the current PC are displayed. The EA row is different: it reads
+EA Desktop achievement logs for non-launcher-managed installs and does not import the regular
+official EA library.
+
 The search field at the top of **Settings** filters every tab at once, and the side menu shows how many options each tab matches - useful when you remember what an option does but not where it lives. It matches labels, descriptions, the values an option offers and its internal name, so `hideZero` finds the same row in any interface language. Press `Ctrl+F` to jump to it and `Esc` to clear it.
+
+## Help & tips adapts to your setup
+
+The **Settings → Help** tab is a live reference, not a static page:
+
+- The strip at the top shows your current theme, notification mode, controller
+  state, overlay hotkey and how many sources are enabled.
+- Controller instructions follow the selected layout (**Xbox**, **PlayStation**
+  or **Switch**) and show your real bindings, including the three-button
+  open/close combo.
+- Keyboard-shortcut entries show the hotkey actually saved instead of a
+  hard-coded default.
+- The topic search ignores case and accents. Several matches stay as a compact
+  list; a single match opens immediately.
+- The **Generated configs** panel summarizes what the emulator fix writes
+  (GBE Fork files, achievement schema and DLC data) without opening the
+  advanced tools.
+
+The panel refreshes immediately as you change settings, so it doubles as a
+preview before you press **Save**.
+
+## Steam metadata, keyless by design
+
+No Steam Web API key or connected account is used: each game's schema is fetched automatically
+with a fast keyless chain. In order, Achievement Watcher tries the official
+`IPlayerService/GetGameAchievements` endpoint (which includes hidden descriptions, icons and global
+rarity), then the SteamHunters public JSON API enriched with the SteamCommunity page (icons and
+hidden status), then SteamCommunity alone, and finally a browser scrape as a last resort. Results
+are cached per language in `%APPDATA%\Achievement Watcher 3.0\steam_cache\schema`.
+
+DLC and update achievements are tagged with their owning group (e.g. "The Witcher 3: Wild Hunt -
+Hearts of Stone") under the achievement title in the detail view. The groups come from the same
+keyless SteamHunters lookup, so no account is needed either.
+
+Steam never announces when a game update adds achievements, so a cached schema re-checks itself
+against Steam every 3 days and picks up anything new without ever deleting an achievement you
+already have cached. To check right away instead of waiting, use **Settings → Advanced → Recheck
+achievement lists**.
 
 ## Find games and saves
 
@@ -71,6 +117,10 @@ Installing a newer build over an older one replaces program files but preserves 
 ```
 
 This directory contains settings, watched folders, caches, playtime, logs, notification assets and local account data. If you're upgrading from a 3.0 build that shared the legacy folder, Achievement Watcher copies the old `%APPDATA%\Achievement Watcher` data once on first launch, without touching or deleting the original. Uninstalling does not remove the data directory by default. Delete it manually only when you intentionally want a completely fresh profile.
+
+If an update keeps failing on the same downloaded file, **Settings → Advanced → Clear caches**
+deletes only re-downloadable caches (update files, Steam/Ubisoft schema and icon cache, downloaded
+emulator-fix tools) and lets everything re-fetch itself; settings, saves and backups are untouched.
 
 ---
 

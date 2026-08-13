@@ -178,7 +178,7 @@
       "onboarding": {
         "name": "Erststart-Assistent",
         "button": "Assistent öffnen",
-        "description": "Den Einrichtungsassistenten für API-Schlüssel, Profil, Ordner, Quellen und Benachrichtigungen erneut öffnen."
+        "description": "Öffnen Sie den Einrichtungsassistenten erneut für Profil, Ordner, Quellen und Benachrichtigungen."
       },
       "hardwareAccel": {
         "name": "Hardwarebeschleunigung deaktivieren",
@@ -266,14 +266,6 @@
           "true": "Aktiviert"
         }
       },
-      "mode": {
-        "name": "Emulator-Modus",
-        "description": "Regular tauscht die steam_api(64).dll des Spiels aus. ColdClient behält sie und lädt den emulierten steamclient von GBE Fork über einen Loader — breitere Abdeckung für hartnäckige Spiele.",
-        "value": {
-          "regular": "Regular (DLL ersetzen)",
-          "coldclient": "ColdClient (GBE Fork)"
-        }
-      },
       "steamSettings": {
         "name": "steam_settings-Daten",
         "description": "Simple nutzt den eigenen Abruf von Achievement Watcher (anonym). Advanced führt generate_emu_config für Depot-/Sprachabdeckung aus.",
@@ -320,14 +312,6 @@
         "value": {
           "false": "Deaktiviert",
           "true": "Aktiviert"
-        }
-      },
-      "launchBat": {
-        "name": "Launch.bat als Fallback erstellen",
-        "description": "Wenn Steamless eine SteamStub-EXE nicht entpacken kann und AW auf ColdClient zurückfällt, wird auch eine Launch.bat für den passenden Loader geschrieben.",
-        "value": {
-          "true": "Aktiviert",
-          "false": "Deaktiviert"
         }
       },
       "checkUpdates": {
@@ -590,6 +574,10 @@
     },
     "source": {
       "title": "Spielquellen",
+      "officialPlatforms": {
+        "title": "Offizielle Plattformen",
+        "description": "Steam, Ubisoft Connect, GOG Galaxy, Epic Games und Xbox PC werden hier unterstützt. Aktiviere unten die mit einem Schild markierten Quellen; angezeigt werden nur auf diesem PC erkannte Bibliotheken."
+      },
       "legitSteam": {
         "name": "Steam-Spiele anzeigen",
         "description": "Steam muss installiert und dein Steam-Profil öffentlich sein !",
@@ -650,123 +638,86 @@
         "description": "Xbox-360-Emulator"
       }
     },
-    "guide": {
-      "nav": "Anleitung",
-      "title": "Plattform-Anleitung",
-      "intro": "Was Achievement Watcher scannt, welche Ordner wichtig sind und wann generierte Emulator-Konfigurationen nützlich sind.",
-      "quickTitle": "Erste Schritte",
-      "quick": [
-        "Füge Save-/Konfig-Ordner unter Einstellungen > Ordner hinzu und aktiviere danach die passende Quelle unter Einstellungen > Quellen.",
-        "Nutze Bibliotheksordner für installierte Spiele, die noch keine Achievement-Dateien erzeugt haben.",
-        "Watchdog meldet neue Änderungen erst, nachdem der Ordner bekannt und die Quelle aktiviert ist."
-      ],
-      "steamTitle": "Steam-Emulatoren",
-      "steam": [
-        "GBE-/Goldberg-Saves liegen meist unter %APPDATA%\\GSE Saves oder %APPDATA%\\Goldberg SteamEmu Saves.",
-        "Saves im CODEX-/RUNE-Stil liegen oft unter Public Documents\\Steam\\CODEX oder Public Documents\\Steam\\RUNE.",
-        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 und Hoodlum werden über ihre Konfig-/Save-Ordner erkannt."
-      ],
-      "emulatorTitle": "Konsolen-Emulatoren",
-      "emulators": [
-        "RPCS3-Achievements werden aus dev_hdd0\\home\\...\\trophy nahe der RPCS3-Installation gelesen.",
-        "shadPS4-Trophäen werden aus den game_data/trophy-Ordnern der App-Daten gelesen; übrig gebliebene Trophäendaten beweisen keine Installation.",
-        "Xenia-Fortschritt wird aus Xbox-Profil-Dateien wie .gpd gelesen."
-      ],
-      "sourcesTitle": "Launcher und Quellen",
-      "sources": [
-        "Der öffentliche Steam-Profilmodus listet installierte oder besessene Steam-Spiele, lokale Freischaltungen kommen aber weiterhin aus Save-Dateien.",
-        "GOG, Epic, Ubisoft Connect/LumaPlay und EA Desktop können in Quellen separat aktiviert werden.",
-        "Gecrackte EA-Desktop-Installationen werden aus EADesktopVerbose.log und dessen Backup-Logs gelesen."
-      ],
-      "configTitle": "Generierte Konfigurationen",
-      "config": [
-        "Der Emulator-Fix per Rechtsklick kann GBE-Fork-Dateien, Achievement-Schemas, DLC-Daten und Starthelfer hinzufügen.",
-        "Der einfache Modus ist schnell und nutzt Achievement-Watcher-Daten; Erweitert startet generate_emu_config für tiefere Steam-Daten.",
-        "Die erweiterte Generierung kann mehrere Minuten dauern, besonders mit DLC-/Depot-Metadaten."
-      ],
-      "troubleshootTitle": "Fehlerbehebung",
-      "troubleshoot": [
-        "Wenn ein Spiel fehlt, scanne nach dem Hinzufügen von Ordnern erneut und prüfe den Quellen-Schalter sowie die Blacklist.",
-        "Wenn Benachrichtigungen fehlen, prüfe den Windows-Fokusassistenten und starte Spiel/App mit passenden Administratorrechten.",
-        "Erweitert > Diagnose öffnet Logs und Datenordner, wenn du prüfen musst, was gescannt wurde."
-      ]
-    },
     "help": {
       "nav": "Hilfe",
       "title": "Hilfe & Tipps",
       "intro": "Alles Wissenswerte — Erkennung, Benachrichtigungen, Controller, Overlay, Themes und Fehlerbehebung.",
+      "setupTitle": "Deine aktuelle Einrichtung",
+      "topicsTitle": "Nach Thema durchsuchen",
+      "searchPlaceholder": "Hilfe durchsuchen…",
+      "noResults": "Kein Hilfethema entspricht deiner Suche.",
       "quickTitle": "Erste Schritte",
       "quick": [
-        "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
-        "The Watchdog runs in the background — it must be running for live notifications and playtime.",
-        "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+        "Füge Speicher-/Konfigurationsordner unter Einstellungen > Ordner hinzu und aktiviere anschließend die passende Quelle unter Einstellungen > Quellen.",
+        "Der Watchdog läuft im Hintergrund — er muss aktiv sein, damit Live-Benachrichtigungen und Spielzeit funktionieren.",
+        "Alles (Einstellungen, Caches, Protokolle und benutzerdefinierte Designs) befindet sich in %APPDATA%\\Achievement Watcher 3.0.",
         "Jeder Einstellungsbereich lässt sich über seine Kopfzeile einklappen — der Pfeil zeigt nach unten, wenn er offen ist, zur Seite, wenn er zu ist. Ihre Auswahl wird gemerkt."
       ],
       "steamTitle": "Steam-Emulatoren",
       "steam": [
-        "GBE / Goldberg saves are usually under %APPDATA%\\GSE Saves or %APPDATA%\\Goldberg SteamEmu Saves.",
-        "CODEX / RUNE saves often live under Public Documents\\Steam\\CODEX or Public Documents\\Steam\\RUNE.",
-        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 and Hoodlum are detected from their config/save folders."
+        "GBE-/Goldberg-Spielstände befinden sich normalerweise unter %APPDATA%\\GSE Saves oder %APPDATA%\\Goldberg SteamEmu Saves.",
+        "CODEX-/RUNE-Spielstände liegen häufig unter Public Documents\\Steam\\CODEX oder Public Documents\\Steam\\RUNE.",
+        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 und Hoodlum werden anhand ihrer Konfigurations-/Speicherordner erkannt."
       ],
       "emulatorTitle": "Konsolen-Emulatoren",
       "emulators": [
-        "RPCS3 trophies are read from dev_hdd0\\home\\...\\trophy near the RPCS3 install.",
-        "shadPS4 trophies are read from its app data game_data/trophy folders; leftover data is not install proof.",
-        "Xenia progress is read from Xbox profile files such as .gpd."
+        "RPCS3-Trophäen werden aus dev_hdd0\\home\\...\\trophy nahe der RPCS3-Installation gelesen.",
+        "shadPS4-Trophäen werden aus den game_data-/trophy-Ordnern der App-Daten gelesen; übrig gebliebene Daten sind kein Installationsnachweis.",
+        "Der Xenia-Fortschritt wird aus Xbox-Profildateien wie .gpd gelesen."
       ],
       "sourcesTitle": "Launcher & Quellen",
       "sources": [
-        "Steam profile mode lists installed or owned games, but unlocks still come from local save files.",
-        "GOG, Epic, Ubisoft Connect/LumaPlay and EA Desktop can be enabled separately in Sources.",
-        "Owned Steam games count as installed only when Steam's registry confirms it."
+        "Der Steam-Profilmodus listet installierte oder eigene Spiele auf; Freischaltungen stammen jedoch weiterhin aus lokalen Speicherdateien.",
+        "GOG, Epic, Ubisoft Connect/LumaPlay und EA Desktop können unter Quellen getrennt aktiviert werden.",
+        "Eigene Steam-Spiele gelten nur dann als installiert, wenn die Steam-Registrierung dies bestätigt."
       ],
       "controllerTitle": "Controller (Gamepad)",
       "controller": [
-        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
-        "LB + X toggles in-overlay navigation.",
-        "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
-        "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
+        "Aktivieren Sie zuerst Einstellungen > Controller; danach öffnet Back + Start + LB das In-Game-Overlay.",
+        "LB + X schaltet die Navigation im Overlay ein oder aus.",
+        "Navigationsmodus: Steuerkreuz/linker Stick verschieben den Fokus, A bestätigt, B bricht ab, X sucht und Y öffnet die Optionen.",
+        "Halte LB + RB gedrückt, um das Overlay mit dem linken Stick zu verschieben und mit dem rechten Stick zu scrollen.",
+        "Funktioniert mit Xbox-, PlayStation- (DualShock 4 / DualSense) und Switch-Pro-Controllern."
       ],
       "overlayTitle": "In-Game-Overlay",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
-        "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
-        "Press / to focus the search, Esc to clear it or close the options panel.",
-        "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
-        "Every achievement with a known rate shows its rarity: gray for common, gold/silver/bronze for rare."
+        "Öffnen Sie es mit dem Overlay-Tastenkürzel (standardmäßig Ctrl+Shift+K) oder mit Back + Start + LB auf einem Controller.",
+        "Sortiere jeweils nach einer Spalte: Seltenheit, Datum oder Status (aufsteigend / absteigend / keine Sortierung).",
+        "Drücke /, um die Suche zu fokussieren, und Esc, um sie zu leeren oder das Optionsfeld zu schließen.",
+        "Im Zahnradmenü lassen sich Akzent, Dichte, Zoom, Deckkraft und sichtbare Zeilen ändern; „App-Theme verwenden“ folgt dem aktiven Theme.",
+        "Jeder Erfolg mit bekannter Quote zeigt seine Seltenheit: Grau für häufige, Gold/Silber/Bronze für seltene."
       ],
       "themesTitle": "Benutzerdefinierte Themes",
       "themes": [
-        "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
-        "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+        "Benutzerdefiniert startet mit Steam Blue; jede Ebene (Hintergrund, Kopfzeile, Felder, Karten, Einstellungen, Text, Ränder, Akzent) ist bearbeitbar.",
+        "Ebenenbilder liegen unter einem farbigen Schleier mit leichtem Milchglas-Effekt; die Effekte werden pro Ebene eingestellt.",
+        "Lege ein CSS-Theme in <userData>\\themes ab, damit es in der Theme-Auswahl erscheint.",
         "Der Vorlagen-Editor kann ein Design vor dem Speichern als echtes Pop-up zeigen, eine gespeicherte Vorlage zum Ändern erneut öffnen und nicht benötigte löschen."
       ],
       "configTitle": "Generierte Konfigurationen",
       "config": [
-        "The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.",
-        "Simple mode is fast; Advanced runs generate_emu_config for deeper Steam data and can take minutes."
+        "Die Emulator-Reparatur im Kontextmenü kann GBE-Fork-Dateien, Erfolgsschemata und DLC-Daten hinzufügen.",
+        "Der einfache Modus ist schnell; Erweitert führt generate_emu_config für ausführlichere Steam-Daten aus und kann mehrere Minuten dauern."
       ],
       "shortcutsTitle": "Tastenkürzel",
       "shortcuts": [
-        "Ctrl+Shift+K (default): toggle the in-game overlay — configurable in Settings > General.",
-        "Ctrl+Alt+Shift+Arrows move the overlay; Ctrl+Alt+Shift+1–5 snap it to a preset position.",
-        "Ctrl+Alt+Shift+C toggles click-through; Ctrl+F focuses Settings search."
+        "Ctrl+Shift+K (Standard): In-Game-Overlay ein-/ausblenden — konfigurierbar unter Einstellungen > Allgemein.",
+        "Ctrl+Alt+Shift+Pfeiltasten verschieben das Overlay; Ctrl+Alt+Shift+1–5 rasten es an einer vorgegebenen Position ein.",
+        "Ctrl+Alt+Shift+C schaltet den Klickdurchgriff um; Ctrl+F fokussiert die Einstellungssuche."
       ],
       "tipsTitle": "Tipps & Tricks",
       "tips": [
-        "Right-click a game tile for quick actions: emulator fix, achievements, Steam page, GBE Fork install, uninstall.",
-        "Right-click a game and choose mute progress to stop progress popups without disabling unlocks.",
-        "The emulator fix (Simple fast / Advanced complete) installs GBE Fork, the achievements schema, DLCs and launch helpers.",
-        "Playtime is tracked while the game runs; progress and playtime notifications can be enabled in Notifications."
+        "Klicke mit der rechten Maustaste auf eine Spielkachel für Schnellaktionen: Emulator-Reparatur, Erfolge, Steam-Seite, GBE-Fork-Installation und Deinstallation.",
+        "Klicke mit der rechten Maustaste auf ein Spiel und wähle „Fortschritt stummschalten“, um Fortschritts-Pop-ups zu stoppen, ohne Freischaltungen zu deaktivieren.",
+        "Die Emulator-Reparatur (Einfach schnell / Erweitert vollständig) installiert GBE Fork, das Erfolgsschema und DLC-Daten.",
+        "Die Spielzeit wird erfasst, solange das Spiel läuft; Fortschritts- und Spielzeitbenachrichtigungen lassen sich unter Benachrichtigungen aktivieren.",
+        "Neue Erfolge aus einem Spielupdate erscheinen automatisch innerhalb von 3 Tagen oder sofort über Einstellungen > Erweitert > Erfolgslisten erneut prüfen."
       ],
       "troubleshootTitle": "Fehlerbehebung",
       "troubleshoot": [
-        "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
-        "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+        "Wenn ein Spiel fehlt: Ordner hinzufügen, erneut scannen und anschließend Quellenschalter sowie Sperrliste prüfen.",
+        "Wenn keine Benachrichtigungen erscheinen: Windows-Fokusassistent prüfen und die App mit denselben Rechten wie die Spiele ausführen.",
+        "Erweitert > Diagnose öffnet Protokoll- und Datenordner; füge sie einer Fehlermeldung bei.",
         "Protokolle werden angehängt, ein Absturz übersteht also den nächsten Start. Jeder Lauf beginnt mit einer Sitzungsmarke und einem [diag]-Block (Versionen, Pfade, Bildschirme) — fügen Sie ihn dem Ticket bei."
       ]
     },
@@ -784,9 +735,6 @@
       },
       "diag": {
         "title": "Diagnose",
-        "apiKeyLabel": "Steam-Web-API-Schlüssel :",
-        "apiKeyConfigured": "konfiguriert",
-        "apiKeyFallback": "nicht gesetzt — Fallback-Scraping wird verwendet",
         "logsFolder": "Log-Ordner öffnen",
         "dataFolder": "Datenordner öffnen",
         "goldbergTitle": "Goldberg / GBE Fork",
@@ -798,34 +746,35 @@
       "blacklistInfo": "Rechtsklick auf eine Spielkachel, um sie zur Sperrliste hinzuzufügen.",
       "blacklistEmpty": "Keine ausgeblendeten Spiele.",
       "blacklistRestore": "Dieses Spiel wieder anzeigen",
-      "apiKey": {
-        "title": "Steam-Web-API-Schlüssel",
-        "description": "Manche Steam-Daten erfordern einen persönlichen Steam-Web-API-Schlüssel.",
-        "fallback": "Lass dieses Feld leer, um den automatischen Abruf zu verwenden. Schlägt dieser fehl, gib deinen eigenen Schlüssel ein.",
-        "create": "Einen API-Schlüssel erstellen",
-        "terms": "Steam-API-Nutzungsbedingungen",
-        "label": "Dein Steam-Web-API-Schlüssel",
-        "security": "Der Schlüssel wird mit AES-256-CBC verschlüsselt, bevor er auf diesem Computer gespeichert wird."
-      },
       "mainSteam": {
         "title": "Steam-Hauptkonto",
         "name": "Nach Benutzer filtern",
         "description": "Nur die Steam-Erfolge des ausgewählten Kontos anzeigen"
       },
-      "checkUpdates": "Nach Updates suchen"
+      "checkUpdates": "Nach Updates suchen",
+      "clearUpdateCache": {
+        "name": "Caches leeren",
+        "button": "Caches leeren",
+        "description": "Löscht neu herunterladbare Caches: Update-Dateien, Steam/Ubisoft-Schema- und Icon-Cache sowie heruntergeladene Emulator-Fix-Tools. Berührt niemals Ihre Einstellungen, Spielstände, Backups oder manuell platzierten Dateien."
+      },
+      "forceAchievementRecheck": {
+        "name": "Erfolgslisten erneut prüfen",
+        "button": "Jetzt prüfen",
+        "description": "Prüft bei Steam, ob ein Spiel-Update seit der letzten Prüfung neue Erfolge hinzugefügt hat. Läuft automatisch alle 3 Tage; dies erzwingt die Prüfung jetzt."
+      }
     }
   },
   "onboarding": {
     "settingsLabel": "Leitfaden zum ersten Mal",
     "settingsButton": "Anleitung öffnen",
-    "settingsHelp": "Öffnen Sie die Einrichtungsanleitung für API-Schlüssel, Profil, Ordner, Quellen und Benachrichtigungen erneut.",
+    "settingsHelp": "Öffnen Sie den Einrichtungsassistenten erneut für Profil, Ordner, Quellen und Benachrichtigungen.",
+    "navLabel": "Einrichtungsschritte",
     "eyebrow": "Erste Einrichtung",
     "close": "Schließen",
     "steps": [
       "Sprache",
       "Wie es funktioniert",
       "Konto",
-      "API-Schlüssel",
       "Spiele",
       "Einstellungen"
     ],
@@ -841,7 +790,7 @@
     "watchTitle": "Überwachen",
     "watchCopy": "Der Watchdog erkennt beim Start eines Spiels dessen ausführbare Datei, erfasst die Spielzeit und überwacht Erfolgsdateien, damit Freischaltungen während des Spielens erscheinen.",
     "fixTitle": "Reparieren",
-    "fixCopy": "Bei emulierten Steam-Spielen installiert die Reparatur im Kontextmenü (oder die automatische Reparatur) GBE Fork und schreibt achievements.json, DLC-Daten und Starthilfen in den steam_settings-Ordner des Spiels.",
+    "fixCopy": "Bei emulierten Steam-Spielen installiert die Reparatur im Kontextmenü (oder die automatische Reparatur) GBE Fork und schreibt achievements.json sowie DLC-Daten in den steam_settings-Ordner des Spiels.",
     "overlayTitle": "In-Game-Overlay",
     "overlayCopy": "Ein kleines Erfolgs-Panel, das du mit einem Tastenkürzel (Standard Ctrl+Shift+K) über dem Spiel einblenden kannst. Jederzeit änderbar unter Einstellungen > Allgemein, neben dem Tastenkürzel-Feld.",
     "profileTitle": "Profil",
@@ -851,13 +800,6 @@
     "avatarPick": "Foto auswählen",
     "avatarDefault": "Standard",
     "avatarHint": "Optional. Lokal auf diesem PC gespeichert.",
-    "apiTitle": "Steam-Web-API-Schlüssel",
-    "apiCopy": "Ein Schlüssel verbessert den Steam-Metadatenabruf. Sie können es leer lassen und später hinzufügen.",
-    "apiWarning": "WICHTIG: Ohne einen API-Schlüssel ist das allererste Laden der Bibliothek SEHR LANGSAM: Jedes Spiel wird durch Scraping der Steam-Seiten abgerufen (mehrere Sekunden pro Spiel). Mit einem Schlüssel erfolgt die Messung nahezu augenblicklich und genauer. Das Fenster bleibt während des Ladens nutzbar, es wird jedoch dringend empfohlen, eines hinzuzufügen.",
-    "apiLabel": "Steam-Web-API-Schlüssel",
-    "apiToggle": "API-Schlüssel anzeigen oder verbergen",
-    "apiLink": "Holen Sie sich einen Steam-Web-API-Schlüssel",
-    "apiNote": "Nutzen Sie die offizielle Steam-Seite. Der Schlüssel wird vor dem Speichern verschlüsselt.",
     "foldersTitle": "Spiele auf der Festplatte hinzufügen",
     "foldersCopy": "Fügen Sie Save/Config-Ordner für bestimmte Emulatoren und Bibliotheksstämme hinzu, die viele installierte Spiele enthalten.",
     "addSave": "Speicherordner hinzufügen",
@@ -1326,6 +1268,9 @@
     "rescan-started": "{count} ausgewählte Ordner werden erneut gescannt…",
     "rescan-complete": "Ausgewählte Ordner wurden erneut gescannt.",
     "rescan-failed": "Scan ausgewählter Ordner fehlgeschlagen: {error}",
+    "force-recheck-started": "Suche nach neuen Erfolgen…",
+    "force-recheck-done": "Prüfung abgeschlossen.",
+    "force-recheck-failed": "Prüfung fehlgeschlagen: {error}",
     "no-game-found": "Kein Spiel gefunden.",
     "invalid-folder": "Ungültiger Ordner",
     "error-adding-custom-folder": "Fehler beim Hinzufügen des benutzerdefinierten Ordners",
@@ -1377,7 +1322,54 @@
     "theme-gradient-angle-135": "Oben links → Unten rechts",
     "theme-gradient-angle-180": "Oben → Unten",
     "theme-gradient-angle-0": "Unten → Oben",
-    "theme-gradient-angle-270": "Oben rechts → Unten links"
+    "theme-gradient-angle-270": "Oben rechts → Unten links",
+    "avatar-import-from-steam-user": "Steam-Avatar von {name} importieren",
+    "update-check-failed-detail": "Update-Prüfung fehlgeschlagen: {message}",
+    "diagnosis-emulator": "Emulator: {emulator}",
+    "diagnosis-emulator-none": "keiner erkannt",
+    "diagnosis-steam-settings": "steam_settings: {path}",
+    "diagnosis-steam-settings-missing": "steam_settings: nicht gefunden",
+    "diagnosis-achievements-count": "Erfolge: {found} in Datei / {expected} im Schema",
+    "diagnosis-no-problems": "Keine Probleme erkannt.",
+    "diagnosis-auto-repair-wrote": "Autoreparatur hat {count} Erfolge nach {path} geschrieben",
+    "diagnosis-icons-summary": "Symbole: {downloaded} heruntergeladen, {failed} fehlgeschlagen, {skipped} übersprungen",
+    "diagnosis-steam-appid-created": "steam_appid.txt erstellt",
+    "diagnosis-configs-main-updated": "configs.main.ini aktualisiert (new_app_ticket + gc_token)",
+    "diagnosis-configs-app-updated": "configs.app.ini aktualisiert ({count} DLC-Einträge, unlock_all={unlockAll})",
+    "diagnosis-configs-user-updated": "configs.user.ini aktualisiert",
+    "diagnosis-auto-repair-failed": "Autoreparatur fehlgeschlagen: {error}",
+    "diagnosis-steam-appid": "Steam-AppID: {appid} ({name})",
+    "diagnosis-steam-appid-not-resolved": "Steam-AppID: nicht aufgelöst",
+    "version-app": "App",
+    "diagnosis-dlls-backed-up": "Vorhandene DLL(s) als *.bak gesichert",
+    "diagnosis-config-backed-up": "Vorherige Konfiguration gesichert: {path}",
+    "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
+    "diagnosis-none-parenthesized": "(keine)",
+    "diagnosis-version": "Version: {version}",
+    "diagnosis-version-unknown": "unbekannt",
+    "diagnosis-dlls-backed-up-locations": "Vorhandene DLL(s) als *.bak in {count} Speicherort(en) gesichert",
+    "diagnosis-after-install": "Diagnose nach Installation:",
+    "diagnosis-auto-repaired-steam-settings": "steam_settings automatisch repariert (Schema + Symbole + DLCs) in {count} Speicherort(en)",
+    "diagnosis-auto-repair-failed-for": "Automatische Reparatur fehlgeschlagen für: {paths}",
+    "diagnosis-dir-status-line": "{dir}: {status}",
+    "diagnosis-dir-status-ok": "ok",
+    "diagnosis-dir-status-attention": "prüfen",
+    "diagnosis-advanced-data-skipped": "Erweiterte Daten: übersprungen (keine numerische AppID)",
+    "diagnosis-advanced-data-login-cancelled": "Erweiterte Daten: Anmeldung abgebrochen",
+    "diagnosis-advanced-data-merged": "Erweiterte Daten: {count} zusätzliche Datei(en) zusammengeführt (generate_emu_config {tag})",
+    "diagnosis-advanced-data-failed": "Erweiterte Daten: {error}",
+    "achievements-overlay-title": "Erfolge-Overlay",
+    "update-retry-failed-message": "Das Update ist auch nach dem Leeren der zwischengespeicherten Dateien in {folder} fehlgeschlagen.",
+    "update-retry-failed-detail": "Dies ist wahrscheinlich ein Netzwerk- oder Release-Problem, das durch Leeren des Caches nicht behoben werden kann. Sie können das Update manuell von der Release-Seite herunterladen und installieren.",
+    "open-release-page": "Release-Seite öffnen",
+    "clear-cache": "Caches leeren",
+    "clear-update-cache-label": "Caches leeren",
+    "clear-update-cache-confirm": "Alle neu herunterladbaren Caches löschen (Update-Dateien, Steam/Ubisoft-Schema- und Icon-Cache, heruntergeladene Emulator-Fix-Tools)? Ihre Einstellungen, Spielstände, Backups und manuell platzierten Dateien werden niemals berührt — alles, was hier geleert wird, wird bei Bedarf einfach automatisch erneut heruntergeladen.",
+    "clear-update-cache-failed": "Der Update-Cache konnte nicht geleert werden.",
+    "clear-update-cache-empty": "Nichts zu leeren — keine zwischengespeicherten Update-Dateien gefunden.",
+    "clear-update-cache-done": "Update-Cache geleert: {folder}",
+    "clear-update-cache-done-apps": "{count} Cache-Ordner geleert.",
+    "clear-update-cache-done-all": "{count} Cache-Ordner geleert, einschließlich des Update-Caches in {folder}."
   },
   "watchdog": {
     "rare": "Selten {percent}%",

@@ -16,15 +16,15 @@ const EFFECT_TYPES = ['veil', 'blur'];
 // Built-in colors mirror app.css; the overlay uses this table directly.
 const BUILTIN_COLORS = {
   default: {
-    bg: '#1b2838',
+    bg: '#142236',
     header: '#26384c',
-    panel: '#15202d',
-    card: '#27374a',
-    settings: '#27374a',
-    text: '#d9dfe4',
-    muted: '#a8b5c5',
+    panel: '#192a40',
+    card: '#263b55',
+    settings: '#263b55',
+    text: '#e7edf6',
+    muted: '#94a5ba',
     border: '#3e5065',
-    accent: '#5b8dff',
+    accent: '#6c91ff',
   },
   oled: {
     bg: '#000000',
@@ -206,6 +206,9 @@ const BUILTIN_COLORS = {
   },
 };
 
+const DEFAULT_THEME_COLOR = BUILTIN_COLORS.default.bg;
+const DEFAULT_ACCENT_COLOR = BUILTIN_COLORS.default.accent;
+
 function customThemeFile(userDataPath) {
   return path.join(String(userDataPath || ''), 'cfg', 'customTheme.json');
 }
@@ -277,7 +280,7 @@ function normalizeEffect(raw) {
 function defaultCustomTheme() {
   const theme = {};
   for (const id of LAYER_IDS) {
-    const color = BUILTIN_COLORS.default[id] || '#1b2838';
+    const color = BUILTIN_COLORS.default[id] || DEFAULT_THEME_COLOR;
     theme[id] = {
       color,
       gradient: { enabled: false, from: color, to: darkenHex(color, 48), angle: 180 },
@@ -336,7 +339,7 @@ function saveCustomTheme(userDataPath, theme) {
 }
 
 function hexToRgbTriplet(value) {
-  const raw = String(value || '#6c91ff').trim().toLowerCase();
+  const raw = String(value || DEFAULT_ACCENT_COLOR).trim().toLowerCase();
   if (/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/.test(raw)) {
     const full = raw.length === 4 ? raw.slice(1).split('').map((c) => c + c).join('') : raw.slice(1);
     const n = parseInt(full, 16);
@@ -344,7 +347,7 @@ function hexToRgbTriplet(value) {
   }
   const m = /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})/.exec(raw);
   if (m) return `${m[1]}, ${m[2]}, ${m[3]}`;
-  return '108, 145, 255';
+  return hexToRgbTriplet(DEFAULT_ACCENT_COLOR);
 }
 
 function imageUrl(filePath) {
@@ -385,7 +388,7 @@ function veilLayer(layer) {
 // extra background layer on surface layers (bg/header/panel/card/settings) when the toggle is on.
 function layerGradient(layer) {
   if (!layer || !layer.gradient || layer.gradient.enabled !== true) return 'none';
-  const from = layer.gradient.from || layer.color || '#1b2838';
+  const from = layer.gradient.from || layer.color || DEFAULT_THEME_COLOR;
   const to = layer.gradient.to || from;
   const angle = Number.isFinite(Number(layer.gradient.angle)) ? Number(layer.gradient.angle) : 180;
   return `linear-gradient(${angle}deg, ${from} 0%, ${to} 100%)`;
@@ -406,7 +409,7 @@ function layerVars(theme, prefix) {
   const lines = [];
   for (const id of LAYER_IDS) {
     const layer = theme[id] || {};
-    lines.push(`  --${prefix}${id}: ${layer.color || '#142236'};`);
+    lines.push(`  --${prefix}${id}: ${layer.color || DEFAULT_THEME_COLOR};`);
     lines.push(`  --aw-grad-${id}: ${layerGradient(layer)};`);
   }
   for (const id of IMAGE_LAYER_IDS) {

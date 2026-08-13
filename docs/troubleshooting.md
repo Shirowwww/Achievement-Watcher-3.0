@@ -26,8 +26,8 @@ Logs are appended, never truncated, so a crash survives the next launch. Each ru
 Right after it, a `[diag]` block records everything a bug report needs and nobody should have to collect by hand - versions, install and data paths, how the app was started, the active language and theme, and the geometry of every display:
 
 ```text
-[diag] app: Achievement Watcher 3.8.0 (packaged)
-[diag] runtime: electron 43.1.0 · chrome 150.0.7871.47 · node 24.18.0
+[diag] app: Achievement Watcher 3.8.5 (packaged)
+[diag] runtime: electron 43.4.0 · chrome 150.0.7871.224 · node 24.18.1
 [diag] display: 3056414223 1080x1920 @1x work=1080x1872 rotation=270
 [diag] display: 3933707034 (primary) 2048x1152 @1.25x work=2048x1104 rotation=0
 ```
@@ -64,7 +64,22 @@ See [Goldberg and GBE Fork setup](emulator-setup.md#common-problems) or [Goldber
 - For Goldberg/GBE, a valid local schema can fill some missing text offline.
 - Use the game's cover actions to retry or choose local artwork when automatic sources fail.
 
+DLC and update achievements show their owning group under the title (e.g. a "Hearts of Stone"
+tag) when SteamHunters knows the groups; games without groups are left untagged.
+
 Hidden achievement descriptions may stay hidden when every available source intentionally omits them.
+
+## A game update added achievements that aren't showing up
+
+A cached schema re-checks itself against Steam every 3 days, since Steam never announces when an
+update adds achievements. To pick them up immediately instead of waiting, use **Settings → Advanced
+→ Recheck achievement lists**. Existing achievements and unlocks are never removed by this check.
+
+## An update is stuck on the same file
+
+Downloaded update files are kept between runs. If a download keeps failing on the same file, use
+**Settings → Advanced → Clear caches** and check for updates again. Only re-downloadable caches
+are deleted - settings, game data and logs are untouched.
 
 ## Notifications do not appear
 
@@ -94,7 +109,11 @@ Ubisoft games should receive Ubisoft-specific metadata and the Uplay R2 repair a
 
 ## Antivirus or SmartScreen warning
 
-Packaged releases are currently unsigned, and optional emulator DLLs may also trigger heuristic detections. Download only from the [official Releases page](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases) and compare the installer against the SHA-512 value stored in the matching `latest.yml`.
+Packaged releases are signed with the project's self-signed publisher certificate, not a publicly
+trusted commercial certificate, so Windows SmartScreen may still warn. You never need to install
+the certificate: the in-app updater accepts the exact `CN=Shirow` identity even when Windows does
+not trust its root, and independently checks the SHA-512 release manifest. Optional emulator DLLs
+can also trigger heuristic detections. Download only from the [official Releases page](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases) and compare the installer against the SHA-512 value stored in the matching `latest.yml`.
 
 Do not disable system-wide protection. Submit a false-positive report to the antivirus vendor when a file from the official release is incorrectly quarantined.
 

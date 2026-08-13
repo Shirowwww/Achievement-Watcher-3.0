@@ -178,7 +178,7 @@
       "onboarding": {
         "name": "First-run guide",
         "button": "Open guide",
-        "description": "Reopen the setup guide for API key, profile, folders, sources, and notifications."
+        "description": "Reopen the setup guide for profile, folders, sources, and notifications."
       },
       "hardwareAccel": {
         "name": "Disable hardware acceleration",
@@ -266,14 +266,6 @@
           "true": "Enabled"
         }
       },
-      "mode": {
-        "name": "Emulator mode",
-        "description": "Regular swaps the game's steam_api(64).dll. ColdClient keeps it and loads GBE Fork's emulated steamclient via a loader — broader coverage for stubborn games.",
-        "value": {
-          "regular": "Regular (replace DLL)",
-          "coldclient": "ColdClient (GBE Fork)"
-        }
-      },
       "steamSettings": {
         "name": "steam_settings data",
         "description": "Simple uses Achievement Watcher's own fetch (anonymous). Advanced runs generate_emu_config for depot/language coverage.",
@@ -320,14 +312,6 @@
         "value": {
           "false": "Disabled",
           "true": "Enabled"
-        }
-      },
-      "launchBat": {
-        "name": "Create Launch.bat for fallback",
-        "description": "When Steamless cannot strip a SteamStub exe and AW falls back to ColdClient, also writes a Launch.bat for the matching loader.",
-        "value": {
-          "true": "Enabled",
-          "false": "Disabled"
         }
       },
       "checkUpdates": {
@@ -590,6 +574,10 @@
     },
     "source": {
       "title": "Game sources",
+      "officialPlatforms": {
+        "title": "Official platforms",
+        "description": "Steam, Ubisoft Connect, GOG Galaxy, Epic Games and Xbox PC are supported here. Enable the shield-marked sources below; only libraries detected on this PC can be shown."
+      },
       "legitSteam": {
         "name": "Display Steam Games",
         "description": "Steam must be installed and your Steam profile public!",
@@ -650,56 +638,18 @@
         "description": "Xbox 360 emulator"
       }
     },
-    "guide": {
-      "nav": "Guide",
-      "title": "Platform guide",
-      "intro": "What Achievement Watcher scans, which folders matter, and when generated emulator configs are useful.",
-      "quickTitle": "First steps",
-      "quick": [
-        "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
-        "Use library folders for installed games that have not produced achievement files yet.",
-        "Watchdog only notifies new changes after the folder is known and the source is enabled."
-      ],
-      "steamTitle": "Steam emulators",
-      "steam": [
-        "GBE / Goldberg saves are usually under %APPDATA%\\GSE Saves or %APPDATA%\\Goldberg SteamEmu Saves.",
-        "CODEX / RUNE style saves often live under Public Documents\\Steam\\CODEX or Public Documents\\Steam\\RUNE.",
-        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 and Hoodlum are detected from their config/save folders."
-      ],
-      "emulatorTitle": "Console emulators",
-      "emulators": [
-        "RPCS3 achievements are read from dev_hdd0\\home\\...\\trophy near the RPCS3 install.",
-        "shadPS4 trophies are read from its app data game_data/trophy folders; leftover trophy data is not install proof.",
-        "Xenia progress is read from Xbox profile files such as .gpd."
-      ],
-      "sourcesTitle": "Launchers and sources",
-      "sources": [
-        "Steam public profile mode lists installed or owned Steam games, but local unlocks still come from save files.",
-        "GOG, Epic, Ubisoft Connect/LumaPlay and EA Desktop can be enabled separately in Sources.",
-        "EA Desktop cracked installs are read from EADesktopVerbose.log and its backup logs."
-      ],
-      "configTitle": "Generated configs",
-      "config": [
-        "The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.",
-        "Simple mode is fast and uses Achievement Watcher's data; Advanced runs generate_emu_config for deeper Steam data.",
-        "Advanced generation can take several minutes, especially with DLC/depot metadata."
-      ],
-      "troubleshootTitle": "Troubleshooting",
-      "troubleshoot": [
-        "If a game is missing, rescan after adding folders, then check the source toggle and blacklist.",
-        "If notifications are missing, check Windows Focus Assist and run the game/app with matching admin rights.",
-        "Advanced > Diagnostics opens logs and data folders when you need to inspect what was scanned."
-      ]
-    },
     "help": {
       "nav": "Help",
       "title": "Help & tips",
       "intro": "Everything useful to know — detection, notifications, controller, overlay, themes and troubleshooting.",
+      "setupTitle": "Your current setup",
+      "topicsTitle": "Browse by topic",
+      "searchPlaceholder": "Search help…",
+      "noResults": "No help topic matches your search.",
       "quickTitle": "First steps",
       "quick": [
         "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
         "The Watchdog runs in the background — it must be running for live notifications and playtime.",
-        "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
         "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
         "Every settings section folds away under its own header — the chevron points down when open, sideways when closed. Your choices are remembered."
       ],
@@ -723,7 +673,7 @@
       ],
       "controllerTitle": "Controller (gamepad)",
       "controller": [
-        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
+        "Enable Settings > Controller first, then Back + Start + LB opens the in-game overlay.",
         "LB + X toggles in-overlay navigation.",
         "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
         "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
@@ -731,7 +681,7 @@
       ],
       "overlayTitle": "In-game overlay",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
+        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start + LB on a controller.",
         "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
         "Press / to focus the search, Esc to clear it or close the options panel.",
         "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
@@ -746,7 +696,7 @@
       ],
       "configTitle": "Generated configs",
       "config": [
-        "The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.",
+        "The right-click emulator fix can add GBE Fork files, achievement schemas and DLC data.",
         "Simple mode is fast; Advanced runs generate_emu_config for deeper Steam data and can take minutes."
       ],
       "shortcutsTitle": "Keyboard shortcuts",
@@ -757,15 +707,16 @@
       ],
       "tipsTitle": "Tips & tricks",
       "tips": [
-        "Right-click a game tile for quick actions: emulator fix, achievements, Steam page, GBE Fork install, uninstall.",
+        "Right-click a game tile to launch it, choose its executable, open folders and links, use emulator tools, or uninstall it when that menu is enabled.",
         "Right-click a game and choose mute progress to stop progress popups without disabling unlocks.",
-        "The emulator fix (Simple fast / Advanced complete) installs GBE Fork, the achievements schema, DLCs and launch helpers.",
-        "Playtime is tracked while the game runs; progress and playtime notifications can be enabled in Notifications."
+        "The emulator fix (Simple fast / Advanced complete) installs GBE Fork, the achievement schema and DLC data.",
+        "Playtime is tracked while the game runs; progress and playtime notifications can be enabled in Notifications.",
+        "New achievements from a game update appear automatically within 3 days, or right away from Settings > Advanced > Recheck achievement lists."
       ],
       "troubleshootTitle": "Troubleshooting",
       "troubleshoot": [
         "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
-        "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
+        "If notifications don't appear: check Windows Do not disturb / Focus Assist and run the app with the same rights as your games.",
         "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
         "Logs are appended, so a crash survives the next launch. Each run starts with a session marker and a [diag] block (versions, paths, displays) — paste it into an issue."
       ]
@@ -784,9 +735,6 @@
       },
       "diag": {
         "title": "Diagnostics",
-        "apiKeyLabel": "Steam Web API key:",
-        "apiKeyConfigured": "configured",
-        "apiKeyFallback": "not set — using fallback scraping",
         "logsFolder": "Open logs folder",
         "dataFolder": "Open data folder",
         "goldbergTitle": "Goldberg / GBE Fork",
@@ -798,34 +746,35 @@
       "blacklistInfo": "Right click on a gamebox to add it to the blacklist.",
       "blacklistEmpty": "No hidden games.",
       "blacklistRestore": "Restore this game",
-      "apiKey": {
-        "title": "Steam Web API key",
-        "description": "Some Steam data requires a personal Steam Web API key.",
-        "fallback": "Leave this field empty to use automatic retrieval. If that fails, enter your own key.",
-        "create": "Create an API key",
-        "terms": "Steam API Terms of Use",
-        "label": "Your Steam Web API key",
-        "security": "The key is encrypted with AES-256-CBC before it is stored on this computer."
-      },
       "mainSteam": {
         "title": "Main Steam Account",
         "name": "Filter by user",
         "description": "Show Steam achievements of only the selected account"
       },
-      "checkUpdates": "Check for updates"
+      "checkUpdates": "Check for updates",
+      "clearUpdateCache": {
+        "name": "Clear caches",
+        "button": "Clear caches",
+        "description": "Deletes re-downloadable caches: update files, Steam/Ubisoft schema & icon cache, and downloaded emulator-fix tools. Never touches your settings, saves, backups, or manually placed files."
+      },
+      "forceAchievementRecheck": {
+        "name": "Recheck achievement lists",
+        "button": "Check now",
+        "description": "Checks Steam for achievements added by a game update since the last check. Runs automatically every 3 days; this forces it now."
+      }
     }
   },
   "onboarding": {
     "settingsLabel": "First-run guide",
     "settingsButton": "Open guide",
-    "settingsHelp": "Reopen the setup guide for API key, profile, folders, sources, and notifications.",
+    "settingsHelp": "Reopen the setup guide for profile, folders, sources, and notifications.",
+    "navLabel": "Setup steps",
     "eyebrow": "First setup",
     "close": "Close",
     "steps": [
       "Language",
       "How it works",
       "Account",
-      "API key",
       "Games",
       "Settings"
     ],
@@ -841,7 +790,7 @@
     "watchTitle": "Watch",
     "watchCopy": "The background Watchdog detects the game's executable when it launches, tracks playtime, and watches achievement files so unlocks pop up while you play.",
     "fixTitle": "Repair",
-    "fixCopy": "For emulated Steam games, the right-click fix (or the auto-fix) installs GBE Fork and writes the achievements.json schema, DLC data and launch helpers into the game's steam_settings folder.",
+    "fixCopy": "For emulated Steam games, the right-click fix (or the auto-fix) installs GBE Fork and writes the achievements.json schema and DLC data into the game's steam_settings folder.",
     "overlayTitle": "In-game overlay",
     "overlayCopy": "A small achievements panel you can bring up over the game with a hotkey (default Ctrl+Shift+K). Change it any time in Settings > General, next to the hotkey field.",
     "profileTitle": "Profile",
@@ -851,13 +800,6 @@
     "avatarPick": "Choose photo",
     "avatarDefault": "Default",
     "avatarHint": "Optional. Stored locally on this PC.",
-    "apiTitle": "Steam Web API key",
-    "apiCopy": "A key improves Steam metadata retrieval. You can leave it empty and add it later.",
-    "apiWarning": "IMPORTANT: without an API key, the very first library load will be VERY SLOW: each game is fetched by scraping the Steam pages (several seconds per game). With a key it is near-instant and more accurate. The window stays usable while it loads, but adding one is strongly recommended.",
-    "apiLabel": "Steam Web API key",
-    "apiToggle": "Show or hide API key",
-    "apiLink": "Get a Steam Web API key",
-    "apiNote": "Use the official Steam page. The key is encrypted before saving.",
     "foldersTitle": "Add games on disk",
     "foldersCopy": "Use Smart find to automatically detect save/config folders and game libraries. Or add them manually by folder type.",
     "addSave": "Save/config folder",
@@ -1326,6 +1268,9 @@
     "rescan-started": "Rescanning {count} selected folder(s)…",
     "rescan-complete": "Selected folders rescanned.",
     "rescan-failed": "Selected-folder scan failed: {error}",
+    "force-recheck-started": "Checking for new achievements…",
+    "force-recheck-done": "Check complete.",
+    "force-recheck-failed": "Check failed: {error}",
     "no-game-found": "No game found.",
     "invalid-folder": "Invalid folder",
     "error-adding-custom-folder": "Error adding custom folder",
@@ -1377,7 +1322,54 @@
     "theme-gradient-angle-135": "Top-left → Bottom-right",
     "theme-gradient-angle-180": "Top → Bottom",
     "theme-gradient-angle-0": "Bottom → Top",
-    "theme-gradient-angle-270": "Top-right → Bottom-left"
+    "theme-gradient-angle-270": "Top-right → Bottom-left",
+    "avatar-import-from-steam-user": "Import {name}'s Steam avatar",
+    "update-check-failed-detail": "Update check failed: {message}",
+    "diagnosis-emulator": "Emulator: {emulator}",
+    "diagnosis-emulator-none": "none detected",
+    "diagnosis-steam-settings": "steam_settings: {path}",
+    "diagnosis-steam-settings-missing": "steam_settings: not found",
+    "diagnosis-achievements-count": "achievements: {found} in file / {expected} in schema",
+    "diagnosis-no-problems": "No problems detected.",
+    "diagnosis-auto-repair-wrote": "Auto-repair wrote {count} achievements to {path}",
+    "diagnosis-icons-summary": "icons: {downloaded} downloaded, {failed} failed, {skipped} skipped",
+    "diagnosis-steam-appid-created": "steam_appid.txt created",
+    "diagnosis-configs-main-updated": "configs.main.ini updated (new_app_ticket + gc_token)",
+    "diagnosis-configs-app-updated": "configs.app.ini updated ({count} DLC entries, unlock_all={unlockAll})",
+    "diagnosis-configs-user-updated": "configs.user.ini updated",
+    "diagnosis-auto-repair-failed": "Auto-repair failed: {error}",
+    "diagnosis-steam-appid": "Steam AppID: {appid} ({name})",
+    "diagnosis-steam-appid-not-resolved": "Steam AppID: not resolved",
+    "version-app": "App",
+    "diagnosis-dlls-backed-up": "Existing dll(s) backed up as *.bak",
+    "diagnosis-config-backed-up": "Previous config backed up: {path}",
+    "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
+    "diagnosis-none-parenthesized": "(none)",
+    "diagnosis-version": "Version: {version}",
+    "diagnosis-version-unknown": "unknown",
+    "diagnosis-dlls-backed-up-locations": "Existing dll(s) backed up as *.bak in {count} location(s)",
+    "diagnosis-after-install": "Diagnostic after install:",
+    "diagnosis-auto-repaired-steam-settings": "Auto-repaired steam_settings (schema + icons + DLCs) in {count} location(s)",
+    "diagnosis-auto-repair-failed-for": "Auto-repair failed for: {paths}",
+    "diagnosis-dir-status-line": "{dir}: {status}",
+    "diagnosis-dir-status-ok": "ok",
+    "diagnosis-dir-status-attention": "needs attention",
+    "diagnosis-advanced-data-skipped": "Advanced data: skipped (no numeric AppID)",
+    "diagnosis-advanced-data-login-cancelled": "Advanced data: login cancelled",
+    "diagnosis-advanced-data-merged": "Advanced data: merged {count} extra file(s) (generate_emu_config {tag})",
+    "diagnosis-advanced-data-failed": "Advanced data: {error}",
+    "achievements-overlay-title": "Achievements Overlay",
+    "update-retry-failed-message": "The update still failed after clearing the cached files in {folder}.",
+    "update-retry-failed-detail": "This is likely a network or release problem, not something clearing the cache can fix. You can download and install the update manually from the release page.",
+    "open-release-page": "Open Release Page",
+    "clear-cache": "Clear caches",
+    "clear-update-cache-label": "Clear caches",
+    "clear-update-cache-confirm": "Delete every re-downloadable cache (update files, Steam/Ubisoft schema & icon cache, downloaded emulator-fix tools)? Your settings, saves, backups and manually placed files are never touched — everything cleared here is simply re-fetched or re-downloaded automatically when needed.",
+    "clear-update-cache-failed": "Could not clear the update cache.",
+    "clear-update-cache-empty": "Nothing to clear — no cached update files found.",
+    "clear-update-cache-done": "Update cache cleared: {folder}",
+    "clear-update-cache-done-apps": "Cleared {count} cache folder(s).",
+    "clear-update-cache-done-all": "Cleared {count} cache folder(s), including the update cache in {folder}."
   },
   "watchdog": {
     "rare": "Rare {percent}%",

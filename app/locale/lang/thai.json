@@ -178,7 +178,7 @@
       "onboarding": {
         "name": "คู่มือการเริ่มใช้งานครั้งแรก",
         "button": "เปิดคู่มือ",
-        "description": "เปิดคู่มือการตั้งค่าอีกครั้ง: คีย์ API, โปรไฟล์, โฟลเดอร์, แหล่งที่มา และการแจ้งเตือน"
+        "description": "เปิดคู่มือการตั้งค่าอีกครั้งสำหรับโปรไฟล์ โฟลเดอร์ แหล่งที่มา และการแจ้งเตือน"
       },
       "hardwareAccel": {
         "name": "ปิดการเร่งด้วยฮาร์ดแวร์",
@@ -266,14 +266,6 @@
           "true": "เปิดใช้งาน"
         }
       },
-      "mode": {
-        "name": "โหมดอีมูเลเตอร์",
-        "description": "Regular จะสลับ steam_api(64).dll ของเกม ColdClient จะเก็บไว้และโหลด steamclient ที่จำลองของ GBE Fork ผ่านโหลดเดอร์ — ครอบคลุมเกมที่ดื้อรั้นได้กว้างกว่า",
-        "value": {
-          "regular": "Regular (เปลี่ยน DLL)",
-          "coldclient": "ColdClient (GBE Fork)"
-        }
-      },
       "steamSettings": {
         "name": "ข้อมูล steam_settings",
         "description": "Simple ใช้การดึงข้อมูลของ Achievement Watcher เอง (ไม่ระบุตัวตน) Advanced เรียกใช้ generate_emu_config เพื่อครอบคลุม depot/ภาษา",
@@ -320,14 +312,6 @@
         "value": {
           "false": "ปิดใช้งาน",
           "true": "เปิดใช้งาน"
-        }
-      },
-      "launchBat": {
-        "name": "สร้าง Launch.bat เป็นทางสำรอง",
-        "description": "เมื่อ Steamless ไม่สามารถถอด exe ที่เป็น SteamStub ได้ และ AW กลับไปใช้ ColdClient จะเขียน Launch.bat สำหรับโหลดเดอร์ที่ตรงกันด้วย",
-        "value": {
-          "true": "เปิดใช้งาน",
-          "false": "ปิดใช้งาน"
         }
       },
       "checkUpdates": {
@@ -590,6 +574,10 @@
     },
     "source": {
       "title": "แหล่งที่มาของเกม",
+      "officialPlatforms": {
+        "title": "แพลตฟอร์มอย่างเป็นทางการ",
+        "description": "รองรับ Steam, Ubisoft Connect, GOG Galaxy, Epic Games และ Xbox PC เปิดแหล่งที่มาที่มีสัญลักษณ์โล่ด้านล่าง โดยจะแสดงได้เฉพาะคลังเกมที่ตรวจพบบนพีซีเครื่องนี้เท่านั้น"
+      },
       "legitSteam": {
         "name": "แสดงเกม Steam",
         "description": "ต้องติดตั้ง Steam และโปรไฟล์ Steam ของคุณต้องเป็นสาธารณะ!",
@@ -650,123 +638,86 @@
         "description": "โปรแกรมจำลอง Xbox 360"
       }
     },
-    "guide": {
-      "nav": "คู่มือ",
-      "title": "คู่มือแพลตฟอร์ม",
-      "intro": "สิ่งที่ Achievement Watcher สแกน โฟลเดอร์ที่สำคัญ และเวลาที่คอนฟิกอีมูเลเตอร์ที่สร้างขึ้นมีประโยชน์",
-      "quickTitle": "ขั้นตอนแรก",
-      "quick": [
-        "เพิ่มโฟลเดอร์เซฟ/คอนฟิกใน ตั้งค่า > โฟลเดอร์ แล้วเปิดแหล่งที่ตรงกันใน ตั้งค่า > แหล่งที่มา",
-        "ใช้โฟลเดอร์ไลบรารีสำหรับเกมที่ติดตั้งแล้วแต่ยังไม่ได้สร้างไฟล์ความสำเร็จ",
-        "Watchdog จะแจ้งเตือนการเปลี่ยนแปลงใหม่หลังจากรู้จักโฟลเดอร์และเปิดแหล่งที่มาแล้วเท่านั้น"
-      ],
-      "steamTitle": "อีมูเลเตอร์ Steam",
-      "steam": [
-        "เซฟ GBE / Goldberg มักอยู่ที่ %APPDATA%\\GSE Saves หรือ %APPDATA%\\Goldberg SteamEmu Saves",
-        "เซฟแบบ CODEX / RUNE มักอยู่ที่ Public Documents\\Steam\\CODEX หรือ Public Documents\\Steam\\RUNE",
-        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 และ Hoodlum จะถูกตรวจจากโฟลเดอร์คอนฟิก/เซฟของตัวเอง"
-      ],
-      "emulatorTitle": "อีมูเลเตอร์คอนโซล",
-      "emulators": [
-        "ความสำเร็จ RPCS3 อ่านจาก dev_hdd0\\home\\...\\trophy ใกล้กับที่ติดตั้ง RPCS3",
-        "ถ้วยรางวัล shadPS4 อ่านจากโฟลเดอร์ app data game_data/trophy; ข้อมูลถ้วยรางวัลที่เหลือไม่ใช่หลักฐานว่าเกมติดตั้งอยู่",
-        "ความคืบหน้า Xenia อ่านจากไฟล์โปรไฟล์ Xbox เช่น .gpd"
-      ],
-      "sourcesTitle": "ลอนเชอร์และแหล่งที่มา",
-      "sources": [
-        "โหมดโปรไฟล์ Steam สาธารณะจะแสดงเกม Steam ที่ติดตั้งหรือเป็นเจ้าของ แต่การปลดล็อกในเครื่องยังมาจากไฟล์เซฟ",
-        "GOG, Epic, Ubisoft Connect/LumaPlay และ EA Desktop เปิดแยกกันได้ใน แหล่งที่มา",
-        "การติดตั้ง EA Desktop แบบ crack อ่านจาก EADesktopVerbose.log และ log สำรองของมัน"
-      ],
-      "configTitle": "คอนฟิกที่สร้างขึ้น",
-      "config": [
-        "การแก้อีมูเลเตอร์ด้วยคลิกขวาสามารถเพิ่มไฟล์ GBE Fork, schema ความสำเร็จ, ข้อมูล DLC และตัวช่วยเปิดเกม",
-        "โหมด Simple รวดเร็วและใช้ข้อมูลของ Achievement Watcher; Advanced จะรัน generate_emu_config เพื่อข้อมูล Steam ที่ลึกกว่า",
-        "การสร้างขั้นสูงอาจใช้เวลาหลายนาที โดยเฉพาะเมื่อมี metadata DLC/depot"
-      ],
-      "troubleshootTitle": "แก้ไขปัญหา",
-      "troubleshoot": [
-        "ถ้าเกมหายไป ให้สแกนใหม่หลังเพิ่มโฟลเดอร์ แล้วตรวจสวิตช์แหล่งที่มาและ blacklist",
-        "ถ้าไม่มีการแจ้งเตือน ให้ตรวจ Windows Focus Assist และรันเกม/app ด้วยสิทธิ์แอดมินที่ตรงกัน",
-        "ขั้นสูง > วินิจฉัย จะเปิด log และโฟลเดอร์ข้อมูลเมื่อคุณต้องตรวจว่าสแกนอะไรไปแล้ว"
-      ]
-    },
     "help": {
       "nav": "ช่วยเหลือ",
       "title": "วิธีใช้และเคล็ดลับ",
       "intro": "ทุกสิ่งที่ควรรู้ — การตรวจจับ การแจ้งเตือน คอนโทรลเลอร์ โอเวอร์เลย์ ธีม และการแก้ไขปัญหา",
+      "setupTitle": "การตั้งค่าปัจจุบันของคุณ",
+      "topicsTitle": "เรียกดูตามหัวข้อ",
+      "searchPlaceholder": "ค้นหาในวิธีใช้…",
+      "noResults": "ไม่มีหัวข้อวิธีใช้ที่ตรงกับการค้นหา",
       "quickTitle": "เริ่มต้นใช้งาน",
       "quick": [
-        "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
-        "The Watchdog runs in the background — it must be running for live notifications and playtime.",
-        "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+      "เพิ่มโฟลเดอร์เซฟ/การตั้งค่าที่ การตั้งค่า > โฟลเดอร์ แล้วเปิดใช้แหล่งข้อมูลที่ตรงกันใน การตั้งค่า > แหล่งข้อมูล",
+      "Watchdog ทำงานอยู่เบื้องหลัง และต้องเปิดทำงานไว้เพื่อรับการแจ้งเตือนแบบสดและบันทึกเวลาเล่น",
+        "ข้อมูลทั้งหมด (การตั้งค่า แคช บันทึก และธีมกำหนดเอง) อยู่ใน %APPDATA%\\Achievement Watcher 3.0",
         "ทุกส่วนของการตั้งค่าพับเก็บได้จากหัวข้อของตัวเอง — ลูกศรชี้ลงเมื่อเปิด ชี้ข้างเมื่อปิด และระบบจะจดจำการเลือกของคุณ"
       ],
       "steamTitle": "อีมูเลเตอร์ Steam",
       "steam": [
-        "GBE / Goldberg saves are usually under %APPDATA%\\GSE Saves or %APPDATA%\\Goldberg SteamEmu Saves.",
-        "CODEX / RUNE saves often live under Public Documents\\Steam\\CODEX or Public Documents\\Steam\\RUNE.",
-        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 and Hoodlum are detected from their config/save folders."
+      "เซฟของ GBE / Goldberg มักอยู่ที่ %APPDATA%\\GSE Saves หรือ %APPDATA%\\Goldberg SteamEmu Saves",
+      "เซฟของ CODEX / RUNE มักอยู่ที่ Public Documents\\Steam\\CODEX หรือ Public Documents\\Steam\\RUNE",
+      "ระบบจะตรวจพบ TENOKE, UniverseLAN, SmartSteamEmu, ALI213 และ Hoodlum จากโฟลเดอร์การตั้งค่า/เซฟของแต่ละรายการ"
       ],
       "emulatorTitle": "อีมูเลเตอร์คอนโซล",
       "emulators": [
-        "RPCS3 trophies are read from dev_hdd0\\home\\...\\trophy near the RPCS3 install.",
-        "shadPS4 trophies are read from its app data game_data/trophy folders; leftover data is not install proof.",
-        "Xenia progress is read from Xbox profile files such as .gpd."
+      "ระบบอ่านถ้วยรางวัล RPCS3 จาก dev_hdd0\\home\\...\\trophy ใกล้กับตำแหน่งติดตั้ง RPCS3",
+      "ระบบอ่านถ้วยรางวัล shadPS4 จากโฟลเดอร์ game_data/trophy ในข้อมูลแอป ข้อมูลที่หลงเหลืออยู่ไม่ได้ยืนยันว่าเกมยังติดตั้งอยู่",
+      "ระบบอ่านความคืบหน้าของ Xenia จากไฟล์โปรไฟล์ Xbox เช่น .gpd"
       ],
       "sourcesTitle": "ตัวเปิดเกมและแหล่งข้อมูล",
       "sources": [
-        "Steam profile mode lists installed or owned games, but unlocks still come from local save files.",
-        "GOG, Epic, Ubisoft Connect/LumaPlay and EA Desktop can be enabled separately in Sources.",
-        "Owned Steam games count as installed only when Steam's registry confirms it."
+      "โหมดโปรไฟล์ Steam แสดงเกมที่ติดตั้งหรือเป็นเจ้าของ แต่ข้อมูลการปลดล็อกยังคงมาจากไฟล์เซฟในเครื่อง",
+      "สามารถเปิดใช้ GOG, Epic, Ubisoft Connect/LumaPlay และ EA Desktop แยกกันได้ใน แหล่งข้อมูล",
+      "เกม Steam ที่เป็นเจ้าของจะถือว่าติดตั้งแล้วต่อเมื่อรีจิสทรีของ Steam ยืนยันเท่านั้น"
       ],
       "controllerTitle": "คอนโทรลเลอร์ (เกมแพด)",
       "controller": [
-        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
-        "LB + X toggles in-overlay navigation.",
-        "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
-        "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
+        "เปิดใช้ การตั้งค่า > คอนโทรลเลอร์ ก่อน แล้วกด Back + Start + LB เพื่อเปิดโอเวอร์เลย์ในเกม",
+      "LB + X ใช้เปิดหรือปิดการนำทางภายในโอเวอร์เลย์",
+      "โหมดนำทาง: D-pad/สติ๊กซ้ายเลื่อนโฟกัส, A ยืนยัน, B ยกเลิก, X ค้นหา และ Y เปิดตัวเลือก",
+      "กด LB + RB ค้างไว้เพื่อย้ายโอเวอร์เลย์ด้วยสติ๊กซ้ายและเลื่อนด้วยสติ๊กขวา",
+      "รองรับคอนโทรลเลอร์ Xbox, PlayStation (DualShock 4 / DualSense) และ Switch Pro"
       ],
       "overlayTitle": "โอเวอร์เลย์ในเกม",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
-        "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
-        "Press / to focus the search, Esc to clear it or close the options panel.",
-        "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
-        "Every achievement with a known rate shows its rarity: gray for common, gold/silver/bronze for rare."
+        "เปิดด้วยปุ่มลัดโอเวอร์เลย์ (ค่าเริ่มต้นคือ Ctrl+Shift+K) หรือกด Back + Start + LB บนคอนโทรลเลอร์",
+      "เรียงลำดับได้ครั้งละหนึ่งคอลัมน์: ความหายาก วันที่ หรือสถานะ (น้อยไปมาก / มากไปน้อย / ไม่เรียง)",
+      "กด / เพื่อโฟกัสช่องค้นหา และกด Esc เพื่อล้างการค้นหาหรือปิดแผงตัวเลือก",
+      "แผงรูปเฟืองใช้เปลี่ยนสีเน้น ความหนาแน่น การซูม ความทึบ และจำนวนแถวที่แสดง ส่วน 'ใช้ธีมของแอป' จะใช้ธีมที่กำลังทำงาน",
+      "ความสำเร็จทุกอันที่ทราบอัตราปลดล็อกจะแสดงความหายาก: สีเทาสำหรับทั่วไป และทอง/เงิน/ทองแดงสำหรับหายาก"
       ],
       "themesTitle": "ธีมแบบกำหนดเอง",
       "themes": [
-        "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
-        "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+      "ธีมกำหนดเองเริ่มจาก Steam Blue และแก้ไขได้ทุกชั้น (พื้นหลัง ส่วนหัว แผง การ์ด การตั้งค่า ข้อความ ขอบ และสีเน้น)",
+      "ภาพของแต่ละชั้นอยู่ใต้สีเคลือบพร้อมเอฟเฟกต์เบลอแบบกระจกฝ้าเล็กน้อย โดยตั้งค่าเอฟเฟกต์แยกแต่ละชั้นได้",
+      "วางธีม CSS ไว้ใน <userData>\\themes แล้วธีมจะปรากฏในรายการธีม",
         "ตัวสร้างพรีเซ็ตสามารถแสดงตัวอย่างงานออกแบบเป็นการแจ้งเตือนจริงก่อนบันทึก เปิดพรีเซ็ตที่บันทึกไว้เพื่อแก้ไข และลบรายการที่ไม่ต้องการ"
       ],
       "configTitle": "การตั้งค่าที่สร้างขึ้น",
       "config": [
-        "The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.",
-        "Simple mode is fast; Advanced runs generate_emu_config for deeper Steam data and can take minutes."
+      "การแก้ไขอีมูเลเตอร์จากเมนูคลิกขวาสามารถเพิ่มไฟล์ GBE Fork สคีมาความสำเร็จ และข้อมูล DLC",
+      "โหมดง่ายทำงานเร็ว ส่วนโหมดขั้นสูงจะเรียก generate_emu_config เพื่อดึงข้อมูล Steam ที่ละเอียดกว่าและอาจใช้เวลาหลายนาที"
       ],
       "shortcutsTitle": "แป้นพิมพ์ลัด",
       "shortcuts": [
-        "Ctrl+Shift+K (default): toggle the in-game overlay — configurable in Settings > General.",
-        "Ctrl+Alt+Shift+Arrows move the overlay; Ctrl+Alt+Shift+1–5 snap it to a preset position.",
-        "Ctrl+Alt+Shift+C toggles click-through; Ctrl+F focuses Settings search."
+      "Ctrl+Shift+K (ค่าเริ่มต้น): เปิดหรือปิดโอเวอร์เลย์ในเกม — เปลี่ยนได้ที่ การตั้งค่า > ทั่วไป",
+      "Ctrl+Alt+Shift+ปุ่มลูกศร ใช้ย้ายโอเวอร์เลย์; Ctrl+Alt+Shift+1–5 ใช้จัดเข้าตำแหน่งที่ตั้งไว้",
+      "Ctrl+Alt+Shift+C ใช้เปิดหรือปิดการคลิกทะลุ; Ctrl+F โฟกัสช่องค้นหาในการตั้งค่า"
       ],
       "tipsTitle": "เคล็ดลับและเทคนิค",
       "tips": [
-        "Right-click a game tile for quick actions: emulator fix, achievements, Steam page, GBE Fork install, uninstall.",
-        "Right-click a game and choose mute progress to stop progress popups without disabling unlocks.",
-        "The emulator fix (Simple fast / Advanced complete) installs GBE Fork, the achievements schema, DLCs and launch helpers.",
-        "Playtime is tracked while the game runs; progress and playtime notifications can be enabled in Notifications."
+      "คลิกขวาที่ช่องเกมเพื่อใช้คำสั่งด่วน: แก้อีมูเลเตอร์ ดูความสำเร็จ เปิดหน้า Steam ติดตั้ง GBE Fork หรือถอนการติดตั้ง",
+      "คลิกขวาที่เกมแล้วเลือกปิดเสียงความคืบหน้า เพื่อหยุดป๊อปอัปความคืบหน้าโดยไม่ปิดการแจ้งเตือนเมื่อปลดล็อก",
+      "การแก้ไขอีมูเลเตอร์ (ง่ายและเร็ว / ขั้นสูงและครบถ้วน) จะติดตั้ง GBE Fork สคีมาความสำเร็จ และข้อมูล DLC",
+      "ระบบจะบันทึกเวลาเล่นขณะเกมทำงาน และเปิดการแจ้งเตือนความคืบหน้ากับเวลาเล่นได้ใน การแจ้งเตือน",
+        "ความสำเร็จใหม่จากการอัปเดตเกมจะแสดงโดยอัตโนมัติภายใน 3 วัน หรือตรวจสอบได้ทันทีที่ การตั้งค่า > ขั้นสูง > ตรวจสอบรายการความสำเร็จอีกครั้ง"
       ],
       "troubleshootTitle": "การแก้ไขปัญหา",
       "troubleshoot": [
-        "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
-        "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+      "หากเกมหายไป: เพิ่มโฟลเดอร์ สแกนใหม่ แล้วตรวจสอบสวิตช์แหล่งข้อมูลและบัญชีดำ",
+      "หากการแจ้งเตือนไม่ปรากฏ: ตรวจสอบตัวช่วยการโฟกัสของ Windows และเปิดแอปด้วยสิทธิ์ระดับเดียวกับเกม",
+      "ขั้นสูง > การวินิจฉัย ใช้เปิดโฟลเดอร์บันทึกและข้อมูล โปรดแนบไฟล์เหล่านี้เมื่อรายงานปัญหา",
         "บันทึกจะถูกต่อท้าย ข้อมูลการขัดข้องจึงอยู่รอดถึงการเปิดครั้งถัดไป ทุกการรันเริ่มด้วยเครื่องหมายเซสชันและบล็อก [diag] (เวอร์ชัน พาธ จอภาพ) — วางลงในรายงานปัญหา"
       ]
     },
@@ -784,9 +735,6 @@
       },
       "diag": {
         "title": "การวินิจฉัย",
-        "apiKeyLabel": "คีย์ Steam Web API:",
-        "apiKeyConfigured": "กำหนดค่าแล้ว",
-        "apiKeyFallback": "ไม่ได้ตั้งค่า — ใช้การดึงข้อมูลสำรอง",
         "logsFolder": "เปิดโฟลเดอร์บันทึก",
         "dataFolder": "เปิดโฟลเดอร์ข้อมูล",
         "goldbergTitle": "Goldberg / GBE Fork",
@@ -798,34 +746,35 @@
       "blacklistInfo": "คลิกขวาที่ไทล์เกมเพื่อเพิ่มลงในบัญชีดำ",
       "blacklistEmpty": "ไม่มีเกมที่ซ่อนอยู่",
       "blacklistRestore": "แสดงเกมนี้อีกครั้ง",
-      "apiKey": {
-        "title": "คีย์ Steam Web API",
-        "description": "ข้อมูล Steam บางอย่างต้องใช้คีย์ Steam Web API ส่วนตัว",
-        "fallback": "เว้นช่องนี้ว่างไว้เพื่อใช้การดึงข้อมูลอัตโนมัติ หากล้มเหลว ให้ป้อนคีย์ของคุณเอง",
-        "create": "สร้างคีย์ API",
-        "terms": "ข้อกำหนดการใช้งาน Steam API",
-        "label": "คีย์ Steam Web API ของคุณ",
-        "security": "คีย์จะถูกเข้ารหัสด้วย AES-256-CBC ก่อนถูกเก็บไว้บนคอมพิวเตอร์เครื่องนี้"
-      },
       "mainSteam": {
         "title": "บัญชี Steam หลัก",
         "name": "กรองตามผู้ใช้",
         "description": "แสดงเฉพาะความสำเร็จ Steam ของบัญชีที่เลือก"
       },
-      "checkUpdates": "ตรวจสอบอัปเดต"
+      "checkUpdates": "ตรวจสอบอัปเดต",
+      "clearUpdateCache": {
+        "name": "ล้างแคช",
+        "button": "ล้างแคช",
+        "description": "ลบแคชที่ดาวน์โหลดใหม่ได้: ไฟล์อัปเดต แคชสคีมาและไอคอนของ Steam/Ubisoft และเครื่องมือแก้ไขอีมูเลเตอร์ที่ดาวน์โหลดไว้ จะไม่แตะต้องการตั้งค่า ข้อมูลเซฟ การสำรองข้อมูล หรือไฟล์ที่วางด้วยตนเองของคุณเลย"
+      },
+      "forceAchievementRecheck": {
+        "name": "ตรวจสอบรายการความสำเร็จอีกครั้ง",
+        "button": "ตรวจสอบตอนนี้",
+        "description": "ตรวจสอบกับ Steam ว่ามีความสำเร็จใหม่ที่เพิ่มมาจากการอัปเดตเกมตั้งแต่การตรวจสอบครั้งล่าสุดหรือไม่ ปกติจะทำงานอัตโนมัติทุก 3 วัน ปุ่มนี้จะบังคับให้ตรวจสอบทันที"
+      }
     }
   },
   "onboarding": {
     "settingsLabel": "คู่มือการวิ่งครั้งแรก",
     "settingsButton": "เปิดคู่มือ",
-    "settingsHelp": "เปิดคู่มือการตั้งค่าคีย์ API, โปรไฟล์, โฟลเดอร์, แหล่งที่มา และการแจ้งเตือนอีกครั้ง",
+    "settingsHelp": "เปิดคู่มือการตั้งค่าอีกครั้งสำหรับโปรไฟล์ โฟลเดอร์ แหล่งที่มา และการแจ้งเตือน",
+    "navLabel": "ขั้นตอนการตั้งค่า",
     "eyebrow": "การตั้งค่าครั้งแรก",
     "close": "ปิด",
     "steps": [
       "ภาษา",
       "มันทำงานอย่างไร",
       "บัญชี",
-      "คีย์ API",
       "เกม",
       "การตั้งค่า"
     ],
@@ -841,7 +790,7 @@
     "watchTitle": "เฝ้าติดตาม",
     "watchCopy": "Watchdog เบื้องหลังจะตรวจหาไฟล์เรียกทำงานของเกมเมื่อเริ่มเกม บันทึกเวลาเล่น และเฝ้าดูไฟล์ความสำเร็จเพื่อแสดงการปลดล็อกระหว่างเล่น",
     "fixTitle": "ซ่อมแซม",
-    "fixCopy": "สำหรับเกม Steam ที่ใช้อีมูเลเตอร์ การซ่อมแซมจากเมนูคลิกขวา (หรือการซ่อมแซมอัตโนมัติ) จะติดตั้ง GBE Fork และเขียนสคีมา achievements.json, ข้อมูล DLC และไฟล์ช่วยเปิดเกมลงในโฟลเดอร์ steam_settings ของเกม",
+    "fixCopy": "สำหรับเกม Steam ที่ใช้อีมูเลเตอร์ การซ่อมแซมจากเมนูคลิกขวา (หรือการซ่อมแซมอัตโนมัติ) จะติดตั้ง GBE Fork และเขียนสคีมา achievements.json กับข้อมูล DLC ลงในโฟลเดอร์ steam_settings ของเกม",
     "overlayTitle": "โอเวอร์เลย์ในเกม",
     "overlayCopy": "แผงความสำเร็จขนาดเล็กที่คุณสามารถเรียกขึ้นมาทับหน้าเกมได้ด้วยปุ่มลัด (ค่าเริ่มต้น Ctrl+Shift+K) เปลี่ยนได้ทุกเมื่อในการตั้งค่า > ทั่วไป ข้างช่องปุ่มลัด",
     "profileTitle": "ประวัติโดยย่อ",
@@ -851,13 +800,6 @@
     "avatarPick": "เลือกรูปภาพ",
     "avatarDefault": "ค่าเริ่มต้น",
     "avatarHint": "ไม่จำเป็น. เก็บไว้ในพีซีเครื่องนี้",
-    "apiTitle": "คีย์ Steam Web API",
-    "apiCopy": "คีย์ช่วยปรับปรุงการดึงข้อมูลเมตาของ Steam คุณสามารถปล่อยว่างไว้และเพิ่มในภายหลังได้",
-    "apiWarning": "สิ่งสำคัญ: หากไม่มีคีย์ API การโหลดไลบรารีแรกสุดจะช้ามาก: แต่ละเกมจะถูกดึงข้อมูลโดยการคัดลอกหน้า Steam (หลายวินาทีต่อเกม) ด้วยกุญแจทำให้ใช้งานได้แทบจะทันทีและแม่นยำยิ่งขึ้น หน้าต่างยังคงใช้งานได้ในขณะที่โหลด แต่ขอแนะนำให้เพิ่มหน้าต่างดังกล่าว",
-    "apiLabel": "คีย์ Steam Web API",
-    "apiToggle": "แสดงหรือซ่อนคีย์ API",
-    "apiLink": "รับคีย์ Steam Web API",
-    "apiNote": "ใช้หน้า Steam อย่างเป็นทางการ คีย์ถูกเข้ารหัสก่อนบันทึก",
     "foldersTitle": "เพิ่มเกมลงในดิสก์",
     "foldersCopy": "เพิ่มโฟลเดอร์บันทึก/กำหนดค่าสำหรับโปรแกรมจำลองเฉพาะ และรูทไลบรารีที่มีเกมที่ติดตั้งไว้จำนวนมาก",
     "addSave": "เพิ่มโฟลเดอร์บันทึก",
@@ -1326,6 +1268,9 @@
     "rescan-started": "กำลังสแกน {count} โฟลเดอร์ที่เลือกอีกครั้ง…",
     "rescan-complete": "สแกนโฟลเดอร์ที่เลือกอีกครั้งแล้ว",
     "rescan-failed": "การสแกนโฟลเดอร์ที่เลือกล้มเหลว: {error}",
+    "force-recheck-started": "กำลังตรวจสอบความสำเร็จใหม่…",
+    "force-recheck-done": "ตรวจสอบเสร็จสมบูรณ์",
+    "force-recheck-failed": "การตรวจสอบล้มเหลว: {error}",
     "no-game-found": "ไม่พบเกม",
     "invalid-folder": "โฟลเดอร์ไม่ถูกต้อง",
     "error-adding-custom-folder": "เกิดข้อผิดพลาดในการเพิ่มโฟลเดอร์ที่กำหนดเอง",
@@ -1377,7 +1322,54 @@
     "theme-gradient-angle-135": "บนซ้าย → ล่างขวา",
     "theme-gradient-angle-180": "บน → ล่าง",
     "theme-gradient-angle-0": "ล่าง → บน",
-    "theme-gradient-angle-270": "บนขวา → ล่างซ้าย"
+    "theme-gradient-angle-270": "บนขวา → ล่างซ้าย",
+    "avatar-import-from-steam-user": "นำเข้าอวตาร Steam ของ {name}",
+    "update-check-failed-detail": "ตรวจสอบอัปเดตล้มเหลว: {message}",
+    "diagnosis-emulator": "อีมูเลเตอร์: {emulator}",
+    "diagnosis-emulator-none": "ไม่พบ",
+    "diagnosis-steam-settings": "steam_settings: {path}",
+    "diagnosis-steam-settings-missing": "steam_settings: ไม่พบ",
+    "diagnosis-achievements-count": "ความสำเร็จ: {found} ในไฟล์ / {expected} ในสคีมา",
+    "diagnosis-no-problems": "ไม่พบปัญหา",
+    "diagnosis-auto-repair-wrote": "การซ่อมอัตโนมัติเขียนความสำเร็จ {count} รายการไปยัง {path}",
+    "diagnosis-icons-summary": "ไอคอน: ดาวน์โหลด {downloaded} ล้มเหลว {failed} ข้าม {skipped}",
+    "diagnosis-steam-appid-created": "สร้าง steam_appid.txt แล้ว",
+    "diagnosis-configs-main-updated": "อัปเดต configs.main.ini แล้ว (new_app_ticket + gc_token)",
+    "diagnosis-configs-app-updated": "อัปเดต configs.app.ini แล้ว ({count} รายการ DLC, unlock_all={unlockAll})",
+    "diagnosis-configs-user-updated": "configs.user.ini อัปเดตแล้ว",
+    "diagnosis-auto-repair-failed": "การซ่อมอัตโนมัติล้มเหลว: {error}",
+    "diagnosis-steam-appid": "Steam AppID: {appid} ({name})",
+    "diagnosis-steam-appid-not-resolved": "Steam AppID: ยังไม่ระบุ",
+    "version-app": "แอป",
+    "diagnosis-dlls-backed-up": "บันทึก DLL ที่มีอยู่เป็น *.bak",
+    "diagnosis-config-backed-up": "สำรองการกำหนดค่าก่อนหน้า: {path}",
+    "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
+    "diagnosis-none-parenthesized": "(ไม่มี)",
+    "diagnosis-version": "เวอร์ชัน: {version}",
+    "diagnosis-version-unknown": "ไม่ทราบ",
+    "diagnosis-dlls-backed-up-locations": "บันทึก DLL ที่มีอยู่เป็น *.bak ใน {count} ตำแหน่ง",
+    "diagnosis-after-install": "การวินิจฉัยหลังติดตั้ง:",
+    "diagnosis-auto-repaired-steam-settings": "ซ่อม steam_settings อัตโนมัติแล้ว (สคีมา + ไอคอน + DLC) ใน {count} ตำแหน่ง",
+    "diagnosis-auto-repair-failed-for": "การซ่อมอัตโนมัติล้มเหลวสำหรับ: {paths}",
+    "diagnosis-dir-status-line": "{dir}: {status}",
+    "diagnosis-dir-status-ok": "โอเค",
+    "diagnosis-dir-status-attention": "ต้องตรวจสอบ",
+    "diagnosis-advanced-data-skipped": "ข้อมูลขั้นสูง: ข้าม (ไม่มี AppID ตัวเลข)",
+    "diagnosis-advanced-data-login-cancelled": "ข้อมูลขั้นสูง: ยกเลิกการเข้าสู่ระบบ",
+    "diagnosis-advanced-data-merged": "ข้อมูลขั้นสูง: รวมไฟล์เพิ่ม {count} ไฟล์แล้ว (generate_emu_config {tag})",
+    "diagnosis-advanced-data-failed": "ข้อมูลขั้นสูง: {error}",
+    "achievements-overlay-title": "โอเวอร์เลย์ความสำเร็จ",
+    "update-retry-failed-message": "การอัปเดตยังคงล้มเหลวแม้จะล้างไฟล์แคชใน {folder} แล้ว",
+    "update-retry-failed-detail": "นี่น่าจะเป็นปัญหาเครือข่ายหรือปัญหาของรุ่นที่เผยแพร่ ซึ่งการล้างแคชไม่สามารถแก้ไขได้ คุณสามารถดาวน์โหลดและติดตั้งการอัปเดตด้วยตนเองจากหน้ารุ่นที่เผยแพร่",
+    "open-release-page": "เปิดหน้ารุ่นที่เผยแพร่",
+    "clear-cache": "ล้างแคช",
+    "clear-update-cache-label": "ล้างแคช",
+    "clear-update-cache-confirm": "ลบแคชที่ดาวน์โหลดใหม่ได้ทั้งหมด (ไฟล์อัปเดต แคชสคีมาและไอคอนของ Steam/Ubisoft เครื่องมือแก้ไขอีมูเลเตอร์ที่ดาวน์โหลดไว้) หรือไม่? การตั้งค่า ข้อมูลเซฟ การสำรองข้อมูล และไฟล์ที่วางด้วยตนเองของคุณจะไม่ถูกแตะต้องเลย — ทุกอย่างที่ล้างที่นี่จะถูกดาวน์โหลดใหม่โดยอัตโนมัติเมื่อจำเป็น",
+    "clear-update-cache-failed": "ไม่สามารถล้างแคชการอัปเดตได้",
+    "clear-update-cache-empty": "ไม่มีอะไรให้ล้าง — ไม่พบไฟล์อัปเดตที่แคชไว้",
+    "clear-update-cache-done": "ล้างแคชการอัปเดตแล้ว: {folder}",
+    "clear-update-cache-done-apps": "ล้างโฟลเดอร์แคชแล้ว {count} โฟลเดอร์",
+    "clear-update-cache-done-all": "ล้างโฟลเดอร์แคชแล้ว {count} โฟลเดอร์ รวมถึงแคชการอัปเดตใน {folder}"
   },
   "watchdog": {
     "rare": "หายาก {percent}%",

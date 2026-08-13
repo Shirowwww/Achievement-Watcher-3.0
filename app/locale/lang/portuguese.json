@@ -178,7 +178,7 @@
       "onboarding": {
         "name": "Guia do primeiro arranque",
         "button": "Abrir o guia",
-        "description": "Reabre a configuração guiada para chave API, perfil, pastas, fontes e notificações."
+        "description": "Reabra o guia de configuração para perfil, pastas, fontes e notificações."
       },
       "hardwareAccel": {
         "name": "Desativar a aceleração por hardware",
@@ -266,14 +266,6 @@
           "true": "Ativado"
         }
       },
-      "mode": {
-        "name": "Modo do emulador",
-        "description": "Regular substitui a steam_api(64).dll do jogo. ColdClient mantém-na e carrega o steamclient emulado do GBE Fork através de um loader — maior cobertura para jogos difíceis.",
-        "value": {
-          "regular": "Regular (substituir DLL)",
-          "coldclient": "ColdClient (GBE Fork)"
-        }
-      },
       "steamSettings": {
         "name": "Dados de steam_settings",
         "description": "Simple usa a obtenção própria do Achievement Watcher (anónima). Advanced executa o generate_emu_config para cobertura de depots/idiomas.",
@@ -320,14 +312,6 @@
         "value": {
           "false": "Desativado",
           "true": "Ativado"
-        }
-      },
-      "launchBat": {
-        "name": "Criar Launch.bat como alternativa",
-        "description": "Quando o Steamless não consegue remover um exe SteamStub e o AW recorre ao ColdClient, escreve também um Launch.bat para o loader correspondente.",
-        "value": {
-          "true": "Ativado",
-          "false": "Desativado"
         }
       },
       "checkUpdates": {
@@ -590,6 +574,10 @@
     },
     "source": {
       "title": "Fontes de jogos",
+      "officialPlatforms": {
+        "title": "Plataformas oficiais",
+        "description": "Steam, Ubisoft Connect, GOG Galaxy, Epic Games e Xbox PC são suportados aqui. Ative abaixo as fontes marcadas com um escudo; apenas bibliotecas detetadas neste PC podem ser apresentadas."
+      },
       "legitSteam": {
         "name": "Mostrar jogos Steam",
         "description": "A Steam tem de estar instalada e o seu perfil Steam público !",
@@ -650,123 +638,86 @@
         "description": "Emulador de Xbox 360"
       }
     },
-    "guide": {
-      "nav": "Guia",
-      "title": "Guia de plataformas",
-      "intro": "O que o Achievement Watcher analisa, que pastas importam e quando são úteis as configs de emulador geradas.",
-      "quickTitle": "Primeiros passos",
-      "quick": [
-        "Adiciona pastas de gravações/config em Definições > Pastas e depois ativa a fonte correspondente em Definições > Fontes.",
-        "Usa pastas de biblioteca para jogos instalados que ainda não produziram ficheiros de conquistas.",
-        "O Watchdog só notifica novas alterações depois de a pasta ser conhecida e a fonte estar ativa."
-      ],
-      "steamTitle": "Emuladores Steam",
-      "steam": [
-        "As gravações GBE / Goldberg estão normalmente em %APPDATA%\\GSE Saves ou %APPDATA%\\Goldberg SteamEmu Saves.",
-        "As gravações do estilo CODEX / RUNE costumam estar em Public Documents\\Steam\\CODEX ou Public Documents\\Steam\\RUNE.",
-        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 e Hoodlum são detetados pelas suas pastas de config/gravações."
-      ],
-      "emulatorTitle": "Emuladores de consola",
-      "emulators": [
-        "As conquistas RPCS3 são lidas em dev_hdd0\\home\\...\\trophy perto da instalação do RPCS3.",
-        "Os troféus shadPS4 são lidos nas pastas game_data/trophy dos dados da app; restos de troféus não provam que o jogo esteja instalado.",
-        "O progresso Xenia é lido de ficheiros de perfil Xbox, como .gpd."
-      ],
-      "sourcesTitle": "Launchers e fontes",
-      "sources": [
-        "O modo de perfil público Steam lista jogos Steam instalados ou possuídos, mas desbloqueios locais continuam a vir dos ficheiros de gravação.",
-        "GOG, Epic, Ubisoft Connect/LumaPlay e EA Desktop podem ser ativados separadamente em Fontes.",
-        "Instalações EA Desktop crackadas são lidas a partir de EADesktopVerbose.log e dos seus logs de cópia de segurança."
-      ],
-      "configTitle": "Configs geradas",
-      "config": [
-        "A correção de emulador com clique direito pode adicionar ficheiros GBE Fork, esquemas de conquistas, dados DLC e auxiliares de arranque.",
-        "O modo Simples é rápido e usa os dados do Achievement Watcher; Avançado executa generate_emu_config para dados Steam mais completos.",
-        "A geração avançada pode demorar vários minutos, especialmente com metadados DLC/depot."
-      ],
-      "troubleshootTitle": "Resolução de problemas",
-      "troubleshoot": [
-        "Se faltar um jogo, volta a analisar depois de adicionar pastas e confirma o seletor da fonte e a lista negra.",
-        "Se faltarem notificações, verifica o Assistente de concentração do Windows e executa o jogo/app com os mesmos direitos de administrador.",
-        "Avançado > Diagnóstico abre logs e pastas de dados quando precisas de inspecionar o que foi analisado."
-      ]
-    },
     "help": {
       "nav": "Ajuda",
       "title": "Ajuda e dicas",
       "intro": "Tudo o que precisa de saber — deteção, notificações, comando, overlay, temas e resolução de problemas.",
+      "setupTitle": "A sua configuração atual",
+      "topicsTitle": "Explorar por tópico",
+      "searchPlaceholder": "Pesquisar na ajuda…",
+      "noResults": "Nenhum tópico de ajuda corresponde à pesquisa.",
       "quickTitle": "Primeiros passos",
       "quick": [
-        "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
-        "The Watchdog runs in the background — it must be running for live notifications and playtime.",
-        "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+        "Adicione as pastas de gravação/configuração em Definições > Pastas e ative a fonte correspondente em Definições > Fontes.",
+        "O Watchdog é executado em segundo plano — tem de estar ativo para as notificações em direto e o tempo de jogo.",
+        "Tudo (definições, caches, registos e temas personalizados) fica em %APPDATA%\\Achievement Watcher 3.0.",
         "Cada secção das definições recolhe sob o seu cabeçalho — a seta aponta para baixo quando está aberta e para o lado quando está fechada. As suas escolhas são memorizadas."
       ],
       "steamTitle": "Emuladores Steam",
       "steam": [
-        "GBE / Goldberg saves are usually under %APPDATA%\\GSE Saves or %APPDATA%\\Goldberg SteamEmu Saves.",
-        "CODEX / RUNE saves often live under Public Documents\\Steam\\CODEX or Public Documents\\Steam\\RUNE.",
-        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 and Hoodlum are detected from their config/save folders."
+        "As gravações GBE/Goldberg encontram-se normalmente em %APPDATA%\\GSE Saves ou %APPDATA%\\Goldberg SteamEmu Saves.",
+        "As gravações CODEX/RUNE encontram-se frequentemente em Public Documents\\Steam\\CODEX ou Public Documents\\Steam\\RUNE.",
+        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 e Hoodlum são detetados através das respetivas pastas de configuração/gravação."
       ],
       "emulatorTitle": "Emuladores de consola",
       "emulators": [
-        "RPCS3 trophies are read from dev_hdd0\\home\\...\\trophy near the RPCS3 install.",
-        "shadPS4 trophies are read from its app data game_data/trophy folders; leftover data is not install proof.",
-        "Xenia progress is read from Xbox profile files such as .gpd."
+        "Os troféus do RPCS3 são lidos em dev_hdd0\\home\\...\\trophy, junto à instalação do RPCS3.",
+        "Os troféus do shadPS4 são lidos nas pastas game_data/trophy dos dados da aplicação; dados residuais não comprovam uma instalação.",
+        "O progresso do Xenia é lido em ficheiros de perfil Xbox, como .gpd."
       ],
       "sourcesTitle": "Launchers e fontes",
       "sources": [
-        "Steam profile mode lists installed or owned games, but unlocks still come from local save files.",
-        "GOG, Epic, Ubisoft Connect/LumaPlay and EA Desktop can be enabled separately in Sources.",
-        "Owned Steam games count as installed only when Steam's registry confirms it."
+        "O modo de perfil Steam lista jogos instalados ou adquiridos, mas os desbloqueios continuam a vir de ficheiros de gravação locais.",
+        "GOG, Epic, Ubisoft Connect/LumaPlay e EA Desktop podem ser ativados separadamente em Fontes.",
+        "Os jogos Steam adquiridos só contam como instalados quando o registo do Steam o confirma."
       ],
       "controllerTitle": "Comando (gamepad)",
       "controller": [
-        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
-        "LB + X toggles in-overlay navigation.",
-        "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
-        "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
+        "Primeiro ative Definições > Comando; depois, Back + Start + LB abre a sobreposição no jogo.",
+        "LB + X ativa ou desativa a navegação no overlay.",
+        "Modo de navegação: o direcional/manípulo esquerdo move o foco, A confirma, B cancela, X pesquisa e Y abre as opções.",
+        "Mantenha LB + RB premidos para mover o overlay com o manípulo esquerdo e deslocar com o direito.",
+        "Funciona com comandos Xbox, PlayStation (DualShock 4 / DualSense) e Switch Pro."
       ],
       "overlayTitle": "Overlay no jogo",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
-        "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
-        "Press / to focus the search, Esc to clear it or close the options panel.",
-        "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
-        "Every achievement with a known rate shows its rarity: gray for common, gold/silver/bronze for rare."
+        "Abra-a com o atalho da sobreposição (Ctrl+Shift+K por predefinição) ou com Back + Start + LB no comando.",
+        "Ordene por uma coluna de cada vez: Raridade, Data ou Estado (ascendente / descendente / sem ordenação).",
+        "Prima / para focar a pesquisa e Esc para a limpar ou fechar o painel de opções.",
+        "O painel da engrenagem altera o destaque, a densidade, o zoom, a opacidade e as linhas visíveis; «Usar tema da aplicação» segue o tema ativo.",
+        "Cada conquista com uma taxa conhecida mostra a raridade: cinzento para comuns e ouro/prata/bronze para raras."
       ],
       "themesTitle": "Temas personalizados",
       "themes": [
-        "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
-        "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+        "Personalizado começa com Steam Blue; todas as camadas (fundo, cabeçalho, painéis, cartões, definições, texto, contornos e destaque) são editáveis.",
+        "As imagens das camadas ficam sob um véu colorido com um ligeiro desfoque fosco; os efeitos são configurados por camada.",
+        "Coloque um tema CSS em <userData>\\themes para que apareça na lista de temas.",
         "O criador de predefinições pode pré-visualizar um design como uma notificação real antes de guardar, reabrir uma predefinição guardada para a alterar e eliminar as que não mantiver."
       ],
       "configTitle": "Configs geradas",
       "config": [
-        "The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.",
-        "Simple mode is fast; Advanced runs generate_emu_config for deeper Steam data and can take minutes."
+        "A correção do emulador no menu de contexto pode adicionar ficheiros GBE Fork, esquemas de conquistas e dados de DLC.",
+        "O modo Simples é rápido; Avançado executa generate_emu_config para obter dados Steam mais completos e pode demorar vários minutos."
       ],
       "shortcutsTitle": "Atalhos de teclado",
       "shortcuts": [
-        "Ctrl+Shift+K (default): toggle the in-game overlay — configurable in Settings > General.",
-        "Ctrl+Alt+Shift+Arrows move the overlay; Ctrl+Alt+Shift+1–5 snap it to a preset position.",
-        "Ctrl+Alt+Shift+C toggles click-through; Ctrl+F focuses Settings search."
+        "Ctrl+Shift+K (predefinição): mostra ou oculta o overlay no jogo — configurável em Definições > Geral.",
+        "Ctrl+Alt+Shift+Setas move o overlay; Ctrl+Alt+Shift+1–5 encaixa-o numa posição predefinida.",
+        "Ctrl+Alt+Shift+C ativa ou desativa a passagem de cliques; Ctrl+F foca a pesquisa das Definições."
       ],
       "tipsTitle": "Dicas e truques",
       "tips": [
-        "Right-click a game tile for quick actions: emulator fix, achievements, Steam page, GBE Fork install, uninstall.",
-        "Right-click a game and choose mute progress to stop progress popups without disabling unlocks.",
-        "The emulator fix (Simple fast / Advanced complete) installs GBE Fork, the achievements schema, DLCs and launch helpers.",
-        "Playtime is tracked while the game runs; progress and playtime notifications can be enabled in Notifications."
+        "Clique com o botão direito num cartão de jogo para ações rápidas: correção do emulador, conquistas, página Steam, instalação do GBE Fork e desinstalação.",
+        "Clique com o botão direito num jogo e escolha silenciar o progresso para parar esses avisos sem desativar os desbloqueios.",
+        "A correção do emulador (Simples rápida / Avançada completa) instala o GBE Fork, o esquema de conquistas e os dados de DLC.",
+        "O tempo de jogo é registado enquanto o jogo está em execução; as notificações de progresso e tempo podem ser ativadas em Notificações.",
+        "As novas conquistas adicionadas por uma atualização do jogo aparecem automaticamente no prazo de 3 dias ou de imediato em Definições > Avançado > Voltar a verificar as listas de conquistas."
       ],
       "troubleshootTitle": "Resolução de problemas",
       "troubleshoot": [
-        "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
-        "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+        "Se faltar um jogo: adicione pastas, volte a analisar e verifique o seletor da fonte e a lista negra.",
+        "Se as notificações não aparecerem: verifique o Assistente de concentração do Windows e execute a aplicação com os mesmos privilégios dos jogos.",
+        "Avançado > Diagnóstico abre os registos e as pastas de dados; anexe-os ao comunicar um problema.",
         "Os registos são acrescentados, por isso uma falha sobrevive ao arranque seguinte. Cada execução começa com um marcador de sessão e um bloco [diag] (versões, caminhos, ecrãs) — cole-o no relatório."
       ]
     },
@@ -784,9 +735,6 @@
       },
       "diag": {
         "title": "Diagnóstico",
-        "apiKeyLabel": "Chave da API Web da Steam :",
-        "apiKeyConfigured": "configurada",
-        "apiKeyFallback": "não definida — a usar obtenção automática",
         "logsFolder": "Abrir a pasta de logs",
         "dataFolder": "Abrir a pasta de dados",
         "goldbergTitle": "Goldberg / GBE Fork",
@@ -798,34 +746,35 @@
       "blacklistInfo": "Clique direito num bloco de jogo para o adicionar à lista negra.",
       "blacklistEmpty": "Não existem jogos ocultos.",
       "blacklistRestore": "Restaurar este jogo",
-      "apiKey": {
-        "title": "Chave da API Web da Steam",
-        "description": "Alguns dados da Steam exigem uma chave pessoal da API Web da Steam.",
-        "fallback": "Deixe este campo vazio para usar a obtenção automática. Se falhar, introduza a sua própria chave.",
-        "create": "Criar uma chave API",
-        "terms": "Termos de utilização da API Steam",
-        "label": "A sua chave da API Web da Steam",
-        "security": "A chave é cifrada com AES-256-CBC antes de ser guardada neste computador."
-      },
       "mainSteam": {
         "title": "Conta Steam principal",
         "name": "Filtrar por utilizador",
         "description": "Mostrar apenas as proezas Steam da conta selecionada"
       },
-      "checkUpdates": "Verificar atualizações"
+      "checkUpdates": "Verificar atualizações",
+      "clearUpdateCache": {
+        "name": "Limpar caches",
+        "button": "Limpar caches",
+        "description": "Elimina caches redescarregáveis: ficheiros de atualização, cache de esquemas e ícones Steam/Ubisoft, e ferramentas de correção de emulador transferidas. Nunca toca nas suas definições, jogos guardados, cópias de segurança ou ficheiros colocados manualmente."
+      },
+      "forceAchievementRecheck": {
+        "name": "Reverificar listas de conquistas",
+        "button": "Verificar agora",
+        "description": "Verifica junto da Steam se uma atualização do jogo adicionou conquistas desde a última verificação. Ocorre automaticamente a cada 3 dias; isto força a verificação agora."
+      }
     }
   },
   "onboarding": {
     "settingsLabel": "Guia de primeira execução",
     "settingsButton": "Guia aberto",
-    "settingsHelp": "Reabra o guia de configuração para chave de API, perfil, pastas, fontes e notificações.",
+    "settingsHelp": "Reabra o guia de configuração para perfil, pastas, fontes e notificações.",
+    "navLabel": "Etapas de configuração",
     "eyebrow": "Primeira configuração",
     "close": "Fechar",
     "steps": [
       "Idioma",
       "Como funciona",
       "Conta",
-      "Chave de API",
       "Jogos",
       "Configurações"
     ],
@@ -841,7 +790,7 @@
     "watchTitle": "Monitorizar",
     "watchCopy": "O Watchdog em segundo plano deteta o executável do jogo quando este inicia, regista o tempo de jogo e monitoriza os ficheiros de conquistas para mostrar os desbloqueios enquanto joga.",
     "fixTitle": "Reparar",
-    "fixCopy": "Nos jogos Steam emulados, a reparação do menu de contexto (ou a reparação automática) instala o GBE Fork e grava o esquema achievements.json, os dados de DLC e os auxiliares de arranque na pasta steam_settings do jogo.",
+    "fixCopy": "Nos jogos Steam emulados, a reparação do menu de contexto (ou a reparação automática) instala o GBE Fork e grava o esquema achievements.json e os dados de DLC na pasta steam_settings do jogo.",
     "overlayTitle": "Overlay no jogo",
     "overlayCopy": "Um pequeno painel de proezas que pode chamar sobre o jogo com um atalho (predefinição Ctrl+Shift+K). Pode alterá-lo a qualquer momento em Definições > Geral, junto ao campo do atalho.",
     "profileTitle": "Perfil",
@@ -851,13 +800,6 @@
     "avatarPick": "Escolha a foto",
     "avatarDefault": "Padrão",
     "avatarHint": "Opcional. Armazenado localmente neste PC.",
-    "apiTitle": "Chave da API da Web Steam",
-    "apiCopy": "Uma chave melhora a recuperação de metadados do Steam. Você pode deixá-lo vazio e adicioná-lo mais tarde.",
-    "apiWarning": "IMPORTANTE: sem uma chave API, o primeiro carregamento da biblioteca será MUITO LENTO: cada jogo é obtido raspando as páginas do Steam (vários segundos por jogo). Com uma chave, é quase instantâneo e mais preciso. A janela permanece utilizável enquanto carrega, mas é altamente recomendável adicionar uma.",
-    "apiLabel": "Chave da API da Web Steam",
-    "apiToggle": "Mostrar ou ocultar a chave da API",
-    "apiLink": "Obtenha uma chave Steam Web API",
-    "apiNote": "Use a página oficial do Steam. A chave é criptografada antes de ser salva.",
     "foldersTitle": "Adicione jogos no disco",
     "foldersCopy": "Adicione pastas de salvamento/configuração para emuladores específicos e raízes de biblioteca que contenham muitos jogos instalados.",
     "addSave": "Adicionar pasta salva",
@@ -1326,6 +1268,9 @@
     "rescan-started": "A analisar novamente {count} pasta(s) selecionada(s)…",
     "rescan-complete": "Pastas selecionadas analisadas novamente.",
     "rescan-failed": "Falha ao analisar as pastas selecionadas: {error}",
+    "force-recheck-started": "A procurar novas conquistas…",
+    "force-recheck-done": "Verificação concluída.",
+    "force-recheck-failed": "Falha na verificação: {error}",
     "no-game-found": "Não foi encontrado nenhum jogo.",
     "invalid-folder": "Pasta inválida",
     "error-adding-custom-folder": "Erro ao adicionar a pasta personalizada",
@@ -1377,7 +1322,54 @@
     "theme-gradient-angle-135": "Superior esquerdo → Inferior direito",
     "theme-gradient-angle-180": "Cima → Base",
     "theme-gradient-angle-0": "Base → Topo",
-    "theme-gradient-angle-270": "Superior direito → Inferior esquerdo"
+    "theme-gradient-angle-270": "Superior direito → Inferior esquerdo",
+    "avatar-import-from-steam-user": "Importar o avatar Steam de {name}",
+    "update-check-failed-detail": "Falha ao verificar atualizações: {message}",
+    "diagnosis-emulator": "Emulador: {emulator}",
+    "diagnosis-emulator-none": "nenhum detetado",
+    "diagnosis-steam-settings": "steam_settings: {path}",
+    "diagnosis-steam-settings-missing": "steam_settings: não encontrado",
+    "diagnosis-achievements-count": "conquistas: {found} no ficheiro / {expected} no esquema",
+    "diagnosis-no-problems": "Nenhum problema detetado.",
+    "diagnosis-auto-repair-wrote": "A reparação automática escreveu {count} conquistas em {path}",
+    "diagnosis-icons-summary": "ícones: {downloaded} transferidos, {failed} com falha, {skipped} ignorados",
+    "diagnosis-steam-appid-created": "steam_appid.txt criado",
+    "diagnosis-configs-main-updated": "configs.main.ini atualizado (new_app_ticket + gc_token)",
+    "diagnosis-configs-app-updated": "configs.app.ini atualizado ({count} entradas DLC, unlock_all={unlockAll})",
+    "diagnosis-configs-user-updated": "configs.user.ini atualizado",
+    "diagnosis-auto-repair-failed": "A reparação automática falhou: {error}",
+    "diagnosis-steam-appid": "Steam AppID: {appid} ({name})",
+    "diagnosis-steam-appid-not-resolved": "Steam AppID: não resolvido",
+    "version-app": "Aplicação",
+    "diagnosis-dlls-backed-up": "DLL(s) existente(s) guardada(s) como *.bak",
+    "diagnosis-config-backed-up": "Configuração anterior guardada: {path}",
+    "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
+    "diagnosis-none-parenthesized": "(nenhum)",
+    "diagnosis-version": "Versão: {version}",
+    "diagnosis-version-unknown": "desconhecida",
+    "diagnosis-dlls-backed-up-locations": "DLL(s) existente(s) guardada(s) como *.bak em {count} local(ais)",
+    "diagnosis-after-install": "Diagnóstico após a instalação:",
+    "diagnosis-auto-repaired-steam-settings": "steam_settings reparado automaticamente (esquema + ícones + DLC) em {count} local(ais)",
+    "diagnosis-auto-repair-failed-for": "A reparação automática falhou para: {paths}",
+    "diagnosis-dir-status-line": "{dir}: {status}",
+    "diagnosis-dir-status-ok": "ok",
+    "diagnosis-dir-status-attention": "requer atenção",
+    "diagnosis-advanced-data-skipped": "Dados avançados: ignorados (sem AppID numérico)",
+    "diagnosis-advanced-data-login-cancelled": "Dados avançados: início de sessão cancelado",
+    "diagnosis-advanced-data-merged": "Dados avançados: {count} ficheiro(s) extra(s) fundido(s) (generate_emu_config {tag})",
+    "diagnosis-advanced-data-failed": "Dados avançados: {error}",
+    "achievements-overlay-title": "Sobreposição de conquistas",
+    "update-retry-failed-message": "A atualização voltou a falhar mesmo depois de limpar os ficheiros em cache em {folder}.",
+    "update-retry-failed-detail": "É provável que seja um problema de rede ou da própria versão publicada, que limpar a cache não consegue resolver. Pode transferir e instalar a atualização manualmente a partir da página de lançamentos.",
+    "open-release-page": "Abrir página de lançamentos",
+    "clear-cache": "Limpar caches",
+    "clear-update-cache-label": "Limpar caches",
+    "clear-update-cache-confirm": "Eliminar todas as caches redescarregáveis (ficheiros de atualização, cache de esquemas e ícones Steam/Ubisoft, ferramentas de correção de emulador transferidas)? As suas definições, jogos guardados, cópias de segurança e ficheiros colocados manualmente nunca são tocados — tudo o que é limpo aqui é simplesmente transferido novamente de forma automática quando necessário.",
+    "clear-update-cache-failed": "Não foi possível limpar a cache de atualizações.",
+    "clear-update-cache-empty": "Nada para limpar — não foram encontrados ficheiros de atualização em cache.",
+    "clear-update-cache-done": "Cache de atualizações limpa: {folder}",
+    "clear-update-cache-done-apps": "{count} pasta(s) de cache limpa(s).",
+    "clear-update-cache-done-all": "{count} pasta(s) de cache limpa(s), incluindo a cache de atualizações em {folder}."
   },
   "watchdog": {
     "rare": "Raro {percent}%",

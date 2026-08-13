@@ -31,21 +31,27 @@
    hex literals previously hardcoded throughout this stylesheet (zero visual change); centralizing
    them removes palette drift and makes future theming/accent tweaks a one-line edit. */
 :root {
-  --bg-base: #1b2838;                /* window / app background */
+  --bg-base: #142236;                /* window / app background */
   --bg-glow: #26384c;                /* top-centre radial glow behind the header */
-  --bg-panel: #15202d;               /* game-list & sunken panels */
-  --bg-panel-translucent: #15202db5; /* same panel at ~71% alpha (overlays) */
-  --surface: #27374a;                /* cards, buttons, avatar background */
+  --bg-panel: #192a40;               /* game-list & sunken panels */
+  --bg-panel-translucent: rgba(27, 45, 67, 0.78);
+  --surface: #263b55;                /* cards, buttons, avatar background */
   --border: #3e5065;                 /* control borders */
-  --text: #d9dfe4;                   /* primary text */
-  --text-muted: #a8b5c5;
-  --accent: #5b8dff;
-  --accent-soft: color-mix(in srgb, var(--accent) 18%, transparent);
-  --surface-elevated: #1f3042;
-  --surface-sunken: #101a27;
-  --success: #3fb950;
-  --warning: #f0b429;
-  --danger: #d9534f;
+  --text: #e7edf6;                   /* primary text */
+  --text-muted: #94a5ba;
+  --accent: #6c91ff;
+  --accent-strong: color-mix(in srgb, var(--accent) 88%, white 12%);
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  --surface-elevated: #2d4561;
+  --surface-sunken: #101d2d;
+  --success: #5fd49a;
+  --warning: #e5b263;
+  --danger: #e07a5f;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --shadow-card: 0 14px 34px rgba(0, 0, 0, 0.28);
+  --shadow-dialog: 0 34px 90px rgba(0, 0, 0, 0.58);
 
   /* Settings-modal-only surface tokens. Default to the same value as the card surface (so built-in
      themes look exactly as before), but the custom theme engine (themeLayers.js) repoints these at
@@ -53,8 +59,8 @@
      into the Settings UI, per the layer-independence contract. Every --set-* chrome token below reads
      from these, not from --surface directly. */
   --set-surface: var(--surface);
-  --set-surface-elevated: var(--surface-elevated);
-  --set-surface-sunken: var(--surface-sunken);
+  --set-surface-elevated: color-mix(in srgb, var(--set-surface) 88%, white 12%);
+  --set-surface-sunken: color-mix(in srgb, var(--set-surface) 82%, black);
 
   /* Settings modal chrome — derived from the active theme tokens (via color-mix) so the whole panel,
      its controls and buttons follow OLED / Dracula / Graphite instead of staying locked to Steam blue.
@@ -99,6 +105,7 @@
   --bg-panel: #060608;
   --bg-panel-translucent: #060608b5;
   --surface: #141419;
+  --set-surface: #0a0a0f;
   --border: #2c2c34;
   --text: #e8ecf2;
   --text-muted: #9aa3b2;
@@ -116,6 +123,7 @@
   --bg-panel: #1e1f29;
   --bg-panel-translucent: #1e1f29b5;
   --surface: #343746;
+  --set-surface: #21222c;
   --border: #4b4e63;
   --text: #f8f8f2;
   --text-muted: #9ba3c7;
@@ -133,6 +141,7 @@
   --bg-panel: #17181b;
   --bg-panel-translucent: #17181bb5;
   --surface: #292c30;
+  --set-surface: #202327;
   --border: #45494f;
   --text: #e3e6ea;
   --text-muted: #a4aab2;
@@ -151,6 +160,7 @@
   --bg-panel: #242933;
   --bg-panel-translucent: #242933b5;
   --surface: #3b4252;
+  --set-surface: #2e3440;
   --border: #4c566a;
   --text: #eceff4;
   --text-muted: #9099ab;
@@ -168,6 +178,7 @@
   --bg-panel: #1d2021;
   --bg-panel-translucent: #1d2021b5;
   --surface: #3c3836;
+  --set-surface: #32302f;
   --border: #504945;
   --text: #ebdbb2;
   --text-muted: #a89984;
@@ -185,6 +196,7 @@
   --bg-panel: #16161e;
   --bg-panel-translucent: #16161eb5;
   --surface: #24283b;
+  --set-surface: #1f2335;
   --border: #3b4261;
   --text: #c0caf5;
   --text-muted: #565f89;
@@ -202,6 +214,7 @@
   --bg-panel: #181825;
   --bg-panel-translucent: #181825b5;
   --surface: #313244;
+  --set-surface: #26263a;
   --border: #45475a;
   --text: #cdd6f4;
   --text-muted: #a6adc8;
@@ -219,6 +232,7 @@
   --bg-panel: #15131d;
   --bg-panel-translucent: #15131db5;
   --surface: #26233a;
+  --set-surface: #211f30;
   --border: #403d52;
   --text: #e0def4;
   --text-muted: #908caa;
@@ -236,6 +250,7 @@
   --bg-panel: #1a1325;
   --bg-panel-translucent: #1a1325b5;
   --surface: #372a54;
+  --set-surface: #271d3c;
   --border: #52407a;
   --text: #f4efff;
   --text-muted: #b7a8d9;
@@ -253,6 +268,7 @@
   --bg-panel: #1c2226;
   --bg-panel-translucent: #1c2226b5;
   --surface: #343f44;
+  --set-surface: #293237;
   --border: #4a555b;
   --text: #d3c6aa;
   --text-muted: #859289;
@@ -270,6 +286,7 @@
   --bg-panel: #101020;
   --bg-panel-translucent: #101020b5;
   --surface: #1e1e3d;
+  --set-surface: #151530;
   --border: #34346e;
   --text: #e8e8ff;
   --text-muted: #9494c8;
@@ -287,6 +304,7 @@
   --bg-panel: #19110c;
   --bg-panel-translucent: #19110cb5;
   --surface: #332316;
+  --set-surface: #261a11;
   --border: #5a4634;
   --text: #f5e6d3;
   --text-muted: #b8a08a;
@@ -304,6 +322,7 @@
   --bg-panel: #08171c;
   --bg-panel-translucent: #08171cb5;
   --surface: #16404d;
+  --set-surface: #0f2730;
   --border: #2e5a66;
   --text: #d7f2f5;
   --text-muted: #8fb4bd;
@@ -321,6 +340,7 @@
   --bg-panel: #070c07;
   --bg-panel-translucent: #070c07b5;
   --surface: #122012;
+  --set-surface: #0c130c;
   --border: #1f3a1f;
   --text: #c8ffc8;
   --text-muted: #5f8f5f;
@@ -338,6 +358,7 @@
   --bg-panel: #140a0e;
   --bg-panel-translucent: #140a0eb5;
   --surface: #311a24;
+  --set-surface: #221017;
   --border: #553040;
   --text: #f2dce2;
   --text-muted: #b58b98;
@@ -355,6 +376,7 @@
   --bg-panel: #0a101d;
   --bg-panel-translucent: #0a101db5;
   --surface: #1c2942;
+  --set-surface: #121c30;
   --border: #33405c;
   --text: #ece9dd;
   --text-muted: #97a0b3;
@@ -505,6 +527,22 @@ main {
   margin-left: 0;
 }
 
+#user-info .info .stats.is-updating .data {
+  display: inline-block;
+  animation: profile-stat-refresh 0.2s cubic-bezier(0.22, 0.7, 0.25, 1);
+}
+
+@keyframes profile-stat-refresh {
+  from {
+    opacity: 0.38;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Average achievement completion — a single clean fill bar that mirrors the "average %" stat
    shown just above it (simple and self-explanatory, vs. the old 3-tier stacked spread). */
 #user-info .info .completion-dist {
@@ -580,7 +618,7 @@ main {
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 #sort-box .installed-filter:hover {
-  color: #fff;
+  color: var(--text);
   border-color: color-mix(in srgb, var(--border) 32%, transparent);
   transform: translateY(-1px);
 }
@@ -588,7 +626,7 @@ main {
   transform: scale(0.94);
 }
 #sort-box .installed-filter.active {
-  color: #fff;
+  color: var(--text);
   background: var(--accent-soft);
   border-color: color-mix(in srgb, var(--accent) 50%, transparent);
 }
@@ -618,10 +656,10 @@ main {
   transition: background 0.15s ease, color 0.15s ease;
 }
 #sort-box .sort:hover {
-  color: #fff;
+  color: var(--text);
 }
 #sort-box .sort.active {
-  color: #fff;
+  color: var(--text);
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--accent) 42%, transparent),
@@ -638,7 +676,7 @@ main {
   margin: 0;
   opacity: 0;
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.82);
+  color: color-mix(in srgb, var(--text) 82%, transparent);
   transform: rotate(0deg);
   pointer-events: none;
   transition: opacity 0.15s ease, transform 0.18s ease;
@@ -845,7 +883,7 @@ main {
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 10px;
-  color: #dedede;
+  color: var(--text);
   text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
   z-index: 2;
   pointer-events: none;
@@ -1060,11 +1098,11 @@ main {
 }
 
 #game-list .game-box .info .dll-badge.present {
-  background: #3fb950;
+  background: var(--success);
 }
 
 #game-list .game-box .info .dll-badge.missing {
-  background: #d9534f;
+  background: var(--danger);
 }
 
 /* A local DLL health signal only makes sense once the game is confirmed on this PC. The badge
@@ -1087,11 +1125,11 @@ main {
   top: 40%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0.78);
-  background: rgba(7, 13, 20, 0.58);
+  background: color-mix(in srgb, var(--surface-sunken) 72%, transparent);
   backdrop-filter: blur(3px);
   border: none;
   border-radius: 50%;
-  color: white;
+  color: var(--text);
   padding: 12px 16px;
   font-size: 20px;
   cursor: pointer;
@@ -1105,11 +1143,11 @@ main {
   top: 1%;
   left: 1%;
   transform: none;
-  background: rgba(7, 13, 20, 0.58);
+  background: color-mix(in srgb, var(--surface-sunken) 72%, transparent);
   backdrop-filter: blur(3px);
   border: none;
   border-radius: 50%;
-  color: white;
+  color: var(--text);
   padding: 5px 5px;
   font-size: 15px;
   cursor: pointer;
@@ -1122,11 +1160,11 @@ main {
   top: 1%;
   right: 1%;
   transform: none;
-  background: rgba(7, 13, 20, 0.58);
+  background: color-mix(in srgb, var(--surface-sunken) 72%, transparent);
   backdrop-filter: blur(3px);
   border: none;
   border-radius: 50%;
-  color: white;
+  color: var(--text);
   padding: 5px 5px;
   font-size: 15px;
   cursor: pointer;
@@ -1316,7 +1354,7 @@ main {
 }
 
 #achievement .wrapper > .header .backButton:hover {
-  color: #fff;
+  color: var(--text);
   border-color: transparent;
   background: linear-gradient(-60deg, color-mix(in srgb, var(--accent) 70%, black 12%) 5%, var(--accent) 95%);
 }
@@ -1371,12 +1409,12 @@ main {
 }
 
 #lock > .header .title > i {
-  color: #da281b;
+  color: var(--danger);
   margin-right: 4px;
 }
 
 #unlock > .header .title > i {
-  color: #4fb553;
+  color: var(--success);
 }
 
 #unlock > .header .title:after,
@@ -1410,7 +1448,7 @@ main {
 }
 
 #achievement .achievement-list ul > li.highlight {
-  box-shadow: rgb(198, 212, 223) 0px 0px 8px 2px;
+  box-shadow: 0 0 8px 2px color-mix(in srgb, var(--accent) 62%, transparent);
 }
 
 .achievement-list > .header .sort-ach {
@@ -1467,7 +1505,7 @@ main {
 }
 
 .achievement-list > .header .sort-ach .sort.active {
-  color: #fff;
+  color: var(--text);
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--accent) 42%, transparent),
@@ -1478,7 +1516,7 @@ main {
 }
 
 .achievement-list > .header .sort-ach .sort:hover {
-  color: #fff;
+  color: var(--text);
 }
 
 .achievement-list > .header .sort-ach .sort:active {
@@ -1589,6 +1627,18 @@ main {
   overflow: hidden;
 }
 
+/* DLC/update tag from SteamHunters achievement groups (absent when the game has none). */
+.achievement .content .ach-category {
+  font-family: 'Raleway';
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--text-muted);
+  padding: 1px 0 3px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
 .achievement .content .description {
   font-family: 'Raleway';
   font-size: 15px;
@@ -1666,7 +1716,7 @@ main {
   transform: translateY(-50%);
   left: 10px;
   display: block;
-  color: #f5f8ff;
+  color: var(--text);
   z-index: 1;
   text-shadow: rgba(0, 0, 0, 0.6) 0 1px 2px;
 }
@@ -1681,7 +1731,7 @@ main {
   transform: translateY(-50%);
   right: 10px;
   display: block;
-  color: #f5f8ff;
+  color: var(--text);
   z-index: 1;
   text-shadow: rgba(0, 0, 0, 0.6) 0 1px 2px;
 }
@@ -2353,7 +2403,7 @@ main {
    (blue on Steam, purple on Dracula, green on Graphite …). */
 #settings .box .footer .buttons div#btn-settings-save,
 #game-config .box .footer .buttons div#btn-game-config-save {
-  color: #fff;
+  color: var(--text);
   border-color: color-mix(in srgb, var(--accent) 55%, transparent);
   background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 82%, white 4%), var(--accent));
 }
@@ -2596,8 +2646,7 @@ main {
   color: var(--text-muted);
 }
 
-.arrow-list li .right select:focus-visible,
-#steamwebapikey:focus-visible {
+.arrow-list li .right select:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--accent) 85%, transparent);
   outline-offset: 1px;
   border-radius: 5px;
@@ -2688,16 +2737,6 @@ main {
   filter: none;
 }
 
-#options-steam-api {
-  margin-top: 16px;
-}
-
-#options-steam-api .title {
-  font-family: Open-sans-bold;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  padding-bottom: 8px;
-}
-
 #onboarding {
   display: none;
   position: fixed;
@@ -2761,7 +2800,7 @@ main {
 
 .onboarding-header h1 {
   margin: 3px 0 0;
-  color: #fff;
+  color: var(--text);
   font-family: 'Raleway-Bold';
   font-size: 24px;
   letter-spacing: 0;
@@ -2849,7 +2888,7 @@ main {
 }
 
 .onboarding-steps button.active {
-  color: #fff;
+  color: var(--text);
   background: color-mix(in srgb, var(--accent) 24%, transparent);
   border-color: color-mix(in srgb, var(--accent) 20%, transparent);
   box-shadow: inset 3px 0 0 var(--accent);
@@ -2863,8 +2902,8 @@ main {
   place-items: center;
   margin-left: auto;
   border-radius: 50%;
-  color: #092012;
-  background: #86d9a4;
+  color: color-mix(in srgb, var(--success) 15%, black);
+  background: var(--success);
   font-family: Arial, sans-serif;
   font-size: 10px;
   font-weight: bold;
@@ -2957,7 +2996,7 @@ main {
 }
 
 .onboarding-cards strong {
-  color: #fff;
+  color: var(--text);
   font-family: 'Open-Sans-Bold';
 }
 
@@ -3004,7 +3043,7 @@ main {
   border: 1px solid color-mix(in srgb, var(--border) 22%, transparent);
   border-radius: 9px;
   color: var(--text);
-  background: rgba(5, 12, 21, 0.56);
+  background: color-mix(in srgb, var(--surface-sunken) 76%, transparent);
   font-family: 'Open-Sans';
 }
 
@@ -3020,13 +3059,13 @@ main {
 }
 
 .onboarding-api-input.is-valid input {
-  border-color: rgba(103, 194, 132, 0.7);
-  box-shadow: inset 0 0 0 1px rgba(103, 194, 132, 0.35);
+  border-color: color-mix(in srgb, var(--success) 70%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--success) 35%, transparent);
 }
 
 .onboarding-api-input.is-invalid input {
-  border-color: rgba(230, 118, 118, 0.7);
-  box-shadow: inset 0 0 0 1px rgba(230, 118, 118, 0.35);
+  border-color: color-mix(in srgb, var(--danger) 70%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 35%, transparent);
 }
 
 .onboarding-api-toggle,
@@ -3045,7 +3084,7 @@ main {
 }
 
 .onboarding-api-toggle[aria-pressed='true'] {
-  color: #fff;
+  color: var(--text);
   border-color: color-mix(in srgb, var(--accent) 56%, transparent);
   background: color-mix(in srgb, var(--accent) 30%, transparent);
 }
@@ -3118,11 +3157,11 @@ main {
   gap: 10px;
   margin: 4px 0 14px;
   padding: 12px 14px;
-  border: 1px solid #e6a23c;
+  border: 1px solid var(--warning);
   border-left-width: 4px;
   border-radius: 8px;
-  color: #f3c97a;
-  background: rgba(230, 162, 60, 0.12);
+  color: color-mix(in srgb, var(--warning) 78%, white);
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
   font-family: 'Open-Sans';
   font-size: 12px;
   font-weight: 600;
@@ -3149,11 +3188,11 @@ main {
 }
 
 .onboarding-inline-status.success {
-  color: #8ce0ad;
+  color: color-mix(in srgb, var(--success) 78%, white);
 }
 
 .onboarding-inline-status.error {
-  color: #f1a1a1;
+  color: color-mix(in srgb, var(--danger) 72%, white);
 }
 
 .onboarding-folder-actions .inline-action-btn:disabled {
@@ -3229,11 +3268,11 @@ main {
 }
 
 #onboarding-status.success {
-  color: #8ce0ad;
+  color: color-mix(in srgb, var(--success) 78%, white);
 }
 
 #onboarding-status.error {
-  color: #f1a1a1;
+  color: color-mix(in srgb, var(--danger) 72%, white);
 }
 
 .onboarding-actions {
@@ -3271,66 +3310,6 @@ main {
   .onboarding-lists {
     grid-template-columns: 1fr;
   }
-}
-
-#options-steam-api .disclaimer {
-  margin: 10px 0 12px;
-  max-width: 680px;
-  font-size: 13px;
-  line-height: 1.38;
-  color: var(--text-muted);
-}
-
-#options-steam-api .disclaimer p {
-  margin: 0 0 6px;
-  padding: 0;
-}
-
-#options-steam-api .disclaimer a {
-  color: var(--accent);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-#options-steam-api .disclaimer a:hover {
-  color: color-mix(in srgb, var(--accent) 78%, white 10%);
-  text-decoration: underline;
-}
-
-#options-steam-api label[for='steamwebapikey'] {
-  font-family: Open-sans;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 7px;
-  font-size: 14px;
-}
-
-#steamwebapikey {
-  display: block;
-  width: min(420px, 100%);
-  height: 34px;
-  padding: 6px 10px;
-  box-sizing: border-box;
-  color: var(--text);
-  background: rgba(8, 17, 28, 0.72);
-  border: 1px solid color-mix(in srgb, var(--border) 35%, transparent);
-  border-radius: 6px;
-  font-family: 'Open-sans';
-  font-size: 14px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-#steamwebapikey:hover {
-  border-color: color-mix(in srgb, var(--border) 55%, transparent);
-}
-
-#steamwebapikey ~ span {
-  font-size: 12px;
-  line-height: 1.35;
-  padding: 6px 0 0;
-  display: block;
-  color: var(--text-muted);
 }
 
 #settings .content li .left {
@@ -3718,10 +3697,10 @@ main {
 #notify_test ~ select {
   background: var(--text);
   font-family: 'Open-sans';
-  border-top: 2px solid #9a9a9a;
-  border-left: 2px solid #9a9a9a;
-  border-right: 2px solid #eeeeee;
-  border-bottom: 2px solid #eeeeee;
+  border-top: 2px solid var(--border);
+  border-left: 2px solid var(--border);
+  border-right: 2px solid color-mix(in srgb, var(--text) 35%, var(--border));
+  border-bottom: 2px solid color-mix(in srgb, var(--text) 35%, var(--border));
   font-size: 14px;
   margin: 0 5px;
 }
@@ -3814,10 +3793,6 @@ main {
   min-height: 30px;
   padding: 4px 12px;
   white-space: nowrap;
-}
-
-#diag-apikey span {
-  font-weight: bold;
 }
 
 /* Achievement search (game detail view): filters unlocked/locked rows by title/description. */
@@ -4051,7 +4026,7 @@ main {
 #game-list .game-box .loading-overlay .content .status {
   font-size: 12px;
   line-height: 1.3;
-  color: #e7eef7;
+  color: var(--text);
   max-width: 160px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
 }
@@ -4083,7 +4058,7 @@ main {
   flex: 0 0 44px;
   border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
   border-radius: 11px;
-  color: #a9c5ff;
+  color: var(--accent-strong);
   background: color-mix(in srgb, var(--accent) 20%, transparent);
   font-size: 20px;
 }
@@ -4095,7 +4070,7 @@ main {
 }
 #settings .emulator-hero p {
   margin: 0;
-  color: #a9b9cc;
+  color: var(--text-muted);
   font-size: 12.5px;
   line-height: 1.4;
 }
@@ -4120,7 +4095,7 @@ main {
   text-transform: uppercase;
 }
 #settings .emulator-group-title i {
-  color: #8fb1e8;
+  color: var(--accent);
 }
 #settings .emulator-list {
   padding: 3px 0;
@@ -4150,11 +4125,11 @@ main {
   margin-top: 2px;
 }
 #settings .emulator-list li.is-on .right {
-  border-color: rgba(93, 205, 148, 0.25);
-  background: rgba(40, 128, 87, 0.12);
+  border-color: color-mix(in srgb, var(--success) 25%, transparent);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
 }
 #settings .emulator-list li.is-on .right select {
-  color: #9de1bd;
+  color: color-mix(in srgb, var(--success) 76%, white);
 }
 #settings .emulator-list li.is-off .right select {
   color: var(--text-muted);
@@ -4263,7 +4238,7 @@ main {
   padding: 6px 11px 6px 7px;
   border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
   border-radius: 10px;
-  color: #e9f1ff;
+  color: var(--text);
   background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 27%, transparent), color-mix(in srgb, var(--set-surface-sunken) 30%, transparent));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 5px 16px rgba(0, 0, 0, 0.12);
   cursor: pointer;
@@ -4349,14 +4324,14 @@ main {
   display: none;
 }
 #settings #emulator-login-test-status.success {
-  color: #8ce0ad;
-  border-color: rgba(87, 205, 139, 0.22);
-  background: rgba(36, 124, 78, 0.11);
+  color: color-mix(in srgb, var(--success) 78%, white);
+  border-color: color-mix(in srgb, var(--success) 22%, transparent);
+  background: color-mix(in srgb, var(--success) 11%, transparent);
 }
 #settings #emulator-login-test-status.error {
-  color: #f1a1a1;
-  border-color: rgba(231, 103, 103, 0.22);
-  background: rgba(137, 49, 49, 0.11);
+  color: color-mix(in srgb, var(--danger) 72%, white);
+  border-color: color-mix(in srgb, var(--danger) 22%, transparent);
+  background: color-mix(in srgb, var(--danger) 11%, transparent);
 }
 #settings #emulator-login-test-status.running::before {
   content: '';
@@ -4381,7 +4356,7 @@ main {
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(4, 10, 18, 0.78);
+  background: color-mix(in srgb, var(--surface-sunken) 78%, transparent);
   backdrop-filter: blur(5px);
   animation: aw-prompt-fade 0.14s ease-out;
 }
@@ -4474,7 +4449,7 @@ main {
 }
 .aw-prompt-button.primary {
   border-color: color-mix(in srgb, var(--accent) 32%, transparent);
-  color: #fff;
+  color: var(--text);
   background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 82%, white 6%), color-mix(in srgb, var(--accent) 78%, black 12%));
 }
 @keyframes aw-prompt-fade { from { opacity: 0; } }
@@ -4577,29 +4552,6 @@ main {
    Shared polish for the library, game details and every settings view.
    -------------------------------------------------------------------------- */
 
-:root {
-  --bg-base: #142236;
-  --bg-panel: #192a40;
-  --bg-panel-translucent: rgba(27, 45, 67, 0.78);
-  --surface: #263b55;
-  --surface-elevated: #2d4561;
-  --surface-sunken: #101d2d;
-  --border: rgba(166, 195, 229, 0.19);
-  --text: #e7edf6;
-  --text-muted: #94a5ba;
-  --accent: #6c91ff;
-  --accent-strong: #7aa7ff;
-  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
-  --success: #5fd49a;
-  --warning: #e5b263;
-  --danger: #e07a5f;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --shadow-card: 0 14px 34px rgba(0, 0, 0, 0.28);
-  --shadow-dialog: 0 34px 90px rgba(0, 0, 0, 0.58);
-}
-
 body {
   border-color: color-mix(in srgb, var(--text-muted) 18%, transparent);
   background:
@@ -4608,7 +4560,7 @@ body {
 }
 
 ::selection {
-  color: #fff;
+  color: var(--text);
   background: color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
@@ -4624,7 +4576,7 @@ body {
 #user-info .info .name {
   font-size: clamp(25px, 3vw, 34px);
   letter-spacing: -0.025em;
-  color: #f7faff;
+  color: var(--text);
 }
 
 #user-info .info .stats ul {
@@ -4959,6 +4911,32 @@ body {
   background: linear-gradient(180deg, var(--set-modal-top) 0%, var(--set-modal-bottom) 100%);
   box-shadow: 0 28px 70px rgba(0, 0, 0, 0.46), inset 0 1px 0 rgba(255, 255, 255, 0.07);
   backdrop-filter: blur(20px) saturate(1.08);
+}
+
+/* Settings opens with a short compositor-only transition. This replaces jQuery's 400 ms opacity
+   tween, which felt slow and repainted the whole blurred modal on every frame. */
+@keyframes settings-modal-scrim-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes settings-modal-panel-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 8px)) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+#settings.is-opening > .overlay {
+  animation: settings-modal-scrim-in 0.16s ease-out both;
+}
+
+#settings.is-opening > .box {
+  animation: settings-modal-panel-in 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 #game-config .box {
@@ -5405,11 +5383,13 @@ body {
   user-select: text;
 }
 
-#options-steam-api {
-  padding: 0 14px 14px;
-  border: 1px solid var(--set-hairline-soft);
-  border-radius: 11px;
-  background: var(--set-panel);
+#settings .diag-line {
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+#settings .diag-line.is-hiding {
+  opacity: 0;
+  transform: translateY(-3px);
 }
 
 /* Advanced tab: sections use the shared card+header model above — nothing tab-specific
@@ -5430,61 +5410,160 @@ body {
   overflow-y: auto;
 }
 
+#settings .help-card {
+  padding-bottom: 16px;
+}
+
+#settings .help-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.65fr);
+  align-items: center;
+  gap: 18px;
+  padding: 14px 0 15px;
+}
+
 #settings .help-intro {
   margin: 0;
-  margin-bottom: 14px;
   color: var(--text-muted);
   font-size: 12.5px;
   line-height: 1.5;
 }
 
-#settings .help-actions {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0 0 14px;
-}
-
-#settings .help-action {
+#settings .help-search {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 7px;
   min-width: 0;
-  min-height: 36px;
-  padding: 7px 10px;
+}
+
+#settings .help-search > i {
+  position: absolute;
+  left: 12px;
+  z-index: 1;
+  color: var(--set-icon);
+  pointer-events: none;
+}
+
+#settings .help-search input {
+  width: 100%;
+  height: 38px;
+  box-sizing: border-box;
+  padding: 0 38px 0 35px;
   border: 1px solid var(--set-control-border);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--set-control-bg) 82%, var(--accent) 7%);
-  color: var(--text);
-  font: 700 12px 'Open-Sans';
-  cursor: pointer;
-  transition: transform 120ms ease, background 150ms ease, border-color 150ms ease;
-}
-
-#settings .help-action:hover,
-#settings .help-action:focus-visible {
-  border-color: color-mix(in srgb, var(--accent) 62%, var(--set-control-border));
-  background: color-mix(in srgb, var(--set-control-bg) 72%, var(--accent) 15%);
+  border-radius: 9px;
   outline: none;
-  transform: translateY(-1px);
+  background: var(--set-control-bg);
+  color: var(--text);
+  font: 12.5px 'Open-Sans';
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
-#settings .help-action i {
-  flex: 0 0 auto;
+#settings .help-search input::placeholder {
+  color: var(--text-muted);
+}
+
+#settings .help-search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+#settings .help-search input:focus {
+  border-color: color-mix(in srgb, var(--accent) 70%, var(--set-control-border));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+#settings .help-search-clear {
+  position: absolute;
+  right: 5px;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  outline: none;
+  background: transparent;
+  color: var(--set-icon);
+  cursor: pointer;
+}
+
+#settings .help-search-clear[hidden] {
+  display: none;
+}
+
+#settings .help-search-clear:hover,
+#settings .help-search-clear:focus-visible {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
   color: var(--accent);
 }
 
-#settings .help-action span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+#settings .help-overview {
+  min-width: 0;
+  padding: 11px 12px 12px;
+  border: 1px solid var(--set-hairline-soft);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--set-surface-sunken) 42%, transparent);
+}
+
+#settings .help-block-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  color: var(--text);
+  font: 700 11.5px 'Open-Sans';
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+#settings .help-block-title > i {
+  width: 16px;
+  color: var(--accent);
+  text-align: center;
+}
+
+#settings .help-topics {
+  margin-top: 16px;
+}
+
+#settings .help-topics-heading {
+  margin-bottom: 9px;
+}
+
+#settings .help-match-count {
+  min-width: 25px;
+  box-sizing: border-box;
+  margin-left: auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 13%, var(--set-control-bg));
+  color: color-mix(in srgb, var(--accent) 65%, var(--text));
+  font-size: 10.5px;
+  text-align: center;
+}
+
+#settings .help-match-count:empty {
+  display: none;
+}
+
+#settings .help-no-results {
+  margin: 0;
+  padding: 28px 16px;
+  border: 1px dashed var(--set-control-border);
+  border-radius: 9px;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  text-align: center;
+}
+
+#settings .help-no-results[hidden] {
+  display: none;
 }
 
 #settings .help-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 13px;
+  gap: 8px;
 }
 
 #settings .help-panel {
@@ -5494,6 +5573,14 @@ body {
   background: var(--set-panel);
   overflow: hidden;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.018);
+}
+
+#settings .help-panel[open] {
+  grid-column: 1 / -1;
+}
+
+#settings .help-panel[hidden] {
+  display: none;
 }
 
 #settings .help-panel summary {
@@ -5518,7 +5605,7 @@ body {
 
 #settings .help-panel summary::after {
   content: '▾';
-  margin-left: auto;
+  margin-left: 0;
   color: var(--set-icon);
   font-size: 11px;
   transition: transform 160ms ease;
@@ -5540,6 +5627,19 @@ body {
   width: 18px;
   text-align: center;
   color: var(--set-icon);
+}
+
+#settings .help-topic-count {
+  min-width: 22px;
+  margin-left: auto;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--set-control-bg) 72%, transparent);
+  color: var(--text-muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
 }
 
 #settings .help-panel[open] summary {
@@ -5576,7 +5676,81 @@ body {
   margin-bottom: 0;
 }
 
-#steamwebapikey,
+#settings .help-setup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-content: flex-start;
+  margin: 0;
+}
+
+#settings .help-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 5px 10px;
+  border: 1px solid var(--set-hairline);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--set-panel) 86%, var(--set-surface-sunken));
+  color: var(--text);
+  font-size: 11.5px;
+  line-height: 1.25;
+}
+
+#settings .help-chip i {
+  flex: 0 0 auto;
+  color: var(--set-icon);
+  font-size: 11px;
+}
+
+#settings .help-chip b {
+  font-weight: 700;
+}
+
+#settings .help-chip b::after {
+  content: ':';
+  margin-left: 1px;
+}
+
+#settings .help-chip.is-on {
+  border-color: color-mix(in srgb, var(--success) 38%, var(--set-hairline));
+}
+
+#settings .help-chip.is-off {
+  opacity: 0.62;
+}
+
+#settings .help-key {
+  display: inline-block;
+  box-sizing: border-box;
+  margin: 0 1px;
+  padding: 1px 6px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--set-control-border));
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--set-control-bg) 78%, var(--accent) 10%);
+  color: color-mix(in srgb, var(--text) 88%, var(--accent) 12%);
+  font-family: 'Open-Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+#settings .help-panel li.help-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding-left: 0;
+}
+
+#settings .help-panel li.help-chip-row::before {
+  content: none;
+}
+
 #game-config .launch-args-row input {
   min-height: 38px;
   border-color: var(--set-control-border);
@@ -5613,7 +5787,7 @@ body {
 
 #settings .box .footer .buttons div#btn-settings-save,
 #game-config .box .footer .buttons div#btn-game-config-save {
-  color: #fff;
+  color: var(--text);
   border-color: color-mix(in srgb, var(--accent) 55%, transparent);
   background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 82%, white 6%), var(--accent));
 }
@@ -5680,14 +5854,12 @@ body {
    scrollport, which cancels sticky positioning outright. `clip` still clips to the rounded corners. */
 #settings .box .content .arrow-list,
 #settings .box .content .emulator-group,
-#settings .box .content #options-steam-api,
 #settings .box .content #epic-connect,
 #settings .box .content .settings-card {
   overflow: clip;
 }
 #settings .box .content .arrow-list > .title,
 #settings .box .content .settings-card > .title,
-#settings .box .content #options-steam-api > .title,
 #settings .box .content #epic-connect > .title,
 #settings .box .content .emulator-group > .emulator-group-title {
   position: sticky;
@@ -5784,7 +5956,7 @@ body {
   }
 }
 
-#settings .settings-section:not(.is-collapsed) > *:not(.settings-section-header) {
+#settings .settings-section.is-opening:not(.is-collapsed) > *:not(.settings-section-header) {
   animation: settings-section-reveal 0.18s ease both;
 }
 
@@ -5801,7 +5973,6 @@ body {
    header bar on Emulator). Everything now uses the card-with-header form. */
 #settings .arrow-list,
 #settings .emulator-group,
-#settings #options-steam-api,
 #settings #epic-connect,
 #settings .settings-card {
   margin: 12px 0 0;
@@ -5814,6 +5985,68 @@ body {
 }
 #settings .content > *:first-child {
   margin-top: 0;
+}
+
+/* Switching tabs animates one panel as a unit instead of re-running an animation on every card. */
+@keyframes settings-view-reveal {
+  from {
+    opacity: 0;
+    transform: translateX(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+#settings .box .content.active.settings-view-opening {
+  animation: settings-view-reveal 0.14s ease-out both;
+}
+
+/* Official desktop libraries stay visually distinct from emulator/local-data sources while keeping
+   the existing source order (and therefore older saved settings and positional locale bindings). */
+#settings .source-official-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 8px 0 10px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--set-hairline-soft));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+#settings .source-official-summary > i {
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+#settings .source-official-summary strong,
+#settings .source-official-summary p {
+  display: block;
+  margin: 0;
+}
+
+#settings .source-official-summary strong {
+  color: var(--set-title);
+  font-size: 13px;
+}
+
+#settings .source-official-summary p {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+#settings #options-source > li.official-source {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+#settings #options-source .source-official-badge {
+  margin-left: 2px;
+  color: color-mix(in srgb, var(--accent) 72%, var(--text-muted));
+  font-size: 10px;
 }
 
 /* The list inside a section is no longer its own card — the section is. `.emulator-list` also
@@ -5889,17 +6122,65 @@ body {
 #settings .folder-rescan-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+#settings .folder-rescan-toolbar .inline-action-btn {
+  min-height: 29px;
+  padding: 5px 9px;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+#settings .folder-rescan-actions #folder-rescan-run {
+  min-height: 32px;
+  padding: 6px 11px;
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--set-control-border));
+  color: var(--text);
+  background: color-mix(in srgb, var(--set-control-bg) 88%, var(--accent) 7%);
+  box-shadow: none;
+}
+
+#settings .folder-rescan-actions #folder-rescan-run:not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--accent) 58%, var(--set-control-border));
+  background: color-mix(in srgb, var(--set-control-bg) 78%, var(--accent) 12%);
+}
+
+#settings .folder-rescan-actions #folder-rescan-run i {
+  color: var(--accent);
 }
 
 #settings #folder-rescan-list {
-  max-height: 172px;
-  margin: 10px 0 0;
-  overflow: auto;
+  max-height: 156px;
+  margin: 8px 0 0;
+  overflow-x: hidden;
+  overflow-y: auto;
   border: 1px solid var(--set-hairline-soft);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--set-surface-sunken) 42%, transparent);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--set-surface-sunken) 28%, transparent);
+  scrollbar-color: color-mix(in srgb, var(--set-icon) 62%, transparent) transparent;
+  scrollbar-width: thin;
+}
+
+#settings #folder-rescan-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+#settings #folder-rescan-list::-webkit-scrollbar-track,
+#settings #folder-rescan-list::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+#settings #folder-rescan-list::-webkit-scrollbar-thumb {
+  min-height: 34px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--set-icon) 52%, transparent);
+}
+
+#settings #folder-rescan-list::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--accent) 62%, var(--set-icon));
 }
 
 #settings #folder-rescan-list:empty {
@@ -5909,7 +6190,7 @@ body {
 #settings #folder-rescan-list > li {
   margin: 0;
   padding: 0;
-  border-bottom: 1px solid var(--set-divider);
+  border-bottom: 1px solid color-mix(in srgb, var(--set-divider) 68%, transparent);
 }
 
 #settings #folder-rescan-list > li:last-child {
@@ -5920,9 +6201,9 @@ body {
   display: flex;
   align-items: center;
   min-width: 0;
-  min-height: 34px;
-  gap: 9px;
-  padding: 6px 10px;
+  min-height: 32px;
+  gap: 8px;
+  padding: 5px 9px;
   cursor: pointer;
 }
 
@@ -6262,7 +6543,6 @@ body {
 }
 
 #settings .emulator-login-fields input,
-#settings #steamwebapikey,
 #settings .cust-field input[type='text'] {
   box-sizing: border-box;
   min-height: 32px;
@@ -6319,7 +6599,6 @@ body {
   border-radius: 4px;
 }
 #settings .emulator-login-fields input:focus,
-#settings #steamwebapikey:focus,
 #settings .cust-field input[type='text']:focus {
   outline: none;
   border-color: var(--accent);
@@ -6686,18 +6965,9 @@ body {
   color: var(--danger);
 }
 
-#settings .help-grid {
-  grid-template-columns: 1fr;
-  gap: 14px;
-}
-
 #settings .help-panel summary {
-  min-height: 54px;
-  padding: 14px 15px;
-}
-
-#settings .help-panel[open] summary {
-  background: transparent;
+  min-height: 47px;
+  padding: 12px 14px;
 }
 
 /* Keyboard accessibility: one consistent, accent-coloured focus ring for every interactive control
@@ -6824,6 +7094,10 @@ body {
     grid-template-columns: 1fr;
   }
 
+  #settings .help-hero {
+    grid-template-columns: 1fr;
+  }
+
   #achievement .achievement-list ul > li {
     padding-inline: 14px;
   }
@@ -6897,12 +7171,12 @@ body {
 /* Manually-unlocked achievements (right-click override): a soft amber ring plus a check mark so
    the state is visible without hiding the real unlock/locked styling. */
 #achievement .achievement-list .achievement.manual .box {
-  box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.55);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--warning) 55%, transparent);
 }
 
 #achievement .achievement-list .achievement.manual .content .title::after {
   content: " ✓";
-  color: #f5a623;
+  color: var(--warning);
   font-weight: 700;
 }
 

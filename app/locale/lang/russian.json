@@ -178,7 +178,7 @@
       "onboarding": {
         "name": "Руководство первого запуска",
         "button": "Открыть руководство",
-        "description": "Снова открыть пошаговую настройку: ключ API, профиль, папки, источники и уведомления."
+        "description": "Снова откройте руководство по настройке для профиля, папок, источников и уведомлений."
       },
       "hardwareAccel": {
         "name": "Отключить аппаратное ускорение",
@@ -266,14 +266,6 @@
           "true": "Включено"
         }
       },
-      "mode": {
-        "name": "Режим эмулятора",
-        "description": "Regular заменяет steam_api(64).dll игры. ColdClient сохраняет её и загружает эмулируемый steamclient из GBE Fork через загрузчик — более широкое покрытие для упрямых игр.",
-        "value": {
-          "regular": "Regular (заменить DLL)",
-          "coldclient": "ColdClient (GBE Fork)"
-        }
-      },
       "steamSettings": {
         "name": "Данные steam_settings",
         "description": "Simple использует собственную загрузку Achievement Watcher (анонимно). Advanced запускает generate_emu_config для покрытия депо/языков.",
@@ -320,14 +312,6 @@
         "value": {
           "false": "Отключено",
           "true": "Включено"
-        }
-      },
-      "launchBat": {
-        "name": "Создавать Launch.bat для запасного варианта",
-        "description": "Когда Steamless не может снять exe SteamStub и AW переключается на ColdClient, также записывает Launch.bat для соответствующего загрузчика.",
-        "value": {
-          "true": "Включено",
-          "false": "Отключено"
         }
       },
       "checkUpdates": {
@@ -590,6 +574,10 @@
     },
     "source": {
       "title": "Источники игр",
+      "officialPlatforms": {
+        "title": "Официальные платформы",
+        "description": "Поддерживаются Steam, Ubisoft Connect, GOG Galaxy, Epic Games и Xbox PC. Включите ниже источники со значком щита; отображаются только библиотеки, найденные на этом компьютере."
+      },
       "legitSteam": {
         "name": "Показывать игры Steam",
         "description": "Steam должен быть установлен, а ваш профиль Steam — открытым !",
@@ -650,123 +638,86 @@
         "description": "Эмулятор Xbox 360"
       }
     },
-    "guide": {
-      "nav": "Руководство",
-      "title": "Руководство по платформам",
-      "intro": "Что сканирует Achievement Watcher, какие папки важны и когда полезны сгенерированные конфиги эмуляторов.",
-      "quickTitle": "Первые шаги",
-      "quick": [
-        "Добавьте папки сохранений/конфигов в Настройки > Папки, затем включите соответствующий источник в Настройки > Источники.",
-        "Используйте папки библиотек для установленных игр, которые еще не создали файлы достижений.",
-        "Watchdog уведомляет о новых изменениях только после того, как папка известна, а источник включен."
-      ],
-      "steamTitle": "Эмуляторы Steam",
-      "steam": [
-        "Сохранения GBE / Goldberg обычно находятся в %APPDATA%\\GSE Saves или %APPDATA%\\Goldberg SteamEmu Saves.",
-        "Сохранения в стиле CODEX / RUNE часто лежат в Public Documents\\Steam\\CODEX или Public Documents\\Steam\\RUNE.",
-        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 и Hoodlum определяются по своим папкам конфигов/сохранений."
-      ],
-      "emulatorTitle": "Консольные эмуляторы",
-      "emulators": [
-        "Достижения RPCS3 читаются из dev_hdd0\\home\\...\\trophy рядом с установкой RPCS3.",
-        "Трофеи shadPS4 читаются из папок app data game_data/trophy; оставшиеся данные трофеев не доказывают, что игра установлена.",
-        "Прогресс Xenia читается из файлов профиля Xbox, например .gpd."
-      ],
-      "sourcesTitle": "Лаунчеры и источники",
-      "sources": [
-        "Режим публичного профиля Steam показывает установленные или купленные игры Steam, но локальные разблокировки все равно берутся из файлов сохранений.",
-        "GOG, Epic, Ubisoft Connect/LumaPlay и EA Desktop можно включать отдельно в Источниках.",
-        "Взломанные установки EA Desktop читаются из EADesktopVerbose.log и его резервных логов."
-      ],
-      "configTitle": "Сгенерированные конфиги",
-      "config": [
-        "Исправление эмулятора по правому клику может добавить файлы GBE Fork, схемы достижений, данные DLC и помощники запуска.",
-        "Простой режим быстрый и использует данные Achievement Watcher; Расширенный запускает generate_emu_config для более глубоких данных Steam.",
-        "Расширенная генерация может занять несколько минут, особенно с метаданными DLC/depot."
-      ],
-      "troubleshootTitle": "Устранение проблем",
-      "troubleshoot": [
-        "Если игра отсутствует, пересканируйте после добавления папок, затем проверьте переключатель источника и черный список.",
-        "Если нет уведомлений, проверьте Фокусировку Windows и запускайте игру/app с теми же правами администратора.",
-        "Расширенные > Диагностика открывает логи и папки данных, когда нужно проверить, что было просканировано."
-      ]
-    },
     "help": {
       "nav": "Справка",
       "title": "Справка и советы",
       "intro": "Всё, что полезно знать: обнаружение, уведомления, геймпад, оверлей, темы и устранение неполадок.",
+      "setupTitle": "Текущие настройки",
+      "topicsTitle": "Просмотр по темам",
+      "searchPlaceholder": "Поиск по справке…",
+      "noResults": "По вашему запросу ничего не найдено.",
       "quickTitle": "Первые шаги",
       "quick": [
-        "Add save/config folders in Settings > Folders, then enable the matching source in Settings > Sources.",
-        "The Watchdog runs in the background — it must be running for live notifications and playtime.",
-        "A Steam Web API key in Settings > General makes first scans much faster and more accurate.",
-        "Everything (settings, caches, logs, custom themes) lives in %APPDATA%\\Achievement Watcher 3.0.",
+        "Добавьте папки сохранений/конфигурации в Настройки > Папки, затем включите соответствующий источник в Настройки > Источники.",
+        "Watchdog работает в фоновом режиме — он должен быть запущен для уведомлений в реальном времени и учёта игрового времени.",
+        "Все данные (настройки, кэши, журналы и пользовательские темы) находятся в %APPDATA%\\Achievement Watcher 3.0.",
         "Любой раздел настроек сворачивается по своему заголовку: стрелка вниз — раздел открыт, вбок — закрыт. Выбор запоминается."
       ],
       "steamTitle": "Эмуляторы Steam",
       "steam": [
-        "GBE / Goldberg saves are usually under %APPDATA%\\GSE Saves or %APPDATA%\\Goldberg SteamEmu Saves.",
-        "CODEX / RUNE saves often live under Public Documents\\Steam\\CODEX or Public Documents\\Steam\\RUNE.",
-        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 and Hoodlum are detected from their config/save folders."
+        "Сохранения GBE/Goldberg обычно находятся в %APPDATA%\\GSE Saves или %APPDATA%\\Goldberg SteamEmu Saves.",
+        "Сохранения CODEX/RUNE часто находятся в Public Documents\\Steam\\CODEX или Public Documents\\Steam\\RUNE.",
+        "TENOKE, UniverseLAN, SmartSteamEmu, ALI213 и Hoodlum определяются по папкам конфигурации/сохранений."
       ],
       "emulatorTitle": "Эмуляторы консолей",
       "emulators": [
-        "RPCS3 trophies are read from dev_hdd0\\home\\...\\trophy near the RPCS3 install.",
-        "shadPS4 trophies are read from its app data game_data/trophy folders; leftover data is not install proof.",
-        "Xenia progress is read from Xbox profile files such as .gpd."
+        "Трофеи RPCS3 считываются из dev_hdd0\\home\\...\\trophy рядом с папкой установки RPCS3.",
+        "Трофеи shadPS4 считываются из папок game_data/trophy в данных приложения; оставшиеся данные не подтверждают установку.",
+        "Прогресс Xenia считывается из файлов профиля Xbox, например .gpd."
       ],
       "sourcesTitle": "Лаунчеры и источники",
       "sources": [
-        "Steam profile mode lists installed or owned games, but unlocks still come from local save files.",
-        "GOG, Epic, Ubisoft Connect/LumaPlay and EA Desktop can be enabled separately in Sources.",
-        "Owned Steam games count as installed only when Steam's registry confirms it."
+        "Режим профиля Steam показывает установленные или приобретённые игры, но разблокировки по-прежнему берутся из локальных файлов сохранений.",
+        "GOG, Epic, Ubisoft Connect/LumaPlay и EA Desktop можно включать отдельно в разделе Источники.",
+        "Приобретённые игры Steam считаются установленными, только если это подтверждает реестр Steam."
       ],
       "controllerTitle": "Геймпад",
       "controller": [
-        "Enable Settings > Controller first, then Back + Start opens the in-game overlay.",
-        "LB + X toggles in-overlay navigation.",
-        "Navigation mode: D-pad/left stick move the focus, A confirms, B cancels, X searches, Y opens the options.",
-        "Hold LB + RB to move the overlay with the left stick and scroll with the right stick.",
-        "Works with Xbox, PlayStation (DualShock 4 / DualSense) and Switch Pro controllers."
+        "Сначала включите Настройки > Контроллер; после этого Back + Start + LB откроет внутриигровой оверлей.",
+        "LB + X включает или отключает навигацию в оверлее.",
+        "Режим навигации: крестовина/левый стик перемещают фокус, A подтверждает, B отменяет, X выполняет поиск, Y открывает параметры.",
+        "Удерживайте LB + RB, чтобы перемещать оверлей левым стиком и прокручивать правым.",
+        "Работает с контроллерами Xbox, PlayStation (DualShock 4 / DualSense) и Switch Pro."
       ],
       "overlayTitle": "Оверлей в игре",
       "overlay": [
-        "Open it with the overlay hotkey (Ctrl+Shift+K by default) or Back + Start on a controller.",
-        "Sort by one column at a time: Rarity, Date or Status (ascending / descending / none).",
-        "Press / to focus the search, Esc to clear it or close the options panel.",
-        "The gear panel changes accent, density, zoom, opacity and visible rows; 'Use app theme' follows the active theme.",
-        "Every achievement with a known rate shows its rarity: gray for common, gold/silver/bronze for rare."
+        "Откройте его горячей клавишей оверлея (по умолчанию Ctrl+Shift+K) или сочетанием Back + Start + LB на контроллере.",
+        "Сортируйте по одному столбцу: Редкость, Дата или Статус (по возрастанию / по убыванию / без сортировки).",
+        "Нажмите /, чтобы перейти к поиску, и Esc, чтобы очистить его или закрыть панель параметров.",
+        "Панель с шестерёнкой изменяет акцент, плотность, масштаб, непрозрачность и видимые строки; «Использовать тему приложения» следует активной теме.",
+        "Каждое достижение с известным процентом показывает редкость: серый для обычных, золотой/серебряный/бронзовый для редких."
       ],
       "themesTitle": "Пользовательские темы",
       "themes": [
-        "Custom starts as Steam Blue; every layer (background, header, panels, cards, settings, text, borders, accent) is editable.",
-        "Layer images sit under a colored veil with a light frosted blur; effects are per layer.",
-        "Drop a CSS theme into <userData>\\themes and it appears in the theme dropdown.",
+        "Пользовательская тема начинается со Steam Blue; каждый слой (фон, заголовок, панели, карточки, настройки, текст, границы и акцент) можно редактировать.",
+        "Изображения слоёв располагаются под цветной вуалью с лёгким матовым размытием; эффекты настраиваются отдельно для каждого слоя.",
+        "Поместите CSS-тему в <userData>\\themes, и она появится в списке тем.",
         "Конструктор пресетов умеет показать оформление настоящим всплывающим окном до сохранения, открыть сохранённый пресет для правки и удалить ненужные."
       ],
       "configTitle": "Сгенерированные конфиги",
       "config": [
-        "The right-click emulator fix can add GBE Fork files, achievements schemas, DLC data and launch helpers.",
-        "Simple mode is fast; Advanced runs generate_emu_config for deeper Steam data and can take minutes."
+        "Исправление эмулятора в контекстном меню может добавить файлы GBE Fork, схемы достижений и данные DLC.",
+        "Простой режим работает быстро; Расширенный запускает generate_emu_config для более полных данных Steam и может занять несколько минут."
       ],
       "shortcutsTitle": "Сочетания клавиш",
       "shortcuts": [
-        "Ctrl+Shift+K (default): toggle the in-game overlay — configurable in Settings > General.",
-        "Ctrl+Alt+Shift+Arrows move the overlay; Ctrl+Alt+Shift+1–5 snap it to a preset position.",
-        "Ctrl+Alt+Shift+C toggles click-through; Ctrl+F focuses Settings search."
+        "Ctrl+Shift+K (по умолчанию): показать или скрыть внутриигровой оверлей — настраивается в Настройки > Общие.",
+        "Ctrl+Alt+Shift+Стрелки перемещают оверлей; Ctrl+Alt+Shift+1–5 закрепляет его в заданной позиции.",
+        "Ctrl+Alt+Shift+C переключает сквозные щелчки; Ctrl+F переводит фокус в поиск настроек."
       ],
       "tipsTitle": "Советы и хитрости",
       "tips": [
-        "Right-click a game tile for quick actions: emulator fix, achievements, Steam page, GBE Fork install, uninstall.",
-        "Right-click a game and choose mute progress to stop progress popups without disabling unlocks.",
-        "The emulator fix (Simple fast / Advanced complete) installs GBE Fork, the achievements schema, DLCs and launch helpers.",
-        "Playtime is tracked while the game runs; progress and playtime notifications can be enabled in Notifications."
+        "Щёлкните правой кнопкой по плитке игры для быстрых действий: исправление эмулятора, достижения, страница Steam, установка GBE Fork и удаление.",
+        "Щёлкните правой кнопкой по игре и выберите отключение прогресса, чтобы остановить всплывающие уведомления, не отключая разблокировки.",
+        "Исправление эмулятора (Простое быстрое / Расширенное полное) устанавливает GBE Fork, схему достижений и данные DLC.",
+        "Игровое время учитывается, пока игра запущена; уведомления о прогрессе и времени можно включить в разделе Уведомления.",
+        "Новые достижения из обновления игры появятся автоматически в течение 3 дней или сразу после выбора Настройки > Дополнительно > Повторно проверить списки достижений."
       ],
       "troubleshootTitle": "Устранение неполадок",
       "troubleshoot": [
-        "If a game is missing: add folders, rescan, then check the source toggle and blacklist.",
-        "If notifications don't appear: check Windows Focus Assist and run the app with the same rights as your games.",
-        "Advanced > Diagnostics opens logs and data folders; attach them when reporting an issue.",
+        "Если игра отсутствует: добавьте папки, повторите сканирование, затем проверьте переключатель источника и чёрный список.",
+        "Если уведомления не появляются: проверьте Фокусировку внимания Windows и запустите приложение с теми же правами, что и игры.",
+        "Расширенные > Диагностика открывает журналы и папки данных; прикрепите их при сообщении о проблеме.",
         "Журналы дописываются, поэтому сбой переживёт следующий запуск. Каждый запуск начинается с метки сессии и блока [diag] (версии, пути, экраны) — вставьте его в сообщение об ошибке."
       ]
     },
@@ -784,9 +735,6 @@
       },
       "diag": {
         "title": "Диагностика",
-        "apiKeyLabel": "Ключ Steam Web API :",
-        "apiKeyConfigured": "настроен",
-        "apiKeyFallback": "не задан — используется запасной парсинг",
         "logsFolder": "Открыть папку логов",
         "dataFolder": "Открыть папку данных",
         "goldbergTitle": "Goldberg / GBE Fork",
@@ -798,34 +746,35 @@
       "blacklistInfo": "Щёлкните правой кнопкой по плитке игры, чтобы добавить её в чёрный список.",
       "blacklistEmpty": "Скрытых игр нет.",
       "blacklistRestore": "Восстановить эту игру",
-      "apiKey": {
-        "title": "Ключ Steam Web API",
-        "description": "Некоторые данные Steam требуют личного ключа Steam Web API.",
-        "fallback": "Оставьте это поле пустым для автоматического получения. Если оно не сработает, введите свой ключ.",
-        "create": "Создать ключ API",
-        "terms": "Условия использования Steam API",
-        "label": "Ваш ключ Steam Web API",
-        "security": "Ключ шифруется AES-256-CBC перед сохранением на этом компьютере."
-      },
       "mainSteam": {
         "title": "Основной аккаунт Steam",
         "name": "Фильтровать по пользователю",
         "description": "Показывать достижения Steam только выбранного аккаунта"
       },
-      "checkUpdates": "Проверить обновления"
+      "checkUpdates": "Проверить обновления",
+      "clearUpdateCache": {
+        "name": "Очистить кэши",
+        "button": "Очистить кэши",
+        "description": "Удаляет повторно загружаемые кэши: файлы обновления, кэш схем и значков Steam/Ubisoft, а также загруженные инструменты исправления эмулятора. Никогда не затрагивает ваши настройки, сохранения, резервные копии или вручную размещённые файлы."
+      },
+      "forceAchievementRecheck": {
+        "name": "Перепроверить списки достижений",
+        "button": "Проверить сейчас",
+        "description": "Проверяет в Steam, не добавило ли обновление игры новые достижения со времени последней проверки. Выполняется автоматически каждые 3 дня; эта кнопка запускает проверку немедленно."
+      }
     }
   },
   "onboarding": {
     "settingsLabel": "Руководство по первому запуску",
     "settingsButton": "Открыть руководство",
-    "settingsHelp": "Снова откройте руководство по настройке ключа API, профиля, папок, источников и уведомлений.",
+    "settingsHelp": "Снова откройте руководство по настройке для профиля, папок, источников и уведомлений.",
+    "navLabel": "Шаги настройки",
     "eyebrow": "Первая настройка",
     "close": "Закрыть",
     "steps": [
       "Язык",
       "Как это работает",
       "Аккаунт",
-      "API-ключ",
       "Игры",
       "Настройки"
     ],
@@ -841,7 +790,7 @@
     "watchTitle": "Мониторинг",
     "watchCopy": "Фоновый Watchdog определяет исполняемый файл при запуске игры, учитывает игровое время и отслеживает файлы достижений, чтобы показывать разблокировки во время игры.",
     "fixTitle": "Исправление",
-    "fixCopy": "Для эмулируемых игр Steam исправление из контекстного меню (или автоматическое исправление) устанавливает GBE Fork и записывает схему achievements.json, данные DLC и вспомогательные файлы запуска в папку steam_settings игры.",
+    "fixCopy": "Для эмулируемых игр Steam исправление из контекстного меню (или автоматическое исправление) устанавливает GBE Fork и записывает схему achievements.json и данные DLC в папку steam_settings игры.",
     "overlayTitle": "Внутриигровой оверлей",
     "overlayCopy": "Небольшая панель достижений, которую можно вызвать поверх игры горячей клавишей (по умолчанию Ctrl+Shift+K). Изменить её можно в любой момент в Настройки > Общие, рядом с полем горячей клавиши.",
     "profileTitle": "Профиль",
@@ -851,13 +800,6 @@
     "avatarPick": "Выбрать фото",
     "avatarDefault": "По умолчанию",
     "avatarHint": "Необязательно. Хранится локально на этом компьютере.",
-    "apiTitle": "Ключ веб-API Steam",
-    "apiCopy": "Ключ улучшает получение метаданных Steam. Вы можете оставить его пустым и добавить позже.",
-    "apiWarning": "ВАЖНО: без ключа API самая первая загрузка библиотеки будет ОЧЕНЬ МЕДЛЕННОЙ: каждая игра извлекается путем парсинга страниц Steam (несколько секунд на игру). С ключом это происходит почти мгновенно и точнее. Окно остается доступным во время загрузки, но настоятельно рекомендуется добавить его.",
-    "apiLabel": "Ключ веб-API Steam",
-    "apiToggle": "Показать или скрыть ключ API",
-    "apiLink": "Получите ключ веб-API Steam.",
-    "apiNote": "Используйте официальную страницу Steam. Ключ шифруется перед сохранением.",
     "foldersTitle": "Добавить игры на диск",
     "foldersCopy": "Добавьте папки сохранения/конфигурации для определенных эмуляторов и корни библиотек, содержащие множество установленных игр.",
     "addSave": "Добавить папку сохранения",
@@ -1326,6 +1268,9 @@
     "rescan-started": "Повторное сканирование {count} выбранных папок…",
     "rescan-complete": "Выбранные папки повторно просканированы.",
     "rescan-failed": "Не удалось просканировать выбранные папки: {error}",
+    "force-recheck-started": "Поиск новых достижений…",
+    "force-recheck-done": "Проверка завершена.",
+    "force-recheck-failed": "Ошибка проверки: {error}",
     "no-game-found": "Игра не найдена.",
     "invalid-folder": "Недопустимая папка",
     "error-adding-custom-folder": "Ошибка при добавлении пользовательской папки",
@@ -1377,7 +1322,54 @@
     "theme-gradient-angle-135": "Слева сверху → Справа снизу",
     "theme-gradient-angle-180": "Сверху вниз",
     "theme-gradient-angle-0": "Снизу вверх",
-    "theme-gradient-angle-270": "Справа сверху → Слева снизу"
+    "theme-gradient-angle-270": "Справа сверху → Слева снизу",
+    "avatar-import-from-steam-user": "Импортировать аватар Steam пользователя {name}",
+    "update-check-failed-detail": "Не удалось проверить обновления: {message}",
+    "diagnosis-emulator": "Эмулятор: {emulator}",
+    "diagnosis-emulator-none": "не обнаружено",
+    "diagnosis-steam-settings": "steam_settings: {path}",
+    "diagnosis-steam-settings-missing": "steam_settings: не найдено",
+    "diagnosis-achievements-count": "достижения: {found} в файле / {expected} в схеме",
+    "diagnosis-no-problems": "Проблем не обнаружено.",
+    "diagnosis-auto-repair-wrote": "Автоматическое исправление записало {count} достижений в {path}",
+    "diagnosis-icons-summary": "значки: {downloaded} загружено, {failed} с ошибкой, {skipped} пропущено",
+    "diagnosis-steam-appid-created": "steam_appid.txt создан",
+    "diagnosis-configs-main-updated": "configs.main.ini обновлён (new_app_ticket + gc_token)",
+    "diagnosis-configs-app-updated": "configs.app.ini обновлён ({count} записей DLC, unlock_all={unlockAll})",
+    "diagnosis-configs-user-updated": "configs.user.ini обновлён",
+    "diagnosis-auto-repair-failed": "Автоматическое исправление не удалось: {error}",
+    "diagnosis-steam-appid": "Steam AppID: {appid} ({name})",
+    "diagnosis-steam-appid-not-resolved": "Steam AppID: не определён",
+    "version-app": "Приложение",
+    "diagnosis-dlls-backed-up": "Существующие DLL сохранены как *.bak",
+    "diagnosis-config-backed-up": "Предыдущая конфигурация сохранена: {path}",
+    "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
+    "diagnosis-none-parenthesized": "(нет)",
+    "diagnosis-version": "Версия: {version}",
+    "diagnosis-version-unknown": "неизвестна",
+    "diagnosis-dlls-backed-up-locations": "Существующие DLL сохранены как *.bak в {count} мест(ах)",
+    "diagnosis-after-install": "Диагностика после установки:",
+    "diagnosis-auto-repaired-steam-settings": "steam_settings автоматически исправлен (схема + значки + DLC) в {count} мест(ах)",
+    "diagnosis-auto-repair-failed-for": "Автоматическое исправление не удалось для: {paths}",
+    "diagnosis-dir-status-line": "{dir}: {status}",
+    "diagnosis-dir-status-ok": "ок",
+    "diagnosis-dir-status-attention": "требует внимания",
+    "diagnosis-advanced-data-skipped": "Расширенные данные: пропущено (нет числового AppID)",
+    "diagnosis-advanced-data-login-cancelled": "Расширенные данные: вход отменён",
+    "diagnosis-advanced-data-merged": "Расширенные данные: объединено {count} доп. файлов (generate_emu_config {tag})",
+    "diagnosis-advanced-data-failed": "Расширенные данные: {error}",
+    "achievements-overlay-title": "Оверлей достижений",
+    "update-retry-failed-message": "Обновление снова завершилось ошибкой даже после очистки кэшированных файлов в {folder}.",
+    "update-retry-failed-detail": "Вероятно, это проблема с сетью или релизом, которую очистка кэша не решит. Вы можете скачать и установить обновление вручную со страницы релизов.",
+    "open-release-page": "Открыть страницу релизов",
+    "clear-cache": "Очистить кэши",
+    "clear-update-cache-label": "Очистить кэши",
+    "clear-update-cache-confirm": "Удалить все повторно загружаемые кэши (файлы обновления, кэш схем и значков Steam/Ubisoft, загруженные инструменты исправления эмулятора)? Ваши настройки, сохранения, резервные копии и вручную размещённые файлы никогда не затрагиваются — всё, что здесь очищается, будет просто автоматически загружено заново при необходимости.",
+    "clear-update-cache-failed": "Не удалось очистить кэш обновлений.",
+    "clear-update-cache-empty": "Нечего очищать — кэшированные файлы обновления не найдены.",
+    "clear-update-cache-done": "Кэш обновлений очищен: {folder}",
+    "clear-update-cache-done-apps": "Очищено папок кэша: {count}.",
+    "clear-update-cache-done-all": "Очищено папок кэша: {count}, включая кэш обновлений в {folder}."
   },
   "watchdog": {
     "rare": "Редкое {percent}%",
