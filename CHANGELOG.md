@@ -5,6 +5,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+## 3.8.6 - 2026-08-13
+
 ### Added
 
 - Fast keyless Steam schema retrieval: the official `IPlayerService/GetGameAchievements` endpoint
@@ -39,6 +41,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- The SteamCommunity HTML fallback now strips malformed nested markup with a stateful scanner,
+  preventing executable markup from surviving the fallback path. Markdown anchor parsing uses the
+  same safe tag-stripping approach and has regression coverage for nested tags.
 - Custom overlay-notification placement now persists from the Windows drag event, stays on the
   monitor where it was positioned even when the cursor is elsewhere, and locks every real popup to
   the saved bounds instead of allowing later window activity to move it. Custom coordinates use the

@@ -26,7 +26,7 @@ Logs are appended, never truncated, so a crash survives the next launch. Each ru
 Right after it, a `[diag]` block records everything a bug report needs and nobody should have to collect by hand - versions, install and data paths, how the app was started, the active language and theme, and the geometry of every display:
 
 ```text
-[diag] app: Achievement Watcher 3.8.5 (packaged)
+[diag] app: Achievement Watcher 3.8.6 (packaged)
 [diag] runtime: electron 43.4.0 · chrome 150.0.7871.224 · node 24.18.1
 [diag] display: 3056414223 1080x1920 @1x work=1080x1872 rotation=270
 [diag] display: 3933707034 (primary) 2048x1152 @1.25x work=2048x1104 rotation=0
