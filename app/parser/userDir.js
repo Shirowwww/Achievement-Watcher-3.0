@@ -6,7 +6,6 @@ const ini = require('../util/ini');
 const parentFind = require('../util/findUp');
 const glob = require('fast-glob');
 const fs = require('fs');
-const listDrive = require(path.join(appPath, 'util/listDrive.js'));
 const { readRegistryStringAndExpand } = require('../util/reg');
 const saveRoots = require(path.join(appPath, 'parser/saveRoots.js'));
 
@@ -26,13 +25,6 @@ const steam_emu_cfg_file_supported = [
   'tenoke.ini',
   'UniverseLAN.ini',
 ];
-
-function addUnique(out, dir) {
-  if (!dir) return;
-  const key = path.normalize(String(dir)).toLowerCase();
-  if (out.some((item) => path.normalize(String(item)).toLowerCase() === key)) return;
-  out.push(dir);
-}
 
 function isProbableAppIdFolderName(name) {
   const value = String(name || '').trim();
@@ -57,6 +49,10 @@ function quarantineCorruptConfig(f, err) {
 }
 
 module.exports.get = async () => {
+  return (await module.exports.getEntries()).filter((entry) => entry.enabled !== false);
+};
+
+module.exports.getEntries = async () => {
   try {
     if (!fs.existsSync(file)) {
       await this.save([]);
@@ -67,7 +63,8 @@ module.exports.get = async () => {
       const parsed = JSON.parse(raw);
       if (!Array.isArray(parsed)) return [];
       return parsed
-        .map((entry) => (typeof entry === 'string' ? { path: entry, notify: true } : { ...entry, notify: true }))
+        .map((entry) => (typeof entry === 'string' ? { path: entry, notify: true, origin: 'manual', enabled: true } : { ...entry, notify: true }))
+        .map((entry) => ({ ...entry, origin: entry.origin === 'auto' ? 'auto' : 'manual', enabled: entry.enabled !== false }))
         .filter((entry) => entry.path);
     } catch (parseErr) {
       // Genuine corruption (e.g. a write interrupted by a crash/power loss). A transient I/O lock
@@ -94,25 +91,37 @@ module.exports.save = async (data) => {
 };
 
 module.exports.find = async () => {
-  const ignore = ['System Volume Information', '$Recycle.Bin', '$RECYCLE.BIN', 'Recovery', 'MSOCache'];
+  return (await module.exports.findEntries()).map((entry) => entry.path);
+};
 
+module.exports.findEntries = async () => {
   try {
-    let result = [];
+    const result = [];
+    const addDetected = (dir, detector) => {
+      if (!dir) return;
+      const key = path.normalize(String(dir)).toLowerCase();
+      if (result.some((item) => path.normalize(item.path).toLowerCase() === key)) return;
+      result.push({ path: dir, notify: true, origin: 'auto', enabled: true, detector });
+    };
     for (const dir of saveRoots.defaultSteamEmuSaveRoots({ existingOnly: true, expandProgramDataSteam: true })) {
-      addUnique(result, dir);
+      addDetected(dir, 'Known achievement-data location');
     }
 
-    const search = steam_emu_cfg_file_supported
-      .filter((el) => el !== 'steam_api.ini') //cause a lot of false positive
-      .concat(['rpcs3.exe', 'shadPS4.exe', 'shadps4.exe', 'xenia.exe', 'xenia_canary.exe']) //emulator binaries
-      .map((el) => {
-        return '**/' + el;
-      }); //glob pattern
-    const drives = await listDrive();
-
-    for (let drive of drives) {
-      for (let filepath of await glob(search, { cwd: drive, ignore: ignore, onlyFiles: true, absolute: true, suppressErrors: true })) {
-        addUnique(result, path.parse(filepath).dir);
+    // Console-emulator data has a few stable per-user locations. Portable emulator binaries are
+    // searched only inside already recognised game libraries, never across an entire drive.
+    for (const dir of [
+      process.env.APPDATA && path.join(process.env.APPDATA, 'rpcs3'),
+      process.env.APPDATA && path.join(process.env.APPDATA, 'shadPS4'),
+      process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, 'xenia'),
+    ]) {
+      try {
+        if (dir && fs.statSync(dir).isDirectory()) addDetected(dir, 'Known emulator data location');
+      } catch {}
+    }
+    const search = ['rpcs3.exe', 'shadPS4.exe', 'shadps4.exe', 'xenia.exe', 'xenia_canary.exe'].map((name) => `**/${name}`);
+    for (const root of await saveRoots.discoverLibraryRoots()) {
+      for (const filepath of await glob(search, { cwd: root, deep: 3, onlyFiles: true, absolute: true, suppressErrors: true })) {
+        addDetected(path.parse(filepath).dir, 'Supported emulator in detected library');
       }
     }
 

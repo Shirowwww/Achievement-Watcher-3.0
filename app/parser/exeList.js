@@ -68,6 +68,19 @@ module.exports.add = async (app) => {
   }
 };
 
+module.exports.remove = async (appid) => {
+  try {
+    const currentList = await getCurrentList();
+    const next = currentList.filter((entry) => String(entry.appid) !== String(appid));
+    if (next.length === currentList.length) return false;
+    await module.exports.save(next);
+    return true;
+  } catch (err) {
+    debug.log(err);
+    return false;
+  }
+};
+
 /*
   Reconcile the stored launch list against the installed games: drop dead exe paths, resolve one-exe-
   shared-by-many collisions by name match, and re-detect empty entries from a known gameDir (respecting

@@ -3,8 +3,10 @@
 /*
   Manages the user-override game index (cfg/gameIndex.json) that the watchdog playtime monitor reads
   at startup to match running processes to appids. Entry shape: { appid, name, binary, icon, source?,
-  steamappid?, uplayId? }. source drives per-platform presets; steamappid/uplayId let the watchdog
-  attribute namespaced SocialClub / Uplay R2 games to their Steam data.
+  steamappid?, uplayId?, iconUrl?, headerUrl?, portraitUrl? }. source drives per-platform presets;
+  steamappid/uplayId let the watchdog attribute namespaced SocialClub / Uplay R2 games to their
+  Steam data, while the resolved artwork fields keep synthetic/manual appids away from invalid
+  Steam-CDN URLs.
 */
 
 const { app } = process.type === 'browser' ? require('electron') : require('@electron/remote');
@@ -48,9 +50,15 @@ module.exports.upsert = (entry) => {
       source: String(entry.source || ''),
       steamappid: String(entry.steamappid || ''),
       uplayId: String(entry.uplayId || ''),
+      iconUrl: String(entry.iconUrl || ''),
+      headerUrl: String(entry.headerUrl || ''),
+      portraitUrl: String(entry.portraitUrl || ''),
     };
     if (!next.steamappid) delete next.steamappid;
     if (!next.uplayId) delete next.uplayId;
+    if (!next.iconUrl) delete next.iconUrl;
+    if (!next.headerUrl) delete next.headerUrl;
+    if (!next.portraitUrl) delete next.portraitUrl;
     const existing = list.find((g) => String(g.appid) === appid);
     if (existing) {
       // Metadata-only seeds (e.g. the Ubisoft Connect row that carries uplayId/steamappid) must
@@ -61,7 +69,10 @@ module.exports.upsert = (entry) => {
         (next.icon && existing.icon !== next.icon) ||
         (next.source && String(existing.source || '') !== next.source) ||
         (next.steamappid && String(existing.steamappid || '') !== next.steamappid) ||
-        (next.uplayId && String(existing.uplayId || '') !== next.uplayId);
+        (next.uplayId && String(existing.uplayId || '') !== next.uplayId) ||
+        (next.iconUrl && String(existing.iconUrl || '') !== next.iconUrl) ||
+        (next.headerUrl && String(existing.headerUrl || '') !== next.headerUrl) ||
+        (next.portraitUrl && String(existing.portraitUrl || '') !== next.portraitUrl);
       if (!changed) return;
       if (next.binary) existing.binary = next.binary;
       if (next.name) existing.name = next.name;
@@ -69,6 +80,9 @@ module.exports.upsert = (entry) => {
       if (next.source) existing.source = next.source;
       if (next.steamappid) existing.steamappid = next.steamappid;
       if (next.uplayId) existing.uplayId = next.uplayId;
+      if (next.iconUrl) existing.iconUrl = next.iconUrl;
+      if (next.headerUrl) existing.headerUrl = next.headerUrl;
+      if (next.portraitUrl) existing.portraitUrl = next.portraitUrl;
     } else {
       list.push(next);
     }

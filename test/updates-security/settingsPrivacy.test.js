@@ -40,6 +40,30 @@ test('the app drops the removed Steam API key without resetting a config missing
   assert.equal(Object.hasOwn(persisted.steam, 'apiKey'), false);
 });
 
+test('only a genuinely new profile launches onboarding and defaults playtime on', (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-app-fresh-profile-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  settings.setUserDataPath(directory);
+
+  const originalConsoleLog = console.log;
+  console.log = () => {};
+  let fresh;
+  try {
+    fresh = settings.load();
+  } finally {
+    console.log = originalConsoleLog;
+  }
+  assert.equal(fresh.general.onboardingCompleted, false);
+  assert.equal(fresh.notification.playtime, true);
+
+  delete fresh.general.onboardingCompleted;
+  delete fresh.notification.playtime;
+  fs.writeFileSync(path.join(directory, 'cfg', 'options.ini'), ini.stringify(fresh), 'utf8');
+  const upgraded = settings.load();
+  assert.equal(upgraded.general.onboardingCompleted, true, 'an existing pre-onboarding config must not rerun setup');
+  assert.equal(upgraded.notification.playtime, false, 'an upgrade must not silently change an old playtime preference');
+});
+
 test('Watchdog port cleanup uses argument-safe process launches', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', '..', 'app', 'electron', 'init.js'), 'utf8');
   assert.doesNotMatch(source, /\bexecSync\s*\(/);

@@ -209,6 +209,9 @@ function makeGpdBuffer() {
     assert.strictEqual(targets.length, 1);
     assert.strictEqual(targets[0].titleId, titleId);
     assert.strictEqual(targets[0].gpdPath, ownGpd);
+
+    fs.writeFileSync(configFile, JSON.stringify([{ path: tmp, notify: true, enabled: false }]), 'utf8');
+    assert.deepStrictEqual(xeniaWatch._internal.discover(configFile), []);
   });
 
   console.log(`\n${passed} passed`);

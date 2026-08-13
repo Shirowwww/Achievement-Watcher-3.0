@@ -38,6 +38,7 @@ module.exports = (option = {}) => {
     server = http.createServer();
   }
   server.listen({ port: options.port, host: options.host, ipv6Only: options.ipv6Only }); //Start http(s) server
+  test.prepare().catch((err) => debug.warn(`[Toast] background preparation failed: ${err && (err.message || err)}`));
 
   WebSocket = new ws.Server({ noServer: true }); //WebSocket server detached from the http(s) server
 

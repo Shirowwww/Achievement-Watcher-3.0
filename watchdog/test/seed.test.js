@@ -47,8 +47,15 @@ test('seeds one session per running known game and groups multi-process games', 
 });
 
 test('seeds task-list snapshots that expose process instead of name', () => {
+  const artworkGame = {
+    ...gameIndex[0],
+    steamappid: '123',
+    iconUrl: 'https://cdn2.steamgriddb.com/icon/custom.png',
+    headerUrl: 'https://cdn2.steamgriddb.com/hero/custom.jpg',
+    portraitUrl: 'https://cdn2.steamgriddb.com/grid/custom.jpg',
+  };
   const sessions = buildSeededSessions({
-    gameIndex,
+    gameIndex: [artworkGame],
     processes: [{ pid: 11, process: 'alpha.exe' }],
     createTimer: () => ({ fake: true }),
   });
@@ -56,6 +63,10 @@ test('seeds task-list snapshots that expose process instead of name', () => {
   assert.equal(sessions.length, 1);
   assert.equal(sessions[0].appid, '100');
   assert.deepEqual([...sessions[0].pids], [11]);
+  assert.equal(sessions[0].steamappid, '123');
+  assert.equal(sessions[0].iconUrl, artworkGame.iconUrl);
+  assert.equal(sessions[0].headerUrl, artworkGame.headerUrl);
+  assert.equal(sessions[0].portraitUrl, artworkGame.portraitUrl);
 });
 
 test('ambiguous binary matches are skipped (delegated to the live watcher)', () => {

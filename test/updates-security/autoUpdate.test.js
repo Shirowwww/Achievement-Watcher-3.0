@@ -6,7 +6,7 @@ const path = require('path');
 const test = require('node:test');
 const yaml = require(path.join(__dirname, '..', '..', 'app', 'node_modules', 'js-yaml'));
 
-test('packaged builds check the GitHub feed, ask before downloading, then ask before installing', () => {
+test('packaged builds ask before downloading, then silently upgrade and restart', () => {
   const appRoot = path.join(__dirname, '..', '..', 'app');
   const builder = yaml.load(fs.readFileSync(path.join(appRoot, 'electron-builder.yml'), 'utf8'));
   assert.deepStrictEqual(builder.publish, {
@@ -22,7 +22,7 @@ test('packaged builds check the GitHub feed, ask before downloading, then ask be
   assert.match(init, /autoUpdater\.on\('update-available'/);
   assert.match(init, /autoUpdater\.downloadUpdate\(\)/);
   assert.match(init, /autoUpdater\.on\('update-downloaded'/);
-  assert.match(init, /autoUpdater\.quitAndInstall\(\)/);
+  assert.match(init, /autoUpdater\.quitAndInstall\(true, true\)/);
 
   // The updater stays supervised while the app is resident: a failed check retries after a delay,
   // a successful one re-checks hourly, and errors surface in the tray instead of being silently

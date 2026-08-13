@@ -24,6 +24,25 @@ const TEST_GAME = 'Hollow Knight';
 const TEST_ACHIEVEMENT_ICON = 'https://shared.fastly.steamstatic.com/community_assets/images/apps/367520/6d15e62c48ba57d23e72b8f24fb775a44223cb8f.jpg';
 const TEST_GAME_ICON = 'https://shared.fastly.steamstatic.com/community_assets/images/apps/367520/f6ab055c2366237200b1a31cccbd6cf81e436d72.jpg';
 const TEST_HEADER = 'https://cdn.cloudflare.steamstatic.com/steam/apps/367520/header.jpg';
+let preparePromise = null;
+
+// Start the cold Windows/AUMID and artwork work when Watchdog starts, not on the user's first click.
+async function prepare() {
+  if (preparePromise) return preparePromise;
+  preparePromise = (async () => {
+    const options = await settings.load(cfg_file);
+    const identity = await toastIdentity.resolveToastIdentity(options, { log: require('./util/log.js') });
+    if (toastIdentity.requiresLocalImages(identity.id)) {
+      await Promise.allSettled([
+        prefetch(TEST_ACHIEVEMENT_ICON, TEST_APPID),
+        prefetch(TEST_GAME_ICON, TEST_APPID),
+        prefetch(TEST_HEADER, TEST_APPID),
+      ]);
+    }
+    return identity;
+  })();
+  return preparePromise;
+}
 
 // Use the same AUMID and WinRT options as real toasts.
 async function applyToastAppSettings(payload, options, identity = null) {
@@ -162,6 +181,9 @@ async function runTest(kind, { rumble = true } = {}) {
     // The test runs in the Watchdog process but reloads options itself, so it has to apply the
     // urgency preference too — otherwise the button would not exercise what a real unlock does.
     require('./notification/transport/toast.js').setUrgentUnlocks(options.notification_toast?.urgent === true);
+    await prepare();
+    // Settings may have changed since background preparation. Identity resolution is now cheap
+    // because the expensive Start-menu enumeration is cached for the Watchdog process.
     const identity = await toastIdentity.resolveToastIdentity(options, { log: require('./util/log.js') });
     await prefetchDesktopToastArtwork(message, identity.id);
     const { notification, soundFile } = buildToastNotification(message, toastOptions);
@@ -206,5 +228,6 @@ module.exports.rare = () => runTest('rare');
 module.exports.progress = () => runTest('progress', { rumble: false });
 module.exports.playtime = () => runTest('playtime', { rumble: false });
 module.exports.platinum = () => runTest('platinum');
+module.exports.prepare = prepare;
 module.exports.applyToastAppSettings = applyToastAppSettings;
 module.exports.testMessageAndOptions = testMessageAndOptions;

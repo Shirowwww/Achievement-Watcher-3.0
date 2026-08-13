@@ -30,6 +30,7 @@ const uplayR2 = require(path.join(appPath, 'uplayR2.js'));
 const gbeInstaller = require(path.join(appPath, 'gbeInstaller.js'));
 const pe = require(path.join(appPath, '..', 'util', 'pe.js'));
 const crackLoaderDetect = require(path.join(appPath, '..', 'util', 'crackLoaderDetect.js'));
+const emulatorFixEligibility = require(path.join(appPath, '..', 'util', 'emulatorFixEligibility.js'));
 const { computeFolderContentVersion } = require(path.join(appPath, '..', 'util', 'contentVersion.js'));
 const steamless = require(path.join(appPath, 'steamless.js'));
 const apiCheckBypass = require(path.join(appPath, 'apiCheckBypass.js'));
@@ -42,6 +43,7 @@ const exeDetect = require(path.join(appPath, 'exeDetect.js'));
 const installState = require(path.join(appPath, 'installState.js'));
 const { applyLocalStatProgress } = require(path.join(appPath, 'statProgress.js'));
 const scanScope = require(path.join(appPath, 'scanScope.js'));
+const manualGames = require(path.join(appPath, 'manualGames.js'));
 let debug;
 let _userDataPath = null; // cache root for automatic emulator setup and downloaded tools
 
@@ -52,6 +54,7 @@ module.exports.initDebug = ({ isDev, userDataPath }) => {
   _userDataPath = userDataPath;
   userDir.setUserDataPath(userDataPath);
   libraryDirs.setUserDataPath(userDataPath);
+  manualGames.setUserDataPath(userDataPath);
   gog.initDebug({ isDev, userDataPath });
   gogOfficial.initDebug({ isDev, userDataPath });
   ubisoftOfficial.initDebug({ isDev, userDataPath });
@@ -91,6 +94,25 @@ function normalizeGameName(name, appid) {
   }
   if (typeof name === 'number') return String(name);
   return String(appid);
+}
+
+// The watchdog cannot derive artwork from synthetic/manual appids. Persist the already-resolved
+// scan assets alongside the legacy Steam icon hash so playtime cards use the same cached cascade as
+// the library. Empty fields are ignored by gameIndex.upsert, preserving a previously good asset.
+function gameIndexArtwork(game) {
+  const img = (game && game.img) || {};
+  const iconSource = img.icon || img.logo || '';
+  let icon = '';
+  if (iconSource) {
+    const clean = String(iconSource).split(/[?#]/)[0].replace(/\\/g, '/');
+    icon = path.basename(clean, path.extname(clean));
+  }
+  return {
+    icon,
+    iconUrl: iconSource,
+    headerUrl: img.background || img.header || img.landscape || '',
+    portraitUrl: img.portrait || img.header || img.landscape || '',
+  };
 }
 
 function cloneDiscoveryRecord(record) {
@@ -262,7 +284,8 @@ function getDiscoverySources(record, cachedList, lookup) {
   return [cloneDiscoveryRecord(record)].filter(Boolean);
 }
 
-// Collect configured, discovered, and Desktop roots for unlaunched Goldberg/GBE games.
+// Collect the roots shown in Settings. Smart Find persists automatic detections there first, so a
+// scan never reaches into an invisible Desktop or drive location.
 async function goldbergScanRoots(scope = _activeScanScope) {
   const roots = [];
   const add = (p) => {
@@ -279,14 +302,6 @@ async function goldbergScanRoots(scope = _activeScanScope) {
   } catch (err) {
     debug.log(`[goldberg-scan] could not read library folders: ${err}`);
   }
-  // Include known storefront and drive roots so users need not add them manually.
-  try {
-    for (const dir of await libraryDirs.find()) add(dir);
-  } catch (err) {
-    debug.log(`[goldberg-scan] could not auto-discover library folders: ${err}`);
-  }
-  if (process.env['USERPROFILE']) add(path.join(process.env['USERPROFILE'], 'Desktop'));
-  if (process.env['PUBLIC']) add(path.join(process.env['PUBLIC'], 'Desktop'));
   try {
     for (const dir of await userDir.get()) add(dir.path);
   } catch (err) {
@@ -316,6 +331,7 @@ async function buildDiscoverCacheKey(option) {
       main: option.steam.main,
       udirs: (await userDir.get()).map((d) => d.path),
       ldirs: await libraryDirs.get(),
+      manual: manualGames.list().map((entry) => [entry.id, entry.title, entry.exe, entry.platform, entry.storeAppId]),
       bl: await blacklist.get(),
       scope: scanScope.cacheValue(scanScope.normalizeScanScope(option.scanScope)),
     });
@@ -464,8 +480,16 @@ module.exports.setEmulatorFixedHandler = (fn) => {
 
 // Shared by the per-scan fixer and Settings > Advanced > Fix all games.
 module.exports.autoApplyEmulatorFix = autoApplyEmulatorFix;
-async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, option, detectedEmu = null, detectedExe = null, skipAdvanced = false, schema = null, requireGameExecutable = false } = {}) {
+async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, option, detectedEmu = null, detectedExe = null, skipAdvanced = false, schema = null, requireGameExecutable = false, onlyIfUnconfigured = false } = {}) {
   if (!gameDir || !_userDataPath) throw new Error('game folder/user data path unavailable');
+  if (onlyIfUnconfigured) {
+    const eligibility = emulatorFixEligibility.inspect({ gameDir });
+    if (!eligibility.eligible) {
+      const existing = eligibility.existingFix ? ` (${eligibility.existingFix.name})` : '';
+      debug.log(`[${appid}] automatic emulator fix skipped — ${eligibility.reason}${existing} in ${gameDir}`);
+      return { skipped: true, reason: eligibility.reason, tag: '', steamSettingsDirs: [], eligibility };
+    }
+  }
   const cfg = option.emulator || {};
   detectedEmu = detectedEmu || goldberg.detectEmulator(gameDir);
   detectedExe = detectedExe || exeDetect.detect(gameDir, gameName || '', { dllPaths: detectedEmu.dll });
@@ -1452,6 +1476,29 @@ async function discover(source, steamAccFilter, scope = null) {
     }
   }
 
+  if (!scope) {
+    try {
+      for (const entry of manualGames.list()) {
+        data.push({
+          appid: entry.id,
+          name: entry.title,
+          source: 'Manual',
+          steamappid: /^\d+$/.test(entry.storeAppId) ? entry.storeAppId : undefined,
+          data: {
+            type: 'manual',
+            gameDir: path.dirname(entry.exe),
+            exe: entry.exe,
+            exeAuthoritative: true,
+            platform: entry.platform,
+            storeAppId: entry.storeAppId,
+          },
+        });
+      }
+    } catch (err) {
+      debug.log(`[manual-games] could not load entries: ${err.message || err}`);
+    }
+  }
+
   data = consolidateDiscoveryList(data);
 
   //AppID Blacklisting
@@ -1548,6 +1595,23 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       } catch {
         /* no art — placeholder */
       }
+      if (!img.header || !img.portrait || !img.background || !img.icon) {
+        try {
+          const { ipcRenderer } = require('electron');
+          const fallback = (await ipcRenderer.invoke('get-images-for-game', {
+            name: uname,
+            platform: appid.data.platform || 'PC',
+            gameId: steamappid || appid.appid,
+          })) || {};
+          img.header = img.header || fallback.landscape || '';
+          img.portrait = img.portrait || fallback.portrait || '';
+          img.background = img.background || fallback.background || '';
+          img.icon = img.icon || fallback.icon || fallback.logo || '';
+          img.logo = img.logo || fallback.logo || '';
+        } catch {
+          /* no community art — placeholder */
+        }
+      }
       return {
         appid: appid.appid,
         steamappid,
@@ -1563,7 +1627,60 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       };
     }
 
-    if (appid.data.type === 'rpcs3') {
+    if (appid.data.type === 'manual') {
+      const requestedTitle = appid.name || path.basename(appid.data.exe || '', path.extname(appid.data.exe || ''));
+      let steamappid = /^\d+$/.test(String(appid.data.storeAppId || '')) ? String(appid.data.storeAppId) : '';
+      if (!steamappid) {
+        try {
+          steamappid = String((await steam.findAppidByName(requestedTitle)) || '');
+        } catch {}
+      }
+      if (steamappid) {
+        try {
+          game = await steam.getGameData({
+            appID: steamappid,
+            lang: option.achievement.lang,
+            showHidden: !!option.achievement.showHidden,
+            fastStart: option.fastStart === true,
+          });
+        } catch {}
+      }
+      if (!game) {
+        let links = {};
+        try {
+          const { ipcRenderer } = require('electron');
+          links = (await ipcRenderer.invoke('get-images-for-game', {
+            name: requestedTitle,
+            platform: appid.data.platform,
+            gameId: appid.data.storeAppId,
+          })) || {};
+        } catch {}
+        game = {
+          name: links.title || requestedTitle,
+          appid: appid.appid,
+          img: {
+            header: links.landscape || '',
+            background: links.background || '',
+            portrait: links.portrait || '',
+            icon: links.icon || links.logo || '',
+            logo: links.logo || '',
+          },
+          achievement: { total: 0, unlocked: 0, list: [] },
+        };
+      }
+      game.appid = appid.appid;
+      game.steamappid = steamappid || undefined;
+      game.name = game.name || requestedTitle;
+      game.manual = true;
+      game.installed = fs.existsSync(appid.data.exe);
+      game.gameDir = path.dirname(appid.data.exe);
+      game.exe = appid.data.exe;
+      game.exeConfident = true;
+      const platform = String(appid.data.platform || '').toLowerCase();
+      if (/playstation/.test(platform)) game.system = 'playstation';
+      else if (/xbox/.test(platform)) game.system = 'xbox';
+      else if (/nintendo|switch/.test(platform)) game.system = 'nintendo';
+    } else if (appid.data.type === 'rpcs3') {
       game = await rpcs3.getGameData(appid.data.path);
     } else if (appid.data.type === 'shadps4') {
       game = await shadps4.getGameData(appid.data.path, option.achievement.lang);
@@ -1624,6 +1741,29 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       });
     }
     if (!game) return;
+
+    // Fill gaps only. SteamGridDB returns the full asset set in one cached lookup, which is useful
+    // for emulator/manual entries where the native provider often has a title but no library art.
+    game.img = game.img && typeof game.img === 'object' ? game.img : {};
+    const needsPrimaryArt = !game.img.header && !game.img.portrait;
+    const benefitsFromFullFallback = ['rpcs3', 'shadps4', 'xenia', 'manual', 'unconfigured'].includes(appid.data.type);
+    if (game.name && (needsPrimaryArt || benefitsFromFullFallback)) {
+      try {
+        const { ipcRenderer } = require('electron');
+        const fallback = (await ipcRenderer.invoke('get-images-for-game', {
+          name: game.name,
+          platform: appid.data.platform || game.system || appid.data.type,
+          gameId: appid.appid,
+        })) || {};
+        game.img.header = game.img.header || fallback.landscape || '';
+        game.img.portrait = game.img.portrait || fallback.portrait || '';
+        game.img.background = game.img.background || fallback.background || '';
+        game.img.logo = game.img.logo || fallback.logo || '';
+        game.img.icon = game.img.icon || fallback.icon || fallback.logo || '';
+      } catch (err) {
+        debug.log(`[${appid.appid}] artwork fallback failed: ${err.message || err}`);
+      }
+    }
 
     if (
       game.achievement &&
@@ -1959,6 +2099,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
                 detectedExe: bgExe,
                 schema: bgSchema,
                 requireGameExecutable: true,
+                onlyIfUnconfigured: true,
               });
               fixedSteamSettingsDirs = setup.steamSettingsDirs || [];
               fixApplied = !setup.skipped;
@@ -2075,13 +2216,11 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
           if (!resolvedExeConfident && exeInfo && exeInfo.confident) resolvedExeConfident = true;
           if (exeInfo) {
             _seededGameDirs.add(gameDirKey);
-            const iconHash =
-              game.img && game.img.icon ? String(game.img.icon).split('/').pop().split('.')[0] : '';
             gameIndex.upsert({
               appid: appid.appid,
               name: game.name,
               binary: exeInfo.name,
-              icon: iconHash,
+              ...gameIndexArtwork(game),
               source: appid.source,
               steamappid: game.steamappid || undefined,
               uplayId: seedUplayId,
@@ -2097,12 +2236,11 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
               const meta = await ipcRenderer.invoke('get-steamdb-launch', appid.appid);
               if (meta && meta.best_process_name) {
                 _seededGameDirs.add(gameDirKey);
-                const iconHash = game.img && game.img.icon ? String(game.img.icon).split('/').pop().split('.')[0] : '';
                 gameIndex.upsert({
                   appid: appid.appid,
                   name: game.name,
                   binary: meta.best_process_name,
-                  icon: iconHash,
+                  ...gameIndexArtwork(game),
                   source: appid.source,
                   steamappid: game.steamappid || undefined,
                   uplayId: seedUplayId,
@@ -2141,12 +2279,11 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
         } catch {
           /* binary is optional — the entry itself is what matters */
         }
-        const iconHash = game.img && game.img.icon ? String(game.img.icon).split('/').pop().split('.')[0] : '';
         gameIndex.upsert({
           appid: appid.appid,
           name: game.name,
           binary,
-          icon: iconHash,
+          ...gameIndexArtwork(game),
           source: appid.source,
           steamappid: game.steamappid,
         });
@@ -2162,12 +2299,11 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     // local Steam library (issue #7).
     if (appid.data && appid.data.type === 'ubisoftOfficial' && game.name && appid.data.uplayId) {
       try {
-        const iconHash = game.img && game.img.icon ? String(game.img.icon).split('/').pop().split('.')[0] : '';
         gameIndex.upsert({
           appid: appid.appid,
           name: game.name,
           binary: '',
-          icon: iconHash,
+          ...gameIndexArtwork(game),
           source: appid.source,
           steamappid: game.steamappid || undefined,
           uplayId: String(appid.data.uplayId),
@@ -2221,6 +2357,8 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
           root = ubisoftOfficial.getAchievements(appid);
         } else if (dataType === 'epicOfficial') {
           root = await epicOfficial.getAchievements(appid);
+        } else if (dataType === 'manual') {
+          root = {};
         } else if (dataType === 'cached') {
           root = await watchdog.getAchievements(appid.appid);
         } else if (dataType === 'uplay') {

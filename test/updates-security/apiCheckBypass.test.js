@@ -73,6 +73,16 @@ try {
   assert.ok(!fs.existsSync(path.join(gameDir, 'winmm.dll')), 'winmm.dll gone after revert');
   assert.ok(fs.existsSync(path.join(gameDir, 'steam_api64.dll')) && fs.existsSync(exe), 'revert leaves game files intact');
 
+  fs.writeFileSync(path.join(gameDir, 'winmm.dll'), 'proxy-x64');
+  fs.writeFileSync(
+    path.join(gameDir, 'SteamAPICheckBypass.json'),
+    JSON.stringify({ 'steam_api64.dll': { mode: 'file_redirect', to: 'missing-steam-api.bak', file_must_exist: true } })
+  );
+  const quarantined = bypass.quarantineBrokenBypass({ exePath: exe });
+  assert.strictEqual(quarantined.changed, true, 'a bypass with a missing mandatory target is disabled');
+  assert.ok(fs.existsSync(path.join(gameDir, 'winmm.dll.aw-disabled')), 'the proxy remains recoverable');
+  assert.ok(fs.existsSync(path.join(gameDir, 'SteamAPICheckBypass.json.aw-disabled')), 'the config remains recoverable');
+
   console.log('PASS: apiCheckBypass (config rules + apply/idempotent/revert)');
 } finally {
   fs.rmSync(temp, { recursive: true, force: true });

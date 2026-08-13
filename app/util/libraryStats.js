@@ -5,9 +5,13 @@ function isInstalled(game) {
 }
 
 function calculateLibraryStats(games, { installedOnly = false } = {}) {
-  const visibleGames = (Array.isArray(games) ? games : []).filter(
-    (game) => game && game.achievement && (!installedOnly || isInstalled(game))
-  );
+  // A game with no achievement schema still belongs in the library and can track playtime, but it
+  // has no meaningful completion percentage. Excluding it from every achievement-stat denominator
+  // avoids turning 0/0 into either a completed game or an artificial 0% entry in the average.
+  const visibleGames = (Array.isArray(games) ? games : []).filter((game) => {
+    if (!game || !game.achievement || (installedOnly && !isInstalled(game))) return false;
+    return Number(game.achievement.total) > 0;
+  });
 
   const totalUnlocked = visibleGames.reduce(
     (sum, game) => sum + (Number.parseInt(game.achievement.unlocked, 10) || 0),

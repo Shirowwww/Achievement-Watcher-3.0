@@ -132,6 +132,13 @@ function getTrackableGameMatches(binaryIndex, process, isIgnored = isIgnoredAppi
   return getBinaryMatches(binaryIndex, process).filter((game) => !isIgnored(game.appid) && !String(game.name || '').toLowerCase().includes('demo'));
 }
 
+function shouldMuteProcessPath(filepath, dirs, indexedMatches) {
+  if (!isMutedByPath(filepath, dirs)) return false;
+  // Profile folders remain muted for unknown processes, but an explicitly indexed manual game is
+  // authoritative. This covers portable games and emulators stored on Desktop or in AppData.
+  return !(indexedMatches || []).some((game) => String(game && game.source || '').toLowerCase() === 'manual');
+}
+
 async function init() {
   const emitter = new EventEmitter();
 
@@ -190,12 +197,11 @@ async function init() {
   }
 
   processMonitor.on('creation', async ([process, pid, filepath]) => {
+    const games = getTrackableGameMatches(gameIndexByBinary, process);
     // Apply path and process filters.
     if (isWallpaperEngineProcess(process, filepath)) return;
-    if (filepath && isMutedByPath(filepath, filter.mute.dir)) return;
+    if (filepath && shouldMuteProcessPath(filepath, filter.mute.dir, games)) return;
     if (filter.mute.file.some((bin) => bin.toLowerCase() === process.toLowerCase())) return;
-
-    const games = getTrackableGameMatches(gameIndexByBinary, process);
 
     let game;
 
@@ -353,4 +359,4 @@ async function getGameIndex() {
   return mergeArrayOfObj(gameIndex, userOverride, 'appid').filter((game) => !isIgnoredAppid(game.appid));
 }
 
-module.exports = { init, isMutedByPath, getTrackableGameMatches };
+module.exports = { init, isMutedByPath, shouldMuteProcessPath, getTrackableGameMatches };

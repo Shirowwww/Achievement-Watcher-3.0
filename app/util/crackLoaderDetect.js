@@ -9,9 +9,17 @@
 const fs = require('fs');
 
 // One entry per known loader: `markers` are exact, case-insensitive basenames looked for directly in
-// the game folder. Extend this list if another loader turns out to need the same protection.
+// the game folder. Every listed family already supplies its own Steam emulation, so replacing its
+// runtime with GBE is never an automatic/config-generation operation.
 const KNOWN_CRACK_LOADERS = [
   { name: 'OnlineFix', markers: ['onlinefix64.dll', 'onlinefix32.dll', 'onlinefix.dll', 'onlinefix.ini'] },
+  { name: 'TENOKE', markers: ['tenoke.ini'] },
+  { name: 'ALI213', markers: ['ali213.ini'] },
+  { name: 'SmartSteamEmu', markers: ['smartsteamemu.ini'] },
+  { name: 'UniverseLAN', markers: ['universelan.ini'] },
+  { name: 'CODEX / RUNE / scene emulator', markers: ['steam_emu.ini', 'steam_api.ini', 'cpy.ini'] },
+  { name: 'Hoodlum / legacy emulator', markers: ['valve.ini', 'hlm.ini', 'ds.ini', 'steamconfig.ini'] },
+  { name: 'ColdClient', markers: ['coldclientloader.ini', 'coldapi.ini'] },
 ];
 
 /*

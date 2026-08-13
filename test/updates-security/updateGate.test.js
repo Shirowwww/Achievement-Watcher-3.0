@@ -114,11 +114,11 @@ test('the monitor is the only source of game activity, and losing it never wedge
   assert.strictEqual((init.match(/setGameActivity\(0\)/g) || []).length, 2, 'both monitor-loss paths must reset the count');
 });
 
-test('the prompt handlers claim the dialog before their first await', () => {
+test('the download prompt claims the dialog before its first await', () => {
   // Checking a flag, awaiting, then setting it lets two checks landing in the same tick (the hourly
   // timer racing the Settings button) both walk past the guard and stack two dialogs.
   const init = fs.readFileSync(path.join(appRoot, 'electron', 'init.js'), 'utf8');
-  for (const event of ['update-available', 'update-downloaded']) {
+  for (const event of ['update-available']) {
     const start = init.indexOf(`autoUpdater.on('${event}'`);
     assert.ok(start > 0, `no ${event} handler`);
     const body = init.slice(start, start + 2600);
@@ -130,10 +130,11 @@ test('the prompt handlers claim the dialog before their first await', () => {
   }
 });
 
-test('both prompts persist the answer before moving on', () => {
+test('the single consent prompt persists Later and a downloaded update installs silently', () => {
   const init = fs.readFileSync(path.join(appRoot, 'electron', 'init.js'), 'utf8');
   // A fire-and-forget save can be lost if the app quits right after the click.
   assert.ok(!/(?<!await )settingsJS\.save\(configJS\)/.test(init), 'settings must be awaited when recording an update answer');
   assert.match(init, /await postponeUpdate\(info\.version\)/);
-  assert.strictEqual((init.match(/await postponeUpdate\(info\.version\)/g) || []).length, 2, 'both prompts must record "Later"');
+  assert.strictEqual((init.match(/await postponeUpdate\(info\.version\)/g) || []).length, 1, 'the download prompt must record "Later"');
+  assert.match(init, /autoUpdater\.quitAndInstall\(true, true\)/);
 });

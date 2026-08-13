@@ -279,6 +279,7 @@ function setGameActivity(count) {
 }
 const minimist = require('minimist');
 const { execFileSync, execFile, spawn } = require('child_process');
+const { launchViaWindowsShell } = require('../util/windowsShellLaunch.js');
 const fs = require('fs');
 const ipc = require(path.join(__dirname, 'ipc.js'));
 const notificationSounds = require(path.join(__dirname, '../util/notificationSounds.js'));
@@ -1030,7 +1031,19 @@ ipcMain.on('get-title-from-epic-id', async (event, arg) => {
 ipcMain.handle('get-title-from-epic-id', (event, arg) => resolveTitleFromEpicId(arg));
 
 async function resolveImagesForGame(arg) {
-  const gameName = arg.name;
+  const gameName = String(arg && arg.name || '').trim();
+  if (!gameName) return null;
+  const assetKey = require('crypto')
+    .createHash('sha1')
+    .update(`${gameName.toLowerCase()}\0${String(arg.platform || '').toLowerCase()}\0${String(arg.gameId || '').toLowerCase()}`)
+    .digest('hex');
+  const cacheFile = path.join(userData, 'steam_cache', 'steamgriddb_assets', `${assetKey}.json`);
+  try {
+    if (fs.existsSync(cacheFile) && Date.now() - fs.statSync(cacheFile).mtimeMs < 30 * 24 * 60 * 60 * 1000) {
+      const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+      if (cached && typeof cached === 'object') return cached;
+    }
+  } catch {}
   const apiKey = getSteamGridDbApiKey();
   // Time-box artwork requests so network failures return quickly.
   const sgdb = (url) =>
@@ -1040,7 +1053,7 @@ async function resolveImagesForGame(arg) {
 
     const searchData = await searchRes.json();
     // Error payloads may omit data.
-    const game = searchData?.data?.[0];
+    const game = pickSteamGridDbGame(searchData?.data, gameName);
     if (!game) {
       debug.log('Game not found');
       return null;
@@ -1057,15 +1070,27 @@ async function resolveImagesForGame(arg) {
 
     const [icons, grids, heroes, logos] = await Promise.all([iconsRes.json(), gridsRes.json(), heroesRes.json(), logosRes.json()]);
 
-    const gridList = Array.isArray(grids?.data) ? grids.data : [];
-    const portrait = gridList.find((g) => g.width === 600 && g.height === 900);
-    const landscape = gridList.find((g) => g.width === 920 && g.height === 430);
-    return {
-      icon: icons?.data?.[0]?.url || logos?.data?.[0]?.url,
-      background: heroes?.data?.[0]?.url,
+    const gridList = Array.isArray(grids?.data) ? grids.data.filter((asset) => asset && asset.url) : [];
+    const assetArea = (asset) => (Number(asset.width) || 0) * (Number(asset.height) || 0);
+    const bestOf = (assets) => assets.slice().sort((a, b) => assetArea(b) - assetArea(a))[0];
+    const portrait = gridList.find((g) => Number(g.width) === 600 && Number(g.height) === 900) || bestOf(gridList.filter((g) => Number(g.height) > Number(g.width)));
+    const landscape = gridList.find((g) => Number(g.width) === 920 && Number(g.height) === 430) || bestOf(gridList.filter((g) => Number(g.width) > Number(g.height)));
+    const icon = bestOf(Array.isArray(icons?.data) ? icons.data.filter((asset) => asset && asset.url) : []);
+    const logo = bestOf(Array.isArray(logos?.data) ? logos.data.filter((asset) => asset && asset.url) : []);
+    const hero = bestOf(Array.isArray(heroes?.data) ? heroes.data.filter((asset) => asset && asset.url) : []);
+    const result = {
+      title: String(game.name || gameName),
+      icon: icon?.url || logo?.url,
+      background: hero?.url,
       portrait: portrait?.url,
       landscape: landscape?.url,
+      logo: logo?.url,
     };
+    try {
+      fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
+      fs.writeFileSync(cacheFile, JSON.stringify(result, null, 2), 'utf8');
+    } catch {}
+    return result;
   } catch (err) {
     debug.log(`[get-images-for-game] ${gameName}: ${err.message}`);
     return null;
@@ -1148,6 +1173,23 @@ ipcMain.on('fetch-source-img', async (event, arg) => {
     default:
       event.returnValue = path.join(userData, 'Source', 'steam.svg');
       break;
+  }
+});
+
+// Manually-added Windows programs are launched through ShellExecute (Start-Process) with their own
+// working directory. A detached Node child has no valid console handle; .NET GUI programs such as
+// Ryujinx still touch Console.Title during startup and otherwise terminate immediately.
+ipcMain.handle('launch-game-via-shell', async (event, { executable, args = '' } = {}) => {
+  try {
+    if (process.platform !== 'win32') {
+      const error = await shell.openPath(String(executable || ''));
+      if (error) throw new Error(error);
+    } else {
+      await launchViaWindowsShell({ executable, args, workingDirectory: path.dirname(String(executable || '')) });
+    }
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err && err.message ? err.message : String(err) };
   }
 });
 
@@ -2035,7 +2077,6 @@ function pickSteamGridDbGame(games, name) {
   const tokensOf = (g) => String((g && g.name) || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(/\s+/).filter(Boolean);
   const exact = list.find((g) => String((g && g.name) || '').trim().toLowerCase() === name.toLowerCase());
   if (exact) return exact;
-  if (list.length === 1) return list[0];
   if (!queryTokens.length) return null;
   return (
     list.find((g) => {
@@ -4183,55 +4224,16 @@ try {
     promptDownloadedUpdate(info);
   });
   promptDownloadedUpdate = async function (info) {
-    // Same synchronous claim as update-available: the flag has to be taken before the first await.
-    if (updatePromptOpen) {
-      debug.log('[updater] a prompt is already open; ignoring duplicate update-downloaded');
+    // "Download && Install" was already explicit consent. Once downloaded, run the NSIS upgrade
+    // silently and relaunch AW; settings/user data live outside the install directory and survive.
+    if (isGameRunning()) {
+      debug.log(`[updater] silent upgrade to ${info.version} held back: a game is running`);
+      pendingInstallPrompt = info;
       return;
     }
-    updatePromptOpen = true;
-    try {
-      try {
-        await startEngines();
-      } catch (err) {
-        debug.log(`[updater] config load failed before install prompt: ${err.message || err}`);
-      }
-      if (shouldSuppressUpdatePrompt(info.version)) {
-        pendingInstallPrompt = null;
-        return;
-      }
-      // The download finishes on its own schedule, so it can land mid-session. Asking to restart
-      // and install while a game is running is the worst possible moment. The update is already on
-      // disk, so remember it and re-open this exact prompt when the session ends — going back
-      // through a fresh check would make the user answer the download question a second time.
-      if (isGameRunning()) {
-        debug.log(`[updater] install prompt for ${info.version} held back: a game is running`);
-        pendingInstallPrompt = info;
-        return;
-      }
-      pendingInstallPrompt = null;
-      const { response } = await dialog.showMessageBox({
-        type: 'info',
-        title: t('update-ready', 'Update Ready', 'Mise à jour prête'),
-        message: t('update-ready-message', 'A new version ({version}) has been downloaded.', 'Une nouvelle version ({version}) a été téléchargée.', { version: info.version }),
-        detail: t('update-ready-detail', 'Would you like to install it now?', 'Voulez-vous l’installer maintenant ?'),
-        buttons: [t('yes', 'Yes', 'Oui'), t('later', 'Later', 'Plus tard'), t('skip-this-version', 'Skip this version', 'Ignorer cette version')],
-        defaultId: 0,
-        cancelId: 1,
-      });
-
-      if (response === 0) autoUpdater.quitAndInstall();
-      else if (response === 2) {
-        configJS.general.skippedVersion = info.version;
-        await settingsJS.save(configJS);
-      } else {
-        // Declining the install must silence the whole cycle: without this the next hourly check
-        // re-offers the download, electron-updater reports the file it already has, and the very
-        // same "install now?" box comes back an hour later.
-        await postponeUpdate(info.version);
-      }
-    } finally {
-      updatePromptOpen = false;
-    }
+    pendingInstallPrompt = null;
+    debug.log(`[updater] installing ${info.version} silently and restarting`);
+    autoUpdater.quitAndInstall(true, true);
   };
 
   app

@@ -307,6 +307,19 @@ async function discoverLibraryRoots() {
   }
   for (const root of profileLibraryRoots()) candidates.push(root);
 
+  // Portable installs are often grouped under Desktop\Games or Desktop\Jeux. Inspect only the
+  // Desktop's immediate children and only accept names from the library allowlist: this surfaces the
+  // exact folder in Smart Find without turning the Desktop (or the drive) into an invisible root.
+  for (const desktop of [envPath('USERPROFILE', 'Desktop'), envPath('PUBLIC', 'Desktop')].filter(Boolean)) {
+    try {
+      for (const entry of fs.readdirSync(desktop, { withFileTypes: true })) {
+        if (entry.isDirectory() && isLibraryLikeFolderName(entry.name)) candidates.push(path.join(desktop, entry.name));
+      }
+    } catch {
+      /* Desktop may be redirected, missing or unreadable. */
+    }
+  }
+
   // Probe every drive/profile candidate in parallel — disk stats dominate this pass.
   const results = await Promise.all(
     candidates.map(async (p) => {

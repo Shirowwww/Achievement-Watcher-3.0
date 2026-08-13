@@ -58,6 +58,20 @@ function tmp(prefix) {
   ok(hit && hit.name === 'OnlineFix', 'OnlineFix32.dll (x86 build) is also recognised');
 }
 
+// ---- Other installed emulator families are protected by the same automatic-write gate --------
+for (const [name, marker] of [
+  ['TENOKE', 'tenoke.ini'],
+  ['ALI213', 'ALI213.ini'],
+  ['SmartSteamEmu', 'SmartSteamEmu.ini'],
+  ['UniverseLAN', 'UniverseLAN.ini'],
+  ['CODEX / RUNE / scene emulator', 'steam_emu.ini'],
+]) {
+  const dir = tmp(`aw-crackloader-${name.replace(/\W/g, '').toLowerCase()}-`);
+  fs.writeFileSync(path.join(dir, marker), 'stub');
+  const hit = crackLoaderDetect.detectWorkingCrackLoader(dir);
+  ok(hit && hit.name === name, `${marker} is recognised as an existing ${name} setup`);
+}
+
 // ---- nested marker does NOT count (top-level only) -------------------------------------------
 {
   const dir = tmp('aw-crackloader-nested-');

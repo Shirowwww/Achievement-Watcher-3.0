@@ -24,7 +24,7 @@ function writeBytes(file, size = 1024) {
   fs.writeFileSync(file, Buffer.alloc(size, 1));
 }
 
-async function detectIn({ build, findRoots = async () => [] } = {}) {
+async function detectIn({ build, persistSmartFind = false } = {}) {
   const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-scen-user-'));
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-scen-root-'));
   const envRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-scen-env-'));
@@ -44,16 +44,19 @@ async function detectIn({ build, findRoots = async () => [] } = {}) {
 
   achievements.initDebug({ isDev: false, userDataPath: userData });
   await libraryDirs.save([root]);
-  const originalFind = libraryDirs.find;
-  libraryDirs.find = async () => findRoots({ root, envRoot });
   try {
     if (build) build({ root, envRoot });
+    // Smart Find is a review/persistence step now: discovery never injects invisible roots directly
+    // into the achievement scan.
+    if (persistSmartFind) {
+      const detected = (await libraryDirs.findEntries()).filter((entry) => path.resolve(entry.path).startsWith(path.resolve(envRoot) + path.sep));
+      await libraryDirs.save([{ path: root, origin: 'manual', enabled: true }, ...detected]);
+    }
     return await achievements.detectInstalledAppids({
       achievement_source: { steamEmu: true },
       steam: { main: null },
     });
   } finally {
-    libraryDirs.find = originalFind;
     for (const [key, value] of Object.entries(oldEnv)) {
       if (value == null) delete process.env[key];
       else process.env[key] = value;
@@ -131,6 +134,7 @@ test('Desktop\\Jeux\\<game> nested installs are found, loose Desktop folders are
       writeBytes(path.join(envRoot, 'Desktop', 'Jeux', 'Nested Game', 'NestedGame.exe'));
       writeBytes(path.join(envRoot, 'Desktop', 'Random Folder', 'random.exe'));
     },
+    persistSmartFind: true,
   });
   assert.equal(found.filter((id) => id.startsWith('local-')).length, 1);
 });
@@ -140,7 +144,7 @@ test('portable games under an AppData\\Games profile root are found', async () =
     build: ({ envRoot }) => {
       writeBytes(path.join(envRoot, 'AppData', 'Local', 'Games', 'Portable Game', 'PortableGame.exe'));
     },
-    findRoots: async ({ envRoot }) => [path.join(envRoot, 'AppData', 'Local', 'Games')],
+    persistSmartFind: true,
   });
   assert.equal(found.filter((id) => id.startsWith('local-')).length, 1);
 });

@@ -11,12 +11,12 @@ const games = [
   { appid: 4, installed: true },
 ];
 
-test('library statistics include every game with achievement data by default', () => {
+test('library statistics include only games with an achievement set by default', () => {
   assert.deepEqual(calculateLibraryStats(games), {
     totalUnlocked: 15,
     completed: 1,
-    total: 3,
-    average: 50,
+    total: 2,
+    average: 75,
   });
 });
 
@@ -24,12 +24,22 @@ test('installed-only statistics match the visible installed library', () => {
   assert.deepEqual(calculateLibraryStats(games, { installedOnly: true }), {
     totalUnlocked: 5,
     completed: 0,
-    total: 2,
-    average: 25,
+    total: 1,
+    average: 50,
   });
   assert.equal(isInstalled(games[0]), true);
   assert.equal(isInstalled(games[1]), false);
   assert.equal(isInstalled(games[2]), true);
+});
+
+test('achievement-less games never affect completed, unlocked, total or average stats', () => {
+  const baseline = calculateLibraryStats(games.slice(0, 2));
+  const withAchievementlessGames = calculateLibraryStats([
+    ...games.slice(0, 2),
+    { appid: 391540, name: 'UNDERTALE', installed: true, achievement: { unlocked: 0, total: 0, list: [] } },
+    { appid: 'manual-local', manual: true, installed: true, achievement: { unlocked: 0, total: 0, list: [] } },
+  ]);
+  assert.deepEqual(withAchievementlessGames, baseline);
 });
 
 test('empty and invalid libraries produce a stable zero summary', () => {

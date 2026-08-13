@@ -66,7 +66,9 @@ module.exports.load = () => {
     }
 
     if (typeof options.general.onboardingCompleted !== 'boolean') {
-      options.general.onboardingCompleted = false;
+      // Reaching this branch means a settings file already existed. Treat it as an upgraded
+      // profile; only the missing-file defaults below should launch first-run onboarding.
+      options.general.onboardingCompleted = true;
     }
     if (typeof options.general.startWithWindows !== 'boolean') {
       options.general.startWithWindows = true;
@@ -329,7 +331,8 @@ module.exports.load = () => {
     }
 
     if (typeof options.notification.playtime !== 'boolean') {
-      options.notification.playtime = false;
+      // Enable playtime on a new profile without changing the preference of upgraded profiles.
+      options.notification.playtime = options.general.onboardingCompleted !== true;
     }
 
     if (typeof options.notification.platinum !== 'boolean') {
@@ -512,7 +515,7 @@ module.exports.load = () => {
         notify: true,
         rumble: true,
         notifyOnProgress: true,
-        playtime: false,
+        playtime: true,
         platinum: true,
       },
       notification_toast: {

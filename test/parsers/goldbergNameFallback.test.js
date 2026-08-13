@@ -79,11 +79,10 @@ test('Goldberg install with steam_settings but no appid resolves by game name, b
   fs.writeFileSync(path.join(dolphinGbeDir, 'steam_settings', 'achievements.json'), JSON.stringify([{ name: 'bad', displayName: 'Bad' }]));
 
   achievements.initDebug({ isDev: false, userDataPath: userData });
-  await libraryDirs.save([root]);
-  // Isolate the scan to the sandbox: the automatic smart-find (libraryDirs.find) would merge the
-  // developer machine's real game libraries into this discovery run.
-  const originalFind = libraryDirs.find;
-  libraryDirs.find = async () => [];
+  // Smart Find now persists reviewed roots instead of injecting them invisibly during discovery.
+  // Include its sandbox result explicitly so Desktop\Jeux remains covered by this scenario.
+  const detected = (await libraryDirs.findEntries()).filter((entry) => path.resolve(entry.path).startsWith(path.resolve(envRoot) + path.sep));
+  await libraryDirs.save([{ path: root, origin: 'manual', enabled: true }, ...detected]);
 
   const originalFindAppidByName = steam.findAppidByName;
   steam.findAppidByName = async (name) => {
@@ -94,7 +93,6 @@ test('Goldberg install with steam_settings but no appid resolves by game name, b
   };
   t.after(() => {
     steam.findAppidByName = originalFindAppidByName;
-    libraryDirs.find = originalFind;
     Module._load = originalLoad;
     for (const [key, value] of Object.entries(oldEnv)) {
       if (value == null) delete process.env[key];

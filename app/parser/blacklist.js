@@ -107,16 +107,15 @@ function localInstallRoots(cfgDir) {
   };
   try {
     const configured = JSON.parse(fs.readFileSync(path.join(cfgDir, 'librarydirs.db'), 'utf8'));
-    if (Array.isArray(configured)) configured.forEach(add);
+    if (Array.isArray(configured)) {
+      configured.forEach((entry) => {
+        if (typeof entry === 'string') add(entry);
+        else if (entry && entry.enabled !== false) add(entry.path);
+      });
+    }
   } catch {
     /* no library folders configured yet */
   }
-  // The roots achievements.js adds automatically on every scan, so a game in the default library
-  // folders or on the Desktop resolves even when the user never added them by hand.
-  add('C:\\Games');
-  add('C:\\Jeux');
-  if (process.env.USERPROFILE) add(path.join(process.env.USERPROFILE, 'Desktop'));
-  if (process.env.PUBLIC) add(path.join(process.env.PUBLIC, 'Desktop'));
   return roots;
 }
 

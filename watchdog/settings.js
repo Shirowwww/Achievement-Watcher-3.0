@@ -8,6 +8,7 @@ const steamLang = require('./steam.json');
 
 // Complete partial options.ini sections before validating their values.
 const REQUIRED_OBJECT_SECTIONS = [
+  'general',
   'achievement',
   'overlay',
   'achievement_source',
@@ -116,6 +117,12 @@ module.exports.load = async (cfg_file) => {
 
     options = ini.parse(await fs.readFile(cfg_file, 'utf8'));
     if (normalizeSectionObjects(options)) fixFile = true;
+
+    // A readable pre-onboarding config is an upgraded profile, not a new install.
+    if (typeof options.general.onboardingCompleted !== 'boolean') {
+      options.general.onboardingCompleted = true;
+      fixFile = true;
+    }
 
     if (!steamLang.some((lang) => lang.api == options.achievement.lang)) {
       try {
@@ -279,7 +286,7 @@ module.exports.load = async (cfg_file) => {
     }
 
     if (typeof options.notification.playtime !== 'boolean') {
-      options.notification.playtime = false;
+      options.notification.playtime = options.general.onboardingCompleted !== true;
       fixFile = true;
     }
 
@@ -517,7 +524,7 @@ module.exports.load = async (cfg_file) => {
         notify: true,
         rumble: true,
         notifyOnProgress: true,
-        playtime: false,
+        playtime: true,
         platinum: true,
       },
       notification_toast: {

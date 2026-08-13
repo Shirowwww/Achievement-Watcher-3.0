@@ -257,7 +257,12 @@ function discover(configFile = userDirFile) {
   let userDirs = [];
   try {
     const parsed = JSON.parse(fs.readFileSync(configFile, 'utf8'));
-    if (Array.isArray(parsed)) userDirs = parsed.map((entry) => (typeof entry === 'string' ? entry : entry && entry.path)).filter(Boolean);
+    if (Array.isArray(parsed)) {
+      userDirs = parsed
+        .filter((entry) => typeof entry === 'string' || (entry && entry.enabled !== false))
+        .map((entry) => (typeof entry === 'string' ? entry : entry.path))
+        .filter(Boolean);
+    }
   } catch {
     return targets;
   }

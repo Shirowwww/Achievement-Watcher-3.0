@@ -56,6 +56,8 @@ test('a partial options.ini is completed without replacing valid or unknown sect
   assert.equal(loaded.action.target, '', 'missing required sections receive only their defaults');
   assert.equal(loaded.controller.enabled, false);
   assert.equal(loaded.custom_extension.keep, 'untouched');
+  assert.equal(loaded.general.onboardingCompleted, true, 'a readable legacy config is an upgrade, not a fresh install');
+  assert.equal(loaded.notification.playtime, false, 'legacy profiles do not silently opt into playtime');
 
   const persisted = ini.parse(fs.readFileSync(file, 'utf8'));
   assert.equal(persisted.achievement.lang, 'french');

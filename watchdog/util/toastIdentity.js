@@ -8,6 +8,14 @@ const ACHIEVEMENT_WATCHER_AUMID = 'io.github.shirowwww.achievement.watcher';
 
 // Legacy fallback; verify it before use.
 const DEFAULT_TOAST_AUMID = 'Microsoft.XboxApp_8wekyb3d8bbwe!Microsoft.XboxApp';
+let registeredAumidsPromise = null;
+
+function registeredAumids() {
+  // Get-StartApps starts PowerShell and is noticeably slow on a cold Windows session. One Watchdog
+  // process has a stable Start-menu view, so share the first lookup across tests and real unlocks.
+  if (!registeredAumidsPromise) registeredAumidsPromise = startApps.listAumids().catch(() => []);
+  return registeredAumidsPromise;
+}
 
 // Candidates are checked in override, app, then legacy order.
 function toastIdentityCandidates(options, env = process.env) {
@@ -31,7 +39,7 @@ function toastIdentityCandidates(options, env = process.env) {
 async function resolveToastIdentity(options, { env = process.env, log } = {}) {
   const debug = log || { log() {}, warn() {}, error() {} };
   const candidates = toastIdentityCandidates(options, env);
-  const registered = await startApps.listAumids();
+  const registered = await registeredAumids();
 
   // Respect an explicit override even when it cannot be enumerated.
   if (candidates[0] && candidates[0].why === 'user override') {

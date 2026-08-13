@@ -67,6 +67,7 @@ const { sendEscapeToFocusedWindow, addExcludedPid } = require('./util/sendKey.js
 const toastIdentity = require('./util/toastIdentity.js');
 const { userDataDir } = require('./util/userData.js');
 const { steamHeaderImage, steamLibraryImage } = require('./util/steamArtwork.js');
+const { resolvePlaytimeArtwork } = require('./util/playtimeArtwork.js');
 const { findIndexedSocialClubGame } = require('./util/socialClub.js');
 const notifyStrings = require('./util/notifyStrings.js');
 const { spawnDetached } = require('./util/spawnDetached.js');
@@ -1189,6 +1190,7 @@ var app = {
             } else {
               description = wdStrings.trackingPlaytime;
             }
+            const artwork = resolvePlaytimeArtwork(game);
             notify(
               {
                 notificationType: 'playtime',
@@ -1196,11 +1198,9 @@ var app = {
                 gameDisplayName: game.name,
                 achievementDisplayName: game.name || wdStrings.playtime,
                 achievementDescription: description,
-                icon: game.icon
-                  ? `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${game.appid}/${game.icon}.jpg`
-                  : undefined,
-                gameIcon: steamLibraryImage(game.steamappid || game.appid),
-                image: steamHeaderImage(game.steamappid || game.appid),
+                icon: artwork.icon,
+                gameIcon: artwork.gameIcon,
+                image: artwork.image,
                 silent: true, // playtime overlay notifications never play a sound
               },
               {

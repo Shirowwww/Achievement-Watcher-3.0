@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { isMutedByPath } = require('../playtime/monitor.js');
+const { isMutedByPath, shouldMuteProcessPath } = require('../playtime/monitor.js');
 
 test('path mute filter matches a child of a muted root (case-insensitive)', () => {
   const dirs = ['C:\\Program Files', 'D:\\Games'];
@@ -22,4 +22,12 @@ test('path mute filter tolerates empty or missing lists and empty paths', () => 
   assert.equal(isMutedByPath('C:\\Games\\game.exe', undefined), false);
   assert.equal(isMutedByPath('', ['C:\\']), false);
   assert.equal(isMutedByPath(null, ['C:\\']), false);
+});
+
+test('an explicitly indexed manual game overrides the broad user-profile path mute', () => {
+  const desktopGame = 'C:\\Users\\Player\\Desktop\\Games\\Ryujinx\\Ryujinx.exe';
+  const mutedRoots = ['C:\\Users\\Player'];
+  assert.equal(shouldMuteProcessPath(desktopGame, mutedRoots, []), true);
+  assert.equal(shouldMuteProcessPath(desktopGame, mutedRoots, [{ appid: 'manual-1', source: 'Manual' }]), false);
+  assert.equal(shouldMuteProcessPath(desktopGame, mutedRoots, [{ appid: '123', source: 'Steam' }]), true);
 });

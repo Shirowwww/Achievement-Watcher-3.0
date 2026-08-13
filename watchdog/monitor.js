@@ -44,6 +44,13 @@ const files = {
 };
 
 module.exports.getFolders = async (userDir_file) => {
+  let configuredDirs = [];
+  try {
+    const parsed = JSON.parse(await fs.readFile(userDir_file, 'utf8'));
+    if (Array.isArray(parsed)) configuredDirs = parsed;
+  } catch {
+    configuredDirs = [];
+  }
   let steamEmu = [
     {
       dir: path.join(process.env['Public'], 'Documents/Steam/CODEX'),
@@ -158,9 +165,8 @@ module.exports.getFolders = async (userDir_file) => {
       ]);
     }
 
-    let list = JSON.parse(await fs.readFile(userDir_file, 'utf8'));
-    for (let dir of list) {
-      if (dir.notify == true) {
+    for (let dir of configuredDirs) {
+      if (dir && dir.notify == true && dir.enabled !== false) {
         try {
           let info;
           for (var file of files.steamEmu) {
@@ -350,7 +356,14 @@ module.exports.getFolders = async (userDir_file) => {
     /*Do nothing*/
   }
 
-  return steamEmu;
+  const disabled = configuredDirs
+    .filter((entry) => entry && entry.enabled === false && entry.path)
+    .map((entry) => path.resolve(String(entry.path)).toLowerCase());
+  if (!disabled.length) return steamEmu;
+  return steamEmu.filter((entry) => {
+    const candidate = path.resolve(String(entry && entry.dir || '')).toLowerCase();
+    return !disabled.some((root) => candidate === root || candidate.startsWith(root + path.sep));
+  });
 };
 
 module.exports.parse = async (filePath) => {
