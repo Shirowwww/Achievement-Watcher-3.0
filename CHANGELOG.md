@@ -16,6 +16,13 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 - First-run and Settings folder lists distinguish manual locations with a compact icon and show
   Smart Find sources with their detector provenance. Automatic locations remain visible and can be
   disabled without deleting them.
+- **Automatic** notification delivery, and the new default: AW Next uses the in-game overlay when it
+  can be shown and a Windows notification when it cannot, without asking the user to know anything
+  about fullscreen modes. It routes each unlock from what it can actually observe — whether the app
+  can render a popup and report back, whether a game holds exclusive fullscreen (only exclusive
+  Direct3D counts, so borderless keeps the overlay), and whether the overlay recently failed to
+  display. **In-game overlay**, **Windows notification** and **Both** remain available and unchanged;
+  an existing saved choice is never rewritten.
 
 ### Changed
 
@@ -37,6 +44,30 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- An overlay notification the app could not display — no usable preset on disk, or a preset page
+  that fails to load — is no longer lost in silence. The app now reports the outcome of every popup
+  it is asked to render, and that one notification is delivered as a Windows notification instead.
+  The report is also what the transport decision is based on: a send call returning is no longer
+  treated as proof that anything appeared on screen.
+- Notification transport selection has a single owner, so a fallback can never duplicate an unlock.
+  The ten copies of the transport rules that each notification source carried (two of which had
+  already drifted apart) are replaced by one decision taken before anything is sent, and a fallback
+  is authorized only when the primary transport reported a definite failure. An overlay that never
+  reports back is not duplicated onto a toast — the next notification switches transport instead.
+- Overlay notifications below 100% scale are no longer cropped or padded. The popup window is
+  scaled by the host and the preset is now rendered at its design size through page zoom, instead
+  of the preset shrinking itself a second time inside an already-shrunken window - which cut off
+  dense presets such as Epic Games, Steam and mudoss and left transparent padding around every
+  other one. Every scale now draws exactly what 100% draws.
+- The Xbox Series presets (including their Platinum, Rare and Purple variants) now keep the edge
+  they are anchored to while the badge expands into the full pill. Their stylesheet ignored the
+  anchor their own script had chosen, so a left- or right-anchored popup drifted sideways by half
+  its grown width and ended up clipped by its own window - visible as a complete badge that turned
+  into a pill with its icon cut off.
+- A custom notification position is used verbatim again, so the popup can sit flush in a corner or
+  over the taskbar with the preset's transparent padding hanging past the screen edge. An anchor
+  that would leave the popup mostly off its display - a monitor that is no longer connected - is
+  still brought back into view.
 - Notification tests now produce one preview consistent with the selected transport/preset instead
   of sending both an AW overlay and a differently styled Windows toast. Watchdog warms the expensive
   first Windows identity/artwork lookup in the background, caches Start-menu enumeration, and shows

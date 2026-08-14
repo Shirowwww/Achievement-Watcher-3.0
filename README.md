@@ -122,7 +122,7 @@ Settings, cache, playtime and achievement data live under `%APPDATA%\Achievement
 
 ## 🔔 Notifications
 
-Choose **Windows notification**, **In-game overlay** or **Both** under **Settings → Notification**.
+Leave it on **Automatic** and AW Next picks per unlock: the in-game overlay when it can be shown, a Windows notification when it cannot (exclusive fullscreen, no usable preset). **In-game overlay**, **Windows notification** and **Both** stay available under **Settings → Notification**.
 
 - Presets for clean desktop, Steam, PlayStation, Xbox, rare and completion styles.
 - A no-code preset builder with live preview: try a design as a real popup before saving it, reopen a saved preset to tweak it, and delete the ones you do not keep.

@@ -387,8 +387,9 @@
         },
         "mode": {
           "name": "Type de notification",
-          "description": "Où apparaissent les notifications de succès : notification Windows, overlay en jeu, ou les deux",
+          "description": "Automatique utilise l'overlay en jeu quand il peut s'afficher et une notification Windows sinon ; les autres choix imposent toujours celui que vous sélectionnez",
           "value": {
+            "auto": "Automatique (recommandé)",
             "toast": "Notification Windows",
             "overlay": "Overlay en jeu",
             "both": "Les deux"
@@ -823,7 +824,7 @@
     "show": "Afficher",
     "hide": "Masquer",
     "sourceHint": "Répertorie également vos jeux Steam légitimes (profil public requis).",
-    "notificationsHint": "Où les déverrouillages apparaissent : notification Windows, overlay en jeu ou les deux.",
+    "notificationsHint": "Où apparaissent les succès. Automatique choisit pour vous entre overlay et notification Windows.",
     "playtimeHint": "Suit automatiquement le temps de jeu pour les jeux détectés.",
     "autoFixHint": "Applique le correctif de l'émulateur (GBE Fork, succès, DLC) aux nouveaux jeux émulés.",
     "hiddenHint": "Révèle les noms et descriptions cachés des succès avant de les débloquer.",

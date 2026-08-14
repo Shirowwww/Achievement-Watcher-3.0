@@ -81,7 +81,6 @@
           applyProgress(notificationData);
         }
         const total = Math.max(0, Number(metaDur?.content || 5000));
-        document.documentElement.style.setProperty('--duration', total + 'ms');
         card.classList.add('active');
         notifyScreenshotReady(560);
         setTimeout(() => {

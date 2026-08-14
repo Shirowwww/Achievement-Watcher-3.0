@@ -387,8 +387,9 @@
         },
         "mode": {
           "name": "Typ upozornenia",
-          "description": "Kde sa zobrazujú upozornenia o odomknutí: oznámenie Windows, overlay v hre alebo oboje",
+          "description": "Automaticky použije overlay v hre, keď sa dá zobraziť, a oznámenie Windows, keď nie; ostatné voľby vždy použijú to, čo vyberiete",
           "value": {
+            "auto": "Automaticky (odporúčané)",
             "toast": "Oznámenie Windows",
             "overlay": "Overlay v hre",
             "both": "Oboje"
@@ -823,7 +824,7 @@
     "show": "Zobraziť",
     "hide": "Skryť",
     "sourceHint": "Tiež uvádza vaše legitímne hry Steam (vyžaduje sa verejný profil).",
-    "notificationsHint": "Kde sa zobrazuje odomknutie: oznámenie Windows, overlay v hre alebo oboje.",
+    "notificationsHint": "Kde sa zobrazujú odomknutia. Automaticky za vás zvolí overlay alebo oznámenie Windows.",
     "playtimeHint": "Automaticky sleduje čas prehrávania zistených hier.",
     "autoFixHint": "Aplikuje opravu emulátora (GBE Fork, achievementy, DLC) na nové emulované hry.",
     "hiddenHint": "Odhalí skryté názvy a popisy úspechov skôr, ako ich odomknete.",

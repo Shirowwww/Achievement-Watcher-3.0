@@ -1,17 +1,43 @@
 # Notifications
 
-Achievement Watcher can announce unlocks with a native Windows notification (toast), an in-game overlay, or both. Configure the transport under **Settings → Notification**.
+AW Next can announce unlocks with a native Windows notification (toast), an in-game overlay, or both. Configure the transport under **Settings → Notification**.
 
 ## Choose a delivery mode
 
 | Mode | Behavior |
 |---|---|
-| **Windows notification** | Uses the Windows system notification (toast). Achievement and progress notifications use the achievement icon; playtime notifications can include game artwork and a progress bar. |
-| **In-game overlay** | Opens a styled popup above the running game. The main library window may stay closed while the background tracker handles it. |
+| **Automatic** (default) | Uses the in-game overlay when it can be shown, and a Windows notification when it cannot. Nothing to configure. |
+| **In-game overlay** | Always opens the styled popup above the running game, including in exclusive fullscreen where it may not be visible. If the overlay reports that it could not display at all, that one notification still arrives as a Windows notification rather than being lost. |
+| **Windows notification** | Always uses the Windows system notification (toast). Achievement and progress notifications use the achievement icon; playtime notifications can include game artwork and a progress bar. |
 | **Both** | Sends the same event to both transports. |
+
+The main library window may stay closed in every mode: the background tracker handles delivery.
 
 > [!TIP]
 > Use the built-in test buttons after changing the mode. A successful test confirms the display path; a real unlock still depends on the relevant game source being watched correctly.
+
+### How Automatic decides
+
+Each notification is routed once, from what AW Next can actually observe at that moment:
+
+| Situation | What happens |
+|---|---|
+| Nothing covering the screen | In-game overlay. |
+| The game holds **exclusive fullscreen** (Direct3D) | Windows notification — an always-on-top popup is not drawn over an exclusive fullscreen game, so it would play invisibly. Borderless and windowed games keep the overlay. |
+| The app reports it cannot display the popup (no usable preset, renderer unavailable) | That notification is sent as a Windows notification instead. |
+| The overlay fails to display | Automatic stays on Windows notifications for ten minutes, then tries the overlay again. |
+| The overlay was asked but never reported back | No second notification is sent — a duplicate is worse than a delayed switch — and the next unlock uses a Windows notification. |
+
+AW Next remembers which transport last delivered for each game and uses it only as a tie-breaker, when Windows cannot answer whether a game is in exclusive fullscreen. A live answer always wins over what was remembered, so a game never gets stuck on the wrong transport.
+
+The transport is chosen **before** anything is sent, and a fallback is only ever allowed when the primary transport reported a definite failure. The same unlock is therefore never announced twice.
+
+> [!NOTE]
+> Exclusive fullscreen is respected rather than worked around: AW Next does not inject into games or force display-mode changes to put a popup on top of one.
+
+### Where the current state is shown
+
+Open a game and check **Game Health**. The Notifications row reports the transport that actually delivered the last notification for that game and why — for example *Working — Windows fallback active* in Simple mode, or *Windows notification · game in exclusive fullscreen* in Advanced. Until a game has had a notification, the row shows the configured mode instead of claiming an observation that has not happened.
 
 ## Priority Windows notifications
 
@@ -62,7 +88,7 @@ Set the background, text and accent colors, then the opacity, font size, corner 
 Only presets this builder generated can be re-opened or deleted: it stores its settings in an `aw-preset.json` beside the generated files, and that file is what makes a preset editable. Bundled presets and hand-written ones are never touched.
 
 > [!NOTE]
-> **Custom presets are stored in** `%APPDATA%\Achievement Watcher 3.0\presets\Users Presets`, not in the installation folder. They survive app updates.
+> **Custom presets are stored in** `%APPDATA%\Achievement Watcher Next\presets\Users Presets`, not in the installation folder. They survive app updates.
 
 ## Sounds, volume and duration
 
@@ -73,7 +99,9 @@ Only presets this builder generated can be re-opened or deleted: it stores its s
 
 ## Position and interaction
 
-Choose a corner, edge or centered position from the Notification settings. The custom position can be moved with **Reposition** and is stored for later sessions.
+Choose a corner, edge or centered position from the Notification settings. The custom position can be moved with **Reposition** and is stored for later sessions. It is used exactly as you left it, so a popup can sit flush in a corner or over the taskbar; a position saved on a monitor that is no longer connected is brought back into view.
+
+The scale setting resizes the whole popup without changing the preset's layout: every preset is drawn exactly as it is at 100%, only larger or smaller. **Reposition** shows the popup at the selected scale, so what you place is what you get.
 
 The in-game overlay also supports keyboard shortcuts for moving, snapping and click-through behavior - see the [Overlay guide](overlay.md#keyboard-shortcuts-overlay-open) - plus optional gamepad control, covered in the [Controller guide](controller.md).
 
@@ -85,12 +113,12 @@ Achievements with a global unlock rate below the configured rare threshold displ
 
 ## If a test or unlock does not appear
 
-1. Confirm the selected mode is **Windows notification**, **In-game overlay** or **Both**, not disabled.
+1. Confirm notifications are enabled, and check the Notifications row of the game's **Game Health** panel — it names the transport that last delivered and why.
 2. Check that the background tracker is running.
-3. For overlays, select a valid preset and test again outside an exclusive fullscreen game.
+3. For overlays, select a valid preset and test again outside an exclusive fullscreen game. **Automatic** already handles both of those cases on its own.
 4. If a full-screen game or Do Not Disturb hides Windows notifications, enable **Priority notifications**
-   and approve Windows' one-time request for Achievement Watcher.
-5. Check Windows notification settings for Achievement Watcher when notifications are missing.
+   and approve Windows' one-time request for AW Next.
+5. Check Windows notification settings for AW Next when notifications are missing.
 6. Open **Settings → Advanced → Diagnostics** and inspect the logs.
 
 Continue with [Troubleshooting](troubleshooting.md#notifications-do-not-appear) if the problem remains.

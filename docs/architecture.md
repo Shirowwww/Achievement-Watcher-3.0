@@ -39,7 +39,8 @@ Electron's bundled Node runtime runs both processes. The installed app does not 
 3. Platform-aware IDs prevent unrelated stores from sharing the same cache key.
 4. Metadata and artwork are resolved from local caches first where possible, then from configured online fallbacks.
 5. The Watchdog establishes a baseline for each active source and watches for later changes.
-6. A new unlock is normalized, de-duplicated and sent to the selected notification transports.
+6. A new unlock is normalized, de-duplicated and sent to the notification transports one planner
+   selects for it (`watchdog/notification/transportPolicy.js`).
 
 Startup must not replay existing unlocks as new events. Watchers should baseline current state before emitting notifications.
 
@@ -71,7 +72,8 @@ Current integrations include Steam, Goldberg/GBE-compatible saves, Goldberg Soci
 | `app/electron/init.js` | Main lifecycle, updater, browser helpers and overlay window |
 | `watchdog/watchdog.js` | Background entry point and service coordination |
 | `watchdog/monitor.js` | Process and filesystem monitoring |
-| `watchdog/notification/toaster.js` | Notification routing |
+| `watchdog/notification/toaster.js` | Notification delivery: one plan per event, single owner of the fallback |
+| `watchdog/notification/transportPolicy.js` | Which transport delivers a notification, from observable signals |
 | `watchdog/playtime/monitor.js` | Process-based playtime sessions |
 
 ## Local data

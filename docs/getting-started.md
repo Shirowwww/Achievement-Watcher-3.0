@@ -25,8 +25,9 @@ The first-run guide asks for the main choices needed to populate the library:
 
 - **Language** controls the interface and the preferred language for game metadata when the source provides it.
 - **Sources** enables launcher, local-save and emulator integrations.
-- **Folders** tells Achievement Watcher where to look for game libraries and achievement saves.
-- **Notifications** chooses Windows notifications (toast), the in-game overlay, or both.
+- **Folders** tells AW Next where to look for game libraries and achievement saves.
+- **Notifications** chooses how unlocks are announced. **Automatic** is the default and needs no
+  decision: it uses the in-game overlay when it can be shown and a Windows notification when it cannot.
 
 You can revisit every option later from **Settings**.
 
@@ -90,9 +91,15 @@ If a folder is rejected, select the directory that directly contains the support
 
 Open **Settings → Notification** and choose a delivery mode:
 
-- **Windows notification** uses native Windows notifications.
-- **In-game overlay** displays a styled popup over the running game.
+- **Automatic** (default) uses the in-game overlay when it can be shown, and a Windows notification
+  when it cannot — for example while a game holds exclusive fullscreen, where an overlay popup would
+  not be visible. The same unlock is never announced twice.
+- **In-game overlay** always displays a styled popup over the running game.
+- **Windows notification** always uses native Windows notifications.
 - **Both** enables both transports.
+
+The [notifications guide](notifications.md#how-automatic-decides) explains what Automatic looks at,
+and a game's **Game Health** panel reports which transport actually delivered its last notification.
 
 If Windows Do Not Disturb normally hides desktop notifications while playing, enable **Priority
 notifications** in the same section and approve the one-time Windows request. This affects achievement

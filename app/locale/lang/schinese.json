@@ -387,8 +387,9 @@
         },
         "mode": {
           "name": "通知类型",
-          "description": "解锁通知的显示位置：Windows 通知、游戏内叠加层，或两者",
+          "description": "自动：能显示时使用游戏内叠加层，无法显示时使用 Windows 通知；其他选项始终使用你选择的方式",
           "value": {
+            "auto": "自动（推荐）",
             "toast": "Windows 通知",
             "overlay": "游戏内叠加层",
             "both": "两者"
@@ -823,7 +824,7 @@
     "show": "展示",
     "hide": "隐藏",
     "sourceHint": "还列出了您的合法 Steam 游戏（需要公开个人资料）。",
-    "notificationsHint": "解锁出现的位置：Windows 通知、游戏内叠加层或两者。",
+    "notificationsHint": "解锁通知的显示位置。“自动”会为你在叠加层和 Windows 通知之间选择。",
     "playtimeHint": "自动跟踪检测到的游戏的游戏时间。",
     "autoFixHint": "将模拟器修复（GBE Fork、成就、DLC）应用于新的模拟游戏。",
     "hiddenHint": "在解锁之前显示隐藏的成就名称和描述。",

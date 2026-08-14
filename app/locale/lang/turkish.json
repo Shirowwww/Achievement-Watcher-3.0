@@ -387,8 +387,9 @@
         },
         "mode": {
           "name": "Bildirim türü",
-          "description": "Açılış bildirimlerinin nerede görüneceği: Windows bildirimi, oyun içi yer paylaşımı veya her ikisi",
+          "description": "Otomatik, gösterilebildiğinde oyun içi yer paylaşımını, gösterilemediğinde Windows bildirimini kullanır; diğer seçenekler her zaman seçtiğinizi kullanır",
           "value": {
+            "auto": "Otomatik (önerilir)",
             "toast": "Windows bildirimi",
             "overlay": "Oyun içi yer paylaşımı",
             "both": "Her ikisi"
@@ -823,7 +824,7 @@
     "show": "Göstermek",
     "hide": "Saklamak",
     "sourceHint": "Ayrıca meşru Steam oyunlarınızı da listeler (herkese açık profil gereklidir).",
-    "notificationsHint": "Kilit açma noktalarının göründüğü yer: Windows bildirimi, oyun içi yer paylaşımı veya her ikisi.",
+    "notificationsHint": "Açılışların nerede görüneceği. Otomatik, yer paylaşımı ile Windows bildirimi arasında sizin için seçer.",
     "playtimeHint": "Algılanan oyunların oynatma süresini otomatik olarak izler.",
     "autoFixHint": "Emülatör düzeltmesini (GBE Fork, başarılar, DLC) yeni taklit edilen oyunlara uygular.",
     "hiddenHint": "Kilidini açmadan önce gizli başarı adlarını ve açıklamalarını ortaya çıkarır.",

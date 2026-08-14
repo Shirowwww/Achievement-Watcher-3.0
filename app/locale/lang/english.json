@@ -387,8 +387,9 @@
         },
         "mode": {
           "name": "Notification type",
-          "description": "Where unlock notifications appear: Windows notification, in-game overlay, or both",
+          "description": "Automatic uses the in-game overlay when it can be shown and a Windows notification when it cannot; the other choices always use the one you pick",
           "value": {
+            "auto": "Automatic (recommended)",
             "toast": "Windows notification",
             "overlay": "In-game overlay",
             "both": "Both"
@@ -823,7 +824,7 @@
     "show": "Show",
     "hide": "Hide",
     "sourceHint": "Also lists your legitimate Steam games (public profile required).",
-    "notificationsHint": "Where unlocks appear: Windows notification, in-game overlay, or both.",
+    "notificationsHint": "Where unlocks appear. Automatic picks the overlay or a Windows notification for you.",
     "playtimeHint": "Automatically tracks playtime for detected games.",
     "autoFixHint": "Applies the emulator fix (GBE Fork, achievements, DLC) to new emulated games.",
     "hiddenHint": "Reveals hidden achievement names and descriptions before you unlock them.",

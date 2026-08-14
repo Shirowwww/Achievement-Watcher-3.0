@@ -203,9 +203,8 @@ async function handleChange(target, changedFile, ctx) {
           {
             notify: ctx.options.notification.notify,
             transport: {
-              toast: ctx.options.notification_transport.mode !== 'overlay',
-              websocket: ctx.options.notification_transport.websocket || ctx.options.notification_transport.mode !== 'toast',
-              overlay: ctx.options.notification_transport.mode === 'overlay' || ctx.options.notification_transport.mode === 'both',
+              mode: ctx.options.notification_transport.mode,
+              websocket: ctx.options.notification_transport.websocket,
             },
             toast: {
               appid: typeof ctx.getToastID === 'function' ? ctx.getToastID() : ctx.toastID,

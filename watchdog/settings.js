@@ -352,8 +352,10 @@ module.exports.load = async (cfg_file) => {
       fixFile = true;
     }
 
-    if (!['toast', 'overlay', 'both'].includes(options.notification_transport.mode)) {
-      options.notification_transport.mode = 'overlay';
+    // 'auto' lets notification/transportPolicy.js pick the overlay or a Windows notification per
+    // event from what it can observe; the other three are the user pinning one behaviour.
+    if (!['auto', 'toast', 'overlay', 'both'].includes(options.notification_transport.mode)) {
+      options.notification_transport.mode = 'auto';
       fixFile = true;
     }
     if (options.notification_transport.overlay !== undefined) {
@@ -536,7 +538,7 @@ module.exports.load = async (cfg_file) => {
         winRT: true,
         balloon: true,
         websocket: true,
-        mode: 'overlay',
+        mode: 'auto',
       },
       notification_advanced: {
         timeTreshold: 10,

@@ -381,6 +381,7 @@ function translateUI(lang, locale, template) {
   // Overlay (in-game) notification section — bound by stable ids to avoid nth-child fragility.
   $('#overlay-notify-title').text(clear(template.settings.notification.title.overlay));
   $('#lbl-notifMode').text(clear(template.settings.notification.option.mode.name));
+  $("#option_notifMode option[value='auto']").text(clear(template.settings.notification.option.mode.value.auto));
   $("#option_notifMode option[value='toast']").text(clear(template.settings.notification.option.mode.value.toast));
   $("#option_notifMode option[value='overlay']").text(clear(template.settings.notification.option.mode.value.overlay));
   $("#option_notifMode option[value='both']").text(clear(template.settings.notification.option.mode.value.both));

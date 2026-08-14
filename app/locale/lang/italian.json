@@ -387,8 +387,9 @@
         },
         "mode": {
           "name": "Tipo di notifica",
-          "description": "Dove appaiono le notifiche di sblocco: notifica di Windows, overlay di gioco o entrambi",
+          "description": "Automatico usa l’overlay di gioco quando può essere mostrato e una notifica di Windows quando non può; le altre scelte usano sempre quella selezionata",
           "value": {
+            "auto": "Automatico (consigliato)",
             "toast": "Notifica di Windows",
             "overlay": "Overlay di gioco",
             "both": "Entrambi"
@@ -823,7 +824,7 @@
     "show": "Spettacolo",
     "hide": "Nascondere",
     "sourceHint": "Elenca anche i tuoi giochi Steam legittimi (è richiesto un profilo pubblico).",
-    "notificationsHint": "Dove vengono visualizzati gli sblocchi: notifica di Windows, overlay di gioco o entrambi.",
+    "notificationsHint": "Dove appaiono gli sblocchi. Automatico sceglie per te tra overlay e notifica di Windows.",
     "playtimeHint": "Tiene traccia automaticamente del tempo di gioco per i giochi rilevati.",
     "autoFixHint": "Applica la correzione dell'emulatore (GBE Fork, obiettivi, DLC) ai nuovi giochi emulati.",
     "hiddenHint": "Rivela i nomi e le descrizioni degli obiettivi nascosti prima di sbloccarli.",

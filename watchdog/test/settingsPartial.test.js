@@ -94,7 +94,8 @@ test('malformed required sections are repaired individually without dropping ext
   const persisted = ini.parse(fs.readFileSync(file, 'utf8'));
 
   assert.equal(loaded.overlay.hotkey, 'Ctrl+Shift+K');
-  assert.equal(loaded.notification_transport.mode, 'overlay');
+  // A section that could not be read carries no choice to preserve, so it lands on the default mode.
+  assert.equal(loaded.notification_transport.mode, 'auto');
   assert.equal(loaded.custom_extension.keep, 'untouched');
   assert.equal(Array.isArray(persisted.notification_transport), false);
   assert.equal(persisted.custom_extension.keep, 'untouched');

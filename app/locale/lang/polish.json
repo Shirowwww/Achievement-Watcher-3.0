@@ -387,8 +387,9 @@
         },
         "mode": {
           "name": "Typ powiadomienia",
-          "description": "Gdzie pojawiają się powiadomienia o odblokowaniu: powiadomienie systemu Windows, nakładka w grze lub oba",
+          "description": "Automatycznie używa nakładki w grze, gdy można ją wyświetlić, a powiadomienia systemu Windows, gdy nie można; pozostałe opcje zawsze używają wybranej",
           "value": {
+            "auto": "Automatycznie (zalecane)",
             "toast": "Powiadomienie systemu Windows",
             "overlay": "Nakładka w grze",
             "both": "Oba"
@@ -823,7 +824,7 @@
     "show": "Pokaż",
     "hide": "Ukryj",
     "sourceHint": "Wyświetla także listę Twoich legalnych gier Steam (wymagany profil publiczny).",
-    "notificationsHint": "Gdzie pojawiają się odblokowania: powiadomienie systemu Windows, nakładka w grze lub jedno i drugie.",
+    "notificationsHint": "Gdzie pojawiają się odblokowania. Automatycznie wybiera za Ciebie nakładkę lub powiadomienie Windows.",
     "playtimeHint": "Automatycznie śledzi czas odtwarzania wykrytych gier.",
     "autoFixHint": "Stosuje poprawkę emulatora (GBE Fork, osiągnięcia, DLC) do nowych emulowanych gier.",
     "hiddenHint": "Ujawnia ukryte nazwy i opisy osiągnięć, zanim je odblokujesz.",

@@ -429,7 +429,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       // Overlay (in-game) notification controls — enable lives in notification_transport, the look in
       // overlay.notification*. The preset dropdown is filled from the bundled preset library.
       const cfgOverlay = app.config.overlay || {};
-      $('#option_notifMode').val(app.config.notification_transport.mode || 'overlay').change();
+      $('#option_notifMode').val(app.config.notification_transport.mode || 'auto').change();
       $('#option_overlayPosition').val(cfgOverlay.notificationPosition || 'center-bottom').change();
       $('#option_overlayScale').val(String(cfgOverlay.notificationScale || 1)).change();
       $('#option_overlayRandomSound').val(String(cfgOverlay.randomSound === true)).change();
@@ -2411,7 +2411,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     }
 
     function updateOverlayOptionsVisibility() {
-      const mode = $('#option_notifMode').val() || 'overlay';
+      const mode = $('#option_notifMode').val() || 'auto';
       const visible = mode !== 'toast';
       // Sound controls also apply to Windows toasts.
       const KEEP_VISIBLE_OVERLAY_IDS = new Set(['lbl-overlaySound', 'lbl-overlayRandomSound', 'lbl-overlayVolume']);
@@ -2579,8 +2579,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       );
     }
     // Route a test through whichever transport(s) the user picked (toast / overlay / both).
-    async function fireNotificationTest(kind, btn, modeOverride, presetOverride) {
-      const mode = modeOverride || $('#option_notifMode').val() || 'overlay';
+    // `game` is optional: a test fired from a game's own panel previews that game's name and
+    // artwork, so what the user sees is what an unlock in THAT game will look like.
+    async function fireNotificationTest(kind, btn, modeOverride, presetOverride, game) {
+      const mode = modeOverride || $('#option_notifMode').val() || 'auto';
       if ($(btn).hasClass('is-running')) return;
       setNotificationTestBusy(btn, true);
       try {
@@ -2597,11 +2599,14 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         setNotificationTestBusy(btn, false);
       }
     }
-    // The first-run guide shares the exact same test path, while supplying its still-unsaved
-    // notification transport choice. Keep the rendering and Watchdog protocol in one place.
-    window.testAchievementWatcherNotification = function (mode, button, preset) {
-      const transport = ['toast', 'overlay', 'both'].includes(mode) ? mode : 'overlay';
-      return fireNotificationTest('toast', button, transport, preset);
+    // The first-run guide and the per-game health panel share the exact same test path, supplying
+    // their still-unsaved transport choice and (for the panel) the game to preview. Keep the
+    // rendering and Watchdog protocol in one place.
+    window.testAchievementWatcherNotification = function (mode, button, preset, game) {
+      // 'auto' previews the overlay: with the app in the foreground and no game covering the screen,
+      // that is exactly what Automatic selects at this moment, so the preview stays truthful.
+      const transport = ['auto', 'toast', 'overlay', 'both'].includes(mode) ? mode : 'auto';
+      return fireNotificationTest('toast', button, transport, preset, game);
     };
     $('#notify_test').click(function () {
       fireNotificationTest('toast', this);
@@ -3001,7 +3006,7 @@ function readNotificationSettings() {
   if ($('#option_urgent').val() !== '') app.config.notification_toast.urgent = boolifyValue($('#option_urgent').val());
 
   // Overlay (in-game) notification — enable in notification_transport, look in overlay.notification*.
-  app.config.notification_transport.mode = $('#option_notifMode').val() || 'overlay';
+  app.config.notification_transport.mode = $('#option_notifMode').val() || 'auto';
   if (!app.config.overlay) app.config.overlay = {};
   app.config.overlay.notificationPreset = $('#option_overlayPreset').val() || 'Shirow';
   app.config.overlay.notificationPresetRare = $('#option_overlayPresetRare').val() || '';

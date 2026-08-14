@@ -186,8 +186,6 @@
           const outDur = Math.max(120, Math.round(300 * scale));
           const outDelayMs = Math.max(0, Number(totalMs) - outDur);
 
-          ach.style.setProperty("--outDelay", `${outDelayMs}ms`);
-
           if (placement?.h === "left" || placement?.h === "right") {
             void inner.offsetWidth;
             inner.style.opacity = "1";

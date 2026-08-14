@@ -382,9 +382,12 @@ module.exports.load = () => {
       options.notification_transport.websocket = true;
     }
 
-    // Notification delivery mode: 'toast' (Windows toast), 'overlay' (in-game HTML/CSS preset), or 'both'.
-    if (!['toast', 'overlay', 'both'].includes(options.notification_transport.mode)) {
-      options.notification_transport.mode = 'overlay';
+    // Notification delivery mode: 'auto' (the Watchdog picks per event — see
+    // watchdog/notification/transportPolicy.js), 'toast' (Windows toast), 'overlay' (in-game
+    // HTML/CSS preset), or 'both'. A saved choice is never rewritten; only an unset or corrupt one
+    // lands on 'auto'.
+    if (!['auto', 'toast', 'overlay', 'both'].includes(options.notification_transport.mode)) {
+      options.notification_transport.mode = 'auto';
     }
     delete options.notification_transport.overlay;
 
@@ -527,7 +530,7 @@ module.exports.load = () => {
         winRT: true,
         balloon: true,
         websocket: true,
-        mode: 'overlay',
+        mode: 'auto',
       },
       notification_advanced: {
         timeTreshold: 10,

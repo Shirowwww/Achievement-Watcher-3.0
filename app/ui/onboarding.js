@@ -50,6 +50,12 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
       localized.preset = requestedBundle.settings?.notification?.option?.overlayPreset || englishBundle.settings?.notification?.option?.overlayPreset || 'Preset';
       localized.presetHint = requestedBundle.settings?.notification?.option?.overlayPresetDesc || englishBundle.settings?.notification?.option?.overlayPresetDesc || '';
       localized.manualSource = requestedBundle.dialogs?.['manual-source'] || englishBundle.dialogs?.['manual-source'] || 'Manual';
+      // The first-run dropdown and the Settings row are the same setting, so the automatic mode is
+      // named from the Settings label rather than from a second key that could drift away from it.
+      localized.notificationAuto =
+        requestedBundle.settings?.notification?.option?.mode?.value?.auto ||
+        englishBundle.settings?.notification?.option?.mode?.value?.auto ||
+        'Automatic';
       onboardingTextCache.set(lang, localized);
       return localized;
     } catch (err) {
@@ -177,6 +183,7 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     $("#onboard-legit-steam option[value='0']").text(t.none);
     $("#onboard-legit-steam option[value='1']").text(t.installed);
     $("#onboard-legit-steam option[value='2']").text(t.owned);
+    $("#onboard-notification-mode option[value='auto']").text(t.notificationAuto);
     $("#onboard-notification-mode option[value='toast']").text(t.toast);
     $("#onboard-notification-mode option[value='overlay']").text(t.overlay);
     $("#onboard-notification-mode option[value='both']").text(t.both);
@@ -241,7 +248,7 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     populateLanguageSelect(app.config.achievement?.lang || 'english');
     $('#onboard-username').val(app.config.general?.username || os.userInfo().username || 'User');
     populateMainSteamSelect(app.config.steam?.main || '0');
-    $('#onboard-notification-mode').val(app.config.notification_transport?.mode || 'overlay');
+    $('#onboard-notification-mode').val(app.config.notification_transport?.mode || 'auto');
     $('#onboard-playtime').val(String(app.config.notification?.playtime ?? true));
     $('#onboard-legit-steam').val(String(app.config.achievement_source?.legitSteam ?? 0));
     $('#onboard-auto-fix').val(String(app.config.emulator?.autoApplyNewGames ?? false));
@@ -495,7 +502,7 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
       app.config.general.username = $('#onboard-username').val().trim() || app.config.general.username || os.userInfo().username || 'User';
       app.config.general.onboardingCompleted = markComplete;
       app.config.steam.main = $('#onboard-main-steam').val() || '0';
-      app.config.notification_transport.mode = $('#onboard-notification-mode').val() || 'overlay';
+      app.config.notification_transport.mode = $('#onboard-notification-mode').val() || 'auto';
       app.config.overlay.notificationPreset = $('#onboard-notification-preset').val() || app.config.overlay.notificationPreset || 'Shirow';
       app.config.general.theme = $('#onboard-theme').val() || 'default';
       app.config.notification.playtime = boolValue($('#onboard-playtime').val());
@@ -625,7 +632,7 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
         return;
       }
       window.testAchievementWatcherNotification(
-        $('#onboard-notification-mode').val() || 'overlay',
+        $('#onboard-notification-mode').val() || 'auto',
         this,
         $('#onboard-notification-preset').val() || 'Shirow'
       );

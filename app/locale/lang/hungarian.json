@@ -387,8 +387,9 @@
         },
         "mode": {
           "name": "Értesítés típusa",
-          "description": "Hol jelennek meg a feloldási értesítések: Windows-értesítés, játékon belüli overlay, vagy mindkettő",
+          "description": "Az Automatikus a játékon belüli overlayt használja, ha megjeleníthető, egyébként Windows-értesítést; a többi választás mindig a kiválasztottat használja",
           "value": {
+            "auto": "Automatikus (ajánlott)",
             "toast": "Windows-értesítés",
             "overlay": "Játékon belüli overlay",
             "both": "Mindkettő"
@@ -823,7 +824,7 @@
     "show": "Megjelenítés",
     "hide": "Elrejtés",
     "sourceHint": "Felsorolja a legális Steam-játékaidat is (nyilvános profil szükséges).",
-    "notificationsHint": "Hol jelennek meg a feloldások: Windows-értesítés, játékon belüli overlay vagy mindkettő.",
+    "notificationsHint": "Hol jelennek meg a feloldások. Az Automatikus helyetted választ overlay és Windows-értesítés között.",
     "playtimeHint": "Automatikusan követi az észlelt játékok lejátszási idejét.",
     "autoFixHint": "Alkalmazza az emulátorjavítást (GBE Fork, teljesítmények, DLC) az új emulált játékokra.",
     "hiddenHint": "Felfedi a rejtett jutalmak neveit és leírásait, mielőtt feloldaná őket.",

@@ -387,8 +387,9 @@
         },
         "mode": {
           "name": "Tipo de notificação",
-          "description": "Onde as notificações de desbloqueio aparecem: notificação do Windows, overlay no jogo ou ambos",
+          "description": "Automático usa o overlay no jogo quando ele pode ser exibido e uma notificação do Windows quando não pode; as outras opções sempre usam a que você escolher",
           "value": {
+            "auto": "Automático (recomendado)",
             "toast": "Notificação do Windows",
             "overlay": "Overlay no jogo",
             "both": "Ambos"
@@ -823,7 +824,7 @@
     "show": "Mostrar",
     "hide": "Esconder",
     "sourceHint": "Também lista seus jogos legítimos do Steam (é necessário perfil público).",
-    "notificationsHint": "Onde os desbloqueios aparecem: notificação do Windows, overlay no jogo ou ambos.",
+    "notificationsHint": "Onde os desbloqueios aparecem. Automático escolhe para você entre overlay e notificação do Windows.",
     "playtimeHint": "Rastreia automaticamente o tempo de jogo dos jogos detectados.",
     "autoFixHint": "Aplica a correção do emulador (GBE Fork, conquistas, DLC) a novos jogos emulados.",
     "hiddenHint": "Revela nomes e descrições de conquistas ocultas antes de você desbloqueá-las.",

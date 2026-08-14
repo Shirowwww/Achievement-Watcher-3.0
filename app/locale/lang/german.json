@@ -387,8 +387,9 @@
         },
         "mode": {
           "name": "Benachrichtigungstyp",
-          "description": "Wo Freischalt-Benachrichtigungen erscheinen: Windows-Benachrichtigung, In-Game-Overlay oder beides",
+          "description": "Automatisch nutzt das In-Game-Overlay, wenn es angezeigt werden kann, und sonst eine Windows-Benachrichtigung; die anderen Optionen verwenden immer die gewählte",
           "value": {
+            "auto": "Automatisch (empfohlen)",
             "toast": "Windows-Benachrichtigung",
             "overlay": "In-Game-Overlay",
             "both": "Beide"
@@ -823,7 +824,7 @@
     "show": "Zeigen",
     "hide": "Verstecken",
     "sourceHint": "Listet außerdem Ihre legitimen Steam-Spiele auf (öffentliches Profil erforderlich).",
-    "notificationsHint": "Wo Freischaltungen angezeigt werden: Windows-Benachrichtigung, In-Game-Overlay oder beides.",
+    "notificationsHint": "Wo Freischaltungen erscheinen. Automatisch wählt für dich zwischen Overlay und Windows-Benachrichtigung.",
     "playtimeHint": "Verfolgt automatisch die Spielzeit für erkannte Spiele.",
     "autoFixHint": "Wendet den Emulator-Fix (GBE Fork, Erfolge, DLC) auf neue emulierte Spiele an.",
     "hiddenHint": "Zeigt versteckte Erfolgsnamen und Beschreibungen an, bevor Sie sie freischalten.",

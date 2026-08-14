@@ -13,6 +13,7 @@ const CANONICAL_WINDOW_ARGS = [
   'icon',
   'image',
   'notificationType',
+  'notifyId',
   'progressCurrent',
   'progressMax',
   'progressPercent',

@@ -1555,6 +1555,23 @@ function handleMonitorMessage(msg) {
   }
 }
 
+/*
+  Tell the monitor what became of an overlay notification it asked for. It cannot see this window, so
+  without a report its only evidence would be that process.send() returned — which says nothing about
+  a popup appearing. Two stages: 'accepted' (the request is renderable, sent before any artwork is
+  fetched so a fallback decision is not held up behind a download or a queued popup) and 'rendered'
+  (the window actually loaded, or did not). See watchdog/notification/overlayAck.js.
+*/
+function reportNotificationOutcome(id, stage, ok, reason = '') {
+  if (!id) return;
+  if (!monitorProc || monitorProc.exitCode !== null || monitorProc.killed || !monitorProc.connected) return;
+  try {
+    monitorProc.send({ notificationResult: { id: String(id), stage, ok: ok === true, reason } });
+  } catch (err) {
+    debug.log(`[monitor] notification outcome report failed: ${err.message || err}`);
+  }
+}
+
 // Tell the monitor whether the overlay is on screen: it owns the hotkey flag, so a change it did not
 // initiate must be reported from the window's own lifecycle events (redundant sends are dropped).
 function notifyMonitorOverlayState(opened) {
@@ -3358,6 +3375,9 @@ function createNotificationWindow(data = {}) {
       nodeIntegration: false,
       backgroundThrottling: false,
       autoplayPolicy: 'no-user-gesture-required',
+      // The host owns the scaling (see setZoomFactor below); set it up front so the preset's very
+      // first layout already happens at its design size.
+      zoomFactor: scale,
     },
   });
 
@@ -3395,6 +3415,12 @@ function createNotificationWindow(data = {}) {
   // (no reliance on 'ready-to-show', which the working in-game overlay also avoids).
   notif.webContents.on('did-finish-load', () => {
     if (notif.isDestroyed()) return;
+    // Scaling belongs to the host: the window is the preset's meta box times the scale, so zooming
+    // the page by that same factor lays the preset out at its design size and paints it exactly
+    // filling the window. Letting the preset scale itself as well shrank an already-shrunken layout
+    // a second time, which cropped dense presets below 100%. Chromium remembers a zoom level per
+    // file and a remembered one overrules the `zoomFactor` preference, so reassert it here too.
+    notif.webContents.setZoomFactor(scale);
     notif.webContents.send('show-notification', {
       displayName: data.displayName != null ? data.displayName : notifStrings.achievementUnlocked || 'Achievement Unlocked',
       description: data.description != null ? data.description : '',
@@ -3412,7 +3438,9 @@ function createNotificationWindow(data = {}) {
       progressMax: data.progress && data.progress.max,
       progressPercent: data.progress && data.progress.percent,
       position: data.position,
-      scale,
+      // Neutral by contract: the page zoom above already renders the preset at the chosen size, and
+      // a preset that scales itself on top of it would shrink or enlarge the artwork twice.
+      scale: 1,
       // Forwarded so presets that support it can match their animation to the user's duration.
       durationMs: Number.isFinite(Number(data.durationMs)) ? Number(data.durationMs) : undefined,
       fallback: {
@@ -3533,6 +3561,9 @@ function enqueueNotification(data) {
   data = data || {};
   if (data.test !== true && MainWin && isDuplicateNotification(data)) {
     debug.log('[overlay-notif] duplicate suppressed (app open): ' + (data.displayName || ''));
+    // Suppressed because the identical popup is already on screen: the user is being told, so this
+    // must not read as a delivery failure and pull a Windows notification in beside it.
+    reportNotificationOutcome(data.notifyId, 'rendered', true, 'duplicate');
     return;
   }
   // A Settings test replaces whatever is on screen right away instead of queuing
@@ -3555,6 +3586,7 @@ function processNotificationQueue() {
     debug.log('[overlay-notif] spawn failed: ' + (err.message || err));
   }
   if (!win) {
+    reportNotificationOutcome(data.notifyId, 'rendered', false, 'no-window');
     notifActive = false;
     if (notifQueue.length) {
       setTimeout(processNotificationQueue, 50);
@@ -3569,6 +3601,15 @@ function processNotificationQueue() {
     return;
   }
   notifActiveWindow = win;
+  // The page loading is the last thing this process can actually witness about the popup: the window
+  // exists, the preset rendered and showInactive() ran. Anything past that (a game covering it in
+  // exclusive full screen) is not observable from here and is not claimed to be.
+  if (data.notifyId) {
+    win.webContents.once('did-finish-load', () => reportNotificationOutcome(data.notifyId, 'rendered', true, 'shown'));
+    win.webContents.once('did-fail-load', (event, code, description) =>
+      reportNotificationOutcome(data.notifyId, 'rendered', false, `load-failed:${description || code}`)
+    );
+  }
   win.on('closed', () => {
     if (notifActiveWindow === win) notifActiveWindow = null;
     notifActive = false;
@@ -3639,6 +3680,39 @@ async function enqueueNotificationFromArgs(args) {
     }
   }
   const ov = (cfg && cfg.overlay) || {};
+  const notifyId = args.notifyId ? String(args.notifyId) : '';
+
+  const progress = normalizeNotificationProgress(args);
+  const notificationType = String(args.notificationType || (progress ? 'progress' : '') || '').toLowerCase();
+  // Per-type and per-emulator preset overrides ('' = main preset): the watchdog only forwards
+  // rarityPercent for rare unlocks (≤10%), platinum popups carry notificationType 'platinum', and
+  // the source lets Xenia/RPCS3/ShadPS4 notifications use their own preset.
+  const preset = require(path.join(__dirname, '../util/notificationPreset.js')).resolvePreset({
+    presets: {
+      main: ov.notificationPreset || 'Shirow',
+      rare: ov.notificationPresetRare || '',
+      platinum: ov.notificationPresetPlatinum || '',
+      xenia: ov.notificationPresetXenia || '',
+      rpcs3: ov.notificationPresetRpcs3 || '',
+      shadps4: ov.notificationPresetShadps4 || '',
+    },
+    source: args.source || '',
+    notificationType,
+    rarityPercent: Number(args.rarityPercent),
+  });
+
+  /*
+    Answer the monitor before fetching any artwork. With no preset folder on disk there is nothing to
+    render and saying so immediately is what lets the watchdog put this one notification on a Windows
+    toast instead — a report sent after the downloads, or after this popup waited its turn in the
+    queue, would arrive far too late to be the difference between one notification and none.
+  */
+  if (!resolvePresetFolder(preset)) {
+    debug.log(`[overlay-notif] no usable preset folder for "${preset}" — telling the monitor this notification cannot be shown`);
+    reportNotificationOutcome(notifyId, 'accepted', false, 'no-preset');
+    return;
+  }
+  reportNotificationOutcome(notifyId, 'accepted', true, preset);
 
   let iconPath = '';
   if (args.icon) {
@@ -3671,8 +3745,6 @@ async function enqueueNotificationFromArgs(args) {
     }
   }
 
-  const progress = normalizeNotificationProgress(args);
-  const notificationType = String(args.notificationType || (progress ? 'progress' : '') || '').toLowerCase();
   const primaryIconPath = resolvePrimaryNotificationIcon({ notificationType, iconPath, gameIconPath, imagePath, progress });
 
   // Playtime (and any caller passing --silent) must never play the overlay sound.
@@ -3691,23 +3763,8 @@ async function enqueueNotificationFromArgs(args) {
     t('achievement-unlocked', 'Achievement Unlocked', 'Succès débloqué');
 
   const durSec = ov.notificationDuration === 'auto' || ov.notificationDuration == null ? 0 : Number(ov.notificationDuration) || 0;
-  // Per-type and per-emulator preset overrides ('' = main preset): the watchdog only forwards
-  // rarityPercent for rare unlocks (≤10%), platinum popups carry notificationType 'platinum', and
-  // the source lets Xenia/RPCS3/ShadPS4 notifications use their own preset.
-  const preset = require(path.join(__dirname, '../util/notificationPreset.js')).resolvePreset({
-    presets: {
-      main: ov.notificationPreset || 'Shirow',
-      rare: ov.notificationPresetRare || '',
-      platinum: ov.notificationPresetPlatinum || '',
-      xenia: ov.notificationPresetXenia || '',
-      rpcs3: ov.notificationPresetRpcs3 || '',
-      shadps4: ov.notificationPresetShadps4 || '',
-    },
-    source: args.source || '',
-    notificationType,
-    rarityPercent: Number(args.rarityPercent),
-  });
   enqueueNotification({
+    notifyId,
     preset,
     position: ov.notificationPosition || 'center-bottom',
     scale: ov.notificationScale || 1,

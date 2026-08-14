@@ -5,6 +5,13 @@
 // preset is loaded, so an edge choice remains an edge choice for every theme.
 const DEFAULT_MARGIN = 2;
 
+// How much of a custom-positioned window must stay on its display for the saved anchor to be used
+// as-is. A preset's window is its <meta> box, usually a little larger than the pixels it paints
+// (glow and shadow room), so a popup only looks flush against a screen edge when that transparent
+// padding may hang past it. Below this ratio the anchor is treated as stale — a monitor that is no
+// longer connected — and clamped back into view instead.
+const MIN_VISIBLE_RATIO = 0.5;
+
 function number(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -12,6 +19,11 @@ function number(value, fallback = 0) {
 
 function clamp(value, minimum, maximum) {
   return Math.min(Math.max(value, minimum), Math.max(minimum, maximum));
+}
+
+// Length of the intersection between [start, start + size] and [areaStart, areaStart + areaSize].
+function overlap(start, size, areaStart, areaSize) {
+  return Math.max(0, Math.min(start + size, areaStart + areaSize) - Math.max(start, areaStart));
 }
 
 function normalizeWorkArea(workArea) {
@@ -100,6 +112,17 @@ function placeNotification({ position, width, height, workArea, custom, margin =
       break;
   }
 
+  // A custom anchor is an explicit user choice made by dragging the reposition witness: honour it
+  // to the pixel as long as the popup stays substantially visible, so its transparent padding can
+  // hang past the edge and the drawn popup itself sits flush in the corner.
+  if (position === 'custom') {
+    const visibleWidth = overlap(x, fittedWidth, area.x, area.width);
+    const visibleHeight = overlap(y, fittedHeight, area.y, area.height);
+    if (visibleWidth >= fittedWidth * MIN_VISIBLE_RATIO && visibleHeight >= fittedHeight * MIN_VISIBLE_RATIO) {
+      return { x: Math.round(x), y: Math.round(y), width: fittedWidth, height: fittedHeight, margin: edge };
+    }
+  }
+
   return {
     x: Math.round(clamp(x, minX, maxX)),
     y: Math.round(clamp(y, minY, maxY)),
@@ -111,6 +134,7 @@ function placeNotification({ position, width, height, workArea, custom, margin =
 
 module.exports = {
   DEFAULT_MARGIN,
+  MIN_VISIBLE_RATIO,
   fitNotificationScale,
   placeNotification,
 };

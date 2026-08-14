@@ -54,6 +54,47 @@ test('a large preset is reduced to the active work area before it is positioned'
   assert.equal(bounds.y + bounds.height, 698);
 });
 
+test('a custom anchor may hang the window past a screen edge so the popup itself sits flush', () => {
+  // A preset window is its <meta> box, which is a little larger than the pixels the preset paints.
+  // Clamping that box to the display is what kept a manually placed popup away from the corner.
+  const displayBounds = { x: 0, y: 0, width: 2560, height: 1440 };
+  const bounds = placeNotification({
+    position: 'custom',
+    width: 315,
+    height: 128,
+    workArea: displayBounds,
+    custom: { x: 2280, y: 1350 },
+    margin: 0,
+  });
+
+  assert.deepEqual({ x: bounds.x, y: bounds.y }, { x: 2280, y: 1350 });
+  assert.equal(bounds.x + bounds.width, 2595); // 35px of transparent padding past the right edge
+  assert.equal(bounds.y + bounds.height, 1478);
+});
+
+test('a custom anchor that is mostly off its display is treated as stale and clamped', () => {
+  const displayBounds = { x: 0, y: 0, width: 2560, height: 1440 };
+  const half = placeNotification({
+    position: 'custom',
+    width: 400,
+    height: 200,
+    workArea: displayBounds,
+    custom: { x: 2360, y: 1340 }, // exactly half of each side still visible
+    margin: 0,
+  });
+  const tooFar = placeNotification({
+    position: 'custom',
+    width: 400,
+    height: 200,
+    workArea: displayBounds,
+    custom: { x: 2361, y: 1340 },
+    margin: 0,
+  });
+
+  assert.deepEqual({ x: half.x, y: half.y }, { x: 2360, y: 1340 });
+  assert.deepEqual({ x: tooFar.x, y: tooFar.y }, { x: 2160, y: 1240 });
+});
+
 test('custom notification positions are clamped back inside the current monitor', () => {
   const bounds = placeNotification({
     position: 'custom',

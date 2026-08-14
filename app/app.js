@@ -51,6 +51,8 @@ const gameIndex = require(path.join(appPath, 'parser/gameIndex.js'));
 const PlaytimeTracking = require(path.join(appPath, 'parser/playtime.js'));
 const progressMute = require(path.join(appPath, 'parser/progressMute.js'));
 progressMute.setUserDataPath(getUserDataPath());
+const notificationHealth = require(path.join(appPath, 'parser/notificationHealth.js'));
+notificationHealth.setUserDataPath(getUserDataPath());
 const emulatorSourceOverride = require(path.join(appPath, 'parser/emulatorSourceOverride.js'));
 emulatorSourceOverride.setUserDataPath(getUserDataPath());
 const l10n = require(path.join(appPath, 'locale/loader.js'));

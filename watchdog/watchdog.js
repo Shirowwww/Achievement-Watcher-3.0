@@ -143,9 +143,8 @@ function startXboxPolling(game) {
             notify: app.options.notification.notify,
             lang: app.options.achievement.lang,
             transport: {
-              toast: app.options.notification_transport.mode !== 'overlay',
-              websocket: app.options.notification_transport.mode !== 'toast',
-              overlay: app.options.notification_transport.mode === 'overlay' || app.options.notification_transport.mode === 'both',
+              mode: app.options.notification_transport.mode,
+              websocket: app.options.notification_transport.websocket,
             },
             toast: {
               appid: app.toastID,
@@ -429,6 +428,13 @@ process.on('message', (msg) => {
     // (createMainWindow() runs after launchWatchdog()), so AW_APP_PIDS alone misses it on a fresh
     // launch. The main process sends it as soon as the window is actually created.
     addExcludedPid(msg.appPid);
+    return;
+  }
+  // What the app did with an overlay notification it was asked to render. This is the only evidence
+  // this process has that a popup appeared at all, so the delivery layer plans from it rather than
+  // from process.send() having returned (notification/overlayAck.js).
+  if (msg.notificationResult && msg.notificationResult.id) {
+    require('./notification/overlayAck.js').report(String(msg.notificationResult.id), msg.notificationResult);
     return;
   }
   if (msg.reloadPlaytimeIndex === true) {
@@ -901,10 +907,8 @@ var app = {
                           notify: self.options.notification.notify,
                           lang: self.options.achievement.lang,
                           transport: {
-                            toast: app.options.notification_transport.mode !== 'overlay',
-                            websocket: self.options.notification_transport.websocket || app.options.notification_transport.mode !== 'toast',
-                            overlay:
-                              app.options.notification_transport.mode === 'overlay' || app.options.notification_transport.mode === 'both',
+                            mode: app.options.notification_transport.mode,
+                            websocket: app.options.notification_transport.websocket,
                           },
                           toast: {
                             appid: self.toastID,
@@ -956,10 +960,8 @@ var app = {
                           notify: self.options.notification.notify,
                           lang: self.options.achievement.lang,
                           transport: {
-                            toast: app.options.notification_transport.mode !== 'overlay',
-                            websocket: self.options.notification_transport.websocket || app.options.notification_transport.mode !== 'toast',
-                            overlay:
-                              app.options.notification_transport.mode === 'overlay' || app.options.notification_transport.mode === 'both',
+                            mode: app.options.notification_transport.mode,
+                            websocket: app.options.notification_transport.websocket,
                           },
                           toast: {
                             appid: self.toastID,
@@ -1025,10 +1027,8 @@ var app = {
                   notify: self.options.notification.notify,
                   lang: self.options.achievement.lang,
                   transport: {
-                    toast: app.options.notification_transport.mode !== 'overlay',
-                    websocket: self.options.notification_transport.websocket || app.options.notification_transport.mode !== 'toast',
-                    overlay:
-                      app.options.notification_transport.mode === 'overlay' || app.options.notification_transport.mode === 'both',
+                    mode: app.options.notification_transport.mode,
+                    websocket: app.options.notification_transport.websocket,
                   },
                   toast: {
                     appid: self.toastID,
@@ -1207,9 +1207,8 @@ var app = {
                 notify: app.options.notification.notify,
                 lang: app.options.achievement.lang,
                 transport: {
-                  toast: app.options.notification_transport.mode !== 'overlay',
-                  websocket: app.options.notification_transport.mode !== 'toast',
-                  overlay: app.options.notification_transport.mode === 'overlay' || app.options.notification_transport.mode === 'both',
+                  mode: app.options.notification_transport.mode,
+                  websocket: app.options.notification_transport.websocket,
                 },
                 toast: {
                   appid: app.toastID,
