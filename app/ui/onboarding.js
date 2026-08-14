@@ -5,15 +5,19 @@ const merge = require('deepmerge');
 const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avatar.js'));
 const onboardingAvatarStore = require(path.join(appPath, 'util/avatarStore.js'));
 const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
+const onboardingInterfaceMode = require(path.join(appPath, 'util/interfaceMode.js'));
 
 (function ($, window, document) {
-  const STEP_COUNT = 5;
+  const STEP_COUNT = 6;
   const onboardingTextCache = new Map();
   let step = 0;
   let addedSaveDirs = [];
   let addedLibraryDirs = [];
   let visitedSteps = new Set([0]);
   let languageChosenThisSession = false;
+  // The interface-mode answer for this run. Deliberately starts empty even when a mode is already
+  // stored: reopening the guide re-asks rather than showing a pre-ticked card.
+  let chosenInterfaceMode = '';
   let smartFindRunning = false;
   let persistRunning = false;
   let openedFromSettings = false;
@@ -144,6 +148,13 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     $('#onboard-card-fix-copy').text(t.fixCopy);
     $('#onboard-card-overlay-title').text(t.overlayTitle);
     $('#onboard-card-overlay-copy').text(t.overlayCopy);
+    $('#onboard-mode-title').text(t.modeTitle);
+    $('#onboard-mode-copy').text(t.modeCopy);
+    $('#onboard-mode-simple-title').text(t.modeSimple);
+    $('#onboard-mode-simple-copy').text(t.modeSimpleCopy);
+    $('#onboard-mode-advanced-title').text(t.modeAdvanced);
+    $('#onboard-mode-advanced-copy').text(t.modeAdvancedCopy);
+    $('#onboard-mode-hint').text(t.modeHint);
     $('#onboard-profile-title').text(t.profileTitle);
     $('#onboard-profile-copy').text(t.profileCopy);
     $('#onboard-username-label').text(t.username);
@@ -196,6 +207,32 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     updateStepButtons();
     updateProgress();
     renderDirLists();
+  }
+
+  /*
+    Interface mode. Nothing is ticked until the user ticks it — the cards carry no default state and
+    the guide will not move past this step while `chosenInterfaceMode` is empty.
+  */
+  function renderInterfaceMode() {
+    $('#onboarding .onboarding-mode-card').each(function () {
+      const selected = $(this).data('mode') === chosenInterfaceMode;
+      $(this).toggleClass('is-selected', selected).attr('aria-checked', String(selected));
+    });
+  }
+
+  function setInterfaceMode(mode) {
+    chosenInterfaceMode = onboardingInterfaceMode.normalize(mode);
+    renderInterfaceMode();
+    if (chosenInterfaceMode) setStatus('', '');
+  }
+
+  // The step that owns the mode cards, found by markup rather than by a hard-coded index so
+  // inserting another step never silently moves the gate onto the wrong one.
+  function interfaceModeStep() {
+    const found = parseInt($('#onboarding .onboarding-mode-choice').closest('.onboarding-step').attr('data-step'), 10);
+    // -1 rather than NaN: callers compare it against the current step and pass it to showStep(),
+    // and a NaN would clamp to NaN there and leave the guide on no step at all.
+    return Number.isFinite(found) ? found : -1;
   }
 
   function populateLanguageSelect(selected) {
@@ -408,6 +445,13 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
       setStatus(text().languageRequired, 'error');
       return;
     }
+    // Same shape as the language gate: leaving the interface step forward needs an answer. Going
+    // back is always allowed, so the guide can be re-read without being trapped here.
+    const modeStep = interfaceModeStep();
+    if (modeStep >= 0 && step === modeStep && nextStep > modeStep && !chosenInterfaceMode) {
+      setStatus(text().modeRequired, 'error');
+      return;
+    }
     step = Math.max(0, Math.min(STEP_COUNT - 1, nextStep));
     visitedSteps.add(step);
     setStatus('', '');
@@ -498,6 +542,13 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
         setStatus(t.languageRequired, 'error');
         return false;
       }
+      if (!chosenInterfaceMode) {
+        setStatus(t.modeRequired, 'error');
+        const modeStep = interfaceModeStep();
+        if (modeStep >= 0) showStep(modeStep);
+        return false;
+      }
+      app.config.general.interfaceMode = chosenInterfaceMode;
       app.config.achievement.lang = language;
       app.config.general.username = $('#onboard-username').val().trim() || app.config.general.username || os.userInfo().username || 'User';
       app.config.general.onboardingCompleted = markComplete;
@@ -536,6 +587,8 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
   async function finish() {
     if (!(await persist(true))) return;
     hide();
+    // Settings is built once at startup, so a mode chosen here has to be pushed onto it.
+    if (typeof window.applyInterfaceMode === 'function') window.applyInterfaceMode();
     resetUI();
   }
 
@@ -545,6 +598,7 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
       return;
     }
     if (!(await persist(true))) return;
+    if (typeof window.applyInterfaceMode === 'function') window.applyInterfaceMode();
     hide({ returnToSettings: true });
   }
 
@@ -562,11 +616,13 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
     isFirstRunSession = !force; // auto-detect candidates only on the genuine first-run guide
     autoDetectedThisSession = false;
     languageChosenThisSession = false;
+    chosenInterfaceMode = isFirstRunSession ? '' : onboardingInterfaceMode.normalize(app.config.general?.interfaceMode);
     addedSaveDirs = [];
     addedLibraryDirs = [];
     visitedSteps = new Set([0]);
     applyText();
     populateValues();
+    renderInterfaceMode();
     renderDirLists();
     $('#settings .box').hide();
     $('#settings').hide();
@@ -600,6 +656,9 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
       event.preventDefault();
       event.stopPropagation();
       show(true);
+    });
+    $('#onboarding').on('click', '.onboarding-mode-card', function () {
+      setInterfaceMode($(this).data('mode'));
     });
     $('#onboard-add-save-dir').on('click', pickSaveDir);
     $('#onboard-smart-find').on('click', smartFindDirs);

@@ -75,6 +75,8 @@ Current integrations include Steam, Goldberg/GBE-compatible saves, Goldberg Soci
 | `watchdog/notification/toaster.js` | Notification delivery: one plan per event, single owner of the fallback |
 | `watchdog/notification/transportPolicy.js` | Which transport delivers a notification, from observable signals |
 | `watchdog/playtime/monitor.js` | Process-based playtime sessions |
+| `app/util/gameHealth.js` | Per-game health derivation: state, explanation, checks and repairs |
+| `app/util/interfaceMode.js` | Simple / Advanced policy: which tabs, rows and health checks each mode shows |
 
 ## Local data
 
@@ -93,6 +95,23 @@ Settings are stored in `cfg/options.ini`. Sensitive fields are encrypted before 
 ## UI and localization
 
 The renderer is a long-lived HTML/JavaScript application. Some locale bindings still depend on DOM order, so changing settings markup can shift text onto the wrong control even when the JSON keys are correct. Update the view, `app/locale/loader.js` and every locale together, then run the full app suite.
+
+The settings panel has two display modes, Simple and Advanced, stored as `[general] interfaceMode`
+and decided by `app/util/interfaceMode.js`. The module is pure: it owns the list of Advanced-only
+tabs, the `data-advanced` attribute that marks individual rows inside the tabs Simple keeps, and the
+Game Health checks Simple leaves out. `app/ui/settings.js` applies it by toggling the `mode-hidden`
+class - **never by removing markup**, because the positional locale bindings above would break.
+
+The mode is a display setting: no parser, watcher or stored value changes with it, and an unset or
+unrecognized value resolves to Advanced so an upgrade never hides a feature someone already used.
+When adding a settings tab, put its `data-view` in one of the two lists in `interfaceMode.js`;
+`test/ui/interfaceMode.test.js` fails on a tab that belongs to neither.
+
+The Sources tab is the exception to the static rules. `hiddenOptionalSources()` decides per row from
+live state: a niche source (`OPTIONAL_SOURCES`) is folded away only while it is still enabled *and*
+no game in the library carries one of its `source` values. Switching it off or owning a game it
+detected brings the row back, so Simple can never hide the only control that would explain a missing
+game. Those rows therefore carry no `data-advanced` marker - adding one would defeat the rule.
 
 English is the reference locale. `app/locale/uiLanguages.js` only exposes languages that have a bundled JSON file, and the loader falls back to English at runtime.
 

@@ -9,10 +9,13 @@ const root = path.join(__dirname, '..', '..');
 
 test('the final onboarding step exposes exactly eight useful choices', () => {
   const html = fs.readFileSync(path.join(root, 'app', 'view', 'app.html'), 'utf8');
-  const step = html.match(/id="onboarding-step-4"[\s\S]*?<\/section>/)?.[0] || '';
-  assert.equal((step.match(/<select\b/g) || []).length, 8);
+  // Found by its own content, not by a step index: inserting a step ahead of it (the Simple /
+  // Advanced choice did exactly that) must not silently point this at a different section.
+  const step = html.split(/<section class="onboarding-step[^"]*" id="onboarding-step-\d+"/).find((part) => part.includes('id="onboard-theme"')) || '';
+  const body = step.slice(0, step.indexOf('</section>'));
+  assert.equal((body.match(/<select\b/g) || []).length, 8);
   for (const id of ['onboard-theme', 'onboard-notification-mode', 'onboard-notification-preset', 'onboard-playtime']) {
-    assert.match(step, new RegExp(`id="${id}"`));
+    assert.match(body, new RegExp(`id="${id}"`));
   }
 });
 

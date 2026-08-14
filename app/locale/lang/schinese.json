@@ -370,11 +370,11 @@
           "description": "可能时在解锁成就时通知"
         },
         "rumble": {
-          "name": "手柄震动 (XInput)",
+          "name": "手柄振动",
           "description": "解锁成就时使第一个手柄震动"
         },
         "notifyOnProgress": {
-          "name": "进度报告",
+          "name": "进度通知",
           "description": "可能时在成就有进度时通知"
         },
         "playtime": {
@@ -554,10 +554,10 @@
     },
     "folder": {
       "headline": "在何处查找成就文件：",
-      "default": "默认目录",
-      "custom": "用户目录",
+      "default": "自动检查的文件夹",
+      "custom": "你的文件夹",
       "addInfo": [
-        "选择一个包含 appid 文件夹的文件夹。",
+        "选择游戏或模拟器存放成就文件的文件夹。",
         "对于 ALI213、Hoodlum、TENOKE、UniverseLAN、RPCS3，请选择以下文件所在的文件夹：",
         "ALI213.ini、valve.ini、hlm.ini、ds.ini、steam_api.ini、SteamConfig.ini、tenoke.ini、UniverseLAN.ini 或 RPCS3.exe。"
       ],
@@ -763,6 +763,11 @@
         "button": "立即检查",
         "description": "向 Steam 查询自上次检查以来游戏更新是否新增了成就。此操作通常每 3 天自动执行一次;此按钮会立即强制执行。"
       }
+    },
+    "interfaceMode": {
+      "title": "界面",
+      "simple": "简易",
+      "advanced": "高级"
     }
   },
   "onboarding": {
@@ -775,6 +780,7 @@
     "steps": [
       "语言",
       "它是如何运作的",
+      "界面",
       "帐户",
       "游戏",
       "设置"
@@ -847,7 +853,15 @@
     "invalidFolder": "该文件夹不像受支持的成就文件夹。应选择：GSE Saves / Goldberg SteamEmu Saves、CODEX/RUNE 存档、AppID 子文件夹（例如 1091500），或包含 steam_settings 或模拟器 .ini 的游戏文件夹。",
     "smartRunning": "正在寻找...",
     "smartDone": "搜索完成。",
-    "saveError": "无法保存设置。"
+    "saveError": "无法保存设置。",
+    "modeTitle": "选择你的界面",
+    "modeCopy": "两种模式记录成就的方式完全相同，这只决定屏幕上显示多少 AW Next 的功能。",
+    "modeSimple": "简易",
+    "modeSimpleCopy": "围绕日常使用精简的界面：你的游戏库、通知、外观和来源。",
+    "modeAdvanced": "高级",
+    "modeAdvancedCopy": "完整的 AW Next：模拟器运行环境设置、手柄控制、诊断、修复工具和实验性选项。",
+    "modeHint": "两种模式都不会关闭任何功能——简易模式只是显示更少，随时可以在设置中更改。",
+    "modeRequired": "请选择简易或高级以继续。"
   },
   "overlay": {
     "icon": "图标",
@@ -1379,7 +1393,9 @@
     "clear-update-cache-empty": "没有可清除的内容——未找到缓存的更新文件。",
     "clear-update-cache-done": "更新缓存已清除：{folder}",
     "clear-update-cache-done-apps": "已清除 {count} 个缓存文件夹。",
-    "clear-update-cache-done-all": "已清除 {count} 个缓存文件夹,包括 {folder} 中的更新缓存。"
+    "clear-update-cache-done-all": "已清除 {count} 个缓存文件夹,包括 {folder} 中的更新缓存。",
+    "interface-mode-hint-simple": "仅显示日常所需。",
+    "interface-mode-hint-advanced": "显示 AW Next 的全部功能。"
   },
   "watchdog": {
     "rare": "稀有 {percent}%",

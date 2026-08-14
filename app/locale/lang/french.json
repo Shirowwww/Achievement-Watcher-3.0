@@ -370,11 +370,11 @@
           "description": "Afficher une notification lorsqu'un succès est débloqué"
         },
         "rumble": {
-          "name": "Vibration de la manette (XInput)",
+          "name": "Vibration de la manette",
           "description": "Faire vibrer la première manette lorsqu'un succès est débloqué"
         },
         "notifyOnProgress": {
-          "name": "Rapport d'avancement",
+          "name": "Notifications de progression",
           "description": "Informer sur la progression quand c'est possible"
         },
         "playtime": {
@@ -554,10 +554,10 @@
     },
     "folder": {
       "headline": "Où chercher les données des succès:",
-      "default": "Répertoire par défaut",
-      "custom": "Répertoire de l'utilisateur",
+      "default": "Dossiers vérifiés automatiquement",
+      "custom": "Tes dossiers",
       "addInfo": [
-        "Sélectionnez un dossier contenant des dossiers appid.",
+        "Choisis le dossier où un jeu ou un émulateur garde ses fichiers de succès.",
         "Pour ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3, sélectionnez un dossier dans lequel",
         "Le fichier ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini ou RPCS3.exe est situé."
       ],
@@ -763,6 +763,11 @@
         "button": "Vérifier maintenant",
         "description": "Vérifie auprès de Steam si une mise à jour du jeu a ajouté des succès depuis la dernière vérification. Se fait automatiquement tous les 3 jours ; ce bouton force la vérification immédiatement."
       }
+    },
+    "interfaceMode": {
+      "title": "Interface",
+      "simple": "Simple",
+      "advanced": "Avancé"
     }
   },
   "onboarding": {
@@ -775,6 +780,7 @@
     "steps": [
       "Langue",
       "Comment ça marche",
+      "Interface",
       "Compte",
       "Jeux",
       "Paramètres"
@@ -847,7 +853,15 @@
     "invalidFolder": "Ce dossier ne ressemble pas à un dossier de succès pris en charge. Attendu : GSE Saves / Goldberg SteamEmu Saves, sauvegardes CODEX/RUNE, sous-dossiers AppID (ex. 1091500), ou un dossier de jeu avec steam_settings ou un .ini d'émulateur.",
     "smartRunning": "Recherche...",
     "smartDone": "Recherche terminée.",
-    "saveError": "Impossible d'enregistrer la configuration."
+    "saveError": "Impossible d'enregistrer la configuration.",
+    "modeTitle": "Choisis ton interface",
+    "modeCopy": "Les deux suivent les succès exactement de la même manière. Cela décide seulement de la quantité d’AW Next affichée à l’écran.",
+    "modeSimple": "Simple",
+    "modeSimpleCopy": "Une interface épurée, centrée sur l’usage quotidien : ta bibliothèque, les notifications, l’apparence et les sources.",
+    "modeAdvanced": "Avancé",
+    "modeAdvancedCopy": "AW Next au complet : configuration de l’émulateur, contrôle à la manette, diagnostics, outils de réparation et options expérimentales.",
+    "modeHint": "Rien n’est désactivé dans un cas comme dans l’autre — le mode Simple affiche moins, et tu peux en changer à tout moment dans les Réglages.",
+    "modeRequired": "Choisis Simple ou Avancé pour continuer."
   },
   "overlay": {
     "icon": "Icône",
@@ -1379,7 +1393,9 @@
     "clear-update-cache-empty": "Rien à vider — aucun fichier de mise à jour en cache.",
     "clear-update-cache-done": "Cache de mise à jour vidé : {folder}",
     "clear-update-cache-done-apps": "{count} dossier(s) de cache vidé(s).",
-    "clear-update-cache-done-all": "{count} dossier(s) de cache vidé(s), y compris le cache de mise à jour dans {folder}."
+    "clear-update-cache-done-all": "{count} dossier(s) de cache vidé(s), y compris le cache de mise à jour dans {folder}.",
+    "interface-mode-hint-simple": "Affiche l’essentiel du quotidien.",
+    "interface-mode-hint-advanced": "Affiche tout ce que sait faire AW Next."
   },
   "watchdog": {
     "rare": "Rare {percent} %",

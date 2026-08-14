@@ -24,6 +24,8 @@ AW Next is a Windows desktop application. Packaged releases include their own ru
 The first-run guide asks for the main choices needed to populate the library:
 
 - **Language** controls the interface and the preferred language for game metadata when the source provides it.
+- **Interface** chooses between Simple and Advanced (see below). The guide will not move past this
+  step until you pick one - neither is preselected.
 - **Sources** enables launcher, local-save and emulator integrations.
 - **Folders** tells AW Next where to look for game libraries and achievement saves.
 - **Notifications** chooses how unlocks are announced. **Automatic** is the default and needs no
@@ -31,11 +33,36 @@ The first-run guide asks for the main choices needed to populate the library:
 
 You can revisit every option later from **Settings**.
 
+## Simple and Advanced
+
+The interface comes in two sizes. Pick one in the first-run guide, and change it whenever you like
+from the **Interface** control at the top of **Settings**.
+
+- **Simple** shows the everyday tabs: General, Theme, Controller, Notification, Sources, Folders
+  and Help.
+- **Advanced** adds the Steam emulator and diagnostics tabs, plus the deeper options inside the
+  tabs Simple already shows.
+
+**Simple hides controls, it never turns anything off.** Tracking, scanning and notifications work
+the same either way, and every value you set is still there when you switch back.
+
+Per-game **Game Health** follows the same idea: Simple says *Achievement data found* or *Tracking
+active*, Advanced gives the exact counts, files and process names. **Technical details** at the
+bottom of the panel has the raw values in both.
+
+Upgrading an existing installation lands on **Advanced**, so nothing you were using disappears.
+
 In **Settings → Sources**, the shield marks the official desktop libraries supported directly:
 Steam, Ubisoft Connect, GOG Galaxy, Epic Games and Xbox PC. Enable the relevant row and refresh the
 library; only libraries detected on the current PC are displayed. The EA row is different: it reads
 EA Desktop achievement logs for non-launcher-managed installs and does not import the regular
 official EA library.
+
+The Sources list adapts to you. In Simple mode, a handful of niche rows (GreenLuma, LumaPlay, the
+Nemirtingas emulators, Goldberg SocialClub and the notification-cache import) stay out of the way
+while they are untouched and no game in your library came from them. Turn one off, or own a game it
+detected, and its row comes back - so the switch is always there when it matters. Advanced always
+lists all of them.
 
 The search field at the top of **Settings** filters every tab at once, and the side menu shows how many options each tab matches - useful when you remember what an option does but not where it lives. It matches labels, descriptions, the values an option offers and its internal name, so `hideZero` finds the same row in any interface language. Press `Ctrl+F` to jump to it and `Esc` to clear it.
 
@@ -52,9 +79,8 @@ The **Settings → Help** tab is a live reference, not a static page:
   hard-coded default.
 - The topic search ignores case and accents. Several matches stay as a compact
   list; a single match opens immediately.
-- The **Generated configs** panel summarizes what the emulator fix writes
-  (GBE Fork files, achievement schema and DLC data) without opening the
-  advanced tools.
+- Every topic is available in both interface modes: reading about a feature
+  never requires switching modes first.
 
 The panel refreshes immediately as you change settings, so it doubles as a
 preview before you press **Save**.

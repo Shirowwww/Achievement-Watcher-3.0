@@ -3242,17 +3242,81 @@ main {
   line-height: 1.45;
 }
 
+/* Interface choice. The two cards are deliberately identical until one is picked: no default
+   highlight, no "recommended" accent, nothing that answers the question for the user. */
+.onboarding-mode-choice {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.onboarding-mode-card {
+  min-height: 168px;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 18px;
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid var(--set-hairline-soft);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-sunken) 44%, transparent);
+  transition: border-color 0.14s ease, background 0.14s ease, box-shadow 0.14s ease;
+}
+
+.onboarding-mode-card i {
+  color: var(--accent);
+  font-size: 22px;
+}
+
+.onboarding-mode-card strong {
+  color: var(--text);
+  font-family: 'Open-Sans-Bold';
+  font-size: 15px;
+}
+
+.onboarding-mode-card span {
+  color: var(--text-muted);
+  font-family: 'Open-Sans';
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.onboarding-mode-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 32%, transparent);
+  background: color-mix(in srgb, var(--surface-sunken) 62%, transparent);
+}
+
+.onboarding-mode-card.is-selected {
+  border-color: color-mix(in srgb, var(--accent) 58%, transparent);
+  background: linear-gradient(180deg, var(--accent-soft), color-mix(in srgb, var(--accent) 5%, transparent));
+  box-shadow: 0 10px 22px rgba(0, 0, 0, calc(0.18 * var(--shadow-scale)));
+}
+
+.onboarding-mode-card.is-selected strong {
+  color: var(--set-title);
+}
+
+#onboard-mode-hint {
+  display: block;
+  margin-top: 14px;
+  color: var(--text-muted);
+  font-family: 'Open-Sans';
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .onboarding-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
 
-#onboarding-step-4 .onboarding-form-grid {
+#onboarding-step-5 .onboarding-form-grid {
   gap: 11px 14px;
 }
 
-#onboarding-step-4 .onboard-field-hint {
+#onboarding-step-5 .onboard-field-hint {
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
@@ -5370,6 +5434,97 @@ body {
   border-color: transparent;
   transform: none;
 }
+
+/* ---- Simple / Advanced interface mode ----------------------------------------------------
+   Rows and tabs Simple mode leaves out. Hidden with a class and never detached: the panel's i18n
+   is positional, so the DOM has to survive every switch (see app/util/interfaceMode.js). */
+#settings .mode-hidden {
+  display: none !important;
+}
+
+/* The switch itself. It decides which tabs exist, so it sits in the panel header next to the
+   title rather than inside a tab: visible the moment Settings opens, quiet enough that the search
+   field still reads as the primary control. */
+.settings-mode {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-left: 18px;
+  padding-left: 18px;
+  border-left: 1px solid var(--set-hairline-soft);
+}
+
+.settings-mode-label {
+  color: color-mix(in srgb, var(--text-muted) 78%, transparent);
+  font-family: 'Open-Sans-Bold', 'Open-Sans', sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-shadow: none;
+}
+
+.settings-mode-switch {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--set-hairline-soft);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.settings-mode-switch button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: 'Open-Sans';
+  font-size: 12px;
+  text-shadow: none;
+  transition: color 0.14s ease, background 0.14s ease, border-color 0.14s ease;
+}
+
+.settings-mode-switch button b {
+  font-weight: 400;
+}
+
+.settings-mode-switch button i {
+  font-size: 11px;
+  /* The header colours every <i> with the accent; only the selected side should stand out. */
+  color: inherit;
+}
+
+.settings-mode-switch button:hover {
+  color: var(--text);
+}
+
+.settings-mode-switch button.is-selected {
+  color: var(--set-title);
+  background: linear-gradient(90deg, var(--accent-soft), color-mix(in srgb, var(--accent) 5%, transparent));
+  border-color: color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.settings-mode-switch button.is-selected i {
+  color: var(--accent);
+}
+
+/* Narrow windows: the search field keeps its width, so the switch drops its wordmark first. */
+@media (max-width: 1080px) {
+  .settings-mode {
+    margin-left: 12px;
+    padding-left: 12px;
+  }
+
+  .settings-mode-label {
+    display: none;
+  }
+}
+
 
 #settings .box .content {
   height: min(590px, calc(100vh - 250px));

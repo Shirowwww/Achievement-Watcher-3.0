@@ -491,7 +491,14 @@ function translateUI(lang, locale, template) {
   $('#addCustomDir span').text(clear(template.settings.folder.add));
   if (template.settings.folder.smartFind) $('#smartFind-label').text(clear(template.settings.folder.smartFind));
   if (template.settings.folder.smartFindHelp) $('#smartFind-help').text(clear(template.settings.folder.smartFindHelp));
-  $('#folder-add-info').html(clear(template.settings.folder.addInfo.join('\n')).replace(/\n/g, '<br>'));
+  // First line = what the folder is for, shown in both modes. The rest names the emulator .ini
+  // files that identify one, which is only useful once you know which emulator you are pointing
+  // at — so it lives in its own paragraph that Simple mode hides.
+  {
+    const addInfo = template.settings.folder.addInfo || [];
+    $('#folder-add-info').text(clear(addInfo[0]));
+    $('#folder-add-info-detail').html(clear(addInfo.slice(1).join('\n')).replace(/\n/g, '<br>'));
+  }
   selector.find('.title:eq(2) span').text(clear(template.settings.folder.library));
   $('#addLibraryDir span').text(clear(template.settings.folder.addLibrary));
   if (template.settings.folder.generateConfigs) $('#generate-configs-label').text(clear(template.settings.folder.generateConfigs));
@@ -622,6 +629,12 @@ function translateUI(lang, locale, template) {
   $("#settingNav li[data-view='source'] span").text(clear(template.settings.sideMenu.source));
   if (template.settings.general.theme) $("#settingNav li[data-view='appearance'] span").text(clear(template.settings.general.theme.name));
   $("#settingNav li[data-view='advanced'] span").text(clear(template.settings.sideMenu.advanced));
+  // Simple / Advanced switch at the foot of the nav — bound by id, the nav has no positional i18n.
+  if (template.settings.interfaceMode) {
+    $('#settings-mode-label').text(clear(template.settings.interfaceMode.title));
+    $('#settings-mode-simple').text(clear(template.settings.interfaceMode.simple));
+    $('#settings-mode-advanced').text(clear(template.settings.interfaceMode.advanced));
+  }
   // Sidebar group headers keep the flat list readable without adding new locale keys.
   $('#nav-group-general').text(clear(template.settings.sideMenu.general));
   $('#nav-group-notification').text(clear(template.settings.sideMenu.notification));

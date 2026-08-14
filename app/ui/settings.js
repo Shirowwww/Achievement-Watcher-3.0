@@ -14,6 +14,7 @@ const DEFAULT_THEME_COLOR = themeLayers.BUILTIN_COLORS.default.bg;
 const scanScopeTools = require(path.join(appPath, 'parser/scanScope.js'));
 const emulatorFixEligibility = require(path.join(appPath, 'util/emulatorFixEligibility.js'));
 const { t } = require(path.join(appPath, 'locale/t.js'));
+const interfaceMode = require(path.join(appPath, 'util/interfaceMode.js'));
 let listeningHotkey = false;
 let keysDown = new Set();
 let keys = '';
@@ -23,6 +24,98 @@ let holdingKeysCheck = null;
 let settingsReady = false;
 let notifAutosaveTimer = null;
 const SETTINGS_SAVE_TIMEOUT_MS = 30000;
+
+/* ---- Simple / Advanced interface mode --------------------------------------------------------
+   Simple hides three settings tabs and a handful of rows inside the tabs it keeps. Everything is
+   hidden with a class and nothing is ever detached: the panel is translated positionally
+   (locale/loader.js binds `li:nth-child(n)`), so a mode switch that moved rows would silently
+   re-label the UI in every language. No setting is written, reset or ignored by switching — the
+   controls behind Advanced keep the values they already have.
+*/
+function currentInterfaceMode() {
+  return interfaceMode.resolve(typeof app !== 'undefined' ? app.config : null);
+}
+
+/*
+  The Sources tab is the one place the mode reasons instead of following a list. A niche source is
+  folded away only while it is doing nothing for you: switched off, or already contributing games to
+  the library, and its switch stays. Reading the saved config rather than the <select> matters — this
+  runs before the form is populated when Settings first opens.
+*/
+function applySourceVisibility(mode) {
+  const enabled = (typeof app !== 'undefined' && app.config && app.config.achievement_source) || {};
+  let librarySources = [];
+  try {
+    // gameList belongs to app.js, which shares this script scope but evaluates after this file.
+    if (typeof gameList !== 'undefined' && Array.isArray(gameList)) librarySources = gameList.map((game) => game && game.source);
+  } catch (err) {
+    debug.log(`interface mode: library sources unavailable (${err})`);
+  }
+
+  const hide = new Set(interfaceMode.hiddenOptionalSources({ mode, enabled, librarySources }));
+  for (const key of Object.keys(interfaceMode.OPTIONAL_SOURCES)) {
+    $(`#option_${key}`).closest('li').toggleClass(interfaceMode.HIDDEN_CLASS, hide.has(key));
+  }
+}
+
+function applyInterfaceMode() {
+  const mode = currentInterfaceMode();
+  const simple = interfaceMode.isSimple(mode);
+  const hidden = interfaceMode.HIDDEN_CLASS;
+
+  $('#settings').attr('data-interface-mode', mode);
+
+  for (const view of interfaceMode.ADVANCED_VIEWS) {
+    $(`#settingNav li[data-view='${view}']`).toggleClass(hidden, simple);
+    $(`#settings .box section.content[data-view='${view}']`).toggleClass(hidden, simple);
+  }
+  // The group header above the advanced tabs would otherwise be left labelling nothing.
+  $('#nav-group-advanced').toggleClass(hidden, simple);
+  $(`#settings [${interfaceMode.ADVANCED_ATTRIBUTE}]`).toggleClass(hidden, simple);
+  applySourceVisibility(mode);
+
+  // The header has no room for a caption, so what each side does is a tooltip on the side itself.
+  const hints = {
+    simple: t('interface-mode-hint-simple', 'Showing the everyday essentials.', 'Affiche l’essentiel du quotidien.'),
+    advanced: t('interface-mode-hint-advanced', 'Showing everything AW Next can do.', 'Affiche tout ce que fait AW Next.'),
+  };
+  $('#settings-mode .settings-mode-switch button').each(function () {
+    const own = $(this).attr('data-mode');
+    const selected = own === mode;
+    $(this).toggleClass('is-selected', selected).attr('aria-checked', String(selected)).attr('title', hints[own] || '');
+  });
+
+  // The Help topic counter is "matches / topics"; hiding topics changes the denominator.
+  if (window.AchievementHelp && typeof window.AchievementHelp.applyHelpSearch === 'function') {
+    try {
+      window.AchievementHelp.applyHelpSearch($, $('#help-search-input').val() || '');
+    } catch (err) {
+      debug.log(`help search refresh after a mode switch failed: ${err}`);
+    }
+  }
+
+  // Switching to Simple while sitting on a tab that just disappeared would leave the panel blank.
+  const active = $('#settingNav li[data-view].active');
+  if (!active.length || active.hasClass(hidden)) {
+    $(`#settingNav li[data-view]:not(.${hidden})`).first().trigger('click');
+  }
+}
+
+/*
+  Persist a mode change immediately. Same policy as the Notifications tab: a control the user flips
+  to see the result is saved when they flip it, not when they remember to press Save.
+*/
+function setInterfaceMode(mode) {
+  const normalized = interfaceMode.normalize(mode);
+  if (!normalized || normalized === currentInterfaceMode()) return;
+  if (!app.config.general) app.config.general = {};
+  app.config.general.interfaceMode = normalized;
+  applyInterfaceMode();
+  settings.setUserDataPath(ipcRenderer.sendSync('get-user-data-path-sync'));
+  settings.save(app.config).catch((err) => debug.log(err));
+}
+
+window.applyInterfaceMode = applyInterfaceMode;
 
 // Apply a stored theme value: built-ins switch <html data-theme>, user themes and
 // the Custom theme inject their CSS through the shared user-theme <style> element.
@@ -334,6 +427,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#settingNav li[data-view="general"]').addClass('active');
       $('#settings .box section.content').removeClass('active');
       $("#settings .box section.content[data-view='general']").addClass('active');
+      applyInterfaceMode();
       $('#game-config').hide();
       const settingsModal = $('#settings');
       const settingsBox = $('#settings .box');
@@ -1723,6 +1817,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       let self = $(this);
       let tooltip = self.find('option:selected').data('tooltip');
       self.attr('title', tooltip);
+    });
+
+    $('#settings-mode .settings-mode-switch button').on('click', function () {
+      setInterfaceMode($(this).attr('data-mode'));
     });
 
     $('#settingNav li[data-view]').click(function () {

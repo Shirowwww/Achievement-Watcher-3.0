@@ -370,11 +370,11 @@
           "description": "Notificar al desbloquear un logro, si es posible"
         },
         "rumble": {
-          "name": "Vibración del control (XInput)",
+          "name": "Vibración del control",
           "description": "Hace vibrar el primer control al desbloquear un logro"
         },
         "notifyOnProgress": {
-          "name": "Informe de progreso",
+          "name": "Notificaciones de progreso",
           "description": "Notificar el progreso de los logros, si es posible"
         },
         "playtime": {
@@ -554,10 +554,10 @@
     },
     "folder": {
       "headline": "Dónde buscar los archivos de logros :",
-      "default": "Carpeta predeterminada",
-      "custom": "Carpeta del usuario",
+      "default": "Carpetas revisadas automáticamente",
+      "custom": "Tus carpetas",
       "addInfo": [
-        "Selecciona una carpeta que contenga carpetas appid.",
+        "Elegí la carpeta donde un juego o un emulador guarda sus archivos de logros.",
         "Para ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 selecciona una carpeta donde se encuentre el",
         "archivo ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini o RPCS3.exe."
       ],
@@ -763,6 +763,11 @@
         "button": "Verificar ahora",
         "description": "Verifica en Steam si una actualización del juego agregó logros desde la última verificación. Ocurre automáticamente cada 3 días; esto lo fuerza ahora."
       }
+    },
+    "interfaceMode": {
+      "title": "Interfaz",
+      "simple": "Simple",
+      "advanced": "Avanzado"
     }
   },
   "onboarding": {
@@ -775,6 +780,7 @@
     "steps": [
       "Idioma",
       "Cómo funciona",
+      "Interfaz",
       "Cuenta",
       "Juegos",
       "Configuración"
@@ -847,7 +853,15 @@
     "invalidFolder": "Esta carpeta no parece contener logros compatibles. Se espera: GSE Saves / Goldberg SteamEmu Saves, partidas CODEX/RUNE, subcarpetas AppID (por ejemplo, 1091500) o una carpeta de juego con steam_settings o un .ini de emulador.",
     "smartRunning": "Buscando...",
     "smartDone": "Búsqueda completa.",
-    "saveError": "No se pudo guardar la configuración."
+    "saveError": "No se pudo guardar la configuración.",
+    "modeTitle": "Elegí tu interfaz",
+    "modeCopy": "Las dos registran los logros exactamente igual. Esto solo decide cuánto de AW Next se ve en pantalla.",
+    "modeSimple": "Simple",
+    "modeSimpleCopy": "Una interfaz despejada pensada para el uso diario: tu biblioteca, las notificaciones, la apariencia y las fuentes.",
+    "modeAdvanced": "Avanzado",
+    "modeAdvancedCopy": "AW Next completo: configuración del emulador, control por mando, diagnósticos, herramientas de reparación y opciones experimentales.",
+    "modeHint": "No se desactiva nada en ninguno de los dos casos: Simple muestra menos y lo podés cambiar cuando quieras en Ajustes.",
+    "modeRequired": "Elegí Simple o Avanzado para continuar."
   },
   "overlay": {
     "icon": "Icono",
@@ -1379,7 +1393,9 @@
     "clear-update-cache-empty": "Nada que vaciar — no se encontraron archivos de actualización en caché.",
     "clear-update-cache-done": "Caché de actualizaciones vaciada: {folder}",
     "clear-update-cache-done-apps": "{count} carpeta(s) de caché vaciada(s).",
-    "clear-update-cache-done-all": "{count} carpeta(s) de caché vaciada(s), incluida la caché de actualizaciones en {folder}."
+    "clear-update-cache-done-all": "{count} carpeta(s) de caché vaciada(s), incluida la caché de actualizaciones en {folder}.",
+    "interface-mode-hint-simple": "Muestra lo esencial del día a día.",
+    "interface-mode-hint-advanced": "Muestra todo lo que puede hacer AW Next."
   },
   "watchdog": {
     "rare": "Raro {percent}%",

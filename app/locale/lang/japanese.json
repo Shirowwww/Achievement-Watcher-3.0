@@ -370,11 +370,11 @@
           "description": "可能なら実績解除時に通知します"
         },
         "rumble": {
-          "name": "ゲームパッドの振動 (XInput)",
+          "name": "コントローラーの振動",
           "description": "実績解除時に最初のコントローラーを振動させます"
         },
         "notifyOnProgress": {
-          "name": "進捗レポート",
+          "name": "進行状況の通知",
           "description": "可能なら実績の進捗を通知します"
         },
         "playtime": {
@@ -554,10 +554,10 @@
     },
     "folder": {
       "headline": "実績ファイルを探す場所：",
-      "default": "既定のディレクトリ",
-      "custom": "ユーザーディレクトリ",
+      "default": "自動で確認されるフォルダー",
+      "custom": "自分のフォルダー",
       "addInfo": [
-        "appid フォルダーを含むフォルダーを選択してください。",
+        "ゲームまたはエミュレーターが実績ファイルを保存しているフォルダーを選んでください。",
         "ALI213、Hoodlum、TENOKE、UniverseLAN、RPCS3 の場合は、次のファイルがあるフォルダーを選択してください：",
         "ALI213.ini、valve.ini、hlm.ini、ds.ini、steam_api.ini、SteamConfig.ini、tenoke.ini、UniverseLAN.ini または RPCS3.exe。"
       ],
@@ -763,6 +763,11 @@
         "button": "今すぐ確認",
         "description": "前回の確認以降にゲームのアップデートで実績が追加されていないか Steam に確認します。通常は3日ごとに自動実行されますが、このボタンで今すぐ実行します。"
       }
+    },
+    "interfaceMode": {
+      "title": "インターフェース",
+      "simple": "シンプル",
+      "advanced": "詳細"
     }
   },
   "onboarding": {
@@ -775,6 +780,7 @@
     "steps": [
       "言語",
       "仕組み",
+      "インターフェース",
       "アカウント",
       "ゲーム",
       "設定"
@@ -847,7 +853,15 @@
     "invalidFolder": "このフォルダーは対応する実績フォルダーではないようです。GSE Saves / Goldberg SteamEmu Saves、CODEX/RUNE セーブ、AppID サブフォルダー（例: 1091500）、または steam_settings やエミュレーターの .ini を含むゲームフォルダーを選択してください。",
     "smartRunning": "検索中...",
     "smartDone": "検索が完了しました。",
-    "saveError": "設定を保存できませんでした。"
+    "saveError": "設定を保存できませんでした。",
+    "modeTitle": "インターフェースを選択",
+    "modeCopy": "どちらも実績の記録方法はまったく同じです。画面にAW Nextをどれだけ表示するかだけが変わります。",
+    "modeSimple": "シンプル",
+    "modeSimpleCopy": "毎日の利用に絞ったすっきりした画面。ライブラリ、通知、外観、ソースを表示します。",
+    "modeAdvanced": "詳細",
+    "modeAdvancedCopy": "AW Nextのすべて。エミュレーターの設定、コントローラー操作、診断、修復ツール、実験的なオプションまで表示します。",
+    "modeHint": "どちらを選んでも機能は無効になりません。シンプルは表示を絞るだけで、設定からいつでも変更できます。",
+    "modeRequired": "続行するにはシンプルまたは詳細を選択してください。"
   },
   "overlay": {
     "icon": "アイコン",
@@ -1379,7 +1393,9 @@
     "clear-update-cache-empty": "消去する対象がありません — キャッシュされた更新ファイルは見つかりませんでした。",
     "clear-update-cache-done": "更新キャッシュを消去しました: {folder}",
     "clear-update-cache-done-apps": "{count} 個のキャッシュフォルダーを消去しました。",
-    "clear-update-cache-done-all": "{count} 個のキャッシュフォルダーを消去しました({folder} 内の更新キャッシュを含む)。"
+    "clear-update-cache-done-all": "{count} 個のキャッシュフォルダーを消去しました({folder} 内の更新キャッシュを含む)。",
+    "interface-mode-hint-simple": "毎日必要なものだけを表示します。",
+    "interface-mode-hint-advanced": "AW Nextのすべての機能を表示します。"
   },
   "watchdog": {
     "rare": "レア {percent}%",

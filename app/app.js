@@ -14,6 +14,18 @@ const { cssUrl } = require(path.join(appPath, 'util/cssUrl.js'));
 const { stripTags } = require(path.join(appPath, 'util/stripTags.js'));
 const { splitLaunchArgs } = require(path.join(appPath, 'util/launchArgs.js'));
 const { openExternalSafe } = require(path.join(appPath, 'util/externalLink.js'));
+const gameHealthInterfaceMode = require(path.join(appPath, 'util/interfaceMode.js'));
+
+/*
+  Simple mode reports outcomes ("Achievement data found"), Advanced reports the values behind them
+  (the schema count, the watched binary, the transport). Both read the SAME report: only the wording
+  and the length of the check list change, never a state, a level or an offered repair. The exact
+  values Simple leaves out are all still in Technical details, which both modes show.
+*/
+function interfaceIsSimple() {
+  return gameHealthInterfaceMode.isSimple(gameHealthInterfaceMode.resolve(app.config));
+}
+
 const args = require('minimist');
 const moment = require('moment');
 const { spawn } = require('child_process');
@@ -3536,7 +3548,11 @@ var app = {
           // single "&" (they're also used in HTML); escape only here, at the native-menu boundary.
           const groupLabel = (attribute) => ($('#game-list').attr(attribute) || '').replace(/&/g, '&&');
           if (gameMenu.items.length) menu.append(new MenuItem({ label: groupLabel('data-ctx-group-game'), submenu: gameMenu }));
-          if (emulatorMenu.items.length)
+          // The emulator submenu is the GBE runtime / Steamless / Uplay R2 surface, so it belongs to
+          // Advanced. Nothing is disabled by hiding it: the safe per-game repairs (rewrite the
+          // achievement data, restore the emulator file) stay on the Game Health panel in both
+          // modes, and switching to Advanced brings the full menu straight back.
+          if (emulatorMenu.items.length && !interfaceIsSimple())
             menu.append(
               new MenuItem({
                 label: isUbisoftSource ? 'Ubisoft Connect' : groupLabel('data-ctx-group-emulator'),

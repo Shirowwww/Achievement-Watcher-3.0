@@ -370,11 +370,11 @@
           "description": "Oznámit při odemčení achievementu, pokud je to možné"
         },
         "rumble": {
-          "name": "Vibrace ovladače (XInput)",
+          "name": "Vibrace ovladače",
           "description": "Při odemčení achievementu rozvibruje první ovladač"
         },
         "notifyOnProgress": {
-          "name": "Hlášení o postupu",
+          "name": "Oznámení o postupu",
           "description": "Oznámit postup achievementu, pokud je to možné"
         },
         "playtime": {
@@ -554,10 +554,10 @@
     },
     "folder": {
       "headline": "Kde hledat soubory achievementů :",
-      "default": "Výchozí složka",
-      "custom": "Složka uživatele",
+      "default": "Automaticky kontrolované složky",
+      "custom": "Tvoje složky",
       "addInfo": [
-        "Vyberte složku obsahující složky appid.",
+        "Vyber složku, ve které hra nebo emulátor ukládá soubory úspěchů.",
         "Pro ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 vyberte složku, ve které se nachází soubor",
         "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini nebo RPCS3.exe."
       ],
@@ -763,6 +763,11 @@
         "button": "Zkontrolovat nyní",
         "description": "Zkontroluje u Steamu, zda aktualizace hry nepřidala achievementy od poslední kontroly. Probíhá automaticky každé 3 dny; toto ji vynutí hned."
       }
+    },
+    "interfaceMode": {
+      "title": "Rozhraní",
+      "simple": "Jednoduché",
+      "advanced": "Pokročilé"
     }
   },
   "onboarding": {
@@ -775,6 +780,7 @@
     "steps": [
       "Jazyk",
       "Jak to funguje",
+      "Rozhraní",
       "Účet",
       "Hry",
       "Nastavení"
@@ -847,7 +853,15 @@
     "invalidFolder": "Tato složka nevypadá jako podporovaná složka úspěchů. Očekává se: GSE Saves / Goldberg SteamEmu Saves, uložené pozice CODEX/RUNE, podsložky AppID (např. 1091500) nebo složka hry se steam_settings či emulátorovým souborem .ini.",
     "smartRunning": "Hledání...",
     "smartDone": "Hledání dokončeno.",
-    "saveError": "Nastavení se nepodařilo uložit."
+    "saveError": "Nastavení se nepodařilo uložit.",
+    "modeTitle": "Vyber si rozhraní",
+    "modeCopy": "Obě varianty sledují úspěchy naprosto stejně. Rozhoduješ jen o tom, kolik z AW Next je vidět.",
+    "modeSimple": "Jednoduché",
+    "modeSimpleCopy": "Přehledné rozhraní zaměřené na každodenní používání: knihovna, oznámení, vzhled a zdroje.",
+    "modeAdvanced": "Pokročilé",
+    "modeAdvancedCopy": "Celý AW Next: nastavení emulátoru, ovládání gamepadem, diagnostika, nástroje pro opravu a experimentální volby.",
+    "modeHint": "Ani v jednom případě se nic nevypíná — Jednoduché jen zobrazuje méně a kdykoli to změníš v Nastavení.",
+    "modeRequired": "Pro pokračování vyber Jednoduché nebo Pokročilé."
   },
   "overlay": {
     "icon": "Ikona",
@@ -1379,7 +1393,9 @@
     "clear-update-cache-empty": "Není co mazat — v mezipaměti nebyly nalezeny žádné soubory aktualizace.",
     "clear-update-cache-done": "Mezipaměť aktualizací vymazána: {folder}",
     "clear-update-cache-done-apps": "Vymazáno {count} složek mezipaměti.",
-    "clear-update-cache-done-all": "Vymazáno {count} složek mezipaměti, včetně mezipaměti aktualizací ve složce {folder}."
+    "clear-update-cache-done-all": "Vymazáno {count} složek mezipaměti, včetně mezipaměti aktualizací ve složce {folder}.",
+    "interface-mode-hint-simple": "Zobrazuje to podstatné pro každý den.",
+    "interface-mode-hint-advanced": "Zobrazuje vše, co AW Next umí."
   },
   "watchdog": {
     "rare": "Vzácný {percent}%",

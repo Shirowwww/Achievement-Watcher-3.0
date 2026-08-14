@@ -370,11 +370,11 @@
           "description": "Notify on achievement unlock if possible"
         },
         "rumble": {
-          "name": "Gamepad Vibration (XInput)",
+          "name": "Gamepad vibration",
           "description": "Vibrates first controller when unlocking an achievement"
         },
         "notifyOnProgress": {
-          "name": "Progress report",
+          "name": "Progress notifications",
           "description": "Notify on achievement progress if possible"
         },
         "playtime": {
@@ -554,10 +554,10 @@
     },
     "folder": {
       "headline": "Where to look for achievement files:",
-      "default": "Default Dir",
-      "custom": "User Dir",
+      "default": "Folders checked automatically",
+      "custom": "Your folders",
       "addInfo": [
-        "Select a folder which contains appid folder(s).",
+        "Choose the folder where a game or an emulator keeps its achievement files.",
         "For ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 please select a folder where the",
         "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini or RPCS3.exe file is located."
       ],
@@ -763,6 +763,11 @@
         "button": "Check now",
         "description": "Checks Steam for achievements added by a game update since the last check. Runs automatically every 3 days; this forces it now."
       }
+    },
+    "interfaceMode": {
+      "title": "Interface",
+      "simple": "Simple",
+      "advanced": "Advanced"
     }
   },
   "onboarding": {
@@ -775,6 +780,7 @@
     "steps": [
       "Language",
       "How it works",
+      "Interface",
       "Account",
       "Games",
       "Settings"
@@ -847,7 +853,15 @@
     "invalidFolder": "That folder does not look like a supported achievement folder. Expected: GSE Saves / Goldberg SteamEmu Saves, CODEX/RUNE saves, AppID subfolders (e.g. 1091500), or a game folder with steam_settings or an emulator .ini.",
     "smartRunning": "Searching...",
     "smartDone": "Search complete.",
-    "saveError": "Could not save setup."
+    "saveError": "Could not save setup.",
+    "modeTitle": "Choose your interface",
+    "modeCopy": "Both track achievements exactly the same way. This only decides how much of AW Next is on screen.",
+    "modeSimple": "Simple",
+    "modeSimpleCopy": "A streamlined interface built around what you use every day: your library, notifications, appearance and sources.",
+    "modeAdvanced": "Advanced",
+    "modeAdvancedCopy": "The complete AW Next: emulator runtime setup, controller control, diagnostics, repair tools and experimental options.",
+    "modeHint": "Nothing is switched off either way — Simple shows less, and you can change this at any time in Settings.",
+    "modeRequired": "Choose Simple or Advanced to continue."
   },
   "overlay": {
     "icon": "Icon",
@@ -1379,7 +1393,9 @@
     "clear-update-cache-empty": "Nothing to clear — no cached update files found.",
     "clear-update-cache-done": "Update cache cleared: {folder}",
     "clear-update-cache-done-apps": "Cleared {count} cache folder(s).",
-    "clear-update-cache-done-all": "Cleared {count} cache folder(s), including the update cache in {folder}."
+    "clear-update-cache-done-all": "Cleared {count} cache folder(s), including the update cache in {folder}.",
+    "interface-mode-hint-simple": "Showing the everyday essentials.",
+    "interface-mode-hint-advanced": "Showing everything AW Next can do."
   },
   "watchdog": {
     "rare": "Rare {percent}%",

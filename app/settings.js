@@ -70,6 +70,16 @@ module.exports.load = () => {
       // profile; only the missing-file defaults below should launch first-run onboarding.
       options.general.onboardingCompleted = true;
     }
+    // Simple / Advanced interface mode (util/interfaceMode.js). Purely how much of the UI is shown —
+    // it changes no parser, no watchdog behaviour and no achievement tracking.
+    //
+    // Migration is deliberate: a profile that already finished onboarding predates this setting, and
+    // silently dropping it into Simple would hide the emulator, controller and diagnostics tabs from
+    // someone who has been using them. Those installs get Advanced — nothing disappears on upgrade.
+    // A profile still in onboarding gets '' and is asked to choose, with neither option preselected.
+    if (options.general.interfaceMode !== 'simple' && options.general.interfaceMode !== 'advanced') {
+      options.general.interfaceMode = options.general.onboardingCompleted === true ? 'advanced' : '';
+    }
     if (typeof options.general.startWithWindows !== 'boolean') {
       options.general.startWithWindows = true;
     }
@@ -452,6 +462,7 @@ module.exports.load = () => {
         updatePostponedVersion: '',
         updatePostponedUntil: 0,
         onboardingCompleted: false,
+        interfaceMode: '', // '' until onboarding asks; 'simple' | 'advanced' afterwards
         startWithWindows: true,
         disableHardwareAccel: false,
         closeToTray: true,

@@ -22,6 +22,11 @@ const ROW_SELECTOR = 'li, .emulator-login, .emulator-hero, .help-panel';
 // matching sections instead of a column of empty headers.
 const BLOCK_SELECTOR = 'ul, .arrow-list, .emulator-group, .settings-card, #epic-connect';
 
+// Rows and tabs the interface mode (util/interfaceMode.js) is hiding. Duplicated as a literal to
+// keep this module dependency-free; interfaceMode.HIDDEN_CLASS is the definition, and
+// test/ui/interfaceMode.test.js pins the two together.
+const MODE_HIDDEN_CLASS = 'mode-hidden';
+
 function normalize(text) {
   return String(text == null ? '' : text)
     .replace(/\s+/g, ' ')
@@ -88,7 +93,11 @@ function filterSections($, query, scope = '#settings') {
 
   $(`${scope} .box section.content[data-view]`).each(function () {
     const section = $(this);
-    const rows = rowsIn($, section);
+    // Simple mode hides whole tabs and individual rows with MODE_HIDDEN_CLASS. Searching must not
+    // count them, and must never clear their class — the search owns `search-hidden` and nothing
+    // else. A hidden tab reports zero hits so its nav counter stays empty.
+    const modeHidden = section.hasClass(MODE_HIDDEN_CLASS);
+    const rows = modeHidden ? $() : rowsIn($, section).not(`.${MODE_HIDDEN_CLASS}`);
     let hits = 0;
 
     rows.each(function () {
@@ -117,4 +126,4 @@ function filterSections($, query, scope = '#settings') {
   return { total, perView };
 }
 
-module.exports = { ROW_SELECTOR, BLOCK_SELECTOR, normalize, parseTerms, matches, buildHaystack, haystackFor, rowsIn, filterSections };
+module.exports = { ROW_SELECTOR, BLOCK_SELECTOR, MODE_HIDDEN_CLASS, normalize, parseTerms, matches, buildHaystack, haystackFor, rowsIn, filterSections };

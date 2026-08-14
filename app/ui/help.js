@@ -274,7 +274,10 @@ function renderPanelCounts($, help) {
 
 function applyHelpSearch($, rawQuery) {
   const card = $('#settings .content[data-view="help"] .help-card');
-  const panels = card.find('.help-panel').toArray();
+  // Topics the interface mode is hiding are not part of the search: counting them would report
+  // matches the user cannot see, and `panel.hidden = false` would never bring them back anyway.
+  // 'mode-hidden' is interfaceMode.HIDDEN_CLASS; this file has no require(), hence the literal.
+  const panels = card.find('.help-panel').not('.mode-hidden').toArray();
   const terms = parseSearchTerms(rawQuery);
   const clearButton = $('#help-search-clear');
   const noResults = $('#help-no-results');

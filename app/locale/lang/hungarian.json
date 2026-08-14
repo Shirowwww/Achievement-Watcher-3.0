@@ -370,11 +370,11 @@
           "description": "Értesítés teljesítmény feloldásakor, ha lehetséges"
         },
         "rumble": {
-          "name": "Kontroller rezgése (XInput)",
+          "name": "Kontroller rezgése",
           "description": "Teljesítmény feloldásakor megrezegteti az első kontrollert"
         },
         "notifyOnProgress": {
-          "name": "Folyamatjelentés",
+          "name": "Haladási értesítések",
           "description": "Értesítés a teljesítmény folyamatáról, ha lehetséges"
         },
         "playtime": {
@@ -554,10 +554,10 @@
     },
     "folder": {
       "headline": "Hol keresse a teljesítményfájlokat :",
-      "default": "Alapértelmezett mappa",
-      "custom": "Felhasználói mappa",
+      "default": "Automatikusan ellenőrzött mappák",
+      "custom": "A saját mappáid",
       "addInfo": [
-        "Válassz egy mappát, amely appid mappákat tartalmaz.",
+        "Válaszd ki a mappát, ahol egy játék vagy egy emulátor a teljesítményfájljait tartja.",
         "ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 esetén válassz egy mappát, ahol a",
         "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini vagy RPCS3.exe fájl található."
       ],
@@ -763,6 +763,11 @@
         "button": "Ellenőrzés most",
         "description": "Ellenőrzi a Steamnél, hogy egy játékfrissítés adott-e hozzá trófeákat az utolsó ellenőrzés óta. Ez automatikusan 3 naponta lefut; ez a gomb azonnal kikényszeríti."
       }
+    },
+    "interfaceMode": {
+      "title": "Felület",
+      "simple": "Egyszerű",
+      "advanced": "Speciális"
     }
   },
   "onboarding": {
@@ -775,6 +780,7 @@
     "steps": [
       "Nyelv",
       "Hogyan működik",
+      "Felület",
       "fiók",
       "Játékok",
       "Beállítások"
@@ -847,7 +853,15 @@
     "invalidFolder": "Ez a mappa nem tűnik támogatott teljesítménymappának. Elvárt: GSE Saves / Goldberg SteamEmu Saves, CODEX/RUNE mentések, AppID almappák (pl. 1091500), vagy steam_settings mappát, illetve emulátor .ini fájlt tartalmazó játékmappa.",
     "smartRunning": "Keresés...",
     "smartDone": "A keresés befejeződött.",
-    "saveError": "Nem sikerült menteni a beállítást."
+    "saveError": "Nem sikerült menteni a beállítást.",
+    "modeTitle": "Válaszd ki a felületet",
+    "modeCopy": "Mindkettő pontosan ugyanúgy követi a teljesítményeket. Ez csak azt dönti el, mennyi látszik az AW Nextből.",
+    "modeSimple": "Egyszerű",
+    "modeSimpleCopy": "Letisztult felület a mindennapi használatra: a könyvtárad, az értesítések, a megjelenés és a források.",
+    "modeAdvanced": "Speciális",
+    "modeAdvancedCopy": "A teljes AW Next: emulátor-beállítás, kontrolleres vezérlés, diagnosztika, javítóeszközök és kísérleti beállítások.",
+    "modeHint": "Egyik módban sem kapcsolódik ki semmi — az Egyszerű csak kevesebbet mutat, és bármikor átválthatsz a Beállításokban.",
+    "modeRequired": "A folytatáshoz válaszd az Egyszerű vagy a Speciális módot."
   },
   "overlay": {
     "icon": "Ikon",
@@ -1379,7 +1393,9 @@
     "clear-update-cache-empty": "Nincs mit üríteni — nem található gyorsítótárazott frissítési fájl.",
     "clear-update-cache-done": "Frissítési gyorsítótár kiürítve: {folder}",
     "clear-update-cache-done-apps": "{count} gyorsítótár-mappa kiürítve.",
-    "clear-update-cache-done-all": "{count} gyorsítótár-mappa kiürítve, beleértve a frissítési gyorsítótárat itt: {folder}."
+    "clear-update-cache-done-all": "{count} gyorsítótár-mappa kiürítve, beleértve a frissítési gyorsítótárat itt: {folder}.",
+    "interface-mode-hint-simple": "A mindennapokhoz szükséges dolgokat mutatja.",
+    "interface-mode-hint-advanced": "Mindent mutat, amit az AW Next tud."
   },
   "watchdog": {
     "rare": "Ritka {percent}%",

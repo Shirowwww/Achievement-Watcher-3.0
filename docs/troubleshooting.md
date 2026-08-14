@@ -9,6 +9,10 @@ Start with the checks below. If a problem remains, include the app version, Wind
 <sub>App/runtime versions and quick access to logs, data and update checks</sub>
 </div>
 
+The **Advanced** tab only exists while the interface is in Advanced mode. If you do not see it,
+switch the **Interface** control at the top of **Settings** from Simple to Advanced first - nothing
+is lost by switching back afterwards (see [getting-started.md](getting-started.md#simple-and-advanced)).
+
 Use **Settings → Advanced → Diagnostics** to open the log or data directory. The default log path is:
 
 ```text

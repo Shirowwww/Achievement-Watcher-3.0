@@ -7,6 +7,20 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- The interface now comes in **Simple** and **Advanced**. The first-run guide asks for the choice on
+  its own step and will not continue until one is picked; neither is preselected. The choice is
+  stored in `[general] interfaceMode` and can be changed at any time from the **Interface** control
+  at the top of Settings, beside the panel title.
+- Simple shows General, Theme, Controller, Notification, Sources, Folders and Help. Advanced adds
+  the Steam emulator tab (GBE runtime, Steamless, API-check bypass, Uplay R2) and the diagnostics
+  tab, and restores the deeper rows inside the tabs Simple already shows: the built-in scan-folder
+  list, the websocket transport, the per-emulator notification presets, the controller backend and
+  overlay-focus options, and the emulator submenu in a game's right-click menu.
+- The Sources list adapts instead of following a fixed list. Simple folds a niche source away
+  (GreenLuma, LumaPlay, the Nemirtingas emulators, Goldberg SocialClub, the notification-cache
+  import) only while it is still enabled and no game in the library came from it. Turning one off or
+  owning a game it detected brings its row straight back, so the mode can never hide the one control
+  that would explain a missing game.
 - The library now supports manually added games from a title and executable, with an optional
   platform and Steam AppID. Achievement-less entries remain launchable, track playtime, display
   **No achievements**, and can adopt a Steam achievement schema later without being
@@ -26,8 +40,18 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Simple / Advanced is a display setting only. It hides controls, it never disables a feature: no
+  parser, watcher, scan or stored value changes with it, and switching back restores every control
+  with the value it already had. Upgrading an existing installation lands on Advanced, so nothing
+  already in use disappears.
 - The Settings About block is one line about this app; the upstream lineage credits moved to the
   foot of the Advanced tab, where they are bound by id rather than by DOM position.
+- Plainer settings vocabulary: "Gamepad Vibration (XInput)" is now "Gamepad vibration", "Progress
+  report" is "Progress notifications", the folder lists are "Your folders" and "Folders checked
+  automatically", and adding a folder asks for "the folder where a game or an emulator keeps its
+  achievement files" instead of "a folder which contains appid folder(s)".
+- The first-run guide is reachable from **Settings → General** instead of the Advanced tab, so it
+  stays available in Simple.
 - The final first-run page is a compact set of eight useful choices: app theme, notification mode,
   notification preset, playtime tracking, Steam-library visibility, emulator auto-fix, hidden
   achievements, and duplicate merging. New profiles enable playtime tracking by default.

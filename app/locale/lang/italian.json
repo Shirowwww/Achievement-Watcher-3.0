@@ -370,11 +370,11 @@
           "description": "Notifica allo sblocco di un obiettivo, se possibile"
         },
         "rumble": {
-          "name": "Vibrazione del controller (XInput)",
+          "name": "Vibrazione del gamepad",
           "description": "Fa vibrare il primo controller quando si sblocca un obiettivo"
         },
         "notifyOnProgress": {
-          "name": "Rapporto sui progressi",
+          "name": "Notifiche di avanzamento",
           "description": "Notifica sul progresso degli obiettivi, se possibile"
         },
         "playtime": {
@@ -554,10 +554,10 @@
     },
     "folder": {
       "headline": "Dove cercare i file degli obiettivi :",
-      "default": "Cartella predefinita",
-      "custom": "Cartella utente",
+      "default": "Cartelle controllate automaticamente",
+      "custom": "Le tue cartelle",
       "addInfo": [
-        "Seleziona una cartella che contiene cartelle appid.",
+        "Scegli la cartella in cui un gioco o un emulatore tiene i file degli obiettivi.",
         "Per ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 seleziona una cartella in cui si trova il",
         "file ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini o RPCS3.exe."
       ],
@@ -763,6 +763,11 @@
         "button": "Verifica ora",
         "description": "Verifica su Steam se un aggiornamento del gioco ha aggiunto obiettivi dall'ultimo controllo. Avviene automaticamente ogni 3 giorni; questo lo forza subito."
       }
+    },
+    "interfaceMode": {
+      "title": "Interfaccia",
+      "simple": "Semplice",
+      "advanced": "Avanzata"
     }
   },
   "onboarding": {
@@ -775,6 +780,7 @@
     "steps": [
       "Lingua",
       "Come funziona",
+      "Interfaccia",
       "Account",
       "Giochi",
       "Impostazioni"
@@ -847,7 +853,15 @@
     "invalidFolder": "Questa cartella non sembra contenere obiettivi supportati. Previsti: GSE Saves / Goldberg SteamEmu Saves, salvataggi CODEX/RUNE, sottocartelle AppID (ad es. 1091500) o una cartella di gioco con steam_settings o un file .ini dell’emulatore.",
     "smartRunning": "Ricerca...",
     "smartDone": "Ricerca completata.",
-    "saveError": "Impossibile salvare la configurazione."
+    "saveError": "Impossibile salvare la configurazione.",
+    "modeTitle": "Scegli la tua interfaccia",
+    "modeCopy": "Entrambe registrano gli obiettivi esattamente allo stesso modo. Questa scelta decide solo quanto di AW Next resta a schermo.",
+    "modeSimple": "Semplice",
+    "modeSimpleCopy": "Un’interfaccia essenziale pensata per l’uso quotidiano: la libreria, le notifiche, l’aspetto e le fonti.",
+    "modeAdvanced": "Avanzata",
+    "modeAdvancedCopy": "AW Next per intero: configurazione dell’emulatore, controllo da gamepad, diagnostica, strumenti di riparazione e opzioni sperimentali.",
+    "modeHint": "In nessuno dei due casi viene disattivato qualcosa: Semplice mostra meno e puoi cambiare quando vuoi dalle Impostazioni.",
+    "modeRequired": "Scegli Semplice o Avanzata per continuare."
   },
   "overlay": {
     "icon": "Icona",
@@ -1379,7 +1393,9 @@
     "clear-update-cache-empty": "Niente da svuotare — nessun file di aggiornamento in cache trovato.",
     "clear-update-cache-done": "Cache aggiornamenti svuotata: {folder}",
     "clear-update-cache-done-apps": "{count} cartella/e di cache svuotata/e.",
-    "clear-update-cache-done-all": "{count} cartella/e di cache svuotata/e, inclusa la cache di aggiornamento in {folder}."
+    "clear-update-cache-done-all": "{count} cartella/e di cache svuotata/e, inclusa la cache di aggiornamento in {folder}.",
+    "interface-mode-hint-simple": "Mostra l’essenziale di ogni giorno.",
+    "interface-mode-hint-advanced": "Mostra tutto quello che AW Next sa fare."
   },
   "watchdog": {
     "rare": "Raro {percent}%",

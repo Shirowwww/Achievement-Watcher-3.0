@@ -370,11 +370,11 @@
           "description": "Powiadom o odblokowaniu osiągnięcia, jeśli to możliwe"
         },
         "rumble": {
-          "name": "Wibracja pada (XInput)",
+          "name": "Wibracje pada",
           "description": "Wibruje pierwszym padem przy odblokowaniu osiągnięcia"
         },
         "notifyOnProgress": {
-          "name": "Raport postępu",
+          "name": "Powiadomienia o postępie",
           "description": "Powiadom o postępie osiągnięcia, jeśli to możliwe"
         },
         "playtime": {
@@ -554,10 +554,10 @@
     },
     "folder": {
       "headline": "Gdzie szukać plików osiągnięć :",
-      "default": "Folder domyślny",
-      "custom": "Folder użytkownika",
+      "default": "Foldery sprawdzane automatycznie",
+      "custom": "Twoje foldery",
       "addInfo": [
-        "Wybierz folder zawierający foldery appid.",
+        "Wybierz folder, w którym gra lub emulator trzyma pliki osiągnięć.",
         "Dla ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 wybierz folder, w którym znajduje się plik",
         "ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini lub RPCS3.exe."
       ],
@@ -763,6 +763,11 @@
         "button": "Sprawdź teraz",
         "description": "Sprawdza w Steam, czy aktualizacja gry dodała osiągnięcia od ostatniego sprawdzenia. Dzieje się to automatycznie co 3 dni; ten przycisk wymusza sprawdzenie od razu."
       }
+    },
+    "interfaceMode": {
+      "title": "Interfejs",
+      "simple": "Prosty",
+      "advanced": "Zaawansowany"
     }
   },
   "onboarding": {
@@ -775,6 +780,7 @@
     "steps": [
       "Język",
       "Jak to działa",
+      "Interfejs",
       "Konto",
       "Gry",
       "Ustawienia"
@@ -847,7 +853,15 @@
     "invalidFolder": "Ten folder nie wygląda na obsługiwany folder osiągnięć. Oczekiwane: GSE Saves / Goldberg SteamEmu Saves, zapisy CODEX/RUNE, podfoldery AppID (np. 1091500) albo folder gry ze steam_settings lub plikiem .ini emulatora.",
     "smartRunning": "Wyszukiwanie...",
     "smartDone": "Wyszukiwanie zakończone.",
-    "saveError": "Nie udało się zapisać konfiguracji."
+    "saveError": "Nie udało się zapisać konfiguracji.",
+    "modeTitle": "Wybierz swój interfejs",
+    "modeCopy": "Oba śledzą osiągnięcia dokładnie tak samo. To decyduje wyłącznie o tym, ile AW Next widać na ekranie.",
+    "modeSimple": "Prosty",
+    "modeSimpleCopy": "Uporządkowany interfejs skupiony na codziennym użyciu: biblioteka, powiadomienia, wygląd i źródła.",
+    "modeAdvanced": "Zaawansowany",
+    "modeAdvancedCopy": "Pełny AW Next: konfiguracja emulatora, sterowanie padem, diagnostyka, narzędzia naprawcze i opcje eksperymentalne.",
+    "modeHint": "W żadnym z trybów nic nie jest wyłączane — Prosty po prostu pokazuje mniej, a zmienisz to w każdej chwili w Ustawieniach.",
+    "modeRequired": "Wybierz Prosty lub Zaawansowany, aby kontynuować."
   },
   "overlay": {
     "icon": "Ikona",
@@ -1379,7 +1393,9 @@
     "clear-update-cache-empty": "Nic do wyczyszczenia — nie znaleziono żadnych plików aktualizacji w pamięci podręcznej.",
     "clear-update-cache-done": "Wyczyszczono pamięć podręczną aktualizacji: {folder}",
     "clear-update-cache-done-apps": "Wyczyszczono {count} folder(y) pamięci podręcznej.",
-    "clear-update-cache-done-all": "Wyczyszczono {count} folder(y) pamięci podręcznej, w tym pamięć podręczną aktualizacji w {folder}."
+    "clear-update-cache-done-all": "Wyczyszczono {count} folder(y) pamięci podręcznej, w tym pamięć podręczną aktualizacji w {folder}.",
+    "interface-mode-hint-simple": "Pokazuje to, co potrzebne na co dzień.",
+    "interface-mode-hint-advanced": "Pokazuje wszystko, co potrafi AW Next."
   },
   "watchdog": {
     "rare": "Rzadkie {percent}%",

@@ -370,11 +370,11 @@
           "description": "Bei Erfolgsfreischaltung benachrichtigen, wenn möglich"
         },
         "rumble": {
-          "name": "Gamepad-Vibration (XInput)",
+          "name": "Controller-Vibration",
           "description": "Lässt den ersten Controller bei einer Erfolgsfreischaltung vibrieren"
         },
         "notifyOnProgress": {
-          "name": "Fortschrittsbericht",
+          "name": "Fortschrittsbenachrichtigungen",
           "description": "Bei Erfolgsfortschritt benachrichtigen, wenn möglich"
         },
         "playtime": {
@@ -554,10 +554,10 @@
     },
     "folder": {
       "headline": "Wo nach Erfolgsdateien gesucht wird :",
-      "default": "Standardverzeichnis",
-      "custom": "Benutzerverzeichnis",
+      "default": "Automatisch geprüfte Ordner",
+      "custom": "Deine Ordner",
       "addInfo": [
-        "Wähle einen Ordner, der appid-Ordner enthält.",
+        "Wähle den Ordner, in dem ein Spiel oder ein Emulator seine Erfolgsdateien ablegt.",
         "Für ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3 wähle bitte einen Ordner, in dem sich die",
         "Datei ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini oder RPCS3.exe befindet."
       ],
@@ -763,6 +763,11 @@
         "button": "Jetzt prüfen",
         "description": "Prüft bei Steam, ob ein Spiel-Update seit der letzten Prüfung neue Erfolge hinzugefügt hat. Läuft automatisch alle 3 Tage; dies erzwingt die Prüfung jetzt."
       }
+    },
+    "interfaceMode": {
+      "title": "Oberfläche",
+      "simple": "Einfach",
+      "advanced": "Erweitert"
     }
   },
   "onboarding": {
@@ -775,6 +780,7 @@
     "steps": [
       "Sprache",
       "Wie es funktioniert",
+      "Oberfläche",
       "Konto",
       "Spiele",
       "Einstellungen"
@@ -847,7 +853,15 @@
     "invalidFolder": "Dieser Ordner sieht nicht wie ein unterstützter Erfolgsordner aus. Erwartet werden: GSE Saves / Goldberg SteamEmu Saves, CODEX-/RUNE-Spielstände, AppID-Unterordner (z. B. 1091500) oder ein Spielordner mit steam_settings bzw. einer Emulator-.ini.",
     "smartRunning": "Suche...",
     "smartDone": "Suche abgeschlossen.",
-    "saveError": "Das Setup konnte nicht gespeichert werden."
+    "saveError": "Das Setup konnte nicht gespeichert werden.",
+    "modeTitle": "Wähle deine Oberfläche",
+    "modeCopy": "Beide verfolgen Erfolge exakt gleich. Es geht nur darum, wie viel von AW Next zu sehen ist.",
+    "modeSimple": "Einfach",
+    "modeSimpleCopy": "Eine aufgeräumte Oberfläche für den Alltag: deine Bibliothek, Benachrichtigungen, Darstellung und Quellen.",
+    "modeAdvanced": "Erweitert",
+    "modeAdvancedCopy": "AW Next vollständig: Emulator-Einrichtung, Controller-Steuerung, Diagnose, Reparaturwerkzeuge und experimentelle Optionen.",
+    "modeHint": "In keinem der beiden Fälle wird etwas abgeschaltet — Einfach zeigt weniger, und du kannst das jederzeit in den Einstellungen ändern.",
+    "modeRequired": "Wähle Einfach oder Erweitert, um fortzufahren."
   },
   "overlay": {
     "icon": "Symbol",
@@ -1379,7 +1393,9 @@
     "clear-update-cache-empty": "Nichts zu leeren — keine zwischengespeicherten Update-Dateien gefunden.",
     "clear-update-cache-done": "Update-Cache geleert: {folder}",
     "clear-update-cache-done-apps": "{count} Cache-Ordner geleert.",
-    "clear-update-cache-done-all": "{count} Cache-Ordner geleert, einschließlich des Update-Caches in {folder}."
+    "clear-update-cache-done-all": "{count} Cache-Ordner geleert, einschließlich des Update-Caches in {folder}.",
+    "interface-mode-hint-simple": "Zeigt das Wesentliche für den Alltag.",
+    "interface-mode-hint-advanced": "Zeigt alles, was AW Next kann."
   },
   "watchdog": {
     "rare": "Selten {percent}%",
