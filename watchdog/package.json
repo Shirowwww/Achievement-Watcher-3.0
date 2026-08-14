@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "Achievement-Watchdog",
-  "description": "Sidekick to Achievement Watcher for live notification on achievement unlocking",
+  "description": "Sidekick to AW Next for live notification on achievement unlocking",
   "version": "3.8.6",
   "main": "watchdog.js",
   "engines": {

@@ -1,6 +1,6 @@
 # Goldberg Uplay R2 setup
 
-Ubisoft games do not use Steam's `steam_api.dll`, so the normal GBE Fork repair is not appropriate. For compatible Ubisoft titles that use Goldberg Uplay R2, Achievement Watcher offers a separate **Apply emulator fix (Uplay R2)** action.
+Ubisoft games do not use Steam's `steam_api.dll`, so the normal GBE Fork repair is not appropriate. For compatible Ubisoft titles that use Goldberg Uplay R2, AW Next offers a separate **Apply emulator fix (Uplay R2)** action.
 
 Official Ubisoft Connect achievement data may already be detected from the local client. This guide is only for games that actually use a Goldberg Uplay R2 loader.
 
@@ -11,19 +11,19 @@ Official Ubisoft Connect achievement data may already be detected from the local
 
 All of the following must be true:
 
-1. Achievement Watcher can identify the Ubisoft game or match it from its install-state metadata.
+1. AW Next can identify the Ubisoft game or match it from its install-state metadata.
 2. `app/assets/uplay-steam.json` contains a matching Steam release.
 3. The Steam release exposes achievement API names that can be mapped safely to Ubisoft objective IDs.
-4. A compatible Uplay R2 loader has been placed in the local Achievement Watcher cache.
+4. A compatible Uplay R2 loader has been placed in the local AW Next cache.
 
 If a requirement is missing, diagnosis reports the limitation instead of writing a guessed mapping.
 
 ## Add the loader once
 
-Achievement Watcher does not download a Uplay R2 loader because there is no stable official release source for the compatible build. Place your own loader file in:
+AW Next does not download a Uplay R2 loader because there is no stable official release source for the compatible build. Place your own loader file in:
 
 ```text
-%APPDATA%\Achievement Watcher 3.0\cache\uplayR2
+%APPDATA%\Achievement Watcher Next\cache\uplayR2
 ```
 
 Supported file names are:
@@ -42,7 +42,7 @@ The installer chooses the matching architecture when the game is repaired.
 3. Open **Emulator & tools → Diagnose Uplay R2 setup**.
 4. Confirm the resolved Ubisoft ID, Steam AppID, install directory and loader status.
 5. Choose **Apply emulator fix (Uplay R2)** and review the confirmation.
-6. Launch the game once, then refresh Achievement Watcher.
+6. Launch the game once, then refresh AW Next.
 
 ## What the action changes
 
@@ -68,7 +68,7 @@ counterpart cannot be resolved simply keep the column hidden.
 
 ## Loader builds
 
-The achievement redirect (`AchSaveType` / `AchSavePath` / `AchKeyPrefix`) was added to the loader partway through its life. Builds released before that ignore those keys entirely: they look an unlock up by the bare objective ID and always write to their own save folder. Achievement Watcher probes the installed loader for those key names and adapts:
+The achievement redirect (`AchSaveType` / `AchSavePath` / `AchKeyPrefix`) was added to the loader partway through its life. Builds released before that ignore those keys entirely: they look an unlock up by the bare objective ID and always write to their own save folder. AW Next probes the installed loader for those key names and adapts:
 
 | Loader | INI written | `achievements_schema.json` keys | Unlocks read from |
 | --- | --- | --- | --- |
@@ -86,10 +86,10 @@ The mapping works only when the Steam achievement API names contain a stable num
 An empty or missing runtime save is expected until the game records an unlock. If an earned achievement still does not appear:
 
 1. Run **Diagnose Uplay R2 setup** again. It names the INI the loader actually reads, whether that loader supports the redirect, and every folder that was searched for a save.
-2. Check for `NO_SCHEMA_JSON` or `ACHIEVEMENTS_DISABLED`. **A Ubisoft game update commonly causes both**: re-extracting the repack deletes `achievements_schema.json` and restores an INI with `Achievements = 0`. Achievement Watcher re-applies the setup automatically on the next scan when *Automatically fix newly detected games* is enabled; otherwise run **Apply emulator fix (Uplay R2)** again.
+2. Check for `NO_SCHEMA_JSON` or `ACHIEVEMENTS_DISABLED`. **A Ubisoft game update commonly causes both**: re-extracting the repack deletes `achievements_schema.json` and restores an INI with `Achievements = 0`. AW Next re-applies the setup automatically on the next scan when *Automatically fix newly detected games* is enabled; otherwise run **Apply emulator fix (Uplay R2)** again.
 3. Confirm the installed loader architecture matches the game.
 4. Set `Logging = 1` in the INI the diagnosis reported and check `upc_r2.log` next to the game executable - `Achievements disabled or achievements.json file not found!` confirms the emulator never armed achievements.
-5. Review `%APPDATA%\Achievement Watcher 3.0\logs\parser.log`.
+5. Review `%APPDATA%\Achievement Watcher Next\logs\parser.log`.
 
 For general schema/save distinctions, see the [Goldberg and GBE Fork guide](emulator-setup.md#schema-and-save-files-are-different).
 

@@ -1,5 +1,19 @@
+# `appId` is the AppUserModelID Windows matches toasts and taskbar pins against. It must not change
+# or every existing install loses its notification identity.
+#
+# `productName` and `executableName` are split on purpose:
+#   productName      is what people read. electron-builder writes it into the executable's
+#                    FileDescription and ProductName, which is the name Task Manager shows, and
+#                    uses it for the installer's own branding text.
+#   executableName   pins everything an existing install is keyed on — the executable filename
+#                    ("Achievement Watcher.exe"), the installation directory and the uninstaller
+#                    filename. The "Start with Windows" entry written by app/electron/ipc.js stores
+#                    the full path of that executable, so renaming it silently kills autostart and
+#                    leaves a dead registry value behind; the Watchdog also spawns the app by that
+#                    exact filename.
 appId: io.github.shirowwww.achievement.watcher
-productName: 'Achievement Watcher'
+productName: 'Achievement Watcher Next'
+executableName: 'Achievement Watcher'
 npmRebuild: false
 
 # Copies watchdog/node_modules into the packed app. electron-builder's
@@ -66,7 +80,12 @@ nsis:
   uninstallerIcon: build/icon.ico
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: 'Achievement Watcher'
+  # Shortcut and Control Panel entry carry the full product name — both have room for it. The
+  # executable behind them keeps its historical name (see the note at the top of this file). The
+  # uninstaller entry drops the version electron-builder appends by default: the product name is
+  # not a version string, and the release tag already carries the number.
+  shortcutName: 'Achievement Watcher Next'
+  uninstallDisplayName: 'Achievement Watcher Next'
   license: build/license.txt
   differentialPackage: true
 

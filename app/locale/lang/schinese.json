@@ -50,7 +50,7 @@
   "hiddenDescriptionPlaceholder": "隐藏 — 点击显示",
   "noneUnlocked": "尚未解锁任何成就",
   "play": "开始游戏 !",
-  "noneUnlockedHint": "没有看到任何解锁？请查看常见问题 / 故障排除部分：",
+  "noneUnlockedHint": "没有看到任何解锁？",
   "scrollUp": "向上滚动",
   "allGamesBackButton": "所有游戏",
   "removeFromList": "从列表中移除",
@@ -173,7 +173,7 @@
       },
       "startup": {
         "name": "随系统启动",
-        "description": "随 Windows 自动启动 Achievement Watcher，并隐藏在托盘中。"
+        "description": "随 Windows 自动启动 AW Next，并隐藏在托盘中。"
       },
       "onboarding": {
         "name": "首次运行向导",
@@ -211,7 +211,7 @@
         },
         "appNavigation": {
           "name": "用手柄控制应用",
-          "description": "用手柄浏览 Achievement Watcher 窗口：游戏库、游戏详情、设置和搜索。"
+          "description": "用手柄浏览 AW Next 窗口：游戏库、游戏详情、设置和搜索。"
         },
         "layout": {
           "auto": "自动",
@@ -268,7 +268,7 @@
       },
       "steamSettings": {
         "name": "steam_settings 数据",
-        "description": "Simple 使用 Achievement Watcher 自身的获取（匿名）。Advanced 运行 generate_emu_config 以覆盖仓库/语言。",
+        "description": "Simple 使用 AW Next 自身的获取（匿名）。Advanced 运行 generate_emu_config 以覆盖仓库/语言。",
         "value": {
           "simple": "Simple（快速）",
           "advanced": "Advanced（完整）"
@@ -784,7 +784,7 @@
     "languagePlaceholder": "选择一种语言...",
     "languageHint": "仅在选择此选项后才开始加载第一个库。",
     "introTitle": "它是如何运作的",
-    "introCopy": "成就观察者会扫描已知的保存文件夹和游戏库，然后看门狗会在托盘中继续运行以获取解锁通知和游戏内叠加层。",
+    "introCopy": "AW Next会扫描已知的保存文件夹和游戏库，然后看门狗会在托盘中继续运行以获取解锁通知和游戏内叠加层。",
     "scanTitle": "扫描",
     "scanCopy": "通过成就文件查找 Steam、GOG、Epic、RPCS3/ShadPS4/Xenia 和 Goldberg/GBE 安装，例如 %APPDATA%\\GSE Saves、Goldberg SteamEmu Saves、CODEX/RUNE 存档，或包含 steam_settings 的游戏文件夹。",
     "watchTitle": "监控",
@@ -924,6 +924,8 @@
     "errorSavingSettings": "保存设置时出错。",
     "failedToSetAvatar": "无法设置头像。",
     "themeCustom": "自定义…",
+    "themeMore": "更多主题…",
+    "themeFewer": "收起主题…",
     "themeUserPrefix": "用户：",
     "manuallyUnlocked": "手动解锁",
     "input-required": "需要输入",
@@ -1097,7 +1099,7 @@
     "copy-the-uplay-r2-loader-64-dll-upc-r2-loader-64-dll-files-into-": "将 uplay_r2_loader(64).dll / upc_r2_loader(64).dll 文件复制到这里（一次性设置）：\n{dir}",
     "update-the-uplay-r2-loader": "更新 Uplay R2 加载器？",
     "uplay-r2-old-loader-message": "此游戏使用的加载器太旧，无法重定向成就。",
-    "uplay-r2-old-loader-detail": "不更新也能使用修复：Achievement Watcher 读取模拟器自身的存档文件夹。\n\n更新可启用重定向到 GSE Saves，但会替换游戏当前启动所用的 DLL（原文件保留为 .bak）。",
+    "uplay-r2-old-loader-detail": "不更新也能使用修复：AW Next 读取模拟器自身的存档文件夹。\n\n更新可启用重定向到 GSE Saves，但会替换游戏当前启动所用的 DLL（原文件保留为 .bak）。",
     "keep-current-loader": "保留当前加载器",
     "update-loader": "更新",
     "updating-the-dll": "正在更新 DLL…",
@@ -1170,7 +1172,7 @@
     "apply-the-emulator-fix-to-x-detected-game-s-existing-files-are-b": "要对检测到的 {count} 个游戏应用模拟器修复吗？现有文件在覆盖前会进行备份。",
     "fixing": "正在修复",
     "done-x-game-s-fixed-x-skipped-x-failed": "完成 — 修复 {fixed} 个游戏，跳过 {skipped} 个，失败 {failed} 个。",
-    "achievement-watcher": "Achievement Watcher",
+    "achievement-watcher": "AW Next",
     "connect-epic-games-account": "连接 Epic Games 账户",
     "connect-microsoft-xbox-network": "连接 Microsoft / Xbox Network",
     "emulator-fix-applied": "已应用模拟器修复",
@@ -1178,7 +1180,7 @@
     "achievement-unlocked": "已解锁成就",
     "choose-theme-image": "选择背景图片",
     "choose-a-notification-sound": "选择通知声音",
-    "open-achievement-watcher": "打开 Achievement Watcher",
+    "open-achievement-watcher": "打开 AW Next",
     "restart-background-monitor": "重启后台监视器",
     "quit": "退出",
     "update-available": "有可用更新",
@@ -1283,7 +1285,7 @@
     "invalid-folder": "无效文件夹",
     "error-adding-custom-folder": "添加自定义文件夹时出错",
     "error-adding-library-folder": "添加库文件夹时出错",
-    "generate-configs-detail-auto-fix": "这将立即启动完整扫描。扫描期间，Achievement Watcher 会对检测到且安装文件夹已知的游戏应用 GBE/Goldberg 自动修复。修复在后台运行：如果刚修复的游戏尚未显示为就绪，请再次扫描。",
+    "generate-configs-detail-auto-fix": "这将立即启动完整扫描。扫描期间，AW Next 会对检测到且安装文件夹已知的游戏应用 GBE/Goldberg 自动修复。修复在后台运行：如果刚修复的游戏尚未显示为就绪，请再次扫描。",
     "generate-configs-detail-scan-only": "这只会启动完整的检测扫描。自动修复已在“模拟器配置 > 自动修复新检测到的游戏”中禁用。",
     "generate-configs": "生成配置",
     "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "找到 {found} 个兼容 Steam 的安装 — 其中 {missing} 个没有现有修复且符合条件。",
@@ -1348,7 +1350,6 @@
     "diagnosis-auto-repair-failed": "自动修复失败：{error}",
     "diagnosis-steam-appid": "Steam AppID：{appid}（{name}）",
     "diagnosis-steam-appid-not-resolved": "Steam AppID：未解析",
-    "version-app": "应用",
     "diagnosis-dlls-backed-up": "现有 DLL 已备份为 *.bak",
     "diagnosis-config-backed-up": "之前的配置已备份：{path}",
     "diagnosis-ach-key-prefix": "AchKeyPrefix：{prefix}",
@@ -1392,7 +1393,7 @@
     "rareAchievement": "稀有成就",
     "rareDescription": "只有 {percent}% 的玩家解锁了此成就。",
     "testAchievement": "测试成就",
-    "testDescription": "这是来自 Achievement Watcher 的测试通知。",
+    "testDescription": "这是来自 AW Next 的测试通知。",
     "playedFor": "你游玩了 {duration}",
     "trackingPlaytime": "正在跟踪游戏时间",
     "playtime": "游戏时间"

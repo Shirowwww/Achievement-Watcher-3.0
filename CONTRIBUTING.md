@@ -12,11 +12,11 @@ Bug fixes, documentation improvements, translations and focused new features are
 - Gather the app version, Windows version, source involved and relevant logs.
 - Report a suspected vulnerability through the private process in [SECURITY.md](SECURITY.md), never in a public issue.
 
-Use the repository templates for bug reports, feature requests and support questions. Keep reports focused on Achievement Watcher itself; the issue tracker cannot provide games, account access or piracy support.
+Use the repository templates for bug reports, feature requests and support questions. Keep reports focused on AW Next itself; the issue tracker cannot provide games, account access or piracy support.
 
 ## Development setup
 
-Achievement Watcher is developed and packaged on Windows. Follow [BUILD.md](BUILD.md) to install both npm workspaces, run the app and build the installer.
+AW Next is developed and packaged on Windows. Follow [BUILD.md](BUILD.md) to install both npm workspaces, run the app and build the installer.
 
 Create a focused branch and inspect the worktree before making changes:
 

@@ -42,30 +42,67 @@ function applyThemeValue(value) {
     .catch(() => userThemes.applyCss(''));
 }
 
+// Eighteen built-ins is too many to choose from cold, so the picker opens on a short, deliberately
+// contrasting set — the one light theme, the pure black one, a neutral grey, then four clearly
+// different accent families — and keeps the rest one step away behind "More themes…". Nothing is
+// removed: expanding appends the remaining built-ins to the same <select>.
+const PRIMARY_THEMES = [
+  ['default', 'Steam Blue'],
+  ['light', 'Light'],
+  ['oled', 'OLED Black'],
+  ['graphite', 'Graphite'],
+  ['nord', 'Nord'],
+  ['dracula', 'Dracula'],
+  ['gruvbox', 'Gruvbox'],
+];
+const MORE_THEMES = [
+  ['tokyonight', 'Tokyo Night'],
+  ['catppuccin', 'Catppuccin Mocha'],
+  ['rosepine', 'Rosé Pine'],
+  ['synthwave', "Synthwave '84"],
+  ['everforest', 'Everforest'],
+  ['cyberpunk', 'Cyberpunk'],
+  ['ember', 'Ember'],
+  ['ocean', 'Ocean'],
+  ['hacker', 'Hacker'],
+  ['burgundy', 'Burgundy'],
+  ['champagne', 'Champagne'],
+];
+// One sentinel toggles the list both ways; only its label changes.
+const MORE_THEMES_VALUE = '__more-themes__';
+let themeListExpanded = false;
+// Last theme the user actually selected, so toggling the list can restore a preview that has not
+// been saved yet instead of snapping back to the persisted value.
+let themeSelection = null;
+
+// Plain rows on purpose. Tinting each option with its theme's colours was tried both ways — the
+// full palette and a faint accent wash — and neither looked right: a native <select> gives no
+// control over how the swatch is drawn, so the list reads as a patchwork and the tint competes
+// with Chromium's own highlight for the selected row, which is the one thing it has to make clear.
+function themeOption(value, label) {
+  return $('<option>').attr('value', value).text(label);
+}
+
 // Populate the theme dropdown: the built-ins + Custom + any user theme in <userData>\themes.
-function populateThemeSelect() {
+function populateThemeSelect(preferred) {
   const sel = $('#option_theme');
-  const wanted = (app.config.general && app.config.general.theme) || 'default';
+  const wanted = preferred || (app.config.general && app.config.general.theme) || 'default';
   sel.empty();
-  [
-    ['default', 'Steam Blue'],
-    ['oled', 'OLED Black'],
-    ['dracula', 'Dracula'],
-    ['graphite', 'Graphite'],
-    ['nord', 'Nord'],
-    ['gruvbox', 'Gruvbox'],
-    ['tokyonight', 'Tokyo Night'],
-    ['catppuccin', 'Catppuccin Mocha'],
-    ['rosepine', 'Rosé Pine'],
-    ['synthwave', "Synthwave '84"],
-    ['everforest', 'Everforest'],
-    ['cyberpunk', 'Cyberpunk'],
-    ['ember', 'Ember'],
-    ['ocean', 'Ocean'],
-    ['hacker', 'Hacker'],
-    ['burgundy', 'Burgundy'],
-    ['champagne', 'Champagne'],
-  ].forEach(([value, label]) => sel.append($('<option>').attr('value', value).text(label)));
+  for (const [value, label] of PRIMARY_THEMES) sel.append(themeOption(value, label));
+  if (themeListExpanded) {
+    for (const [value, label] of MORE_THEMES) sel.append(themeOption(value, label));
+  } else {
+    // Collapsing must never hide the theme that is actually applied, so a selection from the long
+    // list stays on show as an eighth row while the other extras fold away.
+    const active = MORE_THEMES.find(([value]) => value === wanted);
+    if (active) sel.append(themeOption(active[0], active[1]));
+  }
+  // The toggle sits after whatever it controls, so it reads as "…and more" / "…show fewer".
+  sel.append(
+    $('<option>')
+      .attr('value', MORE_THEMES_VALUE)
+      .text(themeListExpanded ? t('themeFewer', 'Fewer themes…', 'Moins de thèmes…') : t('themeMore', 'More themes…', 'Plus de thèmes…'))
+  );
   sel.append($('<option>').attr('value', 'custom').text(t('themeCustom', 'Custom…', 'Personnalisé…')));
   ipcRenderer
     .invoke('list-user-themes')
@@ -477,10 +514,17 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
       // Populate the Debug tab's read-only diagnostics (versions). Wrapped so a failure here can
       // never block the settings form from opening.
+      //
+      // The line is kept to major runtime versions so it stays one short row; the tooltip carries
+      // the full product name and the exact build numbers for a bug report.
       try {
-        $('#diag-versions').text(
-          `${t('version-app', 'App', 'Application')} ${remote.app.getVersion()} · Electron ${process.versions.electron} · Node ${process.versions.node} · Chrome ${process.versions.chrome}`
-        );
+        const major = (v) => String(v || '').split('.')[0];
+        $('#diag-versions')
+          .text(`AW Next ${remote.app.getVersion()} · Electron ${major(process.versions.electron)} · Node ${major(process.versions.node)} · Chrome ${major(process.versions.chrome)}`)
+          .attr(
+            'title',
+            `Achievement Watcher Next ${remote.app.getVersion()}\nElectron ${process.versions.electron} · Node ${process.versions.node} · Chrome ${process.versions.chrome}`
+          );
       } catch (err) {
         debug.log(err);
       }
@@ -1644,6 +1688,23 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     // Cancel restores whatever is saved in the config.
     $('#option_theme').on('change', function () {
       const value = $(this).val() || 'default';
+      // The toggle row is a command, not a theme: it folds the rest of the built-ins in or out,
+      // puts back the selection it interrupted, and reopens the dropdown on it. Both steps run
+      // synchronously so the picker reopens inside the click that asked for it.
+      if (value === MORE_THEMES_VALUE) {
+        const previous = themeSelection || (app.config.general && app.config.general.theme) || 'default';
+        themeListExpanded = !themeListExpanded;
+        populateThemeSelect(previous);
+        $(this).val(previous);
+        try {
+          this.showPicker();
+        } catch {
+          /* showPicker needs a user gesture and is not in every runtime: the list is rebuilt either
+             way, so the user just reopens the dropdown themselves */
+        }
+        return;
+      }
+      themeSelection = value;
       applyThemeValue(value);
       if (value === 'custom') openCustomThemeEditor();
       else closeCustomThemeEditor();
@@ -2898,11 +2959,13 @@ function boolifyValue(v) {
 }
 
 // Default folder where souvenir screenshots are written when no custom folder is set.
+// Mirrors defaultDir() in watchdog/notification/souvenir.js — the Watchdog is what actually writes
+// the file, so the two must agree or the UI would show a folder nothing is saved to.
 function souvenirDefaultDir() {
   try {
-    return path.join(remote.app.getPath('pictures'), 'Achievement Watcher');
+    return path.join(remote.app.getPath('pictures'), 'Achievement Watcher Next');
   } catch (e) {
-    return 'Pictures\\Achievement Watcher';
+    return 'Pictures\\Achievement Watcher Next';
   }
 }
 

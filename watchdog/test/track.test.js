@@ -18,7 +18,7 @@ test('save creates the missing cache directory and round-trips through load (iss
   const root = tempDir(t);
   // Reproduces the reported failure: the steam_cache/data directory does not exist yet, so the old
   // code threw ENOENT on writeFile and the baseline never persisted.
-  const dataDir = path.join(root, 'Achievement Watcher 3.0', 'steam_cache', 'data');
+  const dataDir = path.join(root, 'Achievement Watcher Next', 'steam_cache', 'data');
   track.setCacheDir(dataDir);
 
   const achievements = [

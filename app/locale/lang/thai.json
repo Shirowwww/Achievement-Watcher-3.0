@@ -50,7 +50,7 @@
   "hiddenDescriptionPlaceholder": "ซ่อนอยู่ — คลิกเพื่อเปิดเผย",
   "noneUnlocked": "ยังไม่มีความสำเร็จที่ปลดล็อก",
   "play": "เริ่มเล่นเลย !",
-  "noneUnlockedHint": "ไม่เห็นการปลดล็อกใด ๆ ใช่ไหม? ดูส่วนคำถามที่พบบ่อย / การแก้ปัญหาของ",
+  "noneUnlockedHint": "ไม่เห็นการปลดล็อกใด ๆ ใช่ไหม?",
   "scrollUp": "เลื่อนขึ้น",
   "allGamesBackButton": "เกมทั้งหมด",
   "removeFromList": "นำออกจากรายการ",
@@ -173,7 +173,7 @@
       },
       "startup": {
         "name": "เรียกใช้เมื่อเริ่มต้นระบบ",
-        "description": "เริ่ม Achievement Watcher โดยอัตโนมัติพร้อม Windows โดยซ่อนไว้ในถาดระบบ"
+        "description": "เริ่ม AW Next โดยอัตโนมัติพร้อม Windows โดยซ่อนไว้ในถาดระบบ"
       },
       "onboarding": {
         "name": "คู่มือการเริ่มใช้งานครั้งแรก",
@@ -211,7 +211,7 @@
         },
         "appNavigation": {
           "name": "ควบคุมแอปด้วยคอนโทรลเลอร์",
-          "description": "นำทางหน้าต่าง Achievement Watcher ด้วยคอนโทรลเลอร์: คลังเกม รายละเอียดเกม การตั้งค่า และการค้นหา"
+          "description": "นำทางหน้าต่าง AW Next ด้วยคอนโทรลเลอร์: คลังเกม รายละเอียดเกม การตั้งค่า และการค้นหา"
         },
         "layout": {
           "auto": "อัตโนมัติ",
@@ -268,7 +268,7 @@
       },
       "steamSettings": {
         "name": "ข้อมูล steam_settings",
-        "description": "Simple ใช้การดึงข้อมูลของ Achievement Watcher เอง (ไม่ระบุตัวตน) Advanced เรียกใช้ generate_emu_config เพื่อครอบคลุม depot/ภาษา",
+        "description": "Simple ใช้การดึงข้อมูลของ AW Next เอง (ไม่ระบุตัวตน) Advanced เรียกใช้ generate_emu_config เพื่อครอบคลุม depot/ภาษา",
         "value": {
           "simple": "Simple (เร็ว)",
           "advanced": "Advanced (สมบูรณ์)"
@@ -784,7 +784,7 @@
     "languagePlaceholder": "เลือกภาษา...",
     "languageHint": "การโหลดไลบรารีแรกจะเริ่มต้นหลังจากตัวเลือกนี้เท่านั้น",
     "introTitle": "มันทำงานอย่างไร",
-    "introCopy": "Achievement Watcher จะสแกนโฟลเดอร์บันทึกที่รู้จักและไลบรารีเกมของคุณ จากนั้น Watchdog จะทำงานต่อไปในถาดเพื่อปลดล็อคการแจ้งเตือนและโอเวอร์เลย์ในเกม",
+    "introCopy": "AW Next จะสแกนโฟลเดอร์บันทึกที่รู้จักและไลบรารีเกมของคุณ จากนั้น Watchdog จะทำงานต่อไปในถาดเพื่อปลดล็อคการแจ้งเตือนและโอเวอร์เลย์ในเกม",
     "scanTitle": "สแกน",
     "scanCopy": "ค้นหาการติดตั้ง Steam, GOG, Epic, RPCS3/ShadPS4/Xenia และ Goldberg/GBE จากไฟล์ความสำเร็จ เช่น %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, เซฟ CODEX/RUNE หรือโฟลเดอร์เกมที่มี steam_settings",
     "watchTitle": "เฝ้าติดตาม",
@@ -924,6 +924,8 @@
     "errorSavingSettings": "เกิดข้อผิดพลาดในการบันทึกการตั้งค่า",
     "failedToSetAvatar": "ไม่สามารถตั้งค่าอวตารได้",
     "themeCustom": "กำหนดเอง…",
+    "themeMore": "ธีมเพิ่มเติม…",
+    "themeFewer": "ธีมน้อยลง…",
     "themeUserPrefix": "ผู้ใช้:",
     "manuallyUnlocked": "ปลดล็อกด้วยตนเอง",
     "input-required": "ต้องป้อนข้อมูล",
@@ -1097,7 +1099,7 @@
     "copy-the-uplay-r2-loader-64-dll-upc-r2-loader-64-dll-files-into-": "คัดลอกไฟล์ uplay_r2_loader(64).dll / upc_r2_loader(64).dll มาที่นี่ (ตั้งค่าเพียงครั้งเดียว):\n{dir}",
     "update-the-uplay-r2-loader": "อัปเดต loader Uplay R2 หรือไม่?",
     "uplay-r2-old-loader-message": "เกมนี้ใช้ loader เก่าเกินไปสำหรับการเปลี่ยนเส้นทางความสำเร็จ",
-    "uplay-r2-old-loader-detail": "ฟิกซ์ทำงานได้โดยไม่ต้องอัปเดต: Achievement Watcher อ่านโฟลเดอร์บันทึกของอีมูเลเตอร์เอง\n\nการอัปเดตเปิดใช้งานการเปลี่ยนเส้นทางไปยัง GSE Saves แต่จะแทนที่ DLL ที่เกมใช้เริ่มต้นในปัจจุบัน (ต้นฉบับเก็บเป็น .bak)",
+    "uplay-r2-old-loader-detail": "ฟิกซ์ทำงานได้โดยไม่ต้องอัปเดต: AW Next อ่านโฟลเดอร์บันทึกของอีมูเลเตอร์เอง\n\nการอัปเดตเปิดใช้งานการเปลี่ยนเส้นทางไปยัง GSE Saves แต่จะแทนที่ DLL ที่เกมใช้เริ่มต้นในปัจจุบัน (ต้นฉบับเก็บเป็น .bak)",
     "keep-current-loader": "เก็บ loader ปัจจุบันไว้",
     "update-loader": "อัปเดต",
     "updating-the-dll": "กำลังอัปเดต DLL…",
@@ -1170,7 +1172,7 @@
     "apply-the-emulator-fix-to-x-detected-game-s-existing-files-are-b": "ใช้ฟิกซ์อีมูเลเตอร์กับเกมที่ตรวจพบ {count} เกมหรือไม่? ไฟล์เดิมจะถูกสำรองก่อนเขียนทับ",
     "fixing": "กำลังซ่อม",
     "done-x-game-s-fixed-x-skipped-x-failed": "เสร็จสิ้น — ซ่อม {fixed} เกม ข้าม {skipped} เกม ล้มเหลว {failed} เกม",
-    "achievement-watcher": "Achievement Watcher",
+    "achievement-watcher": "AW Next",
     "connect-epic-games-account": "เชื่อมต่อบัญชี Epic Games",
     "connect-microsoft-xbox-network": "เชื่อมต่อ Microsoft / Xbox Network",
     "emulator-fix-applied": "ใช้ฟิกซ์อีมูเลเตอร์แล้ว",
@@ -1178,7 +1180,7 @@
     "achievement-unlocked": "ปลดล็อกความสำเร็จ",
     "choose-theme-image": "เลือกรูปพื้นหลัง",
     "choose-a-notification-sound": "เลือกเสียงแจ้งเตือน",
-    "open-achievement-watcher": "เปิด Achievement Watcher",
+    "open-achievement-watcher": "เปิด AW Next",
     "restart-background-monitor": "รีสตาร์ทมอนิเตอร์เบื้องหลัง",
     "quit": "ออก",
     "update-available": "มีอัปเดต",
@@ -1283,7 +1285,7 @@
     "invalid-folder": "โฟลเดอร์ไม่ถูกต้อง",
     "error-adding-custom-folder": "เกิดข้อผิดพลาดในการเพิ่มโฟลเดอร์ที่กำหนดเอง",
     "error-adding-library-folder": "เกิดข้อผิดพลาดในการเพิ่มโฟลเดอร์คลังเกม",
-    "generate-configs-detail-auto-fix": "ตอนนี้จะเริ่มสแกนแบบเต็ม ระหว่างการสแกน Achievement Watcher จะใช้ฟิกซ์อัตโนมัติ GBE/Goldberg กับเกมที่ตรวจพบซึ่งมีโฟลเดอร์ติดตั้งที่รู้จัก การซ่อมทำงานเบื้องหลัง: สแกนอีกครั้งหากเกมที่เพิ่งซ่อมยังไม่แสดงว่าพร้อม",
+    "generate-configs-detail-auto-fix": "ตอนนี้จะเริ่มสแกนแบบเต็ม ระหว่างการสแกน AW Next จะใช้ฟิกซ์อัตโนมัติ GBE/Goldberg กับเกมที่ตรวจพบซึ่งมีโฟลเดอร์ติดตั้งที่รู้จัก การซ่อมทำงานเบื้องหลัง: สแกนอีกครั้งหากเกมที่เพิ่งซ่อมยังไม่แสดงว่าพร้อม",
     "generate-configs-detail-scan-only": "จะเริ่มเฉพาะการสแกนตรวจจับแบบเต็ม การซ่อมอัตโนมัติถูกปิดใน การกำหนดค่าอีมูเลเตอร์ > ซ่อมเกมที่ตรวจพบใหม่โดยอัตโนมัติ",
     "generate-configs": "สร้างคอนฟิก",
     "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "พบการติดตั้งที่รองรับ Steam {found} รายการ — {missing} รายการไม่มีฟิกซ์เดิมและเข้าเกณฑ์",
@@ -1348,7 +1350,6 @@
     "diagnosis-auto-repair-failed": "การซ่อมอัตโนมัติล้มเหลว: {error}",
     "diagnosis-steam-appid": "Steam AppID: {appid} ({name})",
     "diagnosis-steam-appid-not-resolved": "Steam AppID: ยังไม่ระบุ",
-    "version-app": "แอป",
     "diagnosis-dlls-backed-up": "บันทึก DLL ที่มีอยู่เป็น *.bak",
     "diagnosis-config-backed-up": "สำรองการกำหนดค่าก่อนหน้า: {path}",
     "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
@@ -1392,7 +1393,7 @@
     "rareAchievement": "ความสำเร็จที่หายาก",
     "rareDescription": "มีเพียง {percent}% ของผู้เล่นที่ปลดล็อก",
     "testAchievement": "ความสำเร็จทดสอบ",
-    "testDescription": "นี่คือการแจ้งเตือนทดสอบจาก Achievement Watcher",
+    "testDescription": "นี่คือการแจ้งเตือนทดสอบจาก AW Next",
     "playedFor": "คุณเล่นไป {duration}",
     "trackingPlaytime": "กำลังติดตามเวลาการเล่น",
     "playtime": "เวลาเล่น"

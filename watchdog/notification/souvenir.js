@@ -28,8 +28,10 @@ function sanitize(s) {
   return String(s || '').replace(/[<>:"/\\|?*]/g, '').replace(/\s+/g, ' ').trim().slice(0, 100) || 'Unknown';
 }
 
+// Kept in sync with souvenirDefaultDir() in app/ui/settings.js and SOUVENIR_DIR_NAME in
+// app/util/migrateUserData.js, which links shots from the pre-rename folder into this one.
 function defaultDir() {
-  return path.join(os.homedir(), 'Pictures', 'Achievement Watcher');
+  return path.join(os.homedir(), 'Pictures', 'Achievement Watcher Next');
 }
 
 // Capture the full desktop and write it to <dir>/<game>/<date> - <achievement>.png. Returns the path or null.

@@ -1,6 +1,6 @@
 # Goldberg and GBE Fork technical reference
 
-This document describes how Achievement Watcher discovers, reads and repairs Goldberg/GBE-compatible achievement data. For normal setup steps, use the [user guide](emulator-setup.md).
+This document describes how AW Next discovers, reads and repairs Goldberg/GBE-compatible achievement data. For normal setup steps, use the [user guide](emulator-setup.md).
 
 ## Data model
 
@@ -105,7 +105,7 @@ unlock_all=1
 1234=DLC display name
 ```
 
-Achievement Watcher writes both when data is available. Explicit IDs let games enumerate DLC, while `unlock_all=1` covers ownership checks that query a specific ID. Existing entries are merged rather than discarded.
+AW Next writes both when data is available. Explicit IDs let games enumerate DLC, while `unlock_all=1` covers ownership checks that query a specific ID. Existing entries are merged rather than discarded.
 
 ## User configuration
 
@@ -118,13 +118,13 @@ language=english
 account_steamid=7656119...
 ```
 
-The account name and language follow Achievement Watcher settings. An existing `account_steamid` is preserved because changing it can redirect the emulator to a different save identity. Placeholder local-save paths are removed or corrected so the Watchdog can observe the resulting files.
+The account name and language follow AW Next settings. An existing `account_steamid` is preserved because changing it can redirect the emulator to a different save identity. Placeholder local-save paths are removed or corrected so the Watchdog can observe the resulting files.
 
 ## Runtime installation
 
 `app/parser/gbeInstaller.js` downloads a Windows release from `Detanup01/gbe_fork` into the local cache and keeps the matching 32-bit/64-bit DLLs with their `generate_interfaces` tools. The cache is reused, and the release endpoint is not queried on every scan.
 
-`installDlls` selects the architecture already present in each game directory, keeps the original DLL as a one-time `.bak`, and installs only a matched runtime set. Achievement Watcher uses a standalone Steam API DLL replacement; the old ColdClient path is not part of the current setup.
+`installDlls` selects the architecture already present in each game directory, keeps the original DLL as a one-time `.bak`, and installs only a matched runtime set. AW Next uses a standalone Steam API DLL replacement; the old ColdClient path is not part of the current setup.
 
 Advanced schema generation is separate. `app/parser/genEmuConfig.js` uses the maintained `gse_fork_tools` generator, then merges its output into the game's `steam_settings` rather than replacing the entire directory blindly.
 

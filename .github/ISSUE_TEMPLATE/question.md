@@ -1,6 +1,6 @@
 ---
 name: Question or support
-about: Ask for help using Achievement Watcher
+about: Ask for help using AW Next
 title: ''
 labels: question
 assignees: ''
@@ -18,7 +18,7 @@ What are you trying to do, what did you expect, and where are you stuck?
 
 ## Environment
 
-- Achievement Watcher version:
+- AW Next version:
 - Windows version:
 - Source or emulator involved:
 

@@ -24,17 +24,17 @@ What should have happened?
 
 ## Environment
 
-- Achievement Watcher version:
+- AW Next version:
 - Windows version:
 - Source or emulator:
 - Installation type: installer / unpacked build / development
 
 ## Logs and screenshots
 
-Attach screenshots or a zip of the relevant files from `%APPDATA%\Achievement Watcher 3.0\logs`. Logs can also be opened from **Settings → Advanced → Diagnostics**.
+Attach screenshots or a zip of the relevant files from `%APPDATA%\Achievement Watcher Next\logs`. Logs can also be opened from **Settings → Advanced → Diagnostics**.
 
 ## Additional context
 
 Include any custom folder, notification or emulator settings that may matter. Do not attach game files, credentials or account tokens.
 
-> Keep reports focused on Achievement Watcher. The issue tracker cannot provide games, account access or piracy support.
+> Keep reports focused on AW Next. The issue tracker cannot provide games, account access or piracy support.

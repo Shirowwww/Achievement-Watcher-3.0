@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "Achievement-Watcher",
-  "description": "A modern achievement tracker for PC games with real-time notifications.",
+  "description": "Achievement Watcher Next - every achievement, one experience. A modern achievement tracker for PC games with real-time notifications.",
   "version": "3.8.6",
   "main": "./electron/init.js",
   "engines": {

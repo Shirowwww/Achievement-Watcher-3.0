@@ -50,7 +50,7 @@
   "hiddenDescriptionPlaceholder": "Gizli — göstermek için tıkla",
   "noneUnlocked": "Henüz açılmış başarım yok",
   "play": "Oynamaya başla !",
-  "noneUnlockedHint": "Hiç açılan görmüyor musun? SSS / Sorun Giderme bölümüne bak:",
+  "noneUnlockedHint": "Hiç açılan görmüyor musun?",
   "scrollUp": "Yukarı çık",
   "allGamesBackButton": "Tüm oyunlar",
   "removeFromList": "Listeden kaldır",
@@ -173,7 +173,7 @@
       },
       "startup": {
         "name": "Başlangıçta çalıştır",
-        "description": "Achievement Watcher'ı Windows ile otomatik olarak, tepside gizli başlatır."
+        "description": "AW Next'i Windows ile otomatik olarak, tepside gizli başlatır."
       },
       "onboarding": {
         "name": "İlk çalıştırma kılavuzu",
@@ -211,7 +211,7 @@
         },
         "appNavigation": {
           "name": "Uygulamayı kumandayla kontrol et",
-          "description": "Achievement Watcher penceresinde kumandayla gezin: kütüphane, oyun ayrıntıları, ayarlar ve aramalar."
+          "description": "AW Next penceresinde kumandayla gezin: kütüphane, oyun ayrıntıları, ayarlar ve aramalar."
         },
         "layout": {
           "auto": "Otomatik",
@@ -268,7 +268,7 @@
       },
       "steamSettings": {
         "name": "steam_settings verisi",
-        "description": "Simple, Achievement Watcher'ın kendi getirmesini kullanır (anonim). Advanced, depo/dil kapsamı için generate_emu_config çalıştırır.",
+        "description": "Simple, AW Next'in kendi getirmesini kullanır (anonim). Advanced, depo/dil kapsamı için generate_emu_config çalıştırır.",
         "value": {
           "simple": "Simple (hızlı)",
           "advanced": "Advanced (tam)"
@@ -784,7 +784,7 @@
     "languagePlaceholder": "Bir dil seçin...",
     "languageHint": "İlk kütüphane yüklemesi ancak bu seçimden sonra başlar.",
     "introTitle": "Nasıl çalışır?",
-    "introCopy": "Achievement Watcher, bilinen kaydetme klasörlerinizi ve oyun kitaplıklarınızı tarar, ardından Watchdog, kilit açma bildirimleri ve oyun içi yer paylaşımı için tepside çalışmaya devam eder.",
+    "introCopy": "AW Next, bilinen kaydetme klasörlerinizi ve oyun kitaplıklarınızı tarar, ardından Watchdog, kilit açma bildirimleri ve oyun içi yer paylaşımı için tepside çalışmaya devam eder.",
     "scanTitle": "Tarama",
     "scanCopy": "Steam, GOG, Epic, RPCS3/ShadPS4/Xenia ve Goldberg/GBE kurulumları başarım dosyalarından bulunur — örneğin %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, CODEX/RUNE kayıtları veya steam_settings içeren bir oyun klasörü.",
     "watchTitle": "İzleme",
@@ -924,6 +924,8 @@
     "errorSavingSettings": "Ayarlar kaydedilirken hata oluştu.",
     "failedToSetAvatar": "Avatar ayarlanamadı.",
     "themeCustom": "Özel…",
+    "themeMore": "Daha fazla tema…",
+    "themeFewer": "Daha az tema…",
     "themeUserPrefix": "Kullanıcı:",
     "manuallyUnlocked": "Elle açıldı",
     "input-required": "Giriş gerekli",
@@ -1097,7 +1099,7 @@
     "copy-the-uplay-r2-loader-64-dll-upc-r2-loader-64-dll-files-into-": "uplay_r2_loader(64).dll / upc_r2_loader(64).dll dosyalarını buraya kopyala (tek seferlik kurulum):\n{dir}",
     "update-the-uplay-r2-loader": "Uplay R2 loader’ı güncellensin mi?",
     "uplay-r2-old-loader-message": "Bu oyun, başarımları yönlendirmek için çok eski bir loader kullanıyor.",
-    "uplay-r2-old-loader-detail": "Fix güncelleme yapmadan da çalışır: Achievement Watcher, emülatörün kendi kayıt klasörünü okur.\n\nGüncelleme, GSE Saves’e yönlendirmeyi etkinleştirir; ancak oyunun şu anda başlattığı DLL’yi değiştirir (orijinal .bak olarak korunur).",
+    "uplay-r2-old-loader-detail": "Fix güncelleme yapmadan da çalışır: AW Next, emülatörün kendi kayıt klasörünü okur.\n\nGüncelleme, GSE Saves’e yönlendirmeyi etkinleştirir; ancak oyunun şu anda başlattığı DLL’yi değiştirir (orijinal .bak olarak korunur).",
     "keep-current-loader": "Geçerli loader’ı koru",
     "update-loader": "Güncelle",
     "updating-the-dll": "DLL güncelleniyor…",
@@ -1170,7 +1172,7 @@
     "apply-the-emulator-fix-to-x-detected-game-s-existing-files-are-b": "Emülatör fixi {count} algılanan oyuna uygulansın mı? Mevcut dosyalar üzerine yazılmadan önce yedeklenir.",
     "fixing": "Düzeltiliyor",
     "done-x-game-s-fixed-x-skipped-x-failed": "Tamam — {fixed} oyun düzeltildi, {skipped} atlandı, {failed} başarısız.",
-    "achievement-watcher": "Achievement Watcher",
+    "achievement-watcher": "AW Next",
     "connect-epic-games-account": "Epic Games hesabını bağla",
     "connect-microsoft-xbox-network": "Microsoft / Xbox Network bağla",
     "emulator-fix-applied": "Emülatör fixi uygulandı",
@@ -1178,7 +1180,7 @@
     "achievement-unlocked": "Başarım açıldı",
     "choose-theme-image": "Bir arka plan görseli seç",
     "choose-a-notification-sound": "Bildirim sesi seç",
-    "open-achievement-watcher": "Achievement Watcher’ı aç",
+    "open-achievement-watcher": "AW Next’i aç",
     "restart-background-monitor": "Arka plan monitörünü yeniden başlat",
     "quit": "Çık",
     "update-available": "Güncelleme mevcut",
@@ -1283,7 +1285,7 @@
     "invalid-folder": "Geçersiz klasör",
     "error-adding-custom-folder": "Özel klasör eklenirken hata",
     "error-adding-library-folder": "Kitaplık klasörü eklenirken hata",
-    "generate-configs-detail-auto-fix": "Bu, şimdi tam bir tarama başlatır. Tarama sırasında Achievement Watcher, bilinen kurulum klasörü olan algılanan oyunlara GBE/Goldberg otomatik fixini uygular. Onarımlar arka planda çalışır: yeni düzeltilen bir oyun henüz hazır görünmüyorsa yeniden tarayın.",
+    "generate-configs-detail-auto-fix": "Bu, şimdi tam bir tarama başlatır. Tarama sırasında AW Next, bilinen kurulum klasörü olan algılanan oyunlara GBE/Goldberg otomatik fixini uygular. Onarımlar arka planda çalışır: yeni düzeltilen bir oyun henüz hazır görünmüyorsa yeniden tarayın.",
     "generate-configs-detail-scan-only": "Bu yalnızca tam bir algılama taraması başlatır. Otomatik onarım, Emülatör yapılandırması > Yeni algılanan oyunları otomatik düzelt bölümünde devre dışıdır.",
     "generate-configs": "Yapılandırmaları oluştur",
     "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "Steam uyumlu {found} kurulum bulundu — {missing} tanesinde mevcut düzeltme yok ve uygun.",
@@ -1348,7 +1350,6 @@
     "diagnosis-auto-repair-failed": "Otomatik onarım başarısız: {error}",
     "diagnosis-steam-appid": "Steam AppID: {appid} ({name})",
     "diagnosis-steam-appid-not-resolved": "Steam AppID: çözümlenemedi",
-    "version-app": "Uygulama",
     "diagnosis-dlls-backed-up": "Mevcut DLL dosyaları *.bak olarak yedeklendi",
     "diagnosis-config-backed-up": "Önceki yapılandırma yedeklendi: {path}",
     "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
@@ -1392,7 +1393,7 @@
     "rareAchievement": "Nadir başarım",
     "rareDescription": "Oyuncuların yalnızca %{percent}'i açtı.",
     "testAchievement": "Test başarımı",
-    "testDescription": "Bu, Achievement Watcher'dan bir test bildirimidir.",
+    "testDescription": "Bu, AW Next'ten bir test bildirimidir.",
     "playedFor": "{duration} oynadınız",
     "trackingPlaytime": "Oyun süresi izleniyor",
     "playtime": "Oyun süresi"

@@ -3,7 +3,7 @@
 const path = require('path');
 const { app } = require('electron');
 const { APP_DATA_DIR_NAME } = require('../util/userDataPath.js');
-const { migrateLegacyUserData } = require('../util/migrateUserData.js');
+const { migrateLegacyUserData, migrateAw3UserData, migrateSouvenirFolder } = require('../util/migrateUserData.js');
 app.setName('Achievement Watcher');
 // Keep 3.x data separate from the legacy folder; --user-data-dir still overrides it for tests.
 const cliUserDataDir = (() => {
@@ -18,7 +18,12 @@ const cliUserDataDir = (() => {
   }
 })();
 app.setPath('userData', cliUserDataDir || path.join(app.getPath('appData'), APP_DATA_DIR_NAME));
+// Import forward along the data-folder chain, newest source first. Each hop is a no-op once the
+// destination holds AW configuration, so the second call does nothing when the first one ran, and
+// a user coming straight from 1.6.8 still gets their data.
+migrateAw3UserData(app.getPath('userData'));
 migrateLegacyUserData(app.getPath('userData'));
+migrateSouvenirFolder(app.getPath('userData'));
 // Keep GPU acceleration enabled, but avoid Chromium background services AW does not use in tray mode.
 for (const sw of ['disable-extensions', 'disable-component-extensions-with-background-pages', 'disable-default-apps', 'disable-background-networking', 'disable-accelerated-video-decode']) {
   app.commandLine.appendSwitch(sw);
@@ -121,8 +126,8 @@ function setUpdateDownloadProgress(fraction) {
   try {
     tray.setToolTip(
       fraction >= 0
-        ? `Achievement Watcher — ${t('downloading-update', 'downloading update {percent}%', 'téléchargement de la mise à jour {percent} %', { percent: Math.round(fraction * 100) })}`
-        : 'Achievement Watcher',
+        ? `Achievement Watcher Next — ${t('downloading-update', 'downloading update {percent}%', 'téléchargement de la mise à jour {percent} %', { percent: Math.round(fraction * 100) })}`
+        : 'Achievement Watcher Next',
     );
   } catch {}
 }
@@ -144,7 +149,7 @@ function notifyUpdateError(message) {
     try {
       tray.displayBalloon({
         iconType: 'warning',
-        title: t('achievement-watcher', 'Achievement Watcher'),
+        title: t('achievement-watcher', 'AW Next'),
         content: t('update-check-failed-detail', 'Update check failed: {message}', 'Échec de la vérification des mises à jour : {message}', { message }),
       });
     } catch {}
@@ -175,7 +180,7 @@ async function notifyChecksumRecoveryFailed(message, cacheDir) {
   try {
     const { response } = await dialog.showMessageBox({
       type: 'error',
-      title: t('achievement-watcher', 'Achievement Watcher'),
+      title: t('achievement-watcher', 'AW Next'),
       message: t(
         'update-retry-failed-message',
         'The update still failed after clearing the cached files in {folder}.',
@@ -2501,8 +2506,18 @@ function createMainWindow() {
       // and the overlay/notification windows keep backgroundThrottling:false — they must run hidden.
       backgroundThrottling: true,
     };
-    //electron 9 crash if no icon exists to specified path
+    // The manifest stores the icon relative to the app root, but BrowserWindow and fs both resolve a
+    // relative path against the *working directory*, which is the install folder rather than the app.
+    // Resolve it here, and prefer the multi-size .ico on Windows: the taskbar button, Alt-Tab and the
+    // window corner each pick a 16/24/32/48px frame out of it, whereas a lone 256px PNG is downscaled
+    // in one step and comes out muddy. Electron crashes on a path that does not exist, so it is
+    // dropped entirely if neither file is there.
+    // NB: `options` aliases manifest.config.window, so this has to stay idempotent across reopens.
     try {
+      const configured = manifest.config.window.icon || 'resources/icon/icon.png';
+      const base = path.isAbsolute(configured) ? configured : path.join(__dirname, '..', configured);
+      const preferred = process.platform === 'win32' ? base.replace(/\.png$/i, '.ico') : base;
+      options.icon = fs.existsSync(preferred) ? preferred : base;
       fs.accessSync(options.icon, fs.constants.F_OK);
     } catch {
       delete options.icon;
@@ -4064,10 +4079,10 @@ function createTray() {
     const iconPath = path.join(__dirname, '../resources/icon/icon.ico');
     const image = nativeImage.createFromPath(iconPath);
     tray = new Tray(image.isEmpty() ? iconPath : image);
-    tray.setToolTip('Achievement Watcher');
+    tray.setToolTip('Achievement Watcher Next');
     const rebuildMenu = () => {
       const contextMenu = Menu.buildFromTemplate([
-        { label: t('open-achievement-watcher', 'Open Achievement Watcher', 'Ouvrir Achievement Watcher'), click: () => createMainWindow() },
+        { label: t('open-achievement-watcher', 'Open AW Next', 'Ouvrir AW Next'), click: () => createMainWindow() },
         {
           label: t('restart-background-monitor', 'Restart background monitor', 'Redémarrer le moniteur en arrière-plan'),
           click: () => restartWatchdog(),
@@ -4164,7 +4179,7 @@ try {
       try {
         tray.displayBalloon({
           iconType: 'info',
-          title: t('achievement-watcher', 'Achievement Watcher'),
+          title: t('achievement-watcher', 'AW Next'),
           content: t('up-to-date', 'You are already using the latest version ({version}).', 'Vous utilisez déjà la dernière version ({version}).', { version: info.version }),
         });
       } catch {}

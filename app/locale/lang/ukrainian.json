@@ -50,7 +50,7 @@
   "hiddenDescriptionPlaceholder": "Приховано — натисніть, щоб показати",
   "noneUnlocked": "Досягнень ще не відкрито",
   "play": "Почати грати !",
-  "noneUnlockedHint": "Не бачите відкриттів? Перегляньте розділ FAQ / Усунення проблем",
+  "noneUnlockedHint": "Не бачите відкриттів?",
   "scrollUp": "Догори",
   "allGamesBackButton": "Усі ігри",
   "removeFromList": "Видалити зі списку",
@@ -173,7 +173,7 @@
       },
       "startup": {
         "name": "Запускати під час старту",
-        "description": "Запускає Achievement Watcher автоматично разом із Windows, приховано в треї."
+        "description": "Запускає AW Next автоматично разом із Windows, приховано в треї."
       },
       "onboarding": {
         "name": "Посібник першого запуску",
@@ -211,7 +211,7 @@
         },
         "appNavigation": {
           "name": "Керувати застосунком геймпадом",
-          "description": "Керуйте вікном Achievement Watcher геймпадом: бібліотека, деталі гри, налаштування та пошук."
+          "description": "Керуйте вікном AW Next геймпадом: бібліотека, деталі гри, налаштування та пошук."
         },
         "layout": {
           "auto": "Авто",
@@ -268,7 +268,7 @@
       },
       "steamSettings": {
         "name": "Дані steam_settings",
-        "description": "Simple використовує власне завантаження Achievement Watcher (анонімно). Advanced запускає generate_emu_config для покриття депо/мов.",
+        "description": "Simple використовує власне завантаження AW Next (анонімно). Advanced запускає generate_emu_config для покриття депо/мов.",
         "value": {
           "simple": "Simple (швидко)",
           "advanced": "Advanced (повно)"
@@ -784,7 +784,7 @@
     "languagePlaceholder": "Виберіть мову...",
     "languageHint": "Перше завантаження бібліотеки починається тільки після цього вибору.",
     "introTitle": "Як це працює",
-    "introCopy": "Achievement Watcher сканує відомі папки збереження та ваші ігрові бібліотеки, а потім Watchdog продовжує працювати в треї для сповіщень про розблокування та внутрішньоігрового оверлея.",
+    "introCopy": "AW Next сканує відомі папки збереження та ваші ігрові бібліотеки, а потім Watchdog продовжує працювати в треї для сповіщень про розблокування та внутрішньоігрового оверлея.",
     "scanTitle": "Сканування",
     "scanCopy": "Інсталяції Steam, GOG, Epic, RPCS3/ShadPS4/Xenia та Goldberg/GBE знаходяться за файлами досягнень — наприклад, %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, збереження CODEX/RUNE або папка гри зі steam_settings.",
     "watchTitle": "Моніторинг",
@@ -924,6 +924,8 @@
     "errorSavingSettings": "Помилка під час збереження налаштувань.",
     "failedToSetAvatar": "Не вдалося встановити аватар.",
     "themeCustom": "Власна…",
+    "themeMore": "Інші теми…",
+    "themeFewer": "Менше тем…",
     "themeUserPrefix": "Користувач:",
     "manuallyUnlocked": "Відкрито вручну",
     "input-required": "Потрібне введення",
@@ -1097,7 +1099,7 @@
     "copy-the-uplay-r2-loader-64-dll-upc-r2-loader-64-dll-files-into-": "Скопіюйте файли uplay_r2_loader(64).dll / upc_r2_loader(64).dll сюди (одноразове налаштування):\n{dir}",
     "update-the-uplay-r2-loader": "Оновити лоадер Uplay R2?",
     "uplay-r2-old-loader-message": "Ця гра використовує занадто старий лоадер для перенаправлення досягнень.",
-    "uplay-r2-old-loader-detail": "Фікс працює і без оновлення: Achievement Watcher читає власну папку збережень емулятора.\n\nОновлення вмикає перенаправлення до GSE Saves, але замінює DLL, з якою гра зараз запускається (оригінал зберігається як .bak).",
+    "uplay-r2-old-loader-detail": "Фікс працює і без оновлення: AW Next читає власну папку збережень емулятора.\n\nОновлення вмикає перенаправлення до GSE Saves, але замінює DLL, з якою гра зараз запускається (оригінал зберігається як .bak).",
     "keep-current-loader": "Залишити поточний лоадер",
     "update-loader": "Оновити",
     "updating-the-dll": "Оновлення DLL…",
@@ -1170,7 +1172,7 @@
     "apply-the-emulator-fix-to-x-detected-game-s-existing-files-are-b": "Застосувати фікс емулятора до {count} виявленої гри/ігор? Наявні файли буде збережено перед перезаписом.",
     "fixing": "Виправлення",
     "done-x-game-s-fixed-x-skipped-x-failed": "Готово — виправлено ігор: {fixed}, пропущено: {skipped}, не вдалося: {failed}.",
-    "achievement-watcher": "Achievement Watcher",
+    "achievement-watcher": "AW Next",
     "connect-epic-games-account": "Підключити обліковий запис Epic Games",
     "connect-microsoft-xbox-network": "Підключити Microsoft / Xbox Network",
     "emulator-fix-applied": "Фікс емулятора застосовано",
@@ -1178,7 +1180,7 @@
     "achievement-unlocked": "Досягнення відкрито",
     "choose-theme-image": "Виберіть фонове зображення",
     "choose-a-notification-sound": "Виберіть звук сповіщення",
-    "open-achievement-watcher": "Відкрити Achievement Watcher",
+    "open-achievement-watcher": "Відкрити AW Next",
     "restart-background-monitor": "Перезапустити фоновий монітор",
     "quit": "Вихід",
     "update-available": "Доступне оновлення",
@@ -1283,7 +1285,7 @@
     "invalid-folder": "Недопустима папка",
     "error-adding-custom-folder": "Помилка під час додавання користувацької папки",
     "error-adding-library-folder": "Помилка під час додавання папки бібліотеки",
-    "generate-configs-detail-auto-fix": "Зараз розпочнеться повне сканування. Під час сканування Achievement Watcher застосує автофікс GBE/Goldberg до виявлених ігор із відомою папкою встановлення. Виправлення виконуються у фоні: повторіть сканування, якщо щойно виправлена гра ще не відображається як готова.",
+    "generate-configs-detail-auto-fix": "Зараз розпочнеться повне сканування. Під час сканування AW Next застосує автофікс GBE/Goldberg до виявлених ігор із відомою папкою встановлення. Виправлення виконуються у фоні: повторіть сканування, якщо щойно виправлена гра ще не відображається як готова.",
     "generate-configs-detail-scan-only": "Буде запущено лише повне сканування виявлення. Автоматичне виправлення вимкнено в розділі Конфігурація емулятора > Автоматично виправляти нові виявлені ігри.",
     "generate-configs": "Створити конфігурації",
     "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "Знайдено сумісних зі Steam встановлень: {found}; без наявного виправлення та доступно для налаштування: {missing}.",
@@ -1348,7 +1350,6 @@
     "diagnosis-auto-repair-failed": "Автоматичне виправлення не вдалося: {error}",
     "diagnosis-steam-appid": "Steam AppID: {appid} ({name})",
     "diagnosis-steam-appid-not-resolved": "Steam AppID: не визначено",
-    "version-app": "Застосунок",
     "diagnosis-dlls-backed-up": "Наявні DLL збережено як *.bak",
     "diagnosis-config-backed-up": "Попередню конфігурацію збережено: {path}",
     "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
@@ -1392,7 +1393,7 @@
     "rareAchievement": "Рідкісне досягнення",
     "rareDescription": "Його відкрило лише {percent}% гравців.",
     "testAchievement": "Тестове досягнення",
-    "testDescription": "Це тестове сповіщення від Achievement Watcher.",
+    "testDescription": "Це тестове сповіщення від AW Next.",
     "playedFor": "Ви грали {duration}",
     "trackingPlaytime": "Відстеження часу гри",
     "playtime": "Час гри"

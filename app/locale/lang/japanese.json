@@ -50,7 +50,7 @@
   "hiddenDescriptionPlaceholder": "隠し — クリックで表示",
   "noneUnlocked": "まだ解除した実績はありません",
   "play": "プレイを始めよう !",
-  "noneUnlockedHint": "解除が表示されませんか？ FAQ／トラブルシューティングのセクションを確認してください：",
+  "noneUnlockedHint": "解除が表示されませんか？",
   "scrollUp": "上へスクロール",
   "allGamesBackButton": "すべてのゲーム",
   "removeFromList": "リストから削除",
@@ -173,7 +173,7 @@
       },
       "startup": {
         "name": "起動時に開始",
-        "description": "Achievement Watcher を Windows と一緒に自動起動し、トレイに隠します。"
+        "description": "AW Next を Windows と一緒に自動起動し、トレイに隠します。"
       },
       "onboarding": {
         "name": "初回起動ガイド",
@@ -211,7 +211,7 @@
         },
         "appNavigation": {
           "name": "アプリをコントローラーで操作",
-          "description": "コントローラーでAchievement Watcherウィンドウを操作します：ライブラリ、ゲーム詳細、設定、検索。"
+          "description": "コントローラーでAW Nextウィンドウを操作します：ライブラリ、ゲーム詳細、設定、検索。"
         },
         "layout": {
           "auto": "自動",
@@ -268,7 +268,7 @@
       },
       "steamSettings": {
         "name": "steam_settings データ",
-        "description": "Simple は Achievement Watcher 独自の取得（匿名）を使用します。Advanced はデポ／言語対応のため generate_emu_config を実行します。",
+        "description": "Simple は AW Next 独自の取得（匿名）を使用します。Advanced はデポ／言語対応のため generate_emu_config を実行します。",
         "value": {
           "simple": "Simple (高速)",
           "advanced": "Advanced (完全)"
@@ -784,7 +784,7 @@
     "languagePlaceholder": "言語を選択してください...",
     "languageHint": "最初のライブラリのロードは、この選択後にのみ開始されます。",
     "introTitle": "仕組み",
-    "introCopy": "Achievement Watcher は既知の保存フォルダーとゲームライブラリをスキャンし、その後 Watchdog はアンロック通知とゲーム内オーバーレイのためにトレイで動作し続けます。",
+    "introCopy": "AW Next は既知の保存フォルダーとゲームライブラリをスキャンし、その後 Watchdog はアンロック通知とゲーム内オーバーレイのためにトレイで動作し続けます。",
     "scanTitle": "スキャン",
     "scanCopy": "Steam、GOG、Epic、RPCS3/ShadPS4/Xenia、Goldberg/GBE のインストールを実績ファイルから検出します（例: %APPDATA%\\GSE Saves、Goldberg SteamEmu Saves、CODEX/RUNE セーブ、steam_settings を含むゲームフォルダー）。",
     "watchTitle": "監視",
@@ -924,6 +924,8 @@
     "errorSavingSettings": "設定の保存中にエラーが発生しました。",
     "failedToSetAvatar": "アバターを設定できませんでした。",
     "themeCustom": "カスタム…",
+    "themeMore": "その他のテーマ…",
+    "themeFewer": "テーマを減らす…",
     "themeUserPrefix": "ユーザー:",
     "manuallyUnlocked": "手動で解除済み",
     "input-required": "入力が必要です",
@@ -1097,7 +1099,7 @@
     "copy-the-uplay-r2-loader-64-dll-upc-r2-loader-64-dll-files-into-": "uplay_r2_loader(64).dll / upc_r2_loader(64).dll をここにコピーしてください（初回のみの設定）：\n{dir}",
     "update-the-uplay-r2-loader": "Uplay R2 ローダーを更新しますか？",
     "uplay-r2-old-loader-message": "このゲームは実績のリダイレクトには古すぎるローダーを使用しています。",
-    "uplay-r2-old-loader-detail": "修正は更新しなくても機能します：Achievement Watcher はエミュレータ自身のセーブフォルダを読み取ります。\n\n更新すると GSE Saves へのリダイレクトが有効になりますが、ゲームが現在起動に使用している DLL を置き換えます（元のファイルは .bak として保持）。",
+    "uplay-r2-old-loader-detail": "修正は更新しなくても機能します：AW Next はエミュレータ自身のセーブフォルダを読み取ります。\n\n更新すると GSE Saves へのリダイレクトが有効になりますが、ゲームが現在起動に使用している DLL を置き換えます（元のファイルは .bak として保持）。",
     "keep-current-loader": "現在のローダーを維持",
     "update-loader": "更新",
     "updating-the-dll": "DLL を更新中…",
@@ -1170,7 +1172,7 @@
     "apply-the-emulator-fix-to-x-detected-game-s-existing-files-are-b": "検出された {count} 個のゲームにエミュレータ修正を適用しますか？既存のファイルは上書き前にバックアップされます。",
     "fixing": "修正中",
     "done-x-game-s-fixed-x-skipped-x-failed": "完了 — 修正 {fixed} 件、スキップ {skipped} 件、失敗 {failed} 件。",
-    "achievement-watcher": "Achievement Watcher",
+    "achievement-watcher": "AW Next",
     "connect-epic-games-account": "Epic Games アカウントを接続",
     "connect-microsoft-xbox-network": "Microsoft / Xbox Network を接続",
     "emulator-fix-applied": "エミュレータ修正を適用しました",
@@ -1178,7 +1180,7 @@
     "achievement-unlocked": "実績を解除",
     "choose-theme-image": "背景画像を選択",
     "choose-a-notification-sound": "通知音を選択",
-    "open-achievement-watcher": "Achievement Watcher を開く",
+    "open-achievement-watcher": "AW Next を開く",
     "restart-background-monitor": "バックグラウンドモニターを再起動",
     "quit": "終了",
     "update-available": "アップデートがあります",
@@ -1283,7 +1285,7 @@
     "invalid-folder": "無効なフォルダ",
     "error-adding-custom-folder": "カスタムフォルダの追加中にエラーが発生しました",
     "error-adding-library-folder": "ライブラリフォルダの追加中にエラーが発生しました",
-    "generate-configs-detail-auto-fix": "今すぐ完全なスキャンを開始します。スキャン中、Achievement Watcher はインストールフォルダが判明している検出済みゲームに GBE/Goldberg の自動修正を適用します。修正はバックグラウンドで実行されます：修正直後のゲームがまだ「準備完了」と表示されない場合は、もう一度スキャンしてください。",
+    "generate-configs-detail-auto-fix": "今すぐ完全なスキャンを開始します。スキャン中、AW Next はインストールフォルダが判明している検出済みゲームに GBE/Goldberg の自動修正を適用します。修正はバックグラウンドで実行されます：修正直後のゲームがまだ「準備完了」と表示されない場合は、もう一度スキャンしてください。",
     "generate-configs-detail-scan-only": "これは検出のための完全スキャンのみを開始します。自動修正は「エミュレータ設定 > 新しく検出されたゲームを自動修正」で無効になっています。",
     "generate-configs": "設定を生成",
     "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "Steam 対応インストールを {found} 件検出 — 既存の修正がなく対象となるものは {missing} 件。",
@@ -1348,7 +1350,6 @@
     "diagnosis-auto-repair-failed": "自動修復に失敗しました: {error}",
     "diagnosis-steam-appid": "Steam AppID: {appid} ({name})",
     "diagnosis-steam-appid-not-resolved": "Steam AppID: 未解決",
-    "version-app": "アプリ",
     "diagnosis-dlls-backed-up": "既存のDLLを*.bakとしてバックアップ",
     "diagnosis-config-backed-up": "以前の設定をバックアップしました: {path}",
     "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
@@ -1392,7 +1393,7 @@
     "rareAchievement": "レア実績",
     "rareDescription": "解除したのはプレイヤーの {percent}% のみです。",
     "testAchievement": "テスト実績",
-    "testDescription": "これは Achievement Watcher からのテスト通知です。",
+    "testDescription": "これは AW Next からのテスト通知です。",
     "playedFor": "{duration}プレイしました",
     "trackingPlaytime": "プレイ時間を記録中",
     "playtime": "プレイ時間"

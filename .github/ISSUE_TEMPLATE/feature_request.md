@@ -12,7 +12,7 @@ What limitation or repeated difficulty would this solve?
 
 ## Proposed behavior
 
-Describe what you would like Achievement Watcher to do. A short example or mockup is welcome.
+Describe what you would like AW Next to do. A short example or mockup is welcome.
 
 ## Alternatives
 

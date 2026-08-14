@@ -50,7 +50,7 @@
   "hiddenDescriptionPlaceholder": "Skryté — kliknite pre zobrazenie",
   "noneUnlocked": "Zatiaľ žiadny odomknutý achievement",
   "play": "Začnite hrať !",
-  "noneUnlockedHint": "Nevidíte žiadne odomknutia? Pozrite si sekciu FAQ / Riešenie problémov",
+  "noneUnlockedHint": "Nevidíte žiadne odomknutia?",
   "scrollUp": "Nahor",
   "allGamesBackButton": "Všetky hry",
   "removeFromList": "Odstrániť zo zoznamu",
@@ -173,7 +173,7 @@
       },
       "startup": {
         "name": "Spustiť pri štarte",
-        "description": "Spustí Achievement Watcher automaticky s Windows, skrytý v oznamovacej oblasti."
+        "description": "Spustí AW Next automaticky s Windows, skrytý v oznamovacej oblasti."
       },
       "onboarding": {
         "name": "Sprievodca prvým spustením",
@@ -211,7 +211,7 @@
         },
         "appNavigation": {
           "name": "Ovládať aplikáciu ovládačom",
-          "description": "Prechádzaj okno Achievement Watcher ovládačom: knižnica, detaily hry, nastavenia a vyhľadávanie."
+          "description": "Prechádzaj okno AW Next ovládačom: knižnica, detaily hry, nastavenia a vyhľadávanie."
         },
         "layout": {
           "auto": "Automaticky",
@@ -268,7 +268,7 @@
       },
       "steamSettings": {
         "name": "Dáta steam_settings",
-        "description": "Simple používa vlastné načítavanie Achievement Watcher (anonymne). Advanced spustí generate_emu_config pre pokrytie depotov/jazykov.",
+        "description": "Simple používa vlastné načítavanie AW Next (anonymne). Advanced spustí generate_emu_config pre pokrytie depotov/jazykov.",
         "value": {
           "simple": "Simple (rýchle)",
           "advanced": "Advanced (úplné)"
@@ -784,7 +784,7 @@
     "languagePlaceholder": "Vyberte jazyk...",
     "languageHint": "Prvé načítanie knižnice sa spustí až po tejto voľbe.",
     "introTitle": "Ako to funguje",
-    "introCopy": "Achievement Watcher preskenuje známe priečinky na uloženie a vaše herné knižnice, potom Watchdog naďalej beží v zásobníku pre upozornenia na odomknutie a overlay v hre.",
+    "introCopy": "AW Next preskenuje známe priečinky na uloženie a vaše herné knižnice, potom Watchdog naďalej beží v zásobníku pre upozornenia na odomknutie a overlay v hre.",
     "scanTitle": "Skenovať",
     "scanCopy": "Inštalácie Steam, GOG, Epic, RPCS3/ShadPS4/Xenia a Goldberg/GBE sa vyhľadávajú podľa súborov úspechov — napríklad %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, uložené pozície CODEX/RUNE alebo priečinok hry so steam_settings.",
     "watchTitle": "Sledovať",
@@ -924,6 +924,8 @@
     "errorSavingSettings": "Chyba pri ukladaní nastavení.",
     "failedToSetAvatar": "Nepodarilo sa nastaviť avatara.",
     "themeCustom": "Vlastné…",
+    "themeMore": "Ďalšie motívy…",
+    "themeFewer": "Menej motívov…",
     "themeUserPrefix": "Používateľ:",
     "manuallyUnlocked": "Odomknuté ručne",
     "input-required": "Vyžaduje sa vstup",
@@ -1097,7 +1099,7 @@
     "copy-the-uplay-r2-loader-64-dll-upc-r2-loader-64-dll-files-into-": "Skopírujte súbory uplay_r2_loader(64).dll / upc_r2_loader(64).dll sem (jednorazové nastavenie):\n{dir}",
     "update-the-uplay-r2-loader": "Aktualizovať loader Uplay R2?",
     "uplay-r2-old-loader-message": "Táto hra používa príliš starý loader na presmerovanie úspechov.",
-    "uplay-r2-old-loader-detail": "Fix funguje aj bez aktualizácie: Achievement Watcher číta priečinok uložených pozícií emulátora.\n\nAktualizácia zapne presmerovanie do GSE Saves, ale nahradí DLL, s ktorou sa hra v súčasnosti spúšťa (originál zostane ako .bak).",
+    "uplay-r2-old-loader-detail": "Fix funguje aj bez aktualizácie: AW Next číta priečinok uložených pozícií emulátora.\n\nAktualizácia zapne presmerovanie do GSE Saves, ale nahradí DLL, s ktorou sa hra v súčasnosti spúšťa (originál zostane ako .bak).",
     "keep-current-loader": "Ponechať aktuálny loader",
     "update-loader": "Aktualizovať",
     "updating-the-dll": "Aktualizácia DLL…",
@@ -1170,7 +1172,7 @@
     "apply-the-emulator-fix-to-x-detected-game-s-existing-files-are-b": "Použiť fix emulátora na {count} zistenú hru/hry? Existujúce súbory sa pred prepísaním zazálohujú.",
     "fixing": "Oprava",
     "done-x-game-s-fixed-x-skipped-x-failed": "Hotovo — {fixed} hra/hrí opravených, {skipped} preskočených, {failed} zlyhalo.",
-    "achievement-watcher": "Achievement Watcher",
+    "achievement-watcher": "AW Next",
     "connect-epic-games-account": "Pripojiť účet Epic Games",
     "connect-microsoft-xbox-network": "Pripojiť Microsoft / Xbox Network",
     "emulator-fix-applied": "Fix emulátora použitý",
@@ -1178,7 +1180,7 @@
     "achievement-unlocked": "Úspech odomknutý",
     "choose-theme-image": "Vyberte obrázok na pozadie",
     "choose-a-notification-sound": "Vyberte zvuk upozornenia",
-    "open-achievement-watcher": "Otvoriť Achievement Watcher",
+    "open-achievement-watcher": "Otvoriť AW Next",
     "restart-background-monitor": "Reštartovať monitor na pozadí",
     "quit": "Ukončiť",
     "update-available": "Dostupná aktualizácia",
@@ -1283,7 +1285,7 @@
     "invalid-folder": "Neplatný priečinok",
     "error-adding-custom-folder": "Chyba pri pridávaní vlastného priečinka",
     "error-adding-library-folder": "Chyba pri pridávaní priečinka knižnice",
-    "generate-configs-detail-auto-fix": "Tým sa teraz spustí úplný sken. Počas skenu aplikuje Achievement Watcher automatický fix GBE/Goldberg na zistené hry so známym priečinkom inštalácie. Opravy bežia na pozadí: skenujte znova, ak čerstvo opravená hra ešte nie je zobrazená ako pripravená.",
+    "generate-configs-detail-auto-fix": "Tým sa teraz spustí úplný sken. Počas skenu aplikuje AW Next automatický fix GBE/Goldberg na zistené hry so známym priečinkom inštalácie. Opravy bežia na pozadí: skenujte znova, ak čerstvo opravená hra ešte nie je zobrazená ako pripravená.",
     "generate-configs-detail-scan-only": "Tým sa spustí iba úplný detekčný sken. Automatická oprava je vypnutá v Konfigurácia emulátora > Automaticky opravovať novo zistené hry.",
     "generate-configs": "Generovať konfigurácie",
     "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "Našlo sa {found} inštalácií kompatibilných so Steamom — {missing} bez existujúcej opravy a vhodných na konfiguráciu.",
@@ -1348,7 +1350,6 @@
     "diagnosis-auto-repair-failed": "Automatická oprava zlyhala: {error}",
     "diagnosis-steam-appid": "Steam AppID: {appid} ({name})",
     "diagnosis-steam-appid-not-resolved": "Steam AppID: nerozpoznaný",
-    "version-app": "Aplikácia",
     "diagnosis-dlls-backed-up": "Existujúce DLL uložené ako *.bak",
     "diagnosis-config-backed-up": "Predchádzajúca konfigurácia zazálohovaná: {path}",
     "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
@@ -1392,7 +1393,7 @@
     "rareAchievement": "Vzácný úspech",
     "rareDescription": "Odomkol ho iba {percent}% hráčov.",
     "testAchievement": "Testovací úspech",
-    "testDescription": "Toto je testovacie upozornenie z Achievement Watcher.",
+    "testDescription": "Toto je testovacie upozornenie z AW Next.",
     "playedFor": "Hral si {duration}",
     "trackingPlaytime": "Sledovanie herného času",
     "playtime": "Herný čas"

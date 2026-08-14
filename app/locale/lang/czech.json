@@ -50,7 +50,7 @@
   "hiddenDescriptionPlaceholder": "Skryté — klikněte pro zobrazení",
   "noneUnlocked": "Zatím žádný odemčený achievement",
   "play": "Začněte hrát !",
-  "noneUnlockedHint": "Nevidíte žádná odemčení? Podívejte se do sekce FAQ / Řešení problémů",
+  "noneUnlockedHint": "Nevidíte žádná odemčení?",
   "scrollUp": "Nahoru",
   "allGamesBackButton": "Všechny hry",
   "removeFromList": "Odebrat ze seznamu",
@@ -173,7 +173,7 @@
       },
       "startup": {
         "name": "Spustit při startu",
-        "description": "Spustí Achievement Watcher automaticky s Windows, skrytý v oznamovací oblasti."
+        "description": "Spustí AW Next automaticky s Windows, skrytý v oznamovací oblasti."
       },
       "onboarding": {
         "name": "Průvodce prvním spuštěním",
@@ -211,7 +211,7 @@
         },
         "appNavigation": {
           "name": "Ovládat aplikaci ovladačem",
-          "description": "Procházej okno Achievement Watcher ovladačem: knihovna, detaily hry, nastavení a vyhledávání."
+          "description": "Procházej okno AW Next ovladačem: knihovna, detaily hry, nastavení a vyhledávání."
         },
         "layout": {
           "auto": "Automaticky",
@@ -268,7 +268,7 @@
       },
       "steamSettings": {
         "name": "Data steam_settings",
-        "description": "Simple používá vlastní načítání Achievement Watcher (anonymně). Advanced spustí generate_emu_config pro pokrytí depotů/jazyků.",
+        "description": "Simple používá vlastní načítání AW Next (anonymně). Advanced spustí generate_emu_config pro pokrytí depotů/jazyků.",
         "value": {
           "simple": "Simple (rychlé)",
           "advanced": "Advanced (úplné)"
@@ -784,7 +784,7 @@
     "languagePlaceholder": "Vyberte jazyk...",
     "languageHint": "První načtení knihovny se spustí až po této volbě.",
     "introTitle": "Jak to funguje",
-    "introCopy": "Achievement Watcher prohledá známé složky pro ukládání a vaše herní knihovny, poté Watchdog stále běží v zásobníku pro odemknutí oznámení a overlay ve hře.",
+    "introCopy": "AW Next prohledá známé složky pro ukládání a vaše herní knihovny, poté Watchdog stále běží v zásobníku pro odemknutí oznámení a overlay ve hře.",
     "scanTitle": "Skenovat",
     "scanCopy": "Instalace Steam, GOG, Epic, RPCS3/ShadPS4/Xenia a Goldberg/GBE se vyhledávají podle souborů úspěchů — například %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, uložené pozice CODEX/RUNE nebo složka hry se steam_settings.",
     "watchTitle": "Sledovat",
@@ -924,6 +924,8 @@
     "errorSavingSettings": "Chyba při ukládání nastavení.",
     "failedToSetAvatar": "Nepodařilo se nastavit avatar.",
     "themeCustom": "Vlastní…",
+    "themeMore": "Další motivy…",
+    "themeFewer": "Méně motivů…",
     "themeUserPrefix": "Uživatel:",
     "manuallyUnlocked": "Odemčeno ručně",
     "input-required": "Je vyžadován vstup",
@@ -1097,7 +1099,7 @@
     "copy-the-uplay-r2-loader-64-dll-upc-r2-loader-64-dll-files-into-": "Zkopírujte soubory uplay_r2_loader(64).dll / upc_r2_loader(64).dll sem (jednorázové nastavení):\n{dir}",
     "update-the-uplay-r2-loader": "Aktualizovat loader Uplay R2?",
     "uplay-r2-old-loader-message": "Tato hra používá příliš starý loader pro přesměrování úspěchů.",
-    "uplay-r2-old-loader-detail": "Fix funguje i bez aktualizace: Achievement Watcher čte složku uložených pozic emulátoru.\n\nAktualizace zapne přesměrování do GSE Saves, ale nahradí DLL, se kterou se hra v současnosti spouští (originál zůstane jako .bak).",
+    "uplay-r2-old-loader-detail": "Fix funguje i bez aktualizace: AW Next čte složku uložených pozic emulátoru.\n\nAktualizace zapne přesměrování do GSE Saves, ale nahradí DLL, se kterou se hra v současnosti spouští (originál zůstane jako .bak).",
     "keep-current-loader": "Ponechat aktuální loader",
     "update-loader": "Aktualizovat",
     "updating-the-dll": "Aktualizace DLL…",
@@ -1170,7 +1172,7 @@
     "apply-the-emulator-fix-to-x-detected-game-s-existing-files-are-b": "Použít fix emulátoru na {count} zjištěnou hru/her? Existující soubory se před přepsáním zazálohují.",
     "fixing": "Oprava",
     "done-x-game-s-fixed-x-skipped-x-failed": "Hotovo — {fixed} hra/her opraveno, {skipped} přeskočeno, {failed} selhalo.",
-    "achievement-watcher": "Achievement Watcher",
+    "achievement-watcher": "AW Next",
     "connect-epic-games-account": "Připojit účet Epic Games",
     "connect-microsoft-xbox-network": "Připojit Microsoft / Xbox Network",
     "emulator-fix-applied": "Fix emulátoru použit",
@@ -1178,7 +1180,7 @@
     "achievement-unlocked": "Úspěch odemčen",
     "choose-theme-image": "Vyberte obrázek na pozadí",
     "choose-a-notification-sound": "Vyberte zvuk oznámení",
-    "open-achievement-watcher": "Otevřít Achievement Watcher",
+    "open-achievement-watcher": "Otevřít AW Next",
     "restart-background-monitor": "Restartovat monitor na pozadí",
     "quit": "Ukončit",
     "update-available": "Dostupná aktualizace",
@@ -1283,7 +1285,7 @@
     "invalid-folder": "Neplatná složka",
     "error-adding-custom-folder": "Chyba při přidávání vlastní složky",
     "error-adding-library-folder": "Chyba při přidávání složky knihovny",
-    "generate-configs-detail-auto-fix": "Tím se nyní spustí úplný sken. Během skenu aplikuje Achievement Watcher automatický fix GBE/Goldberg na zjištěné hry se známou složkou instalace. Opravy běží na pozadí: skenujte znovu, pokud čerstvě opravená hra ještě není zobrazena jako připravená.",
+    "generate-configs-detail-auto-fix": "Tím se nyní spustí úplný sken. Během skenu aplikuje AW Next automatický fix GBE/Goldberg na zjištěné hry se známou složkou instalace. Opravy běží na pozadí: skenujte znovu, pokud čerstvě opravená hra ještě není zobrazena jako připravená.",
     "generate-configs-detail-scan-only": "Tím se spustí pouze úplný detekční sken. Automatická oprava je vypnutá v Konfigurace emulátoru > Automaticky opravovat nově zjištěné hry.",
     "generate-configs": "Generovat konfigurace",
     "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "Nalezeno instalací kompatibilních se Steamem: {found}; {missing} nemá existující opravu a lze je nakonfigurovat.",
@@ -1348,7 +1350,6 @@
     "diagnosis-auto-repair-failed": "Automatická oprava selhala: {error}",
     "diagnosis-steam-appid": "Steam AppID: {appid} ({name})",
     "diagnosis-steam-appid-not-resolved": "Steam AppID: nerozpoznán",
-    "version-app": "Aplikace",
     "diagnosis-dlls-backed-up": "Stávající DLL uloženy jako *.bak",
     "diagnosis-config-backed-up": "Předchozí konfigurace zálohována: {path}",
     "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
@@ -1392,7 +1393,7 @@
     "rareAchievement": "Vzácný úspěch",
     "rareDescription": "Odemklo jej pouze {percent}% hráčů.",
     "testAchievement": "Testovací úspěch",
-    "testDescription": "Toto je testovací oznámení z Achievement Watcher.",
+    "testDescription": "Toto je testovací oznámení z AW Next.",
     "playedFor": "Hrál jsi {duration}",
     "trackingPlaytime": "Sledování herního času",
     "playtime": "Herní čas"

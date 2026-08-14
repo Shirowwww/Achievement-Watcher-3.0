@@ -1,6 +1,6 @@
 # Controller (gamepad) guide
 
-Achievement Watcher can be driven with a gamepad in two independent places: the
+AW Next can be driven with a gamepad in two independent places: the
 main window and the in-game overlay. Both are configured from **Settings →
 Controller**.
 
@@ -13,7 +13,7 @@ Controller**.
 
 | Setting | Default | What it covers |
 |---|---|---|
-| **Control the app with a controller** | On | The main Achievement Watcher window: library, game details, settings and searches. |
+| **Control the app with a controller** | On | The main AW Next window: library, game details, settings and searches. |
 | **Control the in-game overlay with a controller** | Off | The in-game overlay, driven by the background tracker while you play. |
 
 They are separate on purpose. App navigation is pure renderer input and costs
@@ -106,9 +106,9 @@ over raw HID, which is why they work without any vendor driver.
 2. Try the **XInput** backend explicitly; **Auto** can pick GameInput on a build
    where a given pad is not enumerated.
 3. Check the pad in the Windows game-controller panel (`joy.cpl`) first. If Windows
-   does not see it, Achievement Watcher cannot either.
+   does not see it, AW Next cannot either.
 4. For a bug report, add `debugLogging = true` to the `[controller]` section of
-   `%APPDATA%\Achievement Watcher 3.0\cfg\options.ini` and restart. The background
+   `%APPDATA%\Achievement Watcher Next\cfg\options.ini` and restart. The background
    tracker then logs button-level controller diagnostics. There is no UI switch for
    it because it is verbose; turn it back off afterwards.
 

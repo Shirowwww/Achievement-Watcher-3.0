@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Achievement Watcher (3.0 fork) are documented here.
+All notable changes to AW Next are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
@@ -19,6 +19,8 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- The Settings About block is one line about this app; the upstream lineage credits moved to the
+  foot of the Advanced tab, where they are bound by id rather than by DOM position.
 - The final first-run page is a compact set of eight useful choices: app theme, notification mode,
   notification preset, playtime tracking, Steam-library visibility, emulator auto-fix, hidden
   achievements, and duplicate merging. New profiles enable playtime tracking by default.

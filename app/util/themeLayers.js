@@ -26,6 +26,18 @@ const BUILTIN_COLORS = {
     border: '#3e5065',
     accent: '#6c91ff',
   },
+  // The only light-base built-in; see the matching block in app.css.
+  light: {
+    bg: '#eceff4',
+    header: '#ffffff',
+    panel: '#f5f7fa',
+    card: '#ffffff',
+    settings: '#ffffff',
+    text: '#16202e',
+    muted: '#5b6b80',
+    border: '#ccd4e0',
+    accent: '#3a63b5',
+  },
   oled: {
     bg: '#000000',
     header: '#101014',

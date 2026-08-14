@@ -8,7 +8,7 @@ const path = require('node:path');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-socialclub-'));
 const originalAppData = process.env.APPDATA;
 process.env.APPDATA = tmp;
-fs.mkdirSync(path.join(tmp, 'Achievement Watcher 3.0', 'logs'), { recursive: true });
+fs.mkdirSync(path.join(tmp, 'Achievement Watcher Next', 'logs'), { recursive: true });
 
 const socialclub = require('../../app/parser/socialclub.js');
 

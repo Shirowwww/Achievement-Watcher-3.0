@@ -17,7 +17,7 @@ function write(file, content) {
 // full Chromium profile (the bulk of the folder) and a log directory.
 function fixture(root) {
   const legacy = path.join(root, 'Achievement Watcher');
-  const target = path.join(root, 'Achievement Watcher 3.0');
+  const target = path.join(root, 'Achievement Watcher Next');
 
   write(path.join(legacy, 'cfg', 'options.ini'), '[general]\nusername = Screamir58\n');
   write(path.join(legacy, 'cfg', 'gbe-backups.db'), '{}');
@@ -116,7 +116,7 @@ test('an already configured target is never overwritten, and no-ops stay no-ops'
   assert.equal(fs.readFileSync(path.join(target, 'cfg', 'options.ini'), 'utf8').includes('NewUser'), true);
 
   // Missing legacy directory, and source === target, are both no-ops.
-  const other = path.join(root, 'Achievement Watcher 3.0 other');
+  const other = path.join(root, 'Achievement Watcher Next other');
   assert.equal(migrateLegacyUserData(other, { legacyDir: path.join(root, 'nope'), skipRegistry: true }), null);
   assert.equal(migrateLegacyUserData(legacy, { legacyDir: legacy, skipRegistry: true }), null);
 });

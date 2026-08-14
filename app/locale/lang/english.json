@@ -50,7 +50,7 @@
   "hiddenDescriptionPlaceholder": "Hidden — click to reveal",
   "noneUnlocked": "No achievement unlocked yet",
   "play": "Start playing!",
-  "noneUnlockedHint": "Not seeing any unlocks? Check the FAQ / Troubleshooting section of the",
+  "noneUnlockedHint": "Not seeing any unlocks?",
   "scrollUp": "Scroll up",
   "allGamesBackButton": "All Games",
   "removeFromList": "Remove from list",
@@ -173,7 +173,7 @@
       },
       "startup": {
         "name": "Launch at startup",
-        "description": "Starts Achievement Watcher automatically with Windows, hidden in the tray."
+        "description": "Starts AW Next automatically with Windows, hidden in the tray."
       },
       "onboarding": {
         "name": "First-run guide",
@@ -211,7 +211,7 @@
         },
         "appNavigation": {
           "name": "Control the app with a controller",
-          "description": "Navigate the Achievement Watcher window with a gamepad: library, game details, settings and searches."
+          "description": "Navigate the AW Next window with a gamepad: library, game details, settings and searches."
         },
         "layout": {
           "auto": "Auto",
@@ -268,7 +268,7 @@
       },
       "steamSettings": {
         "name": "steam_settings data",
-        "description": "Simple uses Achievement Watcher's own fetch (anonymous). Advanced runs generate_emu_config for depot/language coverage.",
+        "description": "Simple uses AW Next's own fetch (anonymous). Advanced runs generate_emu_config for depot/language coverage.",
         "value": {
           "simple": "Simple (fast)",
           "advanced": "Advanced (complete)"
@@ -784,7 +784,7 @@
     "languagePlaceholder": "Choose a language...",
     "languageHint": "The first library load starts only after this choice.",
     "introTitle": "How it works",
-    "introCopy": "Achievement Watcher looks for games and achievement data in known locations and in the folders you choose. The Watchdog then stays in the tray for unlock notifications and the in-game overlay.",
+    "introCopy": "AW Next looks for games and achievement data in known locations and in the folders you choose. The Watchdog then stays in the tray for unlock notifications and the in-game overlay.",
     "scanTitle": "Scan",
     "scanCopy": "Known launcher, emulator and achievement-data locations are detected automatically. You review every detected folder before the first scan; format-specific details remain available in Help.",
     "watchTitle": "Watch",
@@ -924,6 +924,8 @@
     "errorSavingSettings": "Error while saving settings.",
     "failedToSetAvatar": "Failed to set avatar.",
     "themeCustom": "Custom…",
+    "themeMore": "More themes…",
+    "themeFewer": "Fewer themes…",
     "themeUserPrefix": "User:",
     "manuallyUnlocked": "Manually unlocked",
     "input-required": "Input required",
@@ -1097,7 +1099,7 @@
     "copy-the-uplay-r2-loader-64-dll-upc-r2-loader-64-dll-files-into-": "Copy the uplay_r2_loader(64).dll / upc_r2_loader(64).dll files into (one-time setup):\n{dir}",
     "update-the-uplay-r2-loader": "Update the Uplay R2 loader?",
     "uplay-r2-old-loader-message": "This game uses a loader too old to redirect achievements.",
-    "uplay-r2-old-loader-detail": "The fix works without updating: Achievement Watcher reads the emulator's own save folder.\n\nUpdating enables the redirect into GSE Saves, but replaces a DLL the game currently launches with (the original is kept as .bak).",
+    "uplay-r2-old-loader-detail": "The fix works without updating: AW Next reads the emulator's own save folder.\n\nUpdating enables the redirect into GSE Saves, but replaces a DLL the game currently launches with (the original is kept as .bak).",
     "keep-current-loader": "Keep the current loader",
     "update-loader": "Update",
     "updating-the-dll": "Updating the DLL…",
@@ -1170,7 +1172,7 @@
     "apply-the-emulator-fix-to-x-detected-game-s-existing-files-are-b": "Apply the emulator fix to {count} detected game(s)? Existing files are backed up before being overwritten.",
     "fixing": "Fixing",
     "done-x-game-s-fixed-x-skipped-x-failed": "Done — {fixed} game(s) fixed, {skipped} skipped, {failed} failed.",
-    "achievement-watcher": "Achievement Watcher",
+    "achievement-watcher": "AW Next",
     "connect-epic-games-account": "Connect Epic Games account",
     "connect-microsoft-xbox-network": "Connect Microsoft / Xbox Network",
     "emulator-fix-applied": "Emulator fix applied",
@@ -1178,7 +1180,7 @@
     "achievement-unlocked": "Achievement Unlocked",
     "choose-theme-image": "Choose a background image",
     "choose-a-notification-sound": "Choose a notification sound",
-    "open-achievement-watcher": "Open Achievement Watcher",
+    "open-achievement-watcher": "Open AW Next",
     "restart-background-monitor": "Restart background monitor",
     "quit": "Quit",
     "update-available": "Update Available",
@@ -1283,7 +1285,7 @@
     "invalid-folder": "Invalid folder",
     "error-adding-custom-folder": "Error adding custom folder",
     "error-adding-library-folder": "Error adding library folder",
-    "generate-configs-detail-auto-fix": "This starts a full scan now. During that scan, Achievement Watcher applies the GBE/Goldberg auto-fix to detected games with a known install folder. Repairs run in the background: scan again if a freshly fixed game does not show as ready yet.",
+    "generate-configs-detail-auto-fix": "This starts a full scan now. During that scan, AW Next applies the GBE/Goldberg auto-fix to detected games with a known install folder. Repairs run in the background: scan again if a freshly fixed game does not show as ready yet.",
     "generate-configs-detail-scan-only": "This only starts a full detection scan. Automatic repair is disabled in Emulator configuration > Automatically fix newly detected games.",
     "generate-configs": "Generate configs",
     "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "{found} Steam-compatible install(s) found — {missing} have no existing fix and are eligible.",
@@ -1348,7 +1350,6 @@
     "diagnosis-auto-repair-failed": "Auto-repair failed: {error}",
     "diagnosis-steam-appid": "Steam AppID: {appid} ({name})",
     "diagnosis-steam-appid-not-resolved": "Steam AppID: not resolved",
-    "version-app": "App",
     "diagnosis-dlls-backed-up": "Existing dll(s) backed up as *.bak",
     "diagnosis-config-backed-up": "Previous config backed up: {path}",
     "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
@@ -1392,7 +1393,7 @@
     "rareAchievement": "Rare Achievement",
     "rareDescription": "Only {percent}% of players unlocked this.",
     "testAchievement": "Test Achievement",
-    "testDescription": "This is a test notification from Achievement Watcher.",
+    "testDescription": "This is a test notification from AW Next.",
     "playedFor": "You played for {duration}",
     "trackingPlaytime": "Tracking playtime",
     "playtime": "Playtime"

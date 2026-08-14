@@ -50,7 +50,7 @@
   "hiddenDescriptionPlaceholder": "Oculta — clique para revelar",
   "noneUnlocked": "Ainda não há conquistas desbloqueadas",
   "play": "Comece a jogar !",
-  "noneUnlockedHint": "Não vê nenhum desbloqueio? Consulte a seção de FAQ / Solução de problemas de",
+  "noneUnlockedHint": "Não vê nenhum desbloqueio?",
   "scrollUp": "Subir",
   "allGamesBackButton": "Todos os jogos",
   "removeFromList": "Remover da lista",
@@ -173,7 +173,7 @@
       },
       "startup": {
         "name": "Iniciar com o sistema",
-        "description": "Inicia o Achievement Watcher automaticamente com o Windows, oculto na bandeja."
+        "description": "Inicia o AW Next automaticamente com o Windows, oculto na bandeja."
       },
       "onboarding": {
         "name": "Guia da primeira execução",
@@ -211,7 +211,7 @@
         },
         "appNavigation": {
           "name": "Controlar o app com o controle",
-          "description": "Navegue pela janela do Achievement Watcher com o controle: biblioteca, detalhes do jogo, configurações e pesquisas."
+          "description": "Navegue pela janela do AW Next com o controle: biblioteca, detalhes do jogo, configurações e pesquisas."
         },
         "layout": {
           "auto": "Automático",
@@ -268,7 +268,7 @@
       },
       "steamSettings": {
         "name": "Dados de steam_settings",
-        "description": "Simple usa a obtenção própria do Achievement Watcher (anônima). Advanced executa o generate_emu_config para cobertura de depots/idiomas.",
+        "description": "Simple usa a obtenção própria do AW Next (anônima). Advanced executa o generate_emu_config para cobertura de depots/idiomas.",
         "value": {
           "simple": "Simple (rápido)",
           "advanced": "Advanced (completo)"
@@ -784,7 +784,7 @@
     "languagePlaceholder": "Escolha um idioma...",
     "languageHint": "O primeiro carregamento da biblioteca inicia somente após esta escolha.",
     "introTitle": "Como funciona",
-    "introCopy": "O Achievement Watcher verifica pastas salvas conhecidas e suas bibliotecas de jogos e, em seguida, o Watchdog continua em execução na bandeja para notificações de desbloqueio e overlay no jogo.",
+    "introCopy": "O AW Next verifica pastas salvas conhecidas e suas bibliotecas de jogos e, em seguida, o Watchdog continua em execução na bandeja para notificações de desbloqueio e overlay no jogo.",
     "scanTitle": "Escanear",
     "scanCopy": "Steam, GOG, Epic, RPCS3/ShadPS4/Xenia e instalações Goldberg/GBE são encontrados pelos arquivos de conquistas — por exemplo, %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, saves CODEX/RUNE ou uma pasta de jogo com steam_settings.",
     "watchTitle": "Monitorar",
@@ -924,6 +924,8 @@
     "errorSavingSettings": "Erro ao salvar as configurações.",
     "failedToSetAvatar": "Não foi possível definir o avatar.",
     "themeCustom": "Personalizado…",
+    "themeMore": "Mais temas…",
+    "themeFewer": "Menos temas…",
     "themeUserPrefix": "Usuário:",
     "manuallyUnlocked": "Desbloqueada manualmente",
     "input-required": "Entrada necessária",
@@ -1097,7 +1099,7 @@
     "copy-the-uplay-r2-loader-64-dll-upc-r2-loader-64-dll-files-into-": "Copie os arquivos uplay_r2_loader(64).dll / upc_r2_loader(64).dll para cá (configuração única):\n{dir}",
     "update-the-uplay-r2-loader": "Atualizar o loader do Uplay R2?",
     "uplay-r2-old-loader-message": "Este jogo usa um loader antigo demais para redirecionar conquistas.",
-    "uplay-r2-old-loader-detail": "O fix funciona sem atualizar: o Achievement Watcher lê a pasta de saves do próprio emulador.\n\nAtualizar ativa o redirecionamento para GSE Saves, mas substitui uma DLL com a qual o jogo inicia atualmente (o original é mantido como .bak).",
+    "uplay-r2-old-loader-detail": "O fix funciona sem atualizar: o AW Next lê a pasta de saves do próprio emulador.\n\nAtualizar ativa o redirecionamento para GSE Saves, mas substitui uma DLL com a qual o jogo inicia atualmente (o original é mantido como .bak).",
     "keep-current-loader": "Manter o loader atual",
     "update-loader": "Atualizar",
     "updating-the-dll": "Atualizando a DLL…",
@@ -1170,7 +1172,7 @@
     "apply-the-emulator-fix-to-x-detected-game-s-existing-files-are-b": "Aplicar o fix do emulador a {count} jogo(s) detectado(s)? Os arquivos existentes são salvos antes de serem sobrescritos.",
     "fixing": "Corrigindo",
     "done-x-game-s-fixed-x-skipped-x-failed": "Concluído — {fixed} jogo(s) corrigido(s), {skipped} ignorado(s), {failed} com falha.",
-    "achievement-watcher": "Achievement Watcher",
+    "achievement-watcher": "AW Next",
     "connect-epic-games-account": "Conectar conta da Epic Games",
     "connect-microsoft-xbox-network": "Conectar Microsoft / Xbox Network",
     "emulator-fix-applied": "Fix do emulador aplicado",
@@ -1178,7 +1180,7 @@
     "achievement-unlocked": "Conquista desbloqueada",
     "choose-theme-image": "Escolher uma imagem de fundo",
     "choose-a-notification-sound": "Escolher um som de notificação",
-    "open-achievement-watcher": "Abrir o Achievement Watcher",
+    "open-achievement-watcher": "Abrir o AW Next",
     "restart-background-monitor": "Reiniciar monitor em segundo plano",
     "quit": "Sair",
     "update-available": "Atualização disponível",
@@ -1283,7 +1285,7 @@
     "invalid-folder": "Pasta inválida",
     "error-adding-custom-folder": "Erro ao adicionar a pasta personalizada",
     "error-adding-library-folder": "Erro ao adicionar a pasta da biblioteca",
-    "generate-configs-detail-auto-fix": "Isso inicia agora uma varredura completa. Durante a varredura, o Achievement Watcher aplica o auto-fix GBE/Goldberg aos jogos detectados com pasta de instalação conhecida. As correções ocorrem em segundo plano: faça outra varredura se um jogo recém-corrigido ainda não aparecer como pronto.",
+    "generate-configs-detail-auto-fix": "Isso inicia agora uma varredura completa. Durante a varredura, o AW Next aplica o auto-fix GBE/Goldberg aos jogos detectados com pasta de instalação conhecida. As correções ocorrem em segundo plano: faça outra varredura se um jogo recém-corrigido ainda não aparecer como pronto.",
     "generate-configs-detail-scan-only": "Isso apenas inicia uma varredura de detecção completa. A correção automática está desativada em Configuração do emulador > Corrigir automaticamente os novos jogos detectados.",
     "generate-configs": "Gerar configurações",
     "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "{found} instalação(ões) compatível(is) com Steam encontrada(s) — {missing} sem correção existente e elegível(is).",
@@ -1348,7 +1350,6 @@
     "diagnosis-auto-repair-failed": "A correção automática falhou: {error}",
     "diagnosis-steam-appid": "Steam AppID: {appid} ({name})",
     "diagnosis-steam-appid-not-resolved": "Steam AppID: não resolvido",
-    "version-app": "Aplicativo",
     "diagnosis-dlls-backed-up": "DLL(s) existente(s) salva(s) como *.bak",
     "diagnosis-config-backed-up": "Configuração anterior salva: {path}",
     "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
@@ -1392,7 +1393,7 @@
     "rareAchievement": "Conquista rara",
     "rareDescription": "Apenas {percent}% dos jogadores a desbloquearam.",
     "testAchievement": "Conquista de teste",
-    "testDescription": "Esta é uma notificação de teste do Achievement Watcher.",
+    "testDescription": "Esta é uma notificação de teste do AW Next.",
     "playedFor": "Você jogou por {duration}",
     "trackingPlaytime": "Registrando o tempo de jogo",
     "playtime": "Tempo de jogo"

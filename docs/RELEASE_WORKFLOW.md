@@ -153,7 +153,7 @@ gh release create "v$version" `
   "app/dist/latest.yml" `
   --repo Shirowwww/Achievement-Watcher-3.0 `
   --target $target `
-  --title "Achievement Watcher $version" `
+  --title "AW Next v$version" `
   --notes-file RELEASE_NOTES.md
 ```
 

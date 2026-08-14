@@ -130,6 +130,9 @@ function translateUI(lang, locale, template) {
   $('#unlock').data('lang-noneUnlocked', clear(template.noneUnlocked));
   $('#unlock').data('lang-play', clear(template.play));
   $('#unlock').data('lang-noneUnlockedHint', clear(template.noneUnlockedHint));
+  // Label for the help link next to that hint. Reuses the Help panel's own section title so the
+  // link and the section it points at are worded identically in every language.
+  $('#unlock').data('lang-troubleshoot', clear(template.settings.help.troubleshootTitle));
   $('#lock').data('lang-title', clear(template.hiddenRemain));
   $('#lock').data('lang-message', clear(template.revealedOnceUnlocked));
   $('#lock').data('lang-hiddenDesc', clear(template.hiddenDescriptionPlaceholder));
@@ -607,8 +610,10 @@ function translateUI(lang, locale, template) {
   selector.find('span:eq(0)').text(clear(template.settings.common.version));
   selector.find('span:eq(1)').text(clear(remote.app.getVersion()));
   selector.find('a:first').text(clear(template.settings.common.maintainedBy));
-  $('#settings .box .footer .notice p:nth-child(2) a:first').text(clear(template.settings.common.fork));
-  $('#settings .box .footer .notice p:nth-child(3) a:first').text(clear(template.settings.common.original));
+  // The upstream lineage moved out of the footer to the foot of the Advanced tab, where both
+  // labels carry their own id instead of being addressed by position.
+  $('#lineage-fork-label').text(clear(template.settings.common.fork));
+  $('#lineage-original-label').text(clear(template.settings.common.original));
   $("#settingNav li[data-view='general'] span").text(clear(template.settings.sideMenu.general));
   $("#settingNav li[data-view='controller'] span").text(clear(template.settings.general.controller.title));
   $("#settingNav li[data-view='notification'] span").text(clear(template.settings.sideMenu.notification));

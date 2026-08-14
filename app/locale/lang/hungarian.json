@@ -50,7 +50,7 @@
   "hiddenDescriptionPlaceholder": "Rejtett — kattints a megjelenítéshez",
   "noneUnlocked": "Még nincs feloldott teljesítmény",
   "play": "Kezdj játszani !",
-  "noneUnlockedHint": "Nem látsz feloldásokat? Nézd meg a GYIK / Hibaelhárítás részét",
+  "noneUnlockedHint": "Nem látsz feloldásokat?",
   "scrollUp": "Fel",
   "allGamesBackButton": "Összes játék",
   "removeFromList": "Eltávolítás a listából",
@@ -173,7 +173,7 @@
       },
       "startup": {
         "name": "Indítás a rendszerrel",
-        "description": "Az Achievement Watchert automatikusan elindítja a Windowsszal, elrejtve a tálcán."
+        "description": "Az AW Nextet automatikusan elindítja a Windowsszal, elrejtve a tálcán."
       },
       "onboarding": {
         "name": "Első indítási útmutató",
@@ -211,7 +211,7 @@
         },
         "appNavigation": {
           "name": "Alkalmazás vezérlése kontrollerrel",
-          "description": "Navigálj a Achievement Watcher ablakában kontrollerrel: könyvtár, játékrészletek, beállítások és keresés."
+          "description": "Navigálj a AW Next ablakában kontrollerrel: könyvtár, játékrészletek, beállítások és keresés."
         },
         "layout": {
           "auto": "Automatikus",
@@ -268,7 +268,7 @@
       },
       "steamSettings": {
         "name": "steam_settings adatok",
-        "description": "A Simple az Achievement Watcher saját letöltését használja (névtelen). Az Advanced lefuttatja a generate_emu_config-ot a depó/nyelvi lefedettséghez.",
+        "description": "A Simple az AW Next saját letöltését használja (névtelen). Az Advanced lefuttatja a generate_emu_config-ot a depó/nyelvi lefedettséghez.",
         "value": {
           "simple": "Simple (gyors)",
           "advanced": "Advanced (teljes)"
@@ -784,7 +784,7 @@
     "languagePlaceholder": "Válassz nyelvet...",
     "languageHint": "Az első könyvtárbetöltés csak e választás után indul el.",
     "introTitle": "Hogyan működik",
-    "introCopy": "Az Achievement Watcher átvizsgálja az ismert mentési mappákat és a játékkönyvtárakat, majd a Watchdog folyamatosan fut a tálcán a feloldási értesítésekért és a játékon belüli overlayért.",
+    "introCopy": "Az AW Next átvizsgálja az ismert mentési mappákat és a játékkönyvtárakat, majd a Watchdog folyamatosan fut a tálcán a feloldási értesítésekért és a játékon belüli overlayért.",
     "scanTitle": "Vizsgálat",
     "scanCopy": "A Steam, GOG, Epic, RPCS3/ShadPS4/Xenia és Goldberg/GBE telepítések a teljesítményfájljaik alapján találhatók meg — például %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, CODEX/RUNE mentések vagy steam_settings mappát tartalmazó játékmappa.",
     "watchTitle": "Figyelés",
@@ -924,6 +924,8 @@
     "errorSavingSettings": "Hiba a beállítások mentésekor.",
     "failedToSetAvatar": "Az avatar beállítása nem sikerült.",
     "themeCustom": "Egyedi…",
+    "themeMore": "További témák…",
+    "themeFewer": "Kevesebb téma…",
     "themeUserPrefix": "Felhasználó:",
     "manuallyUnlocked": "Kézzel feloldva",
     "input-required": "Bevitel szükséges",
@@ -1097,7 +1099,7 @@
     "copy-the-uplay-r2-loader-64-dll-upc-r2-loader-64-dll-files-into-": "Másold ide az uplay_r2_loader(64).dll / upc_r2_loader(64).dll fájlokat (egyszeri beállítás):\n{dir}",
     "update-the-uplay-r2-loader": "Frissítjük az Uplay R2 loadert?",
     "uplay-r2-old-loader-message": "Ez a játék túl régi loadert használ a teljesítmények átirányításához.",
-    "uplay-r2-old-loader-detail": "A fix frissítés nélkül is működik: az Achievement Watcher az emulátor saját mentési mappáját olvassa.\n\nA frissítés engedélyezi a GSE Saves felé irányítást, de lecserél egy DLL-t, amellyel a játék jelenleg indul (az eredeti .bak néven marad meg).",
+    "uplay-r2-old-loader-detail": "A fix frissítés nélkül is működik: az AW Next az emulátor saját mentési mappáját olvassa.\n\nA frissítés engedélyezi a GSE Saves felé irányítást, de lecserél egy DLL-t, amellyel a játék jelenleg indul (az eredeti .bak néven marad meg).",
     "keep-current-loader": "Aktuális loader megtartása",
     "update-loader": "Frissítés",
     "updating-the-dll": "DLL frissítése…",
@@ -1170,7 +1172,7 @@
     "apply-the-emulator-fix-to-x-detected-game-s-existing-files-are-b": "Alkalmazzuk az emulátor-fixet {count} észlelt játékra? A meglévő fájlok felülírás előtt biztonsági másolatot kapnak.",
     "fixing": "Javítás",
     "done-x-game-s-fixed-x-skipped-x-failed": "Kész — {fixed} játék javítva, {skipped} kihagyva, {failed} sikertelen.",
-    "achievement-watcher": "Achievement Watcher",
+    "achievement-watcher": "AW Next",
     "connect-epic-games-account": "Epic Games-fiók csatlakoztatása",
     "connect-microsoft-xbox-network": "Microsoft / Xbox Network csatlakoztatása",
     "emulator-fix-applied": "Emulátor-fix alkalmazva",
@@ -1178,7 +1180,7 @@
     "achievement-unlocked": "Teljesítmény feloldva",
     "choose-theme-image": "Háttérkép kiválasztása",
     "choose-a-notification-sound": "Értesítési hang kiválasztása",
-    "open-achievement-watcher": "Achievement Watcher megnyitása",
+    "open-achievement-watcher": "AW Next megnyitása",
     "restart-background-monitor": "Háttérmonitor újraindítása",
     "quit": "Kilépés",
     "update-available": "Frissítés érhető el",
@@ -1283,7 +1285,7 @@
     "invalid-folder": "Érvénytelen mappa",
     "error-adding-custom-folder": "Hiba az egyéni mappa hozzáadásakor",
     "error-adding-library-folder": "Hiba a könyvtármappa hozzáadásakor",
-    "generate-configs-detail-auto-fix": "Ez most egy teljes vizsgálatot indít. A vizsgálat alatt az Achievement Watcher alkalmazza a GBE/Goldberg auto-fixet az ismert telepítési mappával rendelkező észlelt játékokra. A javítások a háttérben futnak: vizsgálj újra, ha egy frissen javított játék még nem jelenik meg készként.",
+    "generate-configs-detail-auto-fix": "Ez most egy teljes vizsgálatot indít. A vizsgálat alatt az AW Next alkalmazza a GBE/Goldberg auto-fixet az ismert telepítési mappával rendelkező észlelt játékokra. A javítások a háttérben futnak: vizsgálj újra, ha egy frissen javított játék még nem jelenik meg készként.",
     "generate-configs-detail-scan-only": "Ez csak egy teljes észlelési vizsgálatot indít. Az automatikus javítás ki van kapcsolva az Emulátor-konfiguráció > Új észlelt játékok automatikus javítása menüpontban.",
     "generate-configs": "Konfigurációk generálása",
     "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "{found} Steam-kompatibilis telepítés található — {missing} nem rendelkezik meglévő javítással és alkalmas.",
@@ -1348,7 +1350,6 @@
     "diagnosis-auto-repair-failed": "Az automatikus javítás sikertelen: {error}",
     "diagnosis-steam-appid": "Steam AppID: {appid} ({name})",
     "diagnosis-steam-appid-not-resolved": "Steam AppID: nem feloldva",
-    "version-app": "Alkalmazás",
     "diagnosis-dlls-backed-up": "Meglévő DLL-ek mentve *.bak néven",
     "diagnosis-config-backed-up": "Előző konfiguráció mentve: {path}",
     "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
@@ -1392,7 +1393,7 @@
     "rareAchievement": "Ritka teljesítmény",
     "rareDescription": "Csak a játékosok {percent}%-a oldotta fel.",
     "testAchievement": "Teszt teljesítmény",
-    "testDescription": "Ez egy tesztértesítés az Achievement Watchertől.",
+    "testDescription": "Ez egy tesztértesítés az AW Nexttől.",
     "playedFor": "{duration} játszottál",
     "trackingPlaytime": "Játékidő követése",
     "playtime": "Játékidő"

@@ -8,7 +8,7 @@ const path = require('node:path');
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-ubi-official-'));
 process.env.APPDATA = tmp; // keep the rarity sidecar inside the sandbox
 // watchdog/util/log.js opens its log file at require time — give it a home inside the sandbox
-fs.mkdirSync(path.join(tmp, 'Achievement Watcher 3.0', 'logs'), { recursive: true });
+fs.mkdirSync(path.join(tmp, 'Achievement Watcher Next', 'logs'), { recursive: true });
 
 const ubi = require('../../app/parser/ubisoftOfficial.js');
 const AdmZip = require('../../app/node_modules/adm-zip');
@@ -91,7 +91,7 @@ function spoolRecord(achId, time) {
     // ---- full contract: getGameData localizes, extracts icons, borrows steam art via the asset.
     // appid is namespaced ("uplay-8006") to avoid colliding with Steam appid 8006; the raw id lives
     // in data.uplayId and is what the uplay-steam mapping is keyed by.
-    ubi.setUserDataPath(path.join(tmp, 'Achievement Watcher 3.0'));
+    ubi.setUserDataPath(path.join(tmp, 'Achievement Watcher Next'));
     const appidEntry = {
       appid: 'uplay-8006',
       source: 'Ubisoft Connect',

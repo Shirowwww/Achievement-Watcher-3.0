@@ -1,6 +1,6 @@
 # Goldberg and GBE Fork setup
 
-Achievement Watcher can read achievement saves produced by Goldberg, GBE Fork and compatible Steam-emulator layouts. It can also diagnose and repair a game's local emulator configuration when the achievement schema, AppID or runtime files are incomplete.
+AW Next can read achievement saves produced by Goldberg, GBE Fork and compatible Steam-emulator layouts. It can also diagnose and repair a game's local emulator configuration when the achievement schema, AppID or runtime files are incomplete.
 
 > [!WARNING]
 > The repair tools are optional. They modify files inside the selected game directory, so use them only with games you own and keep any additional backup you consider important.
@@ -14,7 +14,7 @@ Two unrelated files are commonly named `achievements.json`:
 | Typical location | `<game>\steam_settings\achievements.json` | `%APPDATA%\GSE Saves\<appid>\achievements.json` or `%APPDATA%\Goldberg SteamEmu Saves\<appid>\achievements.json` |
 | Written by | The game/emulator setup | The emulator while the game runs |
 | Purpose | Defines achievement names, descriptions and icons | Records which achievements have unlocked |
-| When missing | In-game achievement handling may be incomplete; Achievement Watcher can use another schema source | The game correctly appears at 0% until the first unlock is written |
+| When missing | In-game achievement handling may be incomplete; AW Next can use another schema source | The game correctly appears at 0% until the first unlock is written |
 
 A schema file does not prove that anything has unlocked. A runtime save that contains no earned entry is a valid 0% state.
 
@@ -26,7 +26,7 @@ A schema file does not prove that anything has unlocked. A runtime save that con
 4. Read the report before applying a repair.
 5. Use **Repair `steam_settings`** for schema or configuration problems.
 6. Use **Apply emulator fix (GBE Fork)** only when the game needs a matching runtime DLL as well.
-7. Launch the game and unlock an achievement, then refresh Achievement Watcher if needed.
+7. Launch the game and unlock an achievement, then refresh AW Next if needed.
 
 Automatic setup for newly discovered games is opt-in under **Settings → Steam emulator**. When disabled, scanning does not perform the full runtime installation in the background.
 
@@ -49,7 +49,7 @@ Offered as a button on the diagnosis report itself when problems were found - it
 
 Downloads and caches a matching GBE Fork release, backs up an existing `steam_api.dll` or `steam_api64.dll`, installs the required architecture and repairs `steam_settings`.
 
-The runtime is installed as a normal DLL replacement. Achievement Watcher does not configure a separate ColdClient launcher.
+The runtime is installed as a normal DLL replacement. AW Next does not configure a separate ColdClient launcher.
 
 ### Remove Steam DRM (Steamless)
 
@@ -73,12 +73,12 @@ Check these causes in order:
 
 1. **No achievement has unlocked yet.** An absent or empty runtime save is expected.
 2. **Schema names do not match the save keys.** Run **Diagnose**, then repair the schema.
-3. **The save path is customized.** Point Achievement Watcher at the actual save root or remove the placeholder override.
+3. **The save path is customized.** Point AW Next at the actual save root or remove the placeholder override.
 4. **The AppID is wrong.** Correct the game mapping before writing a new `steam_appid.txt`.
 
 ### Descriptions or icons are missing
 
-Run a full repair with icon download enabled. When online metadata is unavailable, Achievement Watcher can reuse a valid local schema, but it cannot invent descriptions that are absent from every source.
+Run a full repair with icon download enabled. When online metadata is unavailable, AW Next can reuse a valid local schema, but it cannot invent descriptions that are absent from every source.
 
 ### In-game notifications are missing but the library updates
 
@@ -96,7 +96,7 @@ Review the [technical Goldberg/GBE reference](goldberg-gbe.md) for file formats,
 
 ## Limitations
 
-Some games do not report achievements through Steamworks at all, even when sold on Steam. Those titles cannot be tracked through a Goldberg/GBE save path. Achievement Watcher also cannot repair a game whose real identity or achievement schema cannot be resolved safely.
+Some games do not report achievements through Steamworks at all, even when sold on Steam. Those titles cannot be tracked through a Goldberg/GBE save path. AW Next also cannot repair a game whose real identity or achievement schema cannot be resolved safely.
 
 ---
 

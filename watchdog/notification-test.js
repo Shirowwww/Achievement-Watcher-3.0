@@ -125,7 +125,7 @@ function testMessageAndOptions(kind, options) {
       ];
     case 'playtime':
       baseToast.customAudio = '0';
-      baseToast.attribution = 'Achievement Watcher';
+      baseToast.attribution = 'AW Next';
       return [
         {
           ...common,

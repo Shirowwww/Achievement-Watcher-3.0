@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Achievement Watcher</title>
+    <title>AW Next</title>
     <meta charset="UTF-8" />
     <meta name="author" content="Beaumont Anthony" />
     <meta
@@ -208,7 +208,7 @@
                     </select>
                     <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
                   </div>
-                  <div class="help">Simple uses Achievement Watcher's own fetch (anonymous). Advanced runs generate_emu_config for depot/language coverage.</div>
+                  <div class="help">Simple uses AW Next's own fetch (anonymous). Advanced runs generate_emu_config for depot/language coverage.</div>
                 </li>
 
                 <li class="hasHelper">
@@ -545,6 +545,30 @@
                     <div id="open-logs" class="btn"><i class="fas fa-folder-open"></i> <span>Open logs folder</span></div>
                     <div id="open-userdata" class="btn"><i class="fas fa-folder-open"></i> <span>Open data folder</span></div>
                     <div id="check-for-updates" class="btn"><i class="fas fa-sync"></i> <span id="check-for-updates-label">Check for updates</span></div>
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Upstream lineage. It belongs with the technical credits rather than under every
+                   Settings tab, so it lives here. Bound by id (no .title, so it is not a
+                   collapsible section) — see bindSettings() in app/locale/loader.js. -->
+              <div class="arrow-list">
+                <ul>
+                  <!-- Each credit is one nowrap group, so a wrap can only happen between the two
+                       entries. Left as loose flex items, the line broke between the GitHub icon and
+                       the repository it belongs to. -->
+                  <li class="advanced-lineage" id="advanced-lineage">
+                    <span class="lineage-entry">
+                      <a id="lineage-fork-label">Fork</a>
+                      <i class="fab fa-github"></i>
+                      <a href="https://github.com/darktakayanagi/Achievement-Watcher" target="_blank">darktakayanagi/achievement-watcher</a>
+                    </span>
+                    <span class="notice-sep">·</span>
+                    <span class="lineage-entry">
+                      <a id="lineage-original-label">Original v1.6.8</a>
+                      <i class="fab fa-github"></i>
+                      <a href="https://github.com/xan105/Achievement-Watcher" target="_blank">xan105/achievement-watcher</a>
+                    </span>
                   </li>
                 </ul>
               </div>
@@ -1621,7 +1645,7 @@
                         <span class="arrow"><i class="fas fa-chevron-right"></i></span>
                       </div>
                     </div>
-                    <div class="help">Starts Achievement Watcher automatically with Windows, hidden in the tray.</div>
+                    <div class="help">Starts AW Next automatically with Windows, hidden in the tray.</div>
                   </li>
 
                   <li class="hasHelper">
@@ -1675,24 +1699,17 @@
                       <div class="previous">
                         <span class="arrow"><i class="fas fa-chevron-left"></i></span>
                       </div>
+                      <!-- Rebuilt by populateThemeSelect() in app/ui/settings.js, which appends
+                           "More themes…", Custom… and any user theme. These mirror the primary set
+                           so the control is never empty before that runs. -->
                       <select autocomplete="off" class="dropdown" id="option_theme">
                         <option value="default" selected>Steam Blue</option>
+                        <option value="light">Light</option>
                         <option value="oled">OLED Black</option>
-                        <option value="dracula">Dracula</option>
                         <option value="graphite">Graphite</option>
                         <option value="nord">Nord</option>
+                        <option value="dracula">Dracula</option>
                         <option value="gruvbox">Gruvbox</option>
-                        <option value="tokyonight">Tokyo Night</option>
-                        <option value="catppuccin">Catppuccin Mocha</option>
-                        <option value="rosepine">Rosé Pine</option>
-                        <option value="synthwave">Synthwave '84</option>
-                        <option value="everforest">Everforest</option>
-                        <option value="cyberpunk">Cyberpunk</option>
-                        <option value="ember">Ember</option>
-                        <option value="ocean">Ocean</option>
-                        <option value="hacker">Hacker</option>
-                        <option value="burgundy">Burgundy</option>
-                        <option value="champagne">Champagne</option>
                       </select>
                       <div class="next">
                         <span class="arrow"><i class="fas fa-chevron-right"></i></span>
@@ -1748,7 +1765,7 @@
                     </select>
                     <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
                   </div>
-                  <div class="help" id="controller-app-help">Navigate the Achievement Watcher window with a gamepad: library, game details, settings and searches.</div>
+                  <div class="help" id="controller-app-help">Navigate the AW Next window with a gamepad: library, game details, settings and searches.</div>
                 </li>
                 <li class="hasHelper">
                   <div class="left"><i class="fas fa-arrows-alt-h"></i> <span id="controller-layout-label">Controller layout</span></div>
@@ -1846,26 +1863,23 @@
           </div>
 
           <div class="footer">
+            <!-- About / branding. The locale loader still binds this by position:
+                 p:nth-child(1) span:eq(0|1) = "Version" + number, a:first = "maintained by".
+                 The product name is a <strong> and the icons are <i>, so neither shifts those
+                 indices — see bindSettings() in app/locale/loader.js before reordering anything.
+                 The upstream lineage used to be a second paragraph here; it moved to the foot of
+                 the Advanced tab (#advanced-lineage), where it is bound by id instead. -->
             <div class="notice">
               <p>
+                <strong class="notice-brand">Achievement Watcher Next</strong>
                 <span></span> <span></span>
                 <a>maintained by</a>
                 <i class="fab fa-github"></i>
-                <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0" target="_blank">Shirowwww/achievement-watcher-3.0</a>
+                <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0" target="_blank">Shirowwww</a>
                 <button type="button" id="footer-check-updates" class="footer-update-btn" title="Check for updates" aria-label="Check for updates">
                   <i class="fas fa-sync"></i>
                 </button>
                 <span id="footer-update-status" class="footer-update-status" aria-live="polite"></span>
-              </p>
-              <p>
-                <a>Fork</a>
-                <i class="fab fa-github"></i>
-                <a href="https://github.com/darktakayanagi/Achievement-Watcher" target="_blank">darktakayanagi/achievement-watcher</a>
-              </p>
-              <p>
-                <a>Original v1.6.8</a>
-                <i class="fab fa-github"></i>
-                <a href="https://github.com/xan105/Achievement-Watcher" target="_blank">xan105/achievement-watcher</a>
               </p>
             </div>
             <div class="buttons">
@@ -1934,7 +1948,7 @@
           <div class="onboarding-header">
             <div class="onboarding-brand">
               <div class="eyebrow" id="onboarding-eyebrow">First setup</div>
-              <h1 id="onboarding-title">Achievement Watcher</h1>
+              <h1 id="onboarding-title">Achievement Watcher Next</h1>
             </div>
             <div class="onboarding-progress" aria-live="polite">
               <span id="onboarding-progress-text">1 / 5</span>
@@ -1975,7 +1989,7 @@
                   <i class="fas fa-info-circle"></i>
                   <div>
                     <h2 id="onboard-intro-title">How it works</h2>
-                    <p id="onboard-intro-copy">Achievement Watcher scans known save folders and your game libraries, then the Watchdog keeps running in the tray for unlock notifications and the in-game overlay.</p>
+                    <p id="onboard-intro-copy">AW Next scans known save folders and your game libraries, then the Watchdog keeps running in the tray for unlock notifications and the in-game overlay.</p>
                   </div>
                 </div>
                 <div class="onboarding-cards">

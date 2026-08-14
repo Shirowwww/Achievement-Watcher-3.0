@@ -12,8 +12,8 @@ every `*.test.js` file in these folders:
 
 Reusable browser cleanup code belongs in `helpers`; binary and HTML samples belong in `fixtures`.
 Watchdog's standalone unit suite remains in `watchdog/test` and is run separately from `watchdog/`
-with `npm test`. Both npm commands cap test-process concurrency at four so Chromium and native
-Windows modules remain stable without making the suites sequential.
+with `npm test`. Both npm commands run their test files serially (`--test-concurrency=1`) so that
+Chromium and native Windows registry integrations cannot race each other.
 
 To run one family or one file directly from `app/`:
 

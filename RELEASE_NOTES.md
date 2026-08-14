@@ -1,4 +1,4 @@
-# Achievement Watcher 3.8.6
+# AW Next v3.8.6
 
 A feature and reliability release: keyless Steam schemas, a clearer Help and cache-management
 experience, safer updates, fixes for custom notification placement and scaled displays, plus

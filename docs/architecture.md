@@ -1,6 +1,6 @@
 # Architecture
 
-Achievement Watcher is a Windows-only Electron application with a separate background monitor. This page describes the boundaries that matter when changing the project.
+AW Next is a Windows-only Electron application with a separate background monitor. This page describes the boundaries that matter when changing the project.
 
 ## Runtime overview
 
@@ -76,7 +76,7 @@ Current integrations include Steam, Goldberg/GBE-compatible saves, Goldberg Soci
 
 ## Local data
 
-Packaged user data is stored below `%APPDATA%\Achievement Watcher 3.0` (3.x keeps its own folder so the legacy 1.6.8 app and its uninstaller can never touch it; a one-time import copies the old `%APPDATA%\Achievement Watcher` data on first launch):
+Packaged user data is stored below `%APPDATA%\Achievement Watcher Next`. AW Next owns a folder neither predecessor's uninstaller touches, and imports forward along the chain `Achievement Watcher` (1.6.8) → `Achievement Watcher 3.0` → `Achievement Watcher Next` on first launch, newest source first. Each hop is one-way and non-destructive: it never deletes a source, never overwrites a file already present in the destination, and stops as soon as the destination holds AW configuration (`app/util/migrateUserData.js`):
 
 | Directory | Contents |
 |---|---|

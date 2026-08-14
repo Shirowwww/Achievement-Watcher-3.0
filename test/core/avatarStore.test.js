@@ -14,7 +14,7 @@ const Module = require('node:module');
 const { MIGRATION_PLAN } = require('../../app/util/migrateUserData.js');
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-avatar-store-'));
-const userDataPath = path.join(tmp, 'Achievement Watcher 3.0');
+const userDataPath = path.join(tmp, 'Achievement Watcher Next');
 
 const originalLoad = Module._load;
 Module._load = function (request, parent, isMain) {

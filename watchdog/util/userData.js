@@ -3,10 +3,10 @@
 const path = require('path');
 
 // Mirrors app/util/userDataPath.js for the standalone Watchdog process. The Electron main process
-// passes its (3.0) user-data root through AW_USER_DATA when spawning the monitor; standalone runs
-// (dev, tests) fall back to the same 3.0 directory so the monitor never touches the legacy 1.6.8
-// folder again (issue #6).
-const APP_DATA_DIR_NAME = 'Achievement Watcher 3.0';
+// passes its user-data root through AW_USER_DATA when spawning the monitor; standalone runs (dev,
+// tests) fall back to the same AW Next directory so the monitor never touches either predecessor's
+// folder (issue #6). The main process owns the migration; the monitor only ever reads the result.
+const APP_DATA_DIR_NAME = 'Achievement Watcher Next';
 
 let cached = null;
 

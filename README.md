@@ -1,8 +1,8 @@
 <div align="center">
 
-# 🏆 Achievement Watcher 3.0
+# 🏆 Achievement Watcher Next
 
-<p><strong>All your PC achievements in one modern Windows library.</strong></p>
+<p><strong>Every achievement. One experience.</strong></p>
 
 Track achievements, rarity and playtime across launchers, local saves and supported emulators - with live Windows notifications or an in-game overlay.
 
@@ -23,13 +23,15 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 
 </div>
 
-> This fork continues [Xan105's original Achievement Watcher](https://github.com/xan105/Achievement-Watcher) and [darktakayanagi's 2.x branch](https://github.com/darktakayanagi/Achievement-Watcher), with a modern runtime and a large compatibility, reliability and feature pass.
+> **AW Next** is the modern next generation of Achievement Watcher.
+>
+> It continues [Xan105's original Achievement Watcher](https://github.com/xan105/Achievement-Watcher) and [darktakayanagi's 2.x branch](https://github.com/darktakayanagi/Achievement-Watcher), with a modern runtime and a large compatibility, reliability and feature pass.
 
 ---
 
-## ✨ What this fork adds
+## ✨ What AW Next adds
 
-| Area | Main improvements since Achievement Watcher 2.x |
+| Area | Main improvements over Achievement Watcher 2.x |
 |---|---|
 | **Modern foundation** | Electron 12 → 43, a current Node runtime, refreshed dependencies, tighter renderer security and Windows 10/11 support without WMIC |
 | **More real sources** | Local Steam appcache, GOG Galaxy and Ubisoft Connect readers; optional Epic account connection; Xbox PC (Game Pass / Microsoft Store) account import; an EA achievement-log source for non-managed installs; Goldberg SocialClub; RPCS3, ShadPS4 and Xenia - each one individually switchable |
@@ -37,14 +39,14 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 | **Better library** | Game and achievement search, installed-only filtering, blacklist restore, rarity tiers, progress achievements, persistent manual achievement unlocks, smarter covers with a per-game SteamDB/SteamGridDB gallery, automatic launch-executable detection, a shortcut to each entry's achievement-data folder and right-click uninstall |
 | **Live tracking** | Tray-first background Watchdog, Xenia/ShadPS4/GOG/Ubisoft unlock monitoring, playtime and last-played dates for every tracked source (Steam, Ubisoft, Epic, GOG, EA, Xbox PC and standalone installs), safer startup baselines and duplicate suppression |
 | **Notifications** | Native Windows notifications + a customizable, localized in-game overlay (stats bar, instant search, status filters, rarity badges, progress bars, density/icon-size/accent/zoom), preset library, custom builder, custom sounds, 0–200% volume, separate rare/completion styles and optional priority delivery that survives Do Not Disturb |
-| **Controller and UI** | Full controller navigation of both the main app and the in-game overlay (XInput plus native PlayStation/Switch input), configurable button layout and bindings, mouse Back/Forward, resizable interface, collapsible settings sections that remember what you folded away, seventeen built-in themes plus a Custom theme with per-layer colors/images/gradients, 18 bundled UI languages and a localized installer |
+| **Controller and UI** | Full controller navigation of both the main app and the in-game overlay (XInput plus native PlayStation/Switch input), configurable button layout and bindings, mouse Back/Forward, resizable interface, collapsible settings sections that remember what you folded away, eighteen built-in themes (seven shown up front, the rest behind "More themes…") plus a Custom theme with per-layer colors/images/gradients, 18 bundled UI languages and a localized installer |
 | **Local-first reliability** | Own data directory isolated from the original 1.6.8 app, migration-safe settings and avatar, offline names and artwork, local schemas, platform-aware cache IDs, bounded caches, self-healing folders, quiet update prompts and durable diagnostics |
 
 ---
 
 ## ⚖️ Quick comparison
 
-| Feature | ⭐ **This fork** | [Achievements](https://github.com/PSerban93/Achievements) | [Achievement Watcher 2.x](https://github.com/darktakayanagi/Achievement-Watcher) |
+| Feature | ⭐ **AW Next** | [Achievements](https://github.com/PSerban93/Achievements) | [Achievement Watcher 2.x](https://github.com/darktakayanagi/Achievement-Watcher) |
 |---|:---:|:---:|:---:|
 | Modern desktop runtime | ✅ Electron 43 | ✅ Electron 43 | ❌ Electron 12 |
 | Unified dashboard, game and achievement search | ✅ Both | ✅ Both | ✅ Both |
@@ -62,7 +64,7 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 | Live RPCS3 / ShadPS4 / Xenia unlocks | ✅ | ✅ | ⚠️ RPCS3 only |
 | Full controller navigation | ✅ App + overlay | ✅ App + overlay | ❌ Planned only |
 | Screenshot souvenirs | ✅ | ✅ | ✅ |
-| Multiple UI themes | ✅ 17 + Custom | ✅ 8 | ❌ |
+| Multiple UI themes | ✅ 18 + Custom | ✅ 8 | ❌ |
 | Interface languages | ✅ 18 bundled | ✅ 30 locales | ✅ 18 locales |
 | Xbox PC (Game Pass / Store) | ✅ Account import | ✅ Account import | ❌ |
 | Manual achievement unlock | ✅ | ✅ | ❌ |
@@ -71,7 +73,7 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 | Per-emulator notification presets | ✅ Xenia · RPCS3 · ShadPS4 | ✅ | ❌ |
 | Emulator rarity and live Xbox unlocks | ✅ | ✅ | ❌ |
 
-This fork focuses on an all-in-one library, a quiet tray workflow, native Windows notifications and deeper Goldberg/GBE repair. **Achievements** has a strong auto-configuration and animated-overlay workflow. **Achievement Watcher 2.x** remains the historical base with broad emulator compatibility and several legacy notification transports.
+AW Next focuses on an all-in-one library, a quiet tray workflow, native Windows notifications and deeper Goldberg/GBE repair. **Achievements** has a strong auto-configuration and animated-overlay workflow. **Achievement Watcher 2.x** remains the historical base with broad emulator compatibility and several legacy notification transports.
 
 <sub>✅ = supported and documented · ⚠️ = partial, manual or a different workflow · ❌ = unavailable or not documented on the current public branch. Compared against the public READMEs, package manifests and source on 13 August 2026.</sub>
 
@@ -98,7 +100,7 @@ SteamHunters/SteamCommunity fallbacks). Local sources and cached metadata work o
 ## 📥 Install and use
 
 1. Download `Achievement.Watcher.Setup.<version>.exe` from the [latest release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/latest).
-2. Install and open Achievement Watcher.
+2. Install and open AW Next.
 3. Use the first-run guide to choose your language, sources, folders and notification mode.
 4. Run **Settings → Folders → Smart Find** and add any custom game or save location.
 5. Leave the app in the system tray for live notifications and playtime tracking.
@@ -109,12 +111,12 @@ Everything else is covered by the in-app **Settings → Help** tab and the
 <table>
 <tr>
 <td align="center"><img src="screenshot/onboarding.png" width="300" alt="First-run guide"><br><sub>Guided first-run setup</sub></td>
-<td align="center"><img src="screenshot/settings.png" width="300" alt="Achievement Watcher settings"><br><sub>Sources, folders, notifications and diagnostics in one place</sub></td>
+<td align="center"><img src="screenshot/settings.png" width="300" alt="AW Next settings"><br><sub>Sources, folders, notifications and diagnostics in one place</sub></td>
 <td align="center"><img src="screenshot/custom_theme.png" width="300" alt="Custom theme editor"><br><sub>Per-layer colors, gradients, images and effects</sub></td>
 </tr>
 </table>
 
-Updating over an older build keeps settings, cache, playtime and achievement data under `%APPDATA%\Achievement Watcher 3.0`. The first launch after upgrading imports the legacy `%APPDATA%\Achievement Watcher` folder once (copied, never moved), so the original 1.6.8 app and its uninstaller stay fully independent. See [Getting started](docs/getting-started.md) for the full first-run and update guide.
+Settings, cache, playtime and achievement data live under `%APPDATA%\Achievement Watcher Next`. The first launch after upgrading imports an existing `%APPDATA%\Achievement Watcher 3.0` folder, and otherwise the original `%APPDATA%\Achievement Watcher` one - copied or hard-linked, never moved, so the folder you upgraded from stays intact and the 1.6.8 app and its uninstaller remain fully independent. Screenshot souvenirs follow the same rule, unless you picked your own folder, which is left exactly where it is. See [Getting started](docs/getting-started.md) for the full first-run and update guide.
 
 ---
 
@@ -160,7 +162,7 @@ Normal achievement reading is read-only. Extra actions appear under **Emulator &
 
 Full background setup is **off by default**. Repairs create backups, but they still modify game files; use them only with games you own.
 
-Ubisoft titles use a separate **Uplay R2** path because they do not load `steam_api.dll`. Achievement Watcher can derive a safe mapping for compatible games and reuse the normal `GSE Saves` pipeline. The loader must be provided locally because no stable official download exists.
+Ubisoft titles use a separate **Uplay R2** path because they do not load `steam_api.dll`. AW Next can derive a safe mapping for compatible games and reuse the normal `GSE Saves` pipeline. The loader must be provided locally because no stable official download exists.
 
 Those games show the same Steam community percentage column as native Steam games: Uplay R2 uses its mapped Steam AppID directly, official Ubisoft Connect titles are bridged from Steam's global percentages onto their native ids, and the result is cached like any other rarity.
 
@@ -203,7 +205,7 @@ The installer and updater files are written to `app\dist`. See [BUILD.md](BUILD.
 
 ## 🔐 Security and support
 
-Found a problem, have an idea, or simply want something improved? Please [open an issue](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues) - reports and suggestions are what help Achievement Watcher become better. For a vulnerability, use the private process in the [security policy](SECURITY.md), not a public issue.
+Found a problem, have an idea, or simply want something improved? Please [open an issue](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues) - reports and suggestions are what help AW Next become better. For a vulnerability, use the private process in the [security policy](SECURITY.md), not a public issue.
 
 - Download builds only from the [official Releases page](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases).
 - Official installers use the project's self-signed `CN=Shirow` certificate. Users do not need to
@@ -214,7 +216,7 @@ Found a problem, have an idea, or simply want something improved? Please [open a
 - Sensitive settings and Epic account tokens are encrypted before local storage.
 - The project contains no game files and does not bypass online ownership checks.
 
-For a bug report, include the app version, Windows version, affected source and relevant files from `%APPDATA%\Achievement Watcher 3.0\logs`. The issue tracker cannot provide games, credentials or piracy support.
+For a bug report, include the app version, Windows version, affected source and relevant files from `%APPDATA%\Achievement Watcher Next\logs`. The issue tracker cannot provide games, credentials or piracy support.
 
 ## ⚖️ Credits and license
 

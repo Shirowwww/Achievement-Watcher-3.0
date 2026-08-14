@@ -610,7 +610,7 @@ function diagnose({ gameDir, appid, name } = {}) {
       'info',
       'LOADER_NO_ACH_REDIRECT',
       'This loader build predates AchSaveType/AchSavePath support, so the emulator cannot be redirected. ' +
-        'Achievement Watcher reads its own save folder instead — update the loader dll for the redirect.'
+        'AW Next reads its own save folder instead — update the loader dll for the redirect.'
     );
   }
 

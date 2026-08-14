@@ -17,17 +17,19 @@ const previousAw = process.env.AW_USER_DATA;
     process.env.APPDATA = tmp;
     delete process.env.AW_USER_DATA;
 
-    // 3.x must live in its own directory — never the legacy 1.6.8 folder (issue #6).
-    assert.equal(appPaths.userDataDir(), path.join(tmp, 'Achievement Watcher 3.0'));
+    // AW Next must live in its own directory — never either predecessor's folder (issue #6).
+    // The app and the Watchdog have to agree on it, or the monitor writes somewhere the UI never reads.
+    assert.equal(appPaths.userDataDir(), path.join(tmp, 'Achievement Watcher Next'));
+    assert.equal(appPaths.aw3UserDataDir(), path.join(tmp, 'Achievement Watcher 3.0'));
     assert.equal(appPaths.legacyUserDataDir(), path.join(tmp, 'Achievement Watcher'));
-    assert.equal(watchdogPaths.userDataDir(), path.join(tmp, 'Achievement Watcher 3.0'));
+    assert.equal(watchdogPaths.userDataDir(), path.join(tmp, 'Achievement Watcher Next'));
 
     // The Watchdog trusts the path the main process passes through AW_USER_DATA.
-    process.env.AW_USER_DATA = path.join(tmp, 'Custom 3.0 Dir');
+    process.env.AW_USER_DATA = path.join(tmp, 'Custom Dir');
     appPaths.resetCache();
     watchdogPaths.resetCache();
-    assert.equal(appPaths.userDataDir(), path.join(tmp, 'Custom 3.0 Dir'));
-    assert.equal(watchdogPaths.userDataDir(), path.join(tmp, 'Custom 3.0 Dir'));
+    assert.equal(appPaths.userDataDir(), path.join(tmp, 'Custom Dir'));
+    assert.equal(watchdogPaths.userDataDir(), path.join(tmp, 'Custom Dir'));
 
     console.log('PASS: userDataPath helpers');
   } finally {

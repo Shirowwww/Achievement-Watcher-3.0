@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Drive and visually verify a running Achievement Watcher dev build from the command line.
+  Drive and visually verify a running AW Next dev build from the command line.
 
 .DESCRIPTION
   The app is a tray daemon. This script forwards overlay requests, enumerates windows,
@@ -47,7 +47,7 @@ $ErrorActionPreference = 'Stop'
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $AppDir = Join-Path $RepoRoot 'app'
 $Electron = Join-Path $AppDir 'node_modules\electron\dist\electron.exe'
-$UserData = Join-Path $env:APPDATA 'Achievement Watcher 3.0'
+$UserData = Join-Path $env:APPDATA 'Achievement Watcher Next'
 
 # Keep the native helper compatible with PowerShell 5.1 and 7.
 Add-Type @"
@@ -201,7 +201,7 @@ switch ($Command) {
 
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ((Get-Date) -lt $deadline) {
-      if (Select-Windows 'Achievement Watcher') { break }
+      if (Select-Windows 'AW Next') { break }
       Start-Sleep -Milliseconds 500
     }
     Write-Host 'Windows now visible:'

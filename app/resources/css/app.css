@@ -31,6 +31,10 @@
    hex literals previously hardcoded throughout this stylesheet (zero visual change); centralizing
    them removes palette drift and makes future theming/accent tweaks a one-line edit. */
 :root {
+  /* Every drop shadow in this file is black, with an alpha tuned against a dark surface. On a pale
+     background those same alphas read as heavy grey smudges rather than depth, so each shadow
+     multiplies its alpha by this factor and the light theme simply dials it down. */
+  --shadow-scale: 1;
   --bg-base: #142236;                /* window / app background */
   --bg-glow: #26384c;                /* top-centre radial glow behind the header */
   --bg-panel: #192a40;               /* game-list & sunken panels */
@@ -94,11 +98,40 @@
   --set-btn-bottom: color-mix(in srgb, var(--set-surface) 92%, black 12%);
 }
 
-/* App themes (Settings > General). Dark variants only: the stylesheet's translucent white/black
-   overlays assume a dark base, so every theme keeps light text and shifts backgrounds/accents.
+/* App themes (Settings > General). Every theme but 'light' is a dark variant: the stylesheet's
+   translucent white/black overlays were authored against a dark base, so they keep light text and
+   shift backgrounds/accents.
    Each theme also carries the three semantic hues (--success / --warning / --danger) in its own
    palette: they drive the account cards, the caution badges and the diagnostic lines, which used
    to be pinned to one hardcoded amber/green and stayed Steam-blue-tinted under every theme. */
+
+/* The one light-base theme. Text and surfaces are inverted; the faint rgba(255,255,255,…) depth
+   tints elsewhere in this file simply stop reading against a pale surface instead of inverting,
+   which costs a little shading but never legibility — every foreground colour is token-driven.
+   The semantic hues are darkened so they still pass contrast on a near-white background. */
+:root[data-theme='light'] {
+  /* Shadows here are the same black as everywhere else, just far weaker: at full strength the
+     dark-theme alphas turn every card into a grey halo on a near-white surface. */
+  --shadow-scale: 0.3;
+  --bg-base: #eceff4;
+  --bg-glow: #ffffff;
+  --bg-panel: #f5f7fa;
+  --bg-panel-translucent: #f5f7fab5;
+  --surface: #ffffff;
+  --set-surface: #ffffff;
+  --border: #ccd4e0;
+  --text: #16202e;
+  --text-muted: #5b6b80;
+  /* A muted slate blue rather than a saturated one: the bright accent the dark themes carry is
+     glaring against white, and this still clears 4.5:1 on --bg-base for use as link/label text. */
+  --accent: #3a63b5;
+  --accent-soft: rgba(58, 99, 181, 0.14);
+  --surface-elevated: #ffffff;
+  --surface-sunken: #e3e8f0;
+  --success: #14804a;
+  --warning: #9a6700;
+  --danger: #c4342f;
+}
 :root[data-theme='oled'] {
   --bg-base: #000000;
   --bg-glow: #101014;
@@ -488,14 +521,14 @@ main {
   border-radius: 50%;
   border: solid rgba(255, 255, 255, 0.88) 2px;
   margin: 10px;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.38);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, calc(0.38 * var(--shadow-scale)));
   transition: box-shadow 0.18s ease, transform 0.18s ease;
 }
 
 #user-info .avatar:hover {
   cursor: pointer;
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.42), 0 0 0 3px var(--accent-soft);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, calc(0.42 * var(--shadow-scale))), 0 0 0 3px var(--accent-soft);
   color: var(--text);
 }
 
@@ -557,7 +590,7 @@ main {
   border-radius: 999px;
   overflow: hidden;
   background: color-mix(in srgb, var(--surface-sunken) 72%, transparent);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.38), 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, calc(0.38 * var(--shadow-scale))), 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 #user-info .info .completion-dist::after {
@@ -814,7 +847,7 @@ main {
     color-mix(in srgb, var(--accent) 42%, transparent),
     color-mix(in srgb, var(--accent) 26%, transparent)
   );
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, calc(0.25 * var(--shadow-scale)));
 }
 
 /* The arrow is revealed only for the selected criterion and rotates with its direction. */
@@ -931,7 +964,7 @@ main {
   border-radius: 12px;
   background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 62%, var(--surface-sunken)) 0%, color-mix(in srgb, var(--surface) 34%, var(--surface-sunken)) 100%);
   border: 1px solid color-mix(in srgb, var(--border) 12%, transparent);
-  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.42);
+  box-shadow: 0 20px 44px rgba(0, 0, 0, calc(0.42 * var(--shadow-scale)));
 }
 
 /* Empty state — actionable onboarding instead of a bare "No Games" + sad face. */
@@ -967,7 +1000,7 @@ main {
   border: 1px solid color-mix(in srgb, var(--border) 18%, transparent);
   border-radius: 7px;
   cursor: pointer;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, calc(0.2 * var(--shadow-scale)));
   transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
 }
 #game-list .isEmpty .btn:hover {
@@ -1067,7 +1100,7 @@ main {
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--border) 10%, transparent);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22), 0 3px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, calc(0.22 * var(--shadow-scale))), 0 3px 8px rgba(0, 0, 0, calc(0.25 * var(--shadow-scale)));
   cursor: pointer;
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
   position: relative;
@@ -1081,7 +1114,7 @@ main {
 #game-list ul > li .game-box:hover {
   transform: translateY(-4px);
   border-color: color-mix(in srgb, var(--accent) 38%, transparent);
-  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.42), 0 0 0 1px color-mix(in srgb, var(--accent) 10%, transparent);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, calc(0.42 * var(--shadow-scale))), 0 0 0 1px color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
 /* Skeleton tiles shown while the library scan streams real games in. They keep the grid from
@@ -1193,7 +1226,7 @@ main {
   );
   border: 1px solid color-mix(in srgb, var(--border) 18%, transparent);
   border-radius: 8px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, calc(0.55 * var(--shadow-scale))), 0 1px 0 rgba(255, 255, 255, 0.04);
   overflow: hidden;
   padding: 0;
 }
@@ -1454,7 +1487,7 @@ main {
   height: 32px;
   margin: auto 0;
   border-radius: 5px;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.32);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, calc(0.32 * var(--shadow-scale)));
 }
 
 #achievement .wrapper > .header .title span {
@@ -1498,7 +1531,7 @@ main {
   position: absolute;
   top: 25px;
   right: 0;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, calc(0.22 * var(--shadow-scale)));
   transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
 }
 
@@ -1581,7 +1614,7 @@ main {
   box-sizing: border-box;
   border-radius: 7px;
   border: 1px solid color-mix(in srgb, var(--border) 7%, transparent);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, calc(0.16 * var(--shadow-scale)));
   transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
@@ -1660,7 +1693,7 @@ main {
     color-mix(in srgb, var(--accent) 42%, transparent),
     color-mix(in srgb, var(--accent) 26%, transparent)
   );
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, calc(0.25 * var(--shadow-scale)));
   text-shadow: none;
 }
 
@@ -1682,7 +1715,7 @@ main {
 .achievement .box {
   width: 66px;
   height: 66px;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.26);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, calc(0.26 * var(--shadow-scale)));
   margin: auto 0;
   position: relative;
   border-radius: 9px;
@@ -1827,7 +1860,7 @@ main {
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--border) 24%, transparent);
   box-sizing: border-box;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, calc(0.45 * var(--shadow-scale)));
 }
 
 .achievement .progressBar > .meter {
@@ -2012,7 +2045,7 @@ main {
   align-items: center;
   gap: 6px;
   transition: background 0.15s ease, transform 0.1s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, calc(0.25 * var(--shadow-scale)));
 }
 #options-notify-test .btn:hover {
   background: var(--bg-base);
@@ -2140,7 +2173,7 @@ main {
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--set-hairline);
-  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.48), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, calc(0.48 * var(--shadow-scale))), 0 0 0 1px rgba(255, 255, 255, 0.03);
   display: none;
 }
 #game-config .box {
@@ -2358,7 +2391,7 @@ main {
   font-family: 'Raleway-bold';
   color: var(--set-title);
   border-radius: 8px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, calc(0.18 * var(--shadow-scale)));
   pointer-events: none !important;
 }
 #settingNav li.active i {
@@ -2441,6 +2474,57 @@ main {
   line-height: 1.3;
   color: var(--text-muted);
   min-width: 0;
+}
+
+/* About block: the product name is the only emphasised part, and it gets real breathing room before
+   the version so the line reads as a name followed by its version, not one run-on string. The
+   upstream lineage that used to sit under it now lives at the foot of the Advanced tab. */
+/* Same divider as the one between the panel title and the Interface switch, so the footer reads as
+   "this app │ its version and who maintains it". A border rather than a character: the loader
+   indexes the <span>s of this row by position, so the block must not gain an element. */
+#settings .box .notice .notice-brand {
+  color: var(--text);
+  font-weight: 600;
+  margin-right: 12px;
+  padding-right: 12px;
+  border-right: 1px solid var(--set-hairline-soft);
+}
+
+#settings .box .notice .notice-sep {
+  opacity: 0.5;
+  margin: 0 4px;
+}
+
+/* Upstream credits, at the very bottom of the Advanced tab. Deliberately quiet: it is a credit
+   line, not a setting, so it sits below the diagnostics rather than competing with them. */
+#advanced-lineage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  /* Row gap stays tight so a wrapped second entry reads as a continuation, not a new paragraph. */
+  gap: 2px 8px;
+  padding-top: 4px;
+  opacity: 0.72;
+  color: var(--text-muted);
+  font-family: 'Open-Sans';
+  font-size: 11.5px;
+}
+
+/* A label, its icon and its repository are one unbreakable unit: as loose flex items the line used
+   to break between the icon and the link it labels. */
+#advanced-lineage .lineage-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+#advanced-lineage a {
+  color: inherit;
+}
+
+#advanced-lineage a[href]:hover {
+  color: var(--accent);
 }
 
 #settings .box p {
@@ -2533,7 +2617,7 @@ main {
   margin: 0;
   font-family: 'Open-Sans-Bold';
   cursor: pointer;
-  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, calc(0.18 * var(--shadow-scale)));
   transition: background 0.15s ease, border-color 0.15s ease, filter 0.15s ease;
 }
 
@@ -2738,7 +2822,7 @@ main {
   border-radius: 50%;
   background: var(--accent);
   border: 2px solid var(--bg-base);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, calc(0.4 * var(--shadow-scale)));
 }
 .arrow-list li .right.volume-slider input[type='range']:hover::-webkit-slider-thumb {
   box-shadow: 0 0 0 4px var(--accent-soft);
@@ -2917,7 +3001,7 @@ main {
   border: 1px solid color-mix(in srgb, var(--border) 18%, transparent);
   border-radius: 18px;
   background: color-mix(in srgb, var(--surface-sunken) 94%, transparent);
-  box-shadow: 0 34px 90px rgba(0, 0, 0, 0.58), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  box-shadow: 0 34px 90px rgba(0, 0, 0, calc(0.58 * var(--shadow-scale))), inset 0 1px 0 rgba(255, 255, 255, 0.07);
   overflow: hidden;
 }
 
@@ -3857,7 +3941,7 @@ main {
   border-radius: 6px;
   cursor: pointer;
   text-align: center;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, calc(0.18 * var(--shadow-scale)));
 }
 
 #settings .content[data-view='advanced'] .btn,
@@ -4120,7 +4204,7 @@ main {
 #search-bar-float input[type='search'].has {
   width: 160px;
   border-color: color-mix(in srgb, var(--accent) 55%, transparent);
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.3), 0 0 0 3px var(--accent-soft);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, calc(0.3 * var(--shadow-scale))), 0 0 0 3px var(--accent-soft);
   padding-left: 32px;
   color: var(--text);
   cursor: auto;
@@ -4445,7 +4529,7 @@ main {
   border-radius: 10px;
   color: var(--text);
   background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 27%, transparent), color-mix(in srgb, var(--set-surface-sunken) 30%, transparent));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 5px 16px rgba(0, 0, 0, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 5px 16px rgba(0, 0, 0, calc(0.12 * var(--shadow-scale)));
   cursor: pointer;
   user-select: none;
   transition: transform 0.12s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
@@ -4454,7 +4538,7 @@ main {
   transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--accent) 46%, transparent);
   background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 36%, transparent), color-mix(in srgb, var(--set-surface-sunken) 40%, transparent));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 20px rgba(0, 0, 0, 0.17);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 20px rgba(0, 0, 0, calc(0.17 * var(--shadow-scale)));
 }
 #settings .emulator-login-actions .btn:active {
   transform: scale(0.985);
@@ -4573,7 +4657,7 @@ main {
   border-radius: 14px;
   color: var(--text);
   background: linear-gradient(160deg, var(--surface-elevated), var(--surface-sunken));
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, calc(0.55 * var(--shadow-scale))), inset 0 1px 0 rgba(255, 255, 255, 0.035);
   animation: aw-prompt-in 0.16s ease-out;
 }
 .aw-prompt-heading {
@@ -4713,7 +4797,7 @@ main {
 .aw-cover-picker-tile:focus-visible {
   border-color: color-mix(in srgb, var(--accent) 72%, transparent);
   transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45), 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, calc(0.45 * var(--shadow-scale))), 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 .aw-cover-picker-tile.aw-landscape {
   aspect-ratio: 16 / 9;
@@ -4940,7 +5024,7 @@ body {
   );
   border: 1px solid color-mix(in srgb, var(--border) 26%, transparent);
   border-radius: 999px;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, calc(0.45 * var(--shadow-scale)));
   overflow: hidden;
 }
 
@@ -4990,7 +5074,7 @@ body {
   padding: 0;
   background: color-mix(in srgb, var(--surface-sunken) 56%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.17);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, calc(0.28 * var(--shadow-scale))), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(10px);
 }
 
@@ -5036,7 +5120,7 @@ body {
 #search-bar input[type='search'] {
   background-color: color-mix(in srgb, var(--surface) 66%, transparent);
   border-color: color-mix(in srgb, var(--border) 20%, transparent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 20px rgba(0, 0, 0, calc(0.12 * var(--shadow-scale)));
   backdrop-filter: blur(12px);
 }
 
@@ -5070,7 +5154,7 @@ body {
   background: color-mix(in srgb, var(--surface-sunken) 68%, transparent);
   border-color: color-mix(in srgb, var(--border) 14%, transparent);
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, calc(0.16 * var(--shadow-scale)));
   backdrop-filter: blur(10px);
 }
 
@@ -5115,7 +5199,7 @@ body {
   border-radius: var(--radius-lg);
   border-color: var(--set-hairline);
   background: linear-gradient(180deg, var(--set-modal-top) 0%, var(--set-modal-bottom) 100%);
-  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.46), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  box-shadow: 0 28px 70px rgba(0, 0, 0, calc(0.46 * var(--shadow-scale))), inset 0 1px 0 rgba(255, 255, 255, 0.07);
   backdrop-filter: blur(20px) saturate(1.08);
 }
 
@@ -5255,7 +5339,7 @@ body {
   color: var(--set-title);
   background: linear-gradient(90deg, var(--accent-soft), color-mix(in srgb, var(--accent) 5%, transparent));
   border-color: color-mix(in srgb, var(--accent) 28%, transparent);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, calc(0.16 * var(--shadow-scale)));
 }
 
 /* Sidebar group headers: keep the settings nav scannable without turning it into
@@ -5517,7 +5601,8 @@ body {
 
 #settings .folder-actions .info {
   width: 100%;
-  margin: 0 0 7px;
+  /* Small top margin: without it the description sits flush against the section header above it. */
+  margin: 4px 0 7px;
   text-align: left;
 }
 
@@ -5560,7 +5645,7 @@ body {
   border-radius: 9px;
   border-color: var(--set-control-border);
   background: linear-gradient(180deg, var(--set-btn-top), var(--set-btn-bottom));
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, calc(0.16 * var(--shadow-scale)));
   transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
 }
 
@@ -6782,7 +6867,7 @@ body {
   border: 2px solid var(--bg-base);
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, calc(0.4 * var(--shadow-scale)));
   cursor: pointer;
 }
 #settings input[type='range']:hover::-webkit-slider-thumb {
@@ -7105,7 +7190,7 @@ body {
   border-left: 4px solid #4aa3ff;
   border-radius: 12px;
   background: #16181d;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, calc(0.4 * var(--shadow-scale)));
   color: #ffffff;
   font-family: 'Segoe UI', system-ui, sans-serif;
   font-size: 16px;

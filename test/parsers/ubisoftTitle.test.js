@@ -8,7 +8,7 @@ const path = require('node:path');
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-ubi-title-'));
 process.env.APPDATA = tmp;
-fs.mkdirSync(path.join(tmp, 'Achievement Watcher 3.0', 'logs'), { recursive: true });
+fs.mkdirSync(path.join(tmp, 'Achievement Watcher Next', 'logs'), { recursive: true });
 process.on('exit', () => {
   try {
     fs.rmSync(tmp, { recursive: true, force: true });

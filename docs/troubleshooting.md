@@ -12,7 +12,7 @@ Start with the checks below. If a problem remains, include the app version, Wind
 Use **Settings → Advanced → Diagnostics** to open the log or data directory. The default log path is:
 
 ```text
-%APPDATA%\Achievement Watcher 3.0\logs
+%APPDATA%\Achievement Watcher Next\logs
 ```
 
 The most useful files are usually `Achievement Watcher.log`, `renderer.log`, `parser.log` and the Watchdog logs created for the affected source. Zip several files when the failure crosses scanning, UI and notification behavior.
@@ -96,7 +96,7 @@ If the library updates but no notification appears, the source watcher works and
 
 ## Playtime is not tracked
 
-Achievement Watcher follows the configured game executable and its process lifetime. If a launcher, helper or differently named binary starts instead:
+AW Next follows the configured game executable and its process lifetime. If a launcher, helper or differently named binary starts instead:
 
 - right-click the game and open its configuration;
 - select the executable that remains active while playing;
@@ -120,7 +120,7 @@ Do not disable system-wide protection. Submit a false-positive report to the ant
 ## The window does not open
 
 - Use the tray icon in case the app started hidden.
-- End a stuck Achievement Watcher process, then launch it once more.
+- End a stuck AW Next process, then launch it once more.
 - Remove `ELECTRON_RUN_AS_NODE` from the environment if it was set for development; that variable makes Electron start as plain Node.
 - Check `renderer.log` and the main app log for the first error.
 - Try **Settings → General → Disable hardware acceleration** if the UI is visible long enough to change it.
@@ -129,8 +129,8 @@ Do not disable system-wide protection. Submit a false-positive report to the ant
 
 Use this only after backing up data you want to keep:
 
-1. Exit Achievement Watcher fully from the tray.
-2. Rename `%APPDATA%\Achievement Watcher 3.0` to `Achievement Watcher 3.0.backup`.
+1. Exit AW Next fully from the tray.
+2. Rename `%APPDATA%\Achievement Watcher Next` to `Achievement Watcher Next.backup`.
 3. Start the app and reproduce the issue with the new profile.
 
 If the issue disappears, restore only the data you need or attach the relevant configuration files to the report. Renaming is safer than deleting because it keeps a rollback path.

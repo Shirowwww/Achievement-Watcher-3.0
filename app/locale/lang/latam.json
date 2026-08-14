@@ -50,7 +50,7 @@
   "hiddenDescriptionPlaceholder": "Oculto — haz clic para revelar",
   "noneUnlocked": "Aún no hay logros desbloqueados",
   "play": "¡A jugar !",
-  "noneUnlockedHint": "¿No ves ningún desbloqueo? Consulta la sección de Preguntas frecuentes / Solución de problemas de",
+  "noneUnlockedHint": "¿No ves ningún desbloqueo?",
   "scrollUp": "Subir",
   "allGamesBackButton": "Todos los juegos",
   "removeFromList": "Quitar de la lista",
@@ -173,7 +173,7 @@
       },
       "startup": {
         "name": "Iniciar con el sistema",
-        "description": "Inicia Achievement Watcher automáticamente con Windows, oculto en la bandeja."
+        "description": "Inicia AW Next automáticamente con Windows, oculto en la bandeja."
       },
       "onboarding": {
         "name": "Guía de primer inicio",
@@ -211,7 +211,7 @@
         },
         "appNavigation": {
           "name": "Controlar la app con el mando",
-          "description": "Navega por la ventana de Achievement Watcher con el mando: biblioteca, detalles del juego, ajustes y búsquedas."
+          "description": "Navega por la ventana de AW Next con el mando: biblioteca, detalles del juego, ajustes y búsquedas."
         },
         "layout": {
           "auto": "Auto",
@@ -268,7 +268,7 @@
       },
       "steamSettings": {
         "name": "Datos de steam_settings",
-        "description": "Simple usa la obtención propia de Achievement Watcher (anónima). Advanced ejecuta generate_emu_config para la cobertura de depots/idiomas.",
+        "description": "Simple usa la obtención propia de AW Next (anónima). Advanced ejecuta generate_emu_config para la cobertura de depots/idiomas.",
         "value": {
           "simple": "Simple (rápido)",
           "advanced": "Advanced (completo)"
@@ -784,7 +784,7 @@
     "languagePlaceholder": "Elige un idioma...",
     "languageHint": "La primera carga de la biblioteca comienza sólo después de esta elección.",
     "introTitle": "como funciona",
-    "introCopy": "Achievement Watcher escanea las carpetas guardadas conocidas y las bibliotecas de juegos, luego Watchdog sigue ejecutándose en la bandeja para recibir notificaciones de desbloqueo y el overlay en el juego.",
+    "introCopy": "AW Next escanea las carpetas guardadas conocidas y las bibliotecas de juegos, luego Watchdog sigue ejecutándose en la bandeja para recibir notificaciones de desbloqueo y el overlay en el juego.",
     "scanTitle": "Escanear",
     "scanCopy": "Las instalaciones de Steam, GOG, Epic, RPCS3/ShadPS4/Xenia y Goldberg/GBE se detectan mediante sus archivos de logros — por ejemplo, %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, partidas CODEX/RUNE o una carpeta de juego con steam_settings.",
     "watchTitle": "Supervisar",
@@ -924,6 +924,8 @@
     "errorSavingSettings": "Error al guardar la configuración.",
     "failedToSetAvatar": "No se pudo establecer el avatar.",
     "themeCustom": "Personalizado…",
+    "themeMore": "Más temas…",
+    "themeFewer": "Menos temas…",
     "themeUserPrefix": "Usuario:",
     "manuallyUnlocked": "Desbloqueado manualmente",
     "input-required": "Se requiere entrada",
@@ -1097,7 +1099,7 @@
     "copy-the-uplay-r2-loader-64-dll-upc-r2-loader-64-dll-files-into-": "Copia los archivos uplay_r2_loader(64).dll / upc_r2_loader(64).dll aquí (configuración única):\n{dir}",
     "update-the-uplay-r2-loader": "¿Actualizar el loader de Uplay R2?",
     "uplay-r2-old-loader-message": "Este juego usa un loader demasiado antiguo para redirigir logros.",
-    "uplay-r2-old-loader-detail": "El fix funciona sin actualizar: Achievement Watcher lee la carpeta de guardados del propio emulador.\n\nActualizar activa la redirección a GSE Saves, pero reemplaza una DLL con la que el juego se inicia actualmente (el original se conserva como .bak).",
+    "uplay-r2-old-loader-detail": "El fix funciona sin actualizar: AW Next lee la carpeta de guardados del propio emulador.\n\nActualizar activa la redirección a GSE Saves, pero reemplaza una DLL con la que el juego se inicia actualmente (el original se conserva como .bak).",
     "keep-current-loader": "Conservar el loader actual",
     "update-loader": "Actualizar",
     "updating-the-dll": "Actualizando la DLL…",
@@ -1170,7 +1172,7 @@
     "apply-the-emulator-fix-to-x-detected-game-s-existing-files-are-b": "¿Aplicar el fix de emulador a {count} juego(s) detectado(s)? Los archivos existentes se respaldan antes de sobrescribirse.",
     "fixing": "Reparando",
     "done-x-game-s-fixed-x-skipped-x-failed": "Listo — {fixed} juego(s) reparado(s), {skipped} omitido(s), {failed} con error.",
-    "achievement-watcher": "Achievement Watcher",
+    "achievement-watcher": "AW Next",
     "connect-epic-games-account": "Conectar cuenta de Epic Games",
     "connect-microsoft-xbox-network": "Conectar Microsoft / Xbox Network",
     "emulator-fix-applied": "Fix de emulador aplicado",
@@ -1178,7 +1180,7 @@
     "achievement-unlocked": "Logro desbloqueado",
     "choose-theme-image": "Elegir una imagen de fondo",
     "choose-a-notification-sound": "Elegir un sonido de notificación",
-    "open-achievement-watcher": "Abrir Achievement Watcher",
+    "open-achievement-watcher": "Abrir AW Next",
     "restart-background-monitor": "Reiniciar monitor en segundo plano",
     "quit": "Salir",
     "update-available": "Actualización disponible",
@@ -1283,7 +1285,7 @@
     "invalid-folder": "Carpeta no válida",
     "error-adding-custom-folder": "Error al agregar la carpeta personalizada",
     "error-adding-library-folder": "Error al agregar la carpeta de biblioteca",
-    "generate-configs-detail-auto-fix": "Esto inicia ahora un escaneo completo. Durante el escaneo, Achievement Watcher aplica el auto-fix GBE/Goldberg a los juegos detectados con una carpeta de instalación conocida. Las reparaciones se ejecutan en segundo plano: vuelve a escanear si un juego recién reparado no aparece todavía como listo.",
+    "generate-configs-detail-auto-fix": "Esto inicia ahora un escaneo completo. Durante el escaneo, AW Next aplica el auto-fix GBE/Goldberg a los juegos detectados con una carpeta de instalación conocida. Las reparaciones se ejecutan en segundo plano: vuelve a escanear si un juego recién reparado no aparece todavía como listo.",
     "generate-configs-detail-scan-only": "Esto solo inicia un escaneo de detección completo. La reparación automática está desactivada en Configuración del emulador > Corregir automáticamente los juegos recién detectados.",
     "generate-configs": "Generar configuraciones",
     "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "Se encontraron {found} instalaciones compatibles con Steam — {missing} sin arreglo existente y aptas.",
@@ -1348,7 +1350,6 @@
     "diagnosis-auto-repair-failed": "La reparación automática falló: {error}",
     "diagnosis-steam-appid": "Steam AppID: {appid} ({name})",
     "diagnosis-steam-appid-not-resolved": "Steam AppID: no resuelto",
-    "version-app": "Aplicación",
     "diagnosis-dlls-backed-up": "DLL(s) existentes respaldadas como *.bak",
     "diagnosis-config-backed-up": "Configuración anterior respaldada: {path}",
     "diagnosis-ach-key-prefix": "AchKeyPrefix: {prefix}",
@@ -1392,7 +1393,7 @@
     "rareAchievement": "Logro raro",
     "rareDescription": "Solo el {percent}% de los jugadores lo desbloqueó.",
     "testAchievement": "Logro de prueba",
-    "testDescription": "Esta es una notificación de prueba de Achievement Watcher.",
+    "testDescription": "Esta es una notificación de prueba de AW Next.",
     "playedFor": "Jugaste durante {duration}",
     "trackingPlaytime": "Registrando tiempo de juego",
     "playtime": "Tiempo de juego"

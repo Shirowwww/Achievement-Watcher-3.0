@@ -1,13 +1,13 @@
 # Getting started
 
-Achievement Watcher is a Windows desktop application. Packaged releases include their own runtime, so Node.js is required only when building from source.
+AW Next is a Windows desktop application. Packaged releases include their own runtime, so Node.js is required only when building from source.
 
 ## Install
 
 1. Open the [latest release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/latest).
 2. Download `Achievement.Watcher.Setup.<version>.exe`.
 3. Run the installer and choose an installation folder.
-4. Open Achievement Watcher from the Start menu or desktop shortcut.
+4. Open AW Next from the Start menu or desktop shortcut.
 
 > [!WARNING]
 > The installer is self-signed by `CN=Shirow`. You do not need to install its certificate, and
@@ -61,11 +61,11 @@ preview before you press **Save**.
 ## Steam metadata, keyless by design
 
 No Steam Web API key or connected account is used: each game's schema is fetched automatically
-with a fast keyless chain. In order, Achievement Watcher tries the official
+with a fast keyless chain. In order, AW Next tries the official
 `IPlayerService/GetGameAchievements` endpoint (which includes hidden descriptions, icons and global
 rarity), then the SteamHunters public JSON API enriched with the SteamCommunity page (icons and
 hidden status), then SteamCommunity alone, and finally a browser scrape as a last resort. Results
-are cached per language in `%APPDATA%\Achievement Watcher 3.0\steam_cache\schema`.
+are cached per language in `%APPDATA%\Achievement Watcher Next\steam_cache\schema`.
 
 DLC and update achievements are tagged with their owning group (e.g. "The Witcher 3: Wild Hunt -
 Hearts of Stone") under the achievement title in the detail view. The groups come from the same
@@ -102,7 +102,7 @@ Use the test buttons before launching a game. Presets, sounds, volume, duration 
 
 ## Tray and startup behavior
 
-Closing the main window normally keeps Achievement Watcher in the system tray. The background tracker continues watching supported files and processes for playtime and unlocks.
+Closing the main window normally keeps AW Next in the system tray. The background tracker continues watching supported files and processes for playtime and unlocks.
 
 Starting with Windows and closing to the tray can be changed under **Settings → General**. To exit fully, use the tray menu.
 
@@ -113,10 +113,22 @@ Installed releases check the project's GitHub release feed for a newer version. 
 Installing a newer build over an older one replaces program files but preserves user data in:
 
 ```text
-%APPDATA%\Achievement Watcher 3.0
+%APPDATA%\Achievement Watcher Next
 ```
 
-This directory contains settings, watched folders, caches, playtime, logs, notification assets and local account data. If you're upgrading from a 3.0 build that shared the legacy folder, Achievement Watcher copies the old `%APPDATA%\Achievement Watcher` data once on first launch, without touching or deleting the original. Uninstalling does not remove the data directory by default. Delete it manually only when you intentionally want a completely fresh profile.
+This directory contains settings, watched folders, caches, playtime, logs, notification assets and local account data.
+
+On the first launch after upgrading, AW Next imports your existing data into it:
+
+| You are coming from | Imported from | What happens |
+|---|---|---|
+| Achievement Watcher 3.x | `%APPDATA%\Achievement Watcher 3.0` | Settings, presets, themes, covers, caches, backups and logs are carried over |
+| Achievement Watcher 1.6.8 | `%APPDATA%\Achievement Watcher` | Same, for anyone who skipped 3.x |
+| A fresh machine | nothing | AW Next starts with defaults |
+
+The import runs once, copies small files and hard-links the large write-once ones, and **never deletes or modifies the folder it read from** - if anything goes wrong, your old data is still exactly where it was. Playtime counters stored in the registry are carried across the same way. Screenshot souvenirs move to `Pictures\Achievement Watcher Next`, unless you chose your own souvenir folder, in which case it is left untouched.
+
+Uninstalling does not remove the data directory by default. Delete it manually only when you intentionally want a completely fresh profile.
 
 If an update keeps failing on the same downloaded file, **Settings → Advanced → Clear caches**
 deletes only re-downloadable caches (update files, Steam/Ubisoft schema and icon cache, downloaded

@@ -347,7 +347,7 @@ const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
       } else {
         remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
           type: 'warning',
-          title: 'Achievement Watcher',
+          title: 'AW Next',
           message: text().invalidFolder,
         });
       }

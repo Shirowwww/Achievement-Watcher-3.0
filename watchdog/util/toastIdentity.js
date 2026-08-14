@@ -22,7 +22,7 @@ function toastIdentityCandidates(options, env = process.env) {
   const candidates = [];
   const override = options && options.notification_advanced ? options.notification_advanced.appID : '';
   if (override && override !== '') candidates.push({ id: override, why: 'user override' });
-  candidates.push({ id: env.AW_AUMID || ACHIEVEMENT_WATCHER_AUMID, why: 'Achievement Watcher' });
+  candidates.push({ id: env.AW_AUMID || ACHIEVEMENT_WATCHER_AUMID, why: 'AW Next' });
 
   const win_ver = os.release().split('.');
   if (win_ver[0] == '6' && (win_ver[1] == '3' || win_ver[1] == '2')) {

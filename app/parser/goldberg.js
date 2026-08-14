@@ -211,7 +211,7 @@ function restoreSetup({ backupDir, gameDir } = {}) {
   }
   const manifestFile = path.join(backupDir, 'backup.json');
   if (!fs.existsSync(manifestFile)) {
-    throw new Error('restore: backup.json manifest is missing — not an Achievement Watcher GBE backup');
+    throw new Error('restore: backup.json manifest is missing — not an AW Next GBE backup');
   }
   let manifest;
   try {
@@ -615,7 +615,7 @@ function writeDlcConfig({ steamSettings, dlcs = [], unlockAll = true } = {}) {
   }
 
   const body = [
-    '; Managed by Achievement Watcher — enable all DLCs for this game.',
+    '; Managed by AW Next — enable all DLCs for this game.',
     "; unlock_all=1 reports every DLC as owned; the id=name list below lets games that enumerate",
     '; their DLCs (GetDLCCount/BGetDLCDataByIndex) see them too.',
     `unlock_all=${unlockAll ? '1' : '0'}`,

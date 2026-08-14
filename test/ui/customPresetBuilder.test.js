@@ -106,7 +106,7 @@ test('a generated preset stores the builder options that produced it, so it can 
 test('generated presets are written under userData, never inside the packaged app', () => {
   const { generatedPresetsDir, GENERATED_PRESETS_SUBPATH } = require(path.join(appRoot, 'util', 'customPreset.js'));
 
-  const userData = path.join('C:', 'Users', 'someone', 'AppData', 'Roaming', 'Achievement Watcher 3.0');
+  const userData = path.join('C:', 'Users', 'someone', 'AppData', 'Roaming', 'Achievement Watcher Next');
   const dir = generatedPresetsDir(userData);
 
   assert.ok(dir.startsWith(userData + path.sep), `${dir} is not under userData`);

@@ -154,7 +154,7 @@ function startXboxPolling(game) {
               customAudio: '0',
               imageIntegration: '1',
               group: app.options.notification_toast.groupToast,
-              attribution: 'Achievement Watcher',
+              attribution: 'AW Next',
             },
             prefetch: app.options.notification_advanced.iconPrefetch,
             rumble: false,
@@ -656,7 +656,7 @@ var app = {
           // — the namespaced "socialclub-<slug>" id would fail every Steam lookup (issue #9).
           const indexed = findIndexedSocialClubGame(dir, filePath.dir);
           if (!indexed) {
-            throw 'Unable to find Goldberg SocialClub game for this save folder — run a library refresh so Achievement Watcher can map it';
+            throw 'Unable to find Goldberg SocialClub game for this save folder — run a library refresh so AW Next can map it';
           }
           const steamAppId = String(indexed.steamappid || '').trim();
           if (!/^\d+$/.test(steamAppId)) {
@@ -680,7 +680,7 @@ var app = {
 
         if (options.uplayR2) {
           const mapped = uplayR2.steamAppIdForUplayId(appID);
-          if (!mapped) throw `Unknown Ubisoft product id ${appID} — run a library refresh so Achievement Watcher can map it`;
+          if (!mapped) throw `Unknown Ubisoft product id ${appID} — run a library refresh so AW Next can map it`;
           debug.log(`[uplay-r2] product id ${appID} -> Steam appid ${mapped}`);
           appID = mapped;
         }
@@ -1218,7 +1218,7 @@ var app = {
                   customAudio: '0',
                   imageIntegration: '1',
                   group: app.options.notification_toast.groupToast,
-                  attribution: 'Achievement Watcher',
+                  attribution: 'AW Next',
                 },
                 prefetch: app.options.notification_advanced.iconPrefetch,
                 rumble: false,

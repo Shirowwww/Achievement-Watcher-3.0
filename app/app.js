@@ -2253,7 +2253,7 @@ var app = {
                         if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
                         const backupDir = path.resolve(picked.filePaths[0]);
                         const manifest = backupManifestFor(backupDir);
-                        if (!manifest) throw new Error('restore: backup.json manifest is missing — not an Achievement Watcher GBE backup');
+                        if (!manifest) throw new Error('restore: backup.json manifest is missing — not an AW Next GBE backup');
                         backup = { backupDir, manifest, createdAt: manifest.createdAt, source: 'manual' };
                       }
                       const confirm = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
@@ -3965,7 +3965,7 @@ var app = {
               <li>
                 <div class="notice">
                   <p>${$('#unlock').data('lang-noneUnlocked')} <i class="fas fa-frown-open"></i> ${$('#unlock').data('lang-play')}</p>
-                  <p>⚠️ ${$('#unlock').data('lang-noneUnlockedHint')} <a href="https://github.com/xan105/Achievement-Watcher/wiki" target="_blank">Wiki ↗</a></p>
+                  <p>⚠️ ${$('#unlock').data('lang-noneUnlockedHint')} <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0/blob/main/docs/troubleshooting.md" target="_blank">${$('#unlock').data('lang-troubleshoot')} ↗</a></p>
                   </div>
               </li>`;
         unlock.append(template);

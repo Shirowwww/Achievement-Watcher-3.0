@@ -1,4 +1,4 @@
-# Build Achievement Watcher
+# Build AW Next
 
 This guide covers local development and Windows packaging. Use [docs/RELEASE_WORKFLOW.md](docs/RELEASE_WORKFLOW.md) for versioning, publishing, CI and auto-update validation.
 
@@ -74,9 +74,9 @@ The main window, the in-game overlay and the notification windows are all Browse
 To navigate the interface itself, `Click` and `Scroll` take coordinates relative to a window, so a position read off a screenshot can be replayed wherever the window sits:
 
 ```powershell
-.\tools\aw-probe.ps1 Click  -Match 'Achievement Watcher' -X 1137 -Y 15      # the settings gear
-.\tools\aw-probe.ps1 Scroll -Match 'Achievement Watcher' -X 760 -Y 450 -Notches -6
-.\tools\aw-probe.ps1 Click  -Match 'Achievement Watcher' -X 221 -Y 273 -RightClick
+.\tools\aw-probe.ps1 Click  -Match 'AW Next' -X 1137 -Y 15      # the settings gear
+.\tools\aw-probe.ps1 Scroll -Match 'AW Next' -X 760 -Y 450 -Notches -6
+.\tools\aw-probe.ps1 Click  -Match 'AW Next' -X 221 -Y 273 -RightClick
 .\tools\aw-probe.ps1 Shot   -Screen -Out desktop.png                        # native menus need this
 ```
 
@@ -84,7 +84,7 @@ Take a screenshot after every step rather than chaining clicks blindly: several 
 
 `Send` works because the single-instance lock forwards argv to the running instance - the same channel the Watchdog uses. Window enumeration, not the log files, is the reliable answer to "is the overlay on screen?": the main process logs an incoming overlay *request* before deciding what to do with it.
 
-Dev and the installed app share `%APPDATA%\Achievement Watcher 3.0`. Back up `cfg\options.ini` before a test that changes settings, and restore it afterwards.
+Dev and the installed app share `%APPDATA%\Achievement Watcher Next`. Back up `cfg\options.ini` before a test that changes settings, and restore it afterwards.
 
 ## Run tests
 

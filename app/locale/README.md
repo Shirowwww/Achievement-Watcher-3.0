@@ -1,6 +1,6 @@
 # Interface translations
 
-Achievement Watcher loads interface text from `app/locale/lang`. English is the reference locale. When the selected language does not provide game metadata, the upstream game source may return English instead.
+AW Next loads interface text from `app/locale/lang`. English is the reference locale. When the selected language does not provide game metadata, the upstream game source may return English instead.
 
 <p align="center"><a href="../../README.md">← Project home</a> · <a href="../../CONTRIBUTING.md">Contributing</a></p>
 

@@ -6,7 +6,7 @@ Practical guides for setup, daily use and maintenance.
 
 [🏠 Project home](../README.md) · [⬇️ Download](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/latest) · [📋 Changelog](../CHANGELOG.md) · [🔐 Security](../SECURITY.md) · [💬 Report an issue](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues)
 
-<img src="../screenshot/home.png" width="560" alt="Achievement Watcher library">
+<img src="../screenshot/home.png" width="560" alt="AW Next library">
 
 </div>
 
@@ -45,8 +45,8 @@ from SteamHunters and never affects games without groups.
 
 | Data | Default path |
 |---|---|
-| Settings, cache and user assets | `%APPDATA%\Achievement Watcher 3.0` |
-| Logs | `%APPDATA%\Achievement Watcher 3.0\logs` |
+| Settings, cache and user assets | `%APPDATA%\Achievement Watcher Next` |
+| Logs | `%APPDATA%\Achievement Watcher Next\logs` |
 | GBE Fork saves | `%APPDATA%\GSE Saves` |
 | Classic Goldberg saves | `%APPDATA%\Goldberg SteamEmu Saves` |
 

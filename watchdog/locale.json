@@ -12,7 +12,7 @@
     "rareAchievement": "Conquista rara",
     "rareDescription": "Apenas {percent}% dos jogadores a desbloquearam.",
     "testAchievement": "Conquista de teste",
-    "testDescription": "Esta é uma notificação de teste do Achievement Watcher.",
+    "testDescription": "Esta é uma notificação de teste do AW Next.",
     "playedFor": "Você jogou por {duration}",
     "trackingPlaytime": "Registrando o tempo de jogo",
     "playtime": "Tempo de jogo"
@@ -30,7 +30,7 @@
     "rareAchievement": "Vzácný úspěch",
     "rareDescription": "Odemklo jej pouze {percent}% hráčů.",
     "testAchievement": "Testovací úspěch",
-    "testDescription": "Toto je testovací oznámení z Achievement Watcher.",
+    "testDescription": "Toto je testovací oznámení z AW Next.",
     "playedFor": "Hrál jsi {duration}",
     "trackingPlaytime": "Sledování herního času",
     "playtime": "Herní čas"
@@ -48,7 +48,7 @@
     "rareAchievement": "Rare Achievement",
     "rareDescription": "Only {percent}% of players unlocked this.",
     "testAchievement": "Test Achievement",
-    "testDescription": "This is a test notification from Achievement Watcher.",
+    "testDescription": "This is a test notification from AW Next.",
     "playedFor": "You played for {duration}",
     "trackingPlaytime": "Tracking playtime",
     "playtime": "Playtime"
@@ -66,7 +66,7 @@
     "rareAchievement": "Succès rare",
     "rareDescription": "Seulement {percent} % des joueurs l'ont débloqué.",
     "testAchievement": "Succès de test",
-    "testDescription": "Ceci est une notification de test depuis Achievement Watcher.",
+    "testDescription": "Ceci est une notification de test depuis AW Next.",
     "playedFor": "Vous avez joué pendant {duration}",
     "trackingPlaytime": "Suivi du temps de jeu en cours",
     "playtime": "Temps de jeu"
@@ -84,7 +84,7 @@
     "rareAchievement": "Seltener Erfolg",
     "rareDescription": "Nur {percent}% der Spieler haben es freigeschaltet.",
     "testAchievement": "Testerfolg",
-    "testDescription": "Dies ist eine Testbenachrichtigung von Achievement Watcher.",
+    "testDescription": "Dies ist eine Testbenachrichtigung von AW Next.",
     "playedFor": "Du hast {duration} gespielt",
     "trackingPlaytime": "Spielzeit wird erfasst",
     "playtime": "Spielzeit"
@@ -102,7 +102,7 @@
     "rareAchievement": "Ritka teljesítmény",
     "rareDescription": "Csak a játékosok {percent}%-a oldotta fel.",
     "testAchievement": "Teszt teljesítmény",
-    "testDescription": "Ez egy tesztértesítés az Achievement Watchertől.",
+    "testDescription": "Ez egy tesztértesítés az AW Nexttől.",
     "playedFor": "{duration} játszottál",
     "trackingPlaytime": "Játékidő követése",
     "playtime": "Játékidő"
@@ -120,7 +120,7 @@
     "rareAchievement": "Risultato raro",
     "rareDescription": "Solo il {percent}% dei giocatori lo ha sbloccato.",
     "testAchievement": "Risultato di prova",
-    "testDescription": "Questa è una notifica di prova di Achievement Watcher.",
+    "testDescription": "Questa è una notifica di prova di AW Next.",
     "playedFor": "Hai giocato per {duration}",
     "trackingPlaytime": "Monitoraggio del tempo di gioco",
     "playtime": "Tempo di gioco"
@@ -138,7 +138,7 @@
     "rareAchievement": "レア実績",
     "rareDescription": "解除したのはプレイヤーの {percent}% のみです。",
     "testAchievement": "テスト実績",
-    "testDescription": "これは Achievement Watcher からのテスト通知です。",
+    "testDescription": "これは AW Next からのテスト通知です。",
     "playedFor": "{duration}プレイしました",
     "trackingPlaytime": "プレイ時間を記録中",
     "playtime": "プレイ時間"
@@ -156,7 +156,7 @@
     "rareAchievement": "Logro raro",
     "rareDescription": "Solo el {percent}% de los jugadores lo desbloqueó.",
     "testAchievement": "Logro de prueba",
-    "testDescription": "Esta es una notificación de prueba de Achievement Watcher.",
+    "testDescription": "Esta es una notificación de prueba de AW Next.",
     "playedFor": "Jugaste durante {duration}",
     "trackingPlaytime": "Registrando tiempo de juego",
     "playtime": "Tiempo de juego"
@@ -174,7 +174,7 @@
     "rareAchievement": "Rzadkie osiągnięcie",
     "rareDescription": "Tylko {percent}% graczy je odblokowało.",
     "testAchievement": "Osiągnięcie testowe",
-    "testDescription": "To jest testowe powiadomienie od Achievement Watcher.",
+    "testDescription": "To jest testowe powiadomienie od AW Next.",
     "playedFor": "Grałeś przez {duration}",
     "trackingPlaytime": "Śledzenie czasu gry",
     "playtime": "Czas gry"
@@ -192,7 +192,7 @@
     "rareAchievement": "Proeza rara",
     "rareDescription": "Apenas {percent}% dos jogadores a desbloquearam.",
     "testAchievement": "Proeza de teste",
-    "testDescription": "Esta é uma notificação de teste do Achievement Watcher.",
+    "testDescription": "Esta é uma notificação de teste do AW Next.",
     "playedFor": "Jogaste durante {duration}",
     "trackingPlaytime": "A registar o tempo de jogo",
     "playtime": "Tempo de jogo"
@@ -210,7 +210,7 @@
     "rareAchievement": "Редкое достижение",
     "rareDescription": "Его открыло только {percent}% игроков.",
     "testAchievement": "Тестовое достижение",
-    "testDescription": "Это тестовое уведомление от Achievement Watcher.",
+    "testDescription": "Это тестовое уведомление от AW Next.",
     "playedFor": "Вы играли {duration}",
     "trackingPlaytime": "Отслеживание времени игры",
     "playtime": "Время игры"
@@ -228,7 +228,7 @@
     "rareAchievement": "稀有成就",
     "rareDescription": "只有 {percent}% 的玩家解锁了此成就。",
     "testAchievement": "测试成就",
-    "testDescription": "这是来自 Achievement Watcher 的测试通知。",
+    "testDescription": "这是来自 AW Next 的测试通知。",
     "playedFor": "你游玩了 {duration}",
     "trackingPlaytime": "正在跟踪游戏时间",
     "playtime": "游戏时间"
@@ -246,7 +246,7 @@
     "rareAchievement": "Vzácný úspech",
     "rareDescription": "Odomkol ho iba {percent}% hráčov.",
     "testAchievement": "Testovací úspech",
-    "testDescription": "Toto je testovacie upozornenie z Achievement Watcher.",
+    "testDescription": "Toto je testovacie upozornenie z AW Next.",
     "playedFor": "Hral si {duration}",
     "trackingPlaytime": "Sledovanie herného času",
     "playtime": "Herný čas"
@@ -264,7 +264,7 @@
     "rareAchievement": "Logro raro",
     "rareDescription": "Solo el {percent}% de los jugadores lo desbloqueó.",
     "testAchievement": "Logro de prueba",
-    "testDescription": "Esta es una notificación de prueba de Achievement Watcher.",
+    "testDescription": "Esta es una notificación de prueba de AW Next.",
     "playedFor": "Has jugado durante {duration}",
     "trackingPlaytime": "Registrando tiempo de juego",
     "playtime": "Tiempo de juego"
@@ -282,7 +282,7 @@
     "rareAchievement": "ความสำเร็จที่หายาก",
     "rareDescription": "มีเพียง {percent}% ของผู้เล่นที่ปลดล็อก",
     "testAchievement": "ความสำเร็จทดสอบ",
-    "testDescription": "นี่คือการแจ้งเตือนทดสอบจาก Achievement Watcher",
+    "testDescription": "นี่คือการแจ้งเตือนทดสอบจาก AW Next",
     "playedFor": "คุณเล่นไป {duration}",
     "trackingPlaytime": "กำลังติดตามเวลาการเล่น",
     "playtime": "เวลาเล่น"
@@ -300,7 +300,7 @@
     "rareAchievement": "Nadir başarım",
     "rareDescription": "Oyuncuların yalnızca %{percent}'i açtı.",
     "testAchievement": "Test başarımı",
-    "testDescription": "Bu, Achievement Watcher'dan bir test bildirimidir.",
+    "testDescription": "Bu, AW Next'ten bir test bildirimidir.",
     "playedFor": "{duration} oynadınız",
     "trackingPlaytime": "Oyun süresi izleniyor",
     "playtime": "Oyun süresi"
@@ -318,7 +318,7 @@
     "rareAchievement": "Рідкісне досягнення",
     "rareDescription": "Його відкрило лише {percent}% гравців.",
     "testAchievement": "Тестове досягнення",
-    "testDescription": "Це тестове сповіщення від Achievement Watcher.",
+    "testDescription": "Це тестове сповіщення від AW Next.",
     "playedFor": "Ви грали {duration}",
     "trackingPlaytime": "Відстеження часу гри",
     "playtime": "Час гри"
