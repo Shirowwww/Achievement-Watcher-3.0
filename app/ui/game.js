@@ -162,6 +162,23 @@ function getGlobalStat(appid, source, gameName, achievements, context) {
         .scrollTop(0);
     });
 
+    /*
+      Reset this game's achievements, from the game's own page. The appid comes from the header
+      attribute rather than from a captured variable: it is the same value every other late-arriving
+      handler in this view checks, so the button can never act on the game that was open before.
+    */
+    $('#btn-reset-achievements').click(async function () {
+      const appid = $('#achievement .wrapper > .header').attr('data-appid');
+      if (!appid) return;
+      const self = $(this);
+      self.css('pointer-events', 'none');
+      try {
+        await app.resetAchievementsAction(appid);
+      } finally {
+        self.css('pointer-events', 'initial');
+      }
+    });
+
     $('#btn-scrollup').click(function () {
       let self = $(this);
       self.css('pointer-events', 'none');

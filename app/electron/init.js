@@ -1753,6 +1753,20 @@ ipcMain.handle('start-watchdog', async (event) => {
 // The renderer re-seeds cfg/gameIndex.json at the end of every library scan. Ask the running
 // Watchdog to reload it so non-Steam games added while it is already up are tracked without a
 // restart. No-op when the Watchdog is down; the next launch reads the fresh index anyway.
+// A game's achievements were reset. The monitor caches its unlock baseline in memory, so deleting
+// the file is not enough — ask it to drop the game, or nothing that game unlocks again will notify.
+ipcMain.handle('watchdog-forget-achievement-baseline', (event, appid) => {
+  if (!appid) return false;
+  if (!monitorProc || monitorProc.exitCode !== null || monitorProc.killed || !monitorProc.connected) return false;
+  try {
+    monitorProc.send({ forgetAchievementBaseline: { appid: String(appid) } });
+    return true;
+  } catch (err) {
+    debug.log(`[monitor] achievement baseline reset request failed: ${err.message}`);
+    return false;
+  }
+});
+
 ipcMain.handle('watchdog-reload-playtime-index', () => {
   if (!monitorProc || monitorProc.exitCode !== null || monitorProc.killed || !monitorProc.connected) return false;
   try {

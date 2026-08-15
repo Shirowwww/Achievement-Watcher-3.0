@@ -26,6 +26,24 @@ module.exports.setCacheDir = (dir) => {
   writeQueues.clear();
 };
 
+/*
+  Drop a game's baseline, in memory and on disk.
+
+  The app deletes the .db itself when it resets a game's achievements, but this process keeps the
+  same baseline in `memoryCache` for as long as it runs — and that copy is what the next unlock is
+  diffed against. Without this the achievement is re-earned, matched against a baseline that still
+  has it, and reported as "already unlocked": the reset would silently cost the user every future
+  notification for that game until the monitor restarts.
+*/
+module.exports.forget = async (appID) => {
+  const key = cacheKey(appID);
+  memoryCache.delete(key);
+  // Let an in-flight save finish first, or it would write the baseline straight back.
+  const pending = writeQueues.get(key);
+  if (pending) await pending.catch(() => {});
+  await fs.unlink(cacheFilePath(key)).catch(() => {});
+};
+
 module.exports.load = async (appID) => {
   const key = cacheKey(appID);
   // Prefer the in-memory baseline when available.

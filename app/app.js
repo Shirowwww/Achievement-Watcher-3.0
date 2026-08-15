@@ -65,6 +65,8 @@ const progressMute = require(path.join(appPath, 'parser/progressMute.js'));
 progressMute.setUserDataPath(getUserDataPath());
 const notificationHealth = require(path.join(appPath, 'parser/notificationHealth.js'));
 notificationHealth.setUserDataPath(getUserDataPath());
+const achievementReset = require(path.join(appPath, 'parser/achievementReset.js'));
+achievementReset.setUserDataPath(getUserDataPath());
 const emulatorSourceOverride = require(path.join(appPath, 'parser/emulatorSourceOverride.js'));
 emulatorSourceOverride.setUserDataPath(getUserDataPath());
 const l10n = require(path.join(appPath, 'locale/loader.js'));
@@ -313,6 +315,46 @@ function refreshLibraryProgressFor(appid, games) {
   }
 
   refreshProfileStats({ animate: true });
+}
+
+/*
+  The Watchdog keeps each game's unlock baseline in memory, so deleting the .db file is only half of
+  a reset: the running monitor would still diff the re-earned achievement against a baseline that
+  has it and report "already unlocked", costing the user every future notification for that game.
+  Best effort — a monitor that is not running has no memory to clear, and starts from the file.
+*/
+async function forgetWatchdogBaseline(appid) {
+  try {
+    await ipcRenderer.invoke('watchdog-forget-achievement-baseline', String(appid));
+  } catch (err) {
+    debug.warn(`[reset] the monitor could not be told to drop its baseline: ${formatErr(err)}`);
+  }
+}
+
+/*
+  Take the in-memory copy of a game back to zero after its saves were cleared, then repaint. The
+  library is only re-read from disk on a scan, so without this the tile and the achievement list
+  would keep showing the unlocks that were just deleted until the next refresh.
+*/
+function repaintGameAfterReset(appid, game) {
+  if (game && game.achievement && Array.isArray(game.achievement.list)) {
+    for (const achievement of game.achievement.list) {
+      if (!achievement) continue;
+      achievement.Achieved = false;
+      achievement.UnlockTime = 0;
+      achievement.CurProgress = 0;
+      delete achievement.manual;
+      delete achievement.manualForced;
+    }
+    game.achievement.unlocked = 0;
+  }
+  const box = $('#game-list .game-box')
+    .filter(function () {
+      return String($(this).data('appid')) === String(appid);
+    })
+    .first();
+  if (box.length && typeof app.onGameBoxClick === 'function') app.onGameBoxClick(box, gameList);
+  refreshLibraryProgressFor(appid, gameList);
 }
 
 // Open catalog links only after validating their http(s) scheme.
@@ -2046,6 +2088,59 @@ var app = {
                 },
               })
             );
+          }
+
+          /*
+            Reset the game's achievements so they can be earned again. Deliberately outside every
+            source/emulator gate above: a console emulator, a manually added game and a Steam
+            emulator all keep unlocks somewhere AW Next can put back to zero, and the plan itself
+            reports the one case it cannot touch (a platform that owns the unlocks server-side).
+            Restore is offered beside it, listing the backups this game already has.
+          */
+          gameMenu.append(new MenuItem({ type: 'separator' }));
+          gameMenu.append(
+            new MenuItem({
+              icon: menuIcon('cross.png'),
+              label: t('reset-ach-menu', 'Reset achievements…', 'Réinitialiser les succès…'),
+              async click() {
+                self.css('pointer-events', 'none');
+                try {
+                  await app.resetAchievementsAction(appid);
+                } finally {
+                  self.css('pointer-events', 'initial');
+                }
+              },
+            })
+          );
+          {
+            const backups = achievementReset.listBackups(appid);
+            if (backups.length > 0) {
+              const restoreMenu = new Menu();
+              // Newest first, capped: this is an undo, not an archive browser.
+              for (const backup of backups.slice(0, 10)) {
+                restoreMenu.append(
+                  new MenuItem({
+                    label: `${backup.at ? new Date(backup.at).toLocaleString() : backup.id} — ${t('reset-ach-backup-files', '{count} file(s)', '{count} fichier(s)', {
+                      count: backup.files,
+                    })}`,
+                    async click() {
+                      self.css('pointer-events', 'none');
+                      try {
+                        await app.restoreAchievementsAction(appid, backup.id);
+                      } finally {
+                        self.css('pointer-events', 'initial');
+                      }
+                    },
+                  })
+                );
+              }
+              gameMenu.append(
+                new MenuItem({
+                  label: t('reset-ach-restore-menu', 'Restore an achievement backup', 'Restaurer une sauvegarde de succès'),
+                  submenu: restoreMenu,
+                })
+              );
+            }
           }
 
           // Native-platform records normally skip Steam-emulator tools. Ubisoft and explicitly
@@ -4102,6 +4197,180 @@ var app = {
       debug.warn(`[manualUnlock] ${err && err.stack ? err.stack : err}`);
       return { changed: false };
     }
+  },
+  /*
+    Reset a game's achievements so they can be earned — and announced — again.
+
+    Everything is backed up before a single byte is written (parser/achievementReset.js), the user
+    approves the actual file list rather than a promise, and the Watchdog is told to drop its
+    in-memory unlock baseline: without that last step the game re-earns its achievements against a
+    baseline that still has them and never notifies again.
+  */
+  resetAchievementsAction: async function (appid) {
+    const game = gameList.find((g) => g && String(g.appid) === String(appid));
+    if (!game) return false;
+
+    let resetPlan;
+    try {
+      resetPlan = achievementReset.plan(game);
+    } catch (err) {
+      debug.error(`[reset] planning failed for ${appid} => ${formatErr(err)}`);
+      remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+        type: 'error',
+        title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
+        message: t('reset-ach-failed', 'The achievements could not be reset.', 'Les succès n’ont pas pu être réinitialisés.'),
+        detail: `${err && (err.message || err)}`,
+      });
+      return false;
+    }
+
+    if (!resetPlan.supported) {
+      // Say which of the two it is: a platform that owns its unlocks, or simply nothing recorded yet.
+      const official = resetPlan.blocked.length > 0;
+      remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+        type: 'info',
+        title: t('reset-ach-title', 'Reset achievements', 'Réinitialiser les succès'),
+        message: official
+          ? t('reset-ach-official', 'This game’s achievements are stored by its platform, not on this PC.', 'Les succès de ce jeu sont conservés par sa plateforme, pas sur ce PC.')
+          : t('reset-ach-nothing', 'There is nothing to reset for this game yet.', 'Il n’y a rien à réinitialiser pour ce jeu.'),
+        detail: official
+          ? t('reset-ach-official-detail', 'Steam, GOG Galaxy, Ubisoft Connect, EA, Epic and Xbox keep unlocks on your account and re-synchronise them. Only the account itself can clear them.', 'Steam, GOG Galaxy, Ubisoft Connect, EA, Epic et Xbox conservent les succès sur ton compte et les resynchronisent. Seul le compte peut les effacer.')
+          : t('reset-ach-nothing-detail', 'AW Next has not recorded any unlock for it, and found no achievement save to clear.', 'AW Next n’a enregistré aucun déblocage et n’a trouvé aucune sauvegarde de succès à effacer.'),
+      });
+      return false;
+    }
+
+    const shown = resetPlan.files.slice(0, 8).map((entry) => `• ${entry.path}`);
+    if (resetPlan.files.length > shown.length) {
+      shown.push(t('reset-ach-more-files', '…and {count} more', '…et {count} de plus', { count: resetPlan.files.length - shown.length }));
+    }
+    const detail = [
+      t('reset-ach-detail-count', '{count} achievement file(s) will be backed up, then cleared:', '{count} fichier(s) de succès seront sauvegardés, puis effacés :', {
+        count: resetPlan.files.length,
+      }),
+      ...shown,
+      '',
+      t('reset-ach-detail-backup', 'Backup: {path}', 'Sauvegarde : {path}', { path: achievementReset.gameBackupRoot(resetPlan.appid) }),
+    ];
+    if (resetPlan.manualEntries > 0) {
+      detail.push(t('reset-ach-detail-manual', 'Manual unlocks for this game will also be cleared ({count}).', 'Les déblocages manuels de ce jeu seront aussi effacés ({count}).', { count: resetPlan.manualEntries }));
+    }
+    if (resetPlan.blocked.length > 0) {
+      detail.push(
+        t('reset-ach-detail-blocked', 'Unlocks held by {sources} cannot be reset from here and are left untouched.', 'Les succès gérés par {sources} ne peuvent pas être réinitialisés ici et restent intacts.', {
+          sources: [...new Set(resetPlan.blocked.map((entry) => entry.source).filter(Boolean))].join(', '),
+        })
+      );
+    }
+
+    const confirmed = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+      type: 'warning',
+      title: t('reset-ach-confirm-title', 'Reset this game’s achievements?', 'Réinitialiser les succès de ce jeu ?'),
+      message: t('reset-ach-confirm-message', 'Every achievement of {game} goes back to locked, so the game can unlock them again.', 'Tous les succès de {game} repassent en verrouillé, pour que le jeu puisse les débloquer à nouveau.', {
+        game: game.name || resetPlan.appid,
+      }),
+      detail: detail.join('\n'),
+      buttons: [t('cancel', 'Cancel', 'Annuler'), t('reset-ach-confirm-button', 'Reset', 'Réinitialiser')],
+      defaultId: 0,
+      cancelId: 0,
+      noLink: true,
+    });
+    if (confirmed !== 1) return false;
+
+    let result;
+    try {
+      result = achievementReset.run(resetPlan);
+    } catch (err) {
+      debug.error(`[reset] failed for ${appid} => ${formatErr(err)}`);
+      remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+        type: 'error',
+        title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
+        message: t('reset-ach-failed', 'The achievements could not be reset.', 'Les succès n’ont pas pu être réinitialisés.'),
+        detail: `${err && (err.message || err)}`,
+      });
+      return false;
+    }
+
+    await forgetWatchdogBaseline(resetPlan.appid);
+    repaintGameAfterReset(appid, game);
+
+    const answer = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+      type: result.errors.length > 0 ? 'warning' : 'info',
+      title: t('reset-ach-done-title', 'Achievements reset', 'Succès réinitialisés'),
+      message: t('reset-ach-done-message', '{count} file(s) cleared. Unlock them again in game and they will be announced as new.', '{count} fichier(s) effacé(s). Débloque-les à nouveau en jeu et ils seront annoncés comme neufs.', {
+        count: result.files,
+      }),
+      detail:
+        result.errors.length > 0
+          ? `${t('reset-ach-done-detail', 'Backup: {path}', 'Sauvegarde : {path}', { path: result.backupDir })}\n${result.errors
+              .map((entry) => `• ${entry.path} — ${entry.message}`)
+              .join('\n')}`
+          : t('reset-ach-done-detail', 'Backup: {path}', 'Sauvegarde : {path}', { path: result.backupDir }),
+      buttons: [t('ok', 'OK', 'OK'), t('open-backup-folder', 'Open backup folder', 'Ouvrir la sauvegarde')],
+      defaultId: 0,
+      cancelId: 0,
+      noLink: true,
+    });
+    if (answer === 1) remote.shell.openPath(result.backupDir);
+    return true;
+  },
+  // Put a backup back exactly where it came from, including the unlock baseline, so restored
+  // achievements do not arrive as a burst of new notifications.
+  restoreAchievementsAction: async function (appid, backupId) {
+    const game = gameList.find((g) => g && String(g.appid) === String(appid));
+    const backups = achievementReset.listBackups(appid);
+    const backup = backups.find((entry) => entry.id === backupId) || backups[0];
+    if (!backup) return false;
+
+    const confirmed = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+      type: 'warning',
+      title: t('reset-ach-restore-title', 'Restore this achievement backup?', 'Restaurer cette sauvegarde de succès ?'),
+      message: t('reset-ach-restore-message', 'The {count} file(s) saved on {date} go back to their original location, replacing what is there now.', 'Les {count} fichier(s) sauvegardés le {date} retournent à leur emplacement d’origine et remplacent ce qui s’y trouve.', {
+        count: backup.files,
+        date: backup.at ? new Date(backup.at).toLocaleString() : backup.id,
+      }),
+      detail: backup.path,
+      buttons: [t('cancel', 'Cancel', 'Annuler'), t('restore', 'Restore', 'Restaurer')],
+      defaultId: 1,
+      cancelId: 0,
+      noLink: true,
+    });
+    if (confirmed !== 1) return false;
+
+    let result;
+    try {
+      result = achievementReset.restore(appid, backup.id);
+    } catch (err) {
+      debug.error(`[reset] restore failed for ${appid} => ${formatErr(err)}`);
+      remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+        type: 'error',
+        title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
+        message: t('restore-failed', 'Restore failed', 'Échec de la restauration'),
+        detail: `${err && (err.message || err)}`,
+      });
+      return false;
+    }
+
+    // The restored save is the truth again; a rescan is what re-reads it into the library.
+    await forgetWatchdogBaseline(String(appid));
+    if (game) {
+      const box = $('#game-list .game-box')
+        .filter(function () {
+          return String($(this).data('appid')) === String(appid);
+        })
+        .first();
+      if (box.length && typeof this.onGameBoxClick === 'function') this.onGameBoxClick(box, gameList);
+    }
+    remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+      type: result.errors.length > 0 ? 'warning' : 'info',
+      title: t('reset-ach-restore-done', 'Achievement backup restored', 'Sauvegarde de succès restaurée'),
+      message: t('restored-x-item-s', 'Restored {count} item(s)', '{count} élément(s) restauré(s)', { count: result.restored }),
+      detail:
+        result.errors.length > 0
+          ? result.errors.map((entry) => `• ${entry.path} — ${entry.message}`).join('\n')
+          : t('reset-ach-restore-rescan', 'Refresh the library to read the restored unlocks back in.', 'Rafraîchis la bibliothèque pour relire les succès restaurés.'),
+    });
+    return true;
   },
   onPlayButtonClick: async function (self) {
     let appid = self.closest('.game-box').data('appid');

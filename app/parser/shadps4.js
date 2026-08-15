@@ -216,6 +216,31 @@ module.exports.getGameData = async (dir, lang) => {
   };
 };
 
+/*
+  Relock every trophy in a TROP*.XML, as a text edit.
+
+  ShadPS4 keeps the trophy definitions and their unlock state in the same file, so a reset rewrites
+  the three state attributes (`unlockstate`, `unlocked`, `timestamp`) and touches nothing else — not
+  the trophy list, not the names, not the formatting. Re-serializing the parsed XML would rewrite the
+  whole document, and any attribute or entity this reader does not model would be lost with it.
+
+  Returns the new text and how many trophies were unlocked before.
+*/
+function clearTrophyXml(text) {
+  const source = String(text == null ? '' : text);
+  let cleared = 0;
+  const updated = source.replace(/<trophy\b[^>]*>/gi, (tag) => {
+    if (/unlockstate\s*=\s*"true"/i.test(tag) || /unlocked\s*=\s*"yes"/i.test(tag)) cleared += 1;
+    return tag
+      .replace(/(unlockstate\s*=\s*")[^"]*(")/gi, '$1false$2')
+      .replace(/(unlocked\s*=\s*")[^"]*(")/gi, '$1no$2')
+      .replace(/(timestamp\s*=\s*")[^"]*(")/gi, '$1$2');
+  });
+  return { text: updated, cleared };
+}
+
+module.exports.clearTrophyXml = clearTrophyXml;
+
 module.exports.getAchievements = async (dir) => {
   // Unlock state lives in the same TROP*.XML files (attributes unlockstate / unlocked / timestamp).
   // Union across all language files so we don't miss a flag written to only one of them.

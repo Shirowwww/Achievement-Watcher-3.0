@@ -124,6 +124,12 @@ function translateUI(lang, locale, template) {
   selector.find('li:nth-child(2) span:eq(1)').text(clear(template.perfectGame));
   selector.find('li:nth-child(3) span:eq(1)').text(clear(template.completionRate));
   $('#btn-previous').text(clear(template.allGamesBackButton));
+  // The reset button carries the same wording as its context-menu entry, minus the ellipsis: one
+  // action, one name, whichever way the user reaches it.
+  if (template.dialogs && template.dialogs['reset-ach-menu']) {
+    $('#btn-reset-achievements span').text(clear(template.dialogs['reset-ach-menu']).replace(/[….]+$/, ''));
+    $('#btn-reset-achievements').attr('title', clear(template.dialogs['reset-ach-confirm-title']));
+  }
   $('#unlock .header .title span').text(clear(template.unlocked));
   $('#lock .header .title span').text(clear(template.locked));
   $('#achievement .achievements').data('lang-globalStat', clear(template.globalStat));

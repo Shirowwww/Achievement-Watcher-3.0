@@ -1518,6 +1518,35 @@ main {
   padding-left: 10px;
 }
 
+/* Reset this game's achievements. Carries the same accent weight as the "All Games" button so it
+   reads as a real action rather than another read-only chip, but stays in the header's normal flow:
+   the back button is absolutely positioned and its width follows its label in every language, so
+   anchoring a second button beside it would collide in some of them. */
+#achievement .wrapper > .header .resetAchievements {
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  padding: 10px 18px;
+  display: inline-block;
+  height: 19px;
+  vertical-align: top;
+  margin-left: 10px;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, calc(0.22 * var(--shadow-scale)));
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+}
+
+#achievement .wrapper > .header .resetAchievements:hover {
+  color: var(--text);
+  border-color: transparent;
+  background: linear-gradient(-60deg, color-mix(in srgb, var(--accent) 70%, black 12%) 5%, var(--accent) 95%);
+}
+
+#achievement .wrapper > .header .resetAchievements:active {
+  transform: scale(0.97);
+}
+
 #achievement .wrapper > .header .backButton {
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);

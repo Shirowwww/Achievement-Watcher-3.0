@@ -130,6 +130,18 @@ function update(map, appid, source, name, action, now = Math.floor(Date.now() / 
   return { map, changed };
 }
 
+/*
+  Drop every override of one game. Used by the achievement reset: the game's save can be put back to
+  zero, but an override would keep re-marking the same achievements as unlocked on the next render.
+  The removed entries are returned so the reset can restore them with the rest of its backup.
+*/
+function clearGame(map, appid, source) {
+  const key = gameKey(appid, source);
+  const removed = map && map[key] ? map[key] : null;
+  if (removed) delete map[key];
+  return { map, removed };
+}
+
 // Convenience for the renderer: read sidecar, apply to game, return the map (empty on failure).
 function loadAndApplyToGame(game, appid, source) {
   const file = sidecarFile();
@@ -156,6 +168,7 @@ module.exports = {
   writeMap,
   applyToGame,
   update,
+  clearGame,
   loadAndApplyToGame,
   saveUpdate,
 };

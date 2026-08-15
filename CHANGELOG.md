@@ -40,6 +40,18 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   Direct3D counts, so borderless keeps the overlay), and whether the overlay recently failed to
   display. **In-game overlay**, **Windows notification** and **Both** remain available and unchanged;
   an existing saved choice is never rewritten.
+- **Reset a game's achievements**, from the game's page and from its right-click menu. Every
+  achievement goes back to locked so the game can earn them again and AW Next announces them as new.
+  It covers every local source in one action — the Steam/Uplay/SocialClub emulator saves are removed
+  (the emulator writes a fresh one), RPCS3's `TROPUSR.DAT` is removed, and ShadPS4's `TROP*.XML` and
+  Xenia's `.gpd` are relocked in place because those two files also hold the achievement list itself.
+  Steam, GOG Galaxy, Ubisoft Connect, EA, Epic and Xbox keep unlocks on the account and are reported
+  as out of reach rather than appearing to work.
+- Nothing is reset without a copy: every file is backed up to
+  `<userData>\backups\achievements\<appid>\<date>\` first, a file whose backup fails is skipped
+  rather than cleared, and **Restore an achievement backup** puts a whole reset back where it came
+  from — including AW Next's own unlock record, so restored achievements do not arrive as a burst of
+  notifications.
 - A game's **Game Health** panel now reports which transport actually delivered its last notification
   and why — "Working — Windows fallback active", or "Windows notification · game in exclusive
   fullscreen" in Advanced. Until a game has had one, the row shows the configured mode rather than

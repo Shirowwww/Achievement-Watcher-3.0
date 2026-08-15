@@ -133,6 +133,34 @@ unlocks, not progress or playtime updates.
 
 Use the test buttons before launching a game. Presets, sounds, volume, duration and position can all be changed later. See [Notifications](notifications.md) for details.
 
+## Reset a game's achievements
+
+To play a game through again from zero, use **Reset achievements** — on the game's page, beside the
+playtime, or from its right-click menu. It puts every achievement back to locked so the game can
+unlock them again, and so AW Next announces them as new when it does.
+
+Nothing is deleted without a copy. Every file involved is backed up first to
+`%APPDATA%\Achievement Watcher Next\backups\achievements\<appid>\<date>\`, and the confirmation lists
+the exact files before anything is touched. **Restore an achievement backup** in the same right-click
+menu puts them all back where they came from.
+
+| Source | What a reset does |
+|---|---|
+| Steam emulators (Goldberg/GBE, CODEX, RUNE, RLD!, OnlineFix, SKIDROW, SmartSteamEmu, EMPRESS, CreamAPI, 3DM, ALI213, Hoodlum, TENOKE, UniverseLAN, Nemirtingas, Goldberg SocialClub, Uplay R2…) | Removes the achievement save. The emulator writes a fresh one at the next unlock. |
+| RPCS3 | Removes `TROPUSR.DAT`. The trophy list (`TROPCONF.SFM`) is left alone. |
+| ShadPS4 | Relocks the trophies inside `TROP*.XML`, which also holds the trophy list — so the file is edited, never removed. |
+| Xenia | Clears the earned flag inside the `.gpd`, which also holds the achievement list — same reason. |
+| Steam, GOG Galaxy, Ubisoft Connect, EA, Epic, Xbox | **Not possible.** These keep unlocks on your account and re-synchronise them; only the account itself can clear them. AW Next says so instead of appearing to work. |
+
+Progress counters stored beside the achievements (`stats.ini`, `stats.bin`, …) are reset too: for a
+"travel 1000 km" style achievement the counter *is* the progress, and leaving it full would make the
+achievement either fire instantly or never again. They are in the backup like everything else.
+
+> [!NOTE]
+> AW Next's own record of what was already unlocked is cleared at the same time, including in the
+> running background tracker. Without that, a re-earned achievement would be compared against a
+> record that still had it and would never be announced again.
+
 ## Tray and startup behavior
 
 Closing the main window normally keeps AW Next in the system tray. The background tracker continues watching supported files and processes for playtime and unlocks.

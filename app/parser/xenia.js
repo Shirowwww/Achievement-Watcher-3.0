@@ -324,5 +324,42 @@ module.exports.getAchievements = async (gpdPath) => {
   });
 };
 
+/*
+  Relock every achievement in a GPD, in place.
+
+  A GPD holds the achievement definitions and their unlock state in the same file, so a reset cannot
+  simply delete it — that would take the game's whole achievement list with it. Instead each
+  achievement payload is edited where it lies: the earned bit in `flags` (0x10) is cleared and the
+  unlock timestamp (0x14) is zeroed. Nothing moves, no length changes, so the entry table, the free
+  table, the icons and the strings are all still valid afterwards.
+
+  Returns the edited buffer and how many achievements were actually earned before. A buffer that
+  parses to nothing comes back untouched with `cleared: 0`, never half-written.
+*/
+function clearGpdBuffer(raw) {
+  if (!Buffer.isBuffer(raw)) return { buffer: raw, cleared: 0 };
+  const entries = parseXdbfEntries(raw);
+  if (!entries.length) return { buffer: raw, cleared: 0 };
+  const endian = entries.__endian || 'le';
+  const readU32 = endian === 'be' ? 'readUInt32BE' : 'readUInt32LE';
+  const writeU32 = endian === 'be' ? 'writeUInt32BE' : 'writeUInt32LE';
+
+  const buffer = Buffer.from(raw);
+  let cleared = 0;
+  for (const entry of entries) {
+    if (entry.namespace !== ACHIEVEMENT_NAMESPACE) continue;
+    // 0x1c is the smallest payload that still carries flags and the unlock time.
+    if (entry.length < 0x1c || entry.offset + 0x1c > buffer.length) continue;
+    const flagsAt = entry.offset + 0x10;
+    const flags = buffer[readU32](flagsAt);
+    if ((flags & ACHIEVEMENT_EARNED_FLAG) !== 0) cleared += 1;
+    buffer[writeU32](flags & ~ACHIEVEMENT_EARNED_FLAG, flagsAt);
+    buffer.fill(0, entry.offset + 0x14, entry.offset + 0x1c);
+  }
+  return { buffer, cleared };
+}
+
+module.exports.clearGpdBuffer = clearGpdBuffer;
+
 // Exposed for unit testing the pure binary parser.
-module.exports._internal = { parseGpdBuffer, validAchievements, normalizeUnlockTime };
+module.exports._internal = { parseGpdBuffer, validAchievements, normalizeUnlockTime, parseXdbfEntries, ACHIEVEMENT_EARNED_FLAG };

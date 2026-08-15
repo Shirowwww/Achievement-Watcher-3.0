@@ -197,3 +197,34 @@ test('the in-memory baseline is a snapshot, not a live reference to the caller a
   loaded[0].UnlockTime = 1234;
   assert.deepEqual(await track.load('7'), [{ name: 'A', Achieved: 1, UnlockTime: 1000 }]);
 });
+
+/*
+  A game whose achievements the user reset. The app deletes the .db itself, but this process keeps
+  the same baseline in memory for as long as it runs — and that copy is what the next unlock is
+  diffed against. Without forget(), the re-earned achievement matches a baseline that still has it
+  and is reported as "already unlocked": the reset would silently cost the user every future
+  notification for that game until the monitor restarts.
+*/
+test('forgetting a game drops its baseline from memory and from disk', async (t) => {
+  const root = tempDir(t);
+  track.setCacheDir(path.join(root, 'data'));
+
+  await track.save('480', [{ name: 'ACH_WIN', Achieved: 1, UnlockTime: 1000 }]);
+  assert.equal(fs.existsSync(path.join(root, 'data', '480.db')), true);
+
+  await track.forget('480');
+
+  assert.deepEqual(await track.load('480'), [], 'a forgotten game must diff as if never seen');
+  assert.equal(fs.existsSync(path.join(root, 'data', '480.db')), false);
+
+  // The next unlock re-establishes a baseline normally.
+  await track.save('480', [{ name: 'ACH_WIN', Achieved: 1, UnlockTime: 2000 }]);
+  assert.deepEqual(await track.load('480'), [{ name: 'ACH_WIN', Achieved: 1, UnlockTime: 2000 }]);
+});
+
+test('forgetting a game that was never tracked is not an error', async (t) => {
+  const root = tempDir(t);
+  track.setCacheDir(path.join(root, 'data'));
+  await track.forget('does-not-exist');
+  assert.deepEqual(await track.load('does-not-exist'), []);
+});

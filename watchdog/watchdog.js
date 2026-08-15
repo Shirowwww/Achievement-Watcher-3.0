@@ -437,6 +437,16 @@ process.on('message', (msg) => {
     require('./notification/overlayAck.js').report(String(msg.notificationResult.id), msg.notificationResult);
     return;
   }
+  // The app reset a game's achievements. Its baseline file is already gone; this drops the copy this
+  // process holds in memory, so the re-earned unlocks are seen as new and notify again.
+  if (msg.forgetAchievementBaseline && msg.forgetAchievementBaseline.appid) {
+    const appid = String(msg.forgetAchievementBaseline.appid);
+    track
+      .forget(appid)
+      .then(() => debug.log(`[reset] achievement baseline dropped for ${appid}`))
+      .catch((err) => debug.warn(`[reset] could not drop the baseline for ${appid}: ${err.message || err}`));
+    return;
+  }
   if (msg.reloadPlaytimeIndex === true) {
     if (playtimeMonitorEmitter && typeof playtimeMonitorEmitter.reloadGameIndex === 'function') {
       playtimeMonitorEmitter.reloadGameIndex().catch((err) => {
