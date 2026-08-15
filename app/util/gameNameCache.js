@@ -86,7 +86,39 @@ function lookupSteamDbName(appid, opts = {}) {
   return (index && index.get(id)) || null;
 }
 
+/*
+  Name from the per-game Steam schema caches the app writes for every game it displays
+  (steam_cache/schema/<lang>/<appid>.db, shaped { name, appid, … }).
+
+  Every language folder is tried, because the app only ever writes the one matching the user's
+  setting: hard-coding "english" made this silently return nothing for every non-English profile —
+  which is how a GOG game and its cracked Steam twin both stayed in the library instead of merging.
+  Unlike the 250k-row appList dump, this cache exists as soon as a game has been listed once.
+*/
+function lookupSchemaCacheName(userDataPath, appid) {
+  const id = String(appid ?? '').trim();
+  if (!id) return '';
+  const schemaRoot = path.join(userDataPath || CACHE_BASE, 'steam_cache', 'schema');
+  let langs;
+  try {
+    langs = fs.readdirSync(schemaRoot, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
+  } catch {
+    return '';
+  }
+  for (const lang of langs) {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(path.join(schemaRoot, lang, `${id}.db`), 'utf8'));
+      const name = String((parsed && parsed.name) || '').trim();
+      if (name) return name;
+    } catch {
+      /* missing/corrupt entry for this language — try the next one */
+    }
+  }
+  return '';
+}
+
 module.exports = {
   loadJsonArrayCached,
   lookupSteamDbName,
+  lookupSchemaCacheName,
 };

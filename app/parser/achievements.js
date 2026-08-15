@@ -200,18 +200,9 @@ function mergeCrossSourceDuplicates(appidList) {
   const byAppid = new Map((appidList || []).map((g) => [String(g.appid), g]));
   const drop = new Set();
   const gameNameCache = require(path.join(appPath, '..', 'util', 'gameNameCache.js'));
-  const cachedSteamName = (appid) => {
-    try {
-      const file = path.join(userDataDir(), 'steam_cache', 'schema', 'english', `${appid}.db`);
-      if (fs.existsSync(file)) {
-        const data = JSON.parse(fs.readFileSync(file, 'utf8'));
-        if (data && typeof data.name === 'string' && data.name.trim()) return data.name.trim();
-      }
-    } catch {
-      /* schema cache missing/corrupt — try the app-name cache next */
-    }
-    return '';
-  };
+  // Looks in every cached language, not just english — the app writes only the user's own, so an
+  // english-only lookup found nothing on a non-English profile and the dedupe below never ran.
+  const cachedSteamName = (appid) => gameNameCache.lookupSchemaCacheName(userDataDir(), appid);
   // Use named numeric appids as Steam targets; fill missing names from local caches.
   const steamTargets = (appidList || [])
     .filter((g) => /^\d+$/.test(String(g.appid)))
@@ -252,7 +243,12 @@ function mergeCrossSourceDuplicates(appidList) {
     }
     merged.push(g);
   }
-  return merged;
+  // `drop` is filled while walking the list, so the skip at the top of the loop only catches
+  // entries not visited yet: a phantom listed BEFORE the GOG install that supersedes it was already
+  // pushed and survived. Discovery order is not stable, which is why the same library deduped
+  // correctly one day and showed two Cyberpunk 2077 tiles the next. Filter once at the end so the
+  // result no longer depends on the order records happen to arrive in.
+  return drop.size > 0 ? merged.filter((g) => !drop.has(String(g.appid))) : merged;
 }
 
 // Index discovery records for fast per-game schema and source lookups.
@@ -740,10 +736,37 @@ function unconfiguredDisplayName(folderName, exeName, productName) {
 }
 
 // Resolve an install folder by name, using a conservative match threshold.
+/*
+  Is this folder a collection root rather than a game folder — i.e. does it merely CONTAIN other
+  games' installs?
+
+  "The Jackbox Party Pack Collection" holds one subfolder per pack, each already linked to its own
+  appid. Name-matching a pack that is NOT installed ("The Jackbox Party Pack") against that root
+  scored well above the threshold, so the uninstalled pack adopted the whole collection as its
+  install folder and the executable search inside it then handed it a *different* pack's binary.
+
+  A real game folder can legitimately contain a claimed sub-install (a nested emulator layout), so
+  the container verdict also requires the folder to have no game executable of its own.
+*/
+function isGameCollectionDir(dir) {
+  if (!dir) return false;
+  const prefix = path.resolve(dir).toLowerCase() + path.sep;
+  let holdsAnotherGame = false;
+  for (const claimed of _claimedDirs) {
+    if (path.resolve(claimed).toLowerCase().startsWith(prefix)) {
+      holdsAnotherGame = true;
+      break;
+    }
+  }
+  if (!holdsAnotherGame) return false;
+  return !exeDetect.shallowGameExe(dir);
+}
+
 async function resolveGameDirByName(gameName) {
   if (!gameName) return null;
   try {
-    return exeDetect.bestFolderMatch(gameName, await getFolderIndex());
+    const candidates = (await getFolderIndex()).filter((f) => !isGameCollectionDir(f.dir));
+    return exeDetect.bestFolderMatch(gameName, candidates);
   } catch {
     return null;
   }
@@ -2197,59 +2220,66 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     // ran exe detection on the emulator's SAVE directory and registered e.g. "SmartSteamEmu" as a
     // real game when a non-SocialClub watched folder was misclassified (folder roots must never
     // become gameIndex entries).
-    if (resolvedGameDir && game.name && !(appid.data && appid.data.type === 'socialclub')) {
+    if (game.name && !(appid.data && appid.data.type === 'socialclub')) {
       // Carry the Ubisoft product id into the watchdog's index. The emulator names its save folder
       // with that id, so without the pair the watchdog cannot tell which game an unlock under
       // "Goldberg UplayEmu Saves\<uplayId>" belongs to, and Uplay R2 games never fire a live
       // notification — they only appear after a manual refresh.
       const seedUplayId = (appid.data && appid.data.uplayId) || (appid.data && appid.data.uplayR2 ? uplayR2.resolveGameIdentity({ appid: appid.appid, name: game.name, gameDir: resolvedGameDir }).uplayId : '');
+      const seed = (binary, how) => {
+        gameIndex.upsert({
+          appid: appid.appid,
+          name: game.name,
+          binary,
+          ...gameIndexArtwork(game),
+          source: appid.source,
+          steamappid: game.steamappid || undefined,
+          uplayId: seedUplayId,
+        });
+        debug.log(`[${appid.appid}] auto-seeded playtime tracking${how}: binary="${binary}"`);
+      };
 
       try {
-        const gameDirKey = path.resolve(resolvedGameDir).toLowerCase();
-        if (_seededGameDirs.has(gameDirKey)) {
-          debug.log(`[${appid.appid}] playtime auto-seed skipped: install folder already has a detected executable`);
-        } else {
-          const emu = resolvedEmu || detectEmulatorCached(resolvedGameDir);
-          const exeInfo = resolvedExe || exeDetect.detect(resolvedGameDir, game.name, { dllPaths: emu.dll });
-          resolvedExe = exeInfo || resolvedExe;
-          hasResolvedExe = !!exeInfo;
-          if (!resolvedExeConfident && exeInfo && exeInfo.confident) resolvedExeConfident = true;
-          if (exeInfo) {
-            _seededGameDirs.add(gameDirKey);
-            gameIndex.upsert({
-              appid: appid.appid,
-              name: game.name,
-              binary: exeInfo.name,
-              ...gameIndexArtwork(game),
-              source: appid.source,
-              steamappid: game.steamappid || undefined,
-              uplayId: seedUplayId,
-            });
-            debug.log(`[${appid.appid}] auto-seeded playtime tracking: binary="${exeInfo.name}"`);
-          } else if (/^[0-9]+$/.test(String(appid.appid))) {
-            // No local exe found (obfuscated/renamed build, or a launcher-only install): fall back to
-            // SteamDB's launch metadata so the watchdog still has a process name to match on. Fetched
-            // through the main-process stealth browser (SteamDB 403s plain requests) and disk-cached,
-            // so this only hits the network once per game. Best-effort — never blocks the seed.
-            try {
-              const { ipcRenderer } = require('electron');
-              const meta = await ipcRenderer.invoke('get-steamdb-launch', appid.appid);
-              if (meta && meta.best_process_name) {
-                _seededGameDirs.add(gameDirKey);
-                gameIndex.upsert({
-                  appid: appid.appid,
-                  name: game.name,
-                  binary: meta.best_process_name,
-                  ...gameIndexArtwork(game),
-                  source: appid.source,
-                  steamappid: game.steamappid || undefined,
-                  uplayId: seedUplayId,
-                });
-                debug.log(`[${appid.appid}] auto-seeded playtime tracking from SteamDB: binary="${meta.best_process_name}"`);
-              }
-            } catch (err) {
-              debug.log(`[${appid.appid}] SteamDB launch fallback failed: ${err.message || err}`);
+        let seeded = false;
+        // 1) On-disk detection, when the install folder is known. This is also the "really
+        //    installed" proof used by the "show installed only" toggle, so only a real executable
+        //    found here may set hasResolvedExe.
+        if (resolvedGameDir) {
+          const gameDirKey = path.resolve(resolvedGameDir).toLowerCase();
+          if (_seededGameDirs.has(gameDirKey)) {
+            debug.log(`[${appid.appid}] playtime auto-seed skipped: install folder already has a detected executable`);
+            seeded = true;
+          } else {
+            const emu = resolvedEmu || detectEmulatorCached(resolvedGameDir);
+            const exeInfo = resolvedExe || exeDetect.detect(resolvedGameDir, game.name, { dllPaths: emu.dll });
+            resolvedExe = exeInfo || resolvedExe;
+            hasResolvedExe = !!exeInfo;
+            if (!resolvedExeConfident && exeInfo && exeInfo.confident) resolvedExeConfident = true;
+            if (exeInfo) {
+              _seededGameDirs.add(gameDirKey);
+              seed(exeInfo.name, '');
+              seeded = true;
             }
+          }
+        }
+
+        // 2) Launch metadata, for every game the step above could not name a binary for — whether
+        //    because the folder holds no recognizable exe (obfuscated/renamed build, launcher-only
+        //    install) or because no install folder was resolved at all. That second case is the
+        //    normal state of a game AW Next only knows through its emulator's save folder: keeping
+        //    this inside the folder branch left all of those with no process to match on, and no
+        //    playtime. Fetched through the main-process stealth browser (SteamDB 403s plain
+        //    requests) and disk-cached, so it hits the network once per game. Best-effort.
+        if (!seeded && /^[0-9]+$/.test(String(appid.appid)) && !gameIndex.has(appid.appid)) {
+          try {
+            const { ipcRenderer } = require('electron');
+            const meta = await ipcRenderer.invoke('get-steamdb-launch', appid.appid);
+            if (meta && meta.best_process_name) {
+              if (resolvedGameDir) _seededGameDirs.add(path.resolve(resolvedGameDir).toLowerCase());
+              seed(meta.best_process_name, ' from SteamDB');
+            }
+          } catch (err) {
+            debug.log(`[${appid.appid}] SteamDB launch fallback failed: ${err.message || err}`);
           }
         }
       } catch (err) {

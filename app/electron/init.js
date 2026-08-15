@@ -1151,10 +1151,14 @@ ipcMain.on('stylize-background-for-appid', async (event, arg) => {
 
 ipcMain.on('fetch-source-img', async (event, arg) => {
   switch (arg) {
+    // Both labels each platform emits map to the same icon, so a caller passing the raw source
+    // label gets the right art instead of silently falling through to the Steam default.
     case 'epic':
+    case 'epic-official':
       event.returnValue = path.join(userData, 'Source', 'epic.svg');
       break;
     case 'gog':
+    case 'GOG Galaxy':
       event.returnValue = path.join(userData, 'Source', 'gog.svg');
       break;
     case 'Goldberg SocialClub':
@@ -1162,6 +1166,9 @@ ipcMain.on('fetch-source-img', async (event, arg) => {
       break;
     case 'ubisoft':
       event.returnValue = path.join(userData, 'Source', 'ubisoft.svg');
+      break;
+    case 'ea':
+      event.returnValue = path.join(userData, 'Source', 'ea.svg');
       break;
     case 'RPCS3 Emulator':
     case 'ShadPS4 Emulator':

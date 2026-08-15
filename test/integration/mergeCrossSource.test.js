@@ -74,6 +74,38 @@ test('a GOG game dedupes a same-name Steam save phantom (Cyberpunk case)', () =>
   assert.equal(merged[0].appid, '1423049311');
 });
 
+test('the dedupe does not depend on the order discovery happens to emit records in', () => {
+  // The phantom is dropped while walking the list, so when it came BEFORE the GOG record it had
+  // already been kept and both tiles survived. Discovery order is not stable: the same library
+  // deduped correctly one day and showed two Cyberpunk 2077 tiles the next.
+  const gog = {
+    appid: '1423049311',
+    source: 'GOG Galaxy',
+    data: { type: 'gogOfficial', title: 'Cyberpunk 2077', gameplayDbPath: 'C:\\gog\\gameplay.db' },
+  };
+  const steamPhantom = {
+    appid: '1091500',
+    name: 'Cyberpunk 2077',
+    source: 'CODEX',
+    data: { type: 'file', path: 'C:\\Users\\Public\\Documents\\Steam\\CODEX\\1091500' },
+  };
+  const clone = (record) => JSON.parse(JSON.stringify(record));
+
+  for (const [label, list] of [
+    ['phantom first', [steamPhantom, gog]],
+    ['GOG first', [gog, steamPhantom]],
+  ]) {
+    const merged = achievements._internal.mergeCrossSourceDuplicates(list.map(clone));
+    assert.equal(merged.length, 1, `${label}: exactly one tile`);
+    assert.equal(String(merged[0].appid), '1423049311', `${label}: the GOG install is the survivor`);
+  }
+
+  // Unrelated records must not be disturbed, whatever their position around the dropped one.
+  const other = { appid: '367520', source: 'Goldberg', data: { type: 'file', path: 'C:\\x' } };
+  const withNeighbours = achievements._internal.mergeCrossSourceDuplicates([other, steamPhantom, gog].map(clone));
+  assert.deepEqual(withNeighbours.map((g) => String(g.appid)), ['367520', '1423049311']);
+});
+
 test('a GOG game keeps a genuinely installed Steam copy', () => {
   const gog = {
     appid: '1423049311',

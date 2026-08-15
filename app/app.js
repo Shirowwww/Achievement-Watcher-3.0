@@ -720,6 +720,37 @@ function isLegitSteamLibraryGame(game) {
   return String((game && game.source) || '').startsWith('Steam (');
 }
 
+/*
+  Which badge a source label earns. ONE table, because this decision is silently forgiving: an
+  unrecognised label does not raise anything, it just falls through to the Steam badge at the end of
+  sourcePresentationFor(). Both directions of a sloppy test therefore ship a plausible wrong badge —
+  too narrow (`=== 'gog'` missing 'GOG Galaxy') mislabelled every official GOG game as Steam, and
+  too loose (`includes('ea')` catching 'SmartSteamEmu') mislabelled every cracked Steam game as EA.
+
+  Patterns are anchored and matched against the lowercased label. Ubisoft is deliberately absent:
+  uplayR2.isUbisoftGame() decides it from more than the label (game.uplayR2, system, appid prefix).
+
+  Every `source:` literal in app/parser/*.js must be accounted for either here or in
+  STEAM_BADGE_SOURCES below; test/parsers/libraryDetectionFixes.test.js re-derives that list from
+  the parsers and fails on any label that is neither, so a new source cannot be added silently.
+*/
+const SOURCE_BADGE = {
+  playstation: /^(?:rpcs3 emulator|shadps4 emulator)$/,
+  xbox: /^xenia emulator$/,
+  epic: /^epic(?:-official)?$/,
+  gog: /^(?:gog|gog galaxy)$/,
+  socialclub: /^goldberg socialclub$/,
+  ea: /^ea$/,
+};
+
+/*
+  Labels that legitimately end on the Steam badge: Steam games seen through an emulator or crack,
+  and the placeholder records. Listing them is what makes the coverage test meaningful — without it
+  "falls through to Steam" would swallow genuinely unclassified labels too.
+*/
+const STEAM_BADGE_SOURCES =
+  /^(?:achievement watcher : watchdog|ali213|codex|empress|gbe fork|goldberg(?: steamemu)?|greenluma|hoodlum|manual|onlinefix|rld!|rune|smartsteamemu|tenoke|unconfigured|universelan)$/;
+
 function sourcePresentationFor(game) {
   const source = game && game.source;
   const sourceLower = String(source || '').toLowerCase();
@@ -753,30 +784,37 @@ function sourcePresentationFor(game) {
     };
   }
 
-  if (system === 'playstation' || source === 'RPCS3 Emulator' || source === 'ShadPS4 Emulator') {
-    return { img: getSourceImg(source === 'ShadPS4 Emulator' ? source : 'RPCS3 Emulator'), label: t('playstation-trophies', 'PlayStation trophies', 'Succès PlayStation'), kind: 'playstation' };
-  }
-  if (system === 'xbox' || source === 'Xenia Emulator') {
-    return { img: getSourceImg('Xenia Emulator'), label: t('xbox-achievements', 'Xbox achievements', 'Succès Xbox'), kind: 'xbox' };
-  }
-  if (sourceLower === 'epic') {
-    return { img: getSourceImg('epic'), label: t('epic-games-achievements', 'Epic Games achievements', 'Succès Epic Games'), kind: 'epic' };
-  }
-  if (sourceLower === 'gog') {
-    return { img: getSourceImg('gog'), label: t('gog-achievements', 'GOG achievements', 'Succès GOG'), kind: 'gog' };
-  }
-  if (sourceLower === 'goldberg socialclub') {
-    return {
-      img: getSourceImg('Goldberg SocialClub'),
-      label: t('social-club-achievements', 'Social Club achievements', 'Succès Social Club'),
-      kind: 'socialclub',
-    };
-  }
-  if (isUbisoft) {
-    return { img: getSourceImg('ubisoft'), label: t('ubisoft-connect-achievements', 'Ubisoft Connect achievements', 'Succès Ubisoft Connect'), kind: 'ubisoft' };
-  }
-  if (system === 'ea' || sourceLower.includes('ea')) {
-    return { img: pathToFileURL(path.join(appPath, 'resources/img/achievement.svg')).href, label: t('ea-app-achievements', 'EA app achievements', 'Succès EA app'), kind: 'ea' };
+  // `system` overrides the label: a manually added console game carries no platform source.
+  const kind =
+    system === 'playstation' || system === 'xbox' || system === 'ea'
+      ? system
+      : Object.keys(SOURCE_BADGE).find((name) => SOURCE_BADGE[name].test(sourceLower)) || (isUbisoft ? 'ubisoft' : '');
+
+  switch (kind) {
+    case 'playstation':
+      return {
+        img: getSourceImg(source === 'ShadPS4 Emulator' ? source : 'RPCS3 Emulator'),
+        label: t('playstation-trophies', 'PlayStation trophies', 'Succès PlayStation'),
+        kind,
+      };
+    case 'xbox':
+      return { img: getSourceImg('Xenia Emulator'), label: t('xbox-achievements', 'Xbox achievements', 'Succès Xbox'), kind };
+    case 'epic':
+      return { img: getSourceImg('epic'), label: t('epic-games-achievements', 'Epic Games achievements', 'Succès Epic Games'), kind };
+    case 'gog':
+      return { img: getSourceImg('gog'), label: t('gog-achievements', 'GOG achievements', 'Succès GOG'), kind };
+    case 'socialclub':
+      return {
+        img: getSourceImg('Goldberg SocialClub'),
+        label: t('social-club-achievements', 'Social Club achievements', 'Succès Social Club'),
+        kind,
+      };
+    case 'ubisoft':
+      return { img: getSourceImg('ubisoft'), label: t('ubisoft-connect-achievements', 'Ubisoft Connect achievements', 'Succès Ubisoft Connect'), kind };
+    case 'ea':
+      return { img: getSourceImg('ea'), label: t('ea-app-achievements', 'EA app achievements', 'Succès EA app'), kind };
+    default:
+      break;
   }
 
   return { img: getSourceImg(source), label: t('steam-achievements', 'Steam achievements', 'Succès Steam'), kind: 'steam' };
@@ -3853,6 +3891,12 @@ var app = {
       $('body').fadeIn().css('background', `url('../resources/img/ach_background.jpg')`);
       if (game.img.background) {
         ipcRenderer.invoke('fetch-icon', game.img.background, game.steamappid || game.appid).then((localPath) => {
+          // This fetch can outlive the page that asked for it: going back to the library before it
+          // resolved used to repaint the *home* screen with this game's artwork, because the
+          // back button had already cleared body's style by the time this ran. The header carries
+          // the appid only while that game's page is on screen, so it doubles as the freshness
+          // check — it is cleared on the way out and overwritten when another game opens.
+          if (String($('#achievement .wrapper > .header').attr('data-appid')) !== String(game.appid)) return;
           if (game.system === 'uplay' || game.img?.overlay === true) {
             let gradient = `linear-gradient(to bottom right, color-mix(in srgb, var(--bg-base) 88%, black) 0%, color-mix(in srgb, var(--bg-glow) 78%, black) 100%)`;
             $('body').fadeIn().attr('style', `background: ${gradient}, ${cssUrl(localPath)}`);

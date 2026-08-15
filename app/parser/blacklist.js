@@ -173,28 +173,12 @@ function resolveLocalInstallName(cfgDir, id) {
 // an id that could not be resolved before may be resolvable now.
 module.exports.forgetLocalInstallIndex = () => localInstallIndexCache.clear();
 
-// Per-game Steam schema caches the app writes for every game it displays
-// (steam_cache/schema/<lang>/<appid>.db, shaped { name, appid, … }). A game you blacklisted is by
-// definition a game the app had already listed, so its schema is almost always sitting right here —
-// unlike the 250k-row appList dump, which only exists once GetAppList has answered at least once.
+// Per-game Steam schema caches the app writes for every game it displays. A game you blacklisted is
+// by definition a game the app had already listed, so its schema is almost always sitting right
+// here — unlike the 250k-row appList dump, which only exists once GetAppList has answered at least
+// once. Shared with the library's cross-source dedupe, which needs the same offline name.
 function lookupSchemaCacheName(userDataDir, id) {
-  const schemaRoot = path.join(userDataDir, 'steam_cache', 'schema');
-  let langs;
-  try {
-    langs = fs.readdirSync(schemaRoot, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name);
-  } catch {
-    return '';
-  }
-  for (const lang of langs) {
-    try {
-      const parsed = JSON.parse(fs.readFileSync(path.join(schemaRoot, lang, `${id}.db`), 'utf8'));
-      const name = String((parsed && parsed.name) || '').trim();
-      if (name) return name;
-    } catch {
-      /* missing/corrupt entry for this language — try the next one */
-    }
-  }
-  return '';
+  return require(path.join(__dirname, '../util/gameNameCache.js')).lookupSchemaCacheName(userDataDir, id);
 }
 
 // Best-effort offline name resolution for entries whose name was never stored (blacklisted before

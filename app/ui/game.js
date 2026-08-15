@@ -149,6 +149,12 @@ function getGlobalStat(appid, source, gameName, achievements, context) {
 
       if (app.args.name) app.args.name = null;
 
+      // Mark the detail view as closed straight away, before the 800ms of fade-out and delay below.
+      // An artwork fetch still in flight for this game checks this attribute before painting body,
+      // so clearing it here is what stops a late reply from putting the game's background behind
+      // the library. Everything else that reads it means "the game currently on screen" too.
+      $('#achievement .wrapper > .header').removeAttr('data-appid').removeAttr('data-source');
+
       $('#achievement')
         .fadeOut(500, function () {
           setTimeout(() => {
