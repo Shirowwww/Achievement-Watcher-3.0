@@ -456,6 +456,7 @@
         "souvenirScreenshotDesc": "Делает скриншот экрана при открытии достижения. Сохраняется по играм.",
         "souvenirDir": "Папка сохранения",
         "souvenirDirHelp": "Скриншоты сохраняются в <папка>\\<игра>\\<дата> - <достижение>.png. Пусто = Изображения\\Achievement Watcher.",
+        "souvenirOpenDir": "Открыть папку",
         "soundNone": "Нет",
         "position": {
           "centerBottom": "Снизу по центру",

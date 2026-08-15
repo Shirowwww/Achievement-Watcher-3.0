@@ -5921,11 +5921,33 @@ body {
   width: 100%;
 }
 
+/*
+  Souvenir save-folder row: two buttons share it, so it gets more room than the one-button rows and
+  a gap between them. "Open folder" keeps its natural width - translations of it run from "Ouvrir le
+  dossier" to "Otvoriť priečinok", and squeezing it into an equal share wraps the label onto two
+  lines - while the path button takes what is left and ellipsizes.
+*/
+#settings #options-notify-souvenir li .right.action-right {
+  width: auto;
+  min-width: 320px;
+  max-width: 380px;
+  gap: 10px;
+}
+#settings #options-notify-souvenir li .right.action-right #btn-souvenir-open {
+  width: auto;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 /* Souvenir save-folder button: keep the path on one line and ellipsize it (full path in the title). */
 #settings .arrow-list li .right.action-right #btn-souvenir-dir {
   justify-content: flex-start;
   min-width: 0;
   overflow: hidden;
+}
+#settings #options-notify-souvenir li .right.action-right #btn-souvenir-dir {
+  width: auto;
+  flex: 1 1 auto;
 }
 #souvenir-dir-display {
   flex: 1 1 auto;

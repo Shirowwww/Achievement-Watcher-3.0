@@ -56,6 +56,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   and why — "Working — Windows fallback active", or "Windows notification · game in exclusive
   fullscreen" in Advanced. Until a game has had one, the row shows the configured mode rather than
   claiming an observation that has not happened.
+- **Open folder** beside the souvenir save folder, which opens the folder screenshots are actually
+  written to, creating it first if nothing has been saved there yet. The picker keeps showing the
+  folder in use, so the destination stays visible and changeable in one place.
 
 ### Changed
 
@@ -87,6 +90,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Souvenir screenshots no longer overwrite each other when several achievements unlock within the
+  same second, and a game whose title Windows refuses as a folder name (a reserved device name like
+  `NUL`, or a title ending in a dot or a space) no longer loses its screenshots silently.
 - **Apply emulator fix** no longer disappears from a game's right-click menu once that game has a
   setup. The entry is gated on a first-time-target check, so it hid itself on exactly the games that
   need it most — a repack update that wiped `steam_settings`, or a setup applied for the wrong appid,

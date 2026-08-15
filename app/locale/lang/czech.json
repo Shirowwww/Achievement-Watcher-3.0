@@ -456,6 +456,7 @@
         "souvenirScreenshotDesc": "Pořídí snímek obrazovky při odemčení achievementu. Ukládá se podle hry.",
         "souvenirDir": "Složka pro ukládání",
         "souvenirDirHelp": "Snímky se ukládají do <složka>\\<hra>\\<datum> - <úspěch>.png. Prázdné = Obrázky\\Achievement Watcher.",
+        "souvenirOpenDir": "Otevřít složku",
         "soundNone": "Žádný",
         "position": {
           "centerBottom": "Dole uprostřed",

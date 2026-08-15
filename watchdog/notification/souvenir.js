@@ -23,9 +23,36 @@ function loadScreenshot() {
   return screenshot;
 }
 
-// Strip characters illegal in Windows file/folder names; keep spaces; cap the length.
+// Names Windows refuses whatever the extension, so a game called "NUL" or "COM1" would lose its
+// screenshots entirely.
+const RESERVED_NAME = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i;
+
+/*
+  Strip characters illegal in Windows file/folder names; keep spaces; cap the length.
+
+  Trailing dots and spaces matter as much as the illegal characters: Windows silently drops them
+  from the name it actually creates, so a title ending in one ("Mr. Do." or "Sam & Max ") would
+  have the write land somewhere other than the path returned here - and the caller checks that
+  path when picking a non-colliding name.
+*/
 function sanitize(s) {
-  return String(s || '').replace(/[<>:"/\\|?*]/g, '').replace(/\s+/g, ' ').trim().slice(0, 100) || 'Unknown';
+  const cleaned = String(s || '')
+    .replace(/[<>:"/\\|?*]/g, '')
+    .replace(/\p{Cc}/gu, '') // control characters are illegal in a Windows name too
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 100)
+    .replace(/[. ]+$/, '');
+  if (!cleaned) return 'Unknown';
+  return RESERVED_NAME.test(cleaned) ? cleaned + '_' : cleaned;
+}
+
+// Never overwrite an earlier souvenir: several achievements can unlock within the same second, and
+// the same one can be unlocked again after a reset.
+function uniquePath(dir, base) {
+  let file = path.join(dir, `${base}.png`);
+  for (let n = 2; fs.existsSync(file) && n < 1000; n++) file = path.join(dir, `${base} (${n}).png`);
+  return file;
 }
 
 // Kept in sync with souvenirDefaultDir() in app/ui/settings.js and SOUVENIR_DIR_NAME in
@@ -43,7 +70,7 @@ module.exports.capture = async function ({ game, achievement, dir } = {}) {
     const gameDir = path.join(baseDir, sanitize(game));
     fs.mkdirSync(gameDir, { recursive: true });
     const ts = new Date().toISOString().replace(/[:.]/g, '-').replace('T', ' ').slice(0, 19); // e.g. 2026-06-23 23-10-05
-    const file = path.join(gameDir, ts + ' - ' + sanitize(achievement) + '.png');
+    const file = uniquePath(gameDir, ts + ' - ' + sanitize(achievement));
     const img = await shot({ format: 'png' });
     fs.writeFileSync(file, img);
     debug.log('[souvenir] saved ' + file);
@@ -53,3 +80,7 @@ module.exports.capture = async function ({ game, achievement, dir } = {}) {
     return null;
   }
 };
+
+// Exported for the tests: both decide the path a screenshot is written to.
+module.exports._sanitize = sanitize;
+module.exports._uniquePath = uniquePath;

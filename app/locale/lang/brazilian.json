@@ -456,6 +456,7 @@
         "souvenirScreenshotDesc": "Captura a tela quando uma conquista é desbloqueada. Salvo por jogo.",
         "souvenirDir": "Pasta de salvamento",
         "souvenirDirHelp": "As capturas são salvas em <pasta>\\<jogo>\\<data> - <conquista>.png. Vazio = Imagens\\Achievement Watcher.",
+        "souvenirOpenDir": "Abrir pasta",
         "soundNone": "Nenhum",
         "position": {
           "centerBottom": "Baixo centro",

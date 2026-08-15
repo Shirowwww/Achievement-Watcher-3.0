@@ -2871,6 +2871,19 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       }
     });
 
+    // Open the folder the screenshots are actually written to. It only exists once something has
+    // been saved there, so create it first rather than have the click do nothing.
+    $('#btn-souvenir-open').click(function () {
+      try {
+        const configured = app.config.souvenir && app.config.souvenir.dir ? app.config.souvenir.dir.trim() : '';
+        const dir = configured || souvenirDefaultDir();
+        settingsFs.mkdirSync(dir, { recursive: true });
+        remote.shell.openPath(dir);
+      } catch (e) {
+        debug.log(e);
+      }
+    });
+
     // --- Custom preset builder: live preview, real overlay preview, create/update ---
     function custInt(id, def) {
       const n = parseInt($('#' + id).val(), 10);

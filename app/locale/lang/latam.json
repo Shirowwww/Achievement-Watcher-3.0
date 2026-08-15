@@ -456,6 +456,7 @@
         "souvenirScreenshotDesc": "Captura la pantalla cuando se desbloquea un logro. Guardado por juego.",
         "souvenirDir": "Carpeta de guardado",
         "souvenirDirHelp": "Las capturas se guardan en <carpeta>\\<juego>\\<fecha> - <logro>.png. Vacío = Imágenes\\Achievement Watcher.",
+        "souvenirOpenDir": "Abrir carpeta",
         "soundNone": "Ninguno",
         "position": {
           "centerBottom": "Abajo centro",

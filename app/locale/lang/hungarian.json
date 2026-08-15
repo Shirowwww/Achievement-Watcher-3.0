@@ -456,6 +456,7 @@
         "souvenirScreenshotDesc": "Képernyőképet készít, amikor egy teljesítmény feloldódik. Játékonként mentve.",
         "souvenirDir": "Mentési mappa",
         "souvenirDirHelp": "A képernyőképek ide mentődnek: <mappa>\\<játék>\\<dátum> - <teljesítmény>.png. Üres = Képek\\Achievement Watcher.",
+        "souvenirOpenDir": "Mappa megnyitása",
         "soundNone": "Nincs",
         "position": {
           "centerBottom": "Lent középen",

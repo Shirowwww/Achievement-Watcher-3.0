@@ -456,6 +456,7 @@
         "souvenirScreenshotDesc": "Przechwytuje ekran, gdy odblokowane zostaje osiągnięcie. Zapisywane na grę.",
         "souvenirDir": "Folder zapisu",
         "souvenirDirHelp": "Zrzuty są zapisywane w <folder>\\<gra>\\<data> - <osiągnięcie>.png. Puste = Obrazy\\Achievement Watcher.",
+        "souvenirOpenDir": "Otwórz folder",
         "soundNone": "Brak",
         "position": {
           "centerBottom": "Dół środek",

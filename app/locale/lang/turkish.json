@@ -456,6 +456,7 @@
         "souvenirScreenshotDesc": "Bir başarım açıldığında ekranı yakalar. Oyun başına kaydedilir.",
         "souvenirDir": "Kayıt klasörü",
         "souvenirDirHelp": "Ekran görüntüleri <klasör>\\<oyun>\\<tarih> - <başarım>.png içine kaydedilir. Boş = Resimler\\Achievement Watcher.",
+        "souvenirOpenDir": "Klasörü aç",
         "soundNone": "Yok",
         "position": {
           "centerBottom": "Alt orta",

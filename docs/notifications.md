@@ -111,6 +111,21 @@ Right-click a game to mute its progress notifications without disabling achievem
 
 Achievements with a global unlock rate below the configured rare threshold display their rarity percentage and can use the rare preset.
 
+## Screenshot souvenirs
+
+**Screenshot on unlock** saves a picture of the screen a moment after an achievement pops, so the notification itself is in the shot. Files land in `<folder>\<game>\<date> - <achievement>.png`, and **Open folder** in the same row takes you straight there. The folder defaults to `Pictures\Achievement Watcher Next` and can be changed at any time - the button shows the one in use.
+
+### Playing with Windows HDR on
+
+Screenshots are saved exactly as Windows hands them over, and Windows converts an HDR screen to SDR before any ordinary screenshot tool - AW Next, the Snipping Tool, Print Screen or OBS - ever sees it. Ordinary content comes through correctly, but anything brighter than SDR white is clipped to flat white, so a bright sky or a strong light source can lose its detail. That detail is not in the file to recover: the picture is 8 bits per colour by the time it arrives.
+
+Two things help, both outside AW Next:
+
+- Lower **SDR content brightness** in Windows' HDR settings. On some systems this also fixes screenshots that come out overall too bright.
+- For a shot where a blown highlight really matters, use **Win + G** (Xbox Game Bar), which captures the HDR frame itself and saves a tone-mapped copy beside it.
+
+On multi-monitor setups the souvenir captures the primary monitor, so play on it if you want your screenshots to match.
+
 ## If a test or unlock does not appear
 
 1. Confirm notifications are enabled, and check the Notifications row of the game's **Game Health** panel — it names the transport that last delivered and why.

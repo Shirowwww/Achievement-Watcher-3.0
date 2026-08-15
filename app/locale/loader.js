@@ -446,6 +446,8 @@ function translateUI(lang, locale, template) {
     $("#option_souvenirScreenshot option[value='false']").text(clear(template.settings.common.disable));
     $('#lbl-souvenirDir').text(clear(opt.souvenirDir));
     $('#souvenir-dir-help').text(clear(opt.souvenirDirHelp));
+    $('#souvenir-open-label').text(clear(opt.souvenirOpenDir));
+    $('#btn-souvenir-open').attr('title', clear(opt.souvenirOpenDir));
   }
   if (template.settings.notification.option.customiser) {
     const c = template.settings.notification.option.customiser;

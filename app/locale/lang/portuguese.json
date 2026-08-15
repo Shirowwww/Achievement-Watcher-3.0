@@ -456,6 +456,7 @@
         "souvenirScreenshotDesc": "Captura o ecrã quando uma proeza é desbloqueada. Guardado por jogo.",
         "souvenirDir": "Pasta de gravação",
         "souvenirDirHelp": "As capturas são guardadas em <pasta>\\<jogo>\\<data> - <proeza>.png. Vazio = Imagens\\Achievement Watcher.",
+        "souvenirOpenDir": "Abrir pasta",
         "soundNone": "Nenhum",
         "position": {
           "centerBottom": "Baixo centro",
