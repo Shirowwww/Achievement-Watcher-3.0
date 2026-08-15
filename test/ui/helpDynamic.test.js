@@ -18,8 +18,10 @@ const xbox = {
   y: 'Y',
 };
 
-test('the Generated configs help panel is part of the render contract', () => {
-  assert.equal(help.HELP_LISTS['help-config-list'], 'config');
+test('the Game health help panel is part of the render contract', () => {
+  assert.equal(help.HELP_LISTS['help-gamehealth-list'], 'gameHealth');
+  // Folded into the Steam emulator topic rather than kept as a card of its own.
+  assert.equal(help.HELP_LISTS['help-config-list'], undefined);
 });
 
 test('help search is case, whitespace and accent insensitive', () => {

@@ -101,6 +101,9 @@ function translateUI(lang, locale, template) {
     selector.attr('data-ctx-backupgbe', clear(template.contextMenu.backupGBE));
     if (template.contextMenu.restoreGBE) selector.attr('data-ctx-restoregbe', clear(template.contextMenu.restoreGBE));
     selector.attr('data-ctx-installgbe', clear(template.contextMenu.installGBE));
+    // Same action on a game that already has a setup — named differently so "replace what is there"
+    // is visible before the click, not only in the confirmation.
+    if (template.contextMenu.reinstallGBE) selector.attr('data-ctx-reinstallgbe', clear(template.contextMenu.reinstallGBE));
     if (template.contextMenu.removeDRM) selector.attr('data-ctx-removedrm', clear(template.contextMenu.removeDRM));
     if (template.contextMenu.crackfix) selector.attr('data-ctx-crackfix', clear(template.contextMenu.crackfix));
     selector.attr('data-ctx-iconcache', clear(template.contextMenu.openIconCache));
@@ -307,24 +310,24 @@ function translateUI(lang, locale, template) {
     const helpSearchClear = clear(template.settings.search && template.settings.search.clear);
     if (helpSearchClear) $('#help-search-clear').attr('title', helpSearchClear).attr('aria-label', helpSearchClear);
     bindHelpText('help-quick-title', help.quickTitle);
+    bindHelpText('help-gamehealth-title', help.gameHealthTitle);
     bindHelpText('help-steam-title', help.steamTitle);
     bindHelpText('help-emulator-title', help.emulatorTitle);
     bindHelpText('help-sources-title', help.sourcesTitle);
     bindHelpText('help-controller-title', help.controllerTitle);
     bindHelpText('help-overlay-title', help.overlayTitle);
     bindHelpText('help-themes-title', help.themesTitle);
-    bindHelpText('help-config-title', help.configTitle);
     bindHelpText('help-shortcuts-title', help.shortcutsTitle);
     bindHelpText('help-tips-title', help.tipsTitle);
     bindHelpText('help-troubleshoot-title', help.troubleshootTitle);
     bindHelpList('help-quick-list', help.quick);
+    bindHelpList('help-gamehealth-list', help.gameHealth);
     bindHelpList('help-steam-list', help.steam);
     bindHelpList('help-emulator-list', help.emulators);
     bindHelpList('help-sources-list', help.sources);
     bindHelpList('help-controller-list', help.controller);
     bindHelpList('help-overlay-list', help.overlay);
     bindHelpList('help-themes-list', help.themes);
-    bindHelpList('help-config-list', help.config);
     bindHelpList('help-shortcuts-list', help.shortcuts);
     bindHelpList('help-tips-list', help.tips);
     bindHelpList('help-troubleshoot-list', help.troubleshoot);

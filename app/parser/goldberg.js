@@ -152,6 +152,36 @@ function backupTimestamp(date = new Date()) {
   return date.toISOString().replace(/[:.]/g, '-');
 }
 
+/*
+  Point steam_appid.txt at a different appid, keeping the previous file.
+
+  repair() writes this file only when it is missing, on purpose: overwriting a working setup with a
+  detection that might be wrong is not something an automatic repair may decide. Correcting a genuine
+  mismatch is a decision the user makes explicitly, so it lives here, as its own one-file operation —
+  the previous value is copied into the same .aw-backups folder every other repair uses.
+*/
+function writeSteamAppId({ steamSettings, appid }) {
+  if (!steamSettings) throw new Error('writeSteamAppId: steamSettings path is required');
+  const value = String(appid == null ? '' : appid).trim();
+  if (!/^[0-9]+$/.test(value)) throw new Error(`writeSteamAppId: "${value}" is not a Steam appid`);
+
+  const file = path.join(steamSettings, 'steam_appid.txt');
+  let previous = null;
+  let backupDir = null;
+  if (fs.existsSync(file)) {
+    previous = fs.readFileSync(file, 'utf8').trim();
+    if (previous === value) return { file, previous, appid: value, changed: false, backupDir: null };
+    backupDir = path.join(steamSettings, '.aw-backups', backupTimestamp());
+    fs.mkdirSync(backupDir, { recursive: true });
+    fs.copyFileSync(file, path.join(backupDir, 'steam_appid.txt'));
+  } else {
+    fs.mkdirSync(steamSettings, { recursive: true });
+  }
+
+  fs.writeFileSync(file, value, 'utf8');
+  return { file, previous, appid: value, changed: true, backupDir };
+}
+
 function copyIntoBackup(source, gameDir, backupDir) {
   const relative = path.relative(gameDir, source);
   if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) {
@@ -455,7 +485,9 @@ function diagnose({ gameDir, appid, schema, savesRoots }) {
       missingIcons: [], // referenced icon files that don't exist on disk
     },
   };
-  const add = (level, code, message) => report.issues.push({ level, code, message });
+  // `data` carries the values behind the message for the issues a repair can act on, so a caller
+  // never has to parse an English sentence to know what to write (see APPID_MISMATCH below).
+  const add = (level, code, message, data = null) => report.issues.push(data ? { level, code, message, data } : { level, code, message });
 
   // Runtime unlock state is independent of the steam_settings schema, so report it regardless.
   report.save = inspectSaveState(appid, savesRoots);
@@ -479,7 +511,12 @@ function diagnose({ gameDir, appid, schema, savesRoots }) {
   if (fs.existsSync(appidTxt)) {
     const onDisk = fs.readFileSync(appidTxt, 'utf8').trim();
     if (report.appid && onDisk && onDisk !== report.appid) {
-      add('warning', 'APPID_MISMATCH', `steam_appid.txt (${onDisk}) does not match the detected appid (${report.appid}).`);
+      add(
+        'warning',
+        'APPID_MISMATCH',
+        `steam_appid.txt (${onDisk}) does not match the detected appid (${report.appid}).`,
+        { onDisk, expected: String(report.appid), file: appidTxt }
+      );
     }
   } else {
     add('warning', 'NO_APPID_TXT', 'steam_appid.txt is missing in steam_settings.');
@@ -1036,6 +1073,7 @@ function findGameExe(gameDir, dllPaths) {
 
 module.exports = {
   findSteamSettings,
+  writeSteamAppId,
   detectEmulator,
   buildAchievementsJson,
   backupSetup,

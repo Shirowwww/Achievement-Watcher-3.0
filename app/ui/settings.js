@@ -2120,18 +2120,36 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           debug.log(e);
         }
         const uniqueFound = [...new Map(found.map((game) => [path.resolve(game.gameDir).toLowerCase(), game])).values()];
-        const eligible = uniqueFound.filter((game) => !game.hasSchema && emulatorFixEligibility.inspect({ gameDir: game.gameDir }).eligible);
+        /*
+          Two groups, counted separately. This pass only ever configures games that have no setup at
+          all — it runs unattended during the scan, so it must never overwrite one. The games it
+          skips are not a dead end though: re-applying to them is exactly what Advanced > Fix all
+          games does (with a backup per game), and saying nothing about them left a user whose whole
+          library is already configured with "nothing to do" and no idea where the re-apply lives.
+        */
+        const inspected = uniqueFound.map((game) => ({ game, eligibility: emulatorFixEligibility.inspect({ gameDir: game.gameDir }) }));
+        const eligible = inspected.filter((entry) => !entry.game.hasSchema && entry.eligibility.eligible);
+        const alreadyConfigured = inspected.filter((entry) => entry.eligibility.reason === 'existing-fix').length;
         const unconfigured = eligible.length;
         if (unconfigured === 0) {
-          result.text(t('no-config-eligible-games', 'No unconfigured Steam game without an existing fix was found.', 'Aucun jeu Steam sans fix existant ne nécessite de configuration.'));
+          result.text(
+            alreadyConfigured > 0
+              ? t(
+                  'no-config-eligible-games-configured',
+                  '{count} Steam-compatible install(s) found — all of them already have a setup. To rebuild those, use Advanced > Fix all games.',
+                  '{count} installation(s) compatible(s) Steam détectée(s) — toutes ont déjà une configuration. Pour les régénérer, utilise Avancé > Réparer tous les jeux.',
+                  { count: alreadyConfigured }
+                )
+              : t('no-config-eligible-games', 'No unconfigured Steam game without an existing fix was found.', 'Aucun jeu Steam sans fix existant ne nécessite de configuration.')
+          );
           return;
         }
         const autoFixEnabled = app.config?.emulator?.autoApplyNewGames !== false;
         const detail = autoFixEnabled
           ? t(
               'generate-configs-detail-auto-fix',
-              'This starts a full scan now. During that scan, Achievement Watcher applies the GBE/Goldberg auto-fix to detected games with a known install folder. Repairs run in the background: scan again if a freshly fixed game does not show as ready yet.',
-              "Le bouton lance un scan complet maintenant. Pendant ce scan, Achievement Watcher applique l'auto-fix GBE/Goldberg aux jeux détectés qui ont un dossier d'installation connu. Les réparations se font en arrière-plan : relance un scan si un jeu vient juste d'être corrigé et n'apparaît pas encore comme prêt."
+              'This starts a full scan now. During that scan, AW Next applies the GBE/Goldberg auto-fix to detected games with a known install folder. Repairs run in the background: scan again if a freshly fixed game does not show as ready yet.',
+              "Le bouton lance un scan complet maintenant. Pendant ce scan, AW Next applique l'auto-fix GBE/Goldberg aux jeux détectés qui ont un dossier d'installation connu. Les réparations se font en arrière-plan : relance un scan si un jeu vient juste d'être corrigé et n'apparaît pas encore comme prêt."
             )
           : t(
               'generate-configs-detail-scan-only',
@@ -2145,7 +2163,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
             found: uniqueFound.length,
             missing: unconfigured,
           }),
-          detail,
+          // Say what happens to the rest, so the two numbers add up instead of leaving a silent gap.
+          detail: alreadyConfigured > 0
+            ? `${detail}\n\n${t('generate-configs-detail-configured', '{count} install(s) already have a setup and are left untouched — Advanced > Fix all games rebuilds those.', '{count} installation(s) ont déjà une configuration et ne sont pas touchées — Avancé > Réparer tous les jeux les régénère.', { count: alreadyConfigured })}`
+            : detail,
           buttons: [t('start-scan', 'Start scan', 'Lancer le scan'), t('cancel', 'Cancel', 'Annuler')],
           defaultId: 0,
           cancelId: 1,
@@ -2536,7 +2557,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       }
     }
 
-    function runNotificationTest(cmd, btn) {
+    function runNotificationTest(cmd, btn, game) {
       return new Promise((resolve, reject) => setTimeout(() => {
         const ws = new WebSocket('ws://localhost:8082');
         let settled = false;
@@ -2586,7 +2607,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
             }
           };
           try {
-            ws.send(JSON.stringify({ cmd }));
+            ws.send(JSON.stringify(game ? { cmd, game } : { cmd }));
           } catch (err) {
             ws.close();
             remote.dialog.showMessageBoxSync({
@@ -2613,7 +2634,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       return Math.round((tier.min + Math.random() * (tier.max - tier.min)) * 10) / 10;
     }
     // Build a notification test payload using the current overlay settings.
-    function overlayTestData(kind, presetOverride, label) {
+    function overlayTestData(kind, presetOverride, label, game) {
       const mainPreset = $('#option_overlayPreset').val() || 'Shirow';
       // Match the per-type preset used by real notifications.
       const preset =
@@ -2652,13 +2673,30 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const durRaw = $('#option_overlayDuration').val();
       const durSec = durRaw === 'auto' || !durRaw ? 0 : parseInt(durRaw, 10) || 0;
       const achievementIcon = path.join(appPath, 'resources/img/achievement.svg');
-      const gameIcon = path.join(appPath, 'resources/icon/icon.png');
+      /*
+        A game-scoped preview shows that game's own artwork; the generic tester keeps the app icon
+        and the neutral sample wording.
+
+        The overlay window has no game-name field of its own — createNotificationWindow() forwards
+        only `displayName`, which carries the ACHIEVEMENT title, so a real unlock never prints the
+        game's name either. Naming the game in the description is therefore the only place a preview
+        can say which game it is previewing, and playtime keeps its own convention of putting the
+        game in the title.
+      */
+      const gameIcon = (game && game.icon) || path.join(appPath, 'resources/icon/icon.png');
+      if (game && game.name) {
+        texts.playtime.displayName = game.name;
+        for (const kindName of ['toast', 'rare', 'progress', 'platinum']) texts[kindName].description = game.name;
+      }
       return Object.assign(
         {
           // Test notifications may replace the current overlay immediately (and are never
           // deduplicated), so the tester can chain preset previews without waiting.
           test: true,
           preset,
+          // `image` is the alias createNotificationWindow() maps onto imagePath/headerPath, which is
+          // what the Game Cover preset paints its background from.
+          image: (game && game.image) || '',
           // A rare unlock is a normal achievement notification carrying a rarityPercent.
           notificationType: kind === 'toast' || kind === 'rare' ? 'achievement' : kind,
           rarityPercent: rarePct,
@@ -2666,7 +2704,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           scale: parseFloat($('#option_overlayScale').val()) || 1,
           volume: Number.isFinite(volRaw) ? volRaw : 100,
           durationMs: durSec > 0 ? durSec * 1000 : undefined,
-          iconPath: kind === 'playtime' ? gameIcon : achievementIcon,
+          // The primary icon. A preview has no per-achievement art, so a game-scoped one shows the
+          // game's icon rather than the generic placeholder badge.
+          iconPath: kind === 'playtime' || game ? gameIcon : achievementIcon,
           achievementIconPath: achievementIcon,
           gameIconPath: gameIcon,
           progress: kind === 'progress' ? { current: 3, max: 10, percent: 30 } : null,
@@ -2686,9 +2726,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       try {
         // A preview is one notification. In "Both" mode prefer the styled overlay preview; the
         // Windows transport remains directly testable by selecting Windows notification.
-        if (mode === 'toast') await runNotificationTest(kind + '-test', btn);
+        if (mode === 'toast') await runNotificationTest(kind + '-test', btn, game);
         else {
-          ipcRenderer.send('spawn-overlay-notification', overlayTestData(kind, presetOverride));
+          ipcRenderer.send('spawn-overlay-notification', overlayTestData(kind, presetOverride, null, game));
           await new Promise((resolve) => setTimeout(resolve, 900));
         }
       } catch (err) {

@@ -386,6 +386,16 @@
                     <summary><i class="fas fa-bolt"></i> <span id="help-quick-title">First steps</span></summary>
                     <ul id="help-quick-list"></ul>
                   </details>
+                  <!-- The two "is something wrong?" topics lead, because that is what sends people
+                       to Help in the first place. -->
+                  <details class="help-panel">
+                    <summary><i class="fas fa-heartbeat"></i> <span id="help-gamehealth-title">Game health</span></summary>
+                    <ul id="help-gamehealth-list"></ul>
+                  </details>
+                  <details class="help-panel">
+                    <summary><i class="fas fa-wrench"></i> <span id="help-troubleshoot-title">Troubleshooting</span></summary>
+                    <ul id="help-troubleshoot-list"></ul>
+                  </details>
                   <details class="help-panel">
                     <summary><i class="fas fa-store"></i> <span id="help-sources-title">Launchers &amp; sources</span></summary>
                     <ul id="help-sources-list"></ul>
@@ -415,16 +425,8 @@
                     <ul id="help-themes-list"></ul>
                   </details>
                   <details class="help-panel">
-                    <summary><i class="fas fa-file-code"></i> <span id="help-config-title">Generated configs</span></summary>
-                    <ul id="help-config-list"></ul>
-                  </details>
-                  <details class="help-panel">
                     <summary><i class="fas fa-lightbulb"></i> <span id="help-tips-title">Tips &amp; tricks</span></summary>
                     <ul id="help-tips-list"></ul>
-                  </details>
-                  <details class="help-panel">
-                    <summary><i class="fas fa-wrench"></i> <span id="help-troubleshoot-title">Troubleshooting</span></summary>
-                    <ul id="help-troubleshoot-list"></ul>
                   </details>
                   </div>
                 </section>
@@ -1921,7 +1923,36 @@
         <div class="box">
           <div class="header"><i class="fas fa-cog"></i> <span id="game-config-title">Executable configuration</span><span></span></div>
           <div class="container">
-            <section class="content active" data-view="exe-config">
+            <!-- Both tabs are labelled by id from app.js, not positionally, so this strip can grow
+                 without touching an nth-child selector. -->
+            <div id="game-config-tabs" class="game-config-tabs" role="tablist">
+              <button type="button" class="active" data-gc-view="health" role="tab" aria-selected="true">
+                <i class="fas fa-heartbeat"></i> <span id="game-config-tab-health">Health</span>
+              </button>
+              <button type="button" data-gc-view="exe-config" role="tab" aria-selected="false">
+                <i class="fas fa-terminal"></i> <span id="game-config-tab-exe">Executable</span>
+              </button>
+            </div>
+
+            <section class="content active" data-view="health">
+              <div id="game-health" class="game-health">
+                <div class="gh-summary">
+                  <span class="gh-state" data-state="loading"><i class="fas fa-circle-notch fa-spin"></i> <span class="gh-state-label"></span></span>
+                  <p class="gh-explanation"></p>
+                </div>
+                <ul class="gh-checks"></ul>
+                <div class="gh-actions"></div>
+                <details class="gh-technical">
+                  <summary><i class="fas fa-microscope"></i> <span class="gh-technical-label"></span></summary>
+                  <div class="gh-technical-body">
+                    <pre class="gh-technical-dump"></pre>
+                    <button type="button" class="gh-copy inline-action-btn"></button>
+                  </div>
+                </details>
+              </div>
+            </section>
+
+            <section class="content" data-view="exe-config">
               <div class="title">
                 <ul id="dirlist">
                   <li>

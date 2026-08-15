@@ -65,9 +65,23 @@ async function prefetchDesktopToastArtwork(message, aumid) {
   }
 }
 
-// Build the same payload used by real unlocks.
-function testMessageAndOptions(kind, options) {
+/*
+  Build the same payload used by real unlocks.
+
+  `game` optionally replaces the built-in Hollow Knight sample with a real library entry, so a test
+  fired from a game's own panel shows that game's name and artwork instead of an unrelated title.
+  Every field is optional and falls back to the sample.
+*/
+function testMessageAndOptions(kind, options, game = null) {
   const strings = notifyStrings.forLang(options.achievement.lang);
+  const target = {
+    appid: (game && game.appid) || TEST_APPID,
+    name: (game && game.name) || TEST_GAME,
+    gameIcon: (game && game.icon) || TEST_GAME_ICON,
+    image: (game && game.image) || TEST_HEADER,
+    // Without per-achievement artwork, the game's own icon reads better than another game's badge.
+    icon: (game && (game.achievementIcon || game.icon)) || TEST_ACHIEVEMENT_ICON,
+  };
   const baseToast = {
     appid: toastIdentity.DEFAULT_TOAST_AUMID, // placeholder; applyToastAppSettings resolves the real one
     winrt: options.notification_transport.winRT,
@@ -79,10 +93,10 @@ function testMessageAndOptions(kind, options) {
   };
 
   const common = {
-    appid: TEST_APPID,
-    gameDisplayName: TEST_GAME,
-    gameIcon: TEST_GAME_ICON,
-    image: TEST_HEADER,
+    appid: target.appid,
+    gameDisplayName: target.name,
+    gameIcon: target.gameIcon,
+    image: target.image,
     // powertoast expects Unix seconds.
     time: Math.floor(Date.now() / 1000),
   };
@@ -96,14 +110,14 @@ function testMessageAndOptions(kind, options) {
       ];
       const tier = tiers[Math.floor(Math.random() * tiers.length)];
       const rarePct = Math.round((tier.min + Math.random() * (tier.max - tier.min)) * 10) / 10;
-      baseToast.attribution = `${TEST_GAME} · ${notifyStrings.interpolate(strings.rare, { percent: rarePct })}`;
+      baseToast.attribution = `${target.name} · ${notifyStrings.interpolate(strings.rare, { percent: rarePct })}`;
       return [
         {
           ...common,
           achievementName: 'RARE_TEST',
           achievementDisplayName: strings.rareAchievement,
           achievementDescription: notifyStrings.interpolate(strings.rareDescription, { percent: rarePct }),
-          icon: TEST_ACHIEVEMENT_ICON,
+          icon: target.icon,
           rarityPercent: rarePct,
         },
         { toast: baseToast },
@@ -111,14 +125,14 @@ function testMessageAndOptions(kind, options) {
     }
     case 'progress':
       baseToast.customAudio = '0';
-      baseToast.attribution = TEST_GAME;
+      baseToast.attribution = target.name;
       return [
         {
           ...common,
           achievementName: 'PROGRESS_TEST',
           achievementDisplayName: 'Far Traveler',
           achievementDescription: 'Travel 1000 light-years in a single game.',
-          icon: TEST_ACHIEVEMENT_ICON,
+          icon: target.icon,
           progress: { current: 3, max: 10 },
         },
         { toast: baseToast },
@@ -130,45 +144,45 @@ function testMessageAndOptions(kind, options) {
         {
           ...common,
           notificationType: 'playtime',
-          achievementDisplayName: TEST_GAME,
+          achievementDisplayName: target.name,
           achievementDescription: '0h 42m',
-          icon: TEST_GAME_ICON,
+          icon: target.gameIcon,
           silent: true,
         },
         { toast: baseToast },
       ];
     case 'platinum':
-      baseToast.attribution = `${TEST_GAME} · ${strings.platinumTitle}`;
+      baseToast.attribution = `${target.name} · ${strings.platinumTitle}`;
       return [
         {
           ...common,
           notificationType: 'platinum',
-          achievementDisplayName: TEST_GAME,
+          achievementDisplayName: target.name,
           achievementDescription: strings.platinumDesc,
-          icon: TEST_ACHIEVEMENT_ICON,
+          icon: target.icon,
         },
         { toast: baseToast },
       ];
     case 'toast':
     default:
-      baseToast.attribution = TEST_GAME;
+      baseToast.attribution = target.name;
       return [
         {
           ...common,
           achievementName: 'TOAST_TEST',
           achievementDisplayName: strings.testAchievement,
           achievementDescription: strings.testDescription,
-          icon: TEST_ACHIEVEMENT_ICON,
+          icon: target.icon,
         },
         { toast: baseToast },
       ];
   }
 }
 
-async function runTest(kind, { rumble = true } = {}) {
+async function runTest(kind, { rumble = true, game = null } = {}) {
   try {
     const options = await settings.load(cfg_file);
-    const [message, toastOptions] = testMessageAndOptions(kind, options);
+    const [message, toastOptions] = testMessageAndOptions(kind, options, game);
     toastOptions.toast.lang = options.achievement && options.achievement.lang ? options.achievement.lang : 'english';
     // Test toasts honor the configured overlay sound (Son / Son aléatoire), like real ones.
     if (!message.silent) {
@@ -223,11 +237,12 @@ async function runTest(kind, { rumble = true } = {}) {
   }
 }
 
-module.exports.toast = () => runTest('toast');
-module.exports.rare = () => runTest('rare');
-module.exports.progress = () => runTest('progress', { rumble: false });
-module.exports.playtime = () => runTest('playtime', { rumble: false });
-module.exports.platinum = () => runTest('platinum');
+// `game` is optional and lets a test fired from one game's panel carry that game's name and artwork.
+module.exports.toast = (game) => runTest('toast', { game });
+module.exports.rare = (game) => runTest('rare', { game });
+module.exports.progress = (game) => runTest('progress', { rumble: false, game });
+module.exports.playtime = (game) => runTest('playtime', { rumble: false, game });
+module.exports.platinum = (game) => runTest('platinum', { game });
 module.exports.prepare = prepare;
 module.exports.applyToastAppSettings = applyToastAppSettings;
 module.exports.testMessageAndOptions = testMessageAndOptions;

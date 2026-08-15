@@ -4,6 +4,7 @@
 
 const HELP_LISTS = {
   'help-quick-list': 'quick',
+  'help-gamehealth-list': 'gameHealth',
   'help-sources-list': 'sources',
   'help-steam-list': 'steam',
   'help-emulator-list': 'emulators',
@@ -11,7 +12,6 @@ const HELP_LISTS = {
   'help-overlay-list': 'overlay',
   'help-shortcuts-list': 'shortcuts',
   'help-themes-list': 'themes',
-  'help-config-list': 'config',
   'help-tips-list': 'tips',
   'help-troubleshoot-list': 'troubleshoot',
 };

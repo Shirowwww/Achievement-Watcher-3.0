@@ -15,8 +15,12 @@ test('help stays focused instead of duplicating the settings sidebar', () => {
   assert.doesNotMatch(html, /data-help-view=|help-action-/);
   assert.doesNotMatch(loader, /bindHelpAction|help-links-title/);
   assert.doesNotMatch(settingsUi, /\$\('#settings \[data-help-view\]'\)/);
-  assert.match(html, /id="help-config-list"/, 'the Generated configs panel must exist');
-  assert.match(loader, /bindHelpList\('help-config-list', help\.config\)/);
+  // Game health leads the topic list: it is the panel a player reaches for when a game misbehaves.
+  assert.match(html, /id="help-gamehealth-list"/, 'the Game health panel must exist');
+  assert.match(loader, /bindHelpList\('help-gamehealth-list', help\.gameHealth\)/);
+  // "Generated configs" was folded into Steam emulators — same subject, one card fewer.
+  assert.doesNotMatch(html, /id="help-config-list"/, 'the Generated configs panel is merged away');
+  assert.doesNotMatch(loader, /help\.config\b/);
   assert.match(html, /<script src="\.\.\/ui\/help\.js"/, 'the dynamic help module must be loaded by the settings page');
   assert.match(html, /id="help-search-input"[^>]*aria-controls="help-grid"/, 'help search must name its result region');
   assert.match(html, /id="help-no-results"[^>]*role="status"/, 'empty search results must be announced');

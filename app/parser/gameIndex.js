@@ -35,6 +35,16 @@ module.exports.has = (appid) => {
   }
 };
 
+// The stored entry for one appid, or null. Game Health reports which binary the watchdog will
+// actually match this game on, which `has` alone cannot answer.
+module.exports.get = (appid) => {
+  try {
+    return readList().find((g) => String(g.appid) === String(appid)) || null;
+  } catch {
+    return null;
+  }
+};
+
 // Insert or update the entry for this appid. If it already exists, refresh binary/name/icon when the
 // detected binary changed (so re-detection after a reinstall/move is picked up); otherwise append.
 // Silently no-ops on any I/O error so a failure here never blocks the achievement scan.

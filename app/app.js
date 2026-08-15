@@ -2311,15 +2311,46 @@ var app = {
               );
             }
 
-            // Ubisoft installs use Uplay R2 instead of the Steam GBE fix.
-            if (!isLegitSteamOwned && !isNativeLauncher && !isUbisoftSource && initialGbeEligibility.eligible) {
+            /*
+              Ubisoft installs use Uplay R2 instead of the Steam GBE fix.
+
+              A game that already has a setup ('existing-fix') is offered a RE-APPLY rather than
+              nothing at all. The eligibility gate stays conservative where it has to be — the
+              automatic scan and the bulk "fix all found games" pass still refuse those games, so
+              nothing is ever rewritten behind the user's back — but from this menu the absence of
+              any entry was itself the bug: a repack update that wipes steam_settings, or a setup
+              that was applied for the wrong appid, leaves a game that can only be fixed by
+              re-applying, and the item silently disappeared exactly then.
+            */
+            const gbeExistingFix = initialGbeEligibility.reason === 'existing-fix' ? initialGbeEligibility.existingFix : null;
+            if (!isLegitSteamOwned && !isNativeLauncher && !isUbisoftSource && (initialGbeEligibility.eligible || gbeExistingFix)) {
               emulatorMenu.append(new MenuItem({ type: 'separator' }));
               emulatorMenu.append(
                 new MenuItem({
                   icon: menuIcon('file-text.png'),
-                  label: $('#game-list').attr('data-ctx-installgbe') || '',
+                  label:
+                    (gbeExistingFix
+                      ? $('#game-list').attr('data-ctx-reinstallgbe') || $('#game-list').attr('data-ctx-installgbe')
+                      : $('#game-list').attr('data-ctx-installgbe')) || '',
                   async click() {
                     try {
+                      // Re-applying overwrites a setup that is already there, so it asks first and
+                      // names what was found. The write path below backs everything up either way.
+                      if (gbeExistingFix) {
+                        const proceed = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+                          type: 'warning',
+                          title: t('reapply-gbe-title', 'Re-apply the emulator fix?', 'Ré-appliquer le fix émulateur ?'),
+                          message: t('reapply-gbe-message', 'This game already has a setup ({name}). Re-applying replaces it with a freshly generated one.', 'Ce jeu a déjà une configuration ({name}). La ré-appliquer la remplace par une configuration régénérée.', {
+                            name: gbeExistingFix.name || '',
+                          }),
+                          detail: `${gbeExistingFix.path || ''}\n${t('reapply-gbe-detail', 'The current files are backed up first and can be restored from this same menu.', 'Les fichiers actuels sont sauvegardés au préalable et peuvent être restaurés depuis ce même menu.')}`,
+                          buttons: [t('cancel', 'Cancel', 'Annuler'), t('reapply-gbe-button', 'Re-apply', 'Ré-appliquer')],
+                          defaultId: 0,
+                          cancelId: 0,
+                          noLink: true,
+                        });
+                        if (proceed !== 1) return;
+                      }
                       // 1 — reuse the install folder discover() already found; only prompt when
                       // it's genuinely unknown (e.g. a manually-added custom-dir game).
                       const game = list.find((g) => g.appid == appid);
@@ -2888,8 +2919,8 @@ var app = {
                             message: t('uplay-r2-old-loader-message', 'This game uses a loader too old to redirect achievements.', 'Ce jeu utilise un loader trop ancien pour rediriger les succès.'),
                             detail: t(
                               'uplay-r2-old-loader-detail',
-                              "The fix works without updating: Achievement Watcher reads the emulator's own save folder.\n\nUpdating enables the redirect into GSE Saves, but replaces a DLL the game currently launches with (the original is kept as .bak).",
-                              "Le correctif fonctionne sans mise à jour : Achievement Watcher lit le dossier de sauvegarde de l'émulateur.\n\nMettre à jour le loader permet la redirection vers GSE Saves, mais remplace une DLL avec laquelle le jeu se lance actuellement (l'originale est conservée en .bak)."
+                              "The fix works without updating: AW Next reads the emulator's own save folder.\n\nUpdating enables the redirect into GSE Saves, but replaces a DLL the game currently launches with (the original is kept as .bak).",
+                              "Le correctif fonctionne sans mise à jour : AW Next lit le dossier de sauvegarde de l'émulateur.\n\nMettre à jour le loader permet la redirection vers GSE Saves, mais remplace une DLL avec laquelle le jeu se lance actuellement (l'originale est conservée en .bak)."
                             ),
                             buttons: [t('keep-current-loader', 'Keep the current loader', 'Garder le loader actuel'), t('update-loader', 'Update', 'Mettre à jour')],
                             defaultId: 0,
@@ -4156,6 +4187,14 @@ var app = {
     $('#game-config').show();
     $('#game-config .box').fadeIn();
     $('#game-config .header').attr('title', appid);
+    // The panel covers two tabs now, so it is titled after the game rather than after one of them.
+    const named = gameList.find((g) => g.appid == appid);
+    $('#game-config-title').text(named?.name || t('game-config-title', 'Executable configuration', "Configuration de l'exécutable"));
+    applyGameConfigTabLabels();
+    // Health opens first: it answers "is this game ready" without the user knowing which tab to
+    // look in. The executable configuration is one click away and still loads below either way.
+    setGameConfigView('health');
+    renderGameHealth(appid);
     let cfg = await exeList.get(appid);
     if (!cfg?.exe || cfg.exe === '' || !fs.existsSync(cfg.exe)) {
       const game = gameList.find((g) => g.appid == appid);
@@ -4193,8 +4232,751 @@ var app = {
   },
 };
 
+// ---- Game Health -----------------------------------------------------------------------------
+// The per-game report behind the tools button. Signal collection lives here because it needs the
+// renderer's game list, user config and userData paths; every state / explanation / action decision
+// is in util/gameHealth.js so it can be tested without a window or a game install.
+const gameHealth = require(path.join(appPath, 'util/gameHealth.js'));
+const gameHealthRepair = require(path.join(appPath, 'util/gameHealthRepair.js'));
+// Libraries whose unlocks come from the platform itself. Their watchdog watcher polls the account,
+// so none of the process-tracking or Steam-emulator reasoning applies to them.
+const OFFICIAL_PLATFORM_SOURCES = /^(?:steam\s*\(|gog(?:\s|$)|gog galaxy|epic(?:-official)?$|ea$|ubisoft connect|xbox)/i;
+function isOfficialPlatformSource(source) {
+  return OFFICIAL_PLATFORM_SOURCES.test(String(source || '').trim());
+}
+
+/*
+  Tab labels. Re-applied on every open rather than once at startup: the panel outlives a language
+  change, and locale/loader.js does not know about this panel's tabs, so a one-shot binding would
+  leave them frozen in whatever language the app started in.
+*/
+function applyGameConfigTabLabels() {
+  $('#game-config-tab-health').text(t('game-config-tab-health', 'Health', 'État'));
+  $('#game-config-tab-exe').text(t('game-config-tab-exe', 'Executable', 'Exécutable'));
+}
+
+function setGameConfigView(view) {
+  $('#game-config-tabs button').each(function () {
+    const active = $(this).attr('data-gc-view') === view;
+    $(this).toggleClass('active', active).attr('aria-selected', String(active));
+  });
+  $('#game-config .content').each(function () {
+    $(this).toggleClass('active', $(this).attr('data-view') === view);
+  });
+  // Save belongs to the executable form. Left visible on the health view it is the most prominent
+  // button on screen while doing nothing the report is about, outranking the actual repair.
+  $('#btn-game-config-save').toggle(view === 'exe-config');
+}
+
+/*
+  Everything Game Health reasons about, read once per panel open. Anything unavailable stays absent
+  rather than being guessed at — deriveHealth() reports only on the signals it is actually given.
+*/
+async function collectGameHealthSignals(appid) {
+  const game = gameList.find((g) => g.appid == appid) || {};
+  let cfg = { exe: '', args: '' };
+  try {
+    cfg = (await exeList.get(appid)) || cfg;
+  } catch (err) {
+    debug.log(`[health] exeList lookup failed for ${appid} => ${formatErr(err)}`);
+  }
+
+  const gameDir = game.gameDir || '';
+  const gameDirExists = !!gameDir && fs.existsSync(gameDir);
+  const exe = cfg.exe || (game.exeConfident ? game.exe : '') || '';
+  const source = String(game.source || '');
+  const system = String(game.system || '');
+
+  const forced = emulatorSourceOverride.get(appid);
+  const isUbisoft = forced === 'ubisoft' ? true : forced === 'steam' ? false : uplayR2.isUbisoftGame(game, appid);
+  // Console records read their unlocks from their own emulator's trophy/achievement store.
+  const isConsole = !!system && system !== 'uplay';
+  const writableAppid = /^[0-9]+$/.test(String(appid)) ? String(appid) : game.steamappid || null;
+
+  // Where this game's unlocks are ACTUALLY read from, as resolved during the scan. This is the only
+  // honest way to tell which mechanism a game uses: the source label cannot, because CODEX, RUNE,
+  // OnlineFix, SmartSteamEmu, TENOKE and Goldberg SocialClub are all Steam emulators that keep
+  // their saves in completely different places, and none of them wants a steam_settings folder.
+  const saveSources = (Array.isArray(game.dataPaths) && game.dataPaths.length ? game.dataPaths : game.dataPath ? [{ source, path: game.dataPath }] : [])
+    .filter((entry) => entry && entry.path)
+    .map((entry) => ({ source: entry.source || source, path: entry.path }));
+  const readsGoldbergSave = saveSources.some((entry) => /[\\/](gse saves|goldberg steamemu saves)[\\/]/i.test(entry.path));
+
+  // Only diagnose a Goldberg/GBE setup when one is actually there: a steam_settings folder or a
+  // replaced steam_api dll on disk, or a save already being read out of GSE/Goldberg.
+  let goldbergReport = null;
+  let emulated = false;
+  if (!isConsole && !isUbisoft && gameDirExists) {
+    try {
+      const emu = goldberg.detectEmulator(gameDir);
+      const hasSetupOnDisk = emu.type !== 'none' || !!emu.steamSettings || emu.dll.length > 0;
+      if (hasSetupOnDisk || readsGoldbergSave) {
+        emulated = true;
+        goldbergReport = { ...goldberg.diagnose({ gameDir, appid: writableAppid, schema: game }), dllCount: emu.dll.length };
+      }
+    } catch (err) {
+      debug.log(`[health] goldberg diagnose failed for ${appid} => ${formatErr(err)}`);
+    }
+  }
+
+  let uplayReport = null;
+  if (isUbisoft && gameDirExists) {
+    try {
+      uplayReport = uplayR2.diagnose({ gameDir, appid, name: game.name });
+    } catch (err) {
+      debug.log(`[health] uplay R2 diagnose failed for ${appid} => ${formatErr(err)}`);
+    }
+  }
+
+  const indexEntry = gameIndex.get(appid);
+  let playtime = { playtime: 0, lastplayed: 0 };
+  try {
+    playtime = await PlaytimeTracking(appid);
+  } catch (err) {
+    debug.log(`[health] playtime read failed for ${appid} => ${formatErr(err)}`);
+  }
+
+  return {
+    appid,
+    steamappid: game.steamappid || '',
+    name: game.name || '',
+    source,
+    system,
+    manual: !!game.manual,
+    unconfigured: !!game.unconfigured,
+    isUbisoft,
+    installed: !!game.installed,
+    gameDir,
+    gameDirExists,
+    exe,
+    exeExists: !!exe && fs.existsSync(exe),
+    achievements: { total: (game.achievement && game.achievement.total) || 0, unlocked: (game.achievement && game.achievement.unlocked) || 0 },
+    emulated,
+    saveSources,
+    goldberg: goldbergReport,
+    uplay: uplayReport,
+    // Console emulators (RPCS3/ShadPS4/Xenia) and the official platform libraries are followed by
+    // their own watchers, not by the process monitor, so a missing gameIndex entry means nothing
+    // for them and must not be reported as a fault.
+    processTracking: !isConsole && !isOfficialPlatformSource(source),
+    tracking: { indexed: !!indexEntry, binary: (indexEntry && indexEntry.binary) || '' },
+    notifications: {
+      transport: (app.config && app.config.notification_transport && app.config.notification_transport.mode) || 'auto',
+      progressMuted: progressMute.isMuted(appid),
+      // What the Watchdog observed last time it announced something for this game. Absent until it
+      // has actually delivered one, and never guessed at from the setting.
+      effective: notificationHealth.forGame(appid),
+    },
+    playtime: { total: playtime.playtime || 0, lastPlayed: playtime.lastplayed || 0 },
+  };
+}
+
+function gameHealthStateLabel(state) {
+  if (state === gameHealth.STATE.READY) return t('gh-state-ready', 'Ready', 'Prêt');
+  if (state === gameHealth.STATE.NOT_TRACKING) return t('gh-state-not-tracking', 'Not tracking', 'Non suivi');
+  return t('gh-state-attention', 'Needs attention', 'À vérifier');
+}
+
+// The one sentence that has to make the state make sense on its own, in the user's words.
+function gameHealthExplanation(report) {
+  const p = report.params || {};
+  switch (report.reason) {
+    case 'not-installed':
+      return t('gh-why-not-installed', "This game isn't installed on this PC, or AW Next can't tell where it is. Choose its executable so it can be watched.", "Ce jeu n'est pas installé sur ce PC, ou AW Next ne sait pas où il se trouve. Choisis son exécutable pour qu'il puisse être suivi.");
+    case 'install-gone':
+      return t('gh-why-install-gone', 'The game folder AW Next knew about is gone — it was moved, uninstalled, or is on a drive that is not connected. Point AW Next at the game again.', "Le dossier du jeu connu d'AW Next a disparu : déplacé, désinstallé, ou sur un disque non connecté. Indique à nouveau son emplacement.", p);
+    case 'no-achievement-data':
+      return t('gh-why-no-achievement-data', 'No achievement list could be found for this game, so there is nothing to track yet. Games with no achievements at all are normal here.', "Aucune liste de succès n'a été trouvée pour ce jeu, il n'y a donc rien à suivre. C'est normal pour un jeu sans succès.");
+    case 'emulator-missing':
+      return t('gh-why-emulator-missing', 'This game needs a Steam emulator to record achievements, and none is set up in its folder. Use the emulator fix from the game’s right-click menu to set one up.', "Ce jeu a besoin d'un émulateur Steam pour enregistrer les succès, et aucun n'est installé dans son dossier. Utilise le fix émulateur du menu clic droit du jeu.");
+    case 'emulator-runtime-missing':
+      return t('gh-why-emulator-runtime-missing', 'The achievement data is in place, but the emulator file that reads it is missing from the game folder, so nothing will ever be recorded. AW Next can put it back.', "Les données de succès sont en place, mais le fichier d'émulateur qui les lit est absent du dossier du jeu : rien ne sera jamais enregistré. AW Next peut le remettre.");
+    case 'uplay-broken':
+      return t('gh-why-uplay-broken', 'The Ubisoft emulator setup for this game is incomplete, so unlocks are not being recorded. Re-apply the Uplay R2 fix from the right-click menu.', "La configuration de l'émulateur Ubisoft de ce jeu est incomplète : les déblocages ne sont pas enregistrés. Réapplique le fix Uplay R2 depuis le menu clic droit.", p);
+    case 'achievement-data-incomplete':
+      return t('gh-why-achievement-data-incomplete', "The achievement list AW Next has for this game doesn't match what the game will look for, so some unlocks would be missed. This can be rewritten from the official data.", "La liste de succès dont dispose AW Next ne correspond pas à ce que le jeu va chercher : certains déblocages seraient manqués. Elle peut être réécrite à partir des données officielles.", p);
+    case 'no-progress-yet':
+      return t('gh-why-no-progress-yet', 'The game is detected and achievement data is available, but no achievement progress has been found yet. The likely issue is the game or emulator configuration rather than notifications.', "Le jeu est détecté et les données de succès sont disponibles, mais aucune progression n'a encore été trouvée. Le problème vient probablement de la configuration du jeu ou de l'émulateur, pas des notifications.");
+    case 'install-unknown':
+      return t('gh-why-install-unknown', "AW Next is reading this game's achievements from its save files, but doesn't know where the game itself is installed. Locate it to enable playtime tracking and repairs.", "AW Next lit les succès de ce jeu dans ses fichiers de sauvegarde, mais ne sait pas où le jeu est installé. Localise-le pour activer le temps de jeu et les réparations.");
+    case 'not-watched':
+      return t('gh-why-not-watched', "Everything needed is in place, but AW Next isn't watching this game while it runs, so playtime and live unlock notifications won't happen.", "Tout est en place, mais AW Next ne surveille pas ce jeu pendant qu'il tourne : ni temps de jeu ni notifications en direct.");
+    case 'appid-mismatch':
+      return t('gh-why-appid-mismatch', 'The emulator in this game’s folder announces game ID {appidOnDisk}, but AW Next matched this game to {appidExpected}. Achievements unlocked under the wrong ID are recorded against another game. Correct the file if {appidExpected} is the right game — the current value is kept.', 'L’émulateur du dossier de ce jeu annonce l’identifiant {appidOnDisk}, alors qu’AW Next a associé ce jeu à {appidExpected}. Les succès débloqués sous le mauvais identifiant sont enregistrés sur un autre jeu. Corrige le fichier si {appidExpected} est le bon jeu — la valeur actuelle est conservée.', p);
+    case 'notification-failed':
+      return t('gh-why-notification-failed', 'This game is tracked correctly and its unlocks are being seen, but the last notification could not be sent. Send a test notification to check the display path.', "Ce jeu est correctement suivi et ses déblocages sont bien vus, mais la dernière notification n'a pas pu être envoyée. Envoie une notification de test pour vérifier l'affichage.");
+    case 'progress-muted':
+      return t('gh-why-progress-muted', 'This game is set up correctly. Progress notifications are muted for it, so only full unlocks will be announced.', "Ce jeu est correctement configuré. Les notifications de progression sont coupées pour lui : seuls les déblocages complets seront annoncés.");
+    case 'nothing-unlocked-yet':
+      return t('gh-why-nothing-unlocked-yet', "This game is set up correctly and AW Next is watching it. Nothing has been unlocked yet, which is simply a game you haven't made progress in.", "Ce jeu est correctement configuré et AW Next le surveille. Rien n'a encore été débloqué, c'est simplement un jeu sans progression.");
+    case 'ready':
+      return t('gh-why-ready', 'This game is detected, its achievement data is available, and AW Next is watching it for unlocks.', 'Ce jeu est détecté, ses données de succès sont disponibles et AW Next surveille ses déblocages.');
+    default:
+      return t('gh-why-attention', 'This game works, but part of its setup is incomplete. The checks below show which part.', 'Ce jeu fonctionne, mais une partie de sa configuration est incomplète. Les vérifications ci-dessous indiquent laquelle.');
+  }
+}
+
+function gameHealthCheckLabel(id, simple) {
+  if (simple) {
+    switch (id) {
+      case 'install':
+        return t('gh-simple-check-install', 'Game files', 'Fichiers du jeu');
+      case 'executable':
+        return t('gh-simple-check-executable', 'Game', 'Jeu');
+      case 'achievement-data':
+        return t('gh-simple-check-achievement-data', 'Achievements', 'Succès');
+      case 'emulator':
+      case 'uplay':
+        return t('gh-simple-check-emulator', 'Achievement support', 'Prise en charge des succès');
+      case 'progress':
+        return t('gh-simple-check-progress', 'Progress', 'Progression');
+      case 'tracking':
+        return t('gh-simple-check-tracking', 'Tracking', 'Suivi');
+      default:
+        return t('gh-check-notifications', 'Notifications', 'Notifications');
+    }
+  }
+  switch (id) {
+    case 'install':
+      return t('gh-check-install', 'Game files', 'Fichiers du jeu');
+    case 'executable':
+      return t('gh-check-executable', 'Executable', 'Exécutable');
+    case 'identity':
+      return t('gh-check-identity', 'Game identity', 'Identité du jeu');
+    case 'achievement-data':
+      return t('gh-check-achievement-data', 'Achievement data', 'Données de succès');
+    case 'emulator':
+    case 'uplay':
+      return t('gh-check-emulator', 'Emulator setup', 'Configuration émulateur');
+    case 'progress':
+      return t('gh-check-progress', 'Progress', 'Progression');
+    case 'tracking':
+      return t('gh-check-tracking', 'Live tracking', 'Suivi en direct');
+    default:
+      return t('gh-check-notifications', 'Notifications', 'Notifications');
+  }
+}
+
+/*
+  Simple mode: one plain outcome per check, in the words a player would use. No paths, no process
+  names, no appid, no transport name - those are what Technical details is for.
+*/
+function gameHealthSimpleCheckValue(entry) {
+  const p = entry.params || {};
+  const ok = entry.level === gameHealth.LEVEL.OK;
+  switch (entry.id) {
+    case 'install':
+      return ok
+        ? t('gh-simple-install-ok', 'Game files found', 'Fichiers du jeu trouvés')
+        : t('gh-simple-install-missing', 'Game files not found', 'Fichiers du jeu introuvables');
+    case 'executable':
+      return ok
+        ? t('gh-simple-executable-ok', 'Game found on this PC', 'Jeu trouvé sur ce PC')
+        : t('gh-simple-executable-missing', 'Game not located yet', 'Jeu pas encore localisé');
+    case 'achievement-data':
+      if (ok) return t('gh-simple-data-ok', 'Achievement data found', 'Données de succès trouvées');
+      return entry.level === gameHealth.LEVEL.FAIL
+        ? t('gh-simple-data-missing', 'No achievement data found', 'Aucune donnée de succès trouvée')
+        : t('gh-simple-data-partial', 'Achievement data is incomplete', 'Données de succès incomplètes');
+    case 'emulator':
+    case 'uplay':
+      if (ok) return t('gh-simple-emulator-ok', 'Achievement support is set up', 'Prise en charge des succès configurée');
+      return entry.level === gameHealth.LEVEL.FAIL
+        ? t('gh-simple-emulator-missing', 'Achievement support is missing', 'Prise en charge des succès absente')
+        : t('gh-simple-emulator-partial', 'Achievement support needs attention', 'Prise en charge des succès à vérifier');
+    case 'progress':
+      if (ok) return t('gh-simple-progress-ok', 'Achievement progress found', 'Progression des succès trouvée');
+      // A save file exists but nothing is earned in it yet. gameHealth.js only sets `type` on that
+      // branch, so its presence is what separates "we found the save" from "there is none".
+      if (p.type !== undefined) return t('gh-simple-progress-save', 'Game saves detected', 'Sauvegardes du jeu détectées');
+      return entry.level === gameHealth.LEVEL.WARN
+        ? t('gh-simple-progress-none', 'No progress found yet', 'Aucune progression trouvée pour le moment')
+        : t('gh-simple-progress-empty', 'Nothing unlocked yet', 'Rien de débloqué pour le moment');
+    case 'tracking':
+      return ok
+        ? t('gh-simple-tracking-ok', 'Tracking active', 'Suivi actif')
+        : t('gh-simple-tracking-off', 'Not being tracked yet', 'Pas encore suivi');
+    default: {
+      if (entry.level === gameHealth.LEVEL.INFO)
+        return t('gh-simple-notifications-muted', 'Progress notifications are muted', 'Notifications de progression coupées');
+      if (entry.level === gameHealth.LEVEL.WARN)
+        return t('gh-simple-notifications-failed', 'The last notification could not be sent', "La dernière notification n'a pas pu être envoyée");
+      // Working, but not the way the setting alone would suggest — say which, since "no overlay
+      // appeared" is otherwise read as a fault rather than as the fallback doing its job. The
+      // comparison lives in gameHealth.js; Simple only picks the sentence.
+      if (p.fallbackActive)
+        return t('gh-simple-notifications-fallback', 'Working — Windows fallback active', 'Fonctionnel — repli Windows actif');
+      return t('gh-simple-notifications-ok', 'Notifications working', 'Notifications opérationnelles');
+    }
+  }
+}
+
+/*
+  The emulator's name. "gbe" / "goldberg" are internal ids and must never reach the UI; the two
+  product names are brands that stay identical in every language, while "no emulator" is a real
+  sentence and uses the translation the right-click diagnosis already ships.
+*/
+function gameHealthEmulatorLabel(emulator) {
+  if (emulator === 'gbe') return 'GBE Fork';
+  if (emulator === 'goldberg') return 'Goldberg';
+  if (!emulator || emulator === 'none') return t('diagnosis-emulator-none', 'none detected', 'aucun détecté');
+  return String(emulator);
+}
+
+/*
+  The notification transport, reusing the labels the Notifications tab already shows for the same
+  setting, so the two never drift apart and no new translation is needed for a value that exists.
+*/
+function gameHealthTransportLabel(transport) {
+  const key = String(transport || '').toLowerCase();
+  if (!key) return '';
+  const labels = (window.appLocale && window.appLocale.settings?.notification?.option?.mode?.value) || null;
+  return (labels && labels[key]) || key;
+}
+
+/*
+  Why the last notification went where it went. Only the states the user could otherwise misread are
+  named: a transport that simply did what the setting says needs no explanation, while one chosen
+  over the configured overlay — or one whose delivery could not be confirmed — does.
+*/
+function gameHealthNotificationReason(params) {
+  if (params.outcome === 'unknown') return t('gh-notif-unconfirmed', 'delivery not confirmed', 'diffusion non confirmée');
+  if (params.outcome === 'failed') return t('gh-notif-reason-failed', 'sending failed', "l'envoi a échoué");
+  switch (params.effectiveReason) {
+    case 'fullscreen-hidden':
+      return t('gh-notif-reason-fullscreen', 'game in exclusive fullscreen', 'jeu en plein écran exclusif');
+    case 'overlay-unavailable':
+      return t('gh-notif-reason-unavailable', 'overlay unavailable', 'overlay indisponible');
+    case 'overlay-failing':
+      return t('gh-notif-reason-overlay-failing', 'the overlay could not display', "l'overlay n'a pas pu s'afficher");
+    case 'remembered-toast':
+      return t('gh-notif-reason-remembered', 'what worked for this game', 'ce qui a fonctionné pour ce jeu');
+    default:
+      return '';
+  }
+}
+
+// What each group of diagnosis codes is about, in the words a player would use. Replaces the bare
+// "N point(s) to review", which named a number and gave no way to find out what it referred to.
+function gameHealthIssueTopicLabel(topic) {
+  switch (topic) {
+    case 'schema':
+      return t('gh-issue-schema', 'achievement list', 'liste des succès');
+    case 'icons':
+      return t('gh-issue-icons', 'achievement icons', 'icônes des succès');
+    case 'appid':
+      return t('gh-issue-appid', 'game ID file', 'fichier d’identification du jeu');
+    case 'dlc':
+      return t('gh-issue-dlc', 'DLC access', 'accès aux DLC');
+    case 'compat':
+      return t('gh-issue-compat', 'Steam compatibility settings', 'réglages de compatibilité Steam');
+    case 'account':
+      return t('gh-issue-account', 'account name and language', 'nom de compte et langue');
+    case 'savepath':
+      return t('gh-issue-savepath', 'custom save location', 'emplacement de sauvegarde personnalisé');
+    case 'loader':
+      return t('gh-issue-loader', 'emulator version', 'version de l’émulateur');
+    default:
+      return t('gh-issue-mapping', 'matching Steam release', 'version Steam correspondante');
+  }
+}
+
+// Values stay concrete: real paths, real counts. Only the connecting words are translated.
+function gameHealthCheckValue(entry, simple) {
+  if (simple) return gameHealthSimpleCheckValue(entry);
+  const p = entry.params || {};
+  const missing = t('gh-value-missing', 'not found', 'introuvable');
+  switch (entry.id) {
+    case 'install':
+      if (p.path) return entry.level === gameHealth.LEVEL.OK ? p.path : `${p.path} — ${missing}`;
+      return missing;
+    case 'executable':
+      if (p.path) return entry.level === gameHealth.LEVEL.OK ? p.path : `${p.path} — ${missing}`;
+      return missing;
+    case 'identity':
+      return [p.appid, p.source].filter(Boolean).join(' · ') || missing;
+    case 'achievement-data':
+      if (p.missing) return t('gh-value-missing-entries', '{missing} of {total} missing from the emulator file', '{missing} sur {total} absents du fichier de l’émulateur', p);
+      if (p.missingIcons) return t('gh-value-missing-icons', '{missingIcons} icons not downloaded', '{missingIcons} icônes non téléchargées', p);
+      if (p.total || p.found) return t('gh-value-achievements', '{total} achievements', '{total} succès', { total: p.total || p.found });
+      return missing;
+    case 'emulator':
+    case 'uplay':
+      // Name what is wrong. A bare count ("1 point to review") gave the user no way to know what to
+      // look at, which defeats the purpose of the row.
+      if (p.topics && p.topics.length) return p.topics.map(gameHealthIssueTopicLabel).join(' · ');
+      return gameHealthEmulatorLabel(p.emulator);
+    case 'progress':
+      if (p.unlocked) return t('gh-value-unlocked', '{unlocked} unlocked', '{unlocked} débloqué(s)', p);
+      return t('gh-value-none-yet', 'nothing recorded yet', 'rien d’enregistré pour l’instant');
+    case 'tracking':
+      if (p.binary) return t('gh-value-watching', 'watching {binary}', 'surveille {binary}', p);
+      return t('gh-value-none-yet', 'nothing recorded yet', 'rien d’enregistré pour l’instant');
+    default: {
+      if (entry.level === gameHealth.LEVEL.INFO) return t('gh-value-muted', 'progress muted', 'progression coupée');
+      // Nothing has been announced for this game yet: all there is to report is the setting.
+      if (!p.effective) return gameHealthTransportLabel(p.transport);
+      const detail = gameHealthNotificationReason(p);
+      const transport = gameHealthTransportLabel(p.effective);
+      return detail ? `${transport} · ${detail}` : transport;
+    }
+  }
+}
+
+function gameHealthActionLabel(action) {
+  switch (action) {
+    case gameHealth.ACTION.CHOOSE_EXE:
+      return t('gh-action-choose-exe', 'Locate the game', 'Localiser le jeu');
+    case gameHealth.ACTION.OPEN_FOLDER:
+      return t('gh-action-open-folder', 'Open the game folder', 'Ouvrir le dossier du jeu');
+    case gameHealth.ACTION.REPAIR_DATA:
+      return t('gh-action-repair-data', 'Rewrite the achievement data', 'Réécrire les données de succès');
+    case gameHealth.ACTION.INSTALL_RUNTIME:
+      return t('gh-action-install-runtime', 'Restore the emulator file', 'Restaurer le fichier d’émulateur');
+    case gameHealth.ACTION.START_TRACKING:
+      return t('gh-action-start-tracking', 'Watch this game', 'Surveiller ce jeu');
+    case gameHealth.ACTION.UNMUTE_PROGRESS:
+      return t('gh-action-unmute-progress', 'Unmute progress notifications', 'Réactiver les notifications de progression');
+    case gameHealth.ACTION.FIX_APPID:
+      return t('gh-action-fix-appid', 'Correct the game ID file', 'Corriger le fichier d’identification');
+    default:
+      return t('gh-action-test-notification', 'Send a test notification', 'Envoyer une notification de test');
+  }
+}
+
+const GAME_HEALTH_ICON = { ok: 'fa-check-circle', warn: 'fa-exclamation-triangle', fail: 'fa-times-circle', info: 'fa-info-circle' };
+const GAME_HEALTH_STATE_ICON = { ready: 'fa-check-circle', attention: 'fa-exclamation-triangle', 'not-tracking': 'fa-times-circle' };
+
+function paintGameHealth(report) {
+  const root = $('#game-health');
+  // Kept for the repairs that need a value out of the report they were offered by (the appid fix
+  // needs the two ids). Re-reading the whole report would risk acting on a different one.
+  root.data('report', report);
+  const chip = root.find('.gh-state').attr('data-state', report.state);
+  // The chip starts as a spinner; swapping the icon is what ends the loading state.
+  chip.find('i').attr('class', `fas ${GAME_HEALTH_STATE_ICON[report.state] || GAME_HEALTH_ICON.info}`);
+  chip.find('.gh-state-label').text(gameHealthStateLabel(report.state));
+  root.find('.gh-explanation').text(gameHealthExplanation(report));
+
+  const simple = interfaceIsSimple();
+  const mode = simple ? gameHealthInterfaceMode.SIMPLE : gameHealthInterfaceMode.ADVANCED;
+  const checks = report.checks
+    // Simple drops the purely diagnostic rows (interfaceMode.SIMPLE_HIDDEN_CHECKS). They are
+    // filtered out of the DISPLAY only - the report they came from is unchanged, so the state, the
+    // explanation and the offered repairs are identical in both modes.
+    .filter((entry) => gameHealthInterfaceMode.isCheckVisible(entry.id, mode))
+    .map((entry) => {
+      const value = gameHealthCheckValue(entry, simple);
+      return `<li data-level="${escapeHtml(entry.level)}" data-check="${escapeHtml(entry.id)}">
+        <i class="fas ${GAME_HEALTH_ICON[entry.level] || GAME_HEALTH_ICON.info}"></i>
+        <span class="gh-check-label">${escapeHtml(gameHealthCheckLabel(entry.id, simple))}</span>
+        <span class="gh-check-value" title="${escapeHtml(value)}">${escapeHtml(value)}</span>
+      </li>`;
+    })
+    .join('');
+  root.find('.gh-checks').html(checks);
+
+  // The first action is the fix for the problem the explanation just named, so it leads.
+  const actions = report.actions
+    .map(
+      (action, index) =>
+        `<button type="button" class="inline-action-btn${index === 0 ? ' primary' : ' secondary'}" data-gh-action="${escapeHtml(action)}">${escapeHtml(
+          gameHealthActionLabel(action)
+        )}</button>`
+    )
+    .join('');
+  root.find('.gh-actions').html(actions);
+
+  root.find('.gh-technical-label').text(t('gh-technical', 'Technical details', 'Détails techniques'));
+  root.find('.gh-copy').html(`<i class="fas fa-copy"></i> ${escapeHtml(t('gh-copy', 'Copy', 'Copier'))}`);
+  root.find('.gh-technical-dump').text(JSON.stringify(report.technical, null, 2));
+}
+
+async function renderGameHealth(appid) {
+  const root = $('#game-health');
+  root.attr('data-appid', String(appid));
+  const chip = root.find('.gh-state').attr('data-state', 'loading');
+  // Restore the spinner: a previous report for another game replaced it with its own state icon.
+  chip.find('i').attr('class', 'fas fa-circle-notch fa-spin');
+  chip.find('.gh-state-label').text(t('gh-loading', 'Checking…', 'Vérification…'));
+  root.find('.gh-explanation').text('');
+  root.find('.gh-checks').empty();
+  root.find('.gh-actions').empty();
+
+  try {
+    const signals = await collectGameHealthSignals(appid);
+    // The panel can be reopened on another game while the folder walk is still running.
+    if (String(root.attr('data-appid')) !== String(appid)) return;
+    paintGameHealth(gameHealth.deriveHealth(signals));
+  } catch (err) {
+    debug.error(`[health] report failed for ${appid} => ${formatErr(err)}`);
+    chip.attr('data-state', gameHealth.STATE.ATTENTION);
+    chip.find('i').attr('class', `fas ${GAME_HEALTH_STATE_ICON[gameHealth.STATE.ATTENTION]}`);
+    chip.find('.gh-state-label').text(gameHealthStateLabel(gameHealth.STATE.ATTENTION));
+    root.find('.gh-explanation').text(`${t('unexpected-error', 'Unexpected Error', 'Erreur inattendue')} — ${err && (err.message || err)}`);
+  }
+}
+
+/*
+  Run one repair. The two that write files describe exactly what they are about to change and where
+  the previous version is kept before the first byte is written; both delegate the writing to the
+  parsers that already implement that backup, so nothing here weakens it.
+*/
+async function runGameHealthAction(appid, action, button) {
+  const game = gameList.find((g) => g.appid == appid) || {};
+  const writableAppid = /^[0-9]+$/.test(String(appid)) ? String(appid) : game.steamappid || null;
+
+  if (action === gameHealth.ACTION.CHOOSE_EXE) {
+    setGameConfigView('exe-config');
+    $('#game-config .edit').trigger('click');
+    return false;
+  }
+
+  if (action === gameHealth.ACTION.OPEN_FOLDER) {
+    if (game.gameDir) remote.shell.openPath(game.gameDir);
+    return false;
+  }
+
+  if (action === gameHealth.ACTION.UNMUTE_PROGRESS) {
+    progressMute.toggle(appid);
+    return true;
+  }
+
+  if (action === gameHealth.ACTION.START_TRACKING) {
+    const cfg = await exeList.get(appid);
+    const exe = (cfg && cfg.exe) || game.exe || '';
+    if (!exe) return false;
+    gameIndex.upsert({ appid, name: game.name || '', binary: path.basename(exe), icon: game.img?.icon || '', source: game.source || '' });
+    return true;
+  }
+
+  /*
+    Point steam_appid.txt at the appid AW Next resolved for this game. Both values are put in front
+    of the user before anything is written, because the mismatch has two possible causes and only
+    the user can tell them apart: a setup applied for the wrong game, or a library card matched to
+    the wrong Steam release. The previous file is kept under steam_settings/.aw-backups/.
+  */
+  if (action === gameHealth.ACTION.FIX_APPID) {
+    const report = $('#game-health').data('report');
+    const params = (report && report.checks.find((entry) => entry.id === 'emulator')?.params) || {};
+    const steamSettings = game.steamSettings || (game.gameDir ? path.join(game.gameDir, 'steam_settings') : '');
+    if (!params.appidExpected || !steamSettings) return false;
+
+    const confirmed = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+      type: 'warning',
+      title: t('gh-appid-confirm-title', 'Correct the game ID file?', 'Corriger le fichier d’identification ?'),
+      message: t('gh-appid-confirm-message', 'steam_appid.txt will be changed from {appidOnDisk} to {appidExpected}.', 'steam_appid.txt passera de {appidOnDisk} à {appidExpected}.', params),
+      detail: t('gh-appid-confirm-detail', 'Only do this if {game} really is game {appidExpected} on Steam. If the emulator was set up on purpose for {appidOnDisk}, cancel: the file is right and the library card is what needs correcting. The current file is backed up under steam_settings\\.aw-backups.', 'Ne fais ceci que si {game} est bien le jeu {appidExpected} sur Steam. Si l’émulateur a été configuré volontairement pour {appidOnDisk}, annule : c’est le fichier qui a raison et la fiche du jeu qu’il faut corriger. Le fichier actuel est sauvegardé dans steam_settings\\.aw-backups.', {
+        ...params,
+        game: game.name || appid,
+      }),
+      buttons: [t('cancel', 'Cancel', 'Annuler'), t('gh-action-fix-appid', 'Correct the game ID file', 'Corriger le fichier d’identification')],
+      defaultId: 0,
+      cancelId: 0,
+      noLink: true,
+    });
+    if (confirmed !== 1) return false;
+
+    try {
+      const result = goldberg.writeSteamAppId({ steamSettings, appid: params.appidExpected });
+      remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+        type: 'info',
+        title: t('gh-appid-done-title', 'Game ID file corrected', 'Fichier d’identification corrigé'),
+        message: t('gh-appid-done-message', 'steam_appid.txt now reads {appid}.', 'steam_appid.txt contient maintenant {appid}.', { appid: result.appid }),
+        detail: result.backupDir || '',
+      });
+      return true;
+    } catch (err) {
+      debug.error(`[health] appid repair failed for ${appid} => ${formatErr(err)}`);
+      remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+        type: 'error',
+        title: t('unexpected-error', 'Unexpected Error', 'Erreur inattendue'),
+        message: t('gh-action-failed', 'That repair could not be completed.', 'Cette réparation n’a pas pu être effectuée.'),
+        detail: `${err && (err.message || err)}`,
+      });
+      return false;
+    }
+  }
+
+  if (action === gameHealth.ACTION.TEST_NOTIFICATION) {
+    // The same path the Settings and first-run tests use, so it exercises the transport the user
+    // actually configured and reports its own failure the same way they already know — but carrying
+    // THIS game, so the preview shows what an unlock in it will actually look like.
+    const art = game.img || {};
+    const artAppid = game.steamappid || appid;
+    /*
+      game.img holds fetch-icon TOKENS, not usable URLs: `icon` is a bare Steam content hash and
+      `header` a fragment like "header.jpg" or "<hash>/header.jpg". Handing those straight to a
+      notification showed no artwork at all. Resolve them the way every other view does, then hand
+      over a plain local path — the overlay's iconPath is a filesystem path, and the Watchdog's
+      prefetch returns an existing local file untouched.
+    */
+    const resolveArt = async (token) => {
+      if (!token) return '';
+      try {
+        const resolved = await ipcRenderer.invoke('fetch-icon', token, artAppid);
+        if (!resolved) return '';
+        return resolved.startsWith('file://') ? require('url').fileURLToPath(resolved) : resolved;
+      } catch (err) {
+        debug.log(`[health] could not resolve artwork "${token}" for ${appid} => ${formatErr(err)}`);
+        return '';
+      }
+    };
+    const [icon, image] = await Promise.all([
+      resolveArt(art.icon || art.logo || art.header),
+      resolveArt(art.header || art.background),
+    ]);
+
+    await window.testAchievementWatcherNotification(app.config?.notification_transport?.mode, button && button[0], null, {
+      appid: artAppid,
+      name: game.name || '',
+      icon,
+      image,
+    });
+    return false;
+  }
+
+  if (action === gameHealth.ACTION.REPAIR_DATA) {
+    const plan = gameHealthRepair.planAchievementDataRepair({
+      steamSettings: game.steamSettings,
+      gameDir: game.gameDir,
+      achievementCount: (game.achievement && game.achievement.total) || 0,
+      downloadIcons: !!(app.config.achievement && app.config.achievement.goldbergDownloadIcons),
+    });
+    const confirmed = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+      type: 'question',
+      title: t('gh-confirm-repair-title', 'Rewrite the achievement data?', 'Réécrire les données de succès ?'),
+      message: t('gh-confirm-repair-message', 'AW Next will write the achievement list, icons and emulator settings for this game.', 'AW Next va écrire la liste des succès, les icônes et les réglages de l’émulateur de ce jeu.'),
+      detail: t(
+        'gh-confirm-repair-detail',
+        'Files written in:\n{target}\n\n{writes}\n\nAny existing version of these files is copied to {backup} first.',
+        'Fichiers écrits dans :\n{target}\n\n{writes}\n\nToute version existante de ces fichiers est d’abord copiée dans {backup}.',
+        { target: plan.target, writes: plan.writes.join(', '), backup: plan.backup }
+      ),
+      buttons: [t('cancel', 'Cancel', 'Annuler'), t('gh-action-repair-data', 'Rewrite the achievement data', 'Réécrire les données de succès')],
+      defaultId: 1,
+      cancelId: 0,
+      noLink: true,
+    });
+    if (confirmed !== 1) return false;
+
+    const request = require('request-zero');
+    const summary = await gameHealthRepair.repairAchievementData({
+      goldberg,
+      plan,
+      appid: writableAppid,
+      schema: game,
+      downloadIcon: async (url, dir) => {
+        const r = await request.download(url, dir);
+        return r && r.path;
+      },
+      fetchDlc: (id) => steamParser.getDLCList(id),
+      accountName: app.config?.general?.username,
+      language: app.config?.achievement?.lang,
+    });
+    remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+      type: 'info',
+      title: t('repair-complete', 'Repair complete', 'Réparation terminée'),
+      message: t('repair-complete-message', 'Wrote {count} achievements to {path}', '{count} succès écrits dans {path}', {
+        count: summary.achievementsJson.length,
+        path: summary.steamSettings,
+      }),
+      detail: t('diagnosis-icons-summary', 'icons: {downloaded} downloaded, {failed} failed, {skipped} skipped', 'icônes : {downloaded} téléchargées, {failed} en échec, {skipped} ignorées', summary.icons),
+      noLink: true,
+    });
+    return true;
+  }
+
+  if (action === gameHealth.ACTION.INSTALL_RUNTIME) {
+    const steamSettings = (game.steamSettings && fs.existsSync(game.steamSettings) ? game.steamSettings : null) || goldberg.detectEmulator(game.gameDir).steamSettings;
+    const cfg = await exeList.get(appid);
+    const exe = (cfg && cfg.exe) || game.exe || '';
+    let arch = 'x64';
+    try {
+      if (exe && fs.existsSync(exe)) arch = require(path.join(appPath, 'util/pe.js')).exeArch(exe) || 'x64';
+    } catch {
+      /* an unreadable header just means the 64-bit default is used */
+    }
+    const plan = gameHealthRepair.planRuntimeInstall({ gbeInstaller, gameDir: game.gameDir, exePath: exe || null, steamSettings, arch });
+    const confirmed = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+      type: 'question',
+      title: t('gh-confirm-runtime-title', 'Restore the emulator file?', 'Restaurer le fichier d’émulateur ?'),
+      message: t('gh-confirm-runtime-message', 'AW Next will download the supported emulator build and install it into the game folder.', 'AW Next va télécharger la version prise en charge de l’émulateur et l’installer dans le dossier du jeu.'),
+      detail: t(
+        'gh-confirm-runtime-detail',
+        '{file} will be installed in:\n{dirs}\n\nAn existing file of that name is kept as {backup} before being replaced.',
+        '{file} sera installé dans :\n{dirs}\n\nUn fichier existant de ce nom est conservé sous {backup} avant remplacement.',
+        { file: plan.file, dirs: plan.dirs.join('\n'), backup: plan.backup }
+      ),
+      buttons: [t('cancel', 'Cancel', 'Annuler'), t('gh-action-install-runtime', 'Restore the emulator file', 'Restaurer le fichier d’émulateur')],
+      defaultId: 1,
+      cancelId: 0,
+      noLink: true,
+    });
+    if (confirmed !== 1) return false;
+
+    const summary = await gameHealthRepair.installEmulatorRuntime({
+      gbeInstaller,
+      plan,
+      cacheDir: path.join(getUserDataPath(), 'cache/gbe'),
+      steamSettings,
+      log: debug,
+    });
+    remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+      type: 'info',
+      title: t('repair-complete', 'Repair complete', 'Réparation terminée'),
+      message: t('gh-runtime-done', '{installed} emulator file(s) installed ({tag}).', '{installed} fichier(s) d’émulateur installé(s) ({tag}).', {
+        installed: summary.installed,
+        tag: summary.tag || '',
+      }),
+      detail: summary.backedUp
+        ? t('diagnosis-dlls-backed-up', 'Existing dll(s) backed up as *.bak', 'Dll(s) existante(s) sauvegardée(s) en .bak')
+        : '',
+      noLink: true,
+    });
+    return true;
+  }
+
+  return false;
+}
+
 (function ($, window, document) {
   $(function () {
+    // Game Health: registered once, not per scan, because the panel outlives every list rebuild.
+    $('#game-config-tabs').on('click', 'button', function () {
+      setGameConfigView($(this).attr('data-gc-view'));
+    });
+
+    $('#game-health').on('click', '.gh-copy', function () {
+      clipboard.writeText($('#game-health .gh-technical-dump').text());
+      const icon = $(this).find('i');
+      icon.attr('class', 'fas fa-check');
+      setTimeout(() => icon.attr('class', 'fas fa-copy'), 1200);
+    });
+
+    $('#game-health').on('click', '[data-gh-action]', async function () {
+      const button = $(this);
+      const action = button.attr('data-gh-action');
+      const appid = $('#game-health').attr('data-appid');
+      if (!appid || button.prop('disabled')) return;
+      button.prop('disabled', true);
+      try {
+        // A repair that changed something re-runs the report, so the user sees the new state
+        // instead of the one that justified the button they just pressed.
+        if (await runGameHealthAction(appid, action, button)) await renderGameHealth(appid);
+      } catch (err) {
+        debug.error(`[health] action ${action} failed for ${appid} => ${formatErr(err)}`);
+        remote.dialog.showMessageBoxSync({
+          type: 'error',
+          title: t('repair-failed', 'Repair failed', 'Échec de la réparation'),
+          message: t('gh-action-failed', 'That repair could not be completed.', 'Cette réparation n’a pas pu être effectuée.'),
+          detail: `${err && (err.message || err)}`,
+        });
+      } finally {
+        button.prop('disabled', false);
+      }
+    });
+
     try {
       // Apply the saved app theme before anything renders (Settings > General > Theme).
       const savedTheme = app.config.general?.theme || 'default';
@@ -4222,6 +5004,9 @@ var app = {
           t('game-config-placeholder', '…Click EDIT to choose the executable…', '…Cliquez sur MODIFIER pour choisir l’exécutable…')
         );
         $('#game-config .unlink').attr('title', t('game-config-unlink', 'Unlink executable', "Dissocier l'exécutable"));
+        // The tab labels are (re)applied every time the panel opens, in onConfigButtonClick — this
+        // startup pass only covers the case where it is inspected before its first open.
+        applyGameConfigTabLabels();
       } catch (err) {
         debug.log(`game-config i18n failed: ${err}`);
       }

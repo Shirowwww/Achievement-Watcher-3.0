@@ -88,13 +88,16 @@ are deleted - settings, game data and logs are untouched.
 ## Notifications do not appear
 
 1. Confirm the background tracker is running.
-2. Use the normal, rare and overlay tests under **Settings → Notification**.
-3. Confirm the delivery mode and selected preset.
-4. Check Windows notification permissions for Achievement Watcher.
-5. If the issue happens only while playing or in full screen, turn on **Priority notifications** under
+2. Open the game and read the Notifications row of its **Game Health** panel: it names the transport
+   that actually delivered the last notification for that game, and why.
+3. Use the normal, rare and overlay tests under **Settings → Notification**.
+4. Confirm the delivery mode and selected preset. On **Automatic**, a missing overlay popup is often
+   the intended fallback rather than a fault — see [Notifications](notifications.md#how-automatic-decides).
+5. Check Windows notification permissions for AW Next.
+6. If the issue happens only while playing or in full screen, turn on **Priority notifications** under
    **Settings → Notification** and accept the Windows permission prompt.
-6. Test the overlay outside exclusive fullscreen mode.
-7. Review the logs immediately after a failed test or unlock.
+7. Test the overlay outside exclusive fullscreen mode.
+8. Review the logs immediately after a failed test or unlock.
 
 If the library updates but no notification appears, the source watcher works and the problem is likely in the selected notification transport. If the library also stays unchanged, diagnose the source or save path first.
 

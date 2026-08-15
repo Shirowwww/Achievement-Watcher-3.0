@@ -21,6 +21,9 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   import) only while it is still enabled and no game in the library came from it. Turning one off or
   owning a game it detected brings its row straight back, so the mode can never hide the one control
   that would explain a missing game.
+- Game Health now speaks the mode: Simple states outcomes ("Achievement data found", "Tracking
+  active", "Game saves detected"), Advanced keeps the exact schema counts, watched process and
+  notification transport. **Technical details** still holds every raw value in both modes.
 - The library now supports manually added games from a title and executable, with an optional
   platform and Steam AppID. Achievement-less entries remain launchable, track playtime, display
   **No achievements**, and can adopt a Steam achievement schema later without being
@@ -37,6 +40,10 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   Direct3D counts, so borderless keeps the overlay), and whether the overlay recently failed to
   display. **In-game overlay**, **Windows notification** and **Both** remain available and unchanged;
   an existing saved choice is never rewritten.
+- A game's **Game Health** panel now reports which transport actually delivered its last notification
+  and why — "Working — Windows fallback active", or "Windows notification · game in exclusive
+  fullscreen" in Advanced. Until a game has had one, the row shows the configured mode rather than
+  claiming an observation that has not happened.
 
 ### Changed
 
@@ -68,6 +75,24 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Apply emulator fix** no longer disappears from a game's right-click menu once that game has a
+  setup. The entry is gated on a first-time-target check, so it hid itself on exactly the games that
+  need it most — a repack update that wiped `steam_settings`, or a setup applied for the wrong appid,
+  left no way to re-apply. Those games now get **Re-apply emulator fix**, which names the setup it
+  found and asks before replacing it. The automatic scan and the bulk "fix all found games" pass stay
+  as conservative as before: neither touches a game that already has a setup.
+- **Generate configs** no longer goes silent about the games it skips. It configures only installs
+  that have no setup at all — it runs unattended during the scan and must never overwrite one — but
+  it now counts the already-configured installs and points at **Advanced → Fix all games**, which is
+  what rebuilds those. A library where everything is already set up used to report "nothing to do"
+  with no indication that a re-apply existed anywhere.
+- A `steam_appid.txt` naming another game now has a repair. This was the one diagnosis with no way
+  out: "rewrite the achievement data" deliberately never overwrites an existing `steam_appid.txt`, so
+  it could not have fixed it, and the row named a file without saying what was wrong with it. Game
+  Health now explains that the emulator announces one game while AW Next watches another, and offers
+  **Correct the game ID file** — one file, both values shown, the previous one kept under
+  `steam_settings\.aw-backups`. It is a confirmed choice rather than an automatic rewrite, because a
+  mismatch can equally mean the library card is the part that is wrong.
 - An overlay notification the app could not display — no usable preset on disk, or a preset page
   that fails to load — is no longer lost in silence. The app now reports the outcome of every popup
   it is asked to render, and that one notification is delivered as a Windows notification instead.

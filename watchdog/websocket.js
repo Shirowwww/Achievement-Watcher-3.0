@@ -190,7 +190,9 @@ function incoming(message) {
           ? test.platinum
           : test.toast;
 
-      run()
+      // An optional { game } payload lets the renderer preview a test with a real library entry's
+      // name and artwork; omitted, every test keeps using the built-in sample.
+      run(req.game && typeof req.game === 'object' ? req.game : null)
         .then(() => {
           this.send(
             JSON.stringify({

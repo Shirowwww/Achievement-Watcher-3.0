@@ -3782,6 +3782,221 @@ main {
   padding: 12px 20px;
 }
 
+/* ---- Game Health ----------------------------------------------------------
+   Two layers on purpose: the summary and the checks answer "is this game ready,
+   and why not" in plain words, while every exact path, count and emulator issue
+   code stays one disclosure away under Technical details. */
+#game-config .box .container {
+  flex-direction: column;
+  gap: 10px;
+}
+
+.game-config-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 2px 2px 0;
+}
+
+.game-config-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  border: 1px solid transparent;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: 'Open-Sans';
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.game-config-tabs button.active {
+  color: var(--text);
+  background: var(--set-content-bg);
+  border-color: var(--set-hairline-soft);
+  border-bottom-color: transparent;
+}
+
+.game-config-tabs button i {
+  color: var(--accent);
+}
+
+.game-health {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family: 'Open-Sans';
+  font-size: 12.5px;
+}
+
+.gh-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.gh-state {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 22%, transparent);
+  background: color-mix(in srgb, var(--surface) 62%, transparent);
+  font-family: 'Open-Sans-Bold';
+  font-size: 12px;
+}
+
+/* One colour per state, so the chip is readable before the label is. */
+.gh-state[data-state='ready'] {
+  color: #6ee7a8;
+  border-color: color-mix(in srgb, #6ee7a8 34%, transparent);
+  background: color-mix(in srgb, #6ee7a8 12%, transparent);
+}
+.gh-state[data-state='attention'] {
+  color: #f5c569;
+  border-color: color-mix(in srgb, #f5c569 34%, transparent);
+  background: color-mix(in srgb, #f5c569 12%, transparent);
+}
+.gh-state[data-state='not-tracking'] {
+  color: #f08a8a;
+  border-color: color-mix(in srgb, #f08a8a 34%, transparent);
+  background: color-mix(in srgb, #f08a8a 12%, transparent);
+}
+
+.gh-explanation {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.gh-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 232px;
+  overflow-y: auto;
+}
+
+.gh-checks li {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+
+.gh-checks li:nth-child(odd) {
+  background: color-mix(in srgb, var(--surface) 34%, transparent);
+}
+
+.gh-checks li > i {
+  flex: 0 0 auto;
+  width: 13px;
+  text-align: center;
+  font-size: 11px;
+}
+
+.gh-checks li[data-level='ok'] > i {
+  color: #6ee7a8;
+}
+.gh-checks li[data-level='warn'] > i {
+  color: #f5c569;
+}
+.gh-checks li[data-level='fail'] > i {
+  color: #f08a8a;
+}
+.gh-checks li[data-level='info'] > i {
+  color: var(--text-muted);
+}
+
+.gh-checks .gh-check-label {
+  flex: 0 0 auto;
+  color: var(--text-muted);
+}
+
+.gh-checks .gh-check-value {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gh-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gh-actions:empty {
+  display: none;
+}
+
+.gh-actions .inline-action-btn {
+  min-height: 32px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+}
+
+.gh-technical > summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 5px 2px;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gh-technical > summary::-webkit-details-marker {
+  display: none;
+}
+
+.gh-technical > summary::after {
+  content: '\f078'; /* chevron-down */
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  font-size: 9px;
+  opacity: 0.7;
+}
+
+.gh-technical[open] > summary::after {
+  content: '\f077'; /* chevron-up */
+}
+
+.gh-technical-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.gh-technical-dump {
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+  max-height: 260px;
+  overflow: auto;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--set-hairline-soft);
+  background: var(--set-control-bg);
+  color: var(--text-muted);
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 11.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
+}
+
 #settings .content[data-view='folder'] .disclaimer {
   text-align: center;
   font-family: 'Open-sans';

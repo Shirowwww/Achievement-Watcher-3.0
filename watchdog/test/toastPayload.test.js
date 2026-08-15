@@ -270,6 +270,45 @@ test('test buttons build the same payload contract as real toasts', () => {
   assert.strictEqual(progressOptions.toast.attribution, 'Hollow Knight');
 });
 
+test('a test fired from a game previews that game, not the built-in sample', () => {
+  const options = {
+    achievement: { lang: 'english' },
+    notification_transport: { winRT: true },
+    notification_toast: { customToastAudio: '1', groupToast: false },
+    overlay: { notificationVolume: '100' },
+  };
+  const game = {
+    appid: 1091500,
+    name: 'Cyberpunk 2077',
+    icon: 'https://example.invalid/cp2077-icon.jpg',
+    image: 'https://example.invalid/cp2077-header.jpg',
+  };
+
+  const [message, toastOptions] = notificationTest.testMessageAndOptions('toast', options, game);
+  assert.strictEqual(message.appid, 1091500);
+  assert.strictEqual(message.gameDisplayName, 'Cyberpunk 2077');
+  assert.strictEqual(message.gameIcon, game.icon);
+  assert.strictEqual(message.image, game.image);
+  assert.strictEqual(toastOptions.toast.attribution, 'Cyberpunk 2077');
+  // No per-achievement art exists for a preview, so the game's own icon is used rather than an
+  // unrelated game's badge.
+  assert.strictEqual(message.icon, game.icon);
+
+  // Playtime puts the game name in the title slot and uses the library art.
+  const [playtime] = notificationTest.testMessageAndOptions('playtime', options, game);
+  assert.strictEqual(playtime.achievementDisplayName, 'Cyberpunk 2077');
+  assert.strictEqual(playtime.icon, game.icon);
+
+  // A partial payload still resolves: only the supplied fields override the sample.
+  const [partial] = notificationTest.testMessageAndOptions('toast', options, { name: 'Undertale' });
+  assert.strictEqual(partial.gameDisplayName, 'Undertale');
+  assert.strictEqual(partial.appid, 367520, 'the sample appid stands in when none is given');
+
+  // And omitting the game entirely keeps the previous behaviour exactly.
+  const [sample] = notificationTest.testMessageAndOptions('toast', options);
+  assert.strictEqual(sample.gameDisplayName, 'Hollow Knight');
+});
+
 test('powertoast wrapper maps a legacy appID key to aumid as a safety net', () => {
   const normalized = powertoast.normalizeToastOptions({ appID: 'LegacyApp_12345678!App', uniqueID: 'X' });
   assert.strictEqual(normalized.aumid, 'LegacyApp_12345678!App');
