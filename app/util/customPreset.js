@@ -193,11 +193,30 @@ function generatedPresetsDir(userDataPath) {
   return path.join(userDataPath, ...GENERATED_PRESETS_SUBPATH);
 }
 
+// The builder's own options, stored next to the generated files, and what makes a preset
+// re-openable and deletable from the builder.
+const PRESET_OPTIONS_FILE = 'aw-preset.json';
+
+// Folder-safe, readable preset name. Returns '' for anything unusable. Shared with the package
+// importer so a name that arrives from someone else's machine can never resolve differently.
+function sanitizePresetName(raw) {
+  return String(raw || '')
+    .trim()
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/[. ]+$/, '')
+    .trim()
+    .slice(0, 48)
+    .trim();
+}
+
 module.exports = {
   CUSTOM_PRESET_WINDOW_MARGIN,
   GENERATED_PRESETS_SUBPATH,
+  PRESET_OPTIONS_FILE,
   customPresetNumbers,
   buildCustomPresetHtml,
   buildCustomPresetCss,
   generatedPresetsDir,
+  sanitizePresetName,
 };

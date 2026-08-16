@@ -2931,19 +2931,27 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     $('#options-notify-customiser').on('input change', 'input', updatePresetPreview);
     updatePresetPreview();
 
+    /*
+      Presets the app installed here: `{ name, editable }`, where editable means the builder made it
+      and can load it back. An imported preset is listed too — it can be exported and deleted — but
+      it is not editable, and the Create button must not offer to "Update" it: doing so would
+      regenerate its files from the sliders and destroy artwork they cannot reproduce.
+    */
+    let generatedPresets = [];
+    const managedPresetNames = () => generatedPresets.map((preset) => preset.name);
+    const isEditablePreset = (name) =>
+      generatedPresets.some((preset) => preset.editable && preset.name.toLowerCase() === String(name || '').toLowerCase());
+
     // Creating a preset that already exists replaces it, so the button says so: "Create" for a new
     // name, "Update" once the typed name matches a preset the builder generated.
-    let generatedPresets = [];
     function updateCreateButtonMode() {
       const name = ($('#cust-name').val() || '').trim();
-      const known = name && generatedPresets.some((n) => n.toLowerCase() === name.toLowerCase());
+      const known = Boolean(name) && isEditablePreset(name);
       const label = known ? $('#cust-lbl-create').attr('data-update') : $('#cust-lbl-create').attr('data-create');
       if (label) $('#cust-lbl-create').text(label);
       $('#btn-create-preset').find('i').attr('class', known ? 'fas fa-save' : 'fas fa-plus');
     }
 
-    // Presets generated here can be re-opened: the builder stores its own options next to the
-    // generated CSS, so a preset stays editable instead of being a one-shot export.
     async function refreshGeneratedPresetList(selected) {
       try {
         generatedPresets = (await ipcRenderer.invoke('list-custom-presets')) || [];
@@ -2954,17 +2962,60 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const sel = $('#cust-load');
       sel.empty();
       sel.append($('<option>').attr('value', '').text(sel.attr('data-new') || ''));
-      generatedPresets.forEach((n) => sel.append($('<option>').attr('value', n).text(n)));
-      sel.val(generatedPresets.includes(selected) ? selected : '');
+      generatedPresets.forEach((preset) => sel.append($('<option>').attr('value', preset.name).text(preset.name)));
+      sel.val(managedPresetNames().includes(selected) ? selected : '');
       updateCreateButtonMode();
       updateDeleteButtonVisibility();
     }
 
-    // Deleting only ever applies to a preset this builder generated, so the button appears once one
-    // is actually loaded — never next to a bundled preset or a half-typed new name.
+    // Deleting only ever applies to a preset the app installed, so the button appears once one is
+    // actually loaded — never next to a bundled preset or a half-typed new name.
     function updateDeleteButtonVisibility() {
       const loaded = String($('#cust-load').val() || '');
-      $('#btn-delete-preset').toggle(Boolean(loaded) && generatedPresets.includes(loaded));
+      $('#btn-delete-preset').toggle(Boolean(loaded) && managedPresetNames().includes(loaded));
+    }
+
+    /*
+      Repopulate every notification-preset menu after the preset list changed — the main one AND the
+      five per-type overrides, which offer the same list plus "same as main".
+
+      Both halves matter. Keeping the current choice comes first; when it was the preset just
+      deleted, fall back to the app's own default rather than to whatever sorts first, or deleting a
+      preset silently moves the user onto an unrelated one (alphabetically "ArmsofGod") and looks
+      like the setting was not saved. And rebuilding only the main menu left a freshly imported
+      preset impossible to pick for rare/platinum/emulator notifications, so those kept rendering the
+      preset they were already pointing at.
+    */
+    const DEFAULT_PRESET_NAME = 'Shirow';
+    const OVERLAY_PRESET_TYPE_IDS = [
+      '#option_overlayPresetRare',
+      '#option_overlayPresetPlatinum',
+      '#option_overlayPresetXenia',
+      '#option_overlayPresetRpcs3',
+      '#option_overlayPresetShadps4',
+    ];
+    async function refreshOverlayPresetMenu(preferred) {
+      const presets = (await ipcRenderer.invoke('list-presets')) || [];
+      const names = presets.length ? presets : [DEFAULT_PRESET_NAME, 'Default'];
+      const sel = $('#option_overlayPreset');
+      const previous = sel.val();
+      sel.empty();
+      names.forEach((n) => sel.append($('<option>').attr('value', n).text(n)));
+      const wanted = [preferred, previous, DEFAULT_PRESET_NAME].find((n) => n && names.includes(n)) || names[0];
+      sel.val(wanted).change();
+      for (const id of OVERLAY_PRESET_TYPE_IDS) {
+        const typeSel = $(id);
+        const kept = typeSel.val();
+        typeSel.empty();
+        typeSel.append($('<option>').attr('value', '').text(typeSel.attr('data-lang-same') || ''));
+        names.forEach((n) => typeSel.append($('<option>').attr('value', n).text(n)));
+        const next = names.includes(kept) ? kept : '';
+        typeSel.val(next);
+        // Only when an override pointed at a preset that no longer exists, so the reset is persisted
+        // without every refresh triggering a save of settings nobody touched.
+        if (next !== kept) typeSel.change();
+      }
+      return names;
     }
 
     $('#btn-delete-preset').click(async function () {
@@ -2987,12 +3038,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const res = await ipcRenderer.invoke('delete-custom-preset', name);
         if (res && res.ok) {
           // The deleted preset may have been the selected one; rebuild both lists and fall back.
-          const presets = await ipcRenderer.invoke('list-presets');
-          const sel = $('#option_overlayPreset');
-          const previous = sel.val();
-          sel.empty();
-          (presets && presets.length ? presets : ['Shirow', 'Default']).forEach((n) => sel.append($('<option>').attr('value', n).text(n)));
-          sel.val(presets.includes(previous) ? previous : presets[0] || 'Shirow').change();
+          await refreshOverlayPresetMenu();
           $('#cust-name').val('');
           await refreshGeneratedPresetList('');
           setPresetStatus(`${$('#cust-status').attr('data-deleted') || ''} ${name}`.trim(), 'ok');
@@ -3007,6 +3053,43 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     });
     $('#cust-name').on('input', updateCreateButtonMode);
 
+    /*
+      Put a managed preset into the builder controls. Returns 'editable', 'imported' or 'failed'.
+
+      Shared by the picker and by Import: selecting a preset in the picker fires this through the
+      change event, but an import selects the preset in code, where no event fires — so importing a
+      preset the builder can edit used to leave the controls showing the previous draft.
+    */
+    async function loadPresetIntoBuilder(name) {
+      const opts = await ipcRenderer.invoke('read-custom-preset', name);
+      if (!opts) return 'failed';
+      /*
+        An imported preset with no builder options behind it cannot be reproduced from the controls,
+        so leave them alone and leave the name field empty: Delete and Export work off the picker,
+        and pressing Create then makes a new preset instead of silently overwriting artwork the
+        sliders could never rebuild.
+      */
+      if (opts.editable === false) {
+        $('#cust-name').val('');
+        updateCreateButtonMode();
+        updateDeleteButtonVisibility();
+        return 'imported';
+      }
+      $('#cust-name').val(opts.name || name);
+      $('#cust-bg').val(opts.bg);
+        $('#cust-text').val(opts.text);
+        $('#cust-accent').val(opts.accent);
+        $('#cust-opacity').val(Math.round(opts.opacity * 100));
+        $('#cust-font').val(opts.fontSize);
+        $('#cust-radius').val(opts.radius);
+        $('#cust-icon').val(opts.iconSize);
+      $('#cust-width').val(opts.width);
+      updatePresetPreview();
+      updateCreateButtonMode();
+      updateDeleteButtonVisibility();
+      return 'editable';
+    }
+
     $('#cust-load').on('change', async function () {
       const name = String($(this).val() || '');
       updateDeleteButtonVisibility();
@@ -3015,24 +3098,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         return;
       }
       try {
-        const opts = await ipcRenderer.invoke('read-custom-preset', name);
-        if (!opts) {
-          setPresetStatus($('#cust-status').attr('data-fail') || '', 'error');
-          return;
-        }
-        $('#cust-name').val(opts.name || name);
-        $('#cust-bg').val(opts.bg);
-        $('#cust-text').val(opts.text);
-        $('#cust-accent').val(opts.accent);
-        $('#cust-opacity').val(Math.round(opts.opacity * 100));
-        $('#cust-font').val(opts.fontSize);
-        $('#cust-radius').val(opts.radius);
-        $('#cust-icon').val(opts.iconSize);
-        $('#cust-width').val(opts.width);
-        updatePresetPreview();
-        updateCreateButtonMode();
-        updateDeleteButtonVisibility();
-        setPresetStatus(`${$('#cust-status').attr('data-loaded') || ''} ${opts.name || name}`.trim(), 'ok');
+        const outcome = await loadPresetIntoBuilder(name);
+        if (outcome === 'failed') setPresetStatus($('#cust-status').attr('data-fail') || '', 'error');
+        else if (outcome === 'imported') setPresetStatus($('#cust-status').attr('data-imported-only') || '', 'ok');
+        else setPresetStatus(`${$('#cust-status').attr('data-loaded') || ''} ${name}`.trim(), 'ok');
       } catch (err) {
         debug.log(err);
         setPresetStatus($('#cust-status').attr('data-fail') || '', 'error');
@@ -3045,6 +3114,19 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const self = $(this);
       self.css('pointer-events', 'none');
       try {
+        /*
+          Preview whatever the picker holds. For a preset the builder made that is the same thing as
+          the draft, since loading it filled the controls — but an imported preset has no slider
+          values behind it, so building a scratch preset from the controls previewed an unrelated
+          design instead of the preset the user had just selected.
+        */
+        const loaded = String($('#cust-load').val() || '');
+        if (loaded && !isEditablePreset(loaded)) {
+          setPresetStatus('');
+          ipcRenderer.send('spawn-overlay-notification', overlayTestData('toast', loaded, loaded));
+          self.css('pointer-events', 'initial');
+          return;
+        }
         const res = await ipcRenderer.invoke('preview-custom-preset', readPresetOptions());
         if (res && res.ok) {
           setPresetStatus('');
@@ -3076,11 +3158,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const res = await ipcRenderer.invoke('create-custom-preset', Object.assign({ name }, readPresetOptions()));
         if (res && res.ok) {
           // Refresh the preset dropdown and select the new preset (autosave persists the choice).
-          const presets = await ipcRenderer.invoke('list-presets');
-          const sel = $('#option_overlayPreset');
-          sel.empty();
-          (presets && presets.length ? presets : ['Shirow', 'Default']).forEach((n) => sel.append($('<option>').attr('value', n).text(n)));
-          sel.val(res.name).change();
+          await refreshOverlayPresetMenu(res.name);
           await refreshGeneratedPresetList(res.name);
           const done = res.replaced ? status.attr('data-updated') : status.attr('data-ok');
           setPresetStatus(`${done || ''} ${res.name}`.trim(), 'ok');
@@ -3090,6 +3168,119 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       } catch (e) {
         debug.log(e);
         setPresetStatus(((status.attr('data-fail') || '') + ': ' + e).trim(), 'error');
+      }
+      self.css('pointer-events', 'initial');
+    });
+
+    /* ---- Portable presets (.awpreset) ---------------------------------------------------------
+       Export writes the preset currently loaded in the builder, falling back to the active
+       notification preset so a bundled or hand-authored one can be shared too. Import validates the
+       package in the main process and only then touches the preset storage.
+    */
+    function importErrorText(res) {
+      const error = String((res && res.error) || '');
+      if (error === 'app-too-old') {
+        return t(
+          'import-preset-app-too-old',
+          'This preset needs AW Next {version} or newer.',
+          'Ce preset nécessite AW Next {version} ou plus récent.',
+          { version: (res && res.requires) || '' }
+        );
+      }
+      if (error === 'format-too-new') {
+        return t(
+          'import-preset-format-too-new',
+          'This preset package was made by a newer version of AW Next.',
+          'Ce paquet de preset a été créé par une version plus récente d’AW Next.'
+        );
+      }
+      const invalid = t('import-preset-invalid', 'This file is not a valid preset package.', 'Ce fichier n’est pas un paquet de preset valide.');
+      return error ? `${invalid} (${error})` : invalid;
+    }
+
+    /*
+      Export what the card is showing, under the name in the Nom field.
+
+      An imported preset is the one exception: its look lives in files the sliders cannot describe,
+      so that one is exported from disk. Everything else is exported from the controls, which is what
+      the sample and Aperçu show.
+
+      This used to fall back to the ACTIVE notification preset whenever the picker sat on "New
+      preset…", so exporting a design in progress silently wrote the user's current preset instead —
+      a file named "goat.awpreset" whose manifest said "Shirow", which then clashed with the bundled
+      Shirow on import and rendered as Shirow everywhere.
+    */
+    $('#btn-export-preset').click(async function () {
+      const loaded = String($('#cust-load').val() || '');
+      const request =
+        loaded && !isEditablePreset(loaded)
+          ? { name: loaded }
+          : { name: ($('#cust-name').val() || '').trim() || loaded, options: readPresetOptions() };
+      if (!request.name) {
+        setPresetStatus($('#cust-status').attr('data-err') || '', 'error');
+        return;
+      }
+      const self = $(this);
+      self.css('pointer-events', 'none');
+      try {
+        const res = await ipcRenderer.invoke('export-preset', request);
+        if (res && res.ok) setPresetStatus(`${$('#cust-status').attr('data-exported') || ''} ${res.name}`.trim(), 'ok');
+        else if (!res || !res.canceled) setPresetStatus((($('#cust-status').attr('data-fail') || '') + (res && res.error ? ': ' + res.error : '')).trim(), 'error');
+      } catch (err) {
+        debug.log(err);
+        setPresetStatus((($('#cust-status').attr('data-fail') || '') + ': ' + err).trim(), 'error');
+      }
+      self.css('pointer-events', 'initial');
+    });
+
+    $('#btn-import-preset').click(async function () {
+      const self = $(this);
+      self.css('pointer-events', 'none');
+      try {
+        let res = await ipcRenderer.invoke('import-preset', {});
+        // A name clash changes nothing until the user picks: replace the preset, or keep both.
+        if (res && !res.ok && res.error === 'duplicate') {
+          const choice = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+            type: 'question',
+            buttons: [
+              t('keep-both-presets', 'Keep both', 'Garder les deux'),
+              t('replace-preset', 'Replace', 'Remplacer'),
+              t('cancel', 'Cancel', 'Annuler'),
+            ],
+            defaultId: 0,
+            cancelId: 2,
+            title: t('import-preset-duplicate-title', 'Preset already exists', 'Ce preset existe déjà'),
+            message: t('import-preset-duplicate-message', 'A preset named "{name}" is already installed.', 'Un preset nommé « {name} » est déjà installé.', {
+              name: res.name || '',
+            }),
+            detail: t(
+              'import-preset-duplicate-detail',
+              'Keep both installs the imported preset under a new name. Replace overwrites the installed one.',
+              'Garder les deux installe le preset importé sous un nouveau nom. Remplacer écrase celui déjà installé.'
+            ),
+            noLink: true,
+          });
+          if (choice === 2) {
+            setPresetStatus('');
+            self.css('pointer-events', 'initial');
+            return;
+          }
+          res = await ipcRenderer.invoke('import-preset', { file: res.file, duplicate: choice === 1 ? 'replace' : 'rename' });
+        }
+
+        if (res && res.ok) {
+          await refreshOverlayPresetMenu(res.name);
+          await refreshGeneratedPresetList(res.name);
+          // Selecting it in code fires no change event, so load it into the controls explicitly or
+          // the builder keeps showing whatever draft was there before the import.
+          await loadPresetIntoBuilder(res.name);
+          setPresetStatus(`${$('#cust-status').attr('data-imported') || ''} ${res.name}`.trim(), 'ok');
+        } else if (!res || !res.canceled) {
+          setPresetStatus(importErrorText(res), 'error');
+        }
+      } catch (err) {
+        debug.log(err);
+        setPresetStatus((($('#cust-status').attr('data-fail') || '') + ': ' + err).trim(), 'error');
       }
       self.css('pointer-events', 'initial');
     });

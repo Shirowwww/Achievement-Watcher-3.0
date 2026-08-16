@@ -7,6 +7,15 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Notification presets can be shared. **Export** and **Import**, in the **Custom preset** card of
+  Settings → Notification, move a preset between machines as a single `.awpreset` file carrying its
+  style, images, fonts, builder settings and metadata, plus any sound you imported yourself. A
+  package is checked before anything is installed and is refused whole — not part-installed — when it
+  is malformed, needs a newer AW Next, carries a file the format does not describe, or points
+  anywhere outside its own folder. Nothing inside a package is ever executed while it is read, and a
+  failed import leaves every installed preset untouched. A name clash asks whether to keep both or
+  replace — including against a bundled preset, which an import would otherwise hide behind a copy —
+  and an imported preset shows up in **Edit a preset**, where it can be exported again or deleted.
 - The interface now comes in **Simple** and **Advanced**. The first-run guide asks for the choice on
   its own step and will not continue until one is picked; neither is preselected. The choice is
   stored in `[general] interfaceMode` and can be changed at any time from the **Interface** control
@@ -90,6 +99,10 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Deleting a custom preset no longer moves the active notification preset onto whichever preset
+  sorts first alphabetically. The selection is kept when it still exists and falls back to the app's
+  own default otherwise, and the per-type overrides (rare, platinum, Xenia, RPCS3, ShadPS4) are
+  rebuilt along with the main list instead of keeping a stale one.
 - Souvenir screenshots no longer overwrite each other when several achievements unlock within the
   same second, and a game whose title Windows refuses as a folder name (a reserved device name like
   `NUL`, or a title ending in a dot or a space) no longer loses its screenshots silently.

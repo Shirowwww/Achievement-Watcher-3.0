@@ -465,6 +465,8 @@ function translateUI(lang, locale, template) {
     $('#cust-lbl-load').text(clear(c.edit));
     $('#cust-lbl-preview').text(clear(c.preview));
     $('#cust-lbl-delete').text(clear(c.deleteLabel));
+    $('#cust-lbl-import').text(clear(c.importLabel));
+    $('#cust-lbl-export').text(clear(c.exportLabel));
     // The create button and the preset picker swap their wording at runtime (create vs update,
     // "new preset" placeholder), so both spellings are parked on data attributes here and the
     // settings code re-renders them on the event below.
@@ -477,6 +479,9 @@ function translateUI(lang, locale, template) {
       .attr('data-updated', clear(c.updated))
       .attr('data-loaded', clear(c.loaded))
       .attr('data-deleted', clear(c.deleted))
+      .attr('data-imported', clear(c.imported))
+      .attr('data-imported-only', clear(c.importedOnly))
+      .attr('data-exported', clear(c.exported))
       .attr('data-fail', clear(c.failed));
     if (c.previewTitle) $('#cust-preview-title').text(clear(c.previewTitle));
     if (c.previewDetail) $('#cust-preview-detail').text(clear(c.previewDetail));

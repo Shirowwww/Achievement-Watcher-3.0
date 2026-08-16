@@ -97,10 +97,12 @@ test('init.js reserves the preview preset name and hides it from the preset list
 
 test('a generated preset stores the builder options that produced it, so it can be re-opened', () => {
   const init = fs.readFileSync(path.join(appRoot, 'electron', 'init.js'), 'utf8');
-  assert.match(init, /const PRESET_OPTIONS_FILE = 'aw-preset\.json';/);
+  // The name lives in customPreset.js so the builder and the package importer share one spelling.
+  assert.equal(generator.PRESET_OPTIONS_FILE, 'aw-preset.json');
+  assert.match(init, /const \{ PRESET_OPTIONS_FILE \} = customPreset;/);
   assert.match(init, /fs\.writeFileSync\(path\.join\(dir, PRESET_OPTIONS_FILE\)/, 'writeCustomPreset does not persist its options');
   // read-custom-preset re-clamps what it read, so a hand-edited options file cannot widen the ranges.
-  assert.match(init, /return \{ name: safe, \.\.\.customPresetNumbers\(parsed\) \};/);
+  assert.match(init, /return \{ name: safe, editable: true, \.\.\.customPresetNumbers\(parsed\) \};/);
 });
 
 test('generated presets are written under userData, never inside the packaged app', () => {

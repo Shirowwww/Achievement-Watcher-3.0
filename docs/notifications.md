@@ -84,11 +84,47 @@ Set the background, text and accent colors, then the opacity, font size, corner 
 | **Update preset** | The same button, once the name matches a preset the builder made - it replaces that preset instead of adding another. |
 | **Edit a preset** | Loads one of your generated presets back into the controls. Every value returns exactly as saved. |
 | **Delete** | Appears once a generated preset is loaded, and removes it after a confirmation. |
+| **Export** | Writes the preset to a single `.awpreset` file you can share. |
+| **Import** | Installs a `.awpreset` file someone sent you. |
 
 Only presets this builder generated can be re-opened or deleted: it stores its settings in an `aw-preset.json` beside the generated files, and that file is what makes a preset editable. Bundled presets and hand-written ones are never touched.
 
 > [!NOTE]
 > **Custom presets are stored in** `%APPDATA%\Achievement Watcher Next\presets\Users Presets`, not in the installation folder. They survive app updates.
+
+## Share a preset
+
+**Export** and **Import** sit in the same **Custom preset** card and move a preset between machines as one `.awpreset` file - the style, every image and font it uses, its builder settings and its metadata.
+
+**Export** writes what the card is showing, under the name in the **Name** field - the design in the controls, saved or not, so a preset in progress can be shared without creating it first. The one exception is an imported preset selected in **Edit a preset**: its look lives in files no slider can describe, so that one is exported from disk as it is. Only the preset itself travels: no path from your machine, no account name, and no setting of yours.
+
+**Import** asks for the file, checks it, and installs it under `presets\Users Presets`. If that name is already taken - by one of your presets *or* by a bundled one, which an import would otherwise hide behind a copy - you are asked whether to **Keep both** (the import lands under `Name (2)`) or to **Replace**. Nothing is written until you answer, and an import that fails for any reason leaves every preset you already have untouched.
+
+An imported preset appears in **Edit a preset**, is selected straight away, and can be exported again or deleted from there. A preset the builder made comes back complete: its colors and sizes return to the controls exactly as they were exported, so you can keep editing it. A hand-written preset gets its look from files no slider can reproduce, so the controls are left alone and the name field stays empty - pressing **Create preset** then makes a new preset instead of overwriting the imported one, and **Preview** still shows the imported preset itself.
+
+A package is validated before installation, and is refused whole rather than partly installed when:
+
+- it is not a preset package, or its manifest is missing or malformed;
+- it needs a newer AW Next than the one running, or was made by a newer package format;
+- it carries a file the format does not describe - a program, a script or anything outside `preset/` and `sounds/`;
+- any path inside it points outside its own folder.
+
+Nothing inside a package is ever run, loaded or evaluated while it is being checked or installed. The preset's own page renders later in the same sandboxed notification window that renders a bundled preset.
+
+### What a package contains
+
+```
+manifest.json     name, description, author, version, tags, format version,
+                  minimum AW Next version, and the builder settings
+preset/           index.html, style.css, images and fonts (relative paths only)
+sounds/           optional audio, added to your sound list on import
+```
+
+The manifest is kept beside the installed preset as `aw-package.json`. That is what tells the app the preset is one it installed and may remove again, and it carries the description and credit through to the next export.
+
+A sound you imported yourself travels with the preset. A bundled sound does not - the manifest names it, since every install already has it. Importing never changes which sound you have selected, and never overwrites a sound you already have: a different file of the same name arrives as `name (2)`.
+
+Presets built here export with their builder settings, so the person receiving one can open it in **Edit a preset** and keep changing it. A hand-written preset has no builder settings and stays as it is on the other side, exactly as it does here. The `author` field is optional and is only ever filled from the preset's own file, so nothing is credited to you unless you put it there.
 
 ## Sounds, volume and duration
 
