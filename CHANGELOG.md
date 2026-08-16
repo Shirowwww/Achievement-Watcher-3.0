@@ -7,6 +7,119 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **A redesigned notification preset collection.** Nine presets replace the seventeen that
+  shipped before, each with its own composition, typography, motion and colour rather than a
+  recolour of one card: **AW Next** (the signature and the new default, in the app's own palette),
+  **Steam**, **Epic Games**, **PlayStation**, **Xbox**, **Cover** (the game's artwork behind the
+  text, drifting), **Glass** (genuinely translucent and deliberately quiet), **Arcade** (phosphor
+  and scanlines) and **Slim** (true black, for an OLED panel). The presets named after a platform
+  keep that name and carry its mark.
+- Every bundled preset now renders a **100% completion** notification that actually looks different —
+  a cold, brighter treatment with a doubled rim. No preset in the previous library implemented that
+  state at all, so a 100% unlock was drawn exactly like an ordinary one.
+- Every bundled preset now shows the **game's name** and the **rarity percentage** on the card, and
+  a rare unlock changes the edge and the glow rather than only the accent colour.
+
+### Changed
+
+- **The per-type preset settings are gone.** A rare unlock and a 100% completion are states the
+  preset you picked paints itself, so choosing a second and third preset for them was a second way
+  to say the same thing - and the one that could disagree with itself. The per-emulator overrides
+  (Xenia, RPCS3, ShadPS4) remain. The Xbox Series rare and platinum variants, which existed only to
+  be picked there, fold back into **Xbox Series**.
+- **`Random` is an entry in the sound list** instead of a switch beside it, so the list can no
+  longer name one sound while a different one plays. It previews and tests like any other choice —
+  picking it, dragging the volume under it or firing a test all play a real sound, a different one
+  each time. `Indiana.wav` was dropped from the bundled sounds.
+- **Notifications sit close to the screen edge.** The popup's window is what Windows places against
+  the corner, so every pixel of transparent margin reserved for a shadow pushes the visible card
+  further in. The card is now 11px inside its own window instead of 30, which puts it about 13px
+  from the edge: the drop shadows are near-ambient rather than offset (an offset costs that margin
+  below the card and buys nothing above it, and the window is centred on the card, so it was paid
+  twice), and the glows anchored to a card's own edge — the signature's accent rail, Slim's tick —
+  no longer reach past it. The preset designer's generated presets were reserving more again, and
+  now match; a preset you already built keeps its own window until you re-save it in the designer.
+- Every bundled preset is the **same width**, so switching preset no longer moves the popup
+  sideways. Slim is now the short one rather than the narrow one.
+- Community presets are named for what they look like rather than for who submitted them:
+  `ArmsofGod`, `Epic Preset`, `TigerDX Award` and `mudoss` are now **Pantheon**, **Onyx**,
+  **Hexagon** and **Outline**. **Hexagon** and **Batman** drew their progress bar on top of their
+  own title and icon - both laid it out in the flow while everything around it was absolutely
+  positioned - and now place it under the text.
+- A notification test with no game of its own borrows real cover art and a real name from the
+  library, instead of showing a placeholder badge and the app's own icon.
+
+- The bundled presets all render through **one engine** — the same one the preset designer generates —
+  so a fix to rare tiers, the completion state, the progress line or the scrolling of a long title
+  lands in all of them at once. The previous library carried seventeen near-copies of that script,
+  and the drift between them is why several rendered no completion state, one threw a script error
+  on every notification, and one animated a progress bar that ignored the real numbers.
+- Notification popups sit consistently in their corner: each preset's window is sized to exactly
+  contain its own shadow and glow, so nothing is cut off at the window edge and every preset keeps
+  the same margin from the screen.
+- The default preset library is **152 KB**, down from about 9.5 MB — the removed presets bundled
+  several megabytes of animated GIFs and three copies of the same font files.
+- `backdrop-filter` is gone from the bundled presets. It cost a blur pass per frame over the running
+  game and blurred nothing: the notification window is transparent, so there was never any page
+  content behind the card for it to sample.
+
+- The custom preset builder is now a **Preset designer**: a full no-code notification designer in
+  its own section of Settings → Notification. Layout (icon left, right, above the text or no icon),
+  alignment, width, padding and spacing; font, title and description size, weight, uppercase and
+  letter spacing; a solid, gradient or **game-artwork** background with dimming and blur; corner
+  radius, which edge carries the accent bar and a border of your own; shadow and accent glow; icon
+  size, rounding and border; which edge the popup enters from and leaves to, its speed, easing and
+  how long it stays on screen; the colour and glow of a **rare unlock** and a **100% completion**;
+  and a sound the preset plays instead of the app-wide one. Common controls are shown, the rest sit
+  behind **Advanced** inside each group.
+- The designer now has **its own tab** — Settings → Presets, under Notification — with a **Start from**
+  gallery of eight complete designs (Classic, Aurora, Neon, Cover, Minimal, Console, Terminal, Slate),
+  a **Surprise me** button that builds a coherent design you have not tried, and **Duplicate** to save
+  a variation beside the preset it came from.
+- More to design with: the **game's name** above the achievement, a **rarity badge** printing the
+  unlock rate, a description that may **wrap onto two or three lines**, a **text shadow** for reading
+  over artwork, an **icon glow**, and the **progress bar thickness**. The game name is forwarded by
+  the notification window for any preset that asks for it, bundled ones included.
+- The preview gained a **Compare** view showing the normal, rare and 100% notifications at once, a
+  **Scale** control mirroring the app setting beside the position anchors, and four more properties:
+  what colours the title, how far the popup travels on its way in and out, and how the game artwork
+  is framed.
+- The preset setting in Settings → Notification carries a tools button through to the designer, and
+  the starting points are the first row of the designer itself rather than a card of their own — the
+  Presets tab is one card, read top to bottom: start from something, then shape it.
+- Simple interface mode now leaves out the designer's Advanced halves, and the Presets tab is hidden
+  entirely when notifications are set to Windows notifications, where a preset draws nothing.
+- The preview can be judged against a **backdrop**: transparency, a dark scene, a bright one, or
+  artwork from your own library — a design that reads well on dark can vanish on a bright scene.
+- The designer previews the real notification, not an impression of it: the same page, styles and
+  engine the popup uses in a game, rendered live as you edit. Switch between the **Card** at its own
+  size and a mock **Screen** at 720p to 4K showing its true relative size in the corner notifications
+  are set to appear, flip between the **normal**, **rare**, **100%** and **progress** states, and
+  **Play** the entry, hold and exit at the preset's own timings.
+- A preset can carry **its own sound**, used instead of the one selected in the Notifications tab —
+  by a preset you designed or one you imported, and it travels inside the `.awpreset` package.
+
+### Changed
+
+- A rare unlock and a 100% completion now repaint the whole popup — accent, title, icon border and
+  glow — in presets built with the designer, where before only the progress bar changed colour. A
+  preset already on disk keeps its own files and looks exactly as it did; opening it in the designer
+  and saving is what applies the new defaults.
+- The notification window a generated preset is given is measured from the design instead of a fixed
+  height, so a stacked layout or a strong glow is no longer cropped.
+
+### Fixed
+
+- A scrolling title or description that was too long to fit was painted over the icon and outside
+  the popup instead of being clipped to its own column.
+- A preset shared from a build that recorded its sound in the package manifest — rather than in the
+  designer options, which did not exist yet — lost that sound on import and fell back to whichever
+  sound the recipient had selected. Conversely, a preset that deliberately has no sound of its own is
+  no longer pinned to whichever sound the person exporting it happened to have selected.
+- The designer's **Advanced** disclosures did nothing: the block they toggle was styled to be visible
+  whatever its state, so every advanced property was on screen from the start and the button appeared
+  to be inert.
+
 - Notification presets can be shared. **Export** and **Import**, in the **Custom preset** card of
   Settings → Notification, move a preset between machines as a single `.awpreset` file carrying its
   style, images, fonts, builder settings and metadata, plus any sound you imported yourself. A

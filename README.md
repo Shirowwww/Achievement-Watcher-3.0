@@ -59,7 +59,7 @@ Track achievements, rarity and playtime across launchers, local saves and suppor
 | GBE runtime install and schema repair | ✅ Full | ⚠️ Schema | ❌ Manual setup |
 | Safe repair workflow | ✅ Backup/restore · Steamless · opt-in API-check bypass | ❌ | ❌ |
 | Native Windows notifications and in-game overlay | ✅ Both | ✅ Both | ⚠️ Chromium / toast transports |
-| No-code custom preset builder | ✅ | ❌ | ❌ |
+| No-code notification preset designer | ✅ | ❌ | ❌ |
 | Separate rare and completion styles | ✅ | ✅ | ❌ Not documented |
 | Live RPCS3 / ShadPS4 / Xenia unlocks | ✅ | ✅ | ⚠️ RPCS3 only |
 | Full controller navigation | ✅ App + overlay | ✅ App + overlay | ❌ Planned only |
@@ -136,7 +136,7 @@ Leave it on **Automatic** and AW Next picks per unlock: the in-game overlay when
 <table>
 <tr>
 <td align="center"><img src="screenshot/notifications.png" width="300" alt="Notification settings"><br><sub>Delivery mode and per-context presets</sub></td>
-<td align="center"><img src="screenshot/notification-preset.png" width="300" alt="Custom notification preset builder"><br><sub>No-code custom preset builder with live preview</sub></td>
+<td align="center"><img src="screenshot/notification-preset.png" width="300" alt="Notification preset designer"><br><sub>No-code preset designer with a live preview of the real popup</sub></td>
 <td align="center"><img src="screenshot/overlay.png" width="220" alt="In-game overlay"><br><sub>In-game achievement overlay</sub></td>
 </tr>
 </table>

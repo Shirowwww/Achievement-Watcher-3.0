@@ -395,16 +395,10 @@ function translateUI(lang, locale, template) {
   $("#option_notifMode option[value='overlay']").text(clear(template.settings.notification.option.mode.value.overlay));
   $("#option_notifMode option[value='both']").text(clear(template.settings.notification.option.mode.value.both));
   $('#lbl-overlayPreset').text(clear(template.settings.notification.option.overlayPreset));
-  if (template.settings.notification.option.overlayPresetRare) {
+  if (template.settings.notification.option.presetSameAsMain) {
     const opt = template.settings.notification.option;
-    $('#lbl-overlayPresetRare').text(clear(opt.overlayPresetRare));
-    $('#lbl-overlayPresetPlatinum').text(clear(opt.overlayPresetPlatinum));
-    $('#lbl-overlayPresetRare').closest('li').find('.help').text(clear(opt.overlayPresetRareDesc));
-    $('#lbl-overlayPresetPlatinum').closest('li').find('.help').text(clear(opt.overlayPresetPlatinumDesc));
     // "Same as main" is dynamic (the dropdowns are (re)populated async) — expose it as a data attr
     // and refresh the '' option if it is already there.
-    $('#option_overlayPresetRare, #option_overlayPresetPlatinum').attr('data-lang-same', clear(opt.presetSameAsMain));
-    $("#option_overlayPresetRare option[value=''], #option_overlayPresetPlatinum option[value='']").text(clear(opt.presetSameAsMain));
     $('#option_overlayPresetXenia, #option_overlayPresetRpcs3, #option_overlayPresetShadps4').attr('data-lang-same', clear(opt.presetSameAsMain));
     $("#option_overlayPresetXenia option[value=''], #option_overlayPresetRpcs3 option[value=''], #option_overlayPresetShadps4 option[value='']").text(
       clear(opt.presetSameAsMain)
@@ -413,11 +407,12 @@ function translateUI(lang, locale, template) {
   $('#lbl-overlayPosition').text(clear(template.settings.notification.option.overlayPosition));
   $('#lbl-overlayScale').text(clear(template.settings.notification.option.overlayScale));
   $('#lbl-overlaySound').text(clear(template.settings.notification.option.overlaySound));
-  $('#lbl-overlayRandomSound').text(clear(template.settings.notification.option.overlayRandomSound));
+  // 'Random' is an entry in the sound dropdown now, not a row of its own. Same string, and it is
+  // exposed as a data attribute because the list is rebuilt asynchronously.
+  $('#option_overlaySound').attr('data-lang-random', clear(template.settings.notification.option.overlayRandomSound));
+  $('#option_overlaySound option[value="__random__"]').text(clear(template.settings.notification.option.overlayRandomSound));
   $('#lbl-overlayVolume').text(clear(template.settings.notification.option.overlayVolume));
   $('#lbl-overlayDuration').text(clear(template.settings.notification.option.overlayDuration));
-  $('#option_overlayRandomSound option[value="false"]').text(clear(template.settings.common.disable));
-  $('#option_overlayRandomSound option[value="true"]').text(clear(template.settings.common.enable));
   if (template.settings.notification.option.overlaySoundImport) {
     $('#btn-import-sound').attr('title', clear(template.settings.notification.option.overlaySoundImport));
   }
@@ -432,7 +427,6 @@ function translateUI(lang, locale, template) {
   $('#lbl-overlayPresetShadps4').closest('li').find('.help').text(clear(template.settings.notification.option.overlayPresetShadps4Desc));
   $('#lbl-overlayPosition').closest('li').find('.help').text(clear(template.settings.notification.option.overlayPositionDesc));
   $('#lbl-overlaySound').closest('li').find('.help').text(clear(template.settings.notification.option.overlaySoundDesc));
-  $('#lbl-overlayRandomSound').closest('li').find('.help').text(clear(template.settings.notification.option.overlayRandomSoundDesc));
   $('#lbl-overlayScale').closest('li').find('.help').text(clear(template.settings.notification.option.overlayScaleDesc));
   $('#lbl-overlayVolume').closest('li').find('.help').text(clear(template.settings.notification.option.overlayVolumeDesc));
   $('#lbl-overlayDuration').closest('li').find('.help').text(clear(template.settings.notification.option.overlayDurationDesc));
@@ -449,31 +443,32 @@ function translateUI(lang, locale, template) {
     $('#souvenir-open-label').text(clear(opt.souvenirOpenDir));
     $('#btn-souvenir-open').attr('title', clear(opt.souvenirOpenDir));
   }
-  if (template.settings.notification.option.customiser) {
-    const c = template.settings.notification.option.customiser;
-    $('#customiser-title').text(clear(c.title));
-    $('#customiser-intro').text(clear(c.intro));
-    $('#cust-lbl-name').text(clear(c.name));
-    $('#cust-lbl-bg').text(clear(c.background));
-    $('#cust-lbl-text').text(clear(c.text));
-    $('#cust-lbl-accent').text(clear(c.accent));
-    $('#cust-lbl-opacity').text(clear(c.opacity));
-    $('#cust-lbl-font').text(clear(c.fontSize));
-    $('#cust-lbl-radius').text(clear(c.corners));
-    $('#cust-lbl-icon').text(clear(c.iconSize));
-    $('#cust-lbl-width').text(clear(c.width));
-    $('#cust-lbl-load').text(clear(c.edit));
-    $('#cust-lbl-preview').text(clear(c.preview));
-    $('#cust-lbl-delete').text(clear(c.deleteLabel));
-    $('#cust-lbl-import').text(clear(c.importLabel));
-    $('#cust-lbl-export').text(clear(c.exportLabel));
+  if (template.settings.notification.option.designer) {
+    const c = template.settings.notification.option.designer;
+    /*
+      The preset designer is bound by `data-lang="<dotted path>"` rather than one selector per label:
+      it has a control for every editable property, and its labels — a group title, a property name,
+      the words in a dropdown — are all leaves of this same block. One pass keeps the markup and the
+      locale in step, and a control added to app.html cannot silently ship with a blank label.
+    */
+    $("#settingNav li[data-view='presets'] span").text(clear(template.settings.sideMenu.presets));
+    // The button on the preset row in the Notification tab, which opens this tab.
+    $('#btn-open-presets').attr('title', clear(c.open));
+    $("#settings .content[data-view='presets'] [data-lang]").each(function () {
+      const value = String($(this).attr('data-lang'))
+        .split('.')
+        .reduce((node, key) => (node == null ? node : node[key]), c);
+      if (typeof value === 'string') $(this).text(clear(value));
+    });
     // The create button and the preset picker swap their wording at runtime (create vs update,
     // "new preset" placeholder), so both spellings are parked on data attributes here and the
     // settings code re-renders them on the event below.
-    $('#cust-lbl-create').attr('data-create', clear(c.create)).attr('data-update', clear(c.update)).text(clear(c.create));
-    $('#cust-load').attr('data-new', clear(c.editNew));
-    $('#cust-name').attr('placeholder', clear(c.namePlaceholder));
-    $('#cust-status')
+    $('#pd-lbl-create').attr('data-create', clear(c.create)).attr('data-update', clear(c.update)).text(clear(c.create));
+    $('#pd-load').attr('data-new', clear(c.editNew));
+    $('#pd-name').attr('placeholder', clear(c.namePlaceholder));
+    // The first entry of the preset's sound menu, rebuilt at runtime from the installed sounds.
+    $('#pd-sound').attr('data-lang-app', clear(c.value.appSound));
+    $('#pd-status')
       .attr('data-err', clear(c.errName))
       .attr('data-ok', clear(c.created))
       .attr('data-updated', clear(c.updated))
@@ -482,10 +477,9 @@ function translateUI(lang, locale, template) {
       .attr('data-imported', clear(c.imported))
       .attr('data-imported-only', clear(c.importedOnly))
       .attr('data-exported', clear(c.exported))
+      .attr('data-reset', clear(c.resetDone))
       .attr('data-fail', clear(c.failed));
-    if (c.previewTitle) $('#cust-preview-title').text(clear(c.previewTitle));
-    if (c.previewDetail) $('#cust-preview-detail').text(clear(c.previewDetail));
-    $(document).trigger('customiser-labels-changed');
+    $(document).trigger('locale-labels-changed');
   }
   // Localize the 8 overlay position options + expose the dynamic "None" sound label as a data attr.
   $("#option_overlayPosition option[value='center-bottom']").text(clear(template.settings.notification.option.position.centerBottom));
