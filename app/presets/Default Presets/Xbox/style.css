@@ -1,0 +1,417 @@
+/*
+  Orbit - the console-gamerscore look: a dark pill, a circular icon, and a ring that sweeps once
+  around it as the popup lands. References that visual language without reproducing it - the green
+  is AW's own, the type is Windows-native, and the ring is built from a conic gradient rather than
+  copied artwork.
+
+  Rendered by the shared preset engine (index.html); this file owns every pixel.
+*/
+
+:root {
+  --ach-in: 540ms;
+  --ach-out: 360ms;
+  --ease-in: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out: cubic-bezier(0.7, 0, 0.84, 0);
+
+  --surface-top: #1a2118;
+  --surface-bottom: #0a0d09;
+  --text: #f2f7ef;
+  --muted: #9db096;
+  --accent: #86e01e;
+  --accent-soft: #c8f77e;
+  --mark-opacity: 0.4;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+.ach {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 452px;
+  padding: 14px 46px 14px 11px;
+  border-radius: 46px;
+  background: linear-gradient(160deg, var(--surface-top) 0%, var(--surface-bottom) 100%);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.62),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 0 8px color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  opacity: 0;
+  will-change: transform, opacity;
+  transform: translate(-50%, -50%) scale(var(--scale, 1));
+}
+
+/* The mark. Masked rather than drawn, so it takes the state colour with everything else. */
+.ach::after {
+  content: '';
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  width: 21px;
+  height: 21px;
+  margin-top: -10.5px;
+  background: var(--accent);
+  -webkit-mask: url('logo.svg') center / contain no-repeat;
+  mask: url('logo.svg') center / contain no-repeat;
+  opacity: var(--mark-opacity);
+}
+
+/* --- icon ------------------------------------------------------------------------------------ */
+
+/*
+  The ring, in two layers. ::after is the steady ring the icon keeps for the whole notification;
+  ::before is a conic arc that spins once around it on entry and then fades out, so the sweep
+  resolves into the ring rather than leaving a bright arc parked on one side.
+
+  Both are masked into an annulus and animated by rotation and opacity alone, so the whole effect is
+  two composited layers and costs nothing per frame.
+*/
+.ach .icon {
+  position: relative;
+  flex: 0 0 auto;
+  width: 64px;
+  height: 64px;
+}
+
+/*
+  `closest-side` is load-bearing: a radial gradient sized the default way measures its stops against
+  the distance to the farthest CORNER, so a 50% stop lands well inside the circle and the mask keeps
+  a filled disc instead of cutting an annulus out of it.
+*/
+.ach .icon::before,
+.ach .icon::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  -webkit-mask: radial-gradient(circle closest-side, transparent 0 calc(100% - 3px), #000 calc(100% - 3px));
+  mask: radial-gradient(circle closest-side, transparent 0 calc(100% - 3px), #000 calc(100% - 3px));
+}
+
+.ach .icon::after {
+  background: color-mix(in srgb, var(--accent) 62%, transparent);
+  opacity: 0;
+}
+
+.ach .icon::before {
+  background: conic-gradient(from 0deg, transparent 0deg, var(--accent) 70deg, var(--accent-soft) 130deg, transparent 190deg);
+  opacity: 0;
+}
+
+.ach .icon img {
+  display: block;
+  box-sizing: border-box;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.65);
+}
+
+/* --- text ------------------------------------------------------------------------------------ */
+
+.ach .text_wrap {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ach .text_wrap:has(.marquee) {
+  -webkit-mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.35) 0, #000 10px, #000 calc(100% - 24px), transparent 100%);
+  mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.35) 0, #000 10px, #000 calc(100% - 24px), transparent 100%);
+}
+
+.ach .meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  margin-bottom: 2px;
+  line-height: 1.1;
+}
+
+.ach .meta[hidden] {
+  display: none;
+}
+
+.ach .game {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ach .game[hidden] {
+  display: none;
+}
+
+.ach .rarity {
+  flex: 0 0 auto;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--accent-soft);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.ach .rarity[hidden] {
+  display: none;
+}
+
+.ach .title {
+  max-width: 100%;
+  margin: 0;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.28;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ach .detail {
+  max-width: 100%;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ach .title.marquee,
+.ach .detail.marquee {
+  display: inline-block;
+  overflow: visible;
+  text-overflow: clip;
+  will-change: transform;
+}
+
+/* --- progress -------------------------------------------------------------------------------- */
+
+.progress_line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 7px;
+  min-width: 0;
+}
+
+.progress_line[hidden] {
+  display: none;
+}
+
+.progress_track {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 70px;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.progress_meter {
+  display: block;
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-soft) 100%);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 55%, transparent);
+  transition: width 0.35s ease;
+}
+
+.progress_label {
+  flex: 0 0 auto;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* --- states ---------------------------------------------------------------------------------- */
+
+.ach.state-rare {
+  --accent: #ffc93d;
+  --accent-soft: #ffe9a8;
+  --surface-top: #241f12;
+  --surface-bottom: #0d0a05;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.62),
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent),
+    0 0 8px color-mix(in srgb, var(--accent) 32%, transparent);
+}
+
+.ach.state-rare.tier-silver {
+  --accent: #c9d8ea;
+  --accent-soft: #f2f7fd;
+  --surface-top: #1b2129;
+  --surface-bottom: #090b0e;
+}
+
+.ach.state-rare.tier-bronze {
+  --accent: #d98d47;
+  --accent-soft: #f2c294;
+  --surface-top: #241a11;
+  --surface-bottom: #0d0805;
+}
+
+/* 100%: the ring stops sweeping and stays closed around the icon, and the pill gains a full rim. */
+.ach.state-platinum {
+  --accent: #7ee8ff;
+  --accent-soft: #dcfbff;
+  --surface-top: #12303d;
+  --surface-bottom: #060f15;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.62),
+    inset 0 0 0 2px color-mix(in srgb, var(--accent) 62%, transparent),
+    0 0 8px color-mix(in srgb, var(--accent) 38%, transparent);
+}
+
+/* The steady ring closes fully and brightens, rather than sitting at the partial strength of a
+   normal unlock - the ring is where this preset says "complete". */
+.ach.state-platinum .icon::after {
+  background: var(--accent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.ach.state-platinum {
+  --mark-opacity: 0.72;
+}
+
+.ach.state-platinum .title {
+  color: var(--accent-soft);
+}
+
+/* --- motion ---------------------------------------------------------------------------------- */
+
+@keyframes aw_in {
+  from {
+    transform: translate(-50%, calc(-50% + 22px)) scale(calc(var(--scale, 1) * 0.9));
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(var(--scale, 1));
+    opacity: 1;
+  }
+}
+
+@keyframes aw_hold {
+  from,
+  to {
+    transform: translate(-50%, -50%) scale(var(--scale, 1));
+    opacity: 1;
+  }
+}
+
+@keyframes aw_out {
+  from {
+    transform: translate(-50%, -50%) scale(var(--scale, 1));
+    opacity: 1;
+  }
+  to {
+    transform: translate(-50%, calc(-50% + 14px)) scale(calc(var(--scale, 1) * 0.94));
+    opacity: 0;
+  }
+}
+
+@keyframes aw_sweep {
+  from {
+    transform: rotate(-120deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  to {
+    transform: rotate(320deg);
+    opacity: 0;
+  }
+}
+
+@keyframes aw_ring {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes aw_rise {
+  from {
+    transform: translateX(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.ach.active {
+  animation:
+    aw_in var(--ach-in) var(--ease-in) forwards,
+    aw_hold var(--ach-hold, 5160ms) forwards,
+    aw_out var(--ach-out) var(--ease-out) forwards;
+  animation-delay: 0s, var(--ach-in), calc(var(--ach-in) + var(--ach-hold, 5160ms));
+}
+
+.ach.active .icon::before {
+  animation: aw_sweep 940ms cubic-bezier(0.22, 0.9, 0.28, 1) 100ms both;
+}
+
+.ach.active .icon::after {
+  animation: aw_ring 420ms linear 620ms both;
+}
+
+/* Never .title / .detail: the engine cancels their animations when it measures the marquee. */
+.ach.active .text_wrap {
+  animation: aw_rise 460ms var(--ease-in) 200ms both;
+}
+
+@keyframes aw_mark {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: var(--mark-opacity);
+    transform: translateX(0);
+  }
+}
+
+.ach.active::after {
+  animation: aw_mark 560ms var(--ease-in) 300ms both;
+}

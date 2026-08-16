@@ -1,32 +1,36 @@
 /*
-  Steam.
+  Glass - the quiet one. A softly translucent slab, generous spacing, no accent bar and no glow
+  until a state asks for one.
 
-  The panel behind the text is the preset: bg.jpg is a dark navy plate with the outlined Steam mark
-  sitting off to the right, and that - with the sharp corners, the hairline stroke, the 68px rounded
-  icon and the toast sliding up out of the bottom edge - is what makes it read as Steam rather than
-  as a blue card.
-
-  This is the preset that shipped before, kept as it was and given what it was missing: the game's
-  name, the unlock rate, a 100% completion state, and a progress line that is not squeezed into a
-  230px box.
+  The translucency is real: the notification window paints no background of its own, so a
+  semi-opaque surface shows the running game through the popup. That is also why there is no blur
+  here - a backdrop filter has nothing behind it to sample inside a transparent window, so it would
+  cost frames and change nothing. A dark base under a light sheen is what keeps white text legible
+  over a bright scene as well as a dark one.
 
   Rendered by the shared preset engine (index.html); this file owns every pixel.
 */
 
 :root {
-  --ach-in: 460ms;
+  --ach-in: 520ms;
   --ach-out: 340ms;
   --ease-in: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out: cubic-bezier(0.7, 0, 0.84, 0);
 
-  --veil-top: #30302e;
-  --veil-bottom: #12161f;
-  --veil-opacity: 0.66;
+  /*
+    Opaque enough to win. Glass that lets too much through stops being readable the moment the game
+    behind it is a bright sky, and a notification that has to be squinted at has failed at the one
+    thing it does - so the surface keeps roughly three quarters of its own darkness and lets the
+    scene show in the remaining quarter.
+  */
+  --base: rgba(12, 15, 22, 0.74);
+  --sheen: rgba(255, 255, 255, 0.1);
+  --edge: rgba(255, 255, 255, 0.26);
   --text: #ffffff;
-  --muted: #c3ccd6;
-  --accent: #66c0f4;
-  --accent-soft: #b8e0fb;
-  --stroke: rgba(255, 255, 255, 0.1);
+  --muted: rgba(255, 255, 255, 0.8);
+  --accent: #ffffff;
+  --accent-soft: #ffffff;
+  --glow: 0;
 }
 
 html,
@@ -46,45 +50,24 @@ body {
   box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
   width: 452px;
-  padding: 16px;
-  /* Sharp, like the toast it comes from. */
-  border-radius: 0;
-  overflow: hidden;
-  background: #12161f;
+  padding: 16px 22px;
+  border-radius: 22px;
+  background:
+    linear-gradient(155deg, var(--sheen) 0%, transparent 55%),
+    var(--base);
   box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.55),
-    inset 0 0 0 1px var(--stroke);
+    0 2px 8px rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px var(--edge),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 0 8px color-mix(in srgb, var(--accent) calc(var(--glow) * 40%), transparent);
   color: var(--text);
-  font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
   opacity: 0;
   will-change: transform, opacity;
   transform: translate(-50%, -50%) scale(var(--scale, 1));
-}
-
-/* The plate. Anchored right so the mark sits behind the text rather than behind the icon. */
-.ach::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background: url('bg.jpg') right center / cover no-repeat;
-}
-
-/* The veil that keeps the type legible over it, and what a state recolours. */
-.ach::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(180deg, var(--veil-top), var(--veil-bottom));
-  opacity: var(--veil-opacity);
-}
-
-.ach > * {
-  position: relative;
-  z-index: 2;
 }
 
 /* --- icon ------------------------------------------------------------------------------------ */
@@ -96,15 +79,15 @@ body {
 .ach .icon img {
   display: block;
   box-sizing: border-box;
-  width: 68px;
-  height: 68px;
-  border-radius: 8px;
+  width: 66px;
+  height: 66px;
+  border-radius: 18px;
   object-fit: cover;
-  background: #000000;
+  background: rgba(0, 0, 0, 0.35);
   box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.75),
-    0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent),
-    0 4px 12px rgba(0, 0, 0, 0.5);
+    0 0 0 1px rgba(255, 255, 255, 0.35),
+    0 0 0 5px color-mix(in srgb, var(--accent) calc(var(--glow) * 45%), transparent),
+    0 2px 9px rgba(0, 0, 0, 0.45);
 }
 
 /* --- text ------------------------------------------------------------------------------------ */
@@ -116,7 +99,6 @@ body {
   align-items: flex-start;
   min-width: 0;
   overflow: hidden;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
 }
 
 .ach .text_wrap:has(.marquee) {
@@ -127,9 +109,9 @@ body {
 .ach .meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   max-width: 100%;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
   line-height: 1.1;
 }
 
@@ -140,10 +122,10 @@ body {
 .ach .game {
   min-width: 0;
   overflow: hidden;
-  color: var(--accent);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.13em;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -155,11 +137,12 @@ body {
 
 .ach .rarity {
   flex: 0 0 auto;
-  padding: 1px 6px;
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--accent) 26%, transparent);
-  color: var(--accent-soft);
-  font-size: 10px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, rgba(255, 255, 255, 0.3));
+  color: var(--text);
+  font-size: 10.5px;
   font-weight: 700;
 }
 
@@ -171,9 +154,10 @@ body {
   max-width: 100%;
   margin: 0;
   color: var(--text);
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 19px;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -181,10 +165,10 @@ body {
 
 .ach .detail {
   max-width: 100%;
-  margin: 0;
+  margin: 2px 0 0;
   color: var(--muted);
-  font-size: 12px;
-  line-height: 16px;
+  font-size: 13px;
+  line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -203,9 +187,9 @@ body {
 .progress_line {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   width: 100%;
-  margin-top: 6px;
+  margin-top: 9px;
   min-width: 0;
 }
 
@@ -216,12 +200,12 @@ body {
 .progress_track {
   display: block;
   flex: 1 1 auto;
-  min-width: 60px;
+  min-width: 70px;
   height: 5px;
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.5);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
 }
 
 .progress_meter {
@@ -229,8 +213,7 @@ body {
   width: 0%;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-soft) 100%);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 55%, transparent);
+  background: var(--accent);
   transition: width 0.35s ease;
 }
 
@@ -245,45 +228,46 @@ body {
 
 /* --- states ---------------------------------------------------------------------------------- */
 
-/* The veil takes the colour, so the Steam plate behind it warms with the rest of the card. */
+/* Colour arrives only when there is something to say: an ordinary unlock stays colourless glass. */
 .ach.state-rare {
-  --accent: #ffc53d;
-  --accent-soft: #ffe6a1;
-  --veil-top: #4a3a1c;
-  --veil-bottom: #17110a;
-  --stroke: color-mix(in srgb, var(--accent) 45%, transparent);
-  box-shadow:
-    0 2px 8px rgba(0, 0, 0, 0.55),
-    inset 0 0 0 1px var(--stroke),
-    0 0 8px color-mix(in srgb, var(--accent) 24%, transparent);
+  --accent: #ffd76b;
+  --accent-soft: #fff3cf;
+  --base: rgba(28, 20, 6, 0.66);
+  --sheen: rgba(255, 215, 107, 0.16);
+  --edge: rgba(255, 215, 107, 0.5);
+  --glow: 0.8;
 }
 
 .ach.state-rare.tier-silver {
-  --accent: #c3d3e6;
-  --accent-soft: #eef4fb;
-  --veil-top: #333d4a;
-  --veil-bottom: #11151a;
+  --accent: #dceaf8;
+  --accent-soft: #ffffff;
+  --base: rgba(14, 19, 27, 0.66);
+  --sheen: rgba(220, 234, 248, 0.16);
+  --edge: rgba(220, 234, 248, 0.5);
 }
 
 .ach.state-rare.tier-bronze {
-  --accent: #d08a4a;
-  --accent-soft: #f0bd91;
-  --veil-top: #46301e;
-  --veil-bottom: #150e07;
+  --accent: #e5a068;
+  --accent-soft: #f8d4b4;
+  --base: rgba(28, 17, 8, 0.66);
+  --sheen: rgba(229, 160, 104, 0.16);
+  --edge: rgba(229, 160, 104, 0.5);
 }
 
-/* 100%: the veil thins so the plate reads through, and the stroke becomes a full bright frame. */
+/* 100%: the glass turns cold and picks up a second, wider rim. */
 .ach.state-platinum {
-  --accent: #8ff0ff;
-  --accent-soft: #e6fbff;
-  --veil-top: #14425c;
-  --veil-bottom: #071722;
-  --veil-opacity: 0.62;
-  --stroke: color-mix(in srgb, var(--accent) 65%, transparent);
+  --accent: #a8f0ff;
+  --accent-soft: #e9fdff;
+  --base: rgba(8, 26, 36, 0.7);
+  --sheen: rgba(168, 240, 255, 0.2);
+  --edge: rgba(168, 240, 255, 0.6);
+  --glow: 1;
   box-shadow:
-    0 2px 9px rgba(0, 0, 0, 0.55),
-    inset 0 0 0 2px var(--stroke),
-    0 0 8px color-mix(in srgb, var(--accent) 34%, transparent);
+    0 2px 9px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px var(--edge),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent),
+    0 0 8px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 .ach.state-platinum .title {
@@ -292,10 +276,10 @@ body {
 
 /* --- motion ---------------------------------------------------------------------------------- */
 
-/* Slides up out of the bottom edge, the way the toast it comes from does. */
+/* Soft and short - the point of this preset is that it does not demand attention. */
 @keyframes aw_in {
   from {
-    transform: translate(-50%, calc(-50% + 34px)) scale(var(--scale, 1));
+    transform: translate(-50%, calc(-50% + 14px)) scale(calc(var(--scale, 1) * 0.955));
     opacity: 0;
   }
   to {
@@ -318,14 +302,14 @@ body {
     opacity: 1;
   }
   to {
-    transform: translate(-50%, calc(-50% + 26px)) scale(var(--scale, 1));
+    transform: translate(-50%, -50%) scale(calc(var(--scale, 1) * 0.975));
     opacity: 0;
   }
 }
 
 @keyframes aw_rise {
   from {
-    transform: translateY(7px);
+    transform: translateY(8px);
     opacity: 0;
   }
   to {
@@ -336,7 +320,7 @@ body {
 
 @keyframes aw_icon {
   from {
-    transform: scale(0.9);
+    transform: scale(0.88);
     opacity: 0;
   }
   to {
@@ -348,16 +332,16 @@ body {
 .ach.active {
   animation:
     aw_in var(--ach-in) var(--ease-in) forwards,
-    aw_hold var(--ach-hold, 5200ms) forwards,
+    aw_hold var(--ach-hold, 5140ms) forwards,
     aw_out var(--ach-out) var(--ease-out) forwards;
-  animation-delay: 0s, var(--ach-in), calc(var(--ach-in) + var(--ach-hold, 5200ms));
+  animation-delay: 0s, var(--ach-in), calc(var(--ach-in) + var(--ach-hold, 5140ms));
 }
 
 .ach.active .icon img {
-  animation: aw_icon 460ms var(--ease-in) 110ms both;
+  animation: aw_icon 480ms var(--ease-in) 130ms both;
 }
 
 /* Never .title / .detail: the engine cancels their animations when it measures the marquee. */
 .ach.active .text_wrap {
-  animation: aw_rise 440ms var(--ease-in) 160ms both;
+  animation: aw_rise 440ms var(--ease-in) 190ms both;
 }

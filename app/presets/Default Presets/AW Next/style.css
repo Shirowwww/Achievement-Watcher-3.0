@@ -1,0 +1,396 @@
+/*
+  AW Next - the signature preset.
+
+  Wears the app's own palette (#142236 surface, #6c91ff accent) so a screenshot of the popup and a
+  screenshot of the library read as one product. The recognizable parts are the accent rail that
+  draws itself down the left edge, the ringed icon plate, and the eyebrow line that names the game
+  above the achievement.
+
+  Rendered by the shared preset engine (index.html): it owns the payload and the state classes
+  (.active, .state-rare + .tier-*, .state-platinum), this file owns every pixel.
+*/
+
+:root {
+  /* Read by the engine to work out how long the card holds. */
+  --ach-in: 560ms;
+  --ach-out: 340ms;
+  --ease-in: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out: cubic-bezier(0.7, 0, 0.84, 0);
+
+  --surface-top: #1e2d49;
+  --surface-bottom: #0c1322;
+  --text: #e7edf6;
+  --muted: #9bacc2;
+  --accent: #6c91ff;
+  --accent-soft: #b6c9ff;
+  --glow: 0.5;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+.ach {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 452px;
+  padding: 16px 20px 16px 22px;
+  border-radius: 18px;
+  /*
+    The accent wash behind the icon is the signature: it is the state colour spread across the part
+    of the card the eye lands on first, so a rare or a 100% unlock is recognisable from the shape of
+    the light before a single word is read.
+  */
+  background:
+    linear-gradient(96deg, color-mix(in srgb, var(--accent) 22%, transparent) 0%, transparent 46%),
+    linear-gradient(152deg, var(--surface-top) 0%, var(--surface-bottom) 100%);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 0 8px color-mix(in srgb, var(--accent) calc(var(--glow) * 42%), transparent);
+  color: var(--text);
+  font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif;
+  opacity: 0;
+  will-change: transform, opacity;
+  transform: translate(-50%, -50%) scale(var(--scale, 1));
+}
+
+/* The rail. Drawn top-to-bottom on entry, and the one element that carries the state colour most. */
+.ach::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 5px;
+  border-radius: 0 5px 5px 0;
+  background: linear-gradient(180deg, #ffffff 0%, var(--accent-soft) 22%, var(--accent) 100%);
+  box-shadow: 0 0 7px color-mix(in srgb, var(--accent) 85%, transparent);
+  transform: scaleY(0);
+  transform-origin: center top;
+}
+
+/* Light catching the top edge - what stops a flat panel from looking like a flat panel. */
+.ach::before {
+  content: '';
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  top: 0;
+  height: 1px;
+  border-radius: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+}
+
+/* --- icon ------------------------------------------------------------------------------------ */
+
+.ach .icon {
+  flex: 0 0 auto;
+}
+
+.ach .icon img {
+  display: block;
+  box-sizing: border-box;
+  width: 68px;
+  height: 68px;
+  border-radius: 15px;
+  object-fit: cover;
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--accent) 70%, transparent),
+    0 2px 9px rgba(0, 0, 0, 0.45);
+}
+
+/* --- text ------------------------------------------------------------------------------------ */
+
+.ach .text_wrap {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/*
+  Only a line long enough to scroll gets the fade, so a short one keeps its full contrast. The
+  leading edge softens rather than clearing: text panning out of view should not end on a hard cut,
+  but the eyebrow above it starts at the same x and must stay legible.
+*/
+.ach .text_wrap:has(.marquee) {
+  -webkit-mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.35) 0, #000 10px, #000 calc(100% - 26px), transparent 100%);
+  mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.35) 0, #000 10px, #000 calc(100% - 26px), transparent 100%);
+}
+
+.ach .meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  margin-bottom: 3px;
+  line-height: 1.1;
+}
+
+.ach .meta[hidden] {
+  display: none;
+}
+
+.ach .game {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ach .game[hidden] {
+  display: none;
+}
+
+.ach .rarity {
+  flex: 0 0 auto;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent);
+  color: var(--accent-soft);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.ach .rarity[hidden] {
+  display: none;
+}
+
+.ach .title {
+  max-width: 100%;
+  margin: 0;
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ach .detail {
+  max-width: 100%;
+  margin: 1px 0 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ach .title.marquee,
+.ach .detail.marquee {
+  display: inline-block;
+  overflow: visible;
+  text-overflow: clip;
+  will-change: transform;
+}
+
+/* --- progress -------------------------------------------------------------------------------- */
+
+.progress_line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 8px;
+  min-width: 0;
+}
+
+.progress_line[hidden] {
+  display: none;
+}
+
+.progress_track {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 70px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+}
+
+.progress_meter {
+  display: block;
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-soft) 100%);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent);
+  transition: width 0.35s ease;
+}
+
+.progress_label {
+  flex: 0 0 auto;
+  color: var(--text);
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* --- states ---------------------------------------------------------------------------------- */
+
+/*
+  A rare unlock is not a recolour: the card also gains a full hairline in the tier colour and a
+  deeper glow, so it reads as different from across the room rather than on close inspection.
+*/
+.ach.state-rare {
+  --accent: #ffcb45;
+  --accent-soft: #ffe8a3;
+  --glow: 1;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.55),
+    0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent) inset,
+    0 0 8px color-mix(in srgb, var(--accent) 42%, transparent);
+}
+
+.ach.state-rare.tier-silver {
+  --accent: #c3d3e6;
+  --accent-soft: #eef4fb;
+}
+
+.ach.state-rare.tier-bronze {
+  --accent: #d08a4a;
+  --accent-soft: #f0bd91;
+}
+
+/* 100%: the whole card lifts to a lighter surface and carries a double edge. */
+.ach.state-platinum {
+  --accent: #8ff0ff;
+  --accent-soft: #e6fbff;
+  --surface-top: #1d3352;
+  --surface-bottom: #101c30;
+  --glow: 1;
+  box-shadow:
+    0 2px 9px rgba(0, 0, 0, 0.55),
+    0 0 0 1px color-mix(in srgb, var(--accent) 70%, transparent) inset,
+    0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent),
+    0 0 8px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.ach.state-platinum .title {
+  color: var(--accent-soft);
+}
+
+/* --- motion ---------------------------------------------------------------------------------- */
+
+/*
+  Transform and opacity only - nothing here triggers layout or paint, so the popup costs the same
+  frame budget as a static one and stays smooth over a game that is using the GPU.
+*/
+@keyframes aw_in {
+  from {
+    transform: translate(-50%, calc(-50% + 26px)) scale(calc(var(--scale, 1) * 0.965));
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(var(--scale, 1));
+    opacity: 1;
+  }
+}
+
+@keyframes aw_hold {
+  from,
+  to {
+    transform: translate(-50%, -50%) scale(var(--scale, 1));
+    opacity: 1;
+  }
+}
+
+@keyframes aw_out {
+  from {
+    transform: translate(-50%, -50%) scale(var(--scale, 1));
+    opacity: 1;
+  }
+  to {
+    transform: translate(-50%, calc(-50% + 16px)) scale(calc(var(--scale, 1) * 0.985));
+    opacity: 0;
+  }
+}
+
+@keyframes aw_rail {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes aw_rise {
+  from {
+    transform: translateY(9px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes aw_icon {
+  from {
+    transform: scale(0.82);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.ach.active {
+  animation:
+    aw_in var(--ach-in) var(--ease-in) forwards,
+    aw_hold var(--ach-hold, 5100ms) forwards,
+    aw_out var(--ach-out) var(--ease-out) forwards;
+  animation-delay: 0s, var(--ach-in), calc(var(--ach-in) + var(--ach-hold, 5100ms));
+}
+
+.ach.active::after {
+  animation: aw_rail 460ms var(--ease-in) 180ms forwards;
+}
+
+.ach.active .icon img {
+  animation: aw_icon 520ms cubic-bezier(0.34, 1.4, 0.64, 1) 120ms both;
+}
+
+/*
+  The whole text column rises as one, and never .title / .detail individually: the engine cancels
+  every animation on those two elements when it measures them for the marquee, which silently drops
+  an entry animation put on them and leaves the line snapped into place while the rest still moves.
+*/
+.ach.active .text_wrap {
+  animation: aw_rise 440ms var(--ease-in) 190ms both;
+}

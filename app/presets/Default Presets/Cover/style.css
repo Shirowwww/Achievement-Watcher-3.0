@@ -1,0 +1,389 @@
+/*
+  Cover - the game's own artwork behind the unlock.
+
+  The engine publishes the artwork the notification carries as --artwork; this preset makes it the
+  whole background and drifts it slowly across the hold, so the popup looks like part of the game
+  rather than a panel laid on top of it. A scrim runs left-to-right underneath the text, which is
+  what keeps a white title readable over a bright sky as reliably as over a dark cave.
+
+  With no artwork in the payload --artwork resolves to none and the plain surface below shows
+  instead, so the preset never renders an empty frame.
+
+  Rendered by the shared preset engine (index.html); this file owns every pixel.
+*/
+
+:root {
+  --ach-in: 620ms;
+  --ach-out: 380ms;
+  --ease-in: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out: cubic-bezier(0.7, 0, 0.84, 0);
+
+  --surface: #10141c;
+  --text: #ffffff;
+  --muted: rgba(255, 255, 255, 0.76);
+  --accent: #ffb443;
+  --accent-soft: #ffd899;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+.ach {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 452px;
+  padding: 16px 22px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.62),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 0 8px color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--text);
+  font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif;
+  opacity: 0;
+  will-change: transform, opacity;
+  transform: translate(-50%, -50%) scale(var(--scale, 1));
+}
+
+/* The artwork. Drifts on a transform, so the whole effect is one composited layer. */
+.ach::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: var(--artwork, none);
+  background-size: cover;
+  background-position: center center;
+  transform: scale(1.08);
+}
+
+/* The scrim. Static, and heaviest where the text sits. */
+.ach::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(94deg, rgba(6, 8, 13, 0.94) 0%, rgba(6, 8, 13, 0.82) 42%, rgba(6, 8, 13, 0.24) 72%, rgba(6, 8, 13, 0.06) 100%),
+    linear-gradient(0deg, rgba(6, 8, 13, 0.4), transparent 60%);
+}
+
+.ach > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* --- icon ------------------------------------------------------------------------------------ */
+
+.ach .icon {
+  flex: 0 0 auto;
+}
+
+.ach .icon img {
+  display: block;
+  box-sizing: border-box;
+  width: 68px;
+  height: 68px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.85),
+    0 8px 20px rgba(0, 0, 0, 0.6);
+}
+
+/* --- text ------------------------------------------------------------------------------------ */
+
+.ach .text_wrap {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  overflow: hidden;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+}
+
+.ach .text_wrap:has(.marquee) {
+  -webkit-mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.35) 0, #000 10px, #000 calc(100% - 26px), transparent 100%);
+  mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.35) 0, #000 10px, #000 calc(100% - 26px), transparent 100%);
+}
+
+.ach .meta {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  max-width: 100%;
+  margin-bottom: 4px;
+  line-height: 1.1;
+}
+
+.ach .meta[hidden] {
+  display: none;
+}
+
+.ach .game {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--accent-soft);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ach .game[hidden] {
+  display: none;
+}
+
+.ach .rarity {
+  flex: 0 0 auto;
+  padding: 1px 7px;
+  border-radius: 3px;
+  background: var(--accent);
+  color: #1a1206;
+  font-size: 10.5px;
+  font-weight: 800;
+}
+
+.ach .rarity[hidden] {
+  display: none;
+}
+
+.ach .title {
+  max-width: 100%;
+  margin: 0;
+  color: var(--text);
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ach .detail {
+  max-width: 100%;
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ach .title.marquee,
+.ach .detail.marquee {
+  display: inline-block;
+  overflow: visible;
+  text-overflow: clip;
+  will-change: transform;
+}
+
+/* --- progress -------------------------------------------------------------------------------- */
+
+.progress_line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 9px;
+  min-width: 0;
+}
+
+.progress_line[hidden] {
+  display: none;
+}
+
+.progress_track {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 70px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.progress_meter {
+  display: block;
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-soft) 100%);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 60%, transparent);
+  transition: width 0.35s ease;
+}
+
+.progress_label {
+  flex: 0 0 auto;
+  color: var(--text);
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* --- states ---------------------------------------------------------------------------------- */
+
+/* Rare warms the scrim as well as the accent, so the artwork itself changes temperature. */
+.ach.state-rare {
+  --accent: #ffd24e;
+  --accent-soft: #fff0b8;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.62),
+    inset 0 0 0 2px color-mix(in srgb, var(--accent) 60%, transparent),
+    0 0 8px color-mix(in srgb, var(--accent) 34%, transparent);
+}
+
+.ach.state-rare::after {
+  background:
+    linear-gradient(94deg, rgba(20, 12, 2, 0.95) 0%, rgba(20, 12, 2, 0.82) 42%, rgba(20, 12, 2, 0.24) 72%, rgba(20, 12, 2, 0.08) 100%),
+    linear-gradient(0deg, rgba(255, 200, 80, 0.16), transparent 55%);
+}
+
+.ach.state-rare.tier-silver {
+  --accent: #d3e0f0;
+  --accent-soft: #f4f9ff;
+}
+
+.ach.state-rare.tier-silver::after {
+  background:
+    linear-gradient(94deg, rgba(8, 12, 18, 0.95) 0%, rgba(8, 12, 18, 0.82) 42%, rgba(8, 12, 18, 0.24) 72%, rgba(8, 12, 18, 0.08) 100%),
+    linear-gradient(0deg, rgba(200, 220, 245, 0.14), transparent 55%);
+}
+
+.ach.state-rare.tier-bronze {
+  --accent: #e09550;
+  --accent-soft: #f6c79c;
+}
+
+.ach.state-rare.tier-bronze::after {
+  background:
+    linear-gradient(94deg, rgba(18, 10, 4, 0.95) 0%, rgba(18, 10, 4, 0.82) 42%, rgba(18, 10, 4, 0.24) 72%, rgba(18, 10, 4, 0.08) 100%),
+    linear-gradient(0deg, rgba(224, 149, 80, 0.16), transparent 55%);
+}
+
+/* 100%: the scrim cools to a bright rim-lit frame and the artwork is allowed to show more. */
+.ach.state-platinum {
+  --accent: #9df1ff;
+  --accent-soft: #e8fdff;
+  box-shadow:
+    0 2px 9px rgba(0, 0, 0, 0.62),
+    inset 0 0 0 2px color-mix(in srgb, var(--accent) 70%, transparent),
+    0 0 8px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.ach.state-platinum::after {
+  background:
+    linear-gradient(94deg, rgba(4, 16, 22, 0.94) 0%, rgba(4, 16, 22, 0.78) 42%, rgba(4, 16, 22, 0.2) 72%, rgba(4, 16, 22, 0.05) 100%),
+    linear-gradient(0deg, rgba(120, 230, 255, 0.2), transparent 58%);
+}
+
+.ach.state-platinum .rarity {
+  color: #04161d;
+}
+
+/* --- motion ---------------------------------------------------------------------------------- */
+
+@keyframes aw_in {
+  from {
+    transform: translate(-50%, calc(-50% + 30px)) scale(calc(var(--scale, 1) * 0.97));
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(var(--scale, 1));
+    opacity: 1;
+  }
+}
+
+@keyframes aw_hold {
+  from,
+  to {
+    transform: translate(-50%, -50%) scale(var(--scale, 1));
+    opacity: 1;
+  }
+}
+
+@keyframes aw_out {
+  from {
+    transform: translate(-50%, -50%) scale(var(--scale, 1));
+    opacity: 1;
+  }
+  to {
+    transform: translate(-50%, calc(-50% + 18px)) scale(calc(var(--scale, 1) * 0.985));
+    opacity: 0;
+  }
+}
+
+/* The drift. Slow enough to read as a camera move rather than as an animation. */
+@keyframes aw_drift {
+  from {
+    transform: scale(1.08) translateX(1.2%);
+  }
+  to {
+    transform: scale(1.14) translateX(-1.2%);
+  }
+}
+
+@keyframes aw_rise {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes aw_icon {
+  from {
+    transform: scale(0.86) translateY(6px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.ach.active {
+  animation:
+    aw_in var(--ach-in) var(--ease-in) forwards,
+    aw_hold var(--ach-hold, 5000ms) forwards,
+    aw_out var(--ach-out) var(--ease-out) forwards;
+  animation-delay: 0s, var(--ach-in), calc(var(--ach-in) + var(--ach-hold, 5000ms));
+}
+
+.ach.active::before {
+  animation: aw_drift calc(var(--ach-in) + var(--ach-hold, 5000ms) + var(--ach-out)) linear both;
+}
+
+.ach.active .icon img {
+  animation: aw_icon 560ms var(--ease-in) 160ms both;
+}
+
+/* Never .title / .detail: the engine cancels their animations when it measures the marquee. */
+.ach.active .text_wrap {
+  animation: aw_rise 500ms var(--ease-in) 220ms both;
+}

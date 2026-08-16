@@ -267,11 +267,22 @@
   --aw-accent-soft: #f0bd91;
   --aw-glow: rgba(205, 111, 41, 0.5);
 }
+/*
+  Placed the way the icon frame above it is placed.
+
+  .icon-frame is position:absolute and takes no space in the flow, so a progress row left in the
+  flow laid out underneath it and the two drew on top of each other. Sitting it below the frame's
+  own box (top 47px + 34px tall) is what separates them.
+*/
 .progress_line {
+  position: absolute;
+  left: 50%;
+  top: 90px;
+  width: 300px;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 9px;
   min-width: 0;
 }
 .progress_line[hidden] {
@@ -281,7 +292,7 @@
   display: block;
   flex: 1 1 auto;
   min-width: 70px;
-  height: 8px;
+  height: 6px;
   overflow: hidden;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.45);

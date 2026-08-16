@@ -1,219 +1,139 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>ArcadePop</title>
-
-  <!-- Read by the host app -->
-  <meta name="duration" content="6000" />
-  <meta width="356" height="100" />
-
-  <link rel="stylesheet" href="style.css" />
-  <style>
-    html, body {
-      margin: 0; padding: 0;
-      width: 100%; height: 100%;
-      overflow: hidden; background: transparent;
+<html lang="en"><head>
+<meta charset="UTF-8" />
+<link rel="stylesheet" href="style.css" />
+<meta name="duration" content="5600" />
+<meta width="474" height="128" />
+<title>Steam Notification</title>
+</head><body>
+<div class="ach"><div class="icon"><img src="" alt="" /></div><div class="text_wrap"><div class="meta" hidden><span class="game" hidden></span><span class="rarity" hidden></span></div><p class="title"></p><span class="detail"></span><div class="progress_line" hidden><span class="progress_track"><span class="progress_meter"></span></span><span class="progress_label"></span></div></div></div>
+<script>
+window.addEventListener('DOMContentLoaded', function () {
+  var root = document.querySelector('.ach');
+  var metaDur = document.querySelector('meta[name="duration"]');
+  var total = Math.max(600, Number((metaDur && metaDur.content) || 6000));
+  // Timings live in the stylesheet, so the designer changes them by swapping the CSS alone.
+  function timing(name, fallback) {
+    try {
+      var raw = getComputedStyle(root).getPropertyValue(name).trim();
+      var value = parseFloat(raw);
+      if (!isFinite(value)) return fallback;
+      return raw.indexOf('ms') > -1 ? value : value * 1000;
+    } catch (e) { return fallback; }
+  }
+  // A Windows path becomes a file URL; anything that already carries a scheme is left alone, so a
+  // data: or https: image (the designer previews with data: URIs) is not turned into file:///data:.
+  function fileUrl(value) {
+    var p = String(value || '').replace(/\\/g, '/');
+    if (!p) return '';
+    return /^(?:file|data|https?|blob):/i.test(p) ? p : 'file:///' + p;
+  }
+  function applyState(data) {
+    root.classList.remove('state-rare', 'state-platinum', 'tier-gold', 'tier-silver', 'tier-bronze');
+    var type = String((data && data.notificationType) || '').toLowerCase();
+    if ((data && data.isPlatinum) || type === 'platinum') { root.classList.add('state-platinum'); return; }
+    if (type === 'progress' || type === 'playtime') return;
+    // An ordinary unlock carries rarityPercent null, and Number(null) is 0 — which would make
+    // every notification the rarest tier there is. Absence has to be checked before the number.
+    var raw = data && data.rarityPercent;
+    if (raw == null || raw === '') return;
+    var percent = Number(raw);
+    if (!isFinite(percent) || percent < 0 || percent > 10) return;
+    root.classList.add('state-rare');
+    root.classList.add(percent < 3 ? 'tier-gold' : percent < 6 ? 'tier-silver' : 'tier-bronze');
+  }
+  function applyArtwork(data) {
+    var art = fileUrl((data && (data.imagePath || data.headerPath)) || (data && data.gameIconPath) || "");
+    root.style.setProperty('--artwork', art ? 'url("' + art + '")' : 'none');
+  }
+  function normalizeProgress(data) {
+    var src = (data && data.progress) || data || {};
+    var max = Number(src.max != null ? src.max : src.progressMax);
+    if (!isFinite(max) || max <= 1) return null;
+    var currentRaw = Number(src.current != null ? src.current : src.progressCurrent);
+    var current = Math.max(0, Math.min(max, isFinite(currentRaw) ? currentRaw : 0));
+    var percentRaw = Number(src.percent != null ? src.percent : src.progressPercent);
+    var percent = isFinite(percentRaw)
+      ? Math.max(0, Math.min(100, Math.floor(percentRaw)))
+      : Math.max(0, Math.min(100, Math.floor((current / max) * 100)));
+    return { current: current, max: max, percent: percent };
+  }
+  function applyProgress(data) {
+    var line = document.querySelector('.progress_line');
+    var meter = document.querySelector('.progress_meter');
+    var label = document.querySelector('.progress_label');
+    if (!line || !meter || !label) return;
+    var progress = normalizeProgress(data);
+    if (!progress) { line.hidden = true; meter.style.width = "0%"; label.textContent = ""; return; }
+    line.hidden = false;
+    meter.style.width = progress.percent + "%";
+    label.textContent = progress.current + "/" + progress.max + " - " + progress.percent + "%";
+  }
+  function startMarqueeIfOverflow(lineEl) {
+    if (!lineEl) return;
+    try { lineEl.getAnimations().forEach(function (a) { a.cancel(); }); } catch (e) {}
+    lineEl.classList.remove('marquee');
+    void lineEl.offsetWidth;
+    var clip = lineEl.closest('.text_wrap') || lineEl;
+    var overflow = Math.round((lineEl.scrollWidth || 0) - (clip.clientWidth || 0));
+    if (overflow > 2) {
+      var px = Math.ceil(overflow + 24);
+      lineEl.classList.add('marquee');
+      lineEl.animate([{ transform: "translateX(0)" }, { transform: "translateX(-" + px + "px)" }], { duration: Math.max(3000, Math.round(px / 50) * 1000), delay: 1000, easing: "linear", fill: "both" });
     }
-    body { transform-origin: center center; }
-    .achievement-container {
-      position: relative;
-      width: 100%; height: 100%;
-      pointer-events: none; /* visual only */
-      display: flex; align-items: center; justify-content: center;
-    }
-  </style>
-</head>
-<body>
-  <div class="achievement-container">
-    <div class="arcade-card" id="card">
-      <div class="ani_icon"><img id="icon" alt=""></div>
-      <div class="text">
-        <span id="title"></span>
-        <span id="desc"></span>
-        <div class="progress_line" hidden>
-          <span class="progress_track"><span class="progress_meter"></span></span>
-          <span class="progress_label"></span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    (function () {
-      const card   = document.getElementById('card');
-      const iconEl = document.getElementById('icon');
-      const title  = document.getElementById('title');
-      const desc   = document.getElementById('desc');
-
-      const metaDur = document.querySelector('meta[name="duration"]');
-      const FALLBACK_TOTAL = 3000;
-      const baseTotal = Math.max(1, Number(metaDur?.content || FALLBACK_TOTAL));
-      function notifyScreenshotReady(delayMs = 0) {
-        const safeDelay = Math.max(0, Number(delayMs) || 0);
-        setTimeout(() => {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              window.api?.notificationRenderReady?.();
-            });
-          });
-        }, safeDelay);
-      }
-
-      const fileUrl = (p) => {
-        if (!p) return '';
-        const s = String(p).replace(/\\/g, '/');
-        return s.startsWith('file://') ? s : `file:///${s}`;
-      };
-      const safe = (t) => (t ?? '').toString().trim();
-
-      function applyRarityTier(rootEl, value) {
-        rootEl?.classList.remove("rarity-gold", "rarity-silver", "rarity-bronze");
-        if (value == null || value === "") return;
-        const percent = Number(value);
-        if (!Number.isFinite(percent) || percent < 0 || percent > 10) return;
-        if (percent < 3) rootEl.classList.add("rarity-gold");
-        else if (percent < 6) rootEl.classList.add("rarity-silver");
-        else rootEl.classList.add("rarity-bronze");
-      }
-
-      function normalizeProgress(data) {
-        const src = data?.progress || data || {};
-        const max = Number(src.max ?? src.progressMax);
-        if (!Number.isFinite(max) || max <= 1) return null;
-        const currentRaw = Number(src.current ?? src.progressCurrent);
-        const current = Math.max(
-          0,
-          Math.min(max, Number.isFinite(currentRaw) ? currentRaw : 0)
-        );
-        const percentRaw = Number(src.percent ?? src.progressPercent);
-        const percent = Number.isFinite(percentRaw)
-          ? Math.max(0, Math.min(100, Math.floor(percentRaw)))
-          : Math.max(0, Math.min(100, Math.floor((current / max) * 100)));
-        return { current, max, percent };
-      }
-
-      function applyProgress(data) {
-        const progress = normalizeProgress(data);
-        const line = document.querySelector(".progress_line");
-        const meter = document.querySelector(".progress_meter");
-        const label = document.querySelector(".progress_label");
-        if (!line || !meter || !label) return;
-        if (!progress) {
-          line.hidden = true;
-          meter.style.width = "0%";
-          label.textContent = "";
-          return;
-        }
-        line.hidden = false;
-        meter.style.width = `${progress.percent}%`;
-        label.textContent = `${progress.current}/${progress.max} - ${progress.percent}%`;
-      }
-
-      function startMarqueeIfOverflow(lineEl) {
-        try {
-          lineEl.getAnimations().forEach((a) => a.cancel());
-        } catch {}
-        lineEl.classList.remove("marquee");
-        void lineEl.offsetWidth;
-        const clip = lineEl.closest(".text") || lineEl;
-        const overflow = Math.round(
-          (lineEl.scrollWidth || 0) - (clip.clientWidth || 0)
-        );
-        if (overflow > 2) {
-          const px = Math.ceil(overflow + 24);
-          lineEl.classList.add("marquee");
-          lineEl.animate(
-            [
-              { transform: "translateX(0)" },
-              { transform: `translateX(-${px}px)` },
-            ],
-            {
-              duration: Math.max(3000, Math.round(px / 50) * 1000),
-              delay: 1000,
-              easing: "linear",
-              fill: "both",
-            }
-          );
-        }
-      }
-
-      function computeFromTopFallback() {
-        try {
-          // Decide direction from where the window is placed on the screen
-          const yMid = (window.screenY || 0) + (window.outerHeight || 0) / 2;
-          const h    = (screen.availHeight || screen.height || 1080);
-          return yMid < (h / 2); // true = top half
-        } catch { return false; }
-      }
-
-      function setDirectionByPosition(posString) {
-        const pos = String(posString || '').toLowerCase();
-        const fromTop = (pos === 'center-top' || pos === 'top-right' || pos === 'top-left')
-                     || (!pos && computeFromTopFallback());
-
-        card.classList.remove('from-top', 'from-bottom');
-        card.classList.add(fromTop ? 'from-top' : 'from-bottom');
-      }
-
-      function restartAnimation(totalMs) {
-        // remove + reflow + add to restart CSS animations
-        card.classList.remove('active');
-        // two rafs ensures styles are flushed in all engines
-        requestAnimationFrame(() => {
-          // Force layout read
-          void card.offsetWidth;
-          requestAnimationFrame(() => {
-            card.classList.add('active');
-            setTimeout(() => {
-              card.classList.remove('active');
-              window.api?.closeNotificationWindow?.();
-            }, totalMs);
-          });
-        });
-      }
-
-      window.api?.onNotification?.((payload) => {
-        // Content
-        iconEl.src = fileUrl(payload?.iconPath || '');
-        title.textContent = safe(payload?.displayName) || safe(payload?.fallback?.achievementUnlocked) || 'Achievement Unlocked';
-        const d = safe(payload?.description);
-        desc.textContent = d;
-        desc.style.display = d ? 'inline' : 'none';
-        applyRarityTier(card, payload?.rarityPercent);
-        applyProgress(payload);
-
-        // Scale (host window handles placement)
-        const scale = Math.max(0.01, Number(payload?.scale || 1));
-        document.body.style.transform = `scale(${scale})`;
-        if (scale > 1) document.body.setAttribute('data-scaled', 'true');
-        else document.body.removeAttribute('data-scaled');
-
-        // Direction (use provided position, else fallback by screenY)
-        setDirectionByPosition(payload?.position);
-
-        // Timings
-        const total = Math.max(0, Number(metaDur?.content || baseTotal));
-        const timelineScale = Math.max(0.1, total / baseTotal);
-        const inMs = Math.max(120, Math.round(300 * timelineScale));
-        const outMs = Math.max(120, Math.round(300 * timelineScale));
-        const gapMs = Math.max(60, Math.round(120 * timelineScale));
-        const outDelay = Math.max(0, total - outMs - gapMs);
-
-        card.style.setProperty('--inMs',     inMs  + 'ms');
-        card.style.setProperty('--outMs',    outMs + 'ms');
-        card.style.setProperty('--outDelay', outDelay + 'ms');
-
-        restartAnimation(total);
-        notifyScreenshotReady(inMs + 120);
-        requestAnimationFrame(() => {
-          startMarqueeIfOverflow(title);
-          if (d) startMarqueeIfOverflow(desc);
-        });
-      });
-    })();
-  </script>
-</body>
-</html>
+  }
+  /*
+    The line above the title: the game the unlock came from, and how rare it was. Each half is
+    hidden when the payload has nothing to put in it, and the row itself disappears with both, so
+    a preset that asks for them never reserves an empty line for a notification that has neither.
+  */
+  function applyMeta(data) {
+    var row = document.querySelector('.meta');
+    var gameEl = document.querySelector('.game');
+    var rarityEl = document.querySelector('.rarity');
+    if (!row || !gameEl || !rarityEl) return;
+    var game = String((data && data.gameName) || '').trim();
+    gameEl.textContent = game;
+    gameEl.hidden = !game;
+    var percent = data && data.rarityPercent;
+    var hasRarity = percent != null && percent !== '' && isFinite(Number(percent));
+    rarityEl.textContent = hasRarity ? (Math.round(Number(percent) * 10) / 10) + '%' : '';
+    rarityEl.hidden = !hasRarity;
+    row.hidden = !game && !hasRarity;
+  }
+  var closeTimer = null;
+  function onPayload(displayName, description, iconPath, scale, data) {
+    var titleEl = document.querySelector('.title');
+    var detailEl = document.querySelector('.detail');
+    var iconEl = document.querySelector('.icon img');
+    if (displayName != null) titleEl.textContent = displayName;
+    if (description != null) detailEl.textContent = description;
+    if (iconPath) { iconEl.src = fileUrl(iconPath); iconEl.style.display = "block"; }
+    else { iconEl.style.display = 'none'; }
+    var s = Math.max(0.01, parseFloat(scale || 1) || 1);
+    root.style.setProperty('--scale', String(s));
+    applyState(data);
+    applyArtwork(data);
+    applyMeta(data);
+    applyProgress(data);
+    var inMs = timing('--ach-in', 520);
+    var outMs = timing('--ach-out', 380);
+    var holdMs = Math.max(0, total - inMs - outMs);
+    root.style.setProperty('--ach-hold', holdMs + 'ms');
+    root.classList.remove('active');
+    void root.offsetWidth;
+    root.classList.add('active');
+    if (window.api && window.api.notificationRenderReady) window.api.notificationRenderReady();
+    requestAnimationFrame(function () { startMarqueeIfOverflow(titleEl); startMarqueeIfOverflow(detailEl); });
+    clearTimeout(closeTimer);
+    closeTimer = setTimeout(function () {
+      root.classList.remove('active');
+      if (window.api && window.api.closeNotificationWindow) window.api.closeNotificationWindow();
+    }, total);
+  }
+  if (window.api && window.api.onNotification) window.api.onNotification(function (d) {
+    onPayload(d && d.displayName, d && d.description, d && (d.iconPath || d.icon), d && d.scale, d || {});
+  });
+});
+</script>
+</body></html>
