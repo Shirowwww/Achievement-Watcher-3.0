@@ -301,12 +301,12 @@ const onboardingInterfaceMode = require(path.join(appPath, 'util/interfaceMode.j
     ipcRenderer
       .invoke('list-presets')
       .then((presets) => {
-        const list = Array.isArray(presets) && presets.length ? presets : ['Shirow', 'Default'];
+        const list = Array.isArray(presets) && presets.length ? presets : ['AW Next', 'Deck'];
         list.forEach((name) => presetSelect.append($('<option>').attr('value', name).text(name)));
-        const selected = app.config.overlay?.notificationPreset || 'Shirow';
+        const selected = app.config.overlay?.notificationPreset || 'AW Next';
         presetSelect.val(list.includes(selected) ? selected : list[0]);
       })
-      .catch(() => presetSelect.append($('<option>').attr('value', 'Shirow').text('Shirow')));
+      .catch(() => presetSelect.append($('<option>').attr('value', 'AW Next').text('AW Next')));
     refreshAvatarPreview();
   }
 
@@ -554,7 +554,7 @@ const onboardingInterfaceMode = require(path.join(appPath, 'util/interfaceMode.j
       app.config.general.onboardingCompleted = markComplete;
       app.config.steam.main = $('#onboard-main-steam').val() || '0';
       app.config.notification_transport.mode = $('#onboard-notification-mode').val() || 'auto';
-      app.config.overlay.notificationPreset = $('#onboard-notification-preset').val() || app.config.overlay.notificationPreset || 'Shirow';
+      app.config.overlay.notificationPreset = $('#onboard-notification-preset').val() || app.config.overlay.notificationPreset || 'AW Next';
       app.config.general.theme = $('#onboard-theme').val() || 'default';
       app.config.notification.playtime = boolValue($('#onboard-playtime').val());
       app.config.achievement_source.legitSteam = parseInt($('#onboard-legit-steam').val(), 10) || 0;
@@ -693,7 +693,7 @@ const onboardingInterfaceMode = require(path.join(appPath, 'util/interfaceMode.j
       window.testAchievementWatcherNotification(
         $('#onboard-notification-mode').val() || 'auto',
         this,
-        $('#onboard-notification-preset').val() || 'Shirow'
+        $('#onboard-notification-preset').val() || 'AW Next'
       );
     });
     $('#onboard-theme').on('change', function () {

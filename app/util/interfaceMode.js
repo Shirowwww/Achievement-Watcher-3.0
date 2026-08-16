@@ -37,7 +37,7 @@ const ADVANCED_VIEWS = ['emulator', 'advanced'];
 
 // Tabs Simple mode always shows. Listed rather than derived so a new tab has to make a deliberate
 // choice instead of silently defaulting into the streamlined interface.
-const SIMPLE_VIEWS = ['general', 'appearance', 'controller', 'notification', 'source', 'folder', 'help'];
+const SIMPLE_VIEWS = ['general', 'appearance', 'controller', 'notification', 'presets', 'source', 'folder', 'help'];
 
 /*
   Game Health checks Simple mode leaves out of the summary list. `identity` reports the resolved

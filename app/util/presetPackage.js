@@ -23,7 +23,7 @@ const fs = require('fs');
 const path = require('path');
 const AdmZip = require('adm-zip');
 const semver = require('semver');
-const { customPresetNumbers, sanitizePresetName, PRESET_OPTIONS_FILE } = require('./customPreset.js');
+const { customPresetNumbers, sanitizePresetName, PRESET_OPTIONS_FILE, PRESET_PACKAGE_FILE } = require('./customPreset.js');
 const { SOUND_EXT_RE } = require('./notificationSounds.js');
 
 const PRESET_PACKAGE_EXTENSION = '.awpreset';
@@ -39,12 +39,12 @@ const SOUNDS_DIR = 'sounds';
 const PRESET_ENTRY = 'index.html';
 
 /*
-  The installed manifest, kept beside the preset's files. It is what marks a preset as one the app
-  installed — and may therefore delete — which the builder's own options file cannot do: a preset
-  written by hand has no options, so without this marker an imported preset was installed but could
-  never be listed or removed again. It also carries the metadata through a re-export.
+  The installed manifest, kept beside the preset's files (the name lives in util/customPreset.js, so
+  the two modules that read it cannot disagree). It is what marks a preset as one the app installed —
+  and may therefore delete — which the builder's own options file cannot do: a preset written by hand
+  has no options, so without this marker an imported preset was installed but could never be listed
+  or removed again. It also carries the metadata through a re-export.
 */
-const PRESET_PACKAGE_FILE = 'aw-package.json';
 
 // What a preset is allowed to consist of. No .js: a preset's behaviour belongs in the inline script
 // of its index.html, which is all a bundled preset has ever used, and this keeps a package from
@@ -130,6 +130,22 @@ function fail(error, extra = {}) {
 }
 
 /*
+  The designer options a manifest carries, re-clamped.
+
+  The one subtlety is the sound. A package written before presets could name their own sound recorded
+  it in  alone, and that was the author's intent — so it becomes the preset's sound.
+  A package that DOES carry the field is respected exactly, including an empty value: that means "use
+  whatever the Notifications tab is set to", and inheriting the exporter's sound over it would pin a
+  sound onto a preset that deliberately had no opinion.
+*/
+function manifestOptions(raw, manifestSound) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const options = customPresetNumbers(raw);
+  if (!Object.prototype.hasOwnProperty.call(raw, 'sound') && manifestSound) options.sound = manifestSound;
+  return options;
+}
+
+/*
   Validate the manifest on its own, before a single byte is written. `appVersion` is the running
   app's version; an omitted or unparsable one skips only the compatibility floor, never the
   structural checks.
@@ -175,7 +191,7 @@ function validateManifest(raw, { appVersion = '' } = {}) {
         minVersion,
       },
       // Re-clamped through the builder's own ranges, so a hand-edited manifest cannot widen them.
-      options: raw.options && typeof raw.options === 'object' ? customPresetNumbers(raw.options) : null,
+      options: manifestOptions(raw.options, sound),
       sound,
     },
   };
@@ -452,22 +468,38 @@ function installPackage({ file, presetsDir, soundsDir, appVersion = '', duplicat
       fs.mkdirSync(path.dirname(target), { recursive: true });
       fs.writeFileSync(target, data);
     }
+    /*
+      Sounds first: they are separate files in a shared folder, so a failure here must still leave
+      the preset uninstalled rather than half-installed. A sound whose name was already taken by a
+      different file is installed beside it, so remember what each one ended up being called.
+    */
+    const sounds = [];
+    const installedAs = new Map();
+    for (const { path: relative, entry } of soundFiles) {
+      const installed = installSound(soundsDir, relative, entry.getData());
+      if (installed.created) createdSounds.push(path.join(soundsDir, installed.name));
+      installedAs.set(relative, installed.name);
+      sounds.push(installed.name);
+    }
+
+    /*
+      A sound has to follow the name it was actually installed under, or importing beside an existing
+      sound of the same name leaves the preset pointing at a file that is not the one in the package
+      — silently playing someone else's sound.
+    */
+    const installedSound = (name) => (name && installedAs.has(name) ? installedAs.get(name) : name);
+
     // The marker that makes this preset manageable, and what a re-export reads its metadata from.
-    fs.writeFileSync(path.join(stagedPreset, PRESET_PACKAGE_FILE), JSON.stringify({ ...manifest, name }, null, 2), 'utf8');
+    const stamped = { ...manifest, name, sound: installedSound(manifest.sound) };
+    fs.writeFileSync(path.join(stagedPreset, PRESET_PACKAGE_FILE), JSON.stringify(stamped, null, 2), 'utf8');
+
     if (manifest.options) {
       // Credit survives an import, so re-exporting a preset someone shared keeps their name on it.
       const stored = { name, ...manifest.options };
       if (manifest.author) stored.author = manifest.author;
+      // Whatever the manifest resolved to (see manifestOptions), under the name it was installed as.
+      stored.sound = installedSound(stored.sound);
       fs.writeFileSync(path.join(stagedPreset, PRESET_OPTIONS_FILE), JSON.stringify(stored, null, 2), 'utf8');
-    }
-
-    // Sounds first: they are separate files in a shared folder, so a failure here must still leave
-    // the preset uninstalled rather than half-installed.
-    const sounds = [];
-    for (const { path: relative, entry } of soundFiles) {
-      const installed = installSound(soundsDir, relative, entry.getData());
-      if (installed.created) createdSounds.push(path.join(soundsDir, installed.name));
-      sounds.push(installed.name);
     }
 
     if (fs.existsSync(destination)) {

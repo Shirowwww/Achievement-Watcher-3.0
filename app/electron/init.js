@@ -3253,21 +3253,26 @@ function openGameFromLaunchArgs(args) {
 
 // --- Overlay notification (optional transport) -----------------------------------
 // Spawns a frameless click-through window rendering a preset via window.api; toasts remain the
-// default transport. Resolves presets from the bundled library, falling back to "Shirow".
+// default transport. Resolves presets from the bundled library, falling back to the default preset.
+const { DEFAULT_PRESET, legacyPresetAlias, resolvePreset } = require(path.join(__dirname, '../util/notificationPreset.js'));
+
 function resolvePresetFolder(presetName) {
-  const requestedRaw = String(presetName || 'Shirow');
-  const requested = requestedRaw === 'Raposo' ? 'Shirow' : requestedRaw;
   // Generated presets (<userData>) first, then the bundled libraries, then the flat legacy folder.
   const roots = [usersPresetsDir(), ...bundledPresetRoots(), path.join(__dirname, '../presets')];
-  for (const root of roots) {
-    const f = path.join(root, requested);
-    if (fs.existsSync(path.join(f, 'index.html'))) return f;
-  }
-  for (const root of roots) {
-    const f = path.join(root, 'Default');
-    if (fs.existsSync(path.join(f, 'index.html'))) return f;
-  }
-  return null;
+  const find = (name) => {
+    if (!name) return null;
+    for (const root of roots) {
+      const f = path.join(root, name);
+      if (fs.existsSync(path.join(f, 'index.html'))) return f;
+    }
+    return null;
+  };
+  /*
+    The saved name is tried as written before anything else, so a preset the user made or imported
+    under the name of a bundled one that has since been redesigned away still wins. Only a name that
+    resolves to nothing falls through to the preset that replaced it, and then to the default.
+  */
+  return find(String(presetName || DEFAULT_PRESET)) || find(legacyPresetAlias(presetName)) || find(DEFAULT_PRESET);
 }
 
 // Read the preset's window size from its <meta width="" height=""> tag (reference convention).
@@ -3445,6 +3450,9 @@ function createNotificationWindow(data = {}) {
     notif.webContents.send('show-notification', {
       displayName: data.displayName != null ? data.displayName : notifStrings.achievementUnlocked || 'Achievement Unlocked',
       description: data.description != null ? data.description : '',
+      // The game the unlock came from. `displayName` carries the ACHIEVEMENT title, so without this
+      // a popup could never say where it happened; presets that do not ask for it simply ignore it.
+      gameName: data.gameName != null ? String(data.gameName) : '',
       rarityPercent: data.rarityPercent,
       notificationType: data.notificationType || '',
       // Reference-project presets key on these: `isPlatinum` (Xbox Series Platinum diamond) and
@@ -3705,21 +3713,16 @@ async function enqueueNotificationFromArgs(args) {
 
   const progress = normalizeNotificationProgress(args);
   const notificationType = String(args.notificationType || (progress ? 'progress' : '') || '').toLowerCase();
-  // Per-type and per-emulator preset overrides ('' = main preset): the watchdog only forwards
-  // rarityPercent for rare unlocks (≤10%), platinum popups carry notificationType 'platinum', and
-  // the source lets Xenia/RPCS3/ShadPS4 notifications use their own preset.
-  const preset = require(path.join(__dirname, '../util/notificationPreset.js')).resolvePreset({
+  // Per-emulator preset overrides ('' = main preset): the source lets Xenia/RPCS3/ShadPS4
+  // notifications use their own preset. Rare and 100% are states the chosen preset paints itself.
+  const preset = resolvePreset({
     presets: {
-      main: ov.notificationPreset || 'Shirow',
-      rare: ov.notificationPresetRare || '',
-      platinum: ov.notificationPresetPlatinum || '',
+      main: ov.notificationPreset || DEFAULT_PRESET,
       xenia: ov.notificationPresetXenia || '',
       rpcs3: ov.notificationPresetRpcs3 || '',
       shadps4: ov.notificationPresetShadps4 || '',
     },
     source: args.source || '',
-    notificationType,
-    rarityPercent: Number(args.rarityPercent),
   });
 
   /*
@@ -3728,7 +3731,8 @@ async function enqueueNotificationFromArgs(args) {
     toast instead — a report sent after the downloads, or after this popup waited its turn in the
     queue, would arrive far too late to be the difference between one notification and none.
   */
-  if (!resolvePresetFolder(preset)) {
+  const presetFolder = resolvePresetFolder(preset);
+  if (!presetFolder) {
     debug.log(`[overlay-notif] no usable preset folder for "${preset}" — telling the monitor this notification cannot be shown`);
     reportNotificationOutcome(notifyId, 'accepted', false, 'no-preset');
     return;
@@ -3772,12 +3776,20 @@ async function enqueueNotificationFromArgs(args) {
   const silent = !!args.silent;
   // "Random sound" picks a fresh file from the merged bundled+user sound list for each popup.
   const randomSound = ov.randomSound === true;
+  /*
+    A preset may name its own sound, which then wins over the one picked in the Notifications tab:
+    that is what lets a shared package sound the way its author designed it, and what makes a
+    per-emulator or platinum preset able to bring its own fanfare. '' means the preset has no opinion.
+    Random sound still overrides everything — it is an explicit "surprise me" for every popup.
+  */
+  const presetOwnSound = customPreset.presetSound(presetFolder);
   const chosenSound = silent
     ? ''
     : randomSound
       ? notificationSounds.pickRandomSound([path.join(__dirname, '../sounds'), userSoundsDir()]) ||
         resolveNotificationSound(ov.notificationSound)
-      : resolveNotificationSound(ov.notificationSound);
+      : resolveNotificationSound(presetOwnSound || ov.notificationSound);
+  if (presetOwnSound && !silent && !randomSound) debug.log(`[overlay-notif] preset "${preset}" brings its own sound: ${presetOwnSound}`);
   const displayName =
     (args.displayName != null && String(args.displayName).trim()) ||
     (args.gameDisplayName != null && String(args.gameDisplayName).trim()) ||
@@ -3794,6 +3806,8 @@ async function enqueueNotificationFromArgs(args) {
     // Playtime notifications pass the game name in both fields. Keeping the dedicated game-name
     // fallback prevents a lost/empty displayName argument from becoming "Achievement Unlocked".
     displayName,
+    // Forwarded as its own field too, for presets that print the game beside what was unlocked.
+    gameName: args.gameDisplayName != null ? String(args.gameDisplayName) : '',
     description: args.description != null ? String(args.description) : '',
     rarityPercent: Number.isFinite(Number(args.rarityPercent)) ? Number(args.rarityPercent) : null,
     notificationType,
@@ -3842,9 +3856,9 @@ ipcMain.handle('list-presets', async () => {
   return out;
 });
 
-// --- Custom preset builder (Phase 3 customiser) -----------------------------------------------------
-// The generator itself lives in util/customPreset.js (pure string work, unit-tested); this file owns
-// where the generated files land and which preset names are reserved.
+// --- Preset designer ---------------------------------------------------------------------------
+// The schema lives in util/presetSchema.js and the generator in util/customPreset.js (pure string
+// work, unit-tested); this file owns where the generated files land and which names are reserved.
 const customPreset = require(path.join(__dirname, '../util/customPreset.js'));
 const { customPresetNumbers, buildCustomPresetHtml, buildCustomPresetCss, sanitizePresetName } = customPreset;
 const presetPackage = require(path.join(__dirname, '../util/presetPackage.js'));
@@ -4031,10 +4045,12 @@ ipcMain.handle('export-preset', async (event, request) => {
     if (!meta.author && options && typeof options.author === 'string') meta.author = options.author;
 
     /*
-      The selected sound travels with the preset only when the user imported it: a bundled sound is
-      already on every install, so naming it in the manifest is enough and avoids redistributing it.
+      The sound the preset asks for, falling back to the one currently selected so a preset with no
+      opinion still records what it was designed against. It travels with the package only when the
+      user imported it: a bundled sound is already on every install, so naming it in the manifest is
+      enough and avoids redistributing it.
     */
-    const soundName = String((configJS && configJS.overlay && configJS.overlay.notificationSound) || '');
+    const soundName = String((options && options.sound) || (configJS && configJS.overlay && configJS.overlay.notificationSound) || '');
     const userSound = soundName ? path.join(userSoundsDir(), soundName) : '';
     const sound = soundName ? { name: soundName, file: fs.existsSync(userSound) ? userSound : '' } : null;
 
@@ -4098,6 +4114,53 @@ ipcMain.handle('import-preset', async (event, opts = {}) => {
 });
 
 // List available notification sound files for the overlay sound dropdown (bundled + user-imported).
+/*
+  Artwork for a notification test that is not tied to a game.
+
+  A test used to show the generic achievement badge and the app's own icon, which is the one thing a
+  preview must not do: the whole point of testing a preset is to judge how it frames real artwork,
+  and a flat placeholder hides exactly the problems (contrast over a bright cover, a cropped icon)
+  that the test exists to reveal. So it borrows a game from the library the user already has.
+
+  Returns {} when nothing is cached yet — the caller keeps its placeholder in that case.
+*/
+ipcMain.handle('notification-sample-art', async () => {
+  try {
+    const coversDir = path.join(userData, 'covers');
+    const covers = new Map();
+    try {
+      for (const file of fs.readdirSync(coversDir)) {
+        if (!/\.(?:png|jpe?g|webp)$/i.test(file)) continue;
+        covers.set(file.replace(/\.[^.]+$/, ''), path.join(coversDir, file));
+      }
+    } catch {}
+    if (covers.size === 0) return {};
+
+    /*
+      Prefer a game the index can name. A preview that shows one game's cover while the line above it
+      reads "Sample Game" is worse than either on its own, so the name and the artwork have to come
+      from the same entry — and only the index has both.
+    */
+    let named = [];
+    try {
+      const index = JSON.parse(fs.readFileSync(path.join(userData, 'cfg', 'gameIndex.json'), 'utf8'));
+      named = Object.values(index).filter((game) => game && game.appid && game.name && covers.has(String(game.appid)));
+    } catch {}
+
+    const keys = [...covers.keys()];
+    const pick = named.length
+      ? named[Math.floor(Math.random() * named.length)]
+      : { appid: keys[Math.floor(Math.random() * keys.length)], name: '' };
+    const appid = String(pick.appid);
+    const cover = covers.get(appid);
+    // The wide header reads better as a preset background; the cover crops well as the icon.
+    const header = path.join(userData, 'steam_cache', 'icon', appid, 'header.jpg');
+    return { appid, name: pick.name || '', icon: cover, image: fs.existsSync(header) ? header : cover };
+  } catch {
+    return {};
+  }
+});
+
 ipcMain.handle('list-sounds', async () => {
   const set = new Set();
   for (const { name } of notificationSounds.listSoundFiles([path.join(__dirname, '../sounds'), userSoundsDir()])) set.add(name);

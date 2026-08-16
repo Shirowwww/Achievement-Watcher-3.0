@@ -115,21 +115,15 @@ module.exports.load = () => {
       options.overlay.hotkey = 'Ctrl+Shift+K';
     }
     // Overlay (in-game) notification look — re-introduced as an OPTIONAL transport. The overlay
-    // is now the default delivery mode (with the Shirow preset).
+    // is now the default delivery mode (with the AW Next preset).
+    // A saved name that no longer names a preset is NOT rewritten here: resolvePresetFolder() maps
+    // a removed bundled preset onto the one that replaced it only after failing to find the name
+    // itself, so a user preset of the same name still wins.
     if (typeof options.overlay.notificationPreset !== 'string') {
-      options.overlay.notificationPreset = 'Shirow';
-    }
-    if (options.overlay.notificationPreset === 'Raposo') {
-      options.overlay.notificationPreset = 'Shirow';
+      options.overlay.notificationPreset = 'AW Next';
     }
     // Optional per-type preset overrides ('' = use notificationPreset): rare unlocks (≤10%) and
     // the platinum/100% popup can each render with their own preset (e.g. Xbox Series Rare/Platinum).
-    if (typeof options.overlay.notificationPresetRare !== 'string') {
-      options.overlay.notificationPresetRare = '';
-    }
-    if (typeof options.overlay.notificationPresetPlatinum !== 'string') {
-      options.overlay.notificationPresetPlatinum = '';
-    }
     if (typeof options.overlay.notificationPresetXenia !== 'string') {
       options.overlay.notificationPresetXenia = '';
     }
@@ -471,9 +465,7 @@ module.exports.load = () => {
       },
       overlay: {
         hotkey: 'Ctrl+Shift+K',
-        notificationPreset: 'Shirow',
-        notificationPresetRare: '',
-        notificationPresetPlatinum: '',
+        notificationPreset: 'AW Next',
         notificationPresetXenia: '',
         notificationPresetRpcs3: '',
         notificationPresetShadps4: '',

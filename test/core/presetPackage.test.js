@@ -613,3 +613,149 @@ test('an oversized member is refused on its declared size, before it is decompre
   assert.equal(res.error, 'asset-too-large');
   assert.deepEqual(fs.readdirSync(dirs.presets), []);
 });
+
+test('every designed property survives the round trip, not just the eight the builder started with', (t) => {
+  const dirs = makeWorkspace(t);
+  const schema = require(path.join(appRoot, 'util', 'presetSchema.js'));
+
+  // A design that moves every property off its default, built from the schema so a property added
+  // later is covered here the day it exists.
+  const design = {};
+  for (const property of schema.PRESET_PROPERTIES) {
+    if (property.type === 'number') design[property.key] = property.key === 'opacity' ? 0.4 : property.min + Math.round((property.max - property.min) / 3 / (property.step || 1)) * (property.step || 1);
+    else if (property.type === 'select') design[property.key] = property.values[property.values.length - 1];
+    else if (property.type === 'toggle') design[property.key] = !property.def;
+    else if (property.type === 'color') design[property.key] = '#123456';
+    else if (property.type === 'sound') design[property.key] = 'fanfare.wav';
+  }
+  const expected = schema.normalizeOptions(design);
+
+  writeSourcePreset(dirs.source, { options: { name: 'Everything', ...expected } });
+  const out = presetPackage.exportPreset({
+    presetDir: dirs.source,
+    name: 'Everything',
+    destination: path.join(dirs.out, 'everything.awpreset'),
+    options: expected,
+    appVersion: APP_VERSION,
+  });
+  assert.equal(out.ok, true, out.error);
+
+  const installed = presetPackage.installPackage({
+    file: out.file,
+    presetsDir: dirs.presets,
+    soundsDir: dirs.sounds,
+    appVersion: APP_VERSION,
+  });
+  assert.equal(installed.ok, true, installed.error);
+
+  const stored = JSON.parse(fs.readFileSync(path.join(dirs.presets, 'Everything', 'aw-preset.json'), 'utf8'));
+  for (const property of schema.PRESET_PROPERTIES) {
+    assert.equal(stored[property.key], expected[property.key], `${property.key} did not survive the package round trip`);
+  }
+});
+
+test('a preset that brings its own sound keeps pointing at the file that arrived with it', (t) => {
+  const dirs = makeWorkspace(t);
+  // The user already has a different sound under that name, so the import lands beside it — and the
+  // preset has to follow, or it silently plays the sound it was never designed with.
+  fs.writeFileSync(path.join(dirs.sounds, 'fanfare.wav'), 'MINE');
+  const file = writeZip(path.join(dirs.out, 'sound-preset.awpreset'), {
+    'manifest.json': manifest({ sound: 'fanfare.wav', options: { accent: '#00ff88', sound: 'fanfare.wav' } }),
+    'preset/index.html': INDEX_HTML,
+    'sounds/fanfare.wav': 'THEIRS',
+  });
+
+  const res = presetPackage.installPackage({ file, presetsDir: dirs.presets, soundsDir: dirs.sounds, appVersion: APP_VERSION });
+  assert.equal(res.ok, true, res.error);
+  assert.deepEqual(res.sounds, ['fanfare (2).wav']);
+
+  const stored = JSON.parse(fs.readFileSync(path.join(dirs.presets, 'Shared Preset', 'aw-preset.json'), 'utf8'));
+  assert.equal(stored.sound, 'fanfare (2).wav', 'the preset still names the sound it did not get');
+  // …and that is the sound the notification path will resolve for this preset.
+  const customPreset = require(path.join(appRoot, 'util', 'customPreset.js'));
+  assert.equal(customPreset.presetSound(path.join(dirs.presets, 'Shared Preset')), 'fanfare (2).wav');
+});
+
+test('a sound named in a manifest cannot become a path out of the sounds folder', (t) => {
+  const dirs = makeWorkspace(t);
+  const file = writeZip(path.join(dirs.out, 'evil-sound.awpreset'), {
+    'manifest.json': manifest({ options: { sound: '../../../Windows/System32/evil.wav' } }),
+    'preset/index.html': INDEX_HTML,
+  });
+  const res = presetPackage.installPackage({ file, presetsDir: dirs.presets, soundsDir: dirs.sounds, appVersion: APP_VERSION });
+  assert.equal(res.ok, true, res.error);
+  const stored = JSON.parse(fs.readFileSync(path.join(dirs.presets, 'Shared Preset', 'aw-preset.json'), 'utf8'));
+  assert.equal(stored.sound, '', 'a traversal survived the clamp into the stored options');
+});
+
+test('a package from a build before presets carried a sound keeps the one it names', (t) => {
+  const dirs = makeWorkspace(t);
+  const customPreset = require(path.join(appRoot, 'util', 'customPreset.js'));
+
+  /*
+    Older builds recorded the sound a preset was designed with in `manifest.sound`, because options
+    had no sound field yet. Reading only the options dropped it, so a preset shared from such a build
+    silently fell back to whatever the recipient's Notifications tab was set to.
+  */
+  const file = writeZip(path.join(dirs.out, 'legacy-sound.awpreset'), {
+    'manifest.json': manifest({ sound: 'Steam.wav', options: { bg: '#101010', accent: '#ff8800', width: 500 } }),
+    'preset/index.html': INDEX_HTML,
+  });
+
+  const res = presetPackage.installPackage({ file, presetsDir: dirs.presets, soundsDir: dirs.sounds, appVersion: APP_VERSION });
+  assert.equal(res.ok, true, res.error);
+
+  const installed = path.join(dirs.presets, 'Shared Preset');
+  assert.equal(JSON.parse(fs.readFileSync(path.join(installed, 'aw-preset.json'), 'utf8')).sound, 'Steam.wav');
+  assert.equal(customPreset.presetSound(installed), 'Steam.wav', 'the notification path cannot find the sound the package named');
+});
+
+test('a preset with no builder options still tells the app which sound it wants', (t) => {
+  const dirs = makeWorkspace(t);
+  const customPreset = require(path.join(appRoot, 'util', 'customPreset.js'));
+
+  // A hand-authored preset has no options file at all, so its manifest is the only place its sound
+  // can be recorded — and the only place the notification path can read it back from.
+  const file = writeZip(path.join(dirs.out, 'handmade.awpreset'), {
+    'manifest.json': manifest({ sound: 'Xbox.wav' }),
+    'preset/index.html': INDEX_HTML,
+  });
+  const res = presetPackage.installPackage({ file, presetsDir: dirs.presets, soundsDir: dirs.sounds, appVersion: APP_VERSION });
+  assert.equal(res.ok, true, res.error);
+
+  const installed = path.join(dirs.presets, 'Shared Preset');
+  assert.equal(fs.existsSync(path.join(installed, 'aw-preset.json')), false, 'a preset with no options must not become editable');
+  assert.equal(customPreset.presetSound(installed), 'Xbox.wav');
+});
+
+test('the two bookkeeping filenames are spelled once', () => {
+  // presetSound() reads both, so a second spelling in either module would make a preset's sound
+  // readable by one of them and invisible to the other.
+  const customPreset = require(path.join(appRoot, 'util', 'customPreset.js'));
+  assert.equal(presetPackage.PRESET_PACKAGE_FILE, customPreset.PRESET_PACKAGE_FILE);
+  assert.equal(customPreset.PRESET_PACKAGE_FILE, 'aw-package.json');
+  const source = fs.readFileSync(path.join(appRoot, 'util', 'presetPackage.js'), 'utf8');
+  assert.doesNotMatch(source, /const PRESET_PACKAGE_FILE = /, 'the manifest filename is declared twice');
+});
+
+test('a preset with no sound of its own is not given the exporter\u2019s', (t) => {
+  const dirs = makeWorkspace(t);
+  const customPreset = require(path.join(appRoot, 'util', 'customPreset.js'));
+
+  /*
+    The manifest also records the sound the preset was DESIGNED with, which is not the same as the
+    sound it asks for. Options carrying an empty sound mean "use whatever the Notifications tab is
+    set to" — inheriting the exporter's selection over that would pin a sound onto a preset that
+    deliberately had no opinion, and an export/import round trip would make it permanent.
+  */
+  const file = writeZip(path.join(dirs.out, 'no-opinion.awpreset'), {
+    'manifest.json': manifest({ sound: 'Steam Deck.wav', options: { accent: '#00ff88', sound: '' } }),
+    'preset/index.html': INDEX_HTML,
+  });
+  const res = presetPackage.installPackage({ file, presetsDir: dirs.presets, soundsDir: dirs.sounds, appVersion: APP_VERSION });
+  assert.equal(res.ok, true, res.error);
+
+  const installed = path.join(dirs.presets, 'Shared Preset');
+  assert.equal(JSON.parse(fs.readFileSync(path.join(installed, 'aw-preset.json'), 'utf8')).sound, '');
+  assert.equal(customPreset.presetSound(installed), '', 'an opinionless preset was pinned to a sound');
+});

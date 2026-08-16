@@ -50,10 +50,21 @@ test('a preset never sets a CSS variable nothing reads', () => {
   // This is the static signature of the Xbox Series bug above: the script published an anchor the
   // stylesheet never consumed, so the popup silently used a different one. A variable set at
   // runtime and read by no rule is either dead weight or a wire that came loose.
+  const { PRESET_ENGINE } = require('../../app/util/customPreset.js');
+  /*
+    Except where the script is not the preset's own. The shared engine publishes the notification's
+    artwork to every preset that runs it, because any design MAY paint it - a design that does not
+    (most of them) is declining a capability, not leaving a wire loose. Everything else the engine
+    publishes still has to be consumed: --scale and --ach-hold are what scale and time the card.
+  */
+  const SHARED_ENGINE_OPTIONAL = new Set(['--artwork']);
+
   for (const preset of readPresets()) {
     const cssPath = path.join(preset.dir, 'style.css');
     const styles = preset.html + (fs.existsSync(cssPath) ? fs.readFileSync(cssPath, 'utf8') : '');
+    const sharedEngine = preset.html.includes(PRESET_ENGINE.trim());
     for (const [, name] of preset.html.matchAll(/setProperty\(\s*["'](--[a-z0-9-]+)/gi)) {
+      if (sharedEngine && SHARED_ENGINE_OPTIONAL.has(name)) continue;
       assert.match(styles, new RegExp(`var\\(\\s*${name}\\b`), `${preset.name} sets ${name} but never reads it`);
     }
   }

@@ -6042,9 +6042,12 @@ body {
   background: transparent !important;
 }
 
+/* One row of peers: every button takes an equal share of the line, with one gap between them all.
+   Sized from a basis rather than a column count, so the row still fills itself if it ever has to
+   wrap — and equal shares mean the widest label decides the width, not the order they are in. */
 #settings #options-notify-test > li {
   display: block;
-  width: auto;
+  flex: 1 1 120px;
   min-width: 0;
   min-height: 0;
   margin: 0;
@@ -6053,8 +6056,14 @@ body {
 }
 
 #settings #options-notify-test .btn {
-  width: auto;
+  width: 100%;
+  height: 100%;
   margin: 0;
+  /* A label that does not fit its share wraps instead of spilling out of the button: the five
+     translations of these words differ by more than twice in length. */
+  white-space: normal;
+  line-height: 1.2;
+  text-align: center;
 }
 
 #options-notify-test .btn,
@@ -7255,7 +7264,7 @@ body {
 }
 
 #settings .emulator-login-fields input,
-#settings .cust-field input[type='text'] {
+#settings .pd-file input[type='text'] {
   box-sizing: border-box;
   min-height: 32px;
   border: 1px solid var(--set-control-border);
@@ -7311,7 +7320,7 @@ body {
   border-radius: 4px;
 }
 #settings .emulator-login-fields input:focus,
-#settings .cust-field input[type='text']:focus {
+#settings .pd-file input[type='text']:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
@@ -7507,72 +7516,117 @@ body {
   justify-content: center;
 }
 
-#settings #options-notify-customiser > li {
+/* Preset designer. Everything the designer itself draws follows the app theme; the notification
+   being authored is rendered by the generated stylesheet inside #pd-frame, which is deliberately
+   NOT themed — it is the popup, painted from the user's own choices.
+
+   An ordinary settings row (`li.hasHelper`) is a two-column label|control grid with explicit row
+   placement. The designer is not that shape — it is a stack of full-width blocks — so its row opts
+   out of the grid entirely rather than fighting the column widths and pinned rows. */
+#settings #options-notify-designer > li {
+  display: block;
   padding: 18px 20px 20px;
 }
 
-/* Custom-preset builder. The controls and the stage behind the sample popup follow the app theme;
-   only the sample popup itself is painted from the user's chosen colours (that IS the preview).
-
-   An ordinary settings row (`li.hasHelper`) is a two-column label|control grid with explicit row
-   placement. The builder is not that shape — it is a stack of full-width blocks — so its row opts
-   out of the grid entirely rather than fighting the column widths and pinned rows. */
-#settings #options-notify-customiser > li {
-  display: block;
+/* Starting points, the first row of the designer card. A swatch painted from the template's own
+   colours, so the row reads as designs rather than as a list of words. */
+#settings #pd-templates-row {
+  border-bottom: 1px solid var(--set-hairline-soft);
 }
 
-#settings #options-notify-customiser > li > .left {
+#settings .pd-templates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 0 4px;
+}
+
+#settings .pd-template {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 7px;
+  border: 1px solid var(--set-control-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--set-surface-sunken) 62%, black);
+  color: var(--text);
+  font-family: 'Open-Sans';
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+#settings .pd-template:hover {
+  border-color: var(--accent);
+}
+
+#settings .pd-template.is-on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+#settings .pd-template-swatch {
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+/* Said out loud rather than hiding the tab: presets only paint the in-game overlay, and the current
+   transport is Windows notifications. */
+#settings .pd-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px 12px;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--text-muted);
+  font-size: 0.85em;
+}
+
+#settings .pd-notice[hidden] {
+  display: none;
+}
+
+#settings #options-notify-designer > li > .left {
   display: flex;
   align-items: center;
   gap: 8px;
   width: 100%;
 }
 
-#settings .cust-grid {
+/* Which preset is being edited, and under what name. Above the workspace because it applies to
+   everything below it. */
+#settings .pd-bar {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 12px 18px;
   width: 100%;
-  padding: 10px 0 4px;
+  padding: 12px 0 4px;
 }
 
-#settings #options-notify-customiser .cust-field {
+#settings .pd-file {
   display: flex;
   flex-direction: column;
   gap: 7px;
   min-width: 0;
+  color: var(--text-muted);
   font-size: 0.85em;
 }
 
-#settings .cust-field-wide {
-  grid-column: span 2;
-}
-
-#settings .cust-field > span {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  color: var(--text-muted);
-}
-
-/* Live readout for each slider — the builder used to show a bare handle with no value at all. */
-#settings .cust-value {
-  color: var(--text);
-  font-size: 11.5px;
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-}
-
-#settings #cust-name,
-#settings #cust-load {
+#settings .pd-file input[type='text'],
+#settings .pd-file select {
   width: 100%;
   box-sizing: border-box;
-  padding-left: 14px;
-}
-
-#settings #cust-load {
   min-height: 32px;
+  padding-left: 14px;
   border: 1px solid var(--set-control-border);
   border-radius: 8px;
   background: color-mix(in srgb, var(--set-surface-sunken) 62%, black);
@@ -7581,73 +7635,422 @@ body {
   font-size: 13px;
 }
 
-#settings #cust-name::placeholder {
-  color: var(--text-muted);
+/* Preview beside the controls, folding to one column when the window is too narrow for both. */
+#settings .pd-workspace {
+  display: grid;
+  grid-template-columns: minmax(300px, 1.15fr) minmax(280px, 1fr);
+  gap: 16px;
+  width: 100%;
+  padding: 6px 0 10px;
 }
 
-#settings .cust-stage {
+/* Below this the two columns would both be too narrow to be useful: the preview goes above the
+   controls instead, still sticky, so it stays visible while the controls scroll under it. */
+@media (max-width: 1180px) {
+  #settings .pd-workspace {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The preview follows the controls down the page: a slider at the bottom of the stack is useless if
+   its effect is scrolled off screen. */
+#settings .pd-preview {
+  position: sticky;
+  top: 4px;
+  align-self: start;
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+#settings .pd-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Segmented switches: preview view, and which notification state is being shown. */
+#settings .pd-seg {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--set-control-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--set-surface-sunken) 62%, black);
+}
+
+#settings .pd-seg button {
+  padding: 4px 9px;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: 'Open-Sans';
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#settings .pd-seg button + button {
+  border-left: 1px solid var(--set-hairline-soft);
+}
+
+#settings .pd-seg button.is-on {
+  background: var(--accent);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+#settings .pd-res {
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--set-control-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--set-surface-sunken) 62%, black);
+  color: var(--text);
+  font-family: 'Open-Sans';
+  font-size: 12px;
+}
+
+#settings #pd-play {
+  width: auto;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+/* Only Screen view is drawn at a display resolution, so the picker is not offered in Card view. */
+#settings .pd-res[hidden] {
+  display: none;
+}
+
+/* The backdrop the popup is judged against. Neutral and slightly checkered so a translucent or
+   light-coloured card is readable without the app's own panel colour standing in for a game. */
+#settings .pd-stage {
+  display: flex;
+  align-items: center;
   justify-content: center;
   width: 100%;
-  margin: 6px 0;
-  padding: 16px 12px;
-  overflow-x: auto;
+  min-height: 190px;
+  padding: 14px;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1px solid var(--set-hairline-soft);
+  border-radius: 10px;
+  background-color: #1a1c22;
+  background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.035) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.035) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.035) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.035) 75%);
+  background-size: 22px 22px;
+  background-position: 0 0, 0 11px, 11px -11px, -11px 0;
+}
+
+/* What the popup is judged against: transparency, a dark scene, a bright one, or real artwork. */
+#settings .pd-stage[data-backdrop='dark'] {
+  background-color: #0a0c10;
+  background-image: none;
+}
+
+#settings .pd-stage[data-backdrop='light'] {
+  background-color: #dfe4ec;
+  background-image: none;
+}
+
+/* One of the user's own game headers, set inline by the designer. The painted scene underneath is
+   what an empty library gets: still something to judge contrast against, unlike a flat panel. */
+#settings .pd-stage[data-backdrop='artwork'] {
+  background-color: #10151f;
+  background-image: radial-gradient(120% 90% at 18% 12%, rgba(120, 170, 255, 0.28), transparent 60%),
+    radial-gradient(90% 80% at 82% 88%, rgba(255, 140, 90, 0.22), transparent 62%),
+    linear-gradient(160deg, #1b2740 0%, #0c1017 70%);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+
+#settings .pd-backdrops button {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+#settings .pd-screen {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+}
+
+/* Screen view: a mock display at the chosen resolution, with the popup at its true relative size in
+   the corner it will actually appear in. */
+#settings .pd-screen.is-screen {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--set-hairline-soft);
+  border-radius: 6px;
+  background: linear-gradient(160deg, #2a3350 0%, #131722 60%, #0c0e14 100%);
+}
+
+#settings .pd-screen.is-screen .pd-frame-wrap {
+  position: absolute;
+}
+
+#settings .pd-frame-wrap {
+  overflow: hidden;
+}
+
+/* Compare: the three notifications a preset has to look right in, at once. Nothing else answers
+   "does my rare unlock actually look rare?" in one glance. */
+#settings .pd-compare {
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+#settings .pd-stage[data-view='compare'] .pd-screen {
+  display: none;
+}
+
+#settings .pd-stage[data-view='compare'] .pd-compare {
+  display: flex;
+}
+
+#settings .pd-compare-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+#settings .pd-compare-label {
+  flex: 0 0 68px;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-align: right;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+#settings .pd-compare-frame {
+  overflow: hidden;
+}
+
+#settings .pd-compare iframe {
+  display: block;
+  border: 0;
+  transform-origin: 0 0;
+  background: transparent;
+}
+
+#settings #pd-frame {
+  display: block;
+  border: 0;
+  transform-origin: 0 0;
+  background: transparent;
+  color-scheme: normal;
+}
+
+#settings .pd-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 0.8em;
+}
+
+/* Where the popup appears on screen. Nine cells with the middle one empty: that is the setting's own
+   shape, and it is the same value the Notifications tab keeps — the designer only mirrors it. */
+#settings .pd-anchors {
+  display: grid;
+  grid-template-columns: repeat(3, 14px);
+  grid-template-rows: repeat(3, 10px);
+  gap: 3px;
+}
+
+#settings .pd-anchors button {
+  padding: 0;
+  border: 1px solid var(--set-control-border);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--set-surface-sunken) 62%, black);
+  cursor: pointer;
+}
+
+#settings .pd-anchors button:hover {
+  border-color: var(--accent);
+}
+
+#settings .pd-anchors button.is-on {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+#settings .pd-anchor-hole {
+  display: block;
+}
+
+#settings .pd-foot-note {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scale is an app setting, like the position beside it — the designer only mirrors both. */
+#settings #pd-scale {
+  min-height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--set-control-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--set-surface-sunken) 62%, black);
+  color: var(--text);
+  font-family: 'Open-Sans';
+  font-size: 11.5px;
+}
+
+/* --- controls ------------------------------------------------------------------------------- */
+
+#settings .pd-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+#settings .pd-group {
+  overflow: hidden;
   border: 1px solid var(--set-hairline-soft);
   border-radius: 10px;
   background: color-mix(in srgb, var(--set-surface-sunken) 55%, transparent);
 }
 
-/* DELIBERATELY not themed. This is the sample popup being authored, so it is painted from the
-   builder's own colour pickers (updatePresetPreview writes these inline on every input) — the app
-   palette must not leak into a preview of what the notification will look like in a game. The
-   literals here are only the starting values, and they mirror the generator's defaults. */
-#settings #cust-preview {
+#settings .pd-group-head {
   display: flex;
-  flex: 0 0 auto;
   align-items: center;
-  gap: 12px;
-  box-sizing: border-box;
-  padding: 12px 18px;
-  border-left: 4px solid #4aa3ff;
-  border-radius: 12px;
-  background: #16181d;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, calc(0.4 * var(--shadow-scale)));
-  color: #ffffff;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  font-size: 16px;
-}
-
-#settings #cust-preview .cust-preview-icon-wrap {
-  flex: 0 0 auto;
-}
-
-#settings #cust-preview .cust-preview-text {
-  min-width: 0;
-}
-
-#settings #cust-preview-icon {
-  color: #4aa3ff;
-  font-size: 40px;
-}
-
-#settings #cust-preview-title {
-  overflow: hidden;
-  color: #4aa3ff;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: 'Open-Sans';
+  font-size: 13px;
   font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-align: left;
+  cursor: pointer;
 }
 
-#settings #cust-preview-detail {
-  overflow: hidden;
-  opacity: 0.9;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+#settings .pd-group-head > span {
+  flex: 1 1 auto;
+}
+
+#settings .pd-group-head .fa-chevron-down {
+  color: var(--text-muted);
+  font-size: 11px;
+  transition: transform 0.15s ease;
+}
+
+#settings .pd-group.is-open .pd-group-head .fa-chevron-down {
+  transform: rotate(180deg);
+}
+
+#settings .pd-group-body {
+  display: none;
+  padding: 0 12px 12px;
+}
+
+#settings .pd-group.is-open .pd-group-body {
+  display: block;
+}
+
+#settings .pd-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(124px, 1fr));
+  gap: 12px 14px;
+}
+
+/* `display: grid` above beats the browser's own `[hidden] { display: none }`, so without this the
+   Advanced block was on screen from the start and its button appeared to do nothing at all. */
+#settings .pd-fields[hidden] {
+  display: none;
+}
+
+#settings .pd-fields + .pd-more {
+  margin-top: 10px;
+}
+
+#settings .pd-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.82em;
+}
+
+#settings .pd-field > span {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-muted);
+}
+
+/* A property that only applies in one mode (a second gradient colour, artwork dimming) is hidden
+   rather than shown doing nothing. */
+#settings .pd-field[hidden] {
+  display: none;
+}
+
+#settings .pd-field select {
+  min-height: 28px;
+  padding: 0 6px;
+  border: 1px solid var(--set-control-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--set-surface-sunken) 62%, black);
+  color: var(--text);
+  font-family: 'Open-Sans';
+  font-size: 12px;
+}
+
+/* Live readout for each slider. */
+#settings .pd-value {
+  color: var(--text);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* The per-group Advanced disclosure: the less common half of a group, one click away. */
+#settings .pd-more {
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: 'Open-Sans';
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+#settings .pd-more:hover {
+  color: var(--accent);
+}
+
+/* Open: the group's advanced half is on screen, so the disclosure reads as a switch rather than a
+   button that appears to do nothing the second time it is pressed. */
+#settings .pd-more.is-on {
+  color: var(--accent);
+}
+
+#settings .pd-more i {
+  margin-right: 5px;
+}
+
+#settings .pd-adv {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--set-hairline-soft);
 }
 
 /* The action row also carries `.right`, whose `#settings .arrow-list li .right` rule pins a 230px
    column — so this needs the extra id to claim the full width and its natural height. */
-#settings #options-notify-customiser .cust-actions {
+#settings #options-notify-designer .pd-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -7657,23 +8060,63 @@ body {
   height: auto;
 }
 
-/* An action row normally holds one button and stretches it; this one holds two, side by side. */
-#settings #options-notify-customiser .cust-actions .inline-action-btn {
+/* An action row normally holds one button and stretches it; these hold several, side by side. */
+#settings #options-notify-designer .pd-actions .inline-action-btn {
   width: auto;
+  min-height: 34px;
+  padding: 0 14px;
+  gap: 8px;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
 }
 
-#settings #cust-status {
+/* Saving is the action the whole tab leads to, so it is the one that looks like a button rather than
+   a row of equals. */
+#settings #options-notify-designer .pd-actions #btn-create-preset {
+  border-color: transparent;
+  background: var(--accent);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+#settings #options-notify-designer .pd-actions #btn-create-preset:hover {
+  background: color-mix(in srgb, var(--accent) 82%, white);
+}
+
+#settings #options-notify-designer .pd-actions .inline-action-btn.secondary:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+#settings #options-notify-designer .pd-actions .inline-action-btn:active {
+  transform: translateY(1px);
+}
+
+/* Deleting is not undoable, so it says so on hover instead of looking like its neighbours. */
+#settings #options-notify-designer .pd-actions #btn-delete-preset:hover {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+  color: var(--danger);
+}
+
+/* Import and Export are file actions, not design actions: a little air separates the two groups. */
+#settings #options-notify-designer .pd-actions #btn-import-preset {
+  margin-left: 6px;
+  border-left-width: 1px;
+}
+
+#settings #pd-status {
   flex: 1 1 auto;
   min-width: 0;
   color: var(--text-muted);
   font-size: 0.85em;
 }
 
-#settings #cust-status.is-ok {
+#settings #pd-status.is-ok {
   color: var(--success);
 }
 
-#settings #cust-status.is-error {
+#settings #pd-status.is-error {
   color: var(--danger);
 }
 

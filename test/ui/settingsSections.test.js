@@ -96,8 +96,9 @@ test('section keys are unique, so two cards never share one open/closed state', 
   assert.ok(seen.size >= 20, `expected the whole panel to be covered, only keyed ${seen.size} sections`);
 });
 
-test('the preset builder is a real section and is the one collapsed by default', () => {
-  assert.deepEqual(sectionRules.DEFAULT_COLLAPSED, ['options-notify-customiser']);
+test('anything collapsed by default is a section that actually exists', () => {
+  // Empty since the preset designer moved to a tab of its own — but a name left here that no longer
+  // matches a card would silently collapse nothing, so the list is still checked against the markup.
   const keys = allSections().map(keyOf);
   for (const key of sectionRules.DEFAULT_COLLAPSED) {
     assert.ok(keys.includes(key), `"${key}" is collapsed by default but is not a section key`);

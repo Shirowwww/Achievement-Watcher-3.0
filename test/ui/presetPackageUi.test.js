@@ -1,6 +1,6 @@
 'use strict';
 
-// Import/Export are two buttons in the custom-preset card. Nothing here renders, so these guard the
+// Import/Export are two buttons in the preset designer. Nothing here renders, so these guard the
 // wiring the buttons depend on: the markup, the locale bindings and what the main process does with
 // the request.
 
@@ -14,33 +14,36 @@ const htmlParser = require(path.join(appRoot, 'node_modules', 'node-html-parser'
 
 const read = (...parts) => fs.readFileSync(path.join(appRoot, ...parts), 'utf8');
 
-test('the Import and Export buttons sit in the custom-preset actions', () => {
+test('the Import and Export buttons sit in the preset designer actions', () => {
   const document = htmlParser.parse(read('view', 'app.html'));
-  const actions = document.querySelector('#options-notify-customiser .cust-actions');
-  assert.ok(actions, 'the custom-preset action row is gone');
+  // The card also holds the starting points and their own actions, so target the designer's row.
+  const actions = document.querySelector('#options-notify-designer #pd-actions');
+  assert.ok(actions, 'the preset designer action row is gone');
 
   for (const id of ['btn-import-preset', 'btn-export-preset']) {
     const button = actions.querySelector(`#${id}`);
-    assert.ok(button, `${id} is not in the custom-preset actions`);
+    assert.ok(button, `${id} is not in the preset designer actions`);
     assert.equal(button.tagName, 'BUTTON');
   }
   // Both labels are localized through their own span, like every other button in this card.
-  assert.ok(actions.querySelector('#cust-lbl-import'));
-  assert.ok(actions.querySelector('#cust-lbl-export'));
+  const labels = actions.querySelectorAll('[data-lang]').map((node) => node.getAttribute('data-lang'));
+  assert.ok(labels.includes('importLabel'));
+  assert.ok(labels.includes('exportLabel'));
 });
 
 test('every string the two buttons show is bound from the locale', () => {
   const loader = read('locale', 'loader.js');
-  assert.match(loader, /#cust-lbl-import'\)\.text\(clear\(c\.importLabel\)\)/, 'the Import label is not bound');
-  assert.match(loader, /#cust-lbl-export'\)\.text\(clear\(c\.exportLabel\)\)/, 'the Export label is not bound');
+  // The designer's labels are bound in one pass over `data-lang`, so the Import and Export spans are
+  // covered by that loop rather than by a selector each.
+  assert.match(loader, /\$\("#settings \.content\[data-view='presets'\] \[data-lang\]"\)\.each/, 'the designer labels are not bound');
   assert.match(loader, /attr\('data-imported', clear\(c\.imported\)\)/, 'the import status is not bound');
   assert.match(loader, /attr\('data-exported', clear\(c\.exported\)\)/, 'the export status is not bound');
 
   // The keys have to exist in English before the parity suite can require them everywhere else.
   const english = JSON.parse(read('locale', 'lang', 'english.json'));
-  const customiser = english.settings.notification.option.customiser;
+  const designer = english.settings.notification.option.designer;
   for (const key of ['importLabel', 'exportLabel', 'imported', 'exported']) {
-    assert.ok(String(customiser[key] || '').trim(), `customiser.${key} is missing`);
+    assert.ok(String(designer[key] || '').trim(), `designer.${key} is missing`);
   }
 });
 
@@ -84,7 +87,7 @@ test('importing loads the preset into the builder controls', () => {
   assert.ok(handler, 'the import handler is gone');
   assert.match(handler[0], /await loadPresetIntoBuilder\(res\.name\);/, 'an import does not load the preset into the controls');
   // The picker keeps using the same loader, so the two paths cannot drift apart.
-  const picker = /\$\('#cust-load'\)\.on\('change'[\s\S]*?\n    \}\);/.exec(settings);
+  const picker = /\$\('#pd-load'\)\.on\('change'[\s\S]*?\n    \}\);/.exec(settings);
   assert.ok(picker && /await loadPresetIntoBuilder\(name\)/.test(picker[0]), 'the picker no longer shares the loader');
 });
 
@@ -136,11 +139,11 @@ test('an imported preset does not load meaningless slider values or arm an overw
   const settings = read('ui', 'settings.js');
   assert.match(settings, /if \(opts\.editable === false\) \{/, 'the builder still loads defaults over an imported preset');
   // The name field is cleared, so Create makes a new preset instead of replacing the artwork.
-  assert.match(settings, /if \(opts\.editable === false\) \{\s*\$\('#cust-name'\)\.val\(''\);/);
+  assert.match(settings, /if \(opts\.editable === false\) \{\s*\$\('#pd-name'\)\.val\(''\);/);
   assert.match(settings, /attr\('data-imported-only'\)/, 'nothing explains why the controls did not move');
 
   const english = JSON.parse(read('locale', 'lang', 'english.json'));
-  assert.ok(String(english.settings.notification.option.customiser.importedOnly || '').trim());
+  assert.ok(String(english.settings.notification.option.designer.importedOnly || '').trim());
   assert.match(read('locale', 'loader.js'), /attr\('data-imported-only', clear\(c\.importedOnly\)\)/);
 });
 
@@ -152,7 +155,7 @@ test('deleting a preset never moves the user onto an unrelated one', () => {
   // Deleting the active preset used to fall through to presets[0], i.e. whatever sorts first
   // ("ArmsofGod"), which looked like the setting had failed to save.
   assert.match(helper[0], /\[preferred, previous, DEFAULT_PRESET_NAME\]\.find\(\(n\) => n && names\.includes\(n\)\)/);
-  assert.match(settings, /const DEFAULT_PRESET_NAME = 'Shirow';/);
+  assert.match(settings, /const DEFAULT_PRESET_NAME = 'AW Next';/);
 
   // Every rebuild of the menu goes through the helper, so the fallback cannot differ between them.
   for (const handler of ['btn-delete-preset', 'btn-create-preset', 'btn-import-preset']) {
@@ -198,11 +201,17 @@ test('Preview shows the imported preset, not the unrelated slider draft', () => 
 
   // An imported preset has no builder options, so the scratch preset built from the controls
   // previewed a default dark card instead of the preset the user had just picked.
-  assert.match(handler[0], /const loaded = String\(\$\('#cust-load'\)\.val\(\) \|\| ''\);/);
+  assert.match(handler[0], /const loaded = String\(\$\('#pd-load'\)\.val\(\) \|\| ''\);/);
   assert.match(handler[0], /if \(loaded && !isEditablePreset\(loaded\)\) \{/);
-  assert.match(handler[0], /overlayTestData\('toast', loaded, loaded\)/, 'the preview does not render the selected preset');
-  // The builder's own designs still go through the scratch preset, so an unsaved draft stays previewable.
-  assert.match(handler[0], /invoke\('preview-custom-preset', readPresetOptions\(\)\)/);
+  assert.match(handler[0], /overlayTestData\(kind, loaded, loaded\)/, 'the preview does not render the selected preset');
+  // The popup on screen shows the state the designer is previewing, so a rare or completion design
+  // can be judged at full size and not only as a normal unlock.
+  assert.match(handler[0], /const kind = previewState === 'completion' \? 'platinum' :/);
+  // The designer's own drafts still go through the scratch preset, so an unsaved one stays previewable.
+  assert.match(handler[0], /const options = readPresetOptions\(\);/);
+  assert.match(handler[0], /invoke\('preview-custom-preset', options\)/);
+  // A preset that carries its own sound previews with it — the one thing the inline preview cannot show.
+  assert.match(handler[0], /if \(options\.sound\) data\.soundPath = resolveSoundFile\(options\.sound\);/);
 });
 
 test('the builder never offers to "Update" a preset it cannot rebuild', () => {

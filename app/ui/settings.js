@@ -15,6 +15,13 @@ const scanScopeTools = require(path.join(appPath, 'parser/scanScope.js'));
 const emulatorFixEligibility = require(path.join(appPath, 'util/emulatorFixEligibility.js'));
 const { t } = require(path.join(appPath, 'locale/t.js'));
 const interfaceMode = require(path.join(appPath, 'util/interfaceMode.js'));
+const { legacyPresetAlias } = require(path.join(appPath, 'util/notificationPreset.js'));
+
+/*
+  What the sound dropdown stores when the user picks "Random". It is not a filename, so it can never
+  collide with one: util/presetSchema.js's SOUND_RE requires an extension, and this has none.
+*/
+const RANDOM_SOUND_VALUE = '__random__';
 let listeningHotkey = false;
 let keysDown = new Set();
 let keys = '';
@@ -395,7 +402,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
     window.addEventListener('gamepadconnected', populateControllerBindingOptions);
     window.addEventListener('gamepaddisconnected', populateControllerBindingOptions);
-    $(document).on('customiser-labels-changed', populateControllerBindingOptions);
+    $(document).on('locale-labels-changed', populateControllerBindingOptions);
 
     $('#btn-onboarding-open')
       .off('click.awOnboardingOpen')
@@ -526,7 +533,6 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#option_notifMode').val(app.config.notification_transport.mode || 'auto').change();
       $('#option_overlayPosition').val(cfgOverlay.notificationPosition || 'center-bottom').change();
       $('#option_overlayScale').val(String(cfgOverlay.notificationScale || 1)).change();
-      $('#option_overlayRandomSound').val(String(cfgOverlay.randomSound === true)).change();
       $('#option_overlayVolume').val(String(cfgOverlay.notificationVolume != null ? cfgOverlay.notificationVolume : 100)).change();
       $('#option_overlayDuration').val(String(cfgOverlay.notificationDuration || 'auto')).change();
       const cfgSouvenir = app.config.souvenir || {};
@@ -538,17 +544,27 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const presetsReady = ipcRenderer
         .invoke('list-presets')
         .then((presets) => {
-          const list = presets && presets.length ? presets : ['Shirow', 'Default'];
+          const list = presets && presets.length ? presets : ['AW Next', 'Deck'];
           const sel = $('#option_overlayPreset');
           sel.empty();
           list.forEach((name) => {
             sel.append($('<option>').attr('value', name).text(name));
           });
-          sel.val(cfgOverlay.notificationPreset || 'Shirow');
+          /*
+            Show what the notification will actually render. A config naming a bundled preset that
+            has since been redesigned away resolves to the preset that replaced it (see
+            util/notificationPreset.js), so the dropdown must land there too - otherwise the setting
+            reads as empty while the popup happily renders something.
+          */
+          const savedPreset = cfgOverlay.notificationPreset || 'AW Next';
+          const shownPreset = list.includes(savedPreset)
+            ? savedPreset
+            : list.includes(legacyPresetAlias(savedPreset))
+              ? legacyPresetAlias(savedPreset)
+              : 'AW Next';
+          sel.val(shownPreset);
           // Per-type overrides: same preset list plus a "same as main" ('' value) first entry.
           for (const [id, value] of [
-            ['#option_overlayPresetRare', cfgOverlay.notificationPresetRare || ''],
-            ['#option_overlayPresetPlatinum', cfgOverlay.notificationPresetPlatinum || ''],
             ['#option_overlayPresetXenia', cfgOverlay.notificationPresetXenia || ''],
             ['#option_overlayPresetRpcs3', cfgOverlay.notificationPresetRpcs3 || ''],
             ['#option_overlayPresetShadps4', cfgOverlay.notificationPresetShadps4 || ''],
@@ -559,7 +575,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
             list.forEach((name) => {
               typeSel.append($('<option>').attr('value', name).text(name));
             });
-            typeSel.val(list.includes(value) ? value : '');
+            typeSel.val(list.includes(value) ? value : list.includes(legacyPresetAlias(value)) ? legacyPresetAlias(value) : '');
           }
         })
         .catch(() => {});
@@ -569,8 +585,14 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           const sel = $('#option_overlaySound');
           sel.empty();
           sel.append($('<option>').attr('value', '').text(sel.attr('data-lang-none') || ''));
+          /*
+            "Random" is a sound you pick, not a switch beside the list. It used to be its own row,
+            which meant the sound dropdown could read "Steam.wav" while every notification played
+            something else — two controls describing one outcome, and the wrong one on top.
+          */
+          sel.append($('<option>').attr('value', RANDOM_SOUND_VALUE).text(sel.attr('data-lang-random') || ''));
           (sounds || []).forEach((name) => sel.append($('<option>').attr('value', name).text(name.replace(/\.[^.]+$/, ''))));
-          sel.val(cfgOverlay.notificationSound || '');
+          sel.val(cfgOverlay.randomSound === true ? RANDOM_SOUND_VALUE : cfgOverlay.notificationSound || '');
         })
         .catch(() => {});
 
@@ -2533,14 +2555,30 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const mode = $('#option_notifMode').val() || 'auto';
       const visible = mode !== 'toast';
       // Sound controls also apply to Windows toasts.
-      const KEEP_VISIBLE_OVERLAY_IDS = new Set(['lbl-overlaySound', 'lbl-overlayRandomSound', 'lbl-overlayVolume']);
+      const KEEP_VISIBLE_OVERLAY_IDS = new Set(['lbl-overlaySound', 'lbl-overlayVolume']);
       $('#options-notify-overlay > li:not(:first-child)').each(function () {
         const labelId = $(this).find('[id^="lbl-overlay"]').first().attr('id') || '';
         animateOverlaySettingCollapse(this, visible || KEEP_VISIBLE_OVERLAY_IDS.has(labelId));
       });
-      animateOverlaySettingCollapse($('#options-notify-customiser').closest('.arrow-list')[0], visible);
     }
-    $('#option_notifMode').on('change', updateOverlayOptionsVisibility);
+    /*
+      Presets style the in-game overlay, and the transport decides whether that overlay is used at
+      all: on Windows notifications, nothing a preset describes is ever drawn. So the whole tab goes
+      away rather than offering an authoring surface with no effect — and if it was the tab on screen
+      when the transport changed, the panel falls back to the Notification tab that caused it.
+    */
+    function updatePresetTabVisibility() {
+      const unused = ($('#option_notifMode').val() || 'auto') === 'toast';
+      $("#settingNav li[data-view='presets']").toggleClass(interfaceMode.HIDDEN_CLASS, unused);
+      $("#settings .box section.content[data-view='presets']").toggleClass(interfaceMode.HIDDEN_CLASS, unused);
+      if (unused && $("#settingNav li[data-view='presets']").hasClass('active')) {
+        $("#settingNav li[data-view='notification']").trigger('click');
+      }
+    }
+    $('#option_notifMode').on('change', function () {
+      updateOverlayOptionsVisibility();
+      updatePresetTabVisibility();
+    });
     updateOverlayOptionsVisibility();
 
     // Send notification test requests through the watchdog websocket.
@@ -2635,17 +2673,11 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     }
     // Build a notification test payload using the current overlay settings.
     function overlayTestData(kind, presetOverride, label, game) {
-      const mainPreset = $('#option_overlayPreset').val() || 'Shirow';
-      // Match the per-type preset used by real notifications.
-      const preset =
-        presetOverride ||
-        (kind === 'rare'
-          ? $('#option_overlayPresetRare').val() || mainPreset
-          : kind === 'platinum'
-          ? $('#option_overlayPresetPlatinum').val() || mainPreset
-          : mainPreset);
+      // One preset renders every kind of notification: a rare unlock and a 100% completion are
+      // states the preset itself paints, not separate presets to pick.
+      const preset = presetOverride || $('#option_overlayPreset').val() || 'AW Next';
       const presetLabel = label || preset;
-      const sound = $('#option_overlaySound').val() || '';
+      const sound = soundForPreview($('#option_overlaySound').val() || '');
       const rarePct = kind === 'rare' ? randomRareRarity() : null;
       const texts = {
         toast: {
@@ -2697,6 +2729,9 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           // `image` is the alias createNotificationWindow() maps onto imagePath/headerPath, which is
           // what the Game Cover preset paints its background from.
           image: (game && game.image) || '',
+          // The game the unlock came from, for presets that print it. A generic test has no game, so
+          // it names a sample one rather than leaving the row a preset asked for empty.
+          gameName: (game && game.name) || t('preset-sample-game', 'Sample Game', 'Jeu d’exemple'),
           // A rare unlock is a normal achievement notification carrying a rarityPercent.
           notificationType: kind === 'toast' || kind === 'rare' ? 'achievement' : kind,
           rarityPercent: rarePct,
@@ -2724,6 +2759,17 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       if ($(btn).hasClass('is-running')) return;
       setNotificationTestBusy(btn, true);
       try {
+        /*
+          A test with no game of its own borrows one from the library, so the preview is judged
+          against real cover art instead of the generic badge and the app's own icon. A fresh
+          install has nothing cached yet, and then the placeholder still applies.
+        */
+        if (!game) {
+          try {
+            const sample = await ipcRenderer.invoke('notification-sample-art');
+            if (sample && sample.icon) game = sample;
+          } catch {}
+        }
         // A preview is one notification. In "Both" mode prefer the styled overlay preview; the
         // Windows transport remains directly testable by selecting Windows notification.
         if (mode === 'toast') await runNotificationTest(kind + '-test', btn, game);
@@ -2764,8 +2810,25 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     // Preview a sound at the configured overlay volume (0–200%). >100% needs a WebAudio gain node
     // (Audio.volume caps at 1.0) — mirrors how the real notification window plays it (init.js).
     let previewAudioCtx = null;
+    /*
+      A real file for whatever the sound dropdown is showing.
+
+      Random has to answer with an actual sound here, not with silence: it is a choice like any
+      other in that list, so previewing it and dragging the volume under it have to make a noise -
+      and a different one each time, which is the whole point of it.
+    */
+    function soundForPreview(name) {
+      if (name !== RANDOM_SOUND_VALUE) return name;
+      const pool = $('#option_overlaySound option')
+        .map(function () {
+          return $(this).attr('value');
+        })
+        .get()
+        .filter((value) => value && value !== RANDOM_SOUND_VALUE);
+      return pool.length ? pool[Math.floor(Math.random() * pool.length)] : '';
+    }
     function previewSoundAtVolume(name) {
-      const file = resolveSoundFile(name);
+      const file = resolveSoundFile(soundForPreview(name));
       if (!file) return;
       const raw = parseInt($('#option_overlayVolume').val(), 10);
       const gain = Math.max(0, Math.min(2, (Number.isFinite(raw) ? raw : 100) / 100));
@@ -2884,58 +2947,541 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       }
     });
 
-    // --- Custom preset builder: live preview, real overlay preview, create/update ---
-    function custInt(id, def) {
-      const n = parseInt($('#' + id).val(), 10);
-      return Number.isFinite(n) ? n : def;
+    /* ---- Preset designer ------------------------------------------------------------------------
+       The controls, the live preview and the generator all work from util/presetSchema.js, so a
+       property can only exist in one shape. The preview is the REAL preset — the same markup, the
+       same engine and the same generated stylesheet the notification window loads — rendered in an
+       iframe, which is why it cannot drift from what an unlock actually looks like.
+    */
+    const presetSchema = require(path.join(appPath, 'util/presetSchema.js'));
+    const presetGenerator = require(path.join(appPath, 'util/customPreset.js'));
+    const presetTemplates = require(path.join(appPath, 'util/presetTemplates.js'));
+
+    // Value formatting for the readout beside each slider. Purely cosmetic: the stored value is
+    // always what the schema says.
+    function presetReadout(property, value) {
+      // Both kinds of percentage: a 0-1 factor shown as 20-100%, and a slider that is already one.
+      if (property.percent) return Math.round(value * 100) + '%';
+      if (property.scale === 100) return Math.round(value) + '%';
+      if (property.key === 'duration') return (value / 1000).toFixed(value % 1000 ? 1 : 0) + 's';
+      return String(value) + (property.unit === 'deg' ? '°' : property.unit || '');
     }
-    // The one place that reads the builder's controls. Everything downstream (the inline preview,
-    // the overlay preview and the generator) works from this, so all three can never disagree.
+
+    /*
+      The one place that reads the designer's controls. The inline preview, the on-screen preview,
+      Create and Export all work from this, so none of them can show a different design.
+    */
     function readPresetOptions() {
-      return {
-        bg: $('#cust-bg').val() || '#16181d',
-        text: $('#cust-text').val() || '#ffffff',
-        accent: $('#cust-accent').val() || '#4aa3ff',
-        opacity: custInt('cust-opacity', 100) / 100,
-        fontSize: custInt('cust-font', 16),
-        radius: custInt('cust-radius', 12),
-        iconSize: custInt('cust-icon', 64),
-        width: custInt('cust-width', 420),
-      };
+      const options = {};
+      for (const property of presetSchema.PRESET_PROPERTIES) {
+        const control = $('#pd-' + property.key);
+        if (!control.length) continue;
+        const raw = control.val();
+        if (property.type === 'number') {
+          const number = parseFloat(raw);
+          options[property.key] = property.percent ? number / 100 : number;
+        } else {
+          options[property.key] = raw;
+        }
+      }
+      return presetSchema.normalizeOptions(options);
     }
+
+    // Put a full set of options into the controls. Anything missing falls back to its default, so
+    // this also serves as "reset".
+    function writePresetOptions(options) {
+      const values = presetSchema.normalizeOptions(options);
+      for (const property of presetSchema.PRESET_PROPERTIES) {
+        const control = $('#pd-' + property.key);
+        if (!control.length) continue;
+        const value = values[property.key];
+        control.val(property.type === 'number' && property.percent ? Math.round(value * 100) : String(value));
+      }
+      refreshPresetControls();
+    }
+
+    // Readouts, and the fields that only apply in one mode (the second gradient colour, artwork
+    // dimming): shown doing something or not shown at all.
+    function refreshPresetControls() {
+      const values = readPresetOptions();
+      for (const property of presetSchema.PRESET_PROPERTIES) {
+        if (property.type === 'number') $('#pd-val-' + property.key).text(presetReadout(property, values[property.key]));
+      }
+      $('#options-notify-designer .pd-field[data-shown-for]').each(function () {
+        const [key, allowed] = String($(this).attr('data-shown-for')).split(':');
+        $(this).prop('hidden', !String(allowed).split(',').includes(String(values[key])));
+      });
+      return values;
+    }
+
+    /* ---- live preview ---------------------------------------------------------------------------
+       Sample payloads matching what createNotificationWindow() sends for each kind of notification,
+       so the states a preset has to look right in can all be checked without waiting for an unlock.
+
+       The artwork and icon are inlined as data URIs: the preview frame is a srcdoc document, and a
+       file:// image inside one is not reliably loadable.
+    */
+    let previewState = 'normal';
+    let previewView = 'card';
+    function fileAsDataUri(file, mime) {
+      try {
+        return `data:${mime};base64,${settingsFs.readFileSync(file).toString('base64')}`;
+      } catch (e) {
+        return '';
+      }
+    }
+    let previewIcon = '';
+    let previewArt = null;
+    /*
+      Artwork for the preview: one of the user's own game headers, because that is what a notification
+      is actually seen over. The app already keeps landscape art for the games in the library, so the
+      designer borrows one rather than shipping a picture — and nothing copyrighted lives in the repo.
+
+      With an empty library there is nothing to borrow, so the backdrop falls back to a painted scene
+      rather than the app's own logo, which told the user nothing about contrast.
+    */
+    /*
+      Width and height straight from a PNG or JPEG header. Both are a handful of bytes at a known
+      place, which is cheaper and far less code than an image library for the one question the
+      designer asks: is this a header or a poster?
+    */
+    function imageDimensions(file) {
+      try {
+        const buffer = settingsFs.readFileSync(file);
+        if (buffer.length > 24 && buffer.readUInt32BE(0) === 0x89504e47) {
+          return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
+        }
+        if (buffer.length > 4 && buffer[0] === 0xff && buffer[1] === 0xd8) {
+          // Walk the segment chain to the frame header, which is the only one carrying the size.
+          for (let at = 2; at + 9 < buffer.length; ) {
+            if (buffer[at] !== 0xff) return null;
+            const marker = buffer[at + 1];
+            const length = buffer.readUInt16BE(at + 2);
+            const isFrame = marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker);
+            if (isFrame) return { height: buffer.readUInt16BE(at + 5), width: buffer.readUInt16BE(at + 7) };
+            at += 2 + length;
+          }
+        }
+      } catch (e) {
+        debug.log(e);
+      }
+      return null;
+    }
+
+    function previewArtwork() {
+      if (previewArt !== null) return previewArt;
+      previewArt = '';
+      try {
+        const userData = ipcRenderer.sendSync('get-user-data-path-sync');
+        const candidates = [];
+        const covers = path.join(userData, 'covers');
+        for (const name of settingsFs.readdirSync(covers)) {
+          if (/\.(png|jpe?g|webp)$/i.test(name)) candidates.push(path.join(covers, name));
+        }
+        // Landscape first: a header fills the card, where a portrait cover is cropped to a sliver of
+        // itself. Read from the file header rather than pulling in an image library for one number.
+        const landscape = candidates.filter((file) => {
+          const size = imageDimensions(file);
+          return size && size.width > size.height;
+        });
+        const pool = landscape.length ? landscape : candidates;
+        if (pool.length) {
+          const file = pool[Math.floor(Math.random() * pool.length)];
+          previewArt = fileAsDataUri(file, /\.png$/i.test(file) ? 'image/png' : 'image/jpeg');
+        }
+      } catch (e) {
+        debug.log(e);
+      }
+      return previewArt;
+    }
+    function previewPayload() {
+      if (!previewIcon) previewIcon = fileAsDataUri(path.join(appPath, 'resources/img/achievement.svg'), 'image/svg+xml');
+      const artwork = previewArtwork();
+      const base = {
+        iconPath: previewIcon,
+        imagePath: artwork,
+        gameIconPath: artwork,
+        // Presets that print the game name get a sample too, or the row they asked for would preview
+        // empty and look broken.
+        gameName: t('preset-sample-game', 'Sample Game', 'Jeu d’exemple'),
+        scale: 1,
+      };
+      if (previewState === 'rare') {
+        return Object.assign(base, {
+          displayName: t('test-rare-name', 'Rare Achievement', 'Succès rare'),
+          description: t('test-rare-desc', 'Rare · {percent}% of players', 'Rare · {percent} % des joueurs', { percent: 1.4 }),
+          notificationType: 'achievement',
+          rarityPercent: 1.4,
+        });
+      }
+      if (previewState === 'completion') {
+        return Object.assign(base, {
+          displayName: t('test-platinum-name', 'Platinum!', 'Trophée Platine'),
+          description: t('test-platinum-desc', '100% completed', '100 % complété'),
+          notificationType: 'platinum',
+          isPlatinum: true,
+        });
+      }
+      if (previewState === 'progress') {
+        return Object.assign(base, {
+          displayName: t('test-progress-name', 'Progress', 'Progression'),
+          description: t('test-progress-desc', '3 / 10', '3 / 10'),
+          notificationType: 'progress',
+          progress: { current: 3, max: 10, percent: 30 },
+        });
+      }
+      return Object.assign(base, {
+        displayName: t('test-toast-name', 'Achievement Unlocked', 'Succès débloqué'),
+        description: t('preset-sample-detail', 'Sample achievement description', 'Exemple de description de succès'),
+        notificationType: 'achievement',
+      });
+    }
+
+    const previewFrame = () => document.getElementById('pd-frame');
+
+    /*
+      Rebuild the preview document. Only needed when the frame has to be re-created — switching to a
+      one-off play-through, or the very first render. Editing a property swaps the stylesheet inside
+      the existing document instead, which is what keeps dragging a slider cheap.
+    */
+    function renderPreviewDocument(values, { hold = true } = {}) {
+      const frame = previewFrame();
+      if (!frame) return;
+      frame.srcdoc = presetGenerator.buildPresetPreviewHtml(values, { hold });
+      frame.onload = () => {
+        try {
+          frame.contentWindow.awPreviewApply(previewPayload());
+        } catch (e) {
+          debug.log(e);
+        }
+      };
+      layoutPreview(values);
+    }
+
+    // Swap only the generated stylesheet in the live document. No reload, no animation restart.
+    function updatePreviewStyles(values) {
+      const frame = previewFrame();
+      let styleEl = null;
+      try {
+        styleEl = frame && frame.contentDocument && frame.contentDocument.getElementById('aw-preview-css');
+      } catch (e) {
+        styleEl = null;
+      }
+      if (!styleEl) {
+        renderPreviewDocument(values);
+        return;
+      }
+      styleEl.textContent = presetGenerator.buildCustomPresetCss(values);
+      if (previewView === 'compare') renderComparePreviews(values);
+      layoutPreview(values);
+    }
+
+    // Re-feed the sample payload so the state classes and the entry animation are applied again.
+    function replayPreview() {
+      const frame = previewFrame();
+      try {
+        if (frame && frame.contentWindow && frame.contentWindow.awPreviewApply) {
+          frame.contentWindow.awPreviewApply(previewPayload());
+          return;
+        }
+      } catch (e) {
+        debug.log(e);
+      }
+      renderPreviewDocument(readPresetOptions());
+    }
+
+    /*
+      Size and place the frame.
+
+      Card view shows the popup at its own size, shrunk only if the stage is narrower than the popup.
+      Screen view shows it at its true size relative to a display of the chosen resolution, in the
+      corner the Notifications tab is set to — the popup's window box includes its transparent
+      margin, so what the stage shows is what the screen edge will look like.
+    */
+    /*
+      The stage has no width until the tab has actually been laid out, and a popup scaled to a
+      zero-width stage renders as nothing at all. Fall back to a sensible width and let the observer
+      further down re-run the layout once the panel is on screen.
+    */
+    function measuredStageWidth() {
+      const measured = $('#options-notify-designer .pd-stage').width();
+      return measured > 80 ? measured - 28 : 360;
+    }
+
+    function layoutPreview(values) {
+      const frame = previewFrame();
+      const wrap = document.getElementById('pd-frame-wrap');
+      const screen = document.getElementById('pd-screen');
+      if (!frame || !wrap || !screen) return;
+      const box = presetGenerator.presetBoxSize(values || readPresetOptions());
+      frame.width = box.width;
+      frame.height = box.height;
+      frame.style.width = box.width + 'px';
+      frame.style.height = box.height + 'px';
+
+      const stageWidth = measuredStageWidth();
+      let zoom;
+      if (previewView === 'compare') {
+        // The compare rows own the stage; the single card is hidden by the stylesheet.
+        screen.classList.remove('is-screen');
+        $('#pd-resolution').prop('hidden', true);
+        $('#pd-size-note').text(`${box.width}×${box.height}`);
+        return;
+      }
+      if (previewView === 'screen') {
+        screen.classList.add('is-screen');
+        const resolution = parseInt($('#pd-resolution').val(), 10) || 1920;
+        const userScale = parseFloat($('#option_overlayScale').val()) || 1;
+        zoom = (stageWidth / resolution) * userScale;
+      } else {
+        screen.classList.remove('is-screen');
+        zoom = Math.min(1, stageWidth / box.width);
+      }
+      frame.style.transform = `scale(${zoom})`;
+      wrap.style.width = Math.round(box.width * zoom) + 'px';
+      wrap.style.height = Math.round(box.height * zoom) + 'px';
+      $('#pd-resolution').prop('hidden', previewView !== 'screen');
+      if (previewView === 'screen') placePreviewInScreen(wrap, screen);
+      else {
+        wrap.style.left = '';
+        wrap.style.top = '';
+      }
+      /*
+        The popup's real size, and how much the preview had to shrink it to fit — otherwise a card
+        shown at 70% reads as the design being smaller than it is. A manually placed popup is drawn
+        at the bottom centre and says so: only the app knows where it was dragged to, and quietly
+        showing it in the default corner would be the one thing a position preview must not do.
+      */
+      const custom = previewView === 'screen' && String($('#option_overlayPosition').val()) === 'custom';
+      const customLabel = custom ? ` · ${$("#option_overlayPosition option[value='custom']").text()}` : '';
+      $('#pd-size-note').text(`${box.width}×${box.height} · ${Math.round(zoom * 100)}%${customLabel}`);
+    }
+
+    // Mirror of util/notificationBounds.placeNotification for the mock screen. Its 2px edge margin is
+    // below one preview pixel at these scales, so the anchors are exact without repeating it.
+    function placePreviewInScreen(wrap, screen) {
+      const position = String($('#option_overlayPosition').val() || 'center-bottom');
+      const free = { x: Math.max(0, screen.clientWidth - wrap.offsetWidth), y: Math.max(0, screen.clientHeight - wrap.offsetHeight) };
+      const horizontal = position.includes('left') ? 0 : position.includes('right') ? free.x : free.x / 2;
+      const vertical = position.includes('top') ? 0 : position.includes('middle') ? free.y / 2 : free.y;
+      wrap.style.left = Math.round(horizontal) + 'px';
+      wrap.style.top = Math.round(vertical) + 'px';
+    }
+
+    /*
+      Editing a control repaints the preview on the next frame rather than on every input event: a
+      slider fires continuously while dragged, and regenerating the stylesheet on each one is wasted
+      work between two paints.
+    */
+    let previewPending = null;
+    function schedulePreview() {
+      if (previewPending) return;
+      previewPending = setTimeout(() => {
+        previewPending = null;
+        updatePreviewStyles(refreshPresetControls());
+      }, 40);
+    }
+
+    $('#options-notify-designer').on('input change', 'input, select', function () {
+      if (this.id === 'pd-load' || this.id === 'pd-name' || this.id === 'pd-resolution') return;
+      schedulePreview();
+    });
+    // The one property the card cannot show: play it when it is chosen, exactly as the Notifications
+    // tab does for the app-wide sound, at the volume that setting is on.
+    $('#pd-sound').on('change', function () {
+      const chosen = String($(this).val() || '');
+      if (chosen) previewSoundAtVolume(chosen);
+    });
+    $('#pd-resolution').on('change', () => layoutPreview());
+
+    // Collapsible groups, and the per-group Advanced disclosure.
+    $('#options-notify-designer').on('click', '.pd-group-head', function () {
+      $(this).closest('.pd-group').toggleClass('is-open');
+    });
+    $('#options-notify-designer').on('click', '.pd-more', function () {
+      const advanced = $(this).closest('.pd-group-body').find('.pd-adv');
+      advanced.prop('hidden', !advanced.prop('hidden'));
+      $(this).toggleClass('is-on', !advanced.prop('hidden'));
+    });
+
+    $('#pd-view button').on('click', function () {
+      previewView = String($(this).attr('data-view') || 'card');
+      $('#pd-view button').removeClass('is-on');
+      $(this).addClass('is-on');
+      document.getElementById('pd-stage').setAttribute('data-view', previewView);
+      if (previewView === 'compare') renderComparePreviews(readPresetOptions());
+      layoutPreview();
+    });
+
+    /*
+      The three notifications side by side.
+
+      Switching states one at a time answers "what does a rare unlock look like?"; only seeing them
+      together answers "does a rare unlock look DIFFERENT?" — which is the question a preset with a
+      rare colour is actually asking, and the one a single card cannot show.
+    */
+    function comparePayload(state) {
+      const kept = previewState;
+      previewState = state;
+      const payload = previewPayload();
+      previewState = kept;
+      return payload;
+    }
+
+    function renderComparePreviews(values) {
+      const rows = document.querySelectorAll('#pd-compare .pd-compare-row');
+      if (!rows.length) return;
+      const box = presetGenerator.presetBoxSize(values);
+      const stageWidth = measuredStageWidth();
+      // Each row shows a whole popup, so three of them share the stage the single card had.
+      const labelRoom = 90;
+      const zoom = Math.min(1, (stageWidth - labelRoom) / box.width);
+      const document_ = presetGenerator.buildPresetPreviewHtml(values);
+      for (const row of rows) {
+        const frame = row.querySelector('iframe');
+        const wrap = row.querySelector('.pd-compare-frame');
+        frame.width = box.width;
+        frame.height = box.height;
+        frame.style.width = box.width + 'px';
+        frame.style.height = box.height + 'px';
+        frame.style.transform = `scale(${zoom})`;
+        wrap.style.width = Math.round(box.width * zoom) + 'px';
+        wrap.style.height = Math.round(box.height * zoom) + 'px';
+        const payload = comparePayload(String(row.getAttribute('data-state') || 'normal'));
+        // Already loaded: feed it again rather than reloading, so editing stays as cheap as one card.
+        try {
+          if (frame.contentWindow && frame.contentWindow.awPreviewApply) {
+            const style = frame.contentDocument.getElementById('aw-preview-css');
+            if (style) style.textContent = presetGenerator.buildCustomPresetCss(values);
+            frame.contentWindow.awPreviewApply(payload);
+            continue;
+          }
+        } catch (e) {
+          debug.log(e);
+        }
+        frame.onload = () => {
+          try {
+            frame.contentWindow.awPreviewApply(payload);
+          } catch (e) {
+            debug.log(e);
+          }
+        };
+        frame.srcdoc = document_;
+      }
+    }
+
+    /*
+      What the popup is judged against. A notification is never seen on the app's own panel colour —
+      it is seen over a game — and a design that reads well on dark can vanish on a bright scene, so
+      the backdrop is a preview control rather than a fixed stage.
+    */
+    $('#pd-backdrop button').on('click', function () {
+      $('#pd-backdrop button').removeClass('is-on');
+      $(this).addClass('is-on');
+      const backdrop = String($(this).attr('data-backdrop') || 'checker');
+      const stage = document.getElementById('pd-stage');
+      stage.setAttribute('data-backdrop', backdrop);
+      // The artwork backdrop is the same game header the preview payload carries; with an empty
+      // library the stylesheet's painted scene stands in for it.
+      const artwork = backdrop === 'artwork' ? previewArtwork() : '';
+      stage.style.backgroundImage = artwork ? `url("${artwork}")` : '';
+    });
+
+    $('#pd-state button').on('click', function () {
+      previewState = String($(this).attr('data-state') || 'normal');
+      $('#pd-state button').removeClass('is-on');
+      $(this).addClass('is-on');
+      // Looking at the rare or completion card is when its colours are worth having in reach, and
+      // they live in a group that starts collapsed — so asking for the state opens it.
+      if (previewState === 'rare' || previewState === 'completion' || previewState === 'progress') {
+        $("#options-notify-designer .pd-group[data-group='state']").addClass('is-open');
+      }
+      replayPreview();
+    });
+
+    // Play the whole thing once — entry, hold and exit at the preset's own timings — then go back to
+    // holding the card on screen so the controls stay usable.
+    let previewPlayTimer = null;
+    $('#pd-play').on('click', function () {
+      const values = readPresetOptions();
+      clearTimeout(previewPlayTimer);
+      renderPreviewDocument(values, { hold: false });
+      // Read the controls again when it ends rather than restoring the design as it was when Play was
+      // pressed: a few seconds is long enough to have changed something, and seeing that edit
+      // disappear reads as the designer losing it.
+      previewPlayTimer = setTimeout(() => renderPreviewDocument(readPresetOptions()), values.duration + 400);
+    });
+
+    /*
+      The position anchors mirror the Notifications tab's own position setting rather than adding a
+      second one: a preset does not own where notifications appear, and previewing a corner the user
+      has not chosen would be a lie.
+    */
+    function refreshPresetAnchors() {
+      const scale = String($('#option_overlayScale').val() || '1');
+      if ($('#pd-scale').val() !== scale) $('#pd-scale').val(scale);
+      const position = String($('#option_overlayPosition').val() || 'center-bottom');
+      $('#pd-anchors button').each(function () {
+        const pos = String($(this).attr('data-pos'));
+        $(this).toggleClass('is-on', pos === position);
+        // The grid is nine unlabelled cells, so each one borrows the wording the position setting
+        // already has in this language rather than adding nine strings to translate.
+        $(this).attr('title', $(`#option_overlayPosition option[value='${pos}']`).text());
+      });
+      if (previewView === 'screen') layoutPreview();
+    }
+    /*
+      The way from choosing a preset to designing one. The choice belongs with the other notification
+      settings — it is what the popup will look like tonight — and the designer is a workshop, so the
+      row that picks one carries a button through to it rather than the two being merged.
+    */
+    $('#btn-open-presets').on('click', function () {
+      $("#settingNav li[data-view='presets']").trigger('click');
+    });
+
+    $('#pd-anchors button').on('click', function () {
+      $('#option_overlayPosition').val(String($(this).attr('data-pos'))).change();
+      refreshPresetAnchors();
+    });
+    /*
+      Scale is the other half of "how big will this actually be": the same app setting as the one in
+      the Notification tab, mirrored here because it is only judgeable next to the design. Changing it
+      from either place changes the one setting.
+    */
+    $('#pd-scale').on('change', function () {
+      $('#option_overlayScale').val(String($(this).val())).change();
+      layoutPreview();
+    });
+    $('#option_overlayPosition, #option_overlayScale').on('change', refreshPresetAnchors);
+
     function setPresetStatus(message, state) {
-      $('#cust-status')
+      $('#pd-status')
         .text(message || '')
         .removeClass('is-ok is-error')
         .addClass(state === 'ok' ? 'is-ok' : state === 'error' ? 'is-error' : '');
     }
-    function updatePresetPreview() {
-      const o = readPresetOptions();
-      $('#cust-preview').css({
-        background: o.bg,
-        color: o.text,
-        'border-left-color': o.accent,
-        'border-radius': o.radius + 'px',
-        'font-size': o.fontSize + 'px',
-        width: o.width + 'px',
-        opacity: o.opacity,
-      });
-      $('#cust-preview-title').css('color', o.accent);
-      $('#cust-preview-icon').css({ color: o.accent, 'font-size': Math.round(o.iconSize * 0.62) + 'px' });
-      $('#cust-val-opacity').text(Math.round(o.opacity * 100) + '%');
-      $('#cust-val-font').text(o.fontSize + 'px');
-      $('#cust-val-radius').text(o.radius + 'px');
-      $('#cust-val-icon').text(o.iconSize + 'px');
-      $('#cust-val-width').text(o.width + 'px');
+
+    // The preset's own sound list: the same files the Notifications tab offers, plus a first entry
+    // meaning "whatever the app is set to", which is what a preset with no opinion stores.
+    function refreshPresetSounds(selected) {
+      return ipcRenderer
+        .invoke('list-sounds')
+        .then((sounds) => {
+          const sel = $('#pd-sound');
+          const keep = selected != null ? selected : sel.val() || '';
+          sel.empty();
+          sel.append($('<option>').attr('value', '').text(sel.attr('data-lang-app') || ''));
+          (sounds || []).forEach((name) => sel.append($('<option>').attr('value', name).text(name.replace(/\.[^.]+$/, ''))));
+          sel.val((sounds || []).includes(keep) ? keep : '');
+        })
+        .catch((err) => debug.log(err));
     }
-    $('#options-notify-customiser').on('input change', 'input', updatePresetPreview);
-    updatePresetPreview();
 
     /*
-      Presets the app installed here: `{ name, editable }`, where editable means the builder made it
+      Presets the app installed here: `{ name, editable }`, where editable means the designer made it
       and can load it back. An imported preset is listed too — it can be exported and deleted — but
       it is not editable, and the Create button must not offer to "Update" it: doing so would
-      regenerate its files from the sliders and destroy artwork they cannot reproduce.
+      regenerate its files from the controls and destroy artwork they cannot reproduce.
     */
     let generatedPresets = [];
     const managedPresetNames = () => generatedPresets.map((preset) => preset.name);
@@ -2943,12 +3489,12 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       generatedPresets.some((preset) => preset.editable && preset.name.toLowerCase() === String(name || '').toLowerCase());
 
     // Creating a preset that already exists replaces it, so the button says so: "Create" for a new
-    // name, "Update" once the typed name matches a preset the builder generated.
+    // name, "Update" once the typed name matches a preset the designer generated.
     function updateCreateButtonMode() {
-      const name = ($('#cust-name').val() || '').trim();
+      const name = ($('#pd-name').val() || '').trim();
       const known = Boolean(name) && isEditablePreset(name);
-      const label = known ? $('#cust-lbl-create').attr('data-update') : $('#cust-lbl-create').attr('data-create');
-      if (label) $('#cust-lbl-create').text(label);
+      const label = known ? $('#pd-lbl-create').attr('data-update') : $('#pd-lbl-create').attr('data-create');
+      if (label) $('#pd-lbl-create').text(label);
       $('#btn-create-preset').find('i').attr('class', known ? 'fas fa-save' : 'fas fa-plus');
     }
 
@@ -2959,7 +3505,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         debug.log(err);
         generatedPresets = [];
       }
-      const sel = $('#cust-load');
+      const sel = $('#pd-load');
       sel.empty();
       sel.append($('<option>').attr('value', '').text(sel.attr('data-new') || ''));
       generatedPresets.forEach((preset) => sel.append($('<option>').attr('value', preset.name).text(preset.name)));
@@ -2971,7 +3517,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     // Deleting only ever applies to a preset the app installed, so the button appears once one is
     // actually loaded — never next to a bundled preset or a half-typed new name.
     function updateDeleteButtonVisibility() {
-      const loaded = String($('#cust-load').val() || '');
+      const loaded = String($('#pd-load').val() || '');
       $('#btn-delete-preset').toggle(Boolean(loaded) && managedPresetNames().includes(loaded));
     }
 
@@ -2986,10 +3532,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       preset impossible to pick for rare/platinum/emulator notifications, so those kept rendering the
       preset they were already pointing at.
     */
-    const DEFAULT_PRESET_NAME = 'Shirow';
+    const DEFAULT_PRESET_NAME = 'AW Next';
     const OVERLAY_PRESET_TYPE_IDS = [
-      '#option_overlayPresetRare',
-      '#option_overlayPresetPlatinum',
       '#option_overlayPresetXenia',
       '#option_overlayPresetRpcs3',
       '#option_overlayPresetShadps4',
@@ -3019,7 +3563,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     }
 
     $('#btn-delete-preset').click(async function () {
-      const name = String($('#cust-load').val() || '');
+      const name = String($('#pd-load').val() || '');
       if (!name) return;
       const self = $(this);
       const confirmed = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
@@ -3039,26 +3583,105 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         if (res && res.ok) {
           // The deleted preset may have been the selected one; rebuild both lists and fall back.
           await refreshOverlayPresetMenu();
-          $('#cust-name').val('');
+          $('#pd-name').val('');
           await refreshGeneratedPresetList('');
-          setPresetStatus(`${$('#cust-status').attr('data-deleted') || ''} ${name}`.trim(), 'ok');
+          setPresetStatus(`${$('#pd-status').attr('data-deleted') || ''} ${name}`.trim(), 'ok');
         } else {
-          setPresetStatus((($('#cust-status').attr('data-fail') || '') + (res && res.error ? ': ' + res.error : '')).trim(), 'error');
+          setPresetStatus((($('#pd-status').attr('data-fail') || '') + (res && res.error ? ': ' + res.error : '')).trim(), 'error');
         }
       } catch (err) {
         debug.log(err);
-        setPresetStatus((($('#cust-status').attr('data-fail') || '') + ': ' + err).trim(), 'error');
+        setPresetStatus((($('#pd-status').attr('data-fail') || '') + ': ' + err).trim(), 'error');
       }
       self.css('pointer-events', 'initial');
     });
-    $('#cust-name').on('input', updateCreateButtonMode);
+    $('#pd-name').on('input', updateCreateButtonMode);
+
+    // Back to the designer's own defaults, without touching what is saved on disk: a draft that has
+    // gone wrong is otherwise only recoverable by reloading a saved preset.
+    $('#btn-reset-preset').click(function () {
+      applyDesignToControls({});
+      setPresetStatus($('#pd-status').attr('data-reset') || '', 'ok');
+    });
+
+    /* ---- starting points ------------------------------------------------------------------------
+       A template is an ordinary set of options, so applying one is the same as having moved every
+       control by hand. The name field is deliberately left alone: a starting point is a look, not a
+       preset, and overwriting a name the user typed would lose their work.
+    */
+    function applyDesignToControls(options) {
+      writePresetOptions(options);
+      refreshPresetSounds(presetSchema.normalizeOptions(options).sound || '');
+      updatePreviewStyles(readPresetOptions());
+      replayPreview();
+    }
+
+    function buildTemplateChips() {
+      const list = $('#pd-templates');
+      if (!list.length) return;
+      list.empty();
+      for (const template of presetTemplates.PRESET_TEMPLATES) {
+        // A swatch showing the template's own colours, so the row reads as designs rather than words.
+        const values = presetSchema.normalizeOptions(template.options);
+        const swatch = $('<span class="pd-template-swatch">').css({
+          background: values.bgMode === 'gradient' ? `linear-gradient(135deg, ${values.bg}, ${values.bg2})` : values.bg,
+          'border-color': values.accent,
+        });
+        list.append(
+          $('<button type="button" class="pd-template">')
+            .attr('data-template', template.name)
+            .append(swatch)
+            .append($('<span>').text(template.name))
+        );
+      }
+    }
+
+    $('#options-notify-designer').on('click', '.pd-template', function () {
+      const name = String($(this).attr('data-template') || '');
+      const options = presetTemplates.templateOptions(name);
+      if (!options) return;
+      $('#options-notify-designer .pd-template').removeClass('is-on');
+      $(this).addClass('is-on');
+      applyDesignToControls(options);
+      setPresetStatus(`${$('#pd-status').attr('data-template') || ''} ${name}`.trim(), 'ok');
+    });
+
+    // A design nobody would have thought to try. Constrained rather than uniform-random: one hue
+    // drives the accent and the background is built around it, so the result is a design, not noise.
+    $('#btn-random-preset').click(function () {
+      $('#options-notify-designer .pd-template').removeClass('is-on');
+      applyDesignToControls(presetTemplates.randomPresetOptions());
+      setPresetStatus($('#pd-status').attr('data-randomized') || '', 'ok');
+    });
 
     /*
-      Put a managed preset into the builder controls. Returns 'editable', 'imported' or 'failed'.
+      Riff on a preset without overwriting it: the controls keep the design, the name becomes a free
+      one, and the picker lets go — so the next Create adds a preset instead of replacing the one it
+      was based on.
+    */
+    $('#btn-duplicate-preset').click(function () {
+      const source = ($('#pd-name').val() || '').trim() || String($('#pd-load').val() || '');
+      if (!source) {
+        setPresetStatus($('#pd-status').attr('data-err') || '', 'error');
+        return;
+      }
+      let candidate = `${source} (2)`;
+      for (let index = 2; index < 100 && managedPresetNames().some((name) => name.toLowerCase() === candidate.toLowerCase()); index += 1) {
+        candidate = `${source} (${index + 1})`;
+      }
+      $('#pd-load').val('');
+      $('#pd-name').val(candidate.slice(0, 48));
+      updateCreateButtonMode();
+      updateDeleteButtonVisibility();
+      setPresetStatus(`${$('#pd-status').attr('data-duplicated') || ''} ${$('#pd-name').val()}`.trim(), 'ok');
+    });
+
+    /*
+      Put a managed preset into the designer's controls. Returns 'editable', 'imported' or 'failed'.
 
       Shared by the picker and by Import: selecting a preset in the picker fires this through the
       change event, but an import selects the preset in code, where no event fires — so importing a
-      preset the builder can edit used to leave the controls showing the previous draft.
+      preset the designer can edit used to leave the controls showing the previous draft.
     */
     async function loadPresetIntoBuilder(name) {
       const opts = await ipcRenderer.invoke('read-custom-preset', name);
@@ -3067,30 +3690,23 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         An imported preset with no builder options behind it cannot be reproduced from the controls,
         so leave them alone and leave the name field empty: Delete and Export work off the picker,
         and pressing Create then makes a new preset instead of silently overwriting artwork the
-        sliders could never rebuild.
+        controls could never rebuild.
       */
       if (opts.editable === false) {
-        $('#cust-name').val('');
+        $('#pd-name').val('');
         updateCreateButtonMode();
         updateDeleteButtonVisibility();
         return 'imported';
       }
-      $('#cust-name').val(opts.name || name);
-      $('#cust-bg').val(opts.bg);
-        $('#cust-text').val(opts.text);
-        $('#cust-accent').val(opts.accent);
-        $('#cust-opacity').val(Math.round(opts.opacity * 100));
-        $('#cust-font').val(opts.fontSize);
-        $('#cust-radius').val(opts.radius);
-        $('#cust-icon').val(opts.iconSize);
-      $('#cust-width').val(opts.width);
-      updatePresetPreview();
+      $('#pd-name').val(opts.name || name);
+      $('#options-notify-designer .pd-template').removeClass('is-on');
+      applyDesignToControls(opts);
       updateCreateButtonMode();
       updateDeleteButtonVisibility();
       return 'editable';
     }
 
-    $('#cust-load').on('change', async function () {
+    $('#pd-load').on('change', async function () {
       const name = String($(this).val() || '');
       updateDeleteButtonVisibility();
       if (!name) {
@@ -3099,56 +3715,63 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       }
       try {
         const outcome = await loadPresetIntoBuilder(name);
-        if (outcome === 'failed') setPresetStatus($('#cust-status').attr('data-fail') || '', 'error');
-        else if (outcome === 'imported') setPresetStatus($('#cust-status').attr('data-imported-only') || '', 'ok');
-        else setPresetStatus(`${$('#cust-status').attr('data-loaded') || ''} ${name}`.trim(), 'ok');
+        if (outcome === 'failed') setPresetStatus($('#pd-status').attr('data-fail') || '', 'error');
+        else if (outcome === 'imported') setPresetStatus($('#pd-status').attr('data-imported-only') || '', 'ok');
+        else setPresetStatus(`${$('#pd-status').attr('data-loaded') || ''} ${name}`.trim(), 'ok');
       } catch (err) {
         debug.log(err);
-        setPresetStatus($('#cust-status').attr('data-fail') || '', 'error');
+        setPresetStatus($('#pd-status').attr('data-fail') || '', 'error');
       }
     });
 
-    // Render the design as a real overlay popup without saving it first — the only way to judge a
-    // preset is at full size, on screen, with the animation and the configured position/scale.
+    // Render the design as a real overlay popup without saving it first — the inline preview is
+    // exact, but only a real popup shows it over whatever is on screen, at the configured position
+    // and scale, with the sound.
     $('#btn-preview-preset').click(async function () {
       const self = $(this);
       self.css('pointer-events', 'none');
       try {
         /*
-          Preview whatever the picker holds. For a preset the builder made that is the same thing as
-          the draft, since loading it filled the controls — but an imported preset has no slider
+          Preview whatever the picker holds. For a preset the designer made that is the same thing as
+          the draft, since loading it filled the controls — but an imported preset has no control
           values behind it, so building a scratch preset from the controls previewed an unrelated
           design instead of the preset the user had just selected.
         */
-        const loaded = String($('#cust-load').val() || '');
+        const loaded = String($('#pd-load').val() || '');
+        const kind = previewState === 'completion' ? 'platinum' : previewState === 'normal' ? 'toast' : previewState;
         if (loaded && !isEditablePreset(loaded)) {
           setPresetStatus('');
-          ipcRenderer.send('spawn-overlay-notification', overlayTestData('toast', loaded, loaded));
+          ipcRenderer.send('spawn-overlay-notification', overlayTestData(kind, loaded, loaded));
           self.css('pointer-events', 'initial');
           return;
         }
-        const res = await ipcRenderer.invoke('preview-custom-preset', readPresetOptions());
+        const options = readPresetOptions();
+        const res = await ipcRenderer.invoke('preview-custom-preset', options);
         if (res && res.ok) {
           setPresetStatus('');
           // Only name the design when the user actually named it. Falling back to the picker's
           // "New preset…" placeholder produced "Notification test — New preset… preset", which
           // reads like a bug; an unnamed draft just shows the plain sample text instead.
-          const label = ($('#cust-name').val() || '').trim();
-          ipcRenderer.send('spawn-overlay-notification', overlayTestData('toast', res.name, label));
+          const label = ($('#pd-name').val() || '').trim();
+          const data = overlayTestData(kind, res.name, label);
+          // A preset that names its own sound is what a real unlock would play, so the preview does
+          // too — otherwise the one thing the designer cannot show inline stays untested.
+          if (options.sound) data.soundPath = resolveSoundFile(options.sound);
+          ipcRenderer.send('spawn-overlay-notification', data);
         } else {
-          setPresetStatus((($('#cust-status').attr('data-fail') || '') + (res && res.error ? ': ' + res.error : '')).trim(), 'error');
+          setPresetStatus((($('#pd-status').attr('data-fail') || '') + (res && res.error ? ': ' + res.error : '')).trim(), 'error');
         }
       } catch (e) {
         debug.log(e);
-        setPresetStatus((($('#cust-status').attr('data-fail') || '') + ': ' + e).trim(), 'error');
+        setPresetStatus((($('#pd-status').attr('data-fail') || '') + ': ' + e).trim(), 'error');
       }
       self.css('pointer-events', 'initial');
     });
 
     $('#btn-create-preset').click(async function () {
       const self = $(this);
-      const status = $('#cust-status');
-      const name = ($('#cust-name').val() || '').trim();
+      const status = $('#pd-status');
+      const name = ($('#pd-name').val() || '').trim();
       if (!name) {
         setPresetStatus(status.attr('data-err') || '', 'error');
         return;
@@ -3173,7 +3796,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     });
 
     /* ---- Portable presets (.awpreset) ---------------------------------------------------------
-       Export writes the preset currently loaded in the builder, falling back to the active
+       Export writes the preset currently loaded in the designer, falling back to the active
        notification preset so a bundled or hand-authored one can be shared too. Import validates the
        package in the main process and only then touches the preset storage.
     */
@@ -3199,11 +3822,11 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     }
 
     /*
-      Export what the card is showing, under the name in the Nom field.
+      Export what the preview is showing, under the name in the Name field.
 
-      An imported preset is the one exception: its look lives in files the sliders cannot describe,
+      An imported preset is the one exception: its look lives in files the controls cannot describe,
       so that one is exported from disk. Everything else is exported from the controls, which is what
-      the sample and Aperçu show.
+      the preview shows.
 
       This used to fall back to the ACTIVE notification preset whenever the picker sat on "New
       preset…", so exporting a design in progress silently wrote the user's current preset instead —
@@ -3211,24 +3834,24 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       Shirow on import and rendered as Shirow everywhere.
     */
     $('#btn-export-preset').click(async function () {
-      const loaded = String($('#cust-load').val() || '');
+      const loaded = String($('#pd-load').val() || '');
       const request =
         loaded && !isEditablePreset(loaded)
           ? { name: loaded }
-          : { name: ($('#cust-name').val() || '').trim() || loaded, options: readPresetOptions() };
+          : { name: ($('#pd-name').val() || '').trim() || loaded, options: readPresetOptions() };
       if (!request.name) {
-        setPresetStatus($('#cust-status').attr('data-err') || '', 'error');
+        setPresetStatus($('#pd-status').attr('data-err') || '', 'error');
         return;
       }
       const self = $(this);
       self.css('pointer-events', 'none');
       try {
         const res = await ipcRenderer.invoke('export-preset', request);
-        if (res && res.ok) setPresetStatus(`${$('#cust-status').attr('data-exported') || ''} ${res.name}`.trim(), 'ok');
-        else if (!res || !res.canceled) setPresetStatus((($('#cust-status').attr('data-fail') || '') + (res && res.error ? ': ' + res.error : '')).trim(), 'error');
+        if (res && res.ok) setPresetStatus(`${$('#pd-status').attr('data-exported') || ''} ${res.name}`.trim(), 'ok');
+        else if (!res || !res.canceled) setPresetStatus((($('#pd-status').attr('data-fail') || '') + (res && res.error ? ': ' + res.error : '')).trim(), 'error');
       } catch (err) {
         debug.log(err);
-        setPresetStatus((($('#cust-status').attr('data-fail') || '') + ': ' + err).trim(), 'error');
+        setPresetStatus((($('#pd-status').attr('data-fail') || '') + ': ' + err).trim(), 'error');
       }
       self.css('pointer-events', 'initial');
     });
@@ -3272,24 +3895,47 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           await refreshOverlayPresetMenu(res.name);
           await refreshGeneratedPresetList(res.name);
           // Selecting it in code fires no change event, so load it into the controls explicitly or
-          // the builder keeps showing whatever draft was there before the import.
+          // the designer keeps showing whatever draft was there before the import.
           await loadPresetIntoBuilder(res.name);
-          setPresetStatus(`${$('#cust-status').attr('data-imported') || ''} ${res.name}`.trim(), 'ok');
+          setPresetStatus(`${$('#pd-status').attr('data-imported') || ''} ${res.name}`.trim(), 'ok');
         } else if (!res || !res.canceled) {
           setPresetStatus(importErrorText(res), 'error');
         }
       } catch (err) {
         debug.log(err);
-        setPresetStatus((($('#cust-status').attr('data-fail') || '') + ': ' + err).trim(), 'error');
+        setPresetStatus((($('#pd-status').attr('data-fail') || '') + ': ' + err).trim(), 'error');
       }
       self.css('pointer-events', 'initial');
     });
 
+    buildTemplateChips();
     refreshGeneratedPresetList().catch((err) => debug.log(err));
+    refreshPresetSounds('');
+    refreshPresetControls();
+    renderPreviewDocument(readPresetOptions());
+    refreshPresetAnchors();
+    updatePresetTabVisibility();
+    /*
+      The stage is only measurable once the Notifications tab has been laid out, and the popup is
+      scaled to fit it — so re-measure whenever the stage itself changes width rather than baking in
+      whatever it measured while the panel was still hidden. Guarded on the width actually changing:
+      laying out writes inside the stage, and re-measuring on that would observe itself forever.
+    */
+    let lastStageWidth = 0;
+    const stageNode = document.querySelector('#options-notify-designer .pd-stage');
+    if (stageNode && typeof ResizeObserver === 'function') {
+      new ResizeObserver((entries) => {
+        const width = Math.round(entries[0].contentRect.width);
+        if (width === lastStageWidth) return;
+        lastStageWidth = width;
+        layoutPreview();
+      }).observe(stageNode);
+    }
     // The locale loader can run after this file wired the picker up (and again on a language
-    // change), so re-render the two runtime-worded controls whenever it publishes new labels.
-    $(document).on('customiser-labels-changed', function () {
-      refreshGeneratedPresetList(String($('#cust-load').val() || '')).catch((err) => debug.log(err));
+    // change), so re-render the runtime-worded controls whenever it publishes new labels.
+    $(document).on('locale-labels-changed', function () {
+      refreshGeneratedPresetList(String($('#pd-load').val() || '')).catch((err) => debug.log(err));
+      refreshPresetSounds();
     });
 
     $('#option_mergeDuplicate')
@@ -3350,16 +3996,17 @@ function readNotificationSettings() {
   // Overlay (in-game) notification — enable in notification_transport, look in overlay.notification*.
   app.config.notification_transport.mode = $('#option_notifMode').val() || 'auto';
   if (!app.config.overlay) app.config.overlay = {};
-  app.config.overlay.notificationPreset = $('#option_overlayPreset').val() || 'Shirow';
-  app.config.overlay.notificationPresetRare = $('#option_overlayPresetRare').val() || '';
-  app.config.overlay.notificationPresetPlatinum = $('#option_overlayPresetPlatinum').val() || '';
+  app.config.overlay.notificationPreset = $('#option_overlayPreset').val() || 'AW Next';
   app.config.overlay.notificationPresetXenia = $('#option_overlayPresetXenia').val() || '';
   app.config.overlay.notificationPresetRpcs3 = $('#option_overlayPresetRpcs3').val() || '';
   app.config.overlay.notificationPresetShadps4 = $('#option_overlayPresetShadps4').val() || '';
   app.config.overlay.notificationPosition = $('#option_overlayPosition').val() || 'center-bottom';
   app.config.overlay.notificationScale = parseFloat($('#option_overlayScale').val()) || 1;
-  app.config.overlay.randomSound = $('#option_overlayRandomSound').val() === 'true';
-  app.config.overlay.notificationSound = $('#option_overlaySound').val() || '';
+  // 'Random' lives in the sound list now, so one control writes both keys: the flag the
+  // notification path reads, and the filename it falls back to when the flag is off.
+  const chosenSound = $('#option_overlaySound').val() || '';
+  app.config.overlay.randomSound = chosenSound === RANDOM_SOUND_VALUE;
+  app.config.overlay.notificationSound = chosenSound === RANDOM_SOUND_VALUE ? '' : chosenSound;
   const volRaw = parseInt($('#option_overlayVolume').val(), 10);
   app.config.overlay.notificationVolume = Number.isFinite(volRaw) ? volRaw : 100;
   const durRaw = $('#option_overlayDuration').val();
