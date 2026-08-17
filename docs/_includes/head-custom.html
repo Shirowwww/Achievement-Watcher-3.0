@@ -1,4 +1,15 @@
 <!--
+  The app's own icon as the site favicon. The Primer theme ships none, so a tab of these pages was
+  showing the browser's blank-document placeholder. `relative_url` is required: this is a project
+  page served from /<repo>/, so an absolute /assets path would resolve to the user site's root.
+  The .ico carries every size from 16 to 256; the PNG is the 256 px image on its own, for the
+  browsers that prefer it and for a bookmark/home-screen tile.
+-->
+<link rel="icon" href="{{ '/assets/favicon.ico' | relative_url }}" sizes="any" />
+<link rel="icon" type="image/png" href="{{ '/assets/favicon.png' | relative_url }}" sizes="256x256" />
+<link rel="apple-touch-icon" href="{{ '/assets/favicon.png' | relative_url }}" />
+
+<!--
   Light/dark toggle for the documentation site.
 
   The theme's default layout includes this file inside <head>, which is what makes the first script

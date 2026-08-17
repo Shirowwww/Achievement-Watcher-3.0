@@ -96,7 +96,8 @@ deleting either source.
   conservative title matching and fill-only semantics, so a good existing asset is never downgraded.
 - Accepted updates install through the existing NSIS package in silent upgrade mode and relaunch
   automatically, without a second confirmation or a repeated onboarding flow.
-- The guides are reorganized around real tasks and published as a browsable documentation site.
+- The guides are reorganized around real tasks and published as a browsable documentation site, which
+  carries the app's own icon in the browser tab.
 
 ### Fixed
 
