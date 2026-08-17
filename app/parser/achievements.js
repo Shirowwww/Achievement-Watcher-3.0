@@ -280,6 +280,52 @@ function getDiscoverySources(record, cachedList, lookup) {
   return [cloneDiscoveryRecord(record)].filter(Boolean);
 }
 
+/*
+  Drop records that describe a game Steam has installed, unless official Steam games are shown.
+
+  Skipping the install folder is not enough on its own: an emulator save folder under %APPDATA% is a
+  source of its own, so one left behind — by an emulator run against a Steam copy, or by the
+  automatic fix before it learned to leave Steam libraries alone — keeps listing the game with no
+  install folder attached, which is what the "steam_api not found" badge on Garry's Mod was. An appid
+  Steam itself installed is that Steam game, and follows the "official Steam games" setting, exactly
+  as a Steam purchase that launches through Ubisoft Connect does (issue #20).
+
+  A separate cracked copy keeps its own folder outside the Steam library, and a Steam install cracked
+  in place answers false to isOfficialLauncherInstall; both are left alone. A manifest whose install
+  folder is gone proves nothing about the machine as it is now, so those records stay too.
+*/
+async function dropSteamOwnedRecords(data, showLegitSteam) {
+  if (showLegitSteam) return data;
+  let installs;
+  try {
+    installs = await steam.scanLocalInstalls();
+  } catch (err) {
+    debug.log(`[steam] could not read local installs, keeping every record => ${err}`);
+    return data;
+  }
+  if (!installs || installs.size === 0) return data;
+
+  const dropped = new Map();
+  const kept = data.filter((record) => {
+    const owned = installs.get(String(record && record.appid));
+    if (!owned || !owned.gameDir || !fs.existsSync(owned.gameDir)) return true;
+    const gameDir = (record.data && record.data.gameDir) || null;
+    if (gameDir && !isPathWithin(gameDir, owned.gameDir)) return true; // a cracked copy of its own
+    if (gameDir && !launcherDetect.isOfficialLauncherInstall(gameDir)) return true; // cracked in place
+    dropped.set(String(record.appid), owned.name || owned.gameDir);
+    return false;
+  });
+  for (const [appid, name] of dropped) {
+    debug.log(`[steam] "${name}" (${appid}) is installed by Steam — hidden because official Steam games are disabled`);
+  }
+  return kept;
+}
+
+function isPathWithin(candidate, parent) {
+  const relative = path.relative(path.resolve(parent), path.resolve(candidate));
+  return relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative));
+}
+
 // Collect the roots shown in Settings. Smart Find persists automatic detections there first, so a
 // scan never reaches into an invisible Desktop or drive location.
 async function goldbergScanRoots(scope = _activeScanScope) {
@@ -1523,6 +1569,8 @@ async function discover(source, steamAccFilter, scope = null) {
     }
   }
 
+  data = await dropSteamOwnedRecords(data, source.legitSteam > 0);
+
   data = consolidateDiscoveryList(data);
 
   //AppID Blacklisting
@@ -2696,5 +2744,6 @@ module.exports._internal = {
   getDiscoverySources,
   mergeCrossSourceDuplicates,
   isOfficialLauncherInstall: (dir) => launcherDetect.isOfficialLauncherInstall(dir),
+  dropSteamOwnedRecords,
   isLibraryLikeFolderName: (name) => saveRoots.isLibraryLikeFolderName(name),
 };

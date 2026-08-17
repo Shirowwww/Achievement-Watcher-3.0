@@ -172,7 +172,11 @@ deleting either source.
   scan looks for — so a Steam library inside a watched games folder handed over its own titles, with
   Garry's Mod as the reliable example, and the automatic emulator fix then wrote a `steam_settings`
   folder into it. The scan now asks Steam's own `appmanifest`, which names the `steamapps/common`
-  folder it owns, and skips those installs unless the dll in them is genuinely an emulator's.
+  folder it owns, and skips those installs unless the dll in them is genuinely an emulator's. An
+  emulator save folder left behind under `%APPDATA%` — by such a fix, or by an emulator once run
+  against a Steam copy — no longer brings the game back on its own either: an appid Steam has
+  installed follows the **official Steam games** setting, like a Steam purchase that launches through
+  Ubisoft Connect. A cracked copy with an install folder of its own is untouched.
 - **An update that is not newer is never offered.** A manifest naming the installed version or an
   older one — a rolled-back release, a stale mirror — no longer reaches a prompt or starts an
   installer download.
