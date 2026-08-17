@@ -3297,17 +3297,20 @@ function notificationPlacementArea(customAnchor = null) {
         x: Math.round(Number(customAnchor.x)),
         y: Math.round(Number(customAnchor.y)),
       });
-      // Custom placement is allowed across the taskbar, matching the draggable witness. Electron
-      // reports these bounds in DIP, so this also stays exact on scaled/HiDPI displays.
+      // Electron reports these bounds in DIP, so this stays exact on scaled/HiDPI displays.
       if (savedDisplay && savedDisplay.bounds) return savedDisplay.bounds;
     }
     // The cursor is normally over the game that triggered the unlock, so this keeps the popup on
     // that monitor instead of unexpectedly putting it on the primary display.
     const display = electronScreen.getDisplayNearestPoint(electronScreen.getCursorScreenPoint());
-    if (display && display.workArea) return display.workArea;
+    // Full display bounds, not workArea: "bottom" has to mean the bottom of the screen. Against the
+    // work area a bottom-anchored preset floats above the taskbar, which does not match the edge the
+    // user picked (nor the preset builder's preview, which lays the anchors out on the whole screen).
+    // These windows are alwaysOnTop at 'screen-saver' level, so they draw over the taskbar.
+    if (display && display.bounds) return display.bounds;
   } catch {}
   const primary = electronScreen.getPrimaryDisplay();
-  return customAnchor && primary.bounds ? primary.bounds : primary.workArea;
+  return primary.bounds || primary.workArea;
 }
 
 // Place the window inside the target display's usable area. The shared helper clamps both edges,
@@ -3319,8 +3322,10 @@ function computeNotificationBounds(position, width, height, workArea, customAnch
     height,
     workArea: workArea || notificationPlacementArea(),
     custom: position === 'custom' ? customAnchor || readOverlayBounds().notif : null,
-    // A manually placed popup may intentionally overlap the taskbar or sit flush to a screen edge.
-    margin: position === 'custom' ? 0 : undefined,
+    // An edge anchor means the edge itself: a preset's window is its <meta> box, already padded with
+    // transparent glow/shadow room, so any extra inset here reads as the popup not touching the side
+    // it was anchored to.
+    margin: 0,
   });
 }
 
@@ -3368,7 +3373,7 @@ function createNotificationWindow(data = {}) {
     baseHeight: baseH,
     scale: requestedScale,
     workArea,
-    margin: position === 'custom' ? 0 : undefined,
+    margin: 0,
   });
   const { x, y, width: w, height: h } = computeNotificationBounds(
     position,

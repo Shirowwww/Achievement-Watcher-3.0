@@ -91,10 +91,11 @@ here. See [Share a preset](presets.md#share-a-preset).
 
 ## Position and scale
 
-Choose a corner, edge or centered position from the Notification settings. The custom position can be
-moved with **Reposition** and is stored for later sessions. It is used exactly as you left it, so a
-popup can sit flush in a corner or over the taskbar; a position saved on a monitor that is no longer
-connected is brought back into view.
+Choose a corner, edge or centered position from the Notification settings. Positions are measured
+against the whole screen, so a bottom anchor sits on the bottom edge rather than above the taskbar,
+matching the layout shown in the preset builder. The custom position can be moved with
+**Reposition** and is stored for later sessions; it is used exactly as you left it, and a position
+saved on a monitor that is no longer connected is brought back into view.
 
 The scale setting resizes the whole popup without changing the preset's layout: every preset is drawn
 exactly as it is at 100%, only larger or smaller. **Reposition** shows the popup at the selected

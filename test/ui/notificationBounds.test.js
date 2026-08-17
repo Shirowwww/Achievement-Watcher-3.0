@@ -32,6 +32,24 @@ test('every named notification position is anchored to the corresponding work-ar
   }
 });
 
+test('edge anchors sit flush against the display, taskbar included', () => {
+  // What the app passes since bottom-anchored presets stopped floating above the taskbar: the full
+  // display bounds (not the work area) and no margin, so "bottom" is the bottom of the screen.
+  // A 1080p display whose taskbar takes the last 40px — the work area would end at y=1040.
+  const display = { x: 0, y: 0, width: 1920, height: 1080 };
+  const at = (position) => placeNotification({ position, width: 600, height: 200, workArea: display, margin: 0 });
+
+  for (const position of ['bottom-left', 'bottom-right', 'center-bottom']) {
+    const bounds = at(position);
+    assert.equal(bounds.y + bounds.height, 1080, `${position} must reach the bottom of the display`);
+  }
+  assert.equal(at('bottom-left').x, 0, 'bottom-left must touch the left edge');
+  assert.equal(at('bottom-right').x + at('bottom-right').width, 1920, 'bottom-right must touch the right edge');
+  assert.equal(at('top-left').y, 0, 'top-left must touch the top edge');
+  assert.equal(at('top-right').x + at('top-right').width, 1920, 'top-right must touch the right edge');
+  assert.equal(at('middle-left').x, 0, 'middle-left must touch the left edge');
+});
+
 test('a large preset is reduced to the active work area before it is positioned', () => {
   const fitted = fitNotificationScale({
     baseWidth: 900,

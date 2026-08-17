@@ -15,7 +15,14 @@ test('custom notification placement follows its saved display instead of the cur
   assert.match(init, /savedDisplay\.bounds/);
   assert.match(init, /const customAnchor = position === 'custom' \? readOverlayBounds\(\)\.notif : null/);
   assert.match(init, /notificationPlacementArea\(customAnchor\)/);
-  assert.match(init, /margin: position === 'custom' \? 0 : undefined/);
+});
+
+test('notifications are placed against the whole display, so an edge anchor reaches the edge', () => {
+  // Against display.workArea a bottom anchor floats above the taskbar instead of sitting on the
+  // screen edge the user picked. Both the placement area and the margin have to agree on that.
+  assert.match(init, /if \(display && display\.bounds\) return display\.bounds/);
+  assert.doesNotMatch(init, /if \(display && display\.workArea\) return display\.workArea/);
+  assert.doesNotMatch(init, /margin: position === 'custom' \? 0 : undefined/);
 });
 
 test('Windows repositioning persists on move and real custom popups keep exact bounds', () => {

@@ -338,3 +338,38 @@ test('the starting points are a row of the designer card, not a card of their ow
   // The gallery is wired through the card that now holds it.
   assert.match(settings, /\$\('#options-notify-designer'\)\.on\('click', '\.pd-template'/);
 });
+
+/*
+  The designer reports what it just did through one element, #pd-status, and reads each message off
+  a data attribute the locale loader is supposed to have put there. Nothing connects the two ends:
+  a message the loader never binds resolves to '' and the status still renders, so picking the
+  "Slate" template printed a bare green "Slate" with no indication of what had happened, and
+  "Surprise me" reported nothing at all. Assert every attribute the code reads is one the loader
+  writes, and that the strings behind them exist in every locale.
+*/
+test('every #pd-status message the designer reads is bound by the locale loader', () => {
+  const settingsJs = fs.readFileSync(path.join(appRoot, 'ui', 'settings.js'), 'utf8');
+  const loaderJs = fs.readFileSync(path.join(appRoot, 'locale', 'loader.js'), 'utf8');
+
+  const read = new Set([...settingsJs.matchAll(/\$\('#pd-status'\)\s*\.attr\('(data-[\w-]+)'/g)].map((m) => m[1]));
+  const statusBinding = loaderJs.slice(loaderJs.indexOf("$('#pd-status')"));
+  const bound = new Set([...statusBinding.slice(0, statusBinding.indexOf(';')).matchAll(/\.attr\('(data-[\w-]+)'/g)].map((m) => m[1]));
+
+  assert.ok(read.size >= 10, `expected the designer to read several status messages, saw ${read.size}`);
+  const unbound = [...read].filter((name) => !bound.has(name));
+  assert.deepEqual(unbound, [], `these #pd-status messages are read but never localized: ${unbound.join(', ')}`);
+});
+
+test('the template status strings exist and are translated in every locale', () => {
+  const langDir = path.join(appRoot, 'locale', 'lang');
+  const files = fs.readdirSync(langDir).filter((f) => f.endsWith('.json'));
+  assert.equal(files.length, 18, 'all bundled locales must be checked');
+
+  for (const file of files) {
+    const designerStrings = JSON.parse(fs.readFileSync(path.join(langDir, file), 'utf8')).settings.notification.option.designer;
+    for (const key of ['applied', 'randomized', 'duplicated']) {
+      const value = String((designerStrings.templates || {})[key] || '').trim();
+      assert.ok(value, `${file}: designer.templates.${key} must be translated — there is no English fallback at runtime`);
+    }
+  }
+});

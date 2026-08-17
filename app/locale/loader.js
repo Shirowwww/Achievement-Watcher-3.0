@@ -494,7 +494,13 @@ function translateUI(lang, locale, template) {
       .attr('data-imported-only', clear(c.importedOnly))
       .attr('data-exported', clear(c.exported))
       .attr('data-reset', clear(c.resetDone))
-      .attr('data-fail', clear(c.failed));
+      .attr('data-fail', clear(c.failed))
+      // The three template actions read these back off the element the same way the ones above do.
+      // They were never bound, so picking a starting point printed its bare name — "Slate" on its
+      // own, in green, with nothing saying what had happened — and "Surprise me" said nothing at all.
+      .attr('data-template', clear(c.templates.applied))
+      .attr('data-randomized', clear(c.templates.randomized))
+      .attr('data-duplicated', clear(c.templates.duplicated));
     $(document).trigger('locale-labels-changed');
   }
   // Localize the 8 overlay position options + expose the dynamic "None" sound label as a data attr.
