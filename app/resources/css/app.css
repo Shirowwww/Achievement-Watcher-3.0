@@ -111,15 +111,21 @@
    The semantic hues are darkened so they still pass contrast on a near-white background. */
 :root[data-theme='light'] {
   /* Shadows here are the same black as everywhere else, just far weaker: at full strength the
-     dark-theme alphas turn every card into a grey halo on a near-white surface. */
-  --shadow-scale: 0.3;
-  --bg-base: #eceff4;
-  --bg-glow: #ffffff;
-  --bg-panel: #f5f7fa;
-  --bg-panel-translucent: #f5f7fab5;
+     dark-theme alphas turn every card into a grey halo on a near-white surface. Kept low, but not
+     so low that cards lose their lift — depth is the only separation a white card on a pale panel
+     gets, now that the white-alpha highlights the dark themes rely on no longer register. */
+  --shadow-scale: 0.5;
+  /* These four were all within a few percent of white, so the window, the library panel and the
+     cards inside it read as one flat sheet with tiles floating on nothing. They are spread into
+     real steps instead — base darkest, panel between, cards white — so the hierarchy comes from
+     the surfaces themselves rather than from borders that barely register at this lightness. */
+  --bg-base: #e6ebf3;
+  --bg-glow: #f6f9fc; /* a tint, not a pure-white block across the whole header */
+  --bg-panel: #eef2f8;
+  --bg-panel-translucent: #eef2f8d6;
   --surface: #ffffff;
   --set-surface: #ffffff;
-  --border: #ccd4e0;
+  --border: #c5cfdd;
   --text: #16202e;
   --text-muted: #5b6b80;
   /* A muted slate blue rather than a saturated one: the bright accent the dark themes carry is
@@ -127,7 +133,8 @@
   --accent: #3a63b5;
   --accent-soft: rgba(58, 99, 181, 0.14);
   --surface-elevated: #ffffff;
-  --surface-sunken: #e3e8f0;
+  /* Progress tracks and wells: has to sit clearly below the white card it is cut into. */
+  --surface-sunken: #dbe2ec;
   --success: #14804a;
   --warning: #9a6700;
   --danger: #c4342f;

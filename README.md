@@ -13,7 +13,7 @@ live Windows notifications or an in-game overlay.
 [![License](https://img.shields.io/badge/license-LGPL--3.0-green?style=flat-square)](LICENSE)
 
 **[Download](https://github.com/Shirowwww/Achievement-Watcher-Next/releases/latest)** ·
-[Documentation](docs/README.md) ·
+[Documentation](https://shirowwww.github.io/Achievement-Watcher-Next/) ·
 [Changelog](CHANGELOG.md) ·
 [Issues](https://github.com/Shirowwww/Achievement-Watcher-Next/issues)
 
@@ -63,7 +63,7 @@ live Windows notifications or an in-game overlay.
 </table>
 </div>
 
-→ [How AW Next compares to Achievement Watcher 2.x and Achievements](docs/comparison.md)
+→ [How AW Next compares to Achievement Watcher 2.x and Achievements](https://shirowwww.github.io/Achievement-Watcher-Next/comparison.html)
 
 ---
 
@@ -79,7 +79,7 @@ Settings, caches, playtime and achievement data live in `%APPDATA%\Achievement W
 Upgrading preserves them, and the first launch after an upgrade imports an older Achievement Watcher
 folder without ever modifying it.
 
-→ [Getting started](docs/getting-started.md) for the full first-run, discovery and update guide.
+→ [Getting started](https://shirowwww.github.io/Achievement-Watcher-Next/getting-started.html) for the full first-run, discovery and update guide.
 
 ---
 
@@ -99,8 +99,8 @@ folder without ever modifying it.
 Each source is an individual switch, and no Steam Web API key is used: achievement lists come from
 public endpoints and are cached locally.
 
-→ [Compatible sources](docs/sources.md) · [Goldberg / GBE setup](docs/emulator-setup.md) ·
-[Uplay R2 setup](docs/uplay-r2.md)
+→ [Compatible sources](https://shirowwww.github.io/Achievement-Watcher-Next/sources.html) · [Goldberg / GBE setup](https://shirowwww.github.io/Achievement-Watcher-Next/emulator-setup.html) ·
+[Uplay R2 setup](https://shirowwww.github.io/Achievement-Watcher-Next/uplay-r2.html)
 
 > [!WARNING]
 > Reading achievements is read-only. The emulator repair tools do modify game files — always after a
@@ -110,21 +110,22 @@ public endpoints and are cached locally.
 
 ## Documentation
 
-Start at the **[documentation index](docs/README.md)**, which explains what each guide covers.
+Start at the **[documentation site](https://shirowwww.github.io/Achievement-Watcher-Next/)**, which explains what each guide covers.
 
-[Getting started](docs/getting-started.md) ·
-[Sources](docs/sources.md) ·
-[Notifications](docs/notifications.md) ·
-[Presets](docs/presets.md) ·
-[Overlay](docs/overlay.md) ·
-[Controller](docs/controller.md) ·
-[Game Health](docs/game-health.md) ·
-[Troubleshooting](docs/troubleshooting.md) ·
-[FAQ](docs/faq.md) ·
-[Advanced tools](docs/advanced.md)
+[Getting started](https://shirowwww.github.io/Achievement-Watcher-Next/getting-started.html) ·
+[Sources](https://shirowwww.github.io/Achievement-Watcher-Next/sources.html) ·
+[Notifications](https://shirowwww.github.io/Achievement-Watcher-Next/notifications.html) ·
+[Presets](https://shirowwww.github.io/Achievement-Watcher-Next/presets.html) ·
+[Overlay](https://shirowwww.github.io/Achievement-Watcher-Next/overlay.html) ·
+[Controller](https://shirowwww.github.io/Achievement-Watcher-Next/controller.html) ·
+[Game Health](https://shirowwww.github.io/Achievement-Watcher-Next/game-health.html) ·
+[Troubleshooting](https://shirowwww.github.io/Achievement-Watcher-Next/troubleshooting.html) ·
+[FAQ](https://shirowwww.github.io/Achievement-Watcher-Next/faq.html) ·
+[Advanced tools](https://shirowwww.github.io/Achievement-Watcher-Next/advanced.html)
 
 For contributors: [Contributing](CONTRIBUTING.md) · [Build guide](BUILD.md) ·
-[Architecture](docs/architecture.md) · [Release workflow](docs/RELEASE_WORKFLOW.md)
+[Architecture](https://shirowwww.github.io/Achievement-Watcher-Next/architecture.html) ·
+[Release workflow](https://shirowwww.github.io/Achievement-Watcher-Next/RELEASE_WORKFLOW.html)
 
 ## Build from source
 

@@ -8,7 +8,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0 12px;
+  /* The dot's glow is a 10px box-shadow, painted outside the dot's own box, and #watchdog-status
+     clips to its padding box. Holding the left inset as margin put that boundary right at the dot,
+     so the halo was sliced flat on its left side while staying round everywhere else. Padding keeps
+     the dot in the same place but puts the glow inside the clip. */
+  margin: 0 12px 0 0;
+  padding-left: 12px;
 }
 
 .sf-indicator .status-dot {

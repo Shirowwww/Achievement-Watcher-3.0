@@ -28,14 +28,17 @@ const BUILTIN_COLORS = {
   },
   // The only light-base built-in; see the matching block in app.css.
   light: {
-    bg: '#eceff4',
-    header: '#ffffff',
-    panel: '#f5f7fa',
+    // Kept in step with the :root[data-theme='light'] block in app.css, which is what these values
+    // paint in the overlay: the window, the library panel and the cards used to sit within a few
+    // percent of white, so nothing had any hierarchy.
+    bg: '#e6ebf3',
+    header: '#f6f9fc',
+    panel: '#eef2f8',
     card: '#ffffff',
     settings: '#ffffff',
     text: '#16202e',
     muted: '#5b6b80',
-    border: '#ccd4e0',
+    border: '#c5cfdd',
     accent: '#3a63b5',
   },
   oled: {

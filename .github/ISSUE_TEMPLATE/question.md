@@ -8,7 +8,7 @@ assignees: ''
 
 ## Before asking
 
-- [ ] I checked the [documentation](../../docs/README.md) and [troubleshooting guide](../../docs/troubleshooting.md).
+- [ ] I checked the [documentation](https://shirowwww.github.io/Achievement-Watcher-Next/) and [troubleshooting guide](https://shirowwww.github.io/Achievement-Watcher-Next/troubleshooting.html).
 - [ ] I searched existing issues for the same question.
 - [ ] I am using the latest release, or I have explained why I cannot update.
 
