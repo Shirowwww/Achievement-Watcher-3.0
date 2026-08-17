@@ -77,7 +77,6 @@ function ListRegistryAllValues(hive, key) {
   // enumerateValues returns an array of objects: { name, type, data }
   const values = enumerateValues(hiveEnum, normalizedKey);
 
-  // Return just the names
   return values.map((v) => v.name);
 }
 

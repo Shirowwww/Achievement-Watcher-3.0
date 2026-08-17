@@ -1155,9 +1155,8 @@ var app = {
 
         monitor.on('disable-overlay', () => {
           runningAppid = null;
-          // Only ask for a close when an overlay is actually up: the request used to be sent on
-          // every game exit, and an unsolicited close reaching the app with nothing open made it
-          // open the overlay on the desktop instead (issue #19).
+          // Only ask for a close when an overlay is actually up — an unsolicited close reaching the
+          // app with nothing open made it open the overlay on the desktop instead (issue #19).
           const wasOpen = overlayOpened;
           overlayOpened = false;
           if (wasOpen) {

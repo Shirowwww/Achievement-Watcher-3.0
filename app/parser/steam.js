@@ -951,7 +951,6 @@ async function getDataFromSteamStore(appID) {
 
     const html = htmlParser.parse(body);
 
-    // Extract from inline style
     const bgDiv = html.querySelector('.game_page_background.game');
     let background = null;
 
@@ -1070,10 +1069,8 @@ async function findInAppList(appID) {
     listReady = false;
     try {
       let list;
-      // Use a cached copy if it exists and is < 3 days old.
-      // NB: this used to call fs.readdirSync() on a *file* path, which throws ENOTDIR; the throw
-      // escaped findInAppList(), left listReady stuck at false and froze every subsequent
-      // uncached-game lookup on the `while (!listReady)` spin above (a big part of issue #53).
+      // Use a cached copy if it exists and is < 3 days old. Anything thrown here escapes
+      // findInAppList() and leaves listReady false, freezing every later lookup (issue #53).
       if (fs.existsSync(filepath) && Date.now() - fs.statSync(filepath).mtimeMs < 60 * 60 * 1000 * 24 * 3) {
         try {
           list = JSON.parse(fs.readFileSync(filepath, 'utf-8'));
