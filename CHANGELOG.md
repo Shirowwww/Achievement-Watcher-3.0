@@ -162,7 +162,10 @@ deleting either source.
 - **A custom cover applies to the shape you chose it in, and shows up immediately.** Portrait and
   landscape now hold their own picture instead of overwriting one another, and the stored file is
   named after its own contents — picking a second cover previously reused the same path, so the tile
-  kept painting the previous image and choosing a cover looked like it had done nothing.
+  kept painting the previous image and choosing a cover looked like it had done nothing. Covers picked
+  before this release are read once at startup and bound to the shape their own artwork has, since the
+  image is the only record of which grid they were chosen in: a 920x430 header stops being cropped
+  into a portrait tile, and the orientation it was never meant for falls back to the store's own art.
 - **A game Steam installed is never listed as a cracked one.** Every Steam game ships
   `steam_api64.dll` and every Source game ships `steam_appid.txt` — the two markers the installed-game
   scan looks for — so a Steam library inside a watched games folder handed over its own titles, with

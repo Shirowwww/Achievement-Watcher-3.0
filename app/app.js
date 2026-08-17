@@ -497,6 +497,15 @@ function getSourceImg(source) {
 }
 
 // ---- Cover-art overrides (per-appid; cfg/covers.db) ------------------------------------------
+// One-time: covers picked before they were stored per orientation are bound to the shape their own
+// image has, so switching the grid between portrait and landscape stops reusing the other shape's
+// picture. Runs before the snapshot below so the first render already sees the split entries.
+try {
+  const split = coverStore.splitLegacyByShape();
+  if (split.length > 0) debug.log(`[cover] bound ${split.length} custom cover(s) to the orientation of their artwork`);
+} catch (err) {
+  debug.warn(`[cover] could not classify legacy overrides: ${err.message || err}`);
+}
 // In-memory snapshot so the render path can apply an override synchronously (no disk read per tile).
 let coverOverrides = coverStore.readAll();
 function reloadCoverOverrides() {

@@ -10,6 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const { fileURLToPath, pathToFileURL } = require('url');
 const { userDataDir } = require('./userDataPath.js');
+const { imageSize } = require('./imageSize.js');
 
 const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.gif']);
 
@@ -235,6 +236,49 @@ function persist(appid, coverUrl, root = userDataDir(), orientation) {
   return stored;
 }
 
+/*
+  Which tile shape an image was made for, from its own pixels.
+
+  Store art comes in two unmistakable shapes — a header is about 2:1, a portrait grid 2:3 — so the
+  ratio is the answer, not a guess. Anything close to square (a fan-made square cover, an icon) is
+  deliberately left unclassified: it suits both shapes about equally badly, and forcing it into one
+  would silently drop it from the other.
+*/
+function orientationOfImage(file) {
+  const size = file ? imageSize(file) : null;
+  if (!size) return null;
+  const ratio = size.width / size.height;
+  if (ratio <= 0.9) return 'portrait';
+  if (ratio >= 1.1) return 'landscape';
+  return null;
+}
+
+/*
+  Bind every legacy plain-string entry to the orientation its image actually has.
+
+  Before covers were stored per orientation a pick was one URL for the game, so switching the grid
+  to the other shape kept painting it: a 920x430 header cropped into a portrait tile, or a 600x900
+  grid letterboxed into a landscape one. Splitting the two is only half the fix — the entries already
+  on disk have to be told apart as well, and the file itself is the only record of which shape the
+  user picked. Entries that cannot be measured (a remote URL, a deleted file, a square image) keep
+  applying to both, exactly as before.
+
+  Returns the appids it changed.
+*/
+function splitLegacyByShape() {
+  const map = readAll();
+  const changed = [];
+  for (const [appid, entry] of Object.entries(map)) {
+    if (typeof entry !== 'string') continue;
+    const orientation = orientationOfImage(localPathFromUrl(entry));
+    if (!orientation) continue;
+    map[appid] = { [orientation]: entry };
+    changed.push(appid);
+  }
+  if (changed.length > 0) writeAll(map);
+  return changed;
+}
+
 function isUsable(coverUrl) {
   const local = localPathFromUrl(coverUrl);
   if (!local) return /^https?:\/\//i.test(String(coverUrl || ''));
@@ -330,4 +374,6 @@ module.exports = {
   recoverRemote,
   preserveCachedOverrides,
   valueForOrientation,
+  orientationOfImage,
+  splitLegacyByShape,
 };

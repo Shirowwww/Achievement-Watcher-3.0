@@ -229,4 +229,53 @@ test('persist keeps both orientations’ files when they differ, and prunes only
   assert.strictEqual(coverStore.get('7002', 'landscape'), storedLandscape2);
 });
 
+/*
+  The split above only helps covers picked from now on. Entries written before it exist as one plain
+  string, and nothing in them records which shape the user picked — except the image itself.
+*/
+function writePng(file, width, height) {
+  const png = Buffer.alloc(33);
+  png.writeUInt32BE(0x89504e47, 0);
+  png.writeUInt32BE(0x0d0a1a0a, 4);
+  png.writeUInt32BE(13, 8);
+  png.write('IHDR', 12, 'latin1');
+  png.writeUInt32BE(width, 16);
+  png.writeUInt32BE(height, 20);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, png);
+  return pathToFileURL(file).href;
+}
+
+test('legacy covers are bound to the orientation their own artwork has', () => {
+  const header = writePng(path.join(tmpRoot, 'covers', '8001.png'), 920, 430); // Steam header
+  const grid = writePng(path.join(tmpRoot, 'covers', '8002.png'), 600, 900); // portrait grid
+  const square = writePng(path.join(tmpRoot, 'covers', '8003.png'), 512, 512);
+
+  coverStore.set('8001', header);
+  coverStore.set('8002', grid);
+  coverStore.set('8003', square);
+  coverStore.set('8004', 'https://cdn2.steamgriddb.com/grid/deadbeef.png');
+  coverStore.set('8005', 'file:///gone.png');
+  coverStore.set('8006', 'file:///already-split.png', 'portrait');
+
+  const changed = coverStore.splitLegacyByShape();
+  assert.deepStrictEqual(changed.sort(), ['8001', '8002']);
+
+  assert.strictEqual(coverStore.get('8001', 'landscape'), header);
+  assert.strictEqual(coverStore.get('8001', 'portrait'), null, 'a header must stop being reused as the portrait cover');
+  assert.strictEqual(coverStore.get('8002', 'portrait'), grid);
+  assert.strictEqual(coverStore.get('8002', 'landscape'), null);
+
+  // Nothing to go on: a square image, a remote URL and a deleted file keep applying to both.
+  for (const id of ['8003', '8004', '8005']) {
+    assert.strictEqual(typeof coverStore.readAll()[id], 'string', `${id} must be left alone`);
+  }
+  // Already per-orientation: untouched, and never collapsed back into a string.
+  assert.strictEqual(coverStore.get('8006', 'portrait'), 'file:///already-split.png');
+  assert.strictEqual(coverStore.get('8006', 'landscape'), null);
+
+  // Running twice is a no-op: the migration has nothing left to classify.
+  assert.deepStrictEqual(coverStore.splitLegacyByShape(), []);
+});
+
 console.log(`\n${passed} passed`);
