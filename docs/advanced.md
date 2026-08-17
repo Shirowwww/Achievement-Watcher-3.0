@@ -114,4 +114,8 @@ submenu. They have their own guides:
 
 **Next:** [FAQ](faq.md) - short answers to the questions that come up most.
 
-<p align="center"><a href="README.md">← Documentation</a> · <a href="troubleshooting.md">Troubleshooting</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0">Project home</a></p>
+<div align="center">
+
+[← Documentation](README.md) · [Troubleshooting](troubleshooting.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-3.0)
+
+</div>

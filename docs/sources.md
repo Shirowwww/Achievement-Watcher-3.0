@@ -113,4 +113,8 @@ game.
 *Source-specific setup: [Goldberg / GBE](emulator-setup.md) · [Uplay R2](uplay-r2.md) ·
 [Game Health](game-health.md)*
 
-<p align="center"><a href="README.md">← Documentation</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0">Project home</a></p>
+<div align="center">
+
+[← Documentation](README.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-3.0)
+
+</div>

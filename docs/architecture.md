@@ -138,4 +138,8 @@ When changing a parser or watcher, verify:
 **Next:** [Build guide](https://github.com/Shirowwww/Achievement-Watcher-3.0/blob/main/BUILD.md) - running from source, packaging and the native-module
 gotchas · [Contributing](https://github.com/Shirowwww/Achievement-Watcher-3.0/blob/main/CONTRIBUTING.md) · [Release workflow](RELEASE_WORKFLOW.md).
 
-<p align="center"><a href="README.md">← Documentation</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0/blob/main/BUILD.md">Build guide</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0">Project home</a></p>
+<div align="center">
+
+[← Documentation](README.md) · [Build guide](https://github.com/Shirowwww/Achievement-Watcher-3.0/blob/main/BUILD.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-3.0)
+
+</div>

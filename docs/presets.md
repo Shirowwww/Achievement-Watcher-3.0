@@ -198,4 +198,8 @@ credited to you unless you put it there.
 **Next:** [Overlay](overlay.md) - the in-game achievement list, which is a separate thing from these
 popups.
 
-<p align="center"><a href="README.md">← Documentation</a> · <a href="notifications.md">Notifications</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0">Project home</a></p>
+<div align="center">
+
+[← Documentation](README.md) · [Notifications](notifications.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-3.0)
+
+</div>

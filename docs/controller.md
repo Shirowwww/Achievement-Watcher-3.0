@@ -117,4 +117,8 @@ over raw HID, which is why they work without any vendor driver.
 **Next:** [Game Health](game-health.md) - the per-game panel that says why a game is
 or is not being tracked.
 
-<p align="center"><a href="README.md">← Documentation</a> · <a href="overlay.md">Overlay guide</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0">Project home</a></p>
+<div align="center">
+
+[← Documentation](README.md) · [Overlay guide](overlay.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-3.0)
+
+</div>

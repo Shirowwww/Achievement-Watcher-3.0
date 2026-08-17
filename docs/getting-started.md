@@ -173,4 +173,8 @@ emulator-fix tools) and lets everything re-fetch itself; settings, saves and bac
 [Game Health](game-health.md) · [Goldberg / GBE setup](emulator-setup.md) ·
 [Troubleshooting](troubleshooting.md)*
 
-<p align="center"><a href="README.md">← Documentation</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0">Project home</a></p>
+<div align="center">
+
+[← Documentation](README.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-3.0)
+
+</div>

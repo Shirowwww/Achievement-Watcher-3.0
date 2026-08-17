@@ -121,4 +121,8 @@ the private process in the [security policy](https://github.com/Shirowwww/Achiev
 
 **Still stuck?** [Troubleshooting](troubleshooting.md) goes through each symptom in order.
 
-<p align="center"><a href="README.md">← Documentation</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0">Project home</a></p>
+<div align="center">
+
+[← Documentation](README.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-3.0)
+
+</div>

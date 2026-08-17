@@ -88,4 +88,8 @@ reopening the overlay. **Reset defaults** restores the original look.
 **Next:** [Controller guide](controller.md) - drive the overlay and the app with a
 gamepad.
 
-<p align="center"><a href="README.md">← Documentation</a> · <a href="notifications.md">Notification guide</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0">Project home</a></p>
+<div align="center">
+
+[← Documentation](README.md) · [Notification guide](notifications.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-3.0)
+
+</div>

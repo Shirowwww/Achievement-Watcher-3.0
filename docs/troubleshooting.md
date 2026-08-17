@@ -169,4 +169,8 @@ cache clearing and resets · [Game Health](game-health.md) for single-game probl
 [Goldberg/GBE reference](goldberg-gbe.md) for file formats and detection rules, and
 [Architecture](architecture.md) for the app / renderer / Watchdog boundaries.
 
-<p align="center"><a href="README.md">← Documentation</a> · <a href="getting-started.md">Getting started</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0">Project home</a></p>
+<div align="center">
+
+[← Documentation](README.md) · [Getting started](getting-started.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-3.0)
+
+</div>
