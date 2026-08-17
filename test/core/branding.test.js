@@ -166,7 +166,7 @@ test('help links point at this project, not the upstream wiki', () => {
   // different application. Only the credit links in Settings may still name the upstream projects.
   const appJs = read('app', 'app.js');
   assert.doesNotMatch(appJs, /xan105\/Achievement-Watcher\/wiki/, 'the help link must not point at the upstream wiki');
-  assert.match(appJs, /Shirowwww\/Achievement-Watcher-3\.0\/blob\/main\/docs\/troubleshooting\.md/, 'it must point at this project’s troubleshooting guide');
+  assert.match(appJs, /Shirowwww\/Achievement-Watcher-Next\/blob\/main\/docs\/troubleshooting\.md/, 'it must point at this project’s troubleshooting guide');
 
   // Its label is localized rather than the old hard-coded "Wiki".
   assert.match(appJs, /data\('lang-troubleshoot'\)/, 'the link label must come from the locale');
