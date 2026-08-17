@@ -257,6 +257,9 @@ function setLibraryBusyCursor(busy) {
 const MAX_SKELETON_TILES = 18;
 const DEFAULT_SKELETON_TILES = 12;
 const MIN_STREAMING_SKELETON_TILES = 6;
+// One placeholder past whatever is still coming, so the grid keeps saying "there is more" until the
+// scan actually finishes — clearSkeletonTiles() takes it away at the end.
+const EXTRA_SKELETON_TILES = 1;
 let skeletonStreamActive = false;
 let skeletonSequence = 0;
 // The live placeholders, in document order. Re-querying them per streamed game cost two full
@@ -281,10 +284,23 @@ function skeletonTileHtml(index) {
 }
 
 // Never show more placeholders than games still to arrive, so a 3-game library does not shimmer
-// with 12 of them.
+// with 12 of them — plus the one deliberate extra.
 function skeletonBudget(cap) {
   if (skeletonExpected === null) return cap;
-  return Math.max(0, Math.min(cap, skeletonExpected - skeletonRendered));
+  const remaining = Math.max(0, skeletonExpected - skeletonRendered);
+  return Math.min(cap, remaining + EXTRA_SKELETON_TILES);
+}
+
+// Is this tile one the installed-only filter will hide? Counted from the filter state and the
+// tile's own flag rather than its computed style, so the answer does not depend on layout having
+// happened yet.
+function tileHiddenByInstalledFilter(item) {
+  try {
+    if (!(typeof window.installedOnlyEnabled === 'function' && window.installedOnlyEnabled())) return false;
+    return item.find('.game-box').attr('data-installed') === '0';
+  } catch {
+    return false;
+  }
 }
 
 function appendSkeletonTiles(count) {
@@ -320,7 +336,15 @@ function replaceSkeletonWith(item) {
   const skeleton = skeletonTiles.shift();
   if (skeleton && skeleton.parent().length) skeleton.replaceWith(item);
   else $('#game-list ul').append(item);
-  skeletonRendered += 1;
+  // makeList reports every game it will deliver, but installed-only hides part of them in CSS, so
+  // that total counts tiles the user will never see. A hidden arrival is removed from what is still
+  // expected instead of counting as one delivered — either way the remaining budget drops by one,
+  // and the placeholders keep matching the games the grid is actually going to show.
+  if (tileHiddenByInstalledFilter(item)) {
+    if (skeletonExpected !== null) skeletonExpected -= 1;
+  } else {
+    skeletonRendered += 1;
+  }
   // Keep a short animated tail until makeList resolves, or a large library looks finished after
   // its first dozen games. The tail shrinks to nothing as the last games arrive.
   if (!skeletonStreamActive) return;
@@ -1345,13 +1369,21 @@ var app = {
       const file = manualUnlock.sidecarFile();
       return file ? manualUnlock.readMap(file) : {};
     })();
-    const previousGameCount = gameList.length;
+    // How many tiles the grid was actually showing, which is not gameList.length: installed-only
+    // hides part of the library, so a 200-game list can be three tiles on screen. Placeholders are a
+    // promise about what is coming, so they have to be counted the way the grid is filtered. Read it
+    // before the list is emptied.
+    const previousVisibleCount = $('#game-list ul > li').filter(function () {
+      return $(this).css('display') !== 'none';
+    }).length;
     gameList = [];
     const renderedAppids = new Set();
     // Reset the list and handlers so onStart() stays idempotent.
     $('#game-list ul').empty();
     addSkeletonTiles(
-      previousGameCount > 0 ? Math.min(MAX_SKELETON_TILES, Math.max(previousGameCount, 6)) : DEFAULT_SKELETON_TILES
+      previousVisibleCount > 0
+        ? Math.min(MAX_SKELETON_TILES, previousVisibleCount + EXTRA_SKELETON_TILES)
+        : DEFAULT_SKELETON_TILES
     );
     gameElements.clear();
     // Remove only handlers owned by this scan.

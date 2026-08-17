@@ -132,22 +132,59 @@ test('placeholder tiles track the real game count and never outlive the stream',
       api.addSkeletonTiles(18);
       for (let i = 0; i < 5; i++) api.replaceSkeletonWith(tile(i));
       out.unknownTotalTail = count();
+
+      /*
+        Installed-only mode. makeList reports every game it will deliver, but the filter hides part
+        of them in CSS, so that total counts tiles the user never sees: a 10-game scan with 7
+        uninstalled games is a 3-tile grid, and the placeholders have to say 3, not 10.
+      */
+      const installedTile = (i, installed) =>
+        window.$(`<li><div class="game-box" data-appid="${i}" data-installed="${installed}"></div></li>`);
+      window.installedOnlyEnabled = () => true;
+      window.$('#game-list ul').empty();
+      api.addSkeletonTiles(18);
+      api.setSkeletonExpected(10);
+      out.installedSeeded = count();
+      // Three installed games among ten delivered.
+      for (let i = 0; i < 7; i++) api.replaceSkeletonWith(installedTile(i, '0'));
+      out.installedAfterHidden = count();
+      for (let i = 7; i < 10; i++) api.replaceSkeletonWith(installedTile(i, '1'));
+      out.installedEndTail = count();
+
+      // With the filter off the same stream keeps promising all ten.
+      window.installedOnlyEnabled = () => false;
+      window.$('#game-list ul').empty();
+      api.addSkeletonTiles(18);
+      api.setSkeletonExpected(10);
+      for (let i = 0; i < 7; i++) api.replaceSkeletonWith(installedTile(i, '0'));
+      out.unfilteredAfterSeven = count();
       return out;
     }, skeletonSource());
 
     assert.equal(result.seededBeforeTotal, 12, 'the pre-count seed is the caller-chosen block');
-    assert.equal(result.afterTotalKnown, 3, 'learning the real total shrinks the block to it');
-    assert.equal(result.smallTail, 0, 'a fully streamed small library leaves no placeholders');
+    // The real total plus the one deliberate extra, so the grid keeps saying the scan is not done.
+    assert.equal(result.afterTotalKnown, 4, 'learning the real total shrinks the block to it, plus one');
+    assert.equal(result.smallTail, 1, 'the single trailing placeholder stays until the scan ends');
     assert.equal(result.smallReal, 3);
 
     assert.ok(result.midStreamTail > 0, 'games still to come keep a visible tail');
     assert.ok(result.midStreamTail <= 6, 'the tail stays short');
-    assert.equal(result.endTail, 0, 'the tail runs down to nothing on the last game');
+    assert.equal(result.endTail, 1, 'the last game leaves the one extra placeholder, not a tail');
     assert.equal(result.largeReal, 30);
 
     assert.equal(result.ariaHidden, 4, 'placeholders stay hidden from assistive tech');
     assert.equal(result.afterClear, 0, 'clearing removes every placeholder');
     assert.equal(result.unknownTotalTail, 6, 'without a total the short rolling tail is kept');
+
+    // Installed-only: the placeholders must count the tiles the grid will actually show.
+    assert.equal(result.installedSeeded, 11, 'the reported total plus one, before anything is known about the filter');
+    assert.equal(
+      result.installedAfterHidden,
+      4,
+      'seven hidden arrivals must take seven off what is still expected, leaving the three installed games plus one'
+    );
+    assert.equal(result.installedEndTail, 1, 'the three installed games run the tail down to the single extra');
+    assert.equal(result.unfilteredAfterSeven, 4, 'with the filter off the same seven games are real tiles, so three remain plus one');
   } finally {
     await browser.close().catch(() => {});
     killBrowserUsing(userDataDir);
