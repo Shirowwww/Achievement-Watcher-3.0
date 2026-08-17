@@ -43,6 +43,27 @@ function covers(remembered, offered) {
   return semver.gte(a, b);
 }
 
+/*
+  Is the offered version actually an upgrade?
+
+  `latest.yml` has to be fetched to answer "am I up to date?" at all — it is the manifest that
+  carries the published version, so there is no way to skip reading it and still know. What can be
+  guaranteed is what happens afterwards: a manifest naming the version already installed, or an
+  older one (a rolled-back release, a stale CDN copy, a local build ahead of the published tag),
+  must never turn into a prompt or a download. electron-updater applies its own semver gate before
+  emitting update-available; this is the app's own check, so a surprise there cannot cost the user a
+  pointless installer download or a dialog offering them what they are already running.
+
+  An unparseable version on either side returns false: that is electron-updater's call to make, and
+  suppressing on a version string this cannot read would hide real updates.
+*/
+function isNotAnUpgrade(offered, currentVersion) {
+  const a = coerce(offered);
+  const b = coerce(currentVersion);
+  if (!a || !b) return false;
+  return semver.lte(a, b);
+}
+
 function isVersionSkipped(general, offered) {
   const skipped = general && typeof general.skippedVersion === 'string' ? general.skippedVersion : '';
   if (!skipped || skipped.toLowerCase() === 'none') return false;
@@ -62,7 +83,10 @@ function isUpdatePostponed(general, offered, now = Date.now()) {
   earlier no longer applies — but an explicit "skip this version" still does.
   Returns { suppress, reason }.
 */
-function shouldSuppressUpdatePrompt(general, offered, { manual = false, now = Date.now() } = {}) {
+function shouldSuppressUpdatePrompt(general, offered, { manual = false, now = Date.now(), currentVersion = '' } = {}) {
+  // First, and ahead of `manual`: an explicit "Check for updates" overrules a postpone the user set,
+  // but it cannot make a version that is not newer worth offering.
+  if (isNotAnUpgrade(offered, currentVersion)) return { suppress: true, reason: 'not-newer' };
   if (isVersionSkipped(general, offered)) return { suppress: true, reason: 'skipped' };
   if (!manual && isUpdatePostponed(general, offered, now)) return { suppress: true, reason: 'postponed' };
   return { suppress: false, reason: '' };
@@ -83,6 +107,7 @@ module.exports = {
   INTERVALS,
   nextCheckDelayMs,
   covers,
+  isNotAnUpgrade,
   isVersionSkipped,
   isUpdatePostponed,
   shouldSuppressUpdatePrompt,

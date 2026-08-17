@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const { migrateAw3UserData, migrateSouvenirFolder, configuredSouvenirDir, AW3_MARKER_REL, SOUVENIR_MARKER_REL } = require('../../app/util/migrateUserData.js');
+const { migrateAw3UserData, migrateSouvenirFolder, retargetBackupIndex, configuredSouvenirDir, AW3_MARKER_REL, SOUVENIR_MARKER_REL } = require('../../app/util/migrateUserData.js');
 
 /*
   The "Achievement Watcher 3.0" -> "Achievement Watcher Next" data hop. Everything here is about not
@@ -178,6 +178,65 @@ test('a souvenir folder the user picked is never relocated', () => {
     assert.equal(configuredSouvenirDir(userData), custom);
     assert.equal(migrateSouvenirFolder(userData, { fromDir: from, toDir: to }), null);
     assert.equal(fs.existsSync(to), false, 'a custom souvenir path must not be migrated anywhere');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+/*
+  The restore-point index. `backups/` migrates like any other folder, but each entry records an
+  absolute backupDir, and copying a file does not rewrite what is inside it — so every entry kept
+  naming the folder it came from. That looks fine while the old folder is still on disk, and the
+  uninstaller deletes it outright.
+*/
+test('migrated restore points are repointed at the folder that now holds them', () => {
+  const root = tempRoot();
+  try {
+    const userData = path.join(root, 'userData');
+    const oldRoot = path.join(root, 'Achievement Watcher 3.0', 'backups', 'gbe');
+    const newRoot = path.join(userData, 'backups', 'gbe');
+
+    // Two restore points carried across, plus one whose files are not here at all.
+    for (const name of ['Game A - GBE backup - 2026-06-29T11-44-23-679Z', 'Game B - GBE backup - 2026-07-01T09-00-00-000Z']) {
+      write(path.join(oldRoot, name, 'backup.json'), '{}');
+      write(path.join(newRoot, name, 'backup.json'), '{}');
+    }
+    const orphan = path.join(root, 'Somewhere Else', 'Game C - GBE backup');
+    write(path.join(orphan, 'backup.json'), '{}');
+
+    write(
+      path.join(userData, 'cfg', 'gbe-backups.db'),
+      JSON.stringify([
+        { appid: '1', gameDir: 'C:\Jeux\A', backupDir: path.join(oldRoot, 'Game A - GBE backup - 2026-06-29T11-44-23-679Z') },
+        { appid: '2', gameDir: 'C:\Jeux\B', backupDir: path.join(oldRoot, 'Game B - GBE backup - 2026-07-01T09-00-00-000Z') },
+        { appid: '3', gameDir: 'C:\Jeux\C', backupDir: orphan },
+      ])
+    );
+
+    assert.equal(retargetBackupIndex(userData), 2, 'both carried-across restore points must be repointed');
+
+    const entries = JSON.parse(fs.readFileSync(path.join(userData, 'cfg', 'gbe-backups.db'), 'utf8'));
+    assert.equal(path.dirname(entries[0].backupDir), newRoot);
+    assert.equal(path.dirname(entries[1].backupDir), newRoot);
+    for (const entry of entries) assert.ok(fs.existsSync(entry.backupDir), `${entry.appid}: the recorded path must exist`);
+
+    // An entry this cannot vouch for keeps the path it had rather than being repointed at nothing.
+    assert.equal(entries[2].backupDir, orphan, 'an unknown backup must be left alone');
+
+    // Re-running changes nothing: the entries already live here.
+    assert.equal(retargetBackupIndex(userData), 0, 'the repoint must be idempotent');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('a missing or unreadable restore-point index never stops startup', () => {
+  const root = tempRoot();
+  try {
+    const userData = path.join(root, 'userData');
+    assert.equal(retargetBackupIndex(userData), 0, 'no index at all is fine');
+    write(path.join(userData, 'cfg', 'gbe-backups.db'), 'not json');
+    assert.equal(retargetBackupIndex(userData), 0, 'a corrupt index must be survivable');
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

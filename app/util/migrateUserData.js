@@ -247,6 +247,52 @@ function migrateAw3UserData(newUserDataDir, options = {}) {
   return imported;
 }
 
+/**
+ * Point the GBE restore-point index at the copies that now live in this data folder.
+ *
+ * `backups/` is migrated like everything else, so each restore point exists here — but the index
+ * records an absolute `backupDir`, and importing a file does not rewrite what is inside it. Every
+ * entry therefore kept naming the folder it came from. That reads as working, because the old
+ * folder is still on disk: right up until it is not. The uninstaller removes
+ * `%APPDATA%\Achievement Watcher 3.0` outright, and it is the obvious thing to delete by hand once
+ * AW Next has taken over — either one silently turns every "restore backup" button into a dead path.
+ *
+ * Only entries whose backup is actually present here are rewritten, so an entry pointing somewhere
+ * this cannot vouch for is left exactly as it was rather than repointed at nothing.
+ */
+function retargetBackupIndex(userDataDir, options = {}) {
+  const indexFile = path.join(userDataDir, 'cfg', 'gbe-backups.db');
+  const backupRoot = options.backupRoot || path.join(userDataDir, 'backups', 'gbe');
+  try {
+    if (!fs.existsSync(indexFile)) return 0;
+    const entries = JSON.parse(fs.readFileSync(indexFile, 'utf8'));
+    if (!Array.isArray(entries)) return 0;
+
+    let changed = 0;
+    for (const entry of entries) {
+      const current = entry && typeof entry.backupDir === 'string' ? entry.backupDir : '';
+      if (!current) continue;
+      // Already ours: nothing to do, and this keeps re-runs free.
+      if (path.resolve(current).toLowerCase().startsWith(path.resolve(backupRoot).toLowerCase())) continue;
+      const moved = path.join(backupRoot, path.basename(current));
+      if (!fs.existsSync(moved)) continue;
+      entry.backupDir = moved;
+      changed += 1;
+    }
+
+    if (changed > 0) {
+      fs.writeFileSync(indexFile, JSON.stringify(entries, null, 2), 'utf8');
+      warn(`repointed ${changed} GBE restore point(s) at this data folder`);
+    }
+    return changed;
+  } catch (err) {
+    // Best-effort: a restore point that cannot be repointed still works while its source folder is
+    // there, and a broken index must never stop the app from starting.
+    warn(`could not repoint the GBE restore points: ${(err && err.message) || err}`);
+    return 0;
+  }
+}
+
 // Read `[souvenir] dir` straight out of options.ini. A hand-rolled reader keeps the ini package and
 // the whole settings module out of the first few lines of the main process, where this runs.
 function configuredSouvenirDir(userDataDir) {
@@ -298,6 +344,7 @@ module.exports = {
   migrateLegacyUserData,
   migrateAw3UserData,
   migrateSouvenirFolder,
+  retargetBackupIndex,
   configuredSouvenirDir,
   SOUVENIR_DIR_NAME,
   AW3_SOUVENIR_DIR_NAME,

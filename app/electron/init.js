@@ -3,7 +3,7 @@
 const path = require('path');
 const { app } = require('electron');
 const { APP_DATA_DIR_NAME } = require('../util/userDataPath.js');
-const { migrateLegacyUserData, migrateAw3UserData, migrateSouvenirFolder } = require('../util/migrateUserData.js');
+const { migrateLegacyUserData, migrateAw3UserData, migrateSouvenirFolder, retargetBackupIndex } = require('../util/migrateUserData.js');
 app.setName('Achievement Watcher');
 // Keep 3.x data separate from the legacy folder; --user-data-dir still overrides it for tests.
 const cliUserDataDir = (() => {
@@ -24,6 +24,10 @@ app.setPath('userData', cliUserDataDir || path.join(app.getPath('appData'), APP_
 migrateAw3UserData(app.getPath('userData'));
 migrateLegacyUserData(app.getPath('userData'));
 migrateSouvenirFolder(app.getPath('userData'));
+// Runs on every start, not only on the hop that imported: the folders migrated before this existed
+// still hold a restore-point index pointing at the folder they came from, which keeps working only
+// until that folder is uninstalled or deleted. Idempotent — a repointed entry is skipped next time.
+retargetBackupIndex(app.getPath('userData'));
 // Keep GPU acceleration enabled, but avoid Chromium background services AW does not use in tray mode.
 for (const sw of ['disable-extensions', 'disable-component-extensions-with-background-pages', 'disable-default-apps', 'disable-background-networking', 'disable-accelerated-video-decode']) {
   app.commandLine.appendSwitch(sw);
@@ -100,7 +104,11 @@ async function clearUpdatePostpone() {
 }
 
 function shouldSuppressUpdatePrompt(version, { manual = false } = {}) {
-  const { suppress, reason } = updateGate.shouldSuppressUpdatePrompt((configJS && configJS.general) || {}, version, { manual });
+  const { suppress, reason } = updateGate.shouldSuppressUpdatePrompt((configJS && configJS.general) || {}, version, {
+    manual,
+    // Nothing that is not strictly newer than what is running may be offered or downloaded.
+    currentVersion: app.getVersion(),
+  });
   if (suppress) debug.log(`[updater] version ${version} not offered (${reason})`);
   return suppress;
 }
@@ -4404,6 +4412,14 @@ try {
   } else {
   autoUpdater.on('checking-for-update', () => debug.log('[updater] checking for updates'));
   autoUpdater.on('update-available', async (info) => {
+    // A manifest that names the running version, or an older one, is not an update however it got
+    // here — answer it as "up to date" before anything reports an update or downloads an installer.
+    if (updateGate.isNotAnUpgrade(info.version, app.getVersion())) {
+      debug.log(`[updater] ignoring ${info.version}: not newer than the installed ${app.getVersion()}`);
+      manualUpdateResult = 'uptodate';
+      manualUpdateCheckPending = false;
+      return;
+    }
     debug.log(`[updater] update available: ${info.version}`);
     manualUpdateResult = 'available';
     const manual = manualUpdateCheckPending;

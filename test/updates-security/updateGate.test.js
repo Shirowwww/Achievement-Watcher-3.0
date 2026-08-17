@@ -21,6 +21,42 @@ test('a first offer is shown', () => {
   assert.deepEqual(gate.shouldSuppressUpdatePrompt(fresh(), '3.9.0', { now: T0 }), { suppress: false, reason: '' });
 });
 
+/*
+  Reading latest.yml is how "am I up to date?" is answered, so the fetch itself cannot be skipped.
+  What it must never cost is a dialog or an installer download for something already installed: a
+  re-published release, a stale cached manifest, or a local build ahead of the published tag.
+*/
+test('a version that is not newer than the installed one is never offered', () => {
+  const same = gate.shouldSuppressUpdatePrompt(fresh(), '3.9.0', { now: T0, currentVersion: '3.9.0' });
+  assert.deepEqual(same, { suppress: true, reason: 'not-newer' }, 'the running version must not be offered to itself');
+
+  const older = gate.shouldSuppressUpdatePrompt(fresh(), '3.8.0', { now: T0, currentVersion: '3.9.0' });
+  assert.deepEqual(older, { suppress: true, reason: 'not-newer' }, 'a rolled-back release must not be offered');
+
+  // A local build ahead of the published tag: the published one is not an upgrade.
+  const ahead = gate.shouldSuppressUpdatePrompt(fresh(), '3.9.0', { now: T0, currentVersion: '3.10.0' });
+  assert.equal(ahead.suppress, true, 'a published version older than the local build must not be offered');
+
+  const newer = gate.shouldSuppressUpdatePrompt(fresh(), '3.9.1', { now: T0, currentVersion: '3.9.0' });
+  assert.deepEqual(newer, { suppress: false, reason: '' }, 'a genuinely newer version must still be offered');
+});
+
+test('"not newer" beats an explicit manual check, which only overrules a postpone', () => {
+  const general = Object.assign(fresh(), gate.postponePatch('3.9.0', T0));
+  // Manual re-check while already on the latest version: still nothing to offer.
+  assert.equal(gate.shouldSuppressUpdatePrompt(general, '3.9.0', { manual: true, now: T0, currentVersion: '3.9.0' }).reason, 'not-newer');
+  // The same manual check does overrule the postpone once a newer version exists.
+  assert.equal(gate.shouldSuppressUpdatePrompt(general, '3.9.1', { manual: true, now: T0, currentVersion: '3.9.0' }).suppress, false);
+});
+
+test('an unreadable version on either side is left to electron-updater rather than suppressed', () => {
+  // Suppressing on a version string this cannot parse would hide real updates.
+  assert.equal(gate.isNotAnUpgrade('', '3.9.0'), false);
+  assert.equal(gate.isNotAnUpgrade('3.9.1', ''), false);
+  assert.equal(gate.isNotAnUpgrade('not-a-version', '3.9.0'), false);
+  assert.equal(gate.shouldSuppressUpdatePrompt(fresh(), '3.9.1', { now: T0 }).suppress, false, 'no currentVersion must not suppress');
+});
+
 test('"Later" silences the same version for a day, not just for the moment', () => {
   const general = Object.assign(fresh(), gate.postponePatch('3.9.0', T0));
 
