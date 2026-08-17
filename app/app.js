@@ -253,14 +253,18 @@ function setLibraryBusyCursor(busy) {
 }
 
 // Skeleton tiles fill the grid while a scan streams real games in. Without them a fast local
-// install (Big Walk loads in ~30ms, network-backed games take seconds) sits alone on screen,
-// then the whole rest of the library pops in at once. They are inert and removed as real tiles
-// arrive (and any leftover at the end of the scan).
+// install sits alone on screen, then the whole library pops in at once.
 const MAX_SKELETON_TILES = 18;
 const DEFAULT_SKELETON_TILES = 12;
 const MIN_STREAMING_SKELETON_TILES = 6;
 let skeletonStreamActive = false;
 let skeletonSequence = 0;
+// The live placeholders, in document order. Re-querying them per streamed game cost two full
+// `:has()` traversals of a list that grows with every tile.
+let skeletonTiles = [];
+// Games the scan will actually deliver; null until makeList reports it.
+let skeletonExpected = null;
+let skeletonRendered = 0;
 
 function skeletonTileHtml(index) {
   const delay = ((index || 0) % 6 * -0.2).toFixed(1);
@@ -276,30 +280,60 @@ function skeletonTileHtml(index) {
     </li>`;
 }
 
-function addSkeletonTiles(count) {
+// Never show more placeholders than games still to arrive, so a 3-game library does not shimmer
+// with 12 of them.
+function skeletonBudget(cap) {
+  if (skeletonExpected === null) return cap;
+  return Math.max(0, Math.min(cap, skeletonExpected - skeletonRendered));
+}
+
+function appendSkeletonTiles(count) {
   const list = $('#game-list ul');
+  for (let i = 0; i < count; i++) {
+    const tile = $(skeletonTileHtml(skeletonSequence++));
+    list.append(tile);
+    skeletonTiles.push(tile);
+  }
+}
+
+function trimSkeletonTiles(target) {
+  while (skeletonTiles.length > target) skeletonTiles.pop().remove();
+}
+
+function addSkeletonTiles(count) {
   skeletonStreamActive = true;
   skeletonSequence = 0;
-  for (let i = 0; i < count; i++) list.append(skeletonTileHtml(skeletonSequence++));
+  skeletonTiles = [];
+  skeletonExpected = null;
+  skeletonRendered = 0;
+  appendSkeletonTiles(count);
+}
+
+// makeList reports the real count before the first game resolves; resize to it.
+function setSkeletonExpected(total) {
+  if (!skeletonStreamActive || !(total > 0) || skeletonExpected === total) return;
+  skeletonExpected = total;
+  trimSkeletonTiles(skeletonBudget(MAX_SKELETON_TILES));
 }
 
 function replaceSkeletonWith(item) {
-  const skeleton = $('#game-list ul li:has(.game-box.skeleton)').first();
-  if (skeleton.length) skeleton.replaceWith(item);
+  const skeleton = skeletonTiles.shift();
+  if (skeleton && skeleton.parent().length) skeleton.replaceWith(item);
   else $('#game-list ul').append(item);
-  // Once the initial placeholders have been consumed, keep a short animated tail until makeList()
-  // actually resolves. Otherwise a large/slow library looks fully loaded after its first 12 games.
-  if (skeletonStreamActive) {
-    const list = $('#game-list ul');
-    const remaining = list.find('li:has(.game-box.skeleton)').length;
-    for (let i = remaining; i < MIN_STREAMING_SKELETON_TILES; i++) {
-      list.append(skeletonTileHtml(skeletonSequence++));
-    }
-  }
+  skeletonRendered += 1;
+  // Keep a short animated tail until makeList resolves, or a large library looks finished after
+  // its first dozen games. The tail shrinks to nothing as the last games arrive.
+  if (!skeletonStreamActive) return;
+  const budget = skeletonBudget(MIN_STREAMING_SKELETON_TILES);
+  if (skeletonTiles.length > budget) trimSkeletonTiles(budget);
+  else appendSkeletonTiles(budget - skeletonTiles.length);
 }
 
 function clearSkeletonTiles() {
   skeletonStreamActive = false;
+  skeletonTiles = [];
+  skeletonExpected = null;
+  skeletonRendered = 0;
   $('#game-list ul li:has(.game-box.skeleton)').remove();
 }
 
@@ -1326,9 +1360,10 @@ var app = {
     const listLoadPromise = achievements
       .makeList(
         scanConfig,
-        (percent) => {
+        (percent, total) => {
           loadingElem.progress.attr('data-percent', percent);
           loadingElem.meter.css('width', percent + '%');
+          setSkeletonExpected(total);
         },
         (renderGame = (game) => {
           manualUnlock.applyToGame(game, manualUnlockMap, game.appid, game.source);

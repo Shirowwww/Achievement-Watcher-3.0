@@ -869,9 +869,8 @@ async function scanInstalledGoldbergGames(data, scope = _activeScanScope) {
       }
 
       if (!appid) {
-        // A steam_settings folder without steam_appid.txt used to be claimed by this Goldberg scan and
-        // then dropped, so the later unconfigured-name fallback never saw it. Keep it visible as a
-        // local install when we can identify a real exe, so the user can still repair/pick it manually.
+        // This scan claims the steam_settings folder, so a missing steam_appid.txt must not drop the
+        // game: keep it visible as a local install whenever a real exe identifies it.
         detectedEmu = detectedEmu || (g.gameDir ? detectEmulatorCached(g.gameDir) : null);
         detectedExe = detectedExe || (g.gameDir && detectedEmu ? goldberg.findGameExe(g.gameDir, detectedEmu.dll) : null);
         if (g.gameDir && detectedExe) {
@@ -1875,10 +1874,8 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
 
     // Detect emulators for name-resolved file entries that skipped the strict Goldberg scan.
     if (appid.data && appid.data.type === 'file') {
-      // Every emulated/cracked ('file') game gets a definite boolean so the UI dot is CONSISTENT
-      // (it used to be set only when an install dir happened to resolve, so the dot appeared on some
-      // crack games and not others). Default false (= no dll verified, red dot); flipped true below
-      // when a steam_api(64).dll is actually found. Legit Steam / RPCS3 / Uplay stay undefined (no dot).
+      // Every emulated/cracked ('file') game needs a definite boolean or the UI dot appears on only
+      // some of them. False = no dll verified; legit Steam / RPCS3 / Uplay stay undefined (no dot).
       game.hasSteamApiDll = false;
       if (resolvedGameDir) {
         try {
@@ -2562,7 +2559,6 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     });
 
     return game;
-    //loop appid
   } catch (err) {
     debug.error(`[${requestedAppid}] Error parsing local achievements data => ${err} > SKIPPING`);
   }
@@ -2625,6 +2621,9 @@ module.exports.makeList = async (option, callbackProgress, onGame = () => {}) =>
     const discoveryLookup = buildDiscoveryLookup(appidList);
     if (finalList.length > 0) {
       let count = 0;
+      // Announce the real total before the first game resolves, so the UI can size its placeholders
+      // to what is actually coming instead of guessing from the previous session.
+      callbackProgress(0, finalList.length);
       // Bounded concurrency. The old code fired every game at once (Promise.all over the whole list,
       // staggered by 10ms): a burst of N parallel fetches, and the disk reads / sockets / file
       // handles all spike together. A small worker pool caps how many games load in parallel while
@@ -2674,7 +2673,7 @@ module.exports.makeList = async (option, callbackProgress, onGame = () => {}) =>
             debug.log(`[${game.appid}] ${game.name} took ${(endTime - startTime) / 1000} seconds.`);
           }
           count++;
-          callbackProgress(Math.floor((count / finalList.length) * 100));
+          callbackProgress(Math.floor((count / finalList.length) * 100), finalList.length);
         }
       };
       await Promise.all(Array.from({ length: Math.min(CONCURRENCY, finalList.length) }, () => worker()));

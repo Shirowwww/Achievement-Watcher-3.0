@@ -26,9 +26,17 @@ test('makeList hands each game to its caller without waiting for a frame', () =>
   assert.equal(rafCalls.length, 0, `achievements.js must not depend on frame callbacks, found ${rafCalls.length}`);
 });
 
+test('makeList reports the real game count before the first game resolves', () => {
+  // Without it the renderer sizes its placeholder grid from the previous session's count.
+  assert.match(achievements, /callbackProgress\(0, finalList\.length\);/, 'the total must be announced up front');
+  assert.match(achievements, /callbackProgress\(Math\.floor\(\(count \/ finalList\.length\) \* 100\), finalList\.length\)/);
+});
+
 test('the renderer builds its game list from that callback', () => {
   const app = fs.readFileSync(path.join(__dirname, '..', '..', 'app', 'app.js'), 'utf8');
   assert.match(app, /gameList\.push\(game\)/, 'the renderer tracks loaded games in gameList');
-  // The periodic check diffs discovery against that array, which is why it must be filled reliably.
-  assert.match(app, /gameList\.map\(\(g\)\s*=>\s*String\(g\.appid\)\)/, 'the new-game check diffs against gameList');
+  // gameList drives the tiles, the profile counters and the sort, so it must still be filled from
+  // the stream. The periodic new-game check no longer reads it — it diffs discovery against the
+  // previous discovery instead (see integration/newGameScanBaseline.test.js).
+  assert.match(app, /refreshProfileStats\(\)/, 'the profile counters follow the streamed list');
 });
