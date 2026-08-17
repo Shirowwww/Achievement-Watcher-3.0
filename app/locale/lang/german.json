@@ -575,7 +575,7 @@
         "souvenirScreenshot": "Screenshot beim Freischalten",
         "souvenirScreenshotDesc": "Macht einen Screenshot, wenn ein Erfolg freigeschaltet wird. Pro Spiel gespeichert.",
         "souvenirDir": "Speicherordner",
-        "souvenirDirHelp": "Screenshots werden in <Ordner>\\<Spiel>\\<Datum> - <Erfolg>.png gespeichert. Leer = Bilder\\Achievement Watcher.",
+        "souvenirDirHelp": "Screenshots werden in <Ordner>\\<Spiel>\\<Datum> - <Erfolg>.png gespeichert. Leer = Bilder\\Achievement Watcher Next.",
         "souvenirOpenDir": "Ordner öffnen",
         "soundNone": "Keiner",
         "position": {

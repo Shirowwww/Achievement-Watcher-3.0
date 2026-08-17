@@ -575,7 +575,7 @@
         "souvenirScreenshot": "Screenshot allo sblocco",
         "souvenirScreenshotDesc": "Cattura lo schermo quando si sblocca un obiettivo. Salvato per gioco.",
         "souvenirDir": "Cartella di salvataggio",
-        "souvenirDirHelp": "Gli screenshot vengono salvati in <cartella>\\<gioco>\\<data> - <obiettivo>.png. Vuoto = Immagini\\Achievement Watcher.",
+        "souvenirDirHelp": "Gli screenshot vengono salvati in <cartella>\\<gioco>\\<data> - <obiettivo>.png. Vuoto = Immagini\\Achievement Watcher Next.",
         "souvenirOpenDir": "Apri cartella",
         "soundNone": "Nessuno",
         "position": {

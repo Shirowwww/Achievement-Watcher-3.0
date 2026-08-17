@@ -2951,7 +2951,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#option_overlayPosition').val('custom').change();
     });
 
-    // Pick a custom folder for souvenir screenshots (empty = default Pictures\Achievement Watcher).
+    // Pick a custom folder for souvenir screenshots (empty = default Pictures\Achievement Watcher Next).
     $('#btn-souvenir-dir').click(async function () {
       try {
         const res = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), { properties: ['openDirectory', 'dontAddToRecent'] });

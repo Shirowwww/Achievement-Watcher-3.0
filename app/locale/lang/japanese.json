@@ -575,7 +575,7 @@
         "souvenirScreenshot": "解除時にスクリーンショット",
         "souvenirScreenshotDesc": "実績解除時に画面をキャプチャします。ゲームごとに保存されます。",
         "souvenirDir": "保存フォルダー",
-        "souvenirDirHelp": "スクリーンショットは <フォルダー>\\<ゲーム>\\<日付> - <実績>.png に保存されます。空欄 = ピクチャ\\Achievement Watcher。",
+        "souvenirDirHelp": "スクリーンショットは <フォルダー>\\<ゲーム>\\<日付> - <実績>.png に保存されます。空欄 = ピクチャ\\Achievement Watcher Next。",
         "souvenirOpenDir": "フォルダーを開く",
         "soundNone": "なし",
         "position": {

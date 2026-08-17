@@ -575,7 +575,7 @@
         "souvenirScreenshot": "解锁时截图",
         "souvenirScreenshotDesc": "在解锁成就时捕获屏幕。按游戏保存。",
         "souvenirDir": "保存文件夹",
-        "souvenirDirHelp": "截图保存到 <文件夹>\\<游戏>\\<日期> - <成就>.png。留空 = 图片\\Achievement Watcher。",
+        "souvenirDirHelp": "截图保存到 <文件夹>\\<游戏>\\<日期> - <成就>.png。留空 = 图片\\Achievement Watcher Next。",
         "souvenirOpenDir": "打开文件夹",
         "soundNone": "无",
         "position": {

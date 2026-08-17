@@ -575,7 +575,7 @@
         "souvenirScreenshot": "Snímok pri odomknutí",
         "souvenirScreenshotDesc": "Zhotoví snímku obrazovky pri odomknutí achievementu. Ukladá sa podľa hry.",
         "souvenirDir": "Priečinok na ukladanie",
-        "souvenirDirHelp": "Snímky sa ukladajú do <priečinok>\\<hra>\\<dátum> - <úspech>.png. Prázdne = Obrázky\\Achievement Watcher.",
+        "souvenirDirHelp": "Snímky sa ukladajú do <priečinok>\\<hra>\\<dátum> - <úspech>.png. Prázdne = Obrázky\\Achievement Watcher Next.",
         "souvenirOpenDir": "Otvoriť priečinok",
         "soundNone": "Žiadny",
         "position": {

@@ -575,7 +575,7 @@
         "souvenirScreenshot": "Screenshot on unlock",
         "souvenirScreenshotDesc": "Capture the screen when an achievement unlocks. Saved per game.",
         "souvenirDir": "Save folder",
-        "souvenirDirHelp": "Screenshots are saved to <folder>\\<game>\\<date> - <achievement>.png. Empty = Pictures\\Achievement Watcher.",
+        "souvenirDirHelp": "Screenshots are saved to <folder>\\<game>\\<date> - <achievement>.png. Empty = Pictures\\Achievement Watcher Next.",
         "souvenirOpenDir": "Open folder",
         "soundNone": "None",
         "position": {

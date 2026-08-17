@@ -575,7 +575,7 @@
         "souvenirScreenshot": "ภาพหน้าจอเมื่อปลดล็อก",
         "souvenirScreenshotDesc": "จับภาพหน้าจอเมื่อปลดล็อกความสำเร็จ บันทึกแยกตามเกม",
         "souvenirDir": "โฟลเดอร์บันทึก",
-        "souvenirDirHelp": "ภาพหน้าจอจะถูกบันทึกไปยัง <โฟลเดอร์>\\<เกม>\\<วันที่> - <ความสำเร็จ>.png ว่าง = รูปภาพ\\Achievement Watcher",
+        "souvenirDirHelp": "ภาพหน้าจอจะถูกบันทึกไปยัง <โฟลเดอร์>\\<เกม>\\<วันที่> - <ความสำเร็จ>.png ว่าง = รูปภาพ\\Achievement Watcher Next",
         "souvenirOpenDir": "เปิดโฟลเดอร์",
         "soundNone": "ไม่มี",
         "position": {

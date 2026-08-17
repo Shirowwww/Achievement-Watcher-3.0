@@ -33,7 +33,7 @@ asarUnpack:
 publish:
   provider: github
   owner: Shirowwww
-  repo: Achievement-Watcher-3.0
+  repo: Achievement-Watcher-Next
 
 win:
   icon: build/icon.ico
@@ -115,12 +115,17 @@ extraFiles:
 
   - from: ../watchdog
     to: ./watchdog
+    # Filter globs resolve against `from`, so they must NOT be prefixed with "watchdog/" — a
+    # prefixed pattern silently matches nothing and the excluded files ship anyway.
+    #
+    # notification-test.js is deliberately NOT excluded: websocket.js requires it at module load,
+    # so dropping it from the package breaks the Watchdog's websocket module and with it the
+    # Settings "test notification" buttons.
     filter:
       - '**/*'
-      - '!watchdog/_wip_/**'
-      - '!watchdog/patches/**'
-      - '!watchdog/test/**'
-      - '!watchdog/notification-test.js'
+      - '!_wip_/**'
+      - '!patches/**'
+      - '!test/**'
 
   # NOTE: the portable Node 14 runtime is gone since the A2 koffi migration. The monitor runs
   # under Electron's bundled Node runtime (see launchWatchdog in electron/init.js).

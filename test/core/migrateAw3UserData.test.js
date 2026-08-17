@@ -107,6 +107,32 @@ test('a destination that already holds settings is left completely alone', () =>
   }
 });
 
+test('an interrupted import resumes without rolling newer files back', () => {
+  // A first run that died partway (power loss, antivirus, a locked file) leaves files in the
+  // destination but no marker and no cfg/options.ini, so the next launch legitimately runs the
+  // import again. Anything already in the destination is the newer copy — the app may have written
+  // it since — and must survive the resume untouched.
+  const root = tempRoot();
+  try {
+    const aw3 = seedAw3(root);
+    const target = path.join(root, 'Achievement Watcher Next');
+
+    write(path.join(target, 'covers', '440.jpg'), 'NEWER-JPG');
+    write(path.join(target, 'logs', 'parser.log'), 'newer log line');
+    assert.equal(fs.existsSync(path.join(target, 'cfg', 'options.ini')), false, 'the interrupted run never reached the config');
+
+    assert.equal(migrateAw3UserData(target, { aw3Dir: aw3, skipRegistry: true }), aw3, 'the resume must run');
+
+    assert.equal(fs.readFileSync(path.join(target, 'covers', '440.jpg'), 'utf8'), 'NEWER-JPG', 'an already-placed file must not be overwritten by the older source');
+    assert.equal(fs.readFileSync(path.join(target, 'logs', 'parser.log'), 'utf8'), 'newer log line', 'a linked tree must not clobber the destination either');
+    assert.ok(fs.existsSync(path.join(target, 'cfg', 'options.ini')), 'what the interrupted run missed must be filled in');
+    assert.ok(fs.existsSync(path.join(target, 'epic_tokens.enc')), 'loose state files must be filled in too');
+    assert.ok(fs.existsSync(path.join(target, AW3_MARKER_REL)), 'the completed resume records its marker');
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('a missing or identical source is a no-op rather than an error', () => {
   const root = tempRoot();
   try {

@@ -575,7 +575,7 @@
         "souvenirScreenshot": "Capture au déblocage",
         "souvenirScreenshotDesc": "Capture l’écran lorsqu’un succès se débloque. Rangée par jeu.",
         "souvenirDir": "Dossier d’enregistrement",
-        "souvenirDirHelp": "Captures enregistrées dans <dossier>\\<jeu>\\<date> - <succès>.png. Vide = Images\\Achievement Watcher.",
+        "souvenirDirHelp": "Captures enregistrées dans <dossier>\\<jeu>\\<date> - <succès>.png. Vide = Images\\Achievement Watcher Next.",
         "souvenirOpenDir": "Ouvrir le dossier",
         "soundNone": "Aucun",
         "position": {
