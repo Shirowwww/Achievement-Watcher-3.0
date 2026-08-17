@@ -285,8 +285,12 @@ test('the preview scripts are pinned in the Settings page CSP, or the preview si
   for (const hash of generator.PREVIEW_SCRIPT_HASHES) {
     assert.ok(csp[1].includes(`'${hash}'`), `CSP is missing ${hash} — regenerate it from PREVIEW_SCRIPT_HASHES`);
   }
-  // The hashes have to be over exactly what is embedded, or they would be decorative.
-  for (const match of buildPresetPreviewHtml({}).matchAll(/<script>([\s\S]*?)<\/script>/g)) {
+  // The hashes have to be over exactly what is embedded, or they would be decorative. Match the tag
+  // case-insensitively and allow attributes: a bare lowercase `<script>` pattern would quietly find
+  // nothing the day the generator changes the tag, leaving this loop asserting nothing at all.
+  const embedded = [...buildPresetPreviewHtml({}).matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\b[^>]*>/gi)];
+  assert.equal(embedded.length, generator.PREVIEW_SCRIPT_HASHES.length, 'every embedded preview script must have a published hash');
+  for (const match of embedded) {
     const hash = `sha256-${crypto.createHash('sha256').update(match[1], 'utf8').digest('base64')}`;
     assert.ok(generator.PREVIEW_SCRIPT_HASHES.includes(hash), 'an inline preview script is not covered by a published hash');
   }
