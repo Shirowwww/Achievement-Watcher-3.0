@@ -96,6 +96,11 @@ files:
   - '**/*'
   - '!**/*.map'
   - '!dist/**'
+  # registry-js is compiled locally (npm rebuild registry-js). Only registry.node is needed at
+  # runtime; the rest of build/ is ~5 MB of MSVC link artifacts and debug symbols.
+  - '!node_modules/registry-js/build/**/*.{pdb,ipdb,iobj,lib,exp}'
+  - '!node_modules/registry-js/build/Release/obj/**'
+  - '!node_modules/registry-js/build/Release/obj.target/**'
   # Build-only signing material must never be shipped. A self-signed certificate is used only by
   # the release machine; end users do not receive or install it.
   - '!build/signing/**'
