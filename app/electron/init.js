@@ -290,6 +290,7 @@ const ipc = require(path.join(__dirname, 'ipc.js'));
 const notificationSounds = require(path.join(__dirname, '../util/notificationSounds.js'));
 const userThemes = require(path.join(__dirname, '../util/userThemes.js'));
 const themeLayers = require(path.join(__dirname, '../util/themeLayers.js'));
+const themeImages = require(path.join(__dirname, '../util/themeImages.js'));
 const overlayLocale = require(path.join(__dirname, '../util/overlayLocale.js'));
 const { resolveOverlayRequest } = require(path.join(__dirname, '../util/overlayRequest.js'));
 const { normalizeWindowArgs } = require(path.join(__dirname, '../util/windowArgs.js'));
@@ -4190,7 +4191,6 @@ async function prepareThemeBlurImages(theme) {
     const isBlurEffect = layer.effect.type === 'blur';
     const sigma = isBlurEffect ? Math.max(0.3, Math.min(12, layer.effect.blur / 5)) : 1.2;
     try {
-      const sharp = require('sharp');
       const dir = themeLayers.themeImagesDir(userData);
       fs.mkdirSync(dir, { recursive: true });
       const ext = path.extname(layer.image).toLowerCase() || '.png';
@@ -4198,6 +4198,13 @@ async function prepareThemeBlurImages(theme) {
       // Distinct suffix per effect so a blur copy and a veil copy never overwrite each other.
       const suffix = isBlurEffect ? `blur-${layer.effect.blur}` : `veilblur-${sigma}`;
       const dest = path.join(dir, `${id}-${stem}-${suffix}.png`);
+      // The editor autosaves on every change, so this re-blurred every layer (~250 ms each on a
+      // 7 MB image) for a file the suffix already says is correct.
+      if (themeImages.isDerivedUpToDate(layer.image, dest)) {
+        layer.effect.blurImage = dest;
+        continue;
+      }
+      const sharp = require('sharp');
       await sharp(layer.image)
         .resize({ width: 2560, withoutEnlargement: true })
         .blur(sigma)
@@ -4242,6 +4249,11 @@ ipcMain.handle('pick-theme-image', async (event, layer) => {
     let dest = path.join(dir, `${layer}-${stem}${ext}`);
     let i = 1;
     while (fs.existsSync(dest)) {
+      // Re-picking an image already in the store used to copy it again under " (n)".
+      if (themeImages.sameContent(src, dest)) {
+        debug.log(`[theme-image] ${layer} <- ${dest} (reused)`);
+        return { ok: true, layer, file: dest };
+      }
       dest = path.join(dir, `${layer}-${stem} (${i++})${ext}`);
     }
     fs.copyFileSync(src, dest);
