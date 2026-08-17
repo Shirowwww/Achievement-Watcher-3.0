@@ -83,6 +83,63 @@ test('persist copies a cache-backed selection into the durable covers folder', (
   assert.strictEqual(coverStore.isUsable(coverStore.get('480')), true);
 });
 
+/*
+  Choosing a second cover for a game used to write it over the first one, at the same
+  covers/<appid>.<ext> path. The value handed to CSS was therefore the same file:// URL both times,
+  and Chromium keys its decoded-image cache on the URL — so the tile kept painting the old picture
+  and choosing a cover looked like it silently did nothing.
+*/
+test('a different cover for the same game gets a different URL, so the tile actually repaints', () => {
+  const first = path.join(tmpRoot, 'steam_cache', 'icon', '1478500', 'a.png');
+  const second = path.join(tmpRoot, 'steam_cache', 'icon', '1478500', 'b.png');
+  fs.mkdirSync(path.dirname(first), { recursive: true });
+  fs.writeFileSync(first, 'the first cover');
+  fs.writeFileSync(second, 'a completely different cover');
+
+  const storedFirst = coverStore.persist('1478500', pathToFileURL(first).href, tmpRoot);
+  const storedSecond = coverStore.persist('1478500', pathToFileURL(second).href, tmpRoot);
+
+  assert.notStrictEqual(storedFirst, storedSecond, 'a new image must not reuse the previous URL');
+  assert.strictEqual(fs.readFileSync(fileURLToPath(storedSecond), 'utf8'), 'a completely different cover');
+  assert.strictEqual(coverStore.get('1478500'), storedSecond, 'the store must point at the new selection');
+
+  // The replaced copy is not left behind to accumulate.
+  assert.strictEqual(fs.existsSync(fileURLToPath(storedFirst)), false, 'the superseded cover file must be pruned');
+
+  // Same extension, different bytes: the case that produced the "it did nothing" report.
+  assert.strictEqual(path.extname(fileURLToPath(storedFirst)), path.extname(fileURLToPath(storedSecond)));
+});
+
+test('re-picking the identical image is stable and does not pile up copies', () => {
+  const source = path.join(tmpRoot, 'steam_cache', 'icon', '999', 'same.png');
+  fs.mkdirSync(path.dirname(source), { recursive: true });
+  fs.writeFileSync(source, 'identical bytes');
+
+  const once = coverStore.persist('999', pathToFileURL(source).href, tmpRoot);
+  const twice = coverStore.persist('999', pathToFileURL(source).href, tmpRoot);
+
+  assert.strictEqual(once, twice, 'the same bytes must resolve to the same stored cover');
+  const files = fs.readdirSync(path.join(tmpRoot, 'covers')).filter((n) => n.startsWith('999'));
+  assert.strictEqual(files.length, 1, `exactly one file should exist for this game, found ${files.join(', ')}`);
+});
+
+test('a cover stored by an older build is replaced, not left alongside the new one', () => {
+  // What an older build wrote: covers/<appid>.<ext> with no digest.
+  const legacy = path.join(tmpRoot, 'covers', '4242.png');
+  fs.mkdirSync(path.dirname(legacy), { recursive: true });
+  fs.writeFileSync(legacy, 'old style cover');
+  coverStore.set('4242', pathToFileURL(legacy).href);
+
+  const replacement = path.join(tmpRoot, 'steam_cache', 'icon', '4242', 'new.png');
+  fs.mkdirSync(path.dirname(replacement), { recursive: true });
+  fs.writeFileSync(replacement, 'the newly chosen cover');
+
+  const stored = coverStore.persist('4242', pathToFileURL(replacement).href, tmpRoot);
+  assert.notStrictEqual(fileURLToPath(stored).toLowerCase(), legacy.toLowerCase());
+  assert.strictEqual(fs.existsSync(legacy), false, 'the pre-digest file must be cleaned up too');
+  assert.strictEqual(fs.readFileSync(fileURLToPath(stored), 'utf8'), 'the newly chosen cover');
+});
+
 test('preserveCachedOverrides upgrades selections made by older builds before cache deletion', () => {
   const cached = path.join(tmpRoot, 'steam_cache', 'icon', '570', 'library_600x900.png');
   fs.mkdirSync(path.dirname(cached), { recursive: true });
@@ -114,6 +171,62 @@ test('recoverRemote reconstructs an exact SteamGridDB selection from its legacy 
     null,
     'a generic filename cannot reveal which alternate Steam AppID supplied it'
   );
+});
+
+/*
+  Before orientation-scoped entries, one override applied to a game no matter which shape was on
+  screen — so picking a portrait cover and then switching to the landscape grid kept showing that
+  same portrait image instead of falling back to the default landscape art.
+*/
+test('portrait and landscape overrides are independent, and legacy values apply to both', () => {
+  assert.strictEqual(coverStore.get('7001', 'portrait'), null);
+  assert.strictEqual(coverStore.get('7001', 'landscape'), null);
+
+  coverStore.set('7001', 'file:///legacy.png');
+  assert.strictEqual(coverStore.get('7001', 'portrait'), 'file:///legacy.png');
+  assert.strictEqual(coverStore.get('7001', 'landscape'), 'file:///legacy.png');
+
+  coverStore.set('7001', 'file:///portrait-pick.png', 'portrait');
+  assert.strictEqual(coverStore.get('7001', 'portrait'), 'file:///portrait-pick.png');
+  // The legacy value is preserved for the orientation not just picked, rather than dropped.
+  assert.strictEqual(coverStore.get('7001', 'landscape'), 'file:///legacy.png');
+
+  coverStore.set('7001', 'file:///landscape-pick.png', 'landscape');
+  assert.strictEqual(coverStore.get('7001', 'landscape'), 'file:///landscape-pick.png');
+  assert.strictEqual(coverStore.get('7001', 'portrait'), 'file:///portrait-pick.png');
+
+  coverStore.remove('7001', 'portrait');
+  assert.strictEqual(coverStore.get('7001', 'portrait'), null, 'clearing one orientation must not resurrect the other');
+  assert.strictEqual(coverStore.get('7001', 'landscape'), 'file:///landscape-pick.png');
+
+  coverStore.remove('7001', 'landscape');
+  assert.strictEqual(coverStore.get('7001'), null, 'removing the last orientation clears the entry entirely');
+});
+
+test('persist keeps both orientations’ files when they differ, and prunes only what changed', () => {
+  const portraitSrc = path.join(tmpRoot, 'steam_cache', 'icon', '7002', 'p.png');
+  const landscapeSrc = path.join(tmpRoot, 'steam_cache', 'icon', '7002', 'l.png');
+  fs.mkdirSync(path.dirname(portraitSrc), { recursive: true });
+  fs.writeFileSync(portraitSrc, 'portrait bytes');
+  fs.writeFileSync(landscapeSrc, 'landscape bytes');
+
+  const storedPortrait = coverStore.persist('7002', pathToFileURL(portraitSrc).href, tmpRoot, 'portrait');
+  const storedLandscape = coverStore.persist('7002', pathToFileURL(landscapeSrc).href, tmpRoot, 'landscape');
+
+  assert.notStrictEqual(storedPortrait, storedLandscape);
+  assert.strictEqual(fs.existsSync(fileURLToPath(storedPortrait)), true, 'the portrait file must survive picking a landscape cover');
+  assert.strictEqual(fs.existsSync(fileURLToPath(storedLandscape)), true);
+  assert.strictEqual(coverStore.get('7002', 'portrait'), storedPortrait);
+  assert.strictEqual(coverStore.get('7002', 'landscape'), storedLandscape);
+
+  // Re-picking a new landscape cover prunes the old landscape file but leaves portrait untouched.
+  const landscapeSrc2 = path.join(tmpRoot, 'steam_cache', 'icon', '7002', 'l2.png');
+  fs.writeFileSync(landscapeSrc2, 'a different landscape');
+  const storedLandscape2 = coverStore.persist('7002', pathToFileURL(landscapeSrc2).href, tmpRoot, 'landscape');
+  assert.strictEqual(fs.existsSync(fileURLToPath(storedLandscape)), false, 'the superseded landscape file must be pruned');
+  assert.strictEqual(fs.existsSync(fileURLToPath(storedPortrait)), true, 'the untouched portrait file must not be pruned');
+  assert.strictEqual(coverStore.get('7002', 'portrait'), storedPortrait);
+  assert.strictEqual(coverStore.get('7002', 'landscape'), storedLandscape2);
 });
 
 console.log(`\n${passed} passed`);

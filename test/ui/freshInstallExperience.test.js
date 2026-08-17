@@ -50,7 +50,7 @@ test('artwork fallbacks fill missing assets without replacing existing ones', ()
 
 test('the alternate-cover picker resolves and shows the actual current cover', () => {
   const app = fs.readFileSync(path.join(root, 'app', 'app.js'), 'utf8');
-  assert.match(app, /const currentUrl = coverOverrideFor\(appid\) \|\|/);
+  assert.match(app, /const currentUrl = coverOverrideFor\(appid, pickerOrientation\) \|\|/);
   assert.match(app, /const currentTilePromise = currentUrl/);
   assert.match(app, /ipcRenderer\.invoke\('fetch-icon', preview, coverCacheAppid\)/);
   assert.match(app, /game\.steamappid \|\| game\.appid/);

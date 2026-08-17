@@ -478,23 +478,25 @@ let coverOverrides = coverStore.readAll();
 function reloadCoverOverrides() {
   coverOverrides = coverStore.readAll();
 }
-function coverOverrideFor(appid) {
+// `orientation` ('portrait' | 'landscape') selects between independently-set covers; omitted, this
+// falls back to whatever legacy single value is on record (applies to every orientation).
+function coverOverrideFor(appid, orientation) {
   const id = String(appid);
-  const override = coverOverrides[id] || null;
+  const override = coverStore.valueForOrientation(coverOverrides[id] || null, orientation);
   if (override && !coverStore.isUsable(override)) {
     const recovered = coverStore.recoverRemote(override);
     if (recovered) {
       // Old SteamGridDB selections retain their content hash in the deleted cache filename. Restore
       // the exact CDN URL now; it no longer depends on steam_cache and can be downloaded again.
-      coverStore.set(id, recovered);
-      coverOverrides[id] = recovered;
+      coverStore.set(id, recovered, orientation);
+      reloadCoverOverrides();
       debug.log(`[cover] recovered SteamGridDB override for ${id}`);
       return recovered;
     }
     // A pre-fix covers.db can still reference steam_cache after that cache was already removed.
     // Drop only the broken reference so the normal cover fallback renders instead of a blank tile.
-    coverStore.remove(id);
-    delete coverOverrides[id];
+    coverStore.remove(id, orientation);
+    reloadCoverOverrides();
     debug.warn(`[cover] removed missing override for ${id}`);
     return null;
   }
@@ -544,8 +546,9 @@ function applyCoverWithFallback(game, headerEl, imgName, tried) {
 // Show alternate SteamDB and SteamGridDB covers for a game.
 function openCoverPicker(game, appid, coverCacheAppid) {
   const portraitView = !!(app.config && app.config.achievement && app.config.achievement.thumbnailPortrait);
+  const pickerOrientation = portraitView ? 'portrait' : 'landscape';
   const img = (game && game.img) || {};
-  const currentUrl = coverOverrideFor(appid) || (portraitView ? img.portrait || img.header : img.header || img.portrait);
+  const currentUrl = coverOverrideFor(appid, pickerOrientation) || (portraitView ? img.portrait || img.header : img.header || img.portrait);
   const overlay = document.createElement('div');
   overlay.className = 'aw-prompt-overlay aw-cover-picker-overlay';
   const box = document.createElement('div');
@@ -626,7 +629,7 @@ function openCoverPicker(game, appid, coverCacheAppid) {
           debug.warn(`[cover] picker download failed (${err.message || err}) — applying remote URL`);
           return null;
         });
-        const target = coverStore.persist(String(appid), local && local !== url ? local : url, getUserDataPath());
+        const target = coverStore.persist(String(appid), local && local !== url ? local : url, getUserDataPath(), pickerOrientation);
         if (!target) throw new Error('selected cover could not be persisted');
         reloadCoverOverrides();
         applyCoverBackground(String(appid), target);
@@ -1462,7 +1465,11 @@ var app = {
             refreshProfileStats();
 
             setTimeout(() => {
-              const coverOverride = coverOverrideFor(game.appid);
+              // Keyed off the display setting, not `isPortrait` (which also depends on this game
+              // having portrait art) — a custom pick applies to the orientation the user chose it
+              // in, regardless of whether the default source has art for that shape.
+              const tileOrientation = portrait ? 'portrait' : 'landscape';
+              const coverOverride = coverOverrideFor(game.appid, tileOrientation);
               if (coverOverride) {
                 // User-set cover (local image / alternate AppID) wins over every default source.
                 headerEl.css('background', cssUrl(coverOverride));
@@ -1473,7 +1480,7 @@ var app = {
                     .invoke('fetch-icon', coverOverride, game.steamappid || game.appid)
                     .then((local) => {
                       if (!local) return;
-                      const durable = coverStore.persist(game.appid, local, getUserDataPath());
+                      const durable = coverStore.persist(game.appid, local, getUserDataPath(), tileOrientation);
                       if (!durable) return;
                       reloadCoverOverrides();
                       headerEl.css('background', cssUrl(durable));
@@ -3863,6 +3870,7 @@ var app = {
           const coverGame = list.find((g) => g.appid == appid);
           if (coverGame) {
             const coverCacheAppid = catalogAppid || String(coverGame.steamappid || appid);
+            const coverOrientation = app.config?.achievement?.thumbnailPortrait ? 'portrait' : 'landscape';
             const defaultCoverUrl = () => {
               const img = coverGame.img || {};
               return app.config?.achievement?.thumbnailPortrait
@@ -3885,7 +3893,7 @@ var app = {
                 label: t('re-download-cover', 'Re-download cover', 'Retélécharger la jaquette'),
                 async click() {
                   try {
-                    coverStore.remove(appid);
+                    coverStore.remove(appid, coverOrientation);
                     reloadCoverOverrides();
                     // Purge the cached art so fetch-icon actually re-downloads instead of returning the stale file.
                     try {
@@ -3924,7 +3932,7 @@ var app = {
                     remote.dialog.showMessageBox({ type: 'warning', message: t('no-steam-cover-art-for-appid', 'No Steam cover art found for AppID {appid}.', 'Aucune jaquette Steam trouvée pour l\'AppID {appid}.', { appid: alt }) });
                     return;
                   }
-                  local = coverStore.persist(appid, local, getUserDataPath());
+                  local = coverStore.persist(appid, local, getUserDataPath(), coverOrientation);
                   if (!local) throw new Error('downloaded cover could not be persisted');
                   reloadCoverOverrides();
                   applyCoverBackground(appid, local);
@@ -3942,7 +3950,7 @@ var app = {
                   });
                   if (!files || !files[0]) return;
                   try {
-                    const url = coverStore.persist(appid, pathToFileURL(files[0]).href, getUserDataPath());
+                    const url = coverStore.persist(appid, pathToFileURL(files[0]).href, getUserDataPath(), coverOrientation);
                     if (!url) throw new Error('selected image could not be persisted');
                     reloadCoverOverrides();
                     applyCoverBackground(appid, url);
@@ -3953,13 +3961,13 @@ var app = {
                 },
               })
             );
-            if (coverOverrideFor(appid)) {
+            if (coverOverrideFor(appid, coverOrientation)) {
               coverMenu.append(new MenuItem({ type: 'separator' }));
               coverMenu.append(
                 new MenuItem({
                   label: t('reset-cover-to-default', 'Reset cover to default', 'Réinitialiser la jaquette'),
                   async click() {
-                    coverStore.remove(appid);
+                    coverStore.remove(appid, coverOrientation);
                     reloadCoverOverrides();
                     await refetchDefaultCover();
                   },

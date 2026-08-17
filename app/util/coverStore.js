@@ -5,6 +5,7 @@
 // user can fix a mis-matched cracked game (wrong AppID), point at a local image, or force a redownload.
 // Pure fs/JSON — no Electron — so it is usable from the renderer and unit-testable headless.
 
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { fileURLToPath, pathToFileURL } = require('url');
@@ -49,12 +50,80 @@ function localPathFromUrl(value) {
   return path.isAbsolute(text) ? text : null;
 }
 
-function safeCoverName(appid, sourcePath) {
-  const id = String(appid || '').replace(/[^\w.-]/g, '_');
+function coverIdFor(appid) {
+  return String(appid || '').replace(/[^\w.-]/g, '_');
+}
+
+function isOrientation(value) {
+  return value === 'portrait' || value === 'landscape';
+}
+
+// A stored entry is either a legacy plain URL (applies to every orientation, pre-dating this
+// distinction) or an { portrait, landscape } object. Resolve to the string a caller can use.
+function valueForOrientation(entry, orientation) {
+  if (entry == null) return null;
+  if (typeof entry === 'string') return entry;
+  if (!isOrientation(orientation)) return entry.landscape || entry.portrait || null;
+  return entry[orientation] || null;
+}
+
+/*
+  The stored filename carries a digest of the image itself.
+
+  It used to be just `<appid>.<ext>`, so choosing a second cover for the same game overwrote the
+  first one at the same path — and the value handed to CSS was that same file:// URL both times.
+  Chromium keys its decoded-image cache on the URL, so the tile kept painting the previous picture
+  and choosing a cover looked like it did nothing at all. Including the digest means different
+  bytes are a different URL, which is what makes the new cover appear; identical bytes reuse the
+  file, so re-picking the same art is not a second copy on disk.
+*/
+function safeCoverName(appid, sourcePath, digest) {
+  const id = coverIdFor(appid);
   if (!id) return null;
   const sourceExtension = path.extname(String(sourcePath || '')).toLowerCase();
   const extension = IMAGE_EXTENSIONS.has(sourceExtension) ? sourceExtension : '.png';
-  return `${id}${extension}`;
+  return digest ? `${id}-${digest}${extension}` : `${id}${extension}`;
+}
+
+// Every cover file this game has ever had, including the pre-digest `<appid>.<ext>` spelling.
+function coverFilesFor(root, appid) {
+  const id = coverIdFor(appid);
+  if (!id) return [];
+  const dir = path.join(root, 'covers');
+  const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`^${escaped}(?:-[a-f0-9]+)?\\.[a-z0-9]+$`, 'i');
+  try {
+    return fs
+      .readdirSync(dir)
+      .filter((name) => pattern.test(name))
+      .map((name) => path.join(dir, name));
+  } catch {
+    return [];
+  }
+}
+
+// Drop the copies this game no longer points at. Called only after the new selection is recorded,
+// so an interrupted run leaves a stale file rather than a cover with nothing behind it. Portrait and
+// landscape can each hold their own local file, so every currently-referenced path must be kept —
+// pruning against just the one just written would delete the other orientation's pick out from
+// under it.
+function pruneOldCovers(root, appid, keepPaths) {
+  const keep = new Set(keepPaths.map((p) => path.resolve(p).toLowerCase()));
+  for (const file of coverFilesFor(root, appid)) {
+    if (keep.has(path.resolve(file).toLowerCase())) continue;
+    try {
+      fs.rmSync(file, { force: true });
+    } catch {
+      /* a locked leftover is harmless; it is simply no longer referenced */
+    }
+  }
+}
+
+// Every local file this game's stored entry (legacy string or per-orientation object) still points
+// at, so a prune after writing one orientation never touches the other's file.
+function keepPathsForEntry(entry) {
+  const values = typeof entry === 'string' ? [entry] : entry && typeof entry === 'object' ? [entry.portrait, entry.landscape] : [];
+  return values.map(localPathFromUrl).filter(Boolean);
 }
 
 function writeMapToFile(targetFile, map) {
@@ -94,46 +163,75 @@ function writeAll(map) {
   cacheMap = { ...next };
 }
 
-function get(appid) {
-  return readAll()[String(appid)] || null;
+// `orientation` ('portrait' | 'landscape') is optional. Omitted, this is the legacy single-value
+// API: get returns whatever is stored regardless of shape, set/remove act on the whole entry.
+function get(appid, orientation) {
+  return valueForOrientation(readAll()[String(appid)] ?? null, orientation);
 }
 
-function set(appid, coverUrl) {
+function set(appid, coverUrl, orientation) {
   if (!appid || !coverUrl) return;
   const map = readAll();
-  map[String(appid)] = String(coverUrl);
+  const id = String(appid);
+  if (!isOrientation(orientation)) {
+    map[id] = String(coverUrl);
+  } else {
+    const existing = map[id];
+    const next = existing && typeof existing === 'object' ? { ...existing } : {};
+    if (typeof existing === 'string') {
+      // A pre-existing legacy pick applied to both orientations; keep it for the one not being
+      // changed now instead of dropping it.
+      next[orientation === 'portrait' ? 'landscape' : 'portrait'] = existing;
+    }
+    next[orientation] = String(coverUrl);
+    map[id] = next;
+  }
   writeAll(map);
 }
 
-function remove(appid) {
+function remove(appid, orientation) {
   const map = readAll();
-  if (Object.prototype.hasOwnProperty.call(map, String(appid))) {
-    delete map[String(appid)];
-    writeAll(map);
+  const id = String(appid);
+  if (!Object.prototype.hasOwnProperty.call(map, id)) return;
+  const entry = map[id];
+  if (!isOrientation(orientation) || typeof entry === 'string') {
+    delete map[id];
+  } else {
+    const next = { ...entry };
+    delete next[orientation];
+    if (next.portrait || next.landscape) map[id] = next;
+    else delete map[id];
   }
+  writeAll(map);
 }
 
 // A selected cover is user state, even when its original bytes came from a downloadable cache.
 // Copy local/cache-backed selections into userData/covers before recording them so clearing
 // steam_cache cannot leave covers.db pointing at a deleted file. Remote URLs are safe to retain as
 // URLs when the download failed; they can be requested again by Chromium on the next render.
-function persist(appid, coverUrl, root = userDataDir()) {
+function persist(appid, coverUrl, root = userDataDir(), orientation) {
   if (!appid || !coverUrl) return null;
   const value = String(coverUrl);
   const source = localPathFromUrl(value);
   let stored = value;
+  let destination = null;
   if (source) {
     if (!fs.existsSync(source) || !fs.statSync(source).isFile()) return null;
-    const name = safeCoverName(appid, source);
+    const bytes = fs.readFileSync(source);
+    const digest = crypto.createHash('sha1').update(bytes).digest('hex').slice(0, 12);
+    const name = safeCoverName(appid, source, digest);
     if (!name) return null;
-    const destination = path.join(root, 'covers', name);
+    destination = path.join(root, 'covers', name);
     fs.mkdirSync(path.dirname(destination), { recursive: true });
-    if (path.resolve(source).toLowerCase() !== path.resolve(destination).toLowerCase()) {
-      fs.copyFileSync(source, destination);
+    if (path.resolve(source).toLowerCase() !== path.resolve(destination).toLowerCase() && !fs.existsSync(destination)) {
+      fs.writeFileSync(destination, bytes);
     }
     stored = pathToFileURL(destination).href;
   }
-  set(appid, stored);
+  set(appid, stored, orientation);
+  // Record first, then tidy: the entry above is what makes the new file(s) the ones in use. Keep
+  // every orientation's current file, not just the one just written.
+  if (destination) pruneOldCovers(root, appid, keepPathsForEntry(readAll()[String(appid)]));
   return stored;
 }
 
@@ -178,25 +276,45 @@ function preserveCachedOverrides(root = userDataDir()) {
   if (!map || typeof map !== 'object' || Array.isArray(map)) return [];
 
   const cacheRoot = path.join(root, 'steam_cache');
-  const preserved = [];
-  for (const [appid, value] of Object.entries(map)) {
+  const preserved = new Set();
+
+  // Copy one cache-backed value into durable storage, returning its new file:// URL, or null if
+  // this value doesn't need preserving. Named with a digest so a portrait and a landscape pick for
+  // the same appid never collide on the same destination filename.
+  const preserveValue = (appid, value) => {
     const source = localPathFromUrl(value);
-    if (!source || !pathIsWithin(source, cacheRoot)) continue;
+    if (!source || !pathIsWithin(source, cacheRoot)) return null;
     try {
-      if (!fs.statSync(source).isFile()) continue;
-      const name = safeCoverName(appid, source);
-      if (!name) continue;
+      if (!fs.statSync(source).isFile()) return null;
+      const bytes = fs.readFileSync(source);
+      const digest = crypto.createHash('sha1').update(bytes).digest('hex').slice(0, 12);
+      const name = safeCoverName(appid, source, digest);
+      if (!name) return null;
       const destination = path.join(root, 'covers', name);
       fs.mkdirSync(path.dirname(destination), { recursive: true });
-      fs.copyFileSync(source, destination);
-      map[appid] = pathToFileURL(destination).href;
-      preserved.push(String(appid));
+      if (!fs.existsSync(destination)) fs.writeFileSync(destination, bytes);
+      preserved.add(String(appid));
+      return pathToFileURL(destination).href;
     } catch (err) {
       throw new Error(`Could not preserve custom cover for ${appid}: ${err.message || err}`);
     }
+  };
+
+  for (const [appid, entry] of Object.entries(map)) {
+    if (typeof entry === 'string') {
+      const upgraded = preserveValue(appid, entry);
+      if (upgraded) map[appid] = upgraded;
+      continue;
+    }
+    if (entry && typeof entry === 'object') {
+      for (const orientation of ['portrait', 'landscape']) {
+        const upgraded = preserveValue(appid, entry[orientation]);
+        if (upgraded) entry[orientation] = upgraded;
+      }
+    }
   }
-  if (preserved.length) writeMapToFile(targetFile, map);
-  return preserved;
+  if (preserved.size) writeMapToFile(targetFile, map);
+  return [...preserved];
 }
 
 module.exports = {
@@ -211,4 +329,5 @@ module.exports = {
   isUsable,
   recoverRemote,
   preserveCachedOverrides,
+  valueForOrientation,
 };
