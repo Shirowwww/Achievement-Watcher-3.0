@@ -53,11 +53,12 @@ function wait(id, timeoutMs = DEFAULT_TIMEOUT_MS) {
   // known failure into "no report", i.e. into a notification the user never gets.
   if (entry.result) return Promise.resolve(entry.result);
   return new Promise((resolve) => {
+    // Deliberately not unref'd, unlike the TTL timer above: this one is the answer. Left unref'd it
+    // lets the event loop drain while a caller is still awaiting, and the promise never settles.
     const timer = setTimeout(() => {
       entry.settle = null;
       resolve(RESULT.UNKNOWN);
     }, timeoutMs);
-    if (typeof timer.unref === 'function') timer.unref();
     entry.settle = (value) => {
       clearTimeout(timer);
       entry.settle = null;
