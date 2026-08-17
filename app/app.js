@@ -168,23 +168,34 @@ const NEW_GAME_SCAN_INTERVAL_MS = 3 * 60 * 1000; // 3 minutes
 let newGameScanTimer = null;
 let scanInFlight = false;
 
-// Remember discovered ids that do not reach the rendered list to avoid refresh loops.
-let unrenderedAppids = new Set();
+// Appids the last completed scan discovered. Diffing against the rendered list instead made every
+// discovered-but-unrenderable appid (merged into another source, hidden by "hide 0%", no schema)
+// look new on every tick. Mirrors runBackgroundAutoFix in electron/init.js.
+let knownDiscoveredAppids = null;
 
-// One detection tick: cheap discover, diff against the games on screen, full refresh only on a new one.
+function seedNewGameScanBaseline() {
+  return achievements
+    .detectInstalledAppids(app.config)
+    .then((ids) => {
+      knownDiscoveredAppids = new Set(ids.map(String));
+    })
+    .catch((err) => debug.log(`[new-game-scan] baseline failed: ${err}`));
+}
+
+// One detection tick: cheap discover, diff against the last discovery, full refresh only on a new one.
 async function runNewGameScan() {
   if (scanInFlight) return; // a scan is already running
   if ($('#achievement').is(':visible')) return; // user is reading a game's achievements — don't yank the view
   if ($('title-bar')[0] && $('title-bar')[0].inSettings) return; // user is configuring — leave them be
   scanInFlight = true;
   try {
-    const discovered = await achievements.detectInstalledAppids(app.config);
-    const known = new Set(gameList.map((g) => String(g.appid)));
-    const fresh = discovered.filter((id) => !known.has(id) && !unrenderedAppids.has(id));
+    const discovered = (await achievements.detectInstalledAppids(app.config)).map(String);
+    const previous = knownDiscoveredAppids;
+    knownDiscoveredAppids = new Set(discovered);
+    if (previous === null) return; // no scan has finished yet — this tick only establishes the baseline
+    const fresh = discovered.filter((id) => !previous.has(id));
     if (fresh.length > 0) {
       debug.log(`[new-game-scan] ${fresh.length} new game(s) detected (${fresh.join(', ')}) — refreshing library`);
-      // Avoid retrying ids that still cannot be rendered on the next tick.
-      for (const id of fresh) unrenderedAppids.add(id);
       app.onStart(); // re-seeds the watchdog gameIndex so the new game is tracked
     }
   } catch (err) {
@@ -194,9 +205,8 @@ async function runNewGameScan() {
   }
 }
 
-// Manual refresh clears the background and Steam miss caches.
-function forgetUnrenderedAppids() {
-  unrenderedAppids = new Set();
+// Manual refresh clears the Steam miss caches.
+function forgetScanCaches() {
   try {
     steamParser.forgetUnresolved();
     // Also drop remembered local-schema locations, so a schema added by hand since the last scan
@@ -1468,6 +1478,9 @@ var app = {
           );
         }
         self.hasCompletedFirstScan = true;
+        // Baseline for the background detector: the appids this scan was built from. Within the
+        // discovery TTL this reuses the scan's own discovery rather than repeating it.
+        seedNewGameScanBaseline();
         if (activeScanScope && previousGames.length > 0 && Array.isArray(list)) {
           const freshAppids = new Set(list.map((game) => String(game && game.appid)));
           const preserved = previousGames.filter(
