@@ -6,6 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const exeDetect = require(path.join(__dirname, 'exeDetect.js'));
+const launcherDetect = require(path.join(__dirname, 'launcherDetect.js'));
 const { parseIni, stringifyIni, getIniSection, upsertIniSection, upsertIniKeys, sanitizeIniValue } = require(path.join(__dirname, '..', 'util', 'emuIni.js'));
 
 const APPID_CONFIG_FILES = new Set([
@@ -907,7 +908,7 @@ function readLocalSchema(steamSettings) {
   comes from steam_appid.txt. Bounded depth. Returns [{ gameDir, steamSettings, appid, emulator,
   hasSchema, schemaCount }].
 */
-function findCompatibleGames(roots, { maxDepth = 5 } = {}) {
+function findCompatibleGames(roots, { maxDepth = 5, onSkip = null } = {}) {
   const list = Array.isArray(roots) ? roots : [roots];
   const found = [];
   const seen = new Set();
@@ -1046,6 +1047,14 @@ function findCompatibleGames(roots, { maxDepth = 5 } = {}) {
     }
     const marker = gameRootMarker(dir, entries);
     if (marker) {
+      // A game Steam installed is not an emulator install, however much it looks like one here: it
+      // ships steam_api64.dll, and a Source game ships steam_appid.txt too. Listing it made the app
+      // offer (and auto-apply) a GBE setup on a legitimate Steam library folder.
+      const steamAppid = launcherDetect.steamLibraryAppid(marker.gameDir);
+      if (steamAppid && !launcherDetect.hasEmulatedSteamApi(marker.gameDir)) {
+        if (onSkip) onSkip(marker.gameDir, steamAppid);
+        return;
+      }
       consider(marker.gameDir, marker); // this folder belongs to one game install; don't split nested dll/config dirs
       return;
     }

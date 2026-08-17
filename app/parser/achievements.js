@@ -813,7 +813,9 @@ async function scanInstalledGoldbergGames(data, scope = _activeScanScope) {
     if (roots.length === 0) return additions;
     debug.log(`[goldberg-scan] scanning ${roots.length} root(s): ${roots.join(', ')}`);
 
-    const found = goldberg.findCompatibleGames(roots);
+    const found = goldberg.findCompatibleGames(roots, {
+      onSkip: (gameDir, steamAppid) => debug.log(`[goldberg-scan] skipped Steam library install (appid ${steamAppid}): ${gameDir}`),
+    });
     for (const g of found) {
       if (g.gameDir && isKnownNonGameToolInstall(g.gameDir)) {
         if (g.appid) {

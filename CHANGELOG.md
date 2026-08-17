@@ -163,6 +163,12 @@ deleting either source.
   landscape now hold their own picture instead of overwriting one another, and the stored file is
   named after its own contents — picking a second cover previously reused the same path, so the tile
   kept painting the previous image and choosing a cover looked like it had done nothing.
+- **A game Steam installed is never listed as a cracked one.** Every Steam game ships
+  `steam_api64.dll` and every Source game ships `steam_appid.txt` — the two markers the installed-game
+  scan looks for — so a Steam library inside a watched games folder handed over its own titles, with
+  Garry's Mod as the reliable example, and the automatic emulator fix then wrote a `steam_settings`
+  folder into it. The scan now asks Steam's own `appmanifest`, which names the `steamapps/common`
+  folder it owns, and skips those installs unless the dll in them is genuinely an emulator's.
 - **An update that is not newer is never offered.** A manifest naming the installed version or an
   older one — a rolled-back release, a stale mirror — no longer reaches a prompt or starts an
   installer download.
