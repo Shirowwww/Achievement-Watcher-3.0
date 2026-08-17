@@ -209,6 +209,45 @@ body {
   margin-bottom: 0;
 }
 
+/*
+  GitHub-style alerts, rebuilt by _includes/head-custom.html because kramdown does not understand
+  the "[!WARNING]" marker. The background stays neutral in both themes and the type is carried by
+  the rail and the label, which keeps every variant legible without a palette per colour.
+*/
+.markdown-body blockquote.aw-alert {
+  background: var(--aw-surface);
+  border-left-color: var(--aw-alert-color);
+}
+
+.markdown-body .aw-alert-label {
+  margin: 0 0 0.4em;
+  font-size: 0.82em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--aw-alert-color);
+}
+
+.markdown-body blockquote.aw-alert-note {
+  --aw-alert-color: #3f7ee8;
+}
+
+.markdown-body blockquote.aw-alert-tip {
+  --aw-alert-color: #2ea06a;
+}
+
+.markdown-body blockquote.aw-alert-important {
+  --aw-alert-color: #8a63d2;
+}
+
+.markdown-body blockquote.aw-alert-warning {
+  --aw-alert-color: #c98a1b;
+}
+
+.markdown-body blockquote.aw-alert-caution {
+  --aw-alert-color: #d4553f;
+}
+
 .markdown-body code {
   background: var(--aw-surface);
   border: 1px solid var(--aw-border);

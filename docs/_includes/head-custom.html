@@ -72,5 +72,35 @@
 
     render();
     document.body.appendChild(button);
+
+    /*
+      GitHub renders "> [!WARNING]" as an alert box; kramdown, which builds this site, does not and
+      leaves the literal marker sitting in the quote. The Markdown stays as it is - it is correct
+      where it is authored and on github.com - so the marker is turned into the same kind of box
+      here instead.
+    */
+    var ALERTS = { NOTE: 'Note', TIP: 'Tip', IMPORTANT: 'Important', WARNING: 'Warning', CAUTION: 'Caution' };
+    var quotes = document.querySelectorAll('.markdown-body blockquote');
+
+    Array.prototype.forEach.call(quotes, function (quote) {
+      var first = quote.firstElementChild;
+      if (!first || first.tagName !== 'P') return;
+
+      var match = /^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/.exec(first.textContent);
+      if (!match) return;
+
+      // The marker is plain text at the head of the paragraph; leave any markup after it alone.
+      var lead = first.firstChild;
+      if (!lead || lead.nodeType !== 3) return;
+      lead.nodeValue = lead.nodeValue.replace(/^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/, '');
+
+      var kind = match[1];
+      var label = document.createElement('p');
+      label.className = 'aw-alert-label';
+      label.textContent = ALERTS[kind];
+
+      quote.classList.add('aw-alert', 'aw-alert-' + kind.toLowerCase());
+      quote.insertBefore(label, first);
+    });
   });
 </script>
