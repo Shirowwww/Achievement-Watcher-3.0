@@ -200,6 +200,10 @@ library and designer, and a Simple interface mode for people who do not want the
   each language's own quotation marks and typographic apostrophes across some 460 strings; and
   machine-translation errors in the first-run guide's buttons, where German and Italian **Saving…**
   read as saving *money* and several **Skip** buttons were infinitives rather than imperatives.
+- **The Light theme would not stay selected.** The picker offered it and the stylesheet implemented
+  it, but the settings validator carried its own copy of the built-in theme names and that copy had
+  never learned about `light`, so the choice was reset to the default on the next load. The validator
+  now reads the theme engine's own palette list instead of a second one.
 - **Import Xbox PC library** was the one label in the Xbox account card with no translation.
 - The overlay acknowledgement timeout no longer lets the event loop drain while a caller is still
   waiting on it, which left the promise unsettled.

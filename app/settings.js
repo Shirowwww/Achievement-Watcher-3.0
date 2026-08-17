@@ -8,6 +8,7 @@ const os = require('os');
 const aes = require(path.join(appPath, 'util/aes.js'));
 const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
 const controllerLabels = require(path.join(appPath, 'util/controllerLabels.js'));
+const themeLayers = require(path.join(appPath, 'util/themeLayers.js'));
 
 function normalizeControllerBindingSetting(value, allowedButtons, fallback) {
   const parsed = controllerLabels.normalizeControllerBinding(value, {
@@ -97,10 +98,12 @@ module.exports.load = () => {
     }
     // App color theme (Settings > General) — built-in variants applied via <html data-theme="...">,
     // plus the layer-based Custom theme ("custom") and user themes from <userData>\themes
-    // (stored as "user:<name>").
+    // (stored as "user:<name>"). The built-ins come from the theme engine rather than a second list:
+    // a copy here silently reset any theme it had not been told about ("light" shipped that way).
     if (
       typeof options.general.theme !== 'string' ||
-      (!['default', 'oled', 'dracula', 'graphite', 'nord', 'gruvbox', 'tokyonight', 'catppuccin', 'rosepine', 'synthwave', 'everforest', 'cyberpunk', 'ember', 'ocean', 'hacker', 'burgundy', 'champagne', 'custom'].includes(options.general.theme) &&
+      (!Object.keys(themeLayers.BUILTIN_COLORS).includes(options.general.theme) &&
+        options.general.theme !== 'custom' &&
         !/^user:.+$/i.test(options.general.theme))
     ) {
       options.general.theme = 'default';

@@ -128,3 +128,27 @@ test('light is the only light-based built-in and stays readable', () => {
   assert.ok(contrast(light.text, light.bg) >= 4.5, 'light theme body text must meet WCAG AA against its background');
   assert.ok(contrast(light.muted, light.bg) >= 4.5, 'light theme muted text must meet WCAG AA against its background');
 });
+
+test('a theme the picker offers survives being saved', () => {
+  /*
+    settings.js validates general.theme and rewrites anything it does not recognise back to
+    "default". It used to carry its own copy of the built-in names, and that copy never learned
+    about "light": the picker offered it, the stylesheet implemented it, and the next load quietly
+    reset it. Reading the theme engine here is what keeps the two from drifting again.
+  */
+  const validator = fs.readFileSync(path.join(appDir, 'settings.js'), 'utf8');
+  assert.doesNotMatch(
+    validator,
+    /\[\s*'default',\s*'(?:oled|light)'[^\]]*\]\.includes\(options\.general\.theme\)/,
+    'the theme validator must not hard-code a second list of built-ins'
+  );
+  assert.match(
+    validator,
+    /Object\.keys\(themeLayers\.BUILTIN_COLORS\)\.includes\(options\.general\.theme\)/,
+    'the theme validator must accept every palette the theme engine defines'
+  );
+
+  // Custom and user themes are not palettes in BUILTIN_COLORS, so they need their own branches.
+  assert.match(validator, /options\.general\.theme !== 'custom'/, 'the Custom theme must stay valid');
+  assert.match(validator, /\^user:/, 'user themes from <userData>\\themes must stay valid');
+});
