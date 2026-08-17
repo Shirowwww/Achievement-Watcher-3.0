@@ -64,6 +64,30 @@ body {
   text-decoration: underline;
 }
 
+/*
+  The theme prepends site.title as a bare <h1> link on every page, which then competes with the
+  page's own title right underneath it. Kramdown gives every heading written in Markdown an id, so
+  the one without an id is always the theme's - style that as a masthead instead of a second title.
+*/
+.markdown-body > h1:first-child:not([id]) {
+  font-size: 0.8em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0 0 2.4em;
+  padding-bottom: 0.9em;
+  border-bottom: 1px solid var(--aw-border);
+}
+
+.markdown-body > h1:first-child:not([id]) a {
+  color: var(--aw-muted);
+}
+
+.markdown-body > h1:first-child:not([id]) a:hover {
+  color: var(--aw-accent);
+  text-decoration: none;
+}
+
 /* The page title block each guide opens with. */
 .markdown-body h1 {
   font-size: 2.1em;
