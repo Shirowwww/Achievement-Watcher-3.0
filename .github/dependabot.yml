@@ -26,3 +26,10 @@ updates:
       time: '06:00'
       timezone: Europe/Paris
     open-pull-requests-limit: 5
+    groups:
+      # init and analyze must move together: CodeQL aborts with "Loaded a configuration file for
+      # version X, but running version Y" when the halves disagree, so a per-action PR is red on
+      # arrival and can never be merged alone.
+      codeql-action:
+        patterns:
+          - 'github/codeql-action*'
