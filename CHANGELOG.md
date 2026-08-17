@@ -5,6 +5,28 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+### Performance
+
+- **The library no longer reloads itself a few minutes after every launch.** A game that discovery
+  keeps finding but that the list intentionally never shows — a Steam save folder superseded by the
+  same game installed from GOG, or a title hidden by "hide 0%" — looked like a brand-new install on
+  every background check, and paid for a full refresh each session.
+- **Less blocking work before the window appears.** The parser modules that share a diagnostic log
+  prepared it once each; on a log near its rotation size that was roughly 90 ms of synchronous work
+  on every launch.
+- **Placeholder tiles follow the real scan.** They are sized from the number of games the scan will
+  actually deliver, so a small library no longer shimmers with placeholders for games that will
+  never arrive, and a large one fills its grid without re-scanning the page for every game added.
+- **Theme images are reused instead of duplicated.** Picking a background you already chose keeps
+  the stored copy rather than saving the whole file again, and the Custom theme editor stops
+  re-rendering each layer's blurred copy on every change.
+
+### Fixed
+
+- **Each achievement folder is watched once.** The folders the app auto-detects are the same ones it
+  already watches by default, so every one of them was watched twice — duplicate work, and a Ubisoft
+  unlock could be taken down the Steam lookup path by the duplicate watcher.
+
 ### Added
 
 - **A redesigned notification preset collection.** Nine presets replace the seventeen that
