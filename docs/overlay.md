@@ -6,7 +6,7 @@ lock state, unlock dates and progress. The window is draggable by its header
 and stays on top of the game.
 
 <div align="center">
-<img src="../screenshot/overlay.png" width="360" alt="In-game overlay achievement list"><br>
+<img src="screenshot/overlay.png" width="360" alt="In-game overlay achievement list"><br>
 <sub>Status, rarity and date columns, with search and filters</sub>
 </div>
 
@@ -88,4 +88,4 @@ reopening the overlay. **Reset defaults** restores the original look.
 **Next:** [Controller guide](controller.md) - drive the overlay and the app with a
 gamepad.
 
-<p align="center"><a href="README.md">← Documentation</a> · <a href="notifications.md">Notification guide</a> · <a href="../README.md">Project home</a></p>
+<p align="center"><a href="README.md">← Documentation</a> · <a href="notifications.md">Notification guide</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0">Project home</a></p>

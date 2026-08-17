@@ -5,7 +5,7 @@ main window and the in-game overlay. Both are configured from **Settings →
 Controller**.
 
 <div align="center">
-<img src="../screenshot/controller.png" width="600" alt="Settings - Controller"><br>
+<img src="screenshot/controller.png" width="600" alt="Settings - Controller"><br>
 <sub>Overlay and app navigation, layout, and per-shortcut button bindings</sub>
 </div>
 
@@ -114,7 +114,7 @@ over raw HID, which is why they work without any vendor driver.
 
 ---
 
-**Next:** [Goldberg and GBE Fork setup](emulator-setup.md) - diagnose and repair an
-emulated game whose achievements do not show up.
+**Next:** [Game Health](game-health.md) - the per-game panel that says why a game is
+or is not being tracked.
 
-<p align="center"><a href="README.md">← Documentation</a> · <a href="overlay.md">Overlay guide</a> · <a href="../README.md">Project home</a></p>
+<p align="center"><a href="README.md">← Documentation</a> · <a href="overlay.md">Overlay guide</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0">Project home</a></p>

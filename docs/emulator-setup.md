@@ -33,7 +33,7 @@ Automatic setup for newly discovered games is opt-in under **Settings → Steam 
 ## Context-menu actions
 
 <div align="center">
-<img src="../screenshot/emulator-tools.png" width="560" alt="Emulator & tools context menu"><br>
+<img src="screenshot/emulator-tools.png" width="560" alt="Emulator & tools context menu"><br>
 <sub>Right-click a game → Emulator &amp; tools</sub>
 </div>
 
@@ -106,4 +106,4 @@ not load `steam_api.dll`.
 *Going deeper: [Goldberg/GBE technical reference](goldberg-gbe.md) for file formats
 and detection rules.*
 
-<p align="center"><a href="README.md">← Documentation</a> · <a href="goldberg-gbe.md">Technical reference</a> · <a href="../README.md">Project home</a></p>
+<p align="center"><a href="README.md">← Documentation</a> · <a href="goldberg-gbe.md">Technical reference</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0">Project home</a></p>

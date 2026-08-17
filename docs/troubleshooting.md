@@ -1,11 +1,19 @@
 # Troubleshooting
 
-Start with the checks below. If a problem remains, include the app version, Windows version, source involved, exact reproduction steps and relevant logs in the bug report.
+## Start here
+
+If the problem concerns **one game**, open that game's **[Game Health](game-health.md)** panel first.
+It states whether AW Next can see the game, read its achievements and announce its unlocks, and it
+offers only the repairs that genuinely apply. Most single-game problems end there.
+
+Use the rest of this page for problems that affect the app as a whole. If one remains, include the
+app version, Windows version, source involved, exact reproduction steps and relevant logs in the bug
+report.
 
 ## Open logs and local data
 
 <div align="center">
-<img src="../screenshot/diagnostic.png" width="560" alt="Settings - Advanced Diagnostics"><br>
+<img src="screenshot/diagnostics.png" width="620" alt="Settings - Advanced, diagnostics"><br>
 <sub>App/runtime versions and quick access to logs, data and update checks</sub>
 </div>
 
@@ -52,12 +60,18 @@ If only old save residue remains and the game files are gone, the installed-only
 
 ## Achievements stay locked or show 0%
 
-No runtime unlock file means 0%, even when a complete schema is present. If an achievement has definitely unlocked:
+No runtime unlock file means 0%, even when a complete achievement list is present.
 
-- right-click the game and run the available diagnosis;
+Open the game's **[Game Health](game-health.md)** panel: it names which part is missing and offers
+the repair for it - rewriting the achievement data, restoring the emulator file, or correcting a
+`steam_appid.txt` that names another game. If you would rather check by hand:
+
 - verify that the detected AppID or platform ID belongs to the correct game;
 - check for a custom save path;
 - repair a mismatched `steam_settings` schema only after reviewing the report.
+
+A game with no achievement set at all displays **No achievements** rather than 0%, and is left out of
+completion statistics.
 
 See [Goldberg and GBE Fork setup](emulator-setup.md#common-problems) or [Goldberg Uplay R2 setup](uplay-r2.md#achievements-remain-at-0) for source-specific steps.
 
@@ -148,8 +162,11 @@ Search the [existing issues](https://github.com/Shirowwww/Achievement-Watcher-3.
 
 ---
 
+**See also:** [FAQ](faq.md) for short answers · [Advanced tools](advanced.md) for maintenance,
+cache clearing and resets · [Game Health](game-health.md) for single-game problems.
+
 **That's the end of the user path.** From here the documentation turns technical:
 [Goldberg/GBE reference](goldberg-gbe.md) for file formats and detection rules, and
 [Architecture](architecture.md) for the app / renderer / Watchdog boundaries.
 
-<p align="center"><a href="README.md">← Documentation</a> · <a href="getting-started.md">Getting started</a> · <a href="../README.md">Project home</a></p>
+<p align="center"><a href="README.md">← Documentation</a> · <a href="getting-started.md">Getting started</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0">Project home</a></p>

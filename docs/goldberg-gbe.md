@@ -156,4 +156,4 @@ Background attempts are keyed by game and content version so an unchanged broken
 **Next:** [Architecture](architecture.md) - where this code runs, and which process
 owns which responsibility.
 
-<p align="center"><a href="README.md">← Documentation</a> · <a href="emulator-setup.md">Setup guide</a> · <a href="../README.md">Project home</a></p>
+<p align="center"><a href="README.md">← Documentation</a> · <a href="emulator-setup.md">Setup guide</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0">Project home</a></p>

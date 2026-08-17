@@ -119,7 +119,7 @@ English is the reference locale. `app/locale/uiLanguages.js` only exposes langua
 
 `app/electron-builder.yml` packages the desktop app and copies the Watchdog beside it. Notification presets, sounds and shared Steam-schema mapper modules are unpacked from ASAR because overlay windows and the external Watchdog load them from disk.
 
-`npm run build` prunes Watchdog development dependencies before packaging. Restore them after a build before returning to development. See [BUILD.md](../BUILD.md) and the [release workflow](RELEASE_WORKFLOW.md).
+`npm run build` prunes Watchdog development dependencies before packaging. Restore them after a build before returning to development. See [BUILD.md](https://github.com/Shirowwww/Achievement-Watcher-3.0/blob/main/BUILD.md) and the [release workflow](RELEASE_WORKFLOW.md).
 
 ## Change checklist
 
@@ -135,7 +135,7 @@ When changing a parser or watcher, verify:
 
 ---
 
-**Next:** [Build guide](../BUILD.md) - running from source, packaging and the native-module
-gotchas · [Contributing](../CONTRIBUTING.md) · [Release workflow](RELEASE_WORKFLOW.md).
+**Next:** [Build guide](https://github.com/Shirowwww/Achievement-Watcher-3.0/blob/main/BUILD.md) - running from source, packaging and the native-module
+gotchas · [Contributing](https://github.com/Shirowwww/Achievement-Watcher-3.0/blob/main/CONTRIBUTING.md) · [Release workflow](RELEASE_WORKFLOW.md).
 
-<p align="center"><a href="README.md">← Documentation</a> · <a href="../BUILD.md">Build guide</a> · <a href="../README.md">Project home</a></p>
+<p align="center"><a href="README.md">← Documentation</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0/blob/main/BUILD.md">Build guide</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0">Project home</a></p>

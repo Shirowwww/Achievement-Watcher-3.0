@@ -98,4 +98,4 @@ For general schema/save distinctions, see the [Goldberg and GBE Fork guide](emul
 **Next:** [Troubleshooting](troubleshooting.md) - what to check, and what to collect,
 when something still does not work.
 
-<p align="center"><a href="README.md">← Documentation</a> · <a href="emulator-setup.md">Goldberg / GBE setup</a> · <a href="../README.md">Project home</a></p>
+<p align="center"><a href="README.md">← Documentation</a> · <a href="emulator-setup.md">Goldberg / GBE setup</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0">Project home</a></p>

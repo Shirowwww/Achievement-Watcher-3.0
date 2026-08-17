@@ -5,396 +5,245 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
-### Performance
-
-- **The library no longer reloads itself a few minutes after every launch.** A game that discovery
-  keeps finding but that the list intentionally never shows — a Steam save folder superseded by the
-  same game installed from GOG, or a title hidden by "hide 0%" — looked like a brand-new install on
-  every background check, and paid for a full refresh each session.
-- **Less blocking work before the window appears.** The parser modules that share a diagnostic log
-  prepared it once each; on a log near its rotation size that was roughly 90 ms of synchronous work
-  on every launch.
-- **Placeholder tiles follow the real scan.** They are sized from the number of games the scan will
-  actually deliver, so a small library no longer shimmers with placeholders for games that will
-  never arrive, and a large one fills its grid without re-scanning the page for every game added.
-- **Theme images are reused instead of duplicated.** Picking a background you already chose keeps
-  the stored copy rather than saving the whole file again, and the Custom theme editor stops
-  re-rendering each layer's blurred copy on every change.
-
-### Fixed
-
-- **Each achievement folder is watched once.** The folders the app auto-detects are the same ones it
-  already watches by default, so every one of them was watched twice — duplicate work, and a Ubisoft
-  unlock could be taken down the Steam lookup path by the duplicate watcher.
+The project is now **Achievement Watcher Next** (**AW Next**). The headline changes are notification
+delivery that picks its own transport, a per-game health report with guided repairs, a rebuilt preset
+library and designer, and a Simple interface mode for people who do not want the full control panel.
 
 ### Added
 
-- **A redesigned notification preset collection.** Nine presets replace the seventeen that
-  shipped before, each with its own composition, typography, motion and colour rather than a
-  recolour of one card: **AW Next** (the signature and the new default, in the app's own palette),
-  **Steam**, **Epic Games**, **PlayStation**, **Xbox**, **Cover** (the game's artwork behind the
-  text, drifting), **Glass** (genuinely translucent and deliberately quiet), **Arcade** (phosphor
-  and scanlines) and **Slim** (true black, for an OLED panel). The presets named after a platform
-  keep that name and carry its mark.
-- Every bundled preset now renders a **100% completion** notification that actually looks different —
-  a cold, brighter treatment with a doubled rim. No preset in the previous library implemented that
-  state at all, so a 100% unlock was drawn exactly like an ordinary one.
-- Every bundled preset now shows the **game's name** and the **rarity percentage** on the card, and
-  a rare unlock changes the edge and the glow rather than only the accent colour.
-
-### Changed
-
-- **The per-type preset settings are gone.** A rare unlock and a 100% completion are states the
-  preset you picked paints itself, so choosing a second and third preset for them was a second way
-  to say the same thing - and the one that could disagree with itself. The per-emulator overrides
-  (Xenia, RPCS3, ShadPS4) remain. The Xbox Series rare and platinum variants, which existed only to
-  be picked there, fold back into **Xbox Series**.
-- **`Random` is an entry in the sound list** instead of a switch beside it, so the list can no
-  longer name one sound while a different one plays. It previews and tests like any other choice —
-  picking it, dragging the volume under it or firing a test all play a real sound, a different one
-  each time. `Indiana.wav` was dropped from the bundled sounds.
-- **Notifications sit close to the screen edge.** The popup's window is what Windows places against
-  the corner, so every pixel of transparent margin reserved for a shadow pushes the visible card
-  further in. The card is now 11px inside its own window instead of 30, which puts it about 13px
-  from the edge: the drop shadows are near-ambient rather than offset (an offset costs that margin
-  below the card and buys nothing above it, and the window is centred on the card, so it was paid
-  twice), and the glows anchored to a card's own edge — the signature's accent rail, Slim's tick —
-  no longer reach past it. The preset designer's generated presets were reserving more again, and
-  now match; a preset you already built keeps its own window until you re-save it in the designer.
-- Every bundled preset is the **same width**, so switching preset no longer moves the popup
-  sideways. Slim is now the short one rather than the narrow one.
-- Community presets are named for what they look like rather than for who submitted them:
-  `ArmsofGod`, `Epic Preset`, `TigerDX Award` and `mudoss` are now **Pantheon**, **Onyx**,
-  **Hexagon** and **Outline**. **Hexagon** and **Batman** drew their progress bar on top of their
-  own title and icon - both laid it out in the flow while everything around it was absolutely
-  positioned - and now place it under the text.
-- A notification test with no game of its own borrows real cover art and a real name from the
-  library, instead of showing a placeholder badge and the app's own icon.
-
-- The bundled presets all render through **one engine** — the same one the preset designer generates —
-  so a fix to rare tiers, the completion state, the progress line or the scrolling of a long title
-  lands in all of them at once. The previous library carried seventeen near-copies of that script,
-  and the drift between them is why several rendered no completion state, one threw a script error
-  on every notification, and one animated a progress bar that ignored the real numbers.
-- Notification popups sit consistently in their corner: each preset's window is sized to exactly
-  contain its own shadow and glow, so nothing is cut off at the window edge and every preset keeps
-  the same margin from the screen.
-- The default preset library is **152 KB**, down from about 9.5 MB — the removed presets bundled
-  several megabytes of animated GIFs and three copies of the same font files.
-- `backdrop-filter` is gone from the bundled presets. It cost a blur pass per frame over the running
-  game and blurred nothing: the notification window is transparent, so there was never any page
-  content behind the card for it to sample.
-
-- The custom preset builder is now a **Preset designer**: a full no-code notification designer in
-  its own section of Settings → Notification. Layout (icon left, right, above the text or no icon),
-  alignment, width, padding and spacing; font, title and description size, weight, uppercase and
-  letter spacing; a solid, gradient or **game-artwork** background with dimming and blur; corner
-  radius, which edge carries the accent bar and a border of your own; shadow and accent glow; icon
-  size, rounding and border; which edge the popup enters from and leaves to, its speed, easing and
-  how long it stays on screen; the colour and glow of a **rare unlock** and a **100% completion**;
-  and a sound the preset plays instead of the app-wide one. Common controls are shown, the rest sit
-  behind **Advanced** inside each group.
-- The designer now has **its own tab** — Settings → Presets, under Notification — with a **Start from**
-  gallery of eight complete designs (Classic, Aurora, Neon, Cover, Minimal, Console, Terminal, Slate),
-  a **Surprise me** button that builds a coherent design you have not tried, and **Duplicate** to save
-  a variation beside the preset it came from.
-- More to design with: the **game's name** above the achievement, a **rarity badge** printing the
-  unlock rate, a description that may **wrap onto two or three lines**, a **text shadow** for reading
-  over artwork, an **icon glow**, and the **progress bar thickness**. The game name is forwarded by
-  the notification window for any preset that asks for it, bundled ones included.
-- The preview gained a **Compare** view showing the normal, rare and 100% notifications at once, a
-  **Scale** control mirroring the app setting beside the position anchors, and four more properties:
-  what colours the title, how far the popup travels on its way in and out, and how the game artwork
-  is framed.
-- The preset setting in Settings → Notification carries a tools button through to the designer, and
-  the starting points are the first row of the designer itself rather than a card of their own — the
-  Presets tab is one card, read top to bottom: start from something, then shape it.
-- Simple interface mode now leaves out the designer's Advanced halves, and the Presets tab is hidden
-  entirely when notifications are set to Windows notifications, where a preset draws nothing.
-- The preview can be judged against a **backdrop**: transparency, a dark scene, a bright one, or
-  artwork from your own library — a design that reads well on dark can vanish on a bright scene.
-- The designer previews the real notification, not an impression of it: the same page, styles and
-  engine the popup uses in a game, rendered live as you edit. Switch between the **Card** at its own
-  size and a mock **Screen** at 720p to 4K showing its true relative size in the corner notifications
-  are set to appear, flip between the **normal**, **rare**, **100%** and **progress** states, and
-  **Play** the entry, hold and exit at the preset's own timings.
-- A preset can carry **its own sound**, used instead of the one selected in the Notifications tab —
-  by a preset you designed or one you imported, and it travels inside the `.awpreset` package.
-
-### Changed
-
-- A rare unlock and a 100% completion now repaint the whole popup — accent, title, icon border and
-  glow — in presets built with the designer, where before only the progress bar changed colour. A
-  preset already on disk keeps its own files and looks exactly as it did; opening it in the designer
-  and saving is what applies the new defaults.
-- The notification window a generated preset is given is measured from the design instead of a fixed
-  height, so a stacked layout or a strong glow is no longer cropped.
-
-### Fixed
-
-- A scrolling title or description that was too long to fit was painted over the icon and outside
-  the popup instead of being clipped to its own column.
-- A preset shared from a build that recorded its sound in the package manifest — rather than in the
-  designer options, which did not exist yet — lost that sound on import and fell back to whichever
-  sound the recipient had selected. Conversely, a preset that deliberately has no sound of its own is
-  no longer pinned to whichever sound the person exporting it happened to have selected.
-- The designer's **Advanced** disclosures did nothing: the block they toggle was styled to be visible
-  whatever its state, so every advanced property was on screen from the start and the button appeared
-  to be inert.
-
-- Notification presets can be shared. **Export** and **Import**, in the **Custom preset** card of
-  Settings → Notification, move a preset between machines as a single `.awpreset` file carrying its
-  style, images, fonts, builder settings and metadata, plus any sound you imported yourself. A
-  package is checked before anything is installed and is refused whole — not part-installed — when it
-  is malformed, needs a newer AW Next, carries a file the format does not describe, or points
-  anywhere outside its own folder. Nothing inside a package is ever executed while it is read, and a
-  failed import leaves every installed preset untouched. A name clash asks whether to keep both or
-  replace — including against a bundled preset, which an import would otherwise hide behind a copy —
-  and an imported preset shows up in **Edit a preset**, where it can be exported again or deleted.
-- The interface now comes in **Simple** and **Advanced**. The first-run guide asks for the choice on
-  its own step and will not continue until one is picked; neither is preselected. The choice is
-  stored in `[general] interfaceMode` and can be changed at any time from the **Interface** control
-  at the top of Settings, beside the panel title.
-- Simple shows General, Theme, Controller, Notification, Sources, Folders and Help. Advanced adds
-  the Steam emulator tab (GBE runtime, Steamless, API-check bypass, Uplay R2) and the diagnostics
-  tab, and restores the deeper rows inside the tabs Simple already shows: the built-in scan-folder
-  list, the websocket transport, the per-emulator notification presets, the controller backend and
-  overlay-focus options, and the emulator submenu in a game's right-click menu.
-- The Sources list adapts instead of following a fixed list. Simple folds a niche source away
-  (GreenLuma, LumaPlay, the Nemirtingas emulators, Goldberg SocialClub, the notification-cache
-  import) only while it is still enabled and no game in the library came from it. Turning one off or
-  owning a game it detected brings its row straight back, so the mode can never hide the one control
-  that would explain a missing game.
-- Game Health now speaks the mode: Simple states outcomes ("Achievement data found", "Tracking
-  active", "Game saves detected"), Advanced keeps the exact schema counts, watched process and
-  notification transport. **Technical details** still holds every raw value in both modes.
-- The library now supports manually added games from a title and executable, with an optional
-  platform and Steam AppID. Achievement-less entries remain launchable, track playtime, display
-  **No achievements**, and can adopt a Steam achievement schema later without being
-  recreated.
-- Manual game creation now opens from a discreet `+` beside library search, with explicit game-name
-  and optional Steam AppID fields in a fully theme-aware dialog.
-- First-run and Settings folder lists distinguish manual locations with a compact icon and show
-  Smart Find sources with their detector provenance. Automatic locations remain visible and can be
-  disabled without deleting them.
-- **Automatic** notification delivery, and the new default: AW Next uses the in-game overlay when it
-  can be shown and a Windows notification when it cannot, without asking the user to know anything
-  about fullscreen modes. It routes each unlock from what it can actually observe — whether the app
-  can render a popup and report back, whether a game holds exclusive fullscreen (only exclusive
-  Direct3D counts, so borderless keeps the overlay), and whether the overlay recently failed to
-  display. **In-game overlay**, **Windows notification** and **Both** remain available and unchanged;
-  an existing saved choice is never rewritten.
-- **Reset a game's achievements**, from the game's page and from its right-click menu. Every
+- **Automatic notification delivery, and the new default.** AW Next uses the in-game overlay when it
+  can be shown and a Windows notification when it cannot, without asking you to know anything about
+  fullscreen modes. Each unlock is routed from what can actually be observed: whether the app can
+  render a popup and report back, whether the game holds exclusive fullscreen (only exclusive
+  Direct3D counts, so borderless keeps the overlay), and whether the overlay recently failed.
+  **In-game overlay**, **Windows notification** and **Both** remain available and unchanged, and an
+  existing saved choice is never rewritten.
+- **A Game Health panel for every game**, from the tools button on its tile. One state — *Ready*,
+  *Needs attention* or *Not tracking* — one sentence explaining it, the checks behind it, and only
+  the repairs that can genuinely fix that game: locate the game, rewrite the achievement data,
+  restore the emulator file, correct a mismatched `steam_appid.txt`, watch the game, or send a test
+  notification carrying that game's own name and artwork. It also reports which transport delivered
+  the game's last notification and why.
+- **Reset and restore a game's achievements**, from the game's page and its right-click menu. Every
   achievement goes back to locked so the game can earn them again and AW Next announces them as new.
-  It covers every local source in one action — the Steam/Uplay/SocialClub emulator saves are removed
-  (the emulator writes a fresh one), RPCS3's `TROPUSR.DAT` is removed, and ShadPS4's `TROP*.XML` and
-  Xenia's `.gpd` are relocked in place because those two files also hold the achievement list itself.
-  Steam, GOG Galaxy, Ubisoft Connect, EA, Epic and Xbox keep unlocks on the account and are reported
-  as out of reach rather than appearing to work.
+  It covers every local source in one action: emulator saves are removed, RPCS3's `TROPUSR.DAT` is
+  removed, and ShadPS4's `TROP*.XML` and Xenia's `.gpd` are relocked in place because those files
+  also hold the achievement list. Steam, GOG Galaxy, Ubisoft Connect, EA, Epic and Xbox keep unlocks
+  on the account and are reported as out of reach rather than appearing to work.
 - Nothing is reset without a copy: every file is backed up to
   `<userData>\backups\achievements\<appid>\<date>\` first, a file whose backup fails is skipped
-  rather than cleared, and **Restore an achievement backup** puts a whole reset back where it came
-  from — including AW Next's own unlock record, so restored achievements do not arrive as a burst of
-  notifications.
-- A game's **Game Health** panel now reports which transport actually delivered its last notification
-  and why — "Working — Windows fallback active", or "Windows notification · game in exclusive
-  fullscreen" in Advanced. Until a game has had one, the row shows the configured mode rather than
-  claiming an observation that has not happened.
+  rather than cleared, and **Restore an achievement backup** puts a whole reset back — including AW
+  Next's own unlock record, so restored achievements do not arrive as a burst of notifications.
+- **Simple and Advanced interface modes.** The first-run guide asks on its own step and will not
+  continue until one is picked. Simple shows General, Theme, Controller, Notification, Presets,
+  Sources, Folders and Help; Advanced adds the Steam emulator and Advanced tabs and restores the
+  deeper rows inside the tabs Simple already shows. Game Health speaks the mode too: Simple states
+  outcomes, Advanced keeps the exact counts, watched process and transport, and **Technical details**
+  holds every raw value in both.
+- The Sources list adapts rather than following a fixed list: Simple folds a niche source away only
+  while it is still enabled *and* no game in the library came from it, so the mode can never hide the
+  one control that would explain a missing game.
+- **A redesigned preset library.** Nine presets replace the seventeen that shipped before, each with
+  its own composition, typography, motion and colour rather than a recolour of one card: **AW Next**
+  (the new default), **Steam**, **Epic Games**, **PlayStation**, **Xbox**, **Cover**, **Glass**,
+  **Arcade** and **Slim**. Every one of them now renders a real **100% completion** state — no preset
+  in the previous library implemented that at all — and shows the game's name and the rarity
+  percentage, with a rare unlock changing the edge and glow rather than only the accent colour.
+- **A full Preset Designer**, replacing the slider-based custom builder, in its own **Settings →
+  Presets** tab. Layout, typography, background (including the game's own artwork), corners, shadow
+  and glow, motion and timing, the rare and 100% treatments, and a sound the preset plays instead of
+  the app-wide one — all through ordinary controls, with the less common ones behind **Advanced**
+  inside each group. It opens with a **Start from** gallery of eight complete designs, a **Surprise
+  me** button and **Duplicate**.
+- The designer previews the real notification, not an impression of it: the same page, styles and
+  engine the popup uses in a game. Switch between the **Card** at its own size, **Compare** (normal,
+  rare and 100% at once) and a mock **Screen** from 720p to 4K, judge it against a transparent, dark,
+  bright or real-artwork **backdrop**, and **Play** the entry, hold and exit at the preset's own
+  timings.
+- **Share a preset as a single `.awpreset` file.** Export and Import move a preset between machines
+  with its style, images, fonts, designer settings, metadata and any sound you imported yourself. A
+  name clash asks whether to keep both or replace — including against a bundled preset, which an
+  import would otherwise hide behind a copy.
+- **Manually added games.** The `+` beside library search adds a game from a title and executable,
+  with an optional platform and Steam AppID. Achievement-less entries remain launchable, track
+  playtime, display **No achievements**, and can adopt a Steam achievement list later without being
+  recreated.
 - **Open folder** beside the souvenir save folder, which opens the folder screenshots are actually
-  written to, creating it first if nothing has been saved there yet. The picker keeps showing the
-  folder in use, so the destination stays visible and changeable in one place.
+  written to, creating it first if nothing has been saved there yet.
+- First-run and Settings folder lists distinguish manual locations with a compact icon and show Smart
+  Find sources with their detector provenance.
 
 ### Changed
 
-- Simple / Advanced is a display setting only. It hides controls, it never disables a feature: no
-  parser, watcher, scan or stored value changes with it, and switching back restores every control
-  with the value it already had. Upgrading an existing installation lands on Advanced, so nothing
-  already in use disappears.
-- The Settings About block is one line about this app; the upstream lineage credits moved to the
-  foot of the Advanced tab, where they are bound by id rather than by DOM position.
+- **The product is now Achievement Watcher Next / AW Next**, with a new icon set, across the UI, the
+  installer and the log strings. The executable name and the toast AppUserModelID are unchanged, so
+  existing installs and their autostart entry survive. User data moves to
+  `%APPDATA%\Achievement Watcher Next` and is imported forward from the 3.0 and 1.6.8 folders —
+  souvenirs and playtime counters included — without ever modifying or deleting the folder it read
+  from.
+- **The per-type preset settings are gone.** A rare unlock and a 100% completion are states the
+  preset paints itself, so choosing a second and third preset for them was a second way to say the
+  same thing — and the one that could disagree with itself. The per-emulator overrides (Xenia, RPCS3,
+  ShadPS4) remain. The Xbox Series rare and platinum variants fold back into **Xbox Series**.
+- All bundled presets render through **one engine** — the same one the designer generates — so a fix
+  to rare tiers, the completion state, the progress line or a long scrolling title lands in all of
+  them at once. The previous library carried seventeen near-copies of that script, which is why
+  several rendered no completion state, one threw a script error on every notification, and one
+  animated a progress bar that ignored the real numbers.
+- The default preset library is **1.0 MB, down from 10.8 MB**: the removed presets bundled several
+  megabytes of animated GIFs and three copies of the same fonts. Only PlayStation's two typefaces
+  remain, and everything else in the library — nine presets' markup, styles and images — is 162 KB
+  together. `backdrop-filter` is gone from the bundled presets too: it cost a blur pass per frame
+  over the running game and blurred nothing, since the notification window is transparent.
+- **Notifications sit close to the screen edge.** The card is now 11px inside its own window instead
+  of 30, which puts it about 13px from the edge. Every bundled preset is also the same width, so
+  switching preset no longer moves the popup sideways. A preset you already built keeps its own
+  window until you re-save it in the designer.
+- **`Random` is an entry in the sound list** instead of a switch beside it, so the list can no longer
+  name one sound while a different one plays. It previews and tests like any other choice.
+  `Indiana.wav` was dropped from the bundled sounds.
+- Community presets are named for what they look like rather than who submitted them: `ArmsofGod`,
+  `Epic Preset`, `TigerDX Award` and `mudoss` are now **Pantheon**, **Onyx**, **Hexagon** and
+  **Outline**.
+- The theme picker opens on seven contrasting themes, including a new Light one, and keeps the rest
+  behind **More themes…**.
 - Plainer settings vocabulary: "Gamepad Vibration (XInput)" is now "Gamepad vibration", "Progress
-  report" is "Progress notifications", the folder lists are "Your folders" and "Folders checked
-  automatically", and adding a folder asks for "the folder where a game or an emulator keeps its
-  achievement files" instead of "a folder which contains appid folder(s)".
-- The first-run guide is reachable from **Settings → General** instead of the Advanced tab, so it
-  stays available in Simple.
-- The final first-run page is a compact set of eight useful choices: app theme, notification mode,
-  notification preset, playtime tracking, Steam-library visibility, emulator auto-fix, hidden
-  achievements, and duplicate merging. New profiles enable playtime tracking by default.
-- Smart Find now probes only real known save locations, launcher/library conventions, stable
-  emulator data folders, and shallow supported-emulator binaries. `C:\Games` / `C:\Jeux` are added
-  only when present, and library-like Desktop folders such as `Desktop\Jeux` are surfaced explicitly
-  instead of being scanned through an invisible Desktop root.
-- Missing artwork now uses a cached SteamGridDB cascade for cover, landscape, hero, logo and icon
-  assets after native/Steam metadata, with conservative title matching and fill-only semantics so a
-  good existing asset is never downgraded. The alternate-cover picker resolves cache tokens before
-  previewing the current cover and uses a game's own numeric AppID for SteamDB alternatives.
-- Accepted updates install through the existing NSIS package in silent upgrade mode and relaunch AW
+  report" is "Progress notifications", and the folder lists are "Your folders" and "Folders checked
+  automatically". The first-run guide is shorter where it repeated itself, its final page is a
+  compact set of eight useful choices, and it is reachable from **Settings → General** so it stays
+  available in Simple mode.
+- The Settings About block is one line about this app; the upstream lineage credits moved to the foot
+  of the Advanced tab.
+- Smart Find now probes only real known save locations, launcher and library conventions, stable
+  emulator data folders and shallow supported-emulator binaries. `C:\Games` / `C:\Jeux` are added
+  only when present, and library-like Desktop folders are surfaced explicitly instead of being
+  scanned through an invisible Desktop root.
+- Missing artwork uses a cached SteamGridDB cascade for cover, landscape, hero, logo and icon assets
+  after native and Steam metadata, with conservative title matching and fill-only semantics, so a
+  good existing asset is never downgraded.
+- Accepted updates install through the existing NSIS package in silent upgrade mode and relaunch
   automatically, without a second confirmation prompt or a repeated onboarding flow.
-
-### Fixed
-
-- Deleting a custom preset no longer moves the active notification preset onto whichever preset
-  sorts first alphabetically. The selection is kept when it still exists and falls back to the app's
-  own default otherwise, and the per-type overrides (rare, platinum, Xenia, RPCS3, ShadPS4) are
-  rebuilt along with the main list instead of keeping a stale one.
-- Souvenir screenshots no longer overwrite each other when several achievements unlock within the
-  same second, and a game whose title Windows refuses as a folder name (a reserved device name like
-  `NUL`, or a title ending in a dot or a space) no longer loses its screenshots silently.
-- **Apply emulator fix** no longer disappears from a game's right-click menu once that game has a
-  setup. The entry is gated on a first-time-target check, so it hid itself on exactly the games that
-  need it most — a repack update that wiped `steam_settings`, or a setup applied for the wrong appid,
-  left no way to re-apply. Those games now get **Re-apply emulator fix**, which names the setup it
-  found and asks before replacing it. The automatic scan and the bulk "fix all found games" pass stay
-  as conservative as before: neither touches a game that already has a setup.
-- **Generate configs** no longer goes silent about the games it skips. It configures only installs
-  that have no setup at all — it runs unattended during the scan and must never overwrite one — but
-  it now counts the already-configured installs and points at **Advanced → Fix all games**, which is
-  what rebuilds those. A library where everything is already set up used to report "nothing to do"
-  with no indication that a re-apply existed anywhere.
-- A `steam_appid.txt` naming another game now has a repair. This was the one diagnosis with no way
-  out: "rewrite the achievement data" deliberately never overwrites an existing `steam_appid.txt`, so
-  it could not have fixed it, and the row named a file without saying what was wrong with it. Game
-  Health now explains that the emulator announces one game while AW Next watches another, and offers
-  **Correct the game ID file** — one file, both values shown, the previous one kept under
-  `steam_settings\.aw-backups`. It is a confirmed choice rather than an automatic rewrite, because a
-  mismatch can equally mean the library card is the part that is wrong.
-- An overlay notification the app could not display — no usable preset on disk, or a preset page
-  that fails to load — is no longer lost in silence. The app now reports the outcome of every popup
-  it is asked to render, and that one notification is delivered as a Windows notification instead.
-  The report is also what the transport decision is based on: a send call returning is no longer
-  treated as proof that anything appeared on screen.
-- Notification transport selection has a single owner, so a fallback can never duplicate an unlock.
-  The ten copies of the transport rules that each notification source carried (two of which had
-  already drifted apart) are replaced by one decision taken before anything is sent, and a fallback
-  is authorized only when the primary transport reported a definite failure. An overlay that never
-  reports back is not duplicated onto a toast — the next notification switches transport instead.
-- Overlay notifications below 100% scale are no longer cropped or padded. The popup window is
-  scaled by the host and the preset is now rendered at its design size through page zoom, instead
-  of the preset shrinking itself a second time inside an already-shrunken window - which cut off
-  dense presets such as Epic Games, Steam and mudoss and left transparent padding around every
-  other one. Every scale now draws exactly what 100% draws.
-- The Xbox Series presets (including their Platinum, Rare and Purple variants) now keep the edge
-  they are anchored to while the badge expands into the full pill. Their stylesheet ignored the
-  anchor their own script had chosen, so a left- or right-anchored popup drifted sideways by half
-  its grown width and ended up clipped by its own window - visible as a complete badge that turned
-  into a pill with its icon cut off.
-- A custom notification position is used verbatim again, so the popup can sit flush in a corner or
-  over the taskbar with the preset's transparent padding hanging past the screen edge. An anchor
-  that would leave the popup mostly off its display - a monitor that is no longer connected - is
-  still brought back into view.
-- Notification tests now produce one preview consistent with the selected transport/preset instead
-  of sending both an AW overlay and a differently styled Windows toast. Watchdog warms the expensive
-  first Windows identity/artwork lookup in the background, caches Start-menu enumeration, and shows
-  busy feedback while a cold test is still preparing.
-- Disabled auto-detected folders are excluded consistently from the renderer scan, Watchdog and
-  Xenia watcher. The blacklist name resolver no longer walks hard-coded Desktop or non-existent
-  default game folders behind the Settings list.
-- Library skeletons now retain six animated placeholders while games are still streaming in, then
-  clear only when the scan actually completes.
-- Initial GBE config generation now targets only unconfigured Steam games with no existing fix.
-  OnlineFix, TENOKE, ALI213, SmartSteamEmu, UniverseLAN, scene emulators, GBE/Goldberg, Ubisoft,
-  official-launcher and console-platform installs are protected from that action.
-- Folder provenance is now icon-only with localized tooltips. Manually added PC games retain guarded
-  per-game emulator diagnostics/configuration for advanced use, while destructive Steamless/
-  CrakFiles actions stay hidden, uninstall uses the guarded common submenu, and automatic config
-  generation still ignores them.
-- Games with no achievement set now display **No achievements** instead of `0%` and remain excluded
-  from unlocked-achievement totals, completed-game counts and average completion statistics.
-- Achievement-less games use the normal game-detail page with a localized empty-success state;
-  only their explicit Play
-  control launches them. Manual games stored under Desktop/AppData are eligible for playtime
-  tracking, launch clicks show immediate busy feedback, their real cached artwork is reused by
-  playtime cards, and invalid legacy API-bypass files are disabled with recoverable `.aw-disabled`
-  copies. Windows manual programs use a normal Shell launch environment so .NET GUI applications
-  such as Ryujinx receive valid console handles, and their context menu exposes the same guarded
-  uninstall choices as detected games.
-- Manual emulator tools no longer offer a GBE install for arbitrary programs such as Ryujinx: the
-  selected folder must already contain a real Steam API DLL, while diagnostics remain available.
-- Every bundled locale now uses one consistent native achievement term (including **Succès** in
-  French), and the main scan explanation focuses on known and user-selected locations while keeping
-  format-specific details in Help.
-
-### Changed
-
 - The title-bar Watchdog indicator reads as a state and its meaning — **Watchdog active | Game and
-  achievement tracking operational** — instead of one parenthesised sentence. Both halves are
-  translated strings and the separator is drawn in CSS, so no language carries punctuation or
-  markup; the explanation is dropped first when the window is narrow. **Start Watchdog** is now a
-  button rather than a sentence, and the whole indicator repaints when the language changes instead
-  of waiting for the next status poll.
-- A game with nothing unlocked yet shows one line and a quiet troubleshooting link, in place of two
-  same-size sentences carrying a frowning face and a warning sign.
-- The first-run guide is shorter where it was repeating itself: the language step no longer says
-  three times that the scan waits for the choice, **How it works** drops the paragraph that
-  summarised the four cards printed under it, and those cards are one sentence each — the step now
-  fits without scrolling. **Sources** no longer lists the five platforms named in the rows beneath
-  it, and the preset designer no longer introduces itself twice.
-- The "changes are saved automatically" note in Notifications reads as a caption instead of a
-  bordered card competing with the sections it sits above.
-- Four of the longest Settings descriptions are a sentence shorter: the Epic and Xbox account cards,
-  the controller focus option and the notification-type row. Every caveat that matters is kept — the
-  account cards still say the token is stored encrypted on this PC, and the controller row still
-  says a game may see the buttons anyway.
-- The first-run guide has one way out instead of two. The footer repeated the ✕ already in its
-  header, and on an actual first run both were hidden while a click on the backdrop still dismissed
-  the guide — an escape hatch nobody could see. The ✕ is always there and says whether it skips
-  setup or closes the guide.
-- Game Health's single button says **Close**. It said **Cancel** on a report with nothing to cancel;
-  the executable form, which does have a Save beside it, still says Cancel.
+  achievement tracking operational** — with both halves translated and the separator drawn in CSS.
 
 ### Fixed
 
-- The game page had two achievement searches — the labelled field and a floating one pinned to the
-  bottom-left corner. They filtered the same list by different means, so filtering with the floating
-  box left rows stuck invisible for the other one, and Ctrl+F focused the unlabelled duplicate. The
-  floating box is gone and Ctrl+F focuses the field you can see.
-- The Settings sidebar scrolled sideways. Its column was a few pixels wider than the panel in most
-  languages, so the active row lost its right edge and the whole nav could be dragged left and
-  right. The sidebar now sizes itself to its longest label instead — no label is cut, and it only
-  scrolls when a translation runs past the width it is allowed to take from the panel beside it.
-  Checked in all 18 locales at five window widths: nothing cropped, no horizontal scrollbar.
-- A playtime notification for a game with no header or portrait artwork showed an empty image. It
-  now falls back to the square logo the library already fetched, and a test notification fired from
-  a game's own panel no longer borrows the sample game's artwork.
-- **Import Xbox PC library** was the one label in the Xbox account card with no translation; it now
-  has one in every bundled locale.
-- The profile block sat eight pixels left of centre. At the smallest window the app allows it was
-  drawn partly outside the window.
-- Sliders — notification volume, and width, padding, spacing and opacity in the preset designer —
-  were a four-pixel-tall drag target. The visible line is unchanged; the control itself is now tall
-  enough to grab.
-- The preset designer's position picker had 14×10 cells, the segmented switches and the update-check
-  button were under-sized, and the Settings search accepted clicks only on its text line.
-- A Settings row whose right-hand side is a group of buttons let them take whatever width they
-  wanted, squeezing the label and its description into a narrow strip — the souvenir folder row read
-  four words to a line on a smaller window. The label column now keeps a readable minimum and the
-  buttons wrap under each other instead.
-- The achievement search field on a game page had no accessible name.
-- The tick on a completed step of the first-run guide was an oval whenever that step's name wrapped
-  to two lines, because it could be squeezed along with the label.
-- The trophy and tools buttons on a game tile dimmed when the pointer entered the cover art instead
-  of lighting up.
-- French: the notification **Preset** picker was translated as "Thème", which put two fields named
-  "Thème" side by side in the first-run guide and disagreed with the per-emulator rows already
-  reading "Préréglage". The Help panel and the Folders tab also addressed the reader informally
-  while the rest of the French interface uses *vous* — one Folders paragraph switched register
-  mid-sentence.
-- Typography across all 18 locales: real ellipses instead of three dots, each language's own
-  quotation marks (« » for French with its spaces, „ “ for German, 「 」 for Japanese, “ ” for
-  Brazilian Portuguese and Thai, which do not take guillemets) and typographic apostrophes — some
-  460 strings that mixed both conventions inside the same file.
-- Machine-translation errors in the first-run guide's buttons: German and Italian **Saving…** read
-  as saving *money* (Sparen / Risparmio), Thai likewise; Italian, Turkish and French **Skip** were
-  infinitives rather than the imperative a button needs; Japanese **Finish** meant finishing a
-  craft; Chinese **Back** meant reversing. Spanish and Latin American **Finish** was lower case
-  where every other button is capitalised.
-- The library's search box, the Settings dropdowns and the icon-only buttons on a game tile had no
-  accessible name, and the tools button on a tile was a `div` with a click handler rather than a
-  button. Names are derived from each row's own visible label, so they follow the interface
-  language.
+- **An overlay notification the app could not display is no longer lost in silence.** The app now
+  reports the outcome of every popup it is asked to render, and a failed one is delivered as a
+  Windows notification instead. That report is also what the transport decision is based on: a send
+  call returning is no longer treated as proof that anything appeared on screen.
+- **Notification transport selection has a single owner, so a fallback can never duplicate an
+  unlock.** The ten copies of the transport rules that each notification source carried — two of
+  which had already drifted apart — are replaced by one decision taken before anything is sent, and a
+  fallback is authorised only on a definite failure. An overlay that never reports back is not
+  duplicated onto a toast; the next notification switches transport instead.
+- Overlay notifications below 100% scale are no longer cropped or padded. The popup is now rendered
+  at its design size through page zoom instead of shrinking itself a second time inside an
+  already-shrunken window, which used to cut off dense presets and leave transparent padding around
+  every other one.
+- A custom notification position is used verbatim again, so the popup can sit flush in a corner or
+  over the taskbar. An anchor that would leave it mostly off its display — a monitor that is no
+  longer connected — is still brought back into view.
+- Notification tests now produce one preview consistent with the selected transport and preset,
+  instead of sending both an overlay popup and a differently styled Windows toast.
+- A playtime notification for a game with no header or portrait artwork no longer shows an empty
+  image; it falls back to the square logo the library already fetched.
+- Deleting a custom preset no longer moves the active preset onto whichever preset sorts first
+  alphabetically. The selection is kept when it still exists and falls back to the app's own default
+  otherwise.
+- In the designer: a scrolling title or description too long to fit is clipped to its own column
+  instead of being painted over the icon; the **Advanced** disclosures actually toggle their block,
+  which was styled to be visible whatever its state; and the generated preset's window is measured
+  from the design instead of a fixed height, so a stacked layout or a strong glow is no longer
+  cropped.
+- A preset shared from an older build no longer loses its sound on import, and a preset that
+  deliberately has no sound of its own is no longer pinned to whichever sound the person exporting it
+  happened to have selected.
+- **Apply emulator fix** no longer disappears from a game's right-click menu once that game has a
+  setup — it hid itself on exactly the games that need it most, such as a repack update that wiped
+  `steam_settings`. Those games now get **Re-apply emulator fix**, which names the setup it found and
+  asks before replacing it. The automatic scan and the bulk pass stay as conservative as before.
+- **Generate configs** no longer goes silent about the games it skips. It still configures only
+  installs with no setup at all, but it now counts the already-configured ones and points at
+  **Advanced → Fix all games**.
+- A `steam_appid.txt` naming another game now has a repair. Game Health explains that the emulator
+  announces one game while AW Next watches another, and offers **Correct the game ID file** — one
+  file, both values shown, the previous one kept. It is a confirmed choice rather than an automatic
+  rewrite, because a mismatch can equally mean the library card is the part that is wrong.
+- Source badges come from one anchored table instead of loose string matching, so GOG Galaxy and
+  Epic stop being labelled Steam and SmartSteamEmu stops being labelled EA. Cross-source dedupe no
+  longer depends on discovery order, a collection folder can no longer be adopted as a game's install
+  directory, and a game known only through its emulator saves still gets a process to track.
+- Souvenir screenshots no longer overwrite each other when several achievements unlock within the
+  same second, and a game whose title Windows refuses as a folder name — a reserved device name, or a
+  title ending in a dot or a space — no longer loses its screenshots silently.
+- Games with no achievement set display **No achievements** instead of `0%`, and are excluded from
+  unlocked totals, completed-game counts and average completion.
+- Disabled auto-detected folders are excluded consistently from the renderer scan, the Watchdog and
+  the Xenia watcher, and library skeletons clear only when the scan actually completes.
+- Initial GBE config generation targets only unconfigured Steam games with no existing fix; OnlineFix,
+  TENOKE, ALI213, SmartSteamEmu, UniverseLAN, scene emulators, GBE/Goldberg, Ubisoft, official-launcher
+  and console-platform installs are protected from that action. Manual emulator tools no longer offer
+  a GBE install for arbitrary programs such as Ryujinx.
+- The game page had two achievement searches — the labelled field and a floating duplicate that
+  filtered the same list by different means. The floating box is gone and `Ctrl+F` focuses the field
+  you can see.
+- The Settings sidebar no longer scrolls sideways: it sizes itself to its longest label instead of
+  cropping it, checked in all 18 locales at five window widths. The profile block is centred again,
+  sliders and the designer's position picker are large enough to aim at, and a row whose right-hand
+  side is a group of buttons no longer squeezes its label into a narrow strip.
+- Accessible names for the library and achievement search, the Settings dropdowns and the icon-only
+  buttons on a game tile, derived from each row's own visible label so they follow the interface
+  language; the tools button on a tile is a button rather than a `div`.
+- Localisation: every bundled locale uses one consistent native achievement term (including **Succès**
+  in French, where the notification **Preset** picker had been translated as "Thème"); real ellipses,
+  each language's own quotation marks and typographic apostrophes across some 460 strings; and
+  machine-translation errors in the first-run guide's buttons, where German and Italian **Saving…**
+  read as saving *money* and several **Skip** buttons were infinitives rather than imperatives.
+- **Import Xbox PC library** was the one label in the Xbox account card with no translation.
+- The overlay acknowledgement timeout no longer lets the event loop drain while a caller is still
+  waiting on it, which left the promise unsettled.
 - `tools/aw-probe.ps1` is DPI-aware, so on a scaled display its screenshots capture the whole window
-  instead of cropping to the top-left, and coordinates read off a capture land where they are aimed.
+  instead of cropping to the top-left.
+
+### Performance
+
+Measured against the installed app's own logs and user data, not synthetic load.
+
+- **The library no longer reloads itself a few minutes after every launch.** New-game detection
+  compared discovery against the games rendered on screen, but those are different populations by
+  design — an appid merged into another source, hidden by "hide 0%" or without a schema is discovered
+  on every tick and rendered never — so every session paid a full library refresh for a game that was
+  never new.
+- **Each achievement folder is watched once.** The folders the app auto-detects were the same ones it
+  already watched by default, so every one of them was watched twice: seven duplicate recursive
+  watchers on a typical install. Beyond the wasted work, a Ubisoft unlock could be taken down the
+  Steam lookup path by the duplicate watcher.
+- **Less blocking work before the window appears.** The eleven parser modules sharing `parser.log`
+  each re-read the file and its rotated sibling and opened their own stream: 111–123 ms of
+  synchronous startup work on a rotated 2.4 MB log, now 21–24 ms, and one session banner per launch
+  instead of eleven.
+- **Placeholder tiles follow the real scan.** They are sized from the number of games the scan will
+  actually deliver, and streaming no longer re-queries the DOM for every game added — 28.2 ms for 200
+  tiles against 4.3 ms.
+- **Theme images are reused instead of duplicated.** Re-picking a background you already chose keeps
+  the stored copy rather than saving the whole file again — one library held 22 byte-identical copies
+  of a 7.3 MB image, 168 MB of a 193 MB store — and the Custom theme editor no longer re-renders each
+  layer's blurred copy on every autosave: about 1469 ms per save against 0.4 ms.
+
+### Security
+
+- A `.awpreset` package is validated whole before anything is written, and refused entirely rather
+  than part-installed: format version and minimum app version, an extension allowlist, and one path
+  gate that rejects traversal, absolute paths, drive letters and Windows reserved names. It is then
+  installed through a staging folder and moved in one rename, so a failure anywhere leaves every
+  installed preset untouched. Nothing inside a package is ever executed, required or evaluated while
+  it is read.
+- Hardened the preview script-tag matching in the notification CSP hash check, which CodeQL flagged
+  as `js/bad-tag-filter`: the pattern only matched a bare lowercase `<script>`, so a change of case or
+  an added attribute would have made the check pass without asserting anything.
+- Updated `puppeteer-core` to 25.7.0 and `js-yaml` to 5.3.0, and grouped the `github/codeql-action`
+  bumps so its `init` and `analyze` halves can never land on different versions.
 
 ## 3.8.6 - 2026-08-13
 

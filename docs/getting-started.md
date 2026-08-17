@@ -17,8 +17,8 @@ AW Next is a Windows desktop application. Packaged releases include their own ru
 ## First launch
 
 <div align="center">
-<img src="../screenshot/onboarding.png" width="600" alt="First-run guide"><br>
-<sub>The first-run guide walks through language, sources, folders and notifications</sub>
+<img src="screenshot/onboarding.png" width="620" alt="First-run guide, choosing between the Simple and Advanced interface"><br>
+<sub>Six steps: language, how it works, interface, account, games and settings</sub>
 </div>
 
 The first-run guide asks for the main choices needed to populate the library:
@@ -38,9 +38,14 @@ You can revisit every option later from **Settings**.
 The interface comes in two sizes. Pick one in the first-run guide, and change it whenever you like
 from the **Interface** control at the top of **Settings**.
 
-- **Simple** shows the everyday tabs: General, Theme, Controller, Notification, Sources, Folders
-  and Help.
-- **Advanced** adds the Steam emulator and diagnostics tabs, plus the deeper options inside the
+<div align="center">
+<img src="screenshot/settings.png" width="620" alt="AW Next settings"><br>
+<sub>The Interface control sits beside the panel title; the search field filters every tab at once</sub>
+</div>
+
+- **Simple** shows the everyday tabs: General, Theme, Controller, Notification, Presets, Sources,
+  Folders and Help.
+- **Advanced** adds the Steam emulator and Advanced tabs, plus the deeper options inside the
   tabs Simple already shows.
 
 **Simple hides controls, it never turns anything off.** Tracking, scanning and notifications work
@@ -54,15 +59,9 @@ Upgrading an existing installation lands on **Advanced**, so nothing you were us
 
 In **Settings → Sources**, the shield marks the official desktop libraries supported directly:
 Steam, Ubisoft Connect, GOG Galaxy, Epic Games and Xbox PC. Enable the relevant row and refresh the
-library; only libraries detected on the current PC are displayed. The EA row is different: it reads
-EA Desktop achievement logs for non-launcher-managed installs and does not import the regular
-official EA library.
-
-The Sources list adapts to you. In Simple mode, a handful of niche rows (GreenLuma, LumaPlay, the
-Nemirtingas emulators, Goldberg SocialClub and the notification-cache import) stay out of the way
-while they are untouched and no game in your library came from them. Turn one off, or own a game it
-detected, and its row comes back - so the switch is always there when it matters. Advanced always
-lists all of them.
+library; only libraries detected on the current PC are displayed. Simple mode folds away a few niche
+rows while they are unused, and brings them straight back the moment they matter. Every source and
+what it needs is listed in [Compatible sources](sources.md).
 
 The search field at the top of **Settings** filters every tab at once, and the side menu shows how many options each tab matches - useful when you remember what an option does but not where it lives. It matches labels, descriptions, the values an option offers and its internal name, so `hideZero` finds the same row in any interface language. Press `Ctrl+F` to jump to it and `Esc` to clear it.
 
@@ -87,21 +86,10 @@ preview before you press **Save**.
 
 ## Steam metadata, keyless by design
 
-No Steam Web API key or connected account is used: each game's schema is fetched automatically
-with a fast keyless chain. In order, AW Next tries the official
-`IPlayerService/GetGameAchievements` endpoint (which includes hidden descriptions, icons and global
-rarity), then the SteamHunters public JSON API enriched with the SteamCommunity page (icons and
-hidden status), then SteamCommunity alone, and finally a browser scrape as a last resort. Results
-are cached per language in `%APPDATA%\Achievement Watcher Next\steam_cache\schema`.
-
-DLC and update achievements are tagged with their owning group (e.g. "The Witcher 3: Wild Hunt -
-Hearts of Stone") under the achievement title in the detail view. The groups come from the same
-keyless SteamHunters lookup, so no account is needed either.
-
-Steam never announces when a game update adds achievements, so a cached schema re-checks itself
-against Steam every 3 days and picks up anything new without ever deleting an achievement you
-already have cached. To check right away instead of waiting, use **Settings → Advanced → Recheck
-achievement lists**.
+No Steam Web API key and no connected Steam account are used: each game's achievement list is
+fetched automatically from public endpoints and cached per language, so the library keeps working
+offline afterwards. [Compatible sources](sources.md#steam-metadata-without-an-api-key) explains the
+lookup chain, the DLC and update tags, and the 3-day recheck.
 
 ## Find games and saves
 
@@ -133,33 +121,15 @@ unlocks, not progress or playtime updates.
 
 Use the test buttons before launching a game. Presets, sounds, volume, duration and position can all be changed later. See [Notifications](notifications.md) for details.
 
-## Reset a game's achievements
+## Check on a game
 
-To play a game through again from zero, use **Reset achievements** — on the game's page, beside the
-playtime, or from its right-click menu. It puts every achievement back to locked so the game can
-unlock them again, and so AW Next announces them as new when it does.
+Every game tile has a **tools** button that opens its **Game Health** panel: whether AW Next can see
+the game, read its achievements and announce its unlocks - and the repairs that genuinely apply to
+that game. It is the fastest answer to "why is this one not working", and the first thing to open
+before reporting a problem. See [Game Health](game-health.md).
 
-Nothing is deleted without a copy. Every file involved is backed up first to
-`%APPDATA%\Achievement Watcher Next\backups\achievements\<appid>\<date>\`, and the confirmation lists
-the exact files before anything is touched. **Restore an achievement backup** in the same right-click
-menu puts them all back where they came from.
-
-| Source | What a reset does |
-|---|---|
-| Steam emulators (Goldberg/GBE, CODEX, RUNE, RLD!, OnlineFix, SKIDROW, SmartSteamEmu, EMPRESS, CreamAPI, 3DM, ALI213, Hoodlum, TENOKE, UniverseLAN, Nemirtingas, Goldberg SocialClub, Uplay R2…) | Removes the achievement save. The emulator writes a fresh one at the next unlock. |
-| RPCS3 | Removes `TROPUSR.DAT`. The trophy list (`TROPCONF.SFM`) is left alone. |
-| ShadPS4 | Relocks the trophies inside `TROP*.XML`, which also holds the trophy list — so the file is edited, never removed. |
-| Xenia | Clears the earned flag inside the `.gpd`, which also holds the achievement list — same reason. |
-| Steam, GOG Galaxy, Ubisoft Connect, EA, Epic, Xbox | **Not possible.** These keep unlocks on your account and re-synchronise them; only the account itself can clear them. AW Next says so instead of appearing to work. |
-
-Progress counters stored beside the achievements (`stats.ini`, `stats.bin`, …) are reset too: for a
-"travel 1000 km" style achievement the counter *is* the progress, and leaving it full would make the
-achievement either fire instantly or never again. They are in the backup like everything else.
-
-> [!NOTE]
-> AW Next's own record of what was already unlocked is cleared at the same time, including in the
-> running background tracker. Without that, a re-earned achievement would be compared against a
-> record that still had it and would never be announced again.
+Playing a game through again from zero is [Reset achievements](advanced.md#reset-a-games-achievements),
+which backs everything up first.
 
 ## Tray and startup behavior
 
@@ -197,10 +167,10 @@ emulator-fix tools) and lets everything re-fetch itself; settings, saves and bac
 
 ---
 
-**Next:** [Notifications](notifications.md) - choose how unlocks are announced and
-test them before you launch a game.
+**Next:** [Compatible sources](sources.md) - what AW Next can read, and what each source needs.
 
-*Jump ahead if you already know what you need: [Goldberg / GBE setup](emulator-setup.md) ·
-[Uplay R2 setup](uplay-r2.md) · [Troubleshooting](troubleshooting.md)*
+*Jump ahead if you already know what you need: [Notifications](notifications.md) ·
+[Game Health](game-health.md) · [Goldberg / GBE setup](emulator-setup.md) ·
+[Troubleshooting](troubleshooting.md)*
 
-<p align="center"><a href="README.md">← Documentation</a> · <a href="../README.md">Project home</a></p>
+<p align="center"><a href="README.md">← Documentation</a> · <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0">Project home</a></p>

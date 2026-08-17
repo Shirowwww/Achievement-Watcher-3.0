@@ -1,0 +1,33 @@
+# GitHub Pages builds this folder (Settings -> Pages -> Source: main, /docs).
+#
+# Everything the site serves has to live under this folder, because it is the publish root:
+# screenshots are in docs/screenshot/, and links to files above it (README, BUILD, SECURITY,
+# CONTRIBUTING, CHANGELOG) are absolute GitHub URLs rather than ../ paths.
+#
+# No layout, include or Liquid template is added on purpose. The Markdown in this folder stays the
+# single source of truth: it is what GitHub renders when browsing the repository, and what Jekyll
+# renders here. Three plugins that ship with GitHub Pages do the rest without any configuration:
+#   jekyll-readme-index         README.md becomes the site index (/)
+#   jekyll-relative-links       [x](getting-started.md) resolves to the built page
+#   jekyll-optional-front-matter  files without front matter are still rendered as pages
+
+theme: jekyll-theme-primer
+
+title: Achievement Watcher Next
+description: Setup, sources, notifications, presets and troubleshooting for AW Next.
+lang: en
+
+# GitHub re-enables Markdown after a blank line inside a block-level HTML element; kramdown, which
+# is what Jekyll uses here, does not unless it is told to. Every page centres its header, its
+# screenshots and its footer nav in a <div>/<p>, so without this the site serves the contents of
+# those blocks as raw text — literal [label](url) instead of links. This makes the two renderers
+# agree, and keeps the fix in one line rather than markdown="1" on every block in every file.
+kramdown:
+  parse_block_html: true
+
+# The repository is a monorepo for a desktop app; only this folder is published, but be explicit so
+# a stray file added here later is not served by accident.
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor
