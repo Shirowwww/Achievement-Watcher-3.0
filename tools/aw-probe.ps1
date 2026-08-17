@@ -70,6 +70,16 @@ public class AwProbe {
   [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, UIntPtr extra);
   [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
   [DllImport("user32.dll")] public static extern void mouse_event(uint flags, int dx, int dy, uint data, UIntPtr extra);
+  [DllImport("user32.dll")] static extern IntPtr SetProcessDpiAwarenessContext(IntPtr ctx);
+  [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
+
+  // Without this, Windows virtualizes window rects, screen metrics and SetCursorPos to 96 DPI
+  // while PrintWindow and CopyFromScreen still return physical pixels: on a scaled display every
+  // capture comes back cropped to the top-left and coordinates read off a shot miss their target.
+  public static void MakeDpiAware() {
+    try { if (SetProcessDpiAwarenessContext(new IntPtr(-4)) != IntPtr.Zero) return; } catch {}
+    try { SetProcessDPIAware(); } catch {}
+  }
 
   // Chromium renders the UI in one window, so click through the real cursor.
   public static void ClickAt(int x, int y) {
@@ -133,6 +143,8 @@ public class AwProbe {
 
 }
 "@
+
+[AwProbe]::MakeDpiAware()
 
 function Get-Windows {
   [AwProbe]::List('electron')
