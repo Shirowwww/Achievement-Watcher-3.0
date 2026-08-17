@@ -28,27 +28,7 @@
       });
     });
 
-    $('#search-bar-float input[type=search]').keyup(function () {
-      const self = $(this);
-      const searchValue = self.val().toString().toLowerCase().trim();
-      const achievementlist = $('#achievement .achievement-list ul');
-      const li = achievementlist.children('li');
-
-      li.each((index, elem) => {
-        const _this = $(elem);
-        if (_this.find('> div.notice').length > 0) return; //ignore notice placeholder when no unlocked achievement
-
-        const achievementName = _this.find('.achievement .content .title').text().toString().toLowerCase();
-        const achievementDesc = _this.find('.achievement .content .description').text().toString().toLowerCase();
-        const achievementID = (_this.find('.achievement').data('name') || '').toString().toLowerCase();
-
-        achievementName.includes(searchValue) || achievementDesc.includes(searchValue) || achievementID === searchValue
-          ? _this.show()
-          : _this.hide();
-      });
-    });
-
-    $('#search-bar input[type=search], #search-bar-float input[type=search]').change(function () {
+    $('#search-bar input[type=search]').change(function () {
       const self = $(this);
       if (self.val().length > 0) self.addClass('has');
       else self.removeClass('has');
@@ -57,13 +37,8 @@
     $(document).keydown(function (e) {
       if (e.ctrlKey && e.which === 70) {
         //CTRL+F
-        if ($('#achievement').is(':visible')) {
-          const elem = $('#search-bar-float input[type=search]');
-          elem.is(':focus') ? elem.blur() : elem.focus();
-        } else {
-          const elem = $('#search-bar input[type=search]');
-          elem.is(':focus') ? elem.blur() : elem.focus();
-        }
+        const elem = $('#achievement').is(':visible') ? $('#achievement-search-input') : $('#search-bar input[type=search]');
+        elem.is(':focus') ? elem.blur() : elem.focus();
       }
     });
   });

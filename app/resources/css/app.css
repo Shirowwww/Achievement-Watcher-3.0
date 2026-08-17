@@ -1355,9 +1355,11 @@ main {
   transition: opacity 0.2s ease;
 }
 
+/* Must stay above the resting opacity set further down (.game-box .achievement-button), which this
+   more specific rule would otherwise dim on hover. */
 .game-box .header:hover .config-button,
 .game-box .header:hover .achievement-button {
-  opacity: 0.8;
+  opacity: 1;
 }
 .game-box .header:hover .play-button {
   opacity: 0.95;
@@ -2129,6 +2131,15 @@ main {
   color: inherit;
 }
 
+/* Same two-tier treatment as .empty-achievement-notice below: one statement, then a quiet aside. */
+#achievement .achievement-list ul li > .notice p.notice-aside {
+  max-width: 720px;
+  margin: 0 auto;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.35;
+}
+
 #achievement .achievement-list ul li > .notice.empty-achievement-notice {
   color: var(--text);
 }
@@ -2266,6 +2277,7 @@ main {
 #settings-search input {
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 24px;
   border: 0;
   outline: 0;
   background: transparent;
@@ -2310,11 +2322,9 @@ main {
   align-items: center;
   gap: 8px;
 }
+/* Never truncated: the nav widens to the longest label instead (see #settingNav below). */
 #settingNav li > span {
   flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 #settingNav li .nav-count {
@@ -2572,7 +2582,10 @@ main {
 .footer-update-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
+  min-width: 26px;
+  min-height: 26px;
   margin: 0 8px;
   padding: 2px 7px;
   border: 1px solid var(--set-hairline-soft);
@@ -2838,16 +2851,21 @@ main {
   appearance: none;
   flex: 1 1 auto;
   min-width: 0;
-  height: 4px;
+  height: 24px;
   margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.arrow-list li .right.volume-slider input[type='range']::-webkit-slider-runnable-track {
+  height: 4px;
   background: var(--border);
   border-radius: 999px;
-  cursor: pointer;
 }
 .arrow-list li .right.volume-slider input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 14px;
   height: 14px;
+  margin-top: -5px;
   border-radius: 50%;
   background: var(--accent);
   border: 2px solid var(--bg-base);
@@ -2869,9 +2887,10 @@ main {
    column), while the control stays vertically centred on the right. This stops a description from
    ever leaning into the next row's label (the old absolute-positioned help did), and reads cleaner
    and better spaced. */
+/* The label column keeps a readable minimum; the buttons opposite wrap rather than take it. */
 .arrow-list li.hasHelper {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(180px, 1fr) auto;
   align-items: center;
   column-gap: 12px;
   row-gap: 1px;
@@ -2946,7 +2965,10 @@ main {
 
 .arrow-list li .right.action-right {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  row-gap: 6px;
+  min-width: 0;
   width: 220px;
   height: auto;
   min-height: 32px;
@@ -2956,8 +2978,7 @@ main {
 }
 
 .inline-action-btn,
-.icon-button,
-.text-button {
+.icon-button {
   font-family: 'Open-Sans';
   border: 1px solid color-mix(in srgb, var(--border) 14%, transparent);
   color: var(--text);
@@ -2976,8 +2997,7 @@ main {
   line-height: 1;
 }
 
-.inline-action-btn.secondary,
-.text-button {
+.inline-action-btn.secondary {
   background: color-mix(in srgb, var(--surface) 58%, transparent);
 }
 
@@ -2987,13 +3007,11 @@ main {
 }
 
 .inline-action-btn:hover,
-.icon-button:hover,
-.text-button:hover {
+.icon-button:hover {
   filter: brightness(1.1);
 }
 
-.inline-action-btn:disabled,
-.text-button:disabled {
+.inline-action-btn:disabled {
   opacity: 0.45;
   cursor: default;
   filter: none;
@@ -3144,6 +3162,7 @@ main {
 }
 
 .onboarding-steps button i {
+  flex: 0 0 18px;
   width: 18px;
   color: var(--text-muted);
   text-align: center;
@@ -3156,10 +3175,14 @@ main {
   box-shadow: inset 3px 0 0 var(--accent);
 }
 
+/* A step whose label wraps to two lines must not squeeze the badge into an oval, so it neither
+   shrinks nor stretches with the row. */
 .onboarding-steps button.is-complete:not(.active)::after {
   content: '\2713';
+  flex: 0 0 16px;
   width: 16px;
   height: 16px;
+  align-self: center;
   display: grid;
   place-items: center;
   margin-left: auto;
@@ -3206,7 +3229,7 @@ main {
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .step-heading > i {
@@ -3238,15 +3261,16 @@ main {
 .onboarding-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
+/* No min-height: the grid already equalises the two cards of a row, and a floor only added dead
+   space in the languages whose copy runs short — while pushing the 2x2 grid past the step. */
 .onboarding-cards > div {
-  min-height: 150px;
   display: grid;
   align-content: start;
-  gap: 10px;
-  padding: 16px;
+  gap: 8px;
+  padding: 14px;
   border: 1px solid var(--set-hairline-soft);
   border-radius: 10px;
   background: color-mix(in srgb, var(--surface-sunken) 44%, transparent);
@@ -3660,11 +3684,6 @@ main {
   gap: 9px;
 }
 
-.text-button {
-  min-height: 36px;
-  padding: 8px 12px;
-  border-radius: 8px;
-}
 
 @media (max-width: 900px) {
   .onboarding-body {
@@ -4433,20 +4452,11 @@ main {
   gap: 6px;
 }
 
-#search-bar-float {
-  position: fixed;
-  bottom: 15px;
-  left: 15px;
-  z-index: 1;
-}
-
-#search-bar .wrapper,
-#search-bar-float .wrapper {
+#search-bar .wrapper {
   position: relative;
 }
 
-#search-bar .wrapper > i,
-#search-bar-float .wrapper > i {
+#search-bar .wrapper > i {
   position: absolute;
   top: 7px;
   left: 11px;
@@ -4458,30 +4468,11 @@ main {
 }
 
 #search-bar .wrapper:hover > i,
-#search-bar-float .wrapper:hover > i,
-#search-bar .wrapper:focus-within > i,
-#search-bar-float .wrapper:focus-within > i {
+#search-bar .wrapper:focus-within > i {
   color: var(--text);
 }
 
 #search-bar input[type='search'] {
-  outline: none;
-  box-sizing: content-box;
-  background: var(--bg-panel);
-  border: solid var(--border) 1px;
-  border-radius: 7px;
-  padding: 6px 10px;
-  transition: all 0.45s ease;
-  width: 15px;
-  height: 16px;
-  color: transparent;
-  cursor: pointer;
-  font-size: 12px;
-  font-family: 'Open-Sans';
-  text-transform: capitalize;
-}
-
-#search-bar-float input[type='search'] {
   outline: none;
   box-sizing: content-box;
   background: var(--bg-panel);
@@ -4508,25 +4499,12 @@ main {
   cursor: auto;
 }
 
-#search-bar-float input[type='search']:focus,
-#search-bar-float input[type='search'].has {
-  width: 160px;
-  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
-  box-shadow: 0 12px 26px rgba(0, 0, 0, calc(0.3 * var(--shadow-scale))), 0 0 0 3px var(--accent-soft);
-  padding-left: 32px;
-  color: var(--text);
-  cursor: auto;
-}
-
 #search-bar input::-webkit-search-decoration,
-#search-bar input::-webkit-search-cancel-button,
-#search-bar-float input::-webkit-search-decoration,
-#search-bar-float input::-webkit-search-cancel-button {
+#search-bar input::-webkit-search-cancel-button {
   display: none;
 }
 
-#search-bar input::-webkit-input-placeholder,
-#search-bar-float input::-webkit-input-placeholder {
+#search-bar input::-webkit-input-placeholder {
   color: transparent;
 }
 
@@ -5167,7 +5145,6 @@ body {
   min-height: 144px;
   padding: 18px 28px 14px;
   align-items: center;
-  left: -8px;
 }
 
 #user-info .info .name {
@@ -5577,7 +5554,17 @@ body {
      its tallest child. The 30px it runs taller than `.box .content` below is deliberate margin,
      not a mismatch — don't "align" the two. */
   height: min(590px, calc(100vh - 250px));
-  overflow-y: auto;
+  /* The column follows its labels rather than cropping them: `max-content` sizes it to the longest
+     one in whatever language is loaded, `min-width` keeps it from looking cramped in the short ones,
+     and `max-width` stops a long translation from eating the panel beside it. Only a label past that
+     cap scrolls, which is the one case where a scrollbar beats a cut-off word. */
+  width: max-content;
+  max-width: min(320px, 38%);
+  /* No shrinking: as a flex item it would otherwise be squeezed back to `min-width` by the panel
+     beside it, which is what cropped the labels. The panel absorbs the difference instead. */
+  flex: 0 0 auto;
+  overflow: auto;
+  scrollbar-gutter: stable;
   box-sizing: border-box;
 }
 
@@ -5604,14 +5591,18 @@ body {
   background: transparent;
 }
 
+/* One column, at least as wide as the longest row so no label is cut, and stretching to fill the
+   nav when the labels are shorter than its minimum width. */
 #settingNav ul {
   display: grid;
+  grid-template-columns: minmax(max-content, 1fr);
   gap: 5px;
 }
 
 #settingNav li {
   box-sizing: border-box;
   width: 100%;
+  min-width: 0;
   min-height: 42px;
   display: flex;
   align-items: center;
@@ -5657,6 +5648,9 @@ body {
   height: auto;
   margin-top: 14px;
   padding: 1px 13px 0;
+  /* Bare text rather than a <span>, so it keeps its own single line. */
+  display: block;
+  white-space: nowrap;
   border: 0;
   border-radius: 0;
   color: color-mix(in srgb, var(--text-muted) 72%, transparent);
@@ -7282,18 +7276,23 @@ body {
   appearance: none;
   width: 100%;
   min-height: 0;
-  height: 4px;
-  margin: 6px 0;
+  height: 24px;
+  margin: 0;
   padding: 0;
   border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+#settings input[type='range']::-webkit-slider-runnable-track {
+  height: 4px;
   border-radius: 999px;
   background: var(--set-control-border);
-  cursor: pointer;
 }
 #settings input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 14px;
   height: 14px;
+  margin-top: -5px;
   border: 2px solid var(--bg-base);
   border-radius: 50%;
   background: var(--accent);
@@ -7335,6 +7334,18 @@ body {
   border: 1px solid var(--set-hairline-soft);
   border-radius: 9px;
   background: var(--set-panel);
+}
+
+/* A one-line fact, not a finding: it reads as a caption above the sections rather than as a card
+   competing with them. The Folders disclaimer above keeps the card — it carries a real warning. */
+#options-notify .autosave-hint {
+  min-height: 0;
+  margin: 0 0 12px;
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  font-size: 12.5px;
+  opacity: 0.85;
 }
 
 #settings .folder-actions {
@@ -7681,7 +7692,8 @@ body {
 }
 
 #settings .pd-seg button {
-  padding: 4px 9px;
+  min-height: 26px;
+  padding: 4px 10px;
   border: 0;
   background: transparent;
   color: var(--text-muted);
@@ -7862,9 +7874,9 @@ body {
    shape, and it is the same value the Notifications tab keeps — the designer only mirrors it. */
 #settings .pd-anchors {
   display: grid;
-  grid-template-columns: repeat(3, 14px);
-  grid-template-rows: repeat(3, 10px);
-  gap: 3px;
+  grid-template-columns: repeat(3, 24px);
+  grid-template-rows: repeat(3, 18px);
+  gap: 4px;
 }
 
 #settings .pd-anchors button {
@@ -8019,6 +8031,7 @@ body {
 
 /* The per-group Advanced disclosure: the less common half of a group, one click away. */
 #settings .pd-more {
+  min-height: 26px;
   padding: 4px 0;
   border: 0;
   background: transparent;

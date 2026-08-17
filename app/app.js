@@ -1017,40 +1017,122 @@ function titleBarShadow() {
   return (bar && bar.shadowRoot) || null;
 }
 
+// The icon is built here rather than shipped inside the locale value: a translated string must
+// never carry markup, and this element is filled from user-facing text.
+function setStartWatchdogButton(button, label) {
+  button.textContent = '';
+  button.hidden = !label;
+  if (!label) return;
+  const icon = document.createElement('i');
+  icon.className = 'fas fa-shield-alt';
+  icon.setAttribute('aria-hidden', 'true');
+  button.append(icon, ' ', label);
+}
+
+/*
+  The status reads "<state> | <what that means>". Both halves are locale keys and the separator is
+  drawn in CSS, so no language has to carry punctuation or markup — and the detail can be dropped on
+  a narrow window without touching the state.
+*/
+function setWatchdogStatus(label, state, detail) {
+  label.textContent = '';
+  const strong = document.createElement('strong');
+  strong.textContent = state;
+  label.append(strong);
+  if (!detail) return;
+  const span = document.createElement('span');
+  span.className = 'status-detail';
+  span.textContent = detail;
+  label.append(span);
+}
+
 ipcRenderer.on('reset-watchdog-status', (event) => {
   let shadow = titleBarShadow();
   if (!shadow) return;
   let watchdogStatus = shadow.querySelector('.status-dot');
-  let watchdoglbl = shadow.querySelector('.status-text');
-  watchdoglbl.textContent = t('checking-watchdog-status', 'Checking watchdog status...', 'Vérification du Watchdog…');
+  setWatchdogStatus(shadow.querySelector('.status-text'), t('checking-watchdog-status', 'Checking watchdog…', 'Vérification du Watchdog…'), '');
   watchdogStatus.classList.remove('status-green', 'status-red');
   watchdogStatus.classList.add('status-orange');
-  let startBtn = shadow.querySelector('#start-watchdog');
-  startBtn.textContent = '';
-  startBtn.innerHTML = '';
+  setStartWatchdogButton(shadow.querySelector('#start-watchdog'), '');
 });
 
-ipcRenderer.on('watchdog-status', (event, found) => {
+/*
+  Accessible names that have to be derived rather than authored: the Settings rows label their
+  control with a neighbouring <span> instead of a <label> (the panel's i18n is positional, so the
+  markup cannot change), and the Font Awesome glyphs are decorative everywhere in this app. Re-run
+  whenever a language is applied, since the names come from the translated row labels.
+*/
+window.refreshAccessibleNames = () => {
+  $('#search-bar input[type=search]').attr('aria-label', t('search-games', 'Search games…', 'Rechercher un jeu…'));
+  $('#settings .arrow-list li').each(function () {
+    const label = $(this).children('.left').text().trim();
+    if (!label) return;
+    $(this).find('.right').find('select, input').each(function () {
+      // Only ever rewrite names this function owns, so an authored aria-label survives.
+      if (this.getAttribute('aria-label') && !this.dataset.derivedLabel) return;
+      this.setAttribute('aria-label', label);
+      this.dataset.derivedLabel = '1';
+    });
+  });
+  markDecorativeIcons(document);
+};
+
+// Every Font Awesome glyph in this app is decorative — it always sits beside its own text or inside
+// a labelled control. Rows are built at runtime (folders, blacklist, presets, game tiles), so an
+// observer keeps marking them instead of each template having to remember.
+function markDecorativeIcons(root) {
+  for (const icon of root.querySelectorAll('i[class*="fa-"]:not([aria-hidden])')) icon.setAttribute('aria-hidden', 'true');
+}
+
+new MutationObserver((records) => {
+  for (const record of records) {
+    for (const node of record.addedNodes) {
+      if (node.nodeType !== Node.ELEMENT_NODE) continue;
+      if (node.matches('i[class*="fa-"]') && !node.hasAttribute('aria-hidden')) node.setAttribute('aria-hidden', 'true');
+      markDecorativeIcons(node);
+    }
+  }
+}).observe(document.documentElement, { childList: true, subtree: true });
+
+// The status is always on screen but is only pushed by the monitor poll, so a language change has
+// to repaint it from the last known state instead of waiting for the next tick.
+let lastWatchdogFound = null;
+function renderWatchdogStatus(found) {
   let shadow = titleBarShadow();
   if (!shadow) return;
   let watchdogStatus = shadow.querySelector('.status-dot');
   let watchdoglbl = shadow.querySelector('.status-text');
-  watchdoglbl.textContent = t(
-    'watchdog-stopped',
-    "Watchdog is not running! (in-game overlay/notifications won't trigger.)",
-    'Watchdog arrêté ! (overlays en jeu et notifications ne se déclencheront pas)'
-  );
-  watchdogStatus.classList.remove('status-green', 'status-orange');
-  watchdogStatus.classList.add('status-red');
   let startBtn = shadow.querySelector('#start-watchdog');
-  startBtn.innerHTML = t('i-class-fas-fa-shield-alt-i-click-to-start-watchdog', '<i class="fas fa-shield-alt"></i> Click to Start Watchdog!', '<i class="fas fa-shield-alt"></i> Cliquez pour démarrer le Watchdog !');
   if (found) {
     watchdogStatus.classList.remove('status-orange', 'status-red');
     watchdogStatus.classList.add('status-green');
-    watchdoglbl.textContent = t('watchdog-is-running-in-game-overlay-windows-notifications-should', 'Watchdog is running (in-game overlay/notifications should work properly)', 'Watchdog actif (overlays en jeu et notifications fonctionnels)');
-    startBtn.textContent = '';
+    setWatchdogStatus(
+      watchdoglbl,
+      t('watchdog-running', 'Watchdog active', 'Watchdog actif'),
+      t('watchdog-running-detail', 'Game and achievement tracking operational', 'Suivi des jeux et des succès opérationnel')
+    );
+    setStartWatchdogButton(startBtn, '');
+    return;
   }
+  setWatchdogStatus(
+    watchdoglbl,
+    t('watchdog-stopped', 'Watchdog stopped', 'Watchdog arrêté'),
+    t('watchdog-stopped-detail', 'No in-game overlay or notifications', 'Ni overlay en jeu ni notifications')
+  );
+  watchdogStatus.classList.remove('status-green', 'status-orange');
+  watchdogStatus.classList.add('status-red');
+  setStartWatchdogButton(startBtn, t('start-watchdog', 'Start Watchdog', 'Démarrer le Watchdog'));
+}
+
+ipcRenderer.on('watchdog-status', (event, found) => {
+  lastWatchdogFound = !!found;
+  renderWatchdogStatus(lastWatchdogFound);
 });
+
+// Repaint the title-bar status in the language that was just applied.
+window.refreshWatchdogStatusText = () => {
+  if (lastWatchdogFound !== null) renderWatchdogStatus(lastWatchdogFound);
+};
 
 ipcRenderer.on('achievement-unlock', (event, { appid, ach_data }) => {
   // Ignore toasts for games or achievements missing from the current view.
@@ -1273,6 +1355,12 @@ var app = {
             const sourceIcon = sourcePresentationFor(game);
             const dllIcon = typeof game.hasSteamApiDll === 'boolean' ? dllPresentationFor(game) : null;
             const hideSteamBadges = sourceIcon.kind === 'steam-hidden';
+            // Accessible names for the three icon-only controls on a tile.
+            const tileLabels = {
+              play: t('launch-game', 'Launch game', 'Lancer le jeu'),
+              achievements: (window.appLocale && window.appLocale.achievements) || 'Achievements',
+              health: t('game-health-title', 'Game health', 'État du jeu'),
+            };
             let template = `
             <li>
                 <div class="game-box" data-index="${gameList.length}" data-appid="${game.appid}" data-installed="${
@@ -1284,19 +1372,16 @@ var app = {
                   <div class="header ${isPortrait ? 'glow' : ''}" id="game-header-${game.appid}" style="background: ${cssUrl(
               pathToFileURL(path.join(appPath, 'resources/img/loading.gif')).href
             )};">
-                  <!-- Play Button -->
-                  <div class="play-button"><i class="fas fa-play"></i></div>
+                  <button type="button" class="play-button" aria-label="${escapeHtml(tileLabels.play)}"><i class="fas fa-play" aria-hidden="true"></i></button>
                   </div>
 
-                  <!-- Top Left Button -->
-                  <button class="achievement-button">
-                    <i class="fas fa-trophy"></i>
+                  <button type="button" class="achievement-button" aria-label="${escapeHtml(tileLabels.achievements)}">
+                    <i class="fas fa-trophy" aria-hidden="true"></i>
                   </button>
 
-                  <!-- Top Right Button -->
-                  <div class="config-button">
-                    <i class="fas fa-tools"></i>
-                  </div>
+                  <button type="button" class="config-button" aria-label="${escapeHtml(tileLabels.health)}">
+                    <i class="fas fa-tools" aria-hidden="true"></i>
+                  </button>
 
                   <div class="info">
                     <div class="info-head">
@@ -3885,8 +3970,6 @@ var app = {
 
     if (self.data('time') > 0) $('#unlock > .header .sort-ach .sort.time').addClass('show');
 
-    $('#search-bar-float input[type=search]').val('').blur().removeClass('has'); //reset
-
     $('#home').fadeOut(function () {
       $('body').fadeIn().css('background', `url('../resources/img/ach_background.jpg')`);
       if (game.img.background) {
@@ -4152,8 +4235,8 @@ var app = {
         let template = `
               <li>
                 <div class="notice">
-                  <p>${$('#unlock').data('lang-noneUnlocked')} <i class="fas fa-frown-open"></i> ${$('#unlock').data('lang-play')}</p>
-                  <p>⚠️ ${$('#unlock').data('lang-noneUnlockedHint')} <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0/blob/main/docs/troubleshooting.md" target="_blank">${$('#unlock').data('lang-troubleshoot')} ↗</a></p>
+                  <p>${$('#unlock').data('lang-noneUnlocked')}</p>
+                  <p class="notice-aside">${$('#unlock').data('lang-noneUnlockedHint')} <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0/blob/main/docs/troubleshooting.md" target="_blank">${$('#unlock').data('lang-troubleshoot')} ↗</a></p>
                   </div>
               </li>`;
         unlock.append(template);
@@ -4578,7 +4661,11 @@ function setGameConfigView(view) {
   });
   // Save belongs to the executable form. Left visible on the health view it is the most prominent
   // button on screen while doing nothing the report is about, outranking the actual repair.
-  $('#btn-game-config-save').toggle(view === 'exe-config');
+  const editing = view === 'exe-config';
+  $('#btn-game-config-save').toggle(editing);
+  // With no Save beside it there is nothing to cancel: the health view is a report, so its one
+  // button closes it.
+  $('#btn-game-config-cancel').text(editing ? t('cancel', 'Cancel', 'Annuler') : t('close', 'Close', 'Fermer'));
 }
 
 /*
@@ -5135,9 +5222,11 @@ async function runGameHealthAction(appid, action, button) {
         return '';
       }
     };
+    // The hero slot falls back to the square logo: a game with no header or background art would
+    // otherwise send nothing and the sample game's artwork would stand in for it.
     const [icon, image] = await Promise.all([
       resolveArt(art.icon || art.logo || art.header),
-      resolveArt(art.header || art.background),
+      resolveArt(art.header || art.background || art.icon || art.logo),
     ]);
 
     await window.testAchievementWatcherNotification(app.config?.notification_transport?.mode, button && button[0], null, {

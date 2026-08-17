@@ -29,12 +29,16 @@ function resolvePlaytimeArtwork(game = {}) {
     steamId && game.icon
       ? `https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/${steamId}/${game.icon}.jpg`
       : undefined;
+  // The square logo the library already fetched for this game.
+  const squareLogo = iconUrl || steamIcon;
 
   return {
-    icon: iconUrl || steamIcon,
+    icon: squareLogo,
     // A resolved icon is already square and is a better Windows app-logo than a cropped poster.
-    gameIcon: iconUrl || portraitUrl || (steamId ? steamLibraryImage(steamId) : undefined),
-    image: headerUrl || portraitUrl || (steamId ? steamHeaderImage(steamId) : undefined),
+    gameIcon: iconUrl || portraitUrl || (steamId ? steamLibraryImage(steamId) : undefined) || squareLogo,
+    // The square logo is the last resort for the hero slot: a game with no header or portrait art
+    // (a manual entry, a synthetic appid) otherwise ends its session on a card with an empty image.
+    image: headerUrl || portraitUrl || (steamId ? steamHeaderImage(steamId) : undefined) || squareLogo,
   };
 }
 

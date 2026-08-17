@@ -293,6 +293,87 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   French), and the main scan explanation focuses on known and user-selected locations while keeping
   format-specific details in Help.
 
+### Changed
+
+- The title-bar Watchdog indicator reads as a state and its meaning — **Watchdog active | Game and
+  achievement tracking operational** — instead of one parenthesised sentence. Both halves are
+  translated strings and the separator is drawn in CSS, so no language carries punctuation or
+  markup; the explanation is dropped first when the window is narrow. **Start Watchdog** is now a
+  button rather than a sentence, and the whole indicator repaints when the language changes instead
+  of waiting for the next status poll.
+- A game with nothing unlocked yet shows one line and a quiet troubleshooting link, in place of two
+  same-size sentences carrying a frowning face and a warning sign.
+- The first-run guide is shorter where it was repeating itself: the language step no longer says
+  three times that the scan waits for the choice, **How it works** drops the paragraph that
+  summarised the four cards printed under it, and those cards are one sentence each — the step now
+  fits without scrolling. **Sources** no longer lists the five platforms named in the rows beneath
+  it, and the preset designer no longer introduces itself twice.
+- The "changes are saved automatically" note in Notifications reads as a caption instead of a
+  bordered card competing with the sections it sits above.
+- Four of the longest Settings descriptions are a sentence shorter: the Epic and Xbox account cards,
+  the controller focus option and the notification-type row. Every caveat that matters is kept — the
+  account cards still say the token is stored encrypted on this PC, and the controller row still
+  says a game may see the buttons anyway.
+- The first-run guide has one way out instead of two. The footer repeated the ✕ already in its
+  header, and on an actual first run both were hidden while a click on the backdrop still dismissed
+  the guide — an escape hatch nobody could see. The ✕ is always there and says whether it skips
+  setup or closes the guide.
+- Game Health's single button says **Close**. It said **Cancel** on a report with nothing to cancel;
+  the executable form, which does have a Save beside it, still says Cancel.
+
+### Fixed
+
+- The game page had two achievement searches — the labelled field and a floating one pinned to the
+  bottom-left corner. They filtered the same list by different means, so filtering with the floating
+  box left rows stuck invisible for the other one, and Ctrl+F focused the unlabelled duplicate. The
+  floating box is gone and Ctrl+F focuses the field you can see.
+- The Settings sidebar scrolled sideways. Its column was a few pixels wider than the panel in most
+  languages, so the active row lost its right edge and the whole nav could be dragged left and
+  right. The sidebar now sizes itself to its longest label instead — no label is cut, and it only
+  scrolls when a translation runs past the width it is allowed to take from the panel beside it.
+  Checked in all 18 locales at five window widths: nothing cropped, no horizontal scrollbar.
+- A playtime notification for a game with no header or portrait artwork showed an empty image. It
+  now falls back to the square logo the library already fetched, and a test notification fired from
+  a game's own panel no longer borrows the sample game's artwork.
+- **Import Xbox PC library** was the one label in the Xbox account card with no translation; it now
+  has one in every bundled locale.
+- The profile block sat eight pixels left of centre. At the smallest window the app allows it was
+  drawn partly outside the window.
+- Sliders — notification volume, and width, padding, spacing and opacity in the preset designer —
+  were a four-pixel-tall drag target. The visible line is unchanged; the control itself is now tall
+  enough to grab.
+- The preset designer's position picker had 14×10 cells, the segmented switches and the update-check
+  button were under-sized, and the Settings search accepted clicks only on its text line.
+- A Settings row whose right-hand side is a group of buttons let them take whatever width they
+  wanted, squeezing the label and its description into a narrow strip — the souvenir folder row read
+  four words to a line on a smaller window. The label column now keeps a readable minimum and the
+  buttons wrap under each other instead.
+- The achievement search field on a game page had no accessible name.
+- The tick on a completed step of the first-run guide was an oval whenever that step's name wrapped
+  to two lines, because it could be squeezed along with the label.
+- The trophy and tools buttons on a game tile dimmed when the pointer entered the cover art instead
+  of lighting up.
+- French: the notification **Preset** picker was translated as "Thème", which put two fields named
+  "Thème" side by side in the first-run guide and disagreed with the per-emulator rows already
+  reading "Préréglage". The Help panel and the Folders tab also addressed the reader informally
+  while the rest of the French interface uses *vous* — one Folders paragraph switched register
+  mid-sentence.
+- Typography across all 18 locales: real ellipses instead of three dots, each language's own
+  quotation marks (« » for French with its spaces, „ “ for German, 「 」 for Japanese, “ ” for
+  Brazilian Portuguese and Thai, which do not take guillemets) and typographic apostrophes — some
+  460 strings that mixed both conventions inside the same file.
+- Machine-translation errors in the first-run guide's buttons: German and Italian **Saving…** read
+  as saving *money* (Sparen / Risparmio), Thai likewise; Italian, Turkish and French **Skip** were
+  infinitives rather than the imperative a button needs; Japanese **Finish** meant finishing a
+  craft; Chinese **Back** meant reversing. Spanish and Latin American **Finish** was lower case
+  where every other button is capitalised.
+- The library's search box, the Settings dropdowns and the icon-only buttons on a game tile had no
+  accessible name, and the tools button on a tile was a `div` with a click handler rather than a
+  button. Names are derived from each row's own visible label, so they follow the interface
+  language.
+- `tools/aw-probe.ps1` is DPI-aware, so on a scaled display its screenshots capture the whole window
+  instead of cropping to the top-left, and coordinates read off a capture land where they are aimed.
+
 ## 3.8.6 - 2026-08-13
 
 ### Added

@@ -37,7 +37,8 @@ function enclosingBlocks(marker) {
 }
 
 test('launching a game is offered for every source, not only Ubisoft', () => {
-  for (const marker of ["t('launch-game'", "t('configure-executable'"]) {
+  // "label: " keeps this on the menu entries; the launch label is reused for the tile's play button.
+  for (const marker of ["label: t('launch-game'", "label: t('configure-executable'"]) {
     const chain = enclosingBlocks(marker);
     assert.ok(
       !chain.some((line) => line.includes('isUbisoftSource')),
@@ -58,7 +59,9 @@ test('manual and Ubisoft games get one reset-playtime entry outside emulator too
 });
 
 test('the launch entry drives the same handler as the tile play button', () => {
-  const start = source.indexOf("t('launch-game'");
+  // Anchor on the menu item, not on the first mention: the same label names the tile's play button.
+  const start = source.indexOf("label: t('launch-game'");
+  assert.notEqual(start, -1, 'the context menu must offer a launch entry');
   const body = source.slice(start, start + 400);
   assert.match(body, /app\.onPlayButtonClick\(self\.find\('\.play-button'\)\)/);
 });

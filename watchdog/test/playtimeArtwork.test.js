@@ -29,6 +29,27 @@ test('manual games without artwork do not manufacture invalid Steam CDN URLs', (
   });
 });
 
+test('a game with only a square logo still gets an image for the playtime card', () => {
+  const game = { appid: 'manual-abc', iconUrl: 'https://cdn2.steamgriddb.com/icon/ryujinx.png' };
+  assert.deepEqual(resolvePlaytimeArtwork(game), {
+    icon: game.iconUrl,
+    gameIcon: game.iconUrl,
+    image: game.iconUrl,
+  });
+});
+
+test('a Steam game with no header or portrait art falls back to its square logo', () => {
+  // The common gameIndex shape: a numeric appid plus the legacy Steam icon hash, no scan artwork.
+  const artwork = resolvePlaytimeArtwork({ appid: '480', icon: 'hash' });
+  assert.match(artwork.icon, /\/480\/hash\.jpg$/);
+  assert.match(artwork.image, /\/480\/header\.jpg$/);
+
+  // Without a numeric appid there is no Steam header to fall back to, so the logo fills the slot.
+  const synthetic = resolvePlaytimeArtwork({ appid: 'gse-480', icon: 'hash', iconUrl: 'C:\\cache\\480.png' });
+  assert.equal(synthetic.image, 'C:\\cache\\480.png');
+  assert.equal(synthetic.gameIcon, 'C:\\cache\\480.png');
+});
+
 test('a manual optional Steam AppID remains a valid fallback', () => {
   const artwork = resolvePlaytimeArtwork({ appid: 'manual-abc', steamappid: '123', icon: 'hash' });
   assert.match(artwork.icon, /\/123\/hash\.jpg$/);

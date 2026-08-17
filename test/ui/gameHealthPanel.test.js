@@ -87,11 +87,12 @@ test('the state chip stops spinning once the report is painted', () => {
 
 test('Save is hidden on the health view, where it would outrank the actual repair', () => {
   const setter = appSource.slice(appSource.indexOf('function setGameConfigView'));
-  assert.match(
-    setter.slice(0, setter.indexOf('\n}')),
-    /#btn-game-config-save'\)\.toggle\(view === 'exe-config'\)/,
-    'the executable form Save must only show on the executable view'
-  );
+  const body = setter.slice(0, setter.indexOf('\n}'));
+  assert.match(body, /const editing = view === 'exe-config'/, 'the executable view is what enables editing');
+  assert.match(body, /#btn-game-config-save'\)\.toggle\(editing\)/, 'the executable form Save must only show on the executable view');
+  // Alone on the health view the remaining button dismisses a report, so it must not say "Cancel".
+  assert.match(body, /#btn-game-config-cancel'\)\.text\(editing \? t\('cancel'/, 'the dismiss label follows the view');
+  assert.match(body, /: t\('close'/, 'the health view closes rather than cancels');
 });
 
 test('the report is rebuilt for the game actually being shown', () => {

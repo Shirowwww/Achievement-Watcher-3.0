@@ -49,7 +49,6 @@
   "revealedOnceUnlocked": "Les détails de chaque succès seront révélés une fois débloqués",
   "hiddenDescriptionPlaceholder": "Masqué — cliquez pour révéler",
   "noneUnlocked": "Pas de succès débloqués",
-  "play": "Démarrer une partie !",
   "noneUnlockedHint": "Aucun succès ne se débloque ?",
   "scrollUp": "Vers le haut",
   "allGamesBackButton": "Tous les jeux",
@@ -60,7 +59,7 @@
     "muteProgress": "Couper les notifications de progression",
     "unmuteProgress": "Réactiver les notifications de progression",
     "generateAchievementsJson": "Exporter achievements.json",
-    "diagnose": "Diagnostiquer l'émulateur",
+    "diagnose": "Diagnostiquer l’émulateur",
     "backupGBE": "Sauvegarder GBE/Goldberg (steam_settings + steam_api(64).dll)…",
     "restoreGBE": "Restaurer la dernière sauvegarde GBE/Goldberg…",
     "installGBE": "Appliquer le fix émulateur…",
@@ -120,14 +119,14 @@
       },
       "kill": {
         "name": "Continuer de tourner",
-        "description": "Garder Watchdog actif même si l'application principale se ferme."
+        "description": "Garder Watchdog actif même si l’application principale se ferme."
       }
     },
     "general": {
       "sectionTitle": "Interface et comportement",
       "language": {
         "name": "Langue",
-        "description": "Langue de l'interface. Les données des jeux sont récupérées dans cette langue quand c'est possible."
+        "description": "Langue de l’interface. Les données des jeux sont récupérées dans cette langue quand c’est possible."
       },
       "thumbnail": {
         "name": "Orientation des vignettes",
@@ -146,7 +145,7 @@
         "description": "Regroupe un même jeu trouvé dans plusieurs sources en une seule vignette."
       },
       "timeMerge": {
-        "name": "Fusion d'horodatage",
+        "name": "Fusion d’horodatage",
         "description": "Lors de la fusion de doublons, quelle valeur de temps est préférable ?",
         "value": {
           "recent": "Récente",
@@ -155,7 +154,7 @@
       },
       "hideZero": {
         "name": "Masquer les jeux à 0%",
-        "description": "Masque les jeux dont aucun succès n'a encore été débloqué."
+        "description": "Masque les jeux dont aucun succès n’a encore été débloqué."
       },
       "startup": {
         "name": "Lancer au démarrage",
@@ -167,30 +166,30 @@
         "description": "Rouvrez le guide de configuration pour le profil, les dossiers, les sources et les notifications."
       },
       "hardwareAccel": {
-        "name": "Désactiver l'accélération matérielle",
-        "description": "Désactive l'accélération GPU si l'overlay en jeu ou la fenêtre se comporte mal. Nécessite un redémarrage."
+        "name": "Désactiver l’accélération matérielle",
+        "description": "Désactive l’accélération GPU si l’overlay en jeu ou la fenêtre se comporte mal. Nécessite un redémarrage."
       },
       "tray": {
         "name": "Réduire dans la zone de notification",
-        "description": "Garde l'application en arrière-plan pour un démarrage plus rapide des notifications."
+        "description": "Garde l’application en arrière-plan pour un démarrage plus rapide des notifications."
       },
       "theme": {
         "name": "Thème",
-        "description": "Thème de couleurs de toute l'application et de l'overlay en jeu (aperçu immédiat, enregistré avec OK).",
+        "description": "Thème de couleurs de toute l’application et de l’overlay en jeu (aperçu immédiat, enregistré avec OK).",
         "customTitle": "Thème personnalisé",
         "customHint": "Aperçu par couche",
-        "customDesc": "Choisis une couleur et, éventuellement, une image pour chaque bloc. Une image s'affiche par-dessus la couleur (qui devient un voile léger pour la lisibilité). Tout se prévisualise en direct et se sauvegarde avec OK — l'overlay in-game suit aussi.",
+        "customDesc": "Choisis une couleur et, éventuellement, une image pour chaque bloc. Une image s’affiche par-dessus la couleur (qui devient un voile léger pour la lisibilité). Tout se prévisualise en direct et se sauvegarde avec OK — l’overlay in-game suit aussi.",
         "resetAll": "Tout réinitialiser"
       },
       "controller": {
         "title": "Manette",
         "enabled": {
-          "name": "Contrôler l'overlay en jeu à la manette",
-          "description": "Contrôlez l'overlay en jeu à la manette. Les raccourcis et les noms de boutons Xbox/PlayStation/Switch se configurent ci-dessous."
+          "name": "Contrôler l’overlay en jeu à la manette",
+          "description": "Contrôlez l’overlay en jeu à la manette. Les raccourcis et les noms de boutons Xbox/PlayStation/Switch se configurent ci-dessous."
         },
         "backend": {
           "name": "Backend de la manette",
-          "description": "Auto choisit le meilleur backend d'entrée disponible. Choisissez XInput pour une compatibilité maximale, ou GameInput sur les versions récentes de Windows.",
+          "description": "Auto choisit le meilleur backend d’entrée disponible. Choisissez XInput pour une compatibilité maximale, ou GameInput sur les versions récentes de Windows.",
           "auto": "Auto",
           "xinput": "XInput",
           "gameinput": "GameInput"
@@ -214,7 +213,7 @@
         },
         "priority": {
           "name": "Donner le focus à l’overlay à l’ouverture",
-          "description": "Donne le focus clavier à l’overlay quand il s’ouvre. Beaucoup de jeux se mettent en pause quand ils perdent le focus. Les API d’entrée Windows ne permettent pas à une app tierce de capturer la manette en exclusif : le jeu peut donc continuer de recevoir les boutons."
+          "description": "Donne le focus clavier à l’overlay à son ouverture, pour que les jeux qui se mettent en pause à la perte de focus le fassent. Windows ne peut pas réserver une manette à une application tierce : le jeu peut encore voir les boutons."
         },
         "escape": {
           "name": "Envoyer Échap au jeu à l’ouverture par manette",
@@ -230,19 +229,19 @@
       "nav": "Émulateur Steam",
       "groupNav": "Émulateurs",
       "sectionTitle": "Configuration émulateur (GBE Fork)",
-      "intro": "Valeurs par défaut utilisées par l'action clic-droit « Appliquer le fix émulateur ». Choisis comment Steam est contourné et la quantité de données récupérées.",
+      "intro": "Valeurs par défaut utilisées par l’action clic-droit « Appliquer le fix émulateur ». Choisis comment Steam est contourné et la quantité de données récupérées.",
       "coreTitle": "Configuration principale",
       "advancedTitle": "Options avancées",
       "loginTitle": "Login Steam (compte jetable uniquement)",
       "loginWarning": "Compte jetable",
-      "loginDesc": "Utilisé seulement quand « Source des données » est sur Login Steam. Le mot de passe est stocké chiffré sur ce PC et envoyé uniquement à Steam par generate_emu_config. La 2FA Steam Guard est demandée si nécessaire. Laisse vide pour qu'on te demande à chaque fois.",
+      "loginDesc": "Utilisé seulement quand « Source des données » est sur Login Steam. Le mot de passe est stocké chiffré sur ce PC et envoyé uniquement à Steam par generate_emu_config. La 2FA Steam Guard est demandée si nécessaire. Laisse vide pour qu’on te demande à chaque fois.",
       "loginUser": "Identifiant Steam",
       "loginPass": "Mot de passe Steam",
       "loginTest": "Tester la connexion",
       "loginTestHint": "Steam / Steam Guard",
-      "loginTestRunning": "Connexion à Steam… Saisis le code Steam Guard s'il est demandé.",
+      "loginTestRunning": "Connexion à Steam… Saisissez le code Steam Guard s’il est demandé.",
       "loginTestSuccess": "Connexion Steam réussie. Le refresh token generate_emu_config a été sauvegardé.",
-      "loginTestMissing": "Renseigne d'abord l'identifiant et le mot de passe Steam.",
+      "loginTestMissing": "Renseignez d’abord l’identifiant et le mot de passe Steam.",
       "loginTestFailed": "Échec de la connexion Steam",
       "autoApply": {
         "name": "Corriger automatiquement les nouveaux jeux détectés",
@@ -254,7 +253,7 @@
       },
       "steamSettings": {
         "name": "Données steam_settings",
-        "description": "Simple utilise la récupération d'AW Next (anonyme). Advanced lance generate_emu_config pour la couverture depots/langues.",
+        "description": "Simple utilise la récupération d’AW Next (anonyme). Advanced lance generate_emu_config pour la couverture depots/langues.",
         "value": {
           "simple": "Simple (rapide)",
           "advanced": "Advanced (complet)"
@@ -270,7 +269,7 @@
       },
       "steamless": {
         "name": "Retirer auto le DRM SteamStub",
-        "description": "Lance Steamless sur l'exe avant le patch pour retirer le DRM SteamStub de Valve (original conservé en .steamstub.bak). Sans effet si pas de stub.",
+        "description": "Lance Steamless sur l’exe avant le patch pour retirer le DRM SteamStub de Valve (original conservé en .steamstub.bak). Sans effet si pas de stub.",
         "value": {
           "false": "Désactivé",
           "true": "Activé"
@@ -278,7 +277,7 @@
       },
       "steamlessExp": {
         "name": "Steamless expérimental",
-        "description": "Réaligne les sections pendant l'unpack pour une meilleure compatibilité avec les EXE très protégés. N'a d'effet que si le retrait auto est activé.",
+        "description": "Réaligne les sections pendant l’unpack pour une meilleure compatibilité avec les EXE très protégés. N’a d’effet que si le retrait auto est activé.",
         "value": {
           "false": "Désactivé",
           "true": "Activé"
@@ -286,7 +285,7 @@
       },
       "crackFix": {
         "name": "Appliquer auto un fix communautaire (CrakFiles)",
-        "description": "À chaque fix, télécharge et applique automatiquement un fix communautaire de la liste CrakFiles (correspondance de nom exacte + lien pixeldrain uniquement ; fichiers écrasés sauvegardés). Activé par défaut — désactive-le si tu ne veux pas qu'AW télécharge/écrase des fichiers du jeu depuis une source communautaire.",
+        "description": "À chaque fix, télécharge et applique automatiquement un fix communautaire de la liste CrakFiles (correspondance de nom exacte + lien pixeldrain uniquement ; fichiers écrasés sauvegardés). Activé par défaut — désactive-le si tu ne veux pas qu’AW télécharge/écrase des fichiers du jeu depuis une source communautaire.",
         "value": {
           "false": "Désactivé",
           "true": "Activé"
@@ -302,7 +301,7 @@
       },
       "checkUpdates": {
         "name": "Vérifier les mises à jour de GBE Fork",
-        "description": "Re-vérifie GitHub pour la dernière version de GBE Fork avant d'appliquer (télécharge seulement si plus récent). Désactive pour toujours utiliser la version en cache.",
+        "description": "Re-vérifie GitHub pour la dernière version de GBE Fork avant d’appliquer (télécharge seulement si plus récent). Désactive pour toujours utiliser la version en cache.",
         "value": {
           "true": "Activé",
           "false": "Désactivé"
@@ -327,11 +326,11 @@
         "description": "Legacy utilise l'« ancien » système de notifications"
       },
       "scale": "Taille de la notification",
-      "duration": "Durée de l'animation",
+      "duration": "Durée de l’animation",
       "hotkey": {
-        "name": "Raccourci de l'overlay en jeu",
-        "description": "Appuyez sur ce raccourci pendant qu'un jeu est en cours pour afficher l'overlay en jeu des succès. Cliquez sur le crayon pour le modifier, ou sur l'œil pour prévisualiser l'overlay sans lancer de jeu.",
-        "preview": "Prévisualiser l'overlay"
+        "name": "Raccourci de l’overlay en jeu",
+        "description": "Appuyez sur ce raccourci pendant qu’un jeu est en cours pour afficher l’overlay en jeu des succès. Cliquez sur le crayon pour le modifier, ou sur l’œil pour prévisualiser l’overlay sans lancer de jeu.",
+        "preview": "Prévisualiser l’overlay"
       }
     },
     "notification": {
@@ -369,15 +368,15 @@
         },
         "notification": {
           "name": "Notification",
-          "description": "Afficher une notification lorsqu'un succès est débloqué"
+          "description": "Afficher une notification lorsqu’un succès est débloqué"
         },
         "rumble": {
           "name": "Vibration de la manette",
-          "description": "Faire vibrer la première manette lorsqu'un succès est débloqué"
+          "description": "Faire vibrer la première manette lorsqu’un succès est débloqué"
         },
         "notifyOnProgress": {
           "name": "Notifications de progression",
-          "description": "Informer sur la progression quand c'est possible"
+          "description": "Informer sur la progression quand c’est possible"
         },
         "playtime": {
           "name": "Temps de jeu",
@@ -389,7 +388,7 @@
         },
         "mode": {
           "name": "Type de notification",
-          "description": "Automatique utilise l'overlay en jeu quand il peut s'afficher et une notification Windows sinon ; les autres choix imposent toujours celui que vous sélectionnez",
+          "description": "Automatique utilise l’overlay en jeu quand il peut s’afficher, et une notification Windows sinon. Les autres choix utilisent toujours celui que vous désignez.",
           "value": {
             "auto": "Automatique (recommandé)",
             "toast": "Notification Windows",
@@ -397,8 +396,8 @@
             "both": "Les deux"
           }
         },
-        "overlayPreset": "Thème",
-        "overlayPresetDesc": "Thème visuel de la fenêtre overlay en jeu",
+        "overlayPreset": "Préréglage",
+        "overlayPresetDesc": "Apparence de la fenêtre de notification en jeu",
         "overlayPresetXenia": "Préréglage (Xenia)",
         "overlayPresetXeniaDesc": "Préréglage utilisé pour les notifications Xenia (Xbox 360)",
         "overlayPresetRpcs3": "Préréglage (RPCS3)",
@@ -407,18 +406,18 @@
         "overlayPresetShadps4Desc": "Préréglage utilisé pour les notifications ShadPS4 (PlayStation 4)",
         "presetSameAsMain": "Comme le principal",
         "overlayPosition": "Position",
-        "overlayPositionDesc": "Position de la fenêtre overlay en jeu à l'écran",
+        "overlayPositionDesc": "Position de la fenêtre overlay en jeu à l’écran",
         "overlayScale": "Échelle",
         "overlayScaleDesc": "Taille de la fenêtre overlay en jeu",
         "overlaySound": "Son",
-        "overlaySoundDesc": "Son joué lorsque l'overlay en jeu apparaît",
+        "overlaySoundDesc": "Son joué lorsque l’overlay en jeu apparaît",
         "overlayRandomSound": "Son aléatoire",
         "overlayRandomSoundDesc": "Choisit un son au hasard parmi la liste intégrée et importée pour chaque notification.",
         "overlaySoundImport": "Importer un son personnalisé…",
         "overlayVolume": "Volume",
-        "overlayVolumeDesc": "Volume des sons de notification — l'overlay en jeu peut être amplifié jusqu'à 200 %, les sons personnalisés du toast plafonnent à 100 %",
+        "overlayVolumeDesc": "Volume des sons de notification — l’overlay en jeu peut être amplifié jusqu’à 200 %, les sons personnalisés du toast plafonnent à 100 %",
         "overlayDuration": "Durée",
-        "overlayDurationDesc": "Durée d'affichage de l'overlay en jeu à l'écran. Auto laisse le preset décider ; une valeur plafonne le temps d'affichage.",
+        "overlayDurationDesc": "Durée d’affichage de l’overlay en jeu à l’écran. Auto laisse le preset décider ; une valeur plafonne le temps d’affichage.",
         "overlayDurationAuto": "Auto",
         "designer": {
           "advanced": "Avancé",
@@ -427,7 +426,7 @@
           "deleteLabel": "Supprimer",
           "deleted": "Supprimé :",
           "editNew": "Nouveau preset…",
-          "errName": "Saisissez d'abord un nom",
+          "errName": "Saisissez d’abord un nom",
           "exportLabel": "Exporter",
           "exported": "Exporté :",
           "failed": "Échec",
@@ -461,7 +460,7 @@
             "iconBorder": "Bordure de l’icône",
             "iconGlow": "Halo de l’icône",
             "iconRadius": "Coins de l’icône",
-            "iconSize": "Taille de l'icône",
+            "iconSize": "Taille de l’icône",
             "layout": "Agencement",
             "letterSpacing": "Interlettrage",
             "opacity": "Opacité",
@@ -502,7 +501,6 @@
           "importLabel": "Importer",
           "imported": "Importé et sélectionné :",
           "importedOnly": "Preset importé — exportable ou supprimable ici ; non modifiable avec les curseurs.",
-          "intro": "Composez votre propre notification en jeu : disposition, couleurs, animation et son.",
           "load": "Modifier un preset",
           "loaded": "Chargé :",
           "name": "Nom",
@@ -575,8 +573,8 @@
         },
         "souvenirTitle": "Capture souvenir",
         "souvenirScreenshot": "Capture au déblocage",
-        "souvenirScreenshotDesc": "Capture l'écran lorsqu'un succès se débloque. Rangée par jeu.",
-        "souvenirDir": "Dossier d'enregistrement",
+        "souvenirScreenshotDesc": "Capture l’écran lorsqu’un succès se débloque. Rangée par jeu.",
+        "souvenirDir": "Dossier d’enregistrement",
         "souvenirDirHelp": "Captures enregistrées dans <dossier>\\<jeu>\\<date> - <succès>.png. Vide = Images\\Achievement Watcher.",
         "souvenirOpenDir": "Ouvrir le dossier",
         "soundNone": "Aucun",
@@ -594,7 +592,7 @@
         "reposition": "Repositionner le popup (glissez-le où vous voulez)",
         "customToastAudio": {
           "name": "Son de la notification Windows",
-          "description": "Spécifie le son à jouer lorsqu'une notification Windows est affichée",
+          "description": "Spécifie le son à jouer lorsqu’une notification Windows est affichée",
           "value": {
             "systemDefault": "Défaut",
             "muted": "Son coupé"
@@ -602,7 +600,7 @@
         },
         "toastSouvenir": {
           "name": "Souvenir dans la notification Windows",
-          "description": "Afficher la capture d'écran dans la notification Windows",
+          "description": "Afficher la capture d’écran dans la notification Windows",
           "value": {
             "top": "En haut",
             "bottom": "En bas"
@@ -614,7 +612,7 @@
         },
         "urgent": {
           "name": "Notifications prioritaires",
-          "description": "Permet aux déblocages de succès de s'afficher lorsque Ne pas déranger est actif. Windows demande l'autorisation une seule fois."
+          "description": "Permet aux déblocages de succès de s’afficher lorsque Ne pas déranger est actif. Windows demande l’autorisation une seule fois."
         },
         "useToast": {
           "name": "Notification Windows",
@@ -639,23 +637,23 @@
     },
     "souvenir": {
       "title": {
-        "screenshot": "Capture d'écran",
+        "screenshot": "Capture d’écran",
         "video": "Vidéo"
       },
       "option": {
         "screenshot": {
           "name": "Souvenir",
-          "description": "Prendre une capture d'écran lorsque vous débloquez un succès"
+          "description": "Prendre une capture d’écran lorsque vous débloquez un succès"
         },
         "video": {
           "name": "Souvenir vidéo",
-          "description": "Enregistrez une courte vidéo lorsque vous débloquez un succès à l'aide de l'encodeur matériel de votre GPU"
+          "description": "Enregistrez une courte vidéo lorsque vous débloquez un succès à l’aide de l’encodeur matériel de votre GPU"
         },
         "overwrite": {
           "name": "Écraser si fichier existant"
         },
         "custom_dir": {
-          "name": "Enregistrer dans ..."
+          "name": "Emplacement d’enregistrement"
         },
         "codec": {
           "name": "Codec vidéo",
@@ -663,13 +661,13 @@
         },
         "colorDepth": {
           "name": "Profondeur de couleur",
-          "description": "10bits n'est disponible que pour H.265/HEVC"
+          "description": "10bits n’est disponible que pour H.265/HEVC"
         },
         "duration": {
           "name": "Durée du clip"
         },
         "framerate": {
-          "name": "Fréquence d'images"
+          "name": "Fréquence d’images"
         },
         "cursor": {
           "name": "Curseur de la souris"
@@ -679,11 +677,11 @@
     "folder": {
       "headline": "Où chercher les données des succès:",
       "default": "Dossiers vérifiés automatiquement",
-      "custom": "Tes dossiers",
+      "custom": "Vos dossiers",
       "addInfo": [
-        "Choisis le dossier où un jeu ou un émulateur garde ses fichiers de succès.",
-        "Pour ALI213, Hoodlum, TENOKE, UniverseLAN, RPCS3, sélectionnez un dossier dans lequel",
-        "Le fichier ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini ou RPCS3.exe est situé."
+        "Choisissez le dossier où un jeu ou un émulateur garde ses fichiers de succès.",
+        "Pour ALI213, Hoodlum, TENOKE, UniverseLAN et RPCS3, sélectionnez le dossier qui contient",
+        "le fichier ALI213.ini, valve.ini, hlm.ini, ds.ini, steam_api.ini, SteamConfig.ini, tenoke.ini, UniverseLAN.ini ou RPCS3.exe."
       ],
       "add": "Ajouter un dossier",
       "smartFind": "Recherche auto",
@@ -691,7 +689,7 @@
       "library": "Dossiers de bibliothèque",
       "libraryInfo": [
         "Sélectionnez un dossier qui contient plusieurs dossiers de jeux installés (ex: D:\\Games, E:\\SteamLibrary).",
-        "Tous les jeux qu'il contient seront scannés pour les succès Goldberg/GBE, même s'ils n'ont jamais été lancés."
+        "Tous les jeux qu’il contient seront scannés pour les succès Goldberg/GBE, même s’ils n’ont jamais été lancés."
       ],
       "addLibrary": "Ajouter un dossier de bibliothèque",
       "generateConfigs": "Générer les configs",
@@ -701,7 +699,7 @@
       "title": "Sources de jeu",
       "officialPlatforms": {
         "title": "Plateformes officielles",
-        "description": "Steam, Ubisoft Connect, GOG Galaxy, Epic Games et Xbox PC sont pris en charge ici. Activez ci-dessous les sources marquées d’un bouclier ; seules les bibliothèques détectées sur ce PC peuvent être affichées."
+        "description": "Activez ci-dessous les sources marquées d’un bouclier. Seules les bibliothèques détectées sur ce PC peuvent être affichées."
       },
       "legitSteam": {
         "name": "Afficher les jeux Steam",
@@ -739,7 +737,7 @@
       },
       "socialClub": {
         "name": "Goldberg SocialClub",
-        "description": "Suivre les succès de l'émulateur Goldberg Social Club"
+        "description": "Suivre les succès de l’émulateur Goldberg Social Club"
       },
       "ubisoftOfficial": {
         "description": "Données du client officiel Ubisoft Connect"
@@ -767,29 +765,29 @@
       "nav": "Aide",
       "title": "Aide et astuces",
       "intro": "L’essentiel sur la détection, les notifications, la manette, l’overlay, les thèmes et le dépannage.",
-      "setupTitle": "Ta configuration actuelle",
+      "setupTitle": "Votre configuration actuelle",
       "topicsTitle": "Parcourir les sujets",
       "searchPlaceholder": "Rechercher dans l’aide…",
       "noResults": "Aucun sujet d’aide ne correspond à ta recherche.",
       "quickTitle": "Premiers pas",
       "quick": [
-        "Ajoute tes dossiers de sauvegarde et de configuration dans Paramètres > Dossiers, puis active la source correspondante dans Paramètres > Sources.",
+        "Ajoutez vos dossiers de sauvegarde et de configuration dans Paramètres > Dossiers, puis activez la source correspondante dans Paramètres > Sources.",
         "Le Watchdog fonctionne en arrière-plan : il doit rester actif pour les notifications en direct et le suivi du temps de jeu.",
-        "Tes réglages, caches, journaux et thèmes personnalisés se trouvent dans %APPDATA%\\Achievement Watcher Next.",
+        "Vos réglages, caches, journaux et thèmes personnalisés se trouvent dans %APPDATA%\\Achievement Watcher Next.",
         "Chaque bloc de réglages se replie avec son chevron et mémorise son état."
       ],
       "gameHealthTitle": "État des jeux",
       "gameHealth": [
-        "Ouvre le bouton outils d'un jeu (en haut à droite de sa vignette) pour voir s'il est Prêt, À vérifier ou Non suivi.",
-        "La phrase sous l'état explique la cause en clair ; les vérifications en dessous montrent quelle partie est en cause.",
-        "Les boutons de réparation n'apparaissent que si AW Next peut réellement corriger le jeu — chacun annonce ce qu'il modifie et où les fichiers précédents sont conservés.",
-        "Détails techniques contient les chemins, comptes et codes d'émulateur exacts ; à copier dans un rapport de bug."
+        "Ouvrez le bouton outils d’un jeu (en haut à droite de sa vignette) pour voir s’il est Prêt, À vérifier ou Non suivi.",
+        "La phrase sous l’état explique la cause en clair ; les vérifications en dessous montrent quelle partie est en cause.",
+        "Les boutons de réparation n’apparaissent que si AW Next peut réellement corriger le jeu — chacun annonce ce qu’il modifie et où les fichiers précédents sont conservés.",
+        "Détails techniques contient les chemins, comptes et codes d’émulateur exacts ; à copier dans un rapport de bug."
       ],
       "troubleshootTitle": "Dépannage",
       "troubleshoot": [
-        "Si un jeu manque : ajoute les dossiers, relance un scan, puis vérifie l'interrupteur de source et la liste noire.",
-        "Si les notifications n'apparaissent pas : vérifie Ne pas déranger / Assistant de concentration dans Windows et lance l'app avec les mêmes droits que tes jeux.",
-        "Avancé > Diagnostics ouvre les logs et les dossiers de données ; joins-les quand tu signales un problème.",
+        "Si un jeu manque : ajoutez les dossiers, relancez un scan, puis vérifiez l’interrupteur de source et la liste noire.",
+        "Si les notifications n’apparaissent pas : vérifiez Ne pas déranger / Assistant de concentration dans Windows et lancez l’app avec les mêmes droits que vos jeux.",
+        "Avancé > Diagnostics ouvre les logs et les dossiers de données ; joignez-les quand vous signalez un problème.",
         "Les journaux sont conservés d’un lancement à l’autre. Chaque exécution commence par un marqueur de session et un bloc [diag] (versions, chemins, écrans) à joindre au ticket."
       ],
       "sourcesTitle": "Lanceurs et sources",
@@ -808,45 +806,45 @@
       ],
       "emulatorTitle": "Émulateurs de console",
       "emulators": [
-        "Les trophées RPCS3 sont lus depuis dev_hdd0\\home\\...\\trophy près de l'installation RPCS3.",
-        "Les trophées shadPS4 sont lus depuis ses dossiers game_data/trophy ; des données résiduelles ne prouvent pas l'installation.",
+        "Les trophées RPCS3 sont lus depuis dev_hdd0\\home\\...\\trophy près de l’installation RPCS3.",
+        "Les trophées shadPS4 sont lus depuis ses dossiers game_data/trophy ; des données résiduelles ne prouvent pas l’installation.",
         "La progression Xenia est lue depuis les fichiers de profil Xbox comme .gpd."
       ],
       "controllerTitle": "Manette",
       "controller": [
-        "Active d’abord Paramètres > Manette, puis Select + Start + LB ouvre l’overlay en jeu.",
+        "Activez d’abord Paramètres > Manette, puis Select + Start + LB ouvre l’overlay en jeu.",
         "LB + X active/désactive la navigation dans l’overlay.",
         "Mode navigation : croix/stick gauche déplacent le focus, A valide, B annule, X recherche, Y ouvre les options.",
-        "Maintiens LB + RB pour déplacer l’overlay avec le stick gauche et défiler avec le stick droit.",
+        "Maintenez LB + RB pour déplacer l’overlay avec le stick gauche et défiler avec le stick droit.",
         "Compatible Xbox, PlayStation (DualShock 4 / DualSense) et Switch Pro."
       ],
       "overlayTitle": "Overlay en jeu",
       "overlay": [
-        "Ouvre-le avec le raccourci overlay (Ctrl+Shift+K par défaut) ou Select + Start + LB à la manette.",
-        "Trie par une seule colonne à la fois : Rareté, Date ou Statut (croissant / décroissant / aucun).",
-        "Appuie sur / pour chercher, Échap pour effacer ou fermer le panneau d'options.",
-        "Le panneau engrenage change l'accent, la densité, le zoom, l'opacité et les éléments affichés ; « Utiliser le thème de l'app » suit le thème actif.",
+        "Ouvrez-le avec le raccourci overlay (Ctrl+Shift+K par défaut) ou Select + Start + LB à la manette.",
+        "Triez par une seule colonne à la fois : Rareté, Date ou Statut (croissant / décroissant / aucun).",
+        "Appuyez sur / pour chercher, Échap pour effacer ou fermer le panneau d’options.",
+        "Le panneau engrenage change l’accent, la densité, le zoom, l’opacité et les éléments affichés ; « Utiliser le thème de l’app » suit le thème actif.",
         "Chaque succès avec un taux connu affiche sa rareté : gris pour les communs, or/argent/bronze pour les rares."
       ],
       "shortcutsTitle": "Raccourcis clavier",
       "shortcuts": [
-        "Ctrl+Shift+K (défaut) : bascule l'overlay en jeu — configurable dans Paramètres > Général.",
-        "Ctrl+Alt+Shift+Flèches déplacent l'overlay ; Ctrl+Alt+Shift+1–5 l'aimantent à une position prédéfinie.",
+        "Ctrl+Shift+K (défaut) : bascule l’overlay en jeu — configurable dans Paramètres > Général.",
+        "Ctrl+Alt+Shift+Flèches déplacent l’overlay ; Ctrl+Alt+Shift+1–5 l’aimantent à une position prédéfinie.",
         "Ctrl+Alt+Shift+C active ou désactive les clics traversants ; Ctrl+F place le curseur dans la recherche des réglages."
       ],
       "themesTitle": "Thèmes custom",
       "themes": [
         "Le thème personnalisé part de Steam Blue ; chaque couche (fond, en-tête, panneaux, cartes, réglages, texte, bordures, accent) est modifiable.",
         "Les images de couche passent sous un voile coloré avec un léger flou dépoli ; les effets sont par couche.",
-        "Dépose un thème CSS dans <userData>\\themes et il apparaît dans la liste des thèmes.",
-        "Le créateur de preset affiche un aperçu réel avant l’enregistrement, puis permet de modifier ou supprimer tes presets."
+        "Déposez un thème CSS dans <userData>\\themes et il apparaît dans la liste des thèmes.",
+        "Le créateur de preset affiche un aperçu réel avant l’enregistrement, puis permet de modifier ou supprimer vos presets."
       ],
       "tipsTitle": "Astuces",
       "tips": [
         "Le clic droit sur un jeu regroupe son lancement, le choix de l’exécutable, les dossiers, les liens, les outils d’émulation et la désinstallation si ce menu est activé.",
         "Clic droit sur un jeu puis « couper la progression » pour arrêter les popups de progression sans désactiver les succès.",
         "Le fix émulateur (Simple rapide / Avancé complet) installe GBE Fork, le schéma de succès et les données DLC.",
-        "Le temps de jeu est suivi pendant que le jeu tourne ; les notifications de progression/temps de jeu s'activent dans Notifications.",
+        "Le temps de jeu est suivi pendant que le jeu tourne ; les notifications de progression/temps de jeu s’activent dans Notifications.",
         "Les nouveaux succès ajoutés par une mise à jour du jeu apparaissent automatiquement sous 3 jours, ou immédiatement via Réglages > Avancé > Revérifier les listes de succès."
       ]
     },
@@ -855,24 +853,24 @@
       "fixAll": {
         "name": "Réparer tous les jeux détectés",
         "button": "Réparer tous les jeux",
-        "description": "Lance le fix émulateur (GBE Fork, succès, DLC) sur chaque jeu émulé détecté dont le dossier d'installation est connu.",
-        "confirm": "Appliquer le fix émulateur à chaque jeu détecté dont le dossier d'installation est connu ? Les fichiers existants sont sauvegardés avant d'être écrasés.",
+        "description": "Lance le fix émulateur (GBE Fork, succès, DLC) sur chaque jeu émulé détecté dont le dossier d’installation est connu.",
+        "confirm": "Appliquer le fix émulateur à chaque jeu détecté dont le dossier d’installation est connu ? Les fichiers existants sont sauvegardés avant d’être écrasés.",
         "running": "Réparation des jeux…",
         "progress": "Réparation %cur% / %total% — %name%",
         "done": "Terminé — %fixed% jeu(x) réparé(s), %skipped% ignoré(s), %failed% en échec.",
-        "none": "Aucun jeu détecté avec un dossier d'installation connu à réparer."
+        "none": "Aucun jeu détecté avec un dossier d’installation connu à réparer."
       },
       "diag": {
         "title": "Diagnostics",
         "logsFolder": "Ouvrir le dossier des logs",
         "dataFolder": "Ouvrir le dossier des données",
         "goldbergTitle": "Goldberg / GBE Fork",
-        "goldbergDesc": "Scanne un dossier de bibliothèque de jeux pour les installs Goldberg / GBE Fork et signale ceux à qui manque leur schéma steam_settings/achievements.json. Utilise le menu clic-droit d'un jeu (Diagnostiquer / Réparer) pour en corriger un.",
+        "goldbergDesc": "Scanne un dossier de bibliothèque de jeux pour les installs Goldberg / GBE Fork et signale ceux à qui manque leur schéma steam_settings/achievements.json. Utilise le menu clic-droit d’un jeu (Diagnostiquer / Réparer) pour en corriger un.",
         "scanFolder": "Scanner un dossier…"
       },
       "blacklistTitle": "Liste noire des AppID",
       "blacklistButton": "Réinitialiser la liste noire",
-      "blacklistInfo": "Faites un clic droit sur une vignette de jeu pour l'ajouter à la liste noire.",
+      "blacklistInfo": "Faites un clic droit sur une vignette de jeu pour l’ajouter à la liste noire.",
       "blacklistEmpty": "Aucun jeu masqué.",
       "blacklistRestore": "Réafficher ce jeu",
       "mainSteam": {
@@ -914,23 +912,22 @@
       "Paramètres"
     ],
     "languageTitle": "Choisir la langue",
-    "languageCopy": "Choisissez la langue avant la première numérisation. Les jeux, les métadonnées, les succès et les caches Steam se chargeront dès le départ dans cette langue.",
-    "language": "Langage du jeu et de l'interface",
-    "languagePlaceholder": "Choisissez une langue...",
-    "languageHint": "Le premier chargement de la bibliothèque ne démarre qu'après ce choix.",
+    "languageCopy": "Les jeux, les métadonnées, les succès et les caches Steam se chargeront dans cette langue dès le départ.",
+    "language": "Langue des jeux et de l’interface",
+    "languagePlaceholder": "Choisissez une langue…",
+    "languageHint": "Le premier chargement de la bibliothèque ne démarre qu’après ce choix.",
     "introTitle": "Comment ça marche",
-    "introCopy": "AW Next cherche les jeux et les données de succès dans les emplacements connus et les dossiers que vous choisissez. Watchdog reste ensuite actif dans la zone de notification.",
     "scanTitle": "Scanner",
-    "scanCopy": "Les emplacements connus des launchers, émulateurs et données de succès sont détectés automatiquement. Vous vérifiez chaque dossier avant le premier scan ; les détails de formats restent dans l’Aide.",
+    "scanCopy": "Les emplacements des launchers, des émulateurs et des fichiers de succès sont détectés automatiquement — vous validez chacun d’eux avant le premier scan.",
     "watchTitle": "Surveiller",
-    "watchCopy": "Le Watchdog en arrière-plan détecte l'exécutable du jeu à son lancement, suit le temps de jeu et surveille les fichiers de succès pour afficher les déblocages pendant que tu joues.",
+    "watchCopy": "Le Watchdog en arrière-plan repère le jeu à son lancement, suit le temps de jeu et surveille ses fichiers de succès.",
     "fixTitle": "Réparer",
-    "fixCopy": "Pour les jeux Steam émulés, le fix du clic droit (ou l'auto-fix) installe GBE Fork et écrit le schéma achievements.json et les données DLC dans le steam_settings du jeu.",
+    "fixCopy": "Pour les jeux Steam émulés, le correctif du clic droit installe GBE Fork et écrit le schéma des succès et les données DLC.",
     "overlayTitle": "Overlay en jeu",
-    "overlayCopy": "Un petit panneau de succès que vous pouvez afficher par-dessus le jeu avec un raccourci (Ctrl+Shift+K par défaut). Modifiable à tout moment dans Paramètres > Général, à côté du champ du raccourci.",
+    "overlayCopy": "Un petit panneau de succès que vous affichez par-dessus le jeu avec un raccourci — Ctrl+Shift+K par défaut.",
     "profileTitle": "Profil",
     "profileCopy": "Choisissez le nom affiché dans l’en-tête et définissez éventuellement un avatar local.",
-    "username": "Nom d'affichage",
+    "username": "Nom d’affichage",
     "mainSteam": "Compte Steam principal",
     "avatarPick": "Choisir une photo",
     "avatarDefault": "Par défaut",
@@ -945,9 +942,9 @@
     "addLibraryHint": "plusieurs jeux installés",
     "saveList": "Sauvegardes / configs",
     "libraryList": "Bibliothèques de jeux",
-    "emptyList": "Rien n'a été ajouté à cette session.",
+    "emptyList": "Rien n’a été ajouté à cette session.",
     "settingsTitle": "Paramètres recommandés",
-    "settingsCopy": "Vérifiez huit choix essentiels pour la bibliothèque, l’apparence et les notifications. Tout reste modifiable ensuite.",
+    "settingsCopy": "L’essentiel pour votre bibliothèque, l’apparence et les notifications. Tout reste modifiable ensuite.",
     "source": "Afficher les jeux Steam",
     "notifications": "Notifications",
     "notificationTest": "Tester la notification",
@@ -960,7 +957,7 @@
     "sourceHint": "Répertorie également vos jeux Steam légitimes (profil public requis).",
     "notificationsHint": "Où apparaissent les succès. Automatique choisit pour vous entre overlay et notification Windows.",
     "playtimeHint": "Suit automatiquement le temps de jeu pour les jeux détectés.",
-    "autoFixHint": "Applique le correctif de l'émulateur (GBE Fork, succès, DLC) aux nouveaux jeux émulés.",
+    "autoFixHint": "Applique le correctif de l’émulateur (GBE Fork, succès, DLC) aux nouveaux jeux émulés.",
     "hiddenHint": "Révèle les noms et descriptions cachés des succès avant de les débloquer.",
     "mergeHint": "Combine le même jeu trouvé dans plusieurs sources en une seule tuile.",
     "none": "Aucun",
@@ -974,14 +971,14 @@
     "back": "Retour",
     "next": "Suivant",
     "finish": "Terminer",
-    "skip": "Sauter",
-    "saving": "Sauvegarde...",
+    "skip": "Ignorer",
+    "saving": "Sauvegarde…",
     "saved": "Configuration enregistrée.",
     "languageRequired": "Choisissez une langue pour continuer.",
-    "invalidFolder": "Ce dossier ne ressemble pas à un dossier de succès pris en charge. Attendu : GSE Saves / Goldberg SteamEmu Saves, sauvegardes CODEX/RUNE, sous-dossiers AppID (ex. 1091500), ou un dossier de jeu avec steam_settings ou un .ini d'émulateur.",
-    "smartRunning": "Recherche...",
+    "invalidFolder": "Ce dossier ne ressemble pas à un dossier de succès pris en charge. Attendu : GSE Saves / Goldberg SteamEmu Saves, sauvegardes CODEX/RUNE, sous-dossiers AppID (ex. 1091500), ou un dossier de jeu avec steam_settings ou un .ini d’émulateur.",
+    "smartRunning": "Recherche…",
     "smartDone": "Recherche terminée.",
-    "saveError": "Impossible d'enregistrer la configuration.",
+    "saveError": "Impossible d’enregistrer la configuration.",
     "modeTitle": "Choisis ton interface",
     "modeCopy": "Les deux suivent les succès exactement de la même manière. Cela décide seulement de la quantité d’AW Next affichée à l’écran.",
     "modeSimple": "Simple",
@@ -1046,19 +1043,20 @@
     "controllerMove": "Déplacer/défiler"
   },
   "dialogs": {
-    "game-config-title": "Configuration de l'exécutable",
+    "game-health-title": "État des jeux",
+    "game-config-title": "Configuration de l’exécutable",
     "launch-args-label": "Arguments de lancement :",
     "game-config-placeholder": "…Cliquez sur MODIFIER pour choisir l’exécutable…",
-    "game-config-unlink": "Dissocier l'exécutable",
+    "game-config-unlink": "Dissocier l’exécutable",
     "checking-for-updates": "Vérification…",
-    "link-not-opened": "Ce lien n'a pas été ouvert car ce n'est pas une adresse web.",
+    "link-not-opened": "Ce lien n’a pas été ouvert car ce n’est pas une adresse web.",
     "update-unavailable-dev": "Indisponible en version dev",
     "update-check-failed": "Échec de la vérification",
     "update-download-in-progress": "Téléchargement déjà en cours…",
     "update-available-short": "Mise à jour disponible",
     "update-up-to-date-short": "À jour",
     "update-checked": "Vérifié",
-    "blacklist-add-placeholder": "ID d'app Steam",
+    "blacklist-add-placeholder": "ID d’app Steam",
     "blacklist-add-button": "Ajouter",
     "setupLooksValid": "La configuration semble valide.",
     "problemsWereDetected": "Des problèmes ont été détectés.",
@@ -1075,6 +1073,7 @@
     "enter-the-code-sent-by-email-to-confirm-the-steam-login": "Saisis le code reçu par e-mail pour confirmer la connexion Steam.",
     "steam-guard-code": "Code Steam Guard",
     "cancel": "Annuler",
+    "close": "Fermer",
     "confirm": "Valider",
     "ubisoft-game-no-achievements-found": "Jeu Ubisoft — aucun succès trouvé",
     "no-achievements-found": "Aucun succès trouvé",
@@ -1088,6 +1087,7 @@
     "steam-achievements": "Succès Steam",
     "steam-api-64-dll-detected": "steam_api(64).dll détecté",
     "steam-api-64-dll-not-found": "steam_api(64).dll introuvable",
+    "search-games": "Rechercher un jeu…",
     "game": "Jeu",
     "add-game-manually": "Ajouter un jeu manuellement",
     "manual-game-platform": "Plateforme",
@@ -1106,17 +1106,19 @@
     "disk-scan": "scan disque",
     "found-automatically-via-x": "Trouvée automatiquement via {source}.",
     "checking-watchdog-status": "Vérification du Watchdog…",
-    "watchdog-stopped": "Watchdog arrêté ! (overlays en jeu et notifications ne se déclencheront pas)",
-    "i-class-fas-fa-shield-alt-i-click-to-start-watchdog": "<i class=\"fas fa-shield-alt\"></i> Cliquez pour démarrer le Watchdog !",
-    "watchdog-is-running-in-game-overlay-windows-notifications-should": "Watchdog actif (overlays en jeu et notifications fonctionnels)",
+    "watchdog-stopped": "Watchdog arrêté",
+    "watchdog-stopped-detail": "Ni overlay en jeu ni notifications",
+    "start-watchdog": "Démarrer le Watchdog",
+    "watchdog-running": "Watchdog actif",
+    "watchdog-running-detail": "Suivi des jeux et des succès opérationnel",
     "unexpected-error": "Erreur inattendue",
-    "choose-the-game-executable": "Choisir l'exécutable du jeu",
+    "choose-the-game-executable": "Choisir l’exécutable du jeu",
     "select": "Sélectionner",
     "goldberg-diagnosis-title": "Diagnostic Goldberg/GBE — {gameName}",
     "repair-complete": "Réparation terminée",
     "repair-complete-message": "{count} succès écrits dans {path}",
     "repair-failed": "Échec de la réparation",
-    "could-not-write-steam-settings": "Impossible d'écrire steam_settings.",
+    "could-not-write-steam-settings": "Impossible d’écrire steam_settings.",
     "blacklist-add-failed": "Échec de l’ajout à la liste noire",
     "emulator-source": "Source de l’émulateur",
     "launch-game": "Lancer le jeu",
@@ -1125,7 +1127,7 @@
     "choose-where-to-generate-achievements-json": "Choisir où générer achievements.json",
     "generate": "Générer",
     "generate-achievements-json-failed": "Échec de la génération de achievements.json",
-    "select-install-folder-emulator-dll": "Sélectionne le dossier d'installation du jeu (où se trouve la .dll de l'émulateur)",
+    "select-install-folder-emulator-dll": "Sélectionne le dossier d’installation du jeu (où se trouve la .dll de l’émulateur)",
     "diagnose": "Diagnostiquer",
     "diagnose-failed": "Échec du diagnostic",
     "could-not-diagnose-the-setup": "Impossible de diagnostiquer la configuration.",
@@ -1151,7 +1153,7 @@
     "restore-uplay-r2-message": "Restaurer la sauvegarde prise avant la dernière réparation ?",
     "restore-uplay-r2-done": "Configuration restaurée.",
     "could-not-restore-the-uplay-r2-setup": "Impossible de restaurer la configuration Uplay R2.",
-    "select-install-folder-steam-api": "Sélectionne le dossier d'installation du jeu (où doit aller steam_api(64).dll)",
+    "select-install-folder-steam-api": "Sélectionne le dossier d’installation du jeu (où doit aller steam_api(64).dll)",
     "install-here": "Installer ici",
     "backing-up-before-fix": "Sauvegarde avant fix…",
     "n-nbackup-before-fix-nx": "Sauvegarde avant fix:\n{dir}",
@@ -1180,16 +1182,16 @@
     "configuring-achievements-dlcs": "Configuration (succès + DLC)…",
     "gbe-fork-installed": "GBE Fork installé",
     "gbe-fork-installed-message": "{installed} installée(s) dans {count} emplacement(s)",
-    "gbe-fork-install-failed": "Échec de l'installation de GBE Fork",
-    "could-not-download-or-install-gbe-fork": "Impossible de télécharger ou d'installer GBE Fork.",
-    "select-game-install-folder": "Choisir le dossier d'installation du jeu",
+    "gbe-fork-install-failed": "Échec de l’installation de GBE Fork",
+    "could-not-download-or-install-gbe-fork": "Impossible de télécharger ou d’installer GBE Fork.",
+    "select-game-install-folder": "Choisir le dossier d’installation du jeu",
     "remove-steam-drm-steamless": "Retirer le DRM Steam (Steamless)",
     "remove-steamstub-from-x": "Retirer le SteamStub de : {exe} ?",
     "no-exe-detected-choose-one": "Aucun exe détecté — en choisir un ?",
-    "steamless-detail": "Modifie l'exécutable du jeu (l'original est conservé en .steamstub.bak). Sans effet si le jeu n'a pas de DRM SteamStub.",
+    "steamless-detail": "Modifie l’exécutable du jeu (l’original est conservé en .steamstub.bak). Sans effet si le jeu n’a pas de DRM SteamStub.",
     "choose-an-exe": "Choisir un .exe…",
     "remove-drm": "Retirer le DRM",
-    "select-game-executable": "Choisir l'exécutable du jeu",
+    "select-game-executable": "Choisir l’exécutable du jeu",
     "steamless": "Steamless",
     "steamstub-drm-removed": "DRM SteamStub retiré.",
     "no-steamstub-drm-detected-exe-left-unchanged": "Aucun DRM SteamStub détecté — exe inchangé.",
@@ -1204,11 +1206,11 @@
     "the-crakfiles-list-is-community-maintained-and-limited": "La liste CrakFiles est communautaire et limitée.",
     "open-crakfiles": "Ouvrir CrakFiles",
     "fix-found-x": "Fix trouvé : {name}",
-    "crackfix-overwrite-warning": "⚠ Un crack communautaire peut écraser des fichiers du jeu (dont steam_api(64).dll). La détection des succès passe par l'émulateur — si le crack remplace steam_api, relance « Appliquer le fix émulateur » après. Les fichiers écrasés sont sauvegardés.",
+    "crackfix-overwrite-warning": "⚠ Un crack communautaire peut écraser des fichiers du jeu (dont steam_api(64).dll). La détection des succès passe par l’émulateur — si le crack remplace steam_api, relance « Appliquer le fix émulateur » après. Les fichiers écrasés sont sauvegardés.",
     "open-download-page": "Ouvrir la page de téléchargement",
     "open-source": "Ouvrir la source",
     "download-apply": "Télécharger && appliquer",
-    "game-install-folder": "Dossier d'installation du jeu",
+    "game-install-folder": "Dossier d’installation du jeu",
     "this-link-cannot-be-applied-automatically": "Ce lien ne peut pas être appliqué automatiquement.",
     "open-the-download-page-and-apply-it-manually": "Ouvre la page de téléchargement et applique-le manuellement.",
     "open": "Ouvrir",
@@ -1216,7 +1218,7 @@
     "applied-x-file-s": "{count} fichier(s) appliqué(s).",
     "n-nif-steam-api-was-replaced-re-run-apply-emulator-fix-to-keep-a": "Si steam_api a été remplacé, relance « Appliquer le fix émulateur » pour garder la détection des succès.",
     "pixeldrain-captcha-required-for-this-file": "Captcha pixeldrain requis pour ce fichier.",
-    "pixeldrain-rate-limited": "Pixeldrain limite ce fichier (trop de téléchargements) : il faut résoudre un captcha dans le navigateur.\n\n1) Ouvre la page et télécharge le .rar.\n2) Reviens et sélectionne le fichier téléchargé — AW l'extraira et l'appliquera automatiquement (les fichiers écrasés sont sauvegardés).",
+    "pixeldrain-rate-limited": "Pixeldrain limite ce fichier (trop de téléchargements) : il faut résoudre un captcha dans le navigateur.\n\n1) Ouvre la page et télécharge le .rar.\n2) Reviens et sélectionne le fichier téléchargé — AW l’extraira et l’appliquera automatiquement (les fichiers écrasés sont sauvegardés).",
     "open-page": "Ouvrir la page",
     "select-downloaded-file": "Sélectionner le fichier téléchargé…",
     "once-the-download-is-finished": "Une fois le téléchargement terminé…",
@@ -1230,10 +1232,10 @@
     "failed": "Échec.",
     "uplay-r2-diagnosis-title": "Diagnostic Uplay R2 — {gameName}",
     "apply-emulator-fix-uplay-r2": "Appliquer le correctif émulateur (Uplay R2)…",
-    "select-install-folder-uplay-r2-loader": "Sélectionne le dossier d'installation du jeu (où doit aller la .dll du loader Uplay R2)",
+    "select-install-folder-uplay-r2-loader": "Sélectionne le dossier d’installation du jeu (où doit aller la .dll du loader Uplay R2)",
     "resolving-the-steam-equivalent": "Résolution du jeu Steam…",
     "no-steam-equivalent-found": "Jeu Steam introuvable",
-    "uplay-no-steam-match": "Ce jeu Ubisoft n'a pas de correspondance connue dans uplay-steam.json.",
+    "uplay-no-steam-match": "Ce jeu Ubisoft n’a pas de correspondance connue dans uplay-steam.json.",
     "the-uplay-r2-fix-needs-the-steam-version-of-the-game-to-fetch-th": "Le fix Uplay R2 a besoin de la version Steam du jeu pour récupérer le schéma des succès.",
     "fetching-the-steam-schema": "Récupération du schéma Steam…",
     "unsupported-game": "Jeu non pris en charge",
@@ -1244,7 +1246,7 @@
     "copy-the-uplay-r2-loader-64-dll-upc-r2-loader-64-dll-files-into-": "Copie une fois les fichiers uplay_r2_loader(64).dll / upc_r2_loader(64).dll dans :\n{dir}",
     "update-the-uplay-r2-loader": "Mettre à jour le loader Uplay R2 ?",
     "uplay-r2-old-loader-message": "Ce jeu utilise un loader trop ancien pour rediriger les succès.",
-    "uplay-r2-old-loader-detail": "Le correctif fonctionne sans mise à jour : AW Next lit le dossier de sauvegarde de l'émulateur.\n\nMettre à jour le loader permet la redirection vers GSE Saves, mais remplace une DLL avec laquelle le jeu se lance actuellement (l'originale est conservée en .bak).",
+    "uplay-r2-old-loader-detail": "Le correctif fonctionne sans mise à jour : AW Next lit le dossier de sauvegarde de l’émulateur.\n\nMettre à jour le loader permet la redirection vers GSE Saves, mais remplace une DLL avec laquelle le jeu se lance actuellement (l’originale est conservée en .bak).",
     "keep-current-loader": "Garder le loader actuel",
     "update-loader": "Mettre à jour",
     "updating-the-dll": "Mise à jour de la DLL…",
@@ -1253,10 +1255,10 @@
     "loaderAlreadyPresent": "loader déjà présent",
     "uplay-r2-installed": "Uplay R2 installé",
     "uplay-r2-installed-message": "{installedLabel} — {mapped} succès mappé(s)",
-    "uplay-r2-install-failed": "Échec de l'installation de Uplay R2",
-    "could-not-install-or-configure-goldberg-uplay-r2": "Impossible d'installer ou de configurer Goldberg Uplay R2.",
+    "uplay-r2-install-failed": "Échec de l’installation de Uplay R2",
+    "could-not-install-or-configure-goldberg-uplay-r2": "Impossible d’installer ou de configurer Goldberg Uplay R2.",
     "diagnose-uplay-r2-setup": "Diagnostiquer la configuration Uplay R2",
-    "select-install-folder-uplay-r2-loader-diagnose": "Sélectionne le dossier d'installation du jeu (où se trouve la .dll du loader Uplay R2)",
+    "select-install-folder-uplay-r2-loader-diagnose": "Sélectionne le dossier d’installation du jeu (où se trouve la .dll du loader Uplay R2)",
     "could-not-diagnose-the-uplay-r2-setup": "Impossible de diagnostiquer la configuration Uplay R2.",
     "refresh-game-data": "Actualiser les données du jeu",
     "copy-steam-appid": "Copier l’AppID Steam",
@@ -1274,7 +1276,7 @@
     "steam-uninstall-detail": "Steam supprimera les fichiers locaux du jeu. Tu pourras le réinstaller plus tard depuis ta bibliothèque.",
     "uninstall": "Désinstaller",
     "steam-uninstall-failed": "Échec de la désinstallation Steam",
-    "steam-uninstall-open-failed": "Impossible d'ouvrir Steam pour désinstaller ce jeu.",
+    "steam-uninstall-open-failed": "Impossible d’ouvrir Steam pour désinstaller ce jeu.",
     "steam-opened": "Steam ouvert",
     "steam-will-handle-the-uninstall-the-game-list-will-refresh-autom": "Steam va gérer la désinstallation. La liste se rafraîchira automatiquement.",
     "run-game-uninstaller": "Lancer le désinstalleur du jeu…",
@@ -1312,14 +1314,14 @@
     "re-download-cover": "Retélécharger la jaquette",
     "use-another-steam-appid": "Utiliser un autre AppID Steam…",
     "steam-appid-to-pull-cover-art-from": "AppID Steam à utiliser pour la jaquette :",
-    "no-steam-cover-art-for-appid": "Aucune jaquette Steam trouvée pour l'AppID {appid}.",
+    "no-steam-cover-art-for-appid": "Aucune jaquette Steam trouvée pour l’AppID {appid}.",
     "choose-local-image": "Choisir une image locale…",
     "choose-cover-image": "Choisir une jaquette",
     "could-not-set-cover": "Impossible de définir la jaquette : {error}",
     "reset-cover-to-default": "Réinitialiser la jaquette",
     "game-list-generation-failure": "Échec de la génération de la liste des jeux",
     "no-steam-achievements-found": "Aucun succès Steam trouvé",
-    "no-ach-unconfigured": "Ce dossier n'a pas encore de configuration Goldberg/GBE avec un AppID Steam fiable.",
+    "no-ach-unconfigured": "Ce dossier n’a pas encore de configuration Goldberg/GBE avec un AppID Steam fiable.",
     "no-ach-no-schema": "AW affiche le jeu, mais Steam ne fournit aucun schéma de succès pour cet AppID.",
     "could-not-start-the-game": "Impossible de démarrer le jeu.",
     "no-detected-game-with-a-known-install-folder-to-fix": "Aucun jeu détecté avec un dossier d’installation connu à réparer.",
@@ -1360,8 +1362,8 @@
     "ok": "OK",
     "goldberg-gbe-fork-scan": "Analyse Goldberg / GBE Fork",
     "scan-found-message": "{found} installation(s) trouvée(s) — {missing} non configurée(s)",
-    "emu-login-missing": "Renseigne d'abord l'identifiant et le mot de passe Steam.",
-    "emu-login-running": "Connexion à Steam… Saisis le code Steam Guard s'il est demandé.",
+    "emu-login-missing": "Renseignez d’abord l’identifiant et le mot de passe Steam.",
+    "emu-login-running": "Connexion à Steam… Saisissez le code Steam Guard s’il est demandé.",
     "emu-login-success": "Connexion Steam réussie. Le refresh token generate_emu_config a été sauvegardé.",
     "emu-login-failed": "Échec de la connexion Steam",
     "epic-connected-as": "Connecté{suffix}",
@@ -1372,7 +1374,7 @@
     "epic-failed": "Échec de la connexion Epic",
     "epic-disconnected": "Compte Epic déconnecté.",
     "epic-title": "Compte Epic Games",
-    "epic-desc": "Optionnel. Connecte ton compte Epic pour afficher les succès que tu as débloqués dans les jeux Epic installés. Les noms, descriptions et la rareté fonctionnent déjà sans connexion. Ton jeton Epic est stocké chiffré sur ce PC.",
+    "epic-desc": "Optionnel. La connexion affiche les succès que vous avez déjà débloqués dans les jeux Epic installés ; les noms, descriptions et la rareté fonctionnent sans elle. Votre jeton est stocké chiffré sur ce PC.",
     "epic-btn-hint": "ouvre la fenêtre de connexion Epic",
     "connected": "Connecté",
     "disconnect": "Déconnecter",
@@ -1389,13 +1391,14 @@
     "xbox-imported": "Importation terminée : {created} créé(s), {updated} mis à jour, {failed} échec(s).",
     "xbox-import-failed": "Échec de l’importation Xbox",
     "xbox-title": "Compte Xbox PC",
-    "xbox-desc": "Optionnel. Connecte ton compte Microsoft / Xbox Network pour importer ta bibliothèque Xbox PC (Game Pass et Microsoft Store) : noms, descriptions, état de déblocage et rareté sont récupérés depuis Xbox Network puis mis en cache localement. Ton jeton est stocké chiffré sur ce PC.",
+    "xbox-desc": "Optionnel. Importe votre bibliothèque Xbox PC (Game Pass et Microsoft Store) : succès, état de déblocage et rareté viennent de Xbox Network et sont mis en cache localement. Votre jeton est stocké chiffré sur ce PC.",
     "xbox-btn-hint": "ouvre la fenêtre de connexion Microsoft",
+    "xbox-import-btn-label": "Importer la bibliothèque Xbox PC",
     "xbox-import-btn-hint": "récupère les succès depuis Xbox Network",
     "xbox-reconnect": "Reconnecter",
     "xbox-connect": "Connecter le compte Xbox",
     "theme-layer-bg": "Fond de la fenêtre",
-    "theme-layer-bg-hint": "Derrière toute l'interface",
+    "theme-layer-bg-hint": "Derrière toute l’interface",
     "theme-layer-header": "Barre du haut",
     "theme-layer-header-hint": "La fine barre tout en haut",
     "theme-layer-panel": "Panneau de bibliothèque",
@@ -1419,7 +1422,7 @@
     "theme-effect-veil": "Voile coloré",
     "theme-effect-blur": "Flou",
     "theme-layer-choose-image": "Image…",
-    "theme-layer-remove-image": "Retirer l'image",
+    "theme-layer-remove-image": "Retirer l’image",
     "theme-effect-label": "Effet",
     "theme-effect-color-label": "Couleur",
     "theme-effect-opacity-label": "Opacité",
@@ -1439,9 +1442,9 @@
     "force-recheck-failed": "Échec de la vérification : {error}",
     "no-game-found": "Aucun jeu trouvé.",
     "invalid-folder": "Dossier invalide",
-    "error-adding-custom-folder": "Erreur lors de l'ajout du dossier personnalisé",
-    "error-adding-library-folder": "Erreur lors de l'ajout du dossier de bibliothèque",
-    "generate-configs-detail-auto-fix": "Le bouton lance un scan complet maintenant. Pendant ce scan, AW Next applique l'auto-fix GBE/Goldberg aux jeux détectés qui ont un dossier d'installation connu. Les réparations se font en arrière-plan : relance un scan si un jeu vient juste d'être corrigé et n'apparaît pas encore comme prêt.",
+    "error-adding-custom-folder": "Erreur lors de l’ajout du dossier personnalisé",
+    "error-adding-library-folder": "Erreur lors de l’ajout du dossier de bibliothèque",
+    "generate-configs-detail-auto-fix": "Le bouton lance un scan complet maintenant. Pendant ce scan, AW Next applique l’auto-fix GBE/Goldberg aux jeux détectés qui ont un dossier d’installation connu. Les réparations se font en arrière-plan : relance un scan si un jeu vient juste d’être corrigé et n’apparaît pas encore comme prêt.",
     "generate-configs-detail-scan-only": "Le bouton lance seulement un scan complet pour détecter les jeux. La réparation automatique est désactivée dans Configuration émulateur > Corriger automatiquement les nouveaux jeux détectés.",
     "generate-configs": "Génération des configs",
     "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "{found} installation(s) compatible(s) Steam détectée(s) — {missing} sans fix existant et éligible(s).",
@@ -1579,16 +1582,16 @@
     "gh-issue-mapping": "version Steam correspondante",
     "gh-why-ready": "Ce jeu est détecté, ses données de succès sont disponibles et AW Next surveille ses déblocages.",
     "gh-why-attention": "Ce jeu fonctionne, mais une partie de sa configuration est incomplète. Les vérifications ci-dessous indiquent laquelle.",
-    "gh-why-not-installed": "Ce jeu n'est pas installé sur ce PC, ou AW Next ne sait pas où il se trouve. Choisis son exécutable pour qu'il puisse être suivi.",
-    "gh-why-install-gone": "Le dossier du jeu connu d'AW Next a disparu : déplacé, désinstallé, ou sur un disque non connecté. Indique à nouveau son emplacement.",
-    "gh-why-no-achievement-data": "Aucune liste de succès n'a été trouvée pour ce jeu, il n'y a donc rien à suivre. C'est normal pour un jeu sans succès.",
-    "gh-why-emulator-missing": "Ce jeu a besoin d'un émulateur Steam pour enregistrer les succès, et aucun n'est installé dans son dossier. Utilise le fix émulateur du menu clic droit du jeu.",
-    "gh-why-emulator-runtime-missing": "Les données de succès sont en place, mais le fichier d'émulateur qui les lit est absent du dossier du jeu : rien ne sera jamais enregistré. AW Next peut le remettre.",
-    "gh-why-uplay-broken": "La configuration de l'émulateur Ubisoft de ce jeu est incomplète : les déblocages ne sont pas enregistrés. Réapplique le fix Uplay R2 depuis le menu clic droit.",
+    "gh-why-not-installed": "Ce jeu n’est pas installé sur ce PC, ou AW Next ne sait pas où il se trouve. Choisis son exécutable pour qu’il puisse être suivi.",
+    "gh-why-install-gone": "Le dossier du jeu connu d’AW Next a disparu : déplacé, désinstallé, ou sur un disque non connecté. Indique à nouveau son emplacement.",
+    "gh-why-no-achievement-data": "Aucune liste de succès n’a été trouvée pour ce jeu, il n’y a donc rien à suivre. C’est normal pour un jeu sans succès.",
+    "gh-why-emulator-missing": "Ce jeu a besoin d’un émulateur Steam pour enregistrer les succès, et aucun n’est installé dans son dossier. Utilise le fix émulateur du menu clic droit du jeu.",
+    "gh-why-emulator-runtime-missing": "Les données de succès sont en place, mais le fichier d’émulateur qui les lit est absent du dossier du jeu : rien ne sera jamais enregistré. AW Next peut le remettre.",
+    "gh-why-uplay-broken": "La configuration de l’émulateur Ubisoft de ce jeu est incomplète : les déblocages ne sont pas enregistrés. Réapplique le fix Uplay R2 depuis le menu clic droit.",
     "gh-why-achievement-data-incomplete": "La liste de succès dont dispose AW Next ne correspond pas à ce que le jeu va chercher : certains déblocages seraient manqués. Elle peut être réécrite à partir des données officielles.",
-    "gh-why-no-progress-yet": "Le jeu est détecté et les données de succès sont disponibles, mais aucune progression n'a encore été trouvée. Le problème vient probablement de la configuration du jeu ou de l'émulateur, pas des notifications.",
+    "gh-why-no-progress-yet": "Le jeu est détecté et les données de succès sont disponibles, mais aucune progression n’a encore été trouvée. Le problème vient probablement de la configuration du jeu ou de l’émulateur, pas des notifications.",
     "gh-why-install-unknown": "AW Next lit les succès de ce jeu dans ses fichiers de sauvegarde, mais ne sait pas où le jeu est installé. Localise-le pour activer le temps de jeu et les réparations.",
-    "gh-why-notification-failed": "Ce jeu est correctement suivi et ses déblocages sont bien vus, mais la dernière notification n'a pas pu être envoyée. Envoie une notification de test pour vérifier l'affichage.",
+    "gh-why-notification-failed": "Ce jeu est correctement suivi et ses déblocages sont bien vus, mais la dernière notification n’a pas pu être envoyée. Envoie une notification de test pour vérifier l’affichage.",
     "reset-ach-menu": "Réinitialiser les succès…",
     "reset-ach-restore-menu": "Restaurer une sauvegarde de succès",
     "reset-ach-backup-files": "{count} fichier(s)",
@@ -1624,17 +1627,17 @@
     "gh-appid-confirm-detail": "Ne fais ceci que si {game} est bien le jeu {appidExpected} sur Steam. Si l’émulateur a été configuré volontairement pour {appidOnDisk}, annule : c’est le fichier qui a raison et la fiche du jeu qu’il faut corriger. Le fichier actuel est sauvegardé dans steam_settings\\.aw-backups.",
     "gh-appid-done-title": "Fichier d’identification corrigé",
     "gh-appid-done-message": "steam_appid.txt contient maintenant {appid}.",
-    "gh-simple-notifications-failed": "La dernière notification n'a pas pu être envoyée",
+    "gh-simple-notifications-failed": "La dernière notification n’a pas pu être envoyée",
     "gh-simple-notifications-fallback": "Fonctionnel — repli Windows actif",
     "gh-notif-unconfirmed": "diffusion non confirmée",
-    "gh-notif-reason-failed": "l'envoi a échoué",
+    "gh-notif-reason-failed": "l’envoi a échoué",
     "gh-notif-reason-fullscreen": "jeu en plein écran exclusif",
     "gh-notif-reason-unavailable": "overlay indisponible",
-    "gh-notif-reason-overlay-failing": "l'overlay n'a pas pu s'afficher",
+    "gh-notif-reason-overlay-failing": "l’overlay n’a pas pu s’afficher",
     "gh-notif-reason-remembered": "ce qui a fonctionné pour ce jeu",
-    "gh-why-not-watched": "Tout est en place, mais AW Next ne surveille pas ce jeu pendant qu'il tourne : ni temps de jeu ni notifications en direct.",
+    "gh-why-not-watched": "Tout est en place, mais AW Next ne surveille pas ce jeu pendant qu’il tourne : ni temps de jeu ni notifications en direct.",
     "gh-why-progress-muted": "Ce jeu est correctement configuré. Les notifications de progression sont coupées pour lui : seuls les déblocages complets seront annoncés.",
-    "gh-why-nothing-unlocked-yet": "Ce jeu est correctement configuré et AW Next le surveille. Rien n'a encore été débloqué, c'est simplement un jeu sans progression.",
+    "gh-why-nothing-unlocked-yet": "Ce jeu est correctement configuré et AW Next le surveille. Rien n’a encore été débloqué, c’est simplement un jeu sans progression.",
     "gh-confirm-repair-title": "Réécrire les données de succès ?",
     "gh-confirm-repair-message": "AW Next va écrire la liste des succès, les icônes et les réglages de l’émulateur de ce jeu.",
     "gh-confirm-repair-detail": "Fichiers écrits dans :\n{target}\n\n{writes}\n\nToute version existante de ces fichiers est d’abord copiée dans {backup}.",
@@ -1682,7 +1685,7 @@
     "unknownReward": "Récompense inconnue",
     "trophy": "Trophée",
     "rareAchievement": "Succès rare",
-    "rareDescription": "Seulement {percent} % des joueurs l'ont débloqué.",
+    "rareDescription": "Seulement {percent} % des joueurs l’ont débloqué.",
     "testAchievement": "Succès de test",
     "testDescription": "Ceci est une notification de test depuis AW Next.",
     "playedFor": "Vous avez joué pendant {duration}",

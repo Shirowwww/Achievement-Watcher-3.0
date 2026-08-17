@@ -78,7 +78,8 @@ function testMessageAndOptions(kind, options, game = null) {
     appid: (game && game.appid) || TEST_APPID,
     name: (game && game.name) || TEST_GAME,
     gameIcon: (game && game.icon) || TEST_GAME_ICON,
-    image: (game && game.image) || TEST_HEADER,
+    // A real game with no header art uses its own square logo rather than borrowing the sample's.
+    image: (game && (game.image || game.icon)) || TEST_HEADER,
     // Without per-achievement artwork, the game's own icon reads better than another game's badge.
     icon: (game && (game.achievementIcon || game.icon)) || TEST_ACHIEVEMENT_ICON,
   };

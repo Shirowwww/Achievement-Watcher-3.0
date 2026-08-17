@@ -22,6 +22,28 @@ const { legacyPresetAlias } = require(path.join(appPath, 'util/notificationPrese
   collide with one: util/presetSchema.js's SOUND_RE requires an extension, and this has none.
 */
 const RANDOM_SOUND_VALUE = '__random__';
+
+/*
+  Cards whose labels are written imperatively rather than by locale/loader.js's DOM walk. They run
+  once while the panel is wired, so without this they would keep the language that was active then —
+  and, when they run before the locale bundle is in place, the English/French literal in the `t()`
+  call. The loader replays them after applying a language.
+*/
+const localeRefreshers = [];
+function registerLocaleRefresh(apply) {
+  localeRefreshers.push(apply);
+  apply();
+}
+window.refreshSettingsLocaleText = () => {
+  for (const apply of localeRefreshers) {
+    try {
+      apply();
+    } catch (err) {
+      debug.log(`settings i18n refresh failed: ${err}`);
+    }
+  }
+};
+
 let listeningHotkey = false;
 let keysDown = new Set();
 let keys = '';
@@ -447,6 +469,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       if (typeof window.resetSettingsSearch === 'function') window.resetSettingsSearch();
       // Idempotent: sections already wired keep their key and are skipped.
       if (typeof window.initCollapsibleSections === 'function') window.initCollapsibleSections();
+      // Rows are built lazily, so the derived control names and icon roles are applied per open too.
+      if (typeof window.refreshAccessibleNames === 'function') window.refreshAccessibleNames();
       renderBlacklistManager().catch((err) => debug.log(err));
 
       for (let option in app.config.achievement) {
@@ -1205,17 +1229,21 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const setStatus = (text, cls = '') => status.removeClass('success error running').addClass(cls).text(text || '');
 
       // Localize the static card labels here (kept out of loader.js's fragile nth-child i18n).
-      $('#epic-connect-title').text(t('epic-title', 'Epic Games account', 'Compte Epic Games'));
-      $('#epic-connect-desc').text(
-        t(
-          'epic-desc',
-          'Optional. Connect your Epic account to show which achievements you have unlocked in installed Epic games. Achievement names, descriptions and rarity already work without connecting. Your Epic token is stored encrypted on this PC.',
-          'Optionnel. Connecte ton compte Epic pour afficher les succès que tu as débloqués dans les jeux Epic installés. Les noms, descriptions et la rareté fonctionnent déjà sans connexion. Ton jeton Epic est stocké chiffré sur ce PC.'
-        )
-      );
-      $('#epic-connect-btn-hint').text(t('epic-btn-hint', 'opens the Epic sign-in window', 'ouvre la fenêtre de connexion Epic'));
-      $('#epic-connect-badge-label').text(t('connected', 'Connected', 'Connecté'));
-      $('#epic-disconnect-btn-label').text(t('disconnect', 'Disconnect', 'Déconnecter'));
+      // Registered so a language change repaints them: this runs once, and `t()` falls back to the
+      // literals below whenever it runs before the locale bundle is in place.
+      registerLocaleRefresh(function applyEpicLabels() {
+        $('#epic-connect-title').text(t('epic-title', 'Epic Games account', 'Compte Epic Games'));
+        $('#epic-connect-desc').text(
+          t(
+            'epic-desc',
+            'Optional. Connecting shows which achievements you have already unlocked in installed Epic games; names, descriptions and rarity work without it. Your token is stored encrypted on this PC.',
+            'Optionnel. La connexion affiche les succès que vous avez déjà débloqués dans les jeux Epic installés ; les noms, descriptions et la rareté fonctionnent sans elle. Votre jeton est stocké chiffré sur ce PC.'
+          )
+        );
+        $('#epic-connect-btn-hint').text(t('epic-btn-hint', 'opens the Epic sign-in window', 'ouvre la fenêtre de connexion Epic'));
+        $('#epic-connect-badge-label').text(t('connected', 'Connected', 'Connecté'));
+        $('#epic-disconnect-btn-label').text(t('disconnect', 'Disconnect', 'Déconnecter'));
+      });
 
       async function refresh() {
         let s = {};
@@ -1293,18 +1321,21 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const disconnectBtn = $('#xbox-disconnect-btn');
       const setStatus = (text, cls = '') => status.removeClass('success error running').addClass(cls).text(text || '');
 
-      $('#xbox-connect-title').text(t('xbox-title', 'Xbox PC account', 'Compte Xbox PC'));
-      $('#xbox-connect-desc').text(
-        t(
-          'xbox-desc',
-          'Optional. Connect your Microsoft / Xbox Network account to import your Xbox PC library (Game Pass and Microsoft Store games): achievement names, descriptions, unlock state and rarity are fetched from Xbox Network and cached locally. Your session token is stored encrypted on this PC.',
-          'Optionnel. Connecte ton compte Microsoft / Xbox Network pour importer ta bibliothèque Xbox PC (Game Pass et Microsoft Store) : noms, descriptions, état de déblocage et rareté sont récupérés depuis Xbox Network puis mis en cache localement. Ton jeton est stocké chiffré sur ce PC.'
-        )
-      );
-      $('#xbox-connect-btn-hint').text(t('xbox-btn-hint', 'opens the Microsoft sign-in window', 'ouvre la fenêtre de connexion Microsoft'));
-      $('#xbox-import-btn-hint').text(t('xbox-import-btn-hint', 'fetch achievements from Xbox Network', 'récupère les succès depuis Xbox Network'));
-      $('#xbox-connect-badge-label').text(t('connected', 'Connected', 'Connecté'));
-      $('#xbox-disconnect-btn-label').text(t('disconnect', 'Disconnect', 'Déconnecter'));
+      registerLocaleRefresh(function applyXboxLabels() {
+        $('#xbox-connect-title').text(t('xbox-title', 'Xbox PC account', 'Compte Xbox PC'));
+        $('#xbox-connect-desc').text(
+          t(
+            'xbox-desc',
+            'Optional. Imports your Xbox PC library (Game Pass and Microsoft Store): achievements, unlock state and rarity come from Xbox Network and are cached locally. Your session token is stored encrypted on this PC.',
+            'Optionnel. Importe votre bibliothèque Xbox PC (Game Pass et Microsoft Store) : succès, état de déblocage et rareté viennent de Xbox Network et sont mis en cache localement. Votre jeton est stocké chiffré sur ce PC.'
+          )
+        );
+        $('#xbox-connect-btn-hint').text(t('xbox-btn-hint', 'opens the Microsoft sign-in window', 'ouvre la fenêtre de connexion Microsoft'));
+        $('#xbox-import-btn-label').text(t('xbox-import-btn-label', 'Import Xbox PC library', 'Importer la bibliothèque Xbox PC'));
+        $('#xbox-import-btn-hint').text(t('xbox-import-btn-hint', 'fetch achievements from Xbox Network', 'récupère les succès depuis Xbox Network'));
+        $('#xbox-connect-badge-label').text(t('connected', 'Connected', 'Connecté'));
+        $('#xbox-disconnect-btn-label').text(t('disconnect', 'Disconnect', 'Déconnecter'));
+      });
 
       async function refresh() {
         let s = {};
@@ -2390,7 +2421,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#btn-settings-save').css('pointer-events', 'initial');
     });
 
-    $('#blacklist-add-input').attr('placeholder', t('blacklist-add-placeholder', 'Steam App ID', 'ID d’app Steam'));
+    const blacklistLabel = t('blacklist-add-placeholder', 'Steam App ID', 'ID d’app Steam');
+    $('#blacklist-add-input').attr({ placeholder: blacklistLabel, 'aria-label': blacklistLabel });
     $('#blacklist-add-btn span').text(t('blacklist-add-button', 'Add', 'Ajouter'));
 
     // Resolve missing numeric blacklist names with a short, cacheable Steam lookup.

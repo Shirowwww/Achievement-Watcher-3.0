@@ -76,13 +76,6 @@
         </div>
       </section>
       <section id="achievement">
-        <div id="search-bar-float">
-          <div class="wrapper">
-            <i class="fas fa-search"></i>
-            <input type="search" placeholder="" />
-          </div>
-        </div>
-
         <div class="wrapper">
           <div class="header">
             <div class="title">
@@ -600,7 +593,7 @@
                   <i class="fas fa-shield-alt" aria-hidden="true"></i>
                   <div>
                     <strong id="source-official-title">Official platforms</strong>
-                    <p id="source-official-description">Steam, Ubisoft Connect, GOG Galaxy, Epic Games and Xbox PC are supported here. Enable the shield-marked sources below; only libraries detected on this PC can be shown.</p>
+                    <p id="source-official-description">Enable the shield-marked sources below. Only libraries detected on this PC can be shown.</p>
                   </div>
                 </div>
                 <ul id="options-source">
@@ -1494,8 +1487,6 @@
                     </div>
                   </li>
                   <li class="pd-row">
-                    <div class="left"><i class="fas fa-magic"></i> <span data-lang="intro"></span></div>
-
                     <div class="pd-bar">
                       <label class="pd-file"><span data-lang="load"></span><select autocomplete="off" id="pd-load"></select></label>
                       <label class="pd-file"><span data-lang="name"></span><input type="text" id="pd-name" maxlength="48" /></label>
@@ -2468,7 +2459,7 @@
               <span id="onboarding-progress-text">1 / 6</span>
               <span class="onboarding-progress-track" aria-hidden="true"><span id="onboarding-progress-fill"></span></span>
             </div>
-            <button type="button" id="onboarding-close" class="icon-button" title="Close"><i class="fas fa-times"></i></button>
+            <button type="button" id="onboarding-close" class="icon-button" title="Close" aria-label="Close"><i class="fas fa-times" aria-hidden="true"></i></button>
           </div>
 
           <div class="onboarding-body">
@@ -2487,7 +2478,7 @@
                   <i class="fas fa-language"></i>
                   <div>
                     <h2 id="onboard-language-title">Choose language</h2>
-                    <p id="onboard-language-copy">Choose the language before the first scan.</p>
+                    <p id="onboard-language-copy">Games, metadata, achievements and Steam caches all load in this language from the start.</p>
                   </div>
                 </div>
                 <div class="onboarding-form-grid">
@@ -2504,29 +2495,28 @@
                   <i class="fas fa-info-circle"></i>
                   <div>
                     <h2 id="onboard-intro-title">How it works</h2>
-                    <p id="onboard-intro-copy">AW Next scans known save folders and your game libraries, then the Watchdog keeps running in the tray for unlock notifications and the in-game overlay.</p>
                   </div>
                 </div>
                 <div class="onboarding-cards">
                   <div>
                     <i class="fas fa-search"></i>
                     <strong id="onboard-card-scan-title">Scan</strong>
-                    <span id="onboard-card-scan-copy">Steam, GOG, Epic, emulators and Goldberg/GBE folders are detected from saved achievement files.</span>
+                    <span id="onboard-card-scan-copy">Launcher, emulator and achievement-file locations are detected automatically — you review each one before the first scan.</span>
                   </div>
                   <div>
                     <i class="fas fa-bell"></i>
                     <strong id="onboard-card-watch-title">Watch</strong>
-                    <span id="onboard-card-watch-copy">The background Watchdog watches files and game launches so unlocks appear while you play.</span>
+                    <span id="onboard-card-watch-copy">The background Watchdog spots the game when it launches, tracks playtime and watches its achievement files.</span>
                   </div>
                   <div>
                     <i class="fas fa-tools"></i>
                     <strong id="onboard-card-fix-title">Repair</strong>
-                    <span id="onboard-card-fix-copy">For emulated Steam games, the right-click fix can add GBE Fork, achievement schemas and DLC data.</span>
+                    <span id="onboard-card-fix-copy">For emulated Steam games, the right-click fix installs GBE Fork and writes the achievement schema and DLC data.</span>
                   </div>
                   <div>
                     <i class="fas fa-layer-group"></i>
                     <strong id="onboard-card-overlay-title">In-game overlay</strong>
-                    <span id="onboard-card-overlay-copy">A small achievements panel you can bring up over the game with a hotkey (default Ctrl+Shift+K). Change it any time in Settings &gt; General, next to the hotkey field.</span>
+                    <span id="onboard-card-overlay-copy">A small achievements panel you bring up over the game with a hotkey — Ctrl+Shift+K by default.</span>
                   </div>
                 </div>
               </section>
@@ -2616,7 +2606,7 @@
                   <i class="fas fa-sliders-h"></i>
                   <div>
                     <h2 id="onboard-settings-title">Recommended settings</h2>
-                    <p id="onboard-settings-copy">These are the main switches most users need first. Everything remains editable later in Settings.</p>
+                    <p id="onboard-settings-copy">The essentials for your library, look and notifications. Everything stays editable later.</p>
                   </div>
                 </div>
                 <div class="onboarding-form-grid">
@@ -2692,7 +2682,6 @@
           <div class="onboarding-footer">
             <div id="onboarding-status" aria-live="polite"></div>
             <div class="onboarding-actions">
-              <button type="button" id="onboarding-skip" class="text-button">Skip</button>
               <button type="button" id="onboarding-prev" class="inline-action-btn secondary"><i class="fas fa-chevron-left"></i> <span>Back</span></button>
               <button type="button" id="onboarding-next" class="inline-action-btn primary"><span>Next</span> <i class="fas fa-chevron-right"></i></button>
             </div>

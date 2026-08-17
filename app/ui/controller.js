@@ -185,7 +185,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 
     function focusSearch() {
       const root = activeRoot();
-      const input = root.querySelector('#achievement-search-input, #search-bar input[type="search"], #search-bar-float input[type="search"]');
+      const input = root.querySelector('#achievement-search-input, #search-bar input[type="search"]');
       if (isVisible(input)) {
         setSelected(input);
         input.select();

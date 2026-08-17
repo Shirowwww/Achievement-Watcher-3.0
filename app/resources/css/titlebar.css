@@ -126,9 +126,15 @@ ul#window-controls {
 }
 
 #start-watchdog {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   -webkit-app-region: no-drag;
-  line-height: 30px;
+  margin-left: 8px;
+  padding: 0 8px;
+  height: 20px;
+  border-radius: 5px;
+  cursor: pointer;
   z-index: 99;
   color: var(--text);
   font-family: 'Open-Sans', sans-serif;
@@ -136,7 +142,14 @@ ul#window-controls {
   opacity: 0.9;
 }
 
+#start-watchdog[hidden] {
+  display: none;
+}
+
 #watchdog-status .status-text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
   color: var(--text);
   font-family: 'Open-Sans', sans-serif;
   font-size: 13px;
@@ -145,6 +158,37 @@ ul#window-controls {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+#watchdog-status .status-text > strong {
+  font-weight: 600;
+}
+
+/* The separator is drawn here so no locale has to carry punctuation. */
+#watchdog-status .status-detail {
+  position: relative;
+  padding-left: 9px;
+  color: var(--text-muted);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#watchdog-status .status-detail::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.1em;
+  height: 1em;
+  border-left: 1px solid color-mix(in srgb, var(--text-muted) 45%, transparent);
+}
+
+/* The state alone carries the meaning; the explanation is the first thing to go when the title bar
+   runs out of room. */
+@media (max-width: 820px) {
+  #watchdog-status .status-detail {
+    display: none;
+  }
 }
 
 ul > li {

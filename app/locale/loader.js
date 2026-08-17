@@ -39,12 +39,25 @@ module.exports.load = async (lang = 'english') => {
       // Expose the merged locale so imperative strings (dialogs, menus) can be
       // translated through the same files via locale/t.js.
       window.appLocale = template;
-      // The dynamic Help panel reads the same locale + live settings; refresh it whenever the
-      // language payload is (re)applied so it never shows stale labels or hard-coded shortcuts.
-      if (window.AchievementHelp && typeof window.AchievementHelp.render === 'function') {
+      /*
+        Views that write their own text instead of being reached by the DOM walk below: the Help
+        panel (built from locale + live settings), the title-bar Watchdog status (painted from an
+        IPC push) and the Settings account cards. Without this they keep the previous language —
+        the status bar until the next poll, the others until the panel is rebuilt. None of them may
+        break loading a language, so each is optional and its failure is contained.
+      */
+      const repaint = [
+        () => window.AchievementHelp.render($),
+        () => window.refreshWatchdogStatusText(),
+        () => window.refreshSettingsLocaleText(),
+        () => window.refreshAccessibleNames(),
+      ];
+      for (const render of repaint) {
         try {
-          window.AchievementHelp.render($);
-        } catch {}
+          render();
+        } catch (err) {
+          console.warn(err);
+        }
       }
     } else {
       throw 'Unexpected Error';
@@ -134,10 +147,13 @@ function translateUI(lang, locale, template) {
   $('#lock .header .title span').text(clear(template.locked));
   $('#achievement .achievements').data('lang-globalStat', clear(template.globalStat));
   if (template.achievementSearchPlaceholder) {
-    $('#achievement-search-input').attr('placeholder', clear(template.achievementSearchPlaceholder));
+    // The field carries no visible label, so the placeholder text is its accessible name too.
+    $('#achievement-search-input').attr({
+      placeholder: clear(template.achievementSearchPlaceholder),
+      'aria-label': clear(template.achievementSearchPlaceholder),
+    });
   }
   $('#unlock').data('lang-noneUnlocked', clear(template.noneUnlocked));
-  $('#unlock').data('lang-play', clear(template.play));
   $('#unlock').data('lang-noneUnlockedHint', clear(template.noneUnlockedHint));
   // Label for the help link next to that hint. Reuses the Help panel's own section title so the
   // link and the section it points at are worded identically in every language.

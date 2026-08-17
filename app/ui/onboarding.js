@@ -118,7 +118,7 @@ const onboardingInterfaceMode = require(path.join(appPath, 'util/interfaceMode.j
 
   function setPersistBusy(isBusy) {
     persistRunning = isBusy;
-    $('#onboarding-next, #onboarding-prev, #onboarding-skip, #onboarding-close').prop('disabled', isBusy);
+    $('#onboarding-next, #onboarding-prev, #onboarding-close').prop('disabled', isBusy);
     $('#onboarding').attr('aria-busy', String(isBusy));
     if (!isBusy) updateStepButtons();
   }
@@ -129,7 +129,6 @@ const onboardingInterfaceMode = require(path.join(appPath, 'util/interfaceMode.j
     $('#btn-onboarding-open span').text(t.settingsButton);
     $('#onboarding-settings-help').text(t.settingsHelp);
     $('#onboarding-eyebrow').text(t.eyebrow);
-    $('#onboarding-close').attr('title', t.close);
     $('.onboarding-steps').attr('aria-label', t.navLabel);
     $('.onboarding-steps button').each(function (index) {
       $(this).find('span').text(t.steps[index]);
@@ -139,7 +138,6 @@ const onboardingInterfaceMode = require(path.join(appPath, 'util/interfaceMode.j
     $('#onboard-language-label').text(t.language);
     $('#onboard-language-hint').text(t.languageHint);
     $('#onboard-intro-title').text(t.introTitle);
-    $('#onboard-intro-copy').text(t.introCopy);
     $('#onboard-card-scan-title').text(t.scanTitle);
     $('#onboard-card-scan-copy').text(t.scanCopy);
     $('#onboard-card-watch-title').text(t.watchTitle);
@@ -203,7 +201,6 @@ const onboardingInterfaceMode = require(path.join(appPath, 'util/interfaceMode.j
     $("#onboard-hidden option[value='true']").text(t.show);
     $("#onboard-hidden option[value='false']").text(t.hide);
     $('#onboarding-prev span').text(t.back);
-    $('#onboarding-skip').text(t.skip);
     updateStepButtons();
     updateProgress();
     renderDirLists();
@@ -480,8 +477,10 @@ const onboardingInterfaceMode = require(path.join(appPath, 'util/interfaceMode.j
     $('#onboarding-prev').prop('disabled', step === 0);
     $('#onboarding-next span').text(step === STEP_COUNT - 1 ? t.finish : t.next);
     $('#onboarding-next i').toggleClass('fa-check', step === STEP_COUNT - 1).toggleClass('fa-chevron-right', step !== STEP_COUNT - 1);
-    $('#onboarding-skip').text(isFirstRunSession ? t.skip : t.close).toggle(!isFirstRunSession);
-    $('#onboarding-close').toggle(!isFirstRunSession);
+    // One dismiss affordance, always visible. It used to be hidden on a first run while a click on
+    // the backdrop still dismissed the guide — an escape hatch nobody could see.
+    const dismiss = isFirstRunSession ? t.skip : t.close;
+    $('#onboarding-close').attr({ title: dismiss, 'aria-label': dismiss });
   }
 
   function mergeSaveDirs(existing, additions) {
@@ -648,7 +647,7 @@ const onboardingInterfaceMode = require(path.join(appPath, 'util/interfaceMode.j
       if (step === STEP_COUNT - 1) finish();
       else showStep(step + 1);
     });
-    $('#onboarding-skip, #onboarding-close, #onboarding .overlay').on('click', skip);
+    $('#onboarding-close, #onboarding .overlay').on('click', skip);
     $('.onboarding-steps button').on('click', function () {
       showStep(parseInt($(this).data('step'), 10));
     });

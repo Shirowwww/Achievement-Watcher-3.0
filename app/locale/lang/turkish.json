@@ -49,7 +49,6 @@
   "revealedOnceUnlocked": "Her başarımın ayrıntıları açıldığında gösterilecek",
   "hiddenDescriptionPlaceholder": "Gizli — göstermek için tıkla",
   "noneUnlocked": "Henüz açılmış başarım yok",
-  "play": "Oynamaya başla !",
   "noneUnlockedHint": "Hiç açılan görmüyor musun?",
   "scrollUp": "Yukarı çık",
   "allGamesBackButton": "Tüm oyunlar",
@@ -65,7 +64,7 @@
     "restoreGBE": "En son GBE/Goldberg yedeğini geri yükle…",
     "installGBE": "Emülatör düzeltmesini uygula…",
     "reinstallGBE": "Emülatör düzeltmesini yeniden uygula…",
-    "removeDRM": "DRM'yi kaldır…",
+    "removeDRM": "DRM’yi kaldır…",
     "crackfix": "Topluluk düzeltmesi bul (CrakFiles)…",
     "openIconCache": "Simge önbelleği",
     "openDbCache": "Veri önbelleği (.db)",
@@ -120,7 +119,7 @@
       },
       "kill": {
         "name": "Çalışmaya devam et",
-        "description": "Ana uygulama kapansa bile Watchdog'u çalışır durumda tut."
+        "description": "Ana uygulama kapansa bile Watchdog’u çalışır durumda tut."
       }
     },
     "overlay": {
@@ -133,8 +132,8 @@
       },
       "hotkey": {
         "name": "Oyun içi yer paylaşımı kısayolu",
-        "description": "Bir oyun çalışırken bu kısayola basarak oyun içi başarım overlay'ini gösterebilirsin. Değiştirmek için kalem simgesine, oyun başlatmadan overlay'i önizlemek için göz simgesine tıkla.",
-        "preview": "Overlay'i önizle"
+        "description": "Bir oyun çalışırken bu kısayola basarak oyun içi başarım overlay’ini gösterebilirsin. Değiştirmek için kalem simgesine, oyun başlatmadan overlay’i önizlemek için göz simgesine tıkla.",
+        "preview": "Overlay’i önizle"
       },
       "scale": "Bildirim boyutu",
       "duration": "Animasyon süresi"
@@ -175,7 +174,7 @@
       },
       "startup": {
         "name": "Başlangıçta çalıştır",
-        "description": "AW Next'i Windows ile otomatik olarak, tepside gizli başlatır."
+        "description": "AW Next’i Windows ile otomatik olarak, tepside gizli başlatır."
       },
       "onboarding": {
         "name": "İlk çalıştırma kılavuzu",
@@ -230,7 +229,7 @@
         },
         "priority": {
           "name": "Overlay açılırken odakla",
-          "description": "Overlay açıldığında klavye odağını ona verir. Birçok oyun odağı kaybedince duraklar. Windows giriş API’leri üçüncü taraf bir uygulamanın kumandayı özel olarak yakalamasına izin vermez, bu yüzden oyun düğmeleri görmeye devam edebilir."
+          "description": "Açıldığında yer paylaşımına klavye odağını verir; böylece odak kaybında duraklayan oyunlar duraklar. Windows üçüncü taraf bir uygulamaya kumandayı özel olarak veremez — oyun tuşları yine görebilir."
         },
         "escape": {
           "name": "Kumandayla açarken oyuna Esc gönder",
@@ -239,30 +238,30 @@
       },
       "uninstallMenu": {
         "name": "Oyun listesinden kaldır",
-        "description": "Oyun kutucuklarının sağ tık menüsüne kaldırma seçenekleri ekler (Steam kaldırma, oyun kaldırıcısı veya klasörü Çöp Kutusu'na taşıma)."
+        "description": "Oyun kutucuklarının sağ tık menüsüne kaldırma seçenekleri ekler (Steam kaldırma, oyun kaldırıcısı veya klasörü Çöp Kutusu’na taşıma)."
       }
     },
     "emulator": {
       "nav": "Steam emülatörü",
       "groupNav": "Emülatörler",
       "sectionTitle": "Emülatör kurulumu (GBE Fork)",
-      "intro": "Sağ tık Emülatör düzeltmesini uygula eyleminin kullandığı varsayılanlar. Steam'in nasıl atlatılacağını ve ne kadar oyun verisinin alınacağını seç.",
+      "intro": "Sağ tık Emülatör düzeltmesini uygula eyleminin kullandığı varsayılanlar. Steam’in nasıl atlatılacağını ve ne kadar oyun verisinin alınacağını seç.",
       "coreTitle": "Temel yapılandırma",
       "advancedTitle": "Gelişmiş seçenekler",
       "loginTitle": "Steam girişi (yalnızca tek kullanımlık hesap)",
       "loginWarning": "Tek kullanımlık hesap",
-      "loginDesc": "Yalnızca „Veri kaynağı” Steam girişi olarak ayarlandığında kullanılır. Parola bu bilgisayarda şifreli olarak saklanır ve yalnızca generate_emu_config tarafından Steam'e gönderilir. Gerektiğinde Steam Guard 2FA istenir. Her seferinde sorulması için boş bırak.",
+      "loginDesc": "Yalnızca „Veri kaynağı” Steam girişi olarak ayarlandığında kullanılır. Parola bu bilgisayarda şifreli olarak saklanır ve yalnızca generate_emu_config tarafından Steam’e gönderilir. Gerektiğinde Steam Guard 2FA istenir. Her seferinde sorulması için boş bırak.",
       "loginUser": "Steam kullanıcı adı",
       "loginPass": "Steam parolası",
       "loginTest": "Bağlantıyı test et",
       "loginTestHint": "Steam / Steam Guard",
-      "loginTestRunning": "Steam'e bağlanılıyor… İstenirse Steam Guard kodunu gir.",
+      "loginTestRunning": "Steam’e bağlanılıyor… İstenirse Steam Guard kodunu gir.",
       "loginTestSuccess": "Steam girişi başarılı. generate_emu_config yenileme jetonu kaydedildi.",
       "loginTestMissing": "Önce Steam kullanıcı adını ve parolasını gir.",
       "loginTestFailed": "Steam girişi başarısız",
       "autoApply": {
         "name": "Yeni algılanan oyunları otomatik düzelt",
-        "description": "Yeni algılanan, yapılandırılmamış bir emüle oyun için tüm Emülatör düzeltmesini uygula zincirini bir kez çalıştırır: SteamStub işleme, GBE Fork, başarımlar, DLC'ler, kimlik/dil ve etkinse Gelişmiş veriler. Varsayılan olarak devre dışı.",
+        "description": "Yeni algılanan, yapılandırılmamış bir emüle oyun için tüm Emülatör düzeltmesini uygula zincirini bir kez çalıştırır: SteamStub işleme, GBE Fork, başarımlar, DLC’ler, kimlik/dil ve etkinse Gelişmiş veriler. Varsayılan olarak devre dışı.",
         "value": {
           "false": "Devre dışı",
           "true": "Etkin"
@@ -270,7 +269,7 @@
       },
       "steamSettings": {
         "name": "steam_settings verisi",
-        "description": "Simple, AW Next'in kendi getirmesini kullanır (anonim). Advanced, depo/dil kapsamı için generate_emu_config çalıştırır.",
+        "description": "Simple, AW Next’in kendi getirmesini kullanır (anonim). Advanced, depo/dil kapsamı için generate_emu_config çalıştırır.",
         "value": {
           "simple": "Simple (hızlı)",
           "advanced": "Advanced (tam)"
@@ -278,15 +277,15 @@
       },
       "login": {
         "name": "Veri kaynağı (Advanced)",
-        "description": "Steam girişi, generate_emu_config'in tam DLC/depo verisini çekmesini sağlar. YALNIZCA tek kullanımlık bir hesap kullan — asla ana hesabını.",
+        "description": "Steam girişi, generate_emu_config’in tam DLC/depo verisini çekmesini sağlar. YALNIZCA tek kullanımlık bir hesap kullan — asla ana hesabını.",
         "value": {
           "anonymous": "Anonim",
           "steam": "Steam girişi"
         }
       },
       "steamless": {
-        "name": "SteamStub DRM'yi otomatik çıkar",
-        "description": "Yamadan önce oyunun exe dosyasında Steamless çalıştırarak Valve'ın SteamStub DRM'sini çıkarır (orijinal .steamstub.bak olarak saklanır). Stub yoksa etkisizdir.",
+        "name": "SteamStub DRM’yi otomatik çıkar",
+        "description": "Yamadan önce oyunun exe dosyasında Steamless çalıştırarak Valve’ın SteamStub DRM’sini çıkarır (orijinal .steamstub.bak olarak saklanır). Stub yoksa etkisizdir.",
         "value": {
           "false": "Devre dışı",
           "true": "Etkin"
@@ -294,7 +293,7 @@
       },
       "steamlessExp": {
         "name": "Steamless deneysel",
-        "description": "Çıkarma sırasında bölümleri yeniden hizalayarak ağır korumalı EXE'lerle daha iyi uyumluluk sağlar. Yalnızca otomatik çıkarma açıkken önemlidir.",
+        "description": "Çıkarma sırasında bölümleri yeniden hizalayarak ağır korumalı EXE’lerle daha iyi uyumluluk sağlar. Yalnızca otomatik çıkarma açıkken önemlidir.",
         "value": {
           "false": "Devre dışı",
           "true": "Etkin"
@@ -302,7 +301,7 @@
       },
       "crackFix": {
         "name": "Topluluk düzeltmesini otomatik uygula (CrakFiles)",
-        "description": "Her düzeltmede, CrakFiles listesinden güvenle eşleşen bir topluluk düzeltmesini otomatik olarak indirir ve uygular (yalnızca tam ad eşleşmesi + pixeldrain bağlantısı; üzerine yazılan dosyalar yedeklenir). Varsayılan olarak açık — AW'nin bir topluluk kaynağından oyun dosyalarını indirmesini/üzerine yazmasını istemiyorsan kapat.",
+        "description": "Her düzeltmede, CrakFiles listesinden güvenle eşleşen bir topluluk düzeltmesini otomatik olarak indirir ve uygular (yalnızca tam ad eşleşmesi + pixeldrain bağlantısı; üzerine yazılan dosyalar yedeklenir). Varsayılan olarak açık — AW’nin bir topluluk kaynağından oyun dosyalarını indirmesini/üzerine yazmasını istemiyorsan kapat.",
         "value": {
           "false": "Devre dışı",
           "true": "Etkin"
@@ -310,7 +309,7 @@
       },
       "apiCheckBypass": {
         "name": "Steam API sahiplik denetimini atla",
-        "description": "Varsayılan olarak kapalı. SteamAutoCrack'in atlatma proxy'sini (winmm.dll) + bir yönlendirme yapılandırması bırakır; böylece değiştirmeden sonra orijinal steam_api/exe'yi yeniden denetleyen oyunlar yine de başlar ve açılır. Proxy'yi resmi sürümünden indirir.",
+        "description": "Varsayılan olarak kapalı. SteamAutoCrack’in atlatma proxy’sini (winmm.dll) + bir yönlendirme yapılandırması bırakır; böylece değiştirmeden sonra orijinal steam_api/exe’yi yeniden denetleyen oyunlar yine de başlar ve açılır. Proxy’yi resmi sürümünden indirir.",
         "value": {
           "false": "Devre dışı",
           "true": "Etkin"
@@ -318,7 +317,7 @@
       },
       "checkUpdates": {
         "name": "GBE Fork güncellemelerini denetle",
-        "description": "Uygulamadan önce en son GBE Fork derlemesi için GitHub'ı yeniden denetler (yalnızca daha yeniyse indirir). Her zaman önbellekteki derlemeyi kullanmak için kapat.",
+        "description": "Uygulamadan önce en son GBE Fork derlemesi için GitHub’ı yeniden denetler (yalnızca daha yeniyse indirir). Her zaman önbellekteki derlemeyi kullanmak için kapat.",
         "value": {
           "true": "Etkin",
           "false": "Devre dışı"
@@ -326,7 +325,7 @@
       },
       "goldbergIcons": {
         "name": "GBE/Goldberg — simgeleri indir",
-        "description": "Etkinleştirildiğinde, eksik bir steam_settings/achievements.json yazan otomatik onarım, başarım simgelerini de Steam CDN'den indirir.",
+        "description": "Etkinleştirildiğinde, eksik bir steam_settings/achievements.json yazan otomatik onarım, başarım simgelerini de Steam CDN’den indirir.",
         "value": {
           "false": "Devre dışı (hızlı)",
           "true": "Etkin"
@@ -345,7 +344,7 @@
         "overlay": "Bildirim"
       },
       "info": {
-        "toast": "Bazı özellikler yalnızca Windows 10'da kullanılabilir",
+        "toast": "Bazı özellikler yalnızca Windows 10’da kullanılabilir",
         "autoSave": "Bu sekmedeki değişiklikler otomatik olarak kaydedilir."
       },
       "test": {
@@ -389,7 +388,7 @@
         },
         "mode": {
           "name": "Bildirim türü",
-          "description": "Otomatik, gösterilebildiğinde oyun içi yer paylaşımını, gösterilemediğinde Windows bildirimini kullanır; diğer seçenekler her zaman seçtiğinizi kullanır",
+          "description": "Otomatik, gösterilebildiğinde oyun içi yer paylaşımını, gösterilemediğinde bir Windows bildirimini kullanır. Diğer seçenekler her zaman seçtiğinizi kullanır.",
           "value": {
             "auto": "Otomatik (önerilir)",
             "toast": "Windows bildirimi",
@@ -502,7 +501,6 @@
           "importLabel": "İçe aktar",
           "imported": "İçe aktarıldı ve seçildi:",
           "importedOnly": "İçe aktarılan ön ayar — burada dışa aktarılabilir veya silinebilir; kaydırıcılarla düzenlenemez.",
-          "intro": "Kendi oyun içi bildiriminizi tasarlayın: düzen, renkler, animasyon ve ses.",
           "load": "Ön ayarı düzenle",
           "loaded": "Yüklendi:",
           "name": "Ad",
@@ -649,7 +647,7 @@
         },
         "video": {
           "name": "Video anı",
-          "description": "Bir başarım açtığında GPU'nun donanım kodlayıcısını kullanarak kısa bir video kaydet"
+          "description": "Bir başarım açtığında GPU’nun donanım kodlayıcısını kullanarak kısa bir video kaydet"
         },
         "overwrite": {
           "name": "Dosya varsa üzerine yaz"
@@ -701,7 +699,7 @@
       "title": "Oyun kaynakları",
       "officialPlatforms": {
         "title": "Resmî platformlar",
-        "description": "Steam, Ubisoft Connect, GOG Galaxy, Epic Games ve Xbox PC desteklenir. Aşağıdaki kalkan işaretli kaynakları etkinleştirin; yalnızca bu bilgisayarda algılanan kütüphaneler gösterilebilir."
+        "description": "Aşağıdaki kalkan işaretli kaynakları etkinleştirin. Yalnızca bu bilgisayarda bulunan kitaplıklar gösterilebilir."
       },
       "legitSteam": {
         "name": "Steam oyunlarını göster",
@@ -727,15 +725,15 @@
       },
       "ea": {
         "name": "EA Desktop",
-        "description": "EA Desktop'un yerel başarım günlüğünü okur (EA'nın yönettiği klasörlerin dışındaki oyunlar için)."
+        "description": "EA Desktop’un yerel başarım günlüğünü okur (EA’nın yönettiği klasörlerin dışındaki oyunlar için)."
       },
       "xboxPc": {
         "name": "Xbox PC",
-        "description": "Xbox PC oyunları (Game Pass / Microsoft Store). Durumu ve nadirliği görmek için Ayarlar'dan bağlanın ve içe aktarın."
+        "description": "Xbox PC oyunları (Game Pass / Microsoft Store). Durumu ve nadirliği görmek için Ayarlar’dan bağlanın ve içe aktarın."
       },
       "importCache": {
         "name": "Bildirim önbelleğini içe aktar",
-        "description": "Watchdog'un önbelleğini başka bir başarım kaynağı olarak içe aktar"
+        "description": "Watchdog’un önbelleğini başka bir başarım kaynağı olarak içe aktar"
       },
       "socialClub": {
         "name": "Goldberg SocialClub",
@@ -788,7 +786,7 @@
       "troubleshootTitle": "Sorun giderme",
       "troubleshoot": [
         "Bir oyun eksikse: klasörleri ekleyin, yeniden tarayın, ardından kaynak anahtarını ve kara listeyi kontrol edin.",
-        "Bildirimler görünmüyorsa: Windows Odaklanma Yardımı'nı kontrol edin ve uygulamayı oyunlarınızla aynı haklarla çalıştırın.",
+        "Bildirimler görünmüyorsa: Windows Odaklanma Yardımı’nı kontrol edin ve uygulamayı oyunlarınızla aynı haklarla çalıştırın.",
         "Gelişmiş > Tanılama, günlük ve veri klasörlerini açar; sorun bildirirken bunları ekleyin.",
         "Günlükler eklenerek yazılır, bu yüzden bir çökme sonraki açılışa kalır. Her çalıştırma bir oturum işareti ve [diag] bloğuyla başlar (sürümler, yollar, ekranlar) — bunu bildirime yapıştırın."
       ],
@@ -845,7 +843,7 @@
       "tips": [
         "Hızlı işlemler için bir oyun kutucuğuna sağ tıklayın: emülatör düzeltmesi, başarımlar, Steam sayfası, GBE Fork kurulumu, kaldırma.",
         "Kilit açmaları devre dışı bırakmadan ilerleme açılır pencerelerini durdurmak için oyuna sağ tıklayıp ilerlemeyi sessize al seçeneğini seçin.",
-        "Emülatör düzeltmesi (Basit hızlı / Gelişmiş eksiksiz), GBE Fork'u, başarım şemasını ve DLC verilerini kurar.",
+        "Emülatör düzeltmesi (Basit hızlı / Gelişmiş eksiksiz), GBE Fork’u, başarım şemasını ve DLC verilerini kurar.",
         "Oyun çalışırken oynama süresi izlenir; ilerleme ve oynama süresi bildirimleri Bildirimler bölümünde etkinleştirilebilir.",
         "Bir oyun güncellemesinin eklediği yeni başarımlar 3 gün içinde otomatik olarak görünür veya Ayarlar > Gelişmiş > Başarım listelerini yeniden denetle yoluyla hemen kontrol edilebilir."
       ]
@@ -855,7 +853,7 @@
       "fixAll": {
         "name": "Algılanan tüm oyunları düzelt",
         "button": "Tüm oyunları düzelt",
-        "description": "Kurulum klasörü bilinen, algılanan her emüle oyunda emülatör düzeltmesini (GBE Fork, başarımlar, DLC'ler) çalıştırır.",
+        "description": "Kurulum klasörü bilinen, algılanan her emüle oyunda emülatör düzeltmesini (GBE Fork, başarımlar, DLC’ler) çalıştırır.",
         "confirm": "Kurulum klasörü bilinen, algılanan her oyuna emülatör düzeltmesi uygulansın mı? Mevcut dosyalar üzerine yazılmadan önce yedeklenir.",
         "running": "Oyunlar düzeltiliyor…",
         "progress": "Düzeltiliyor %cur% / %total% — %name%",
@@ -889,7 +887,7 @@
       "forceAchievementRecheck": {
         "name": "Başarım listelerini yeniden kontrol et",
         "button": "Şimdi kontrol et",
-        "description": "Son kontrolden bu yana bir oyun güncellemesinin başarım eklediğini Steam'den kontrol eder. Normalde her 3 günde bir otomatik çalışır; bu düğme hemen zorlar."
+        "description": "Son kontrolden bu yana bir oyun güncellemesinin başarım eklediğini Steam’den kontrol eder. Normalde her 3 günde bir otomatik çalışır; bu düğme hemen zorlar."
       }
     },
     "interfaceMode": {
@@ -914,20 +912,19 @@
       "Ayarlar"
     ],
     "languageTitle": "Dil seçin",
-    "languageCopy": "İlk taramadan önce dili seçin. Oyunlar, meta veriler, başarılar ve Steam önbellekleri başlangıçtan itibaren bu dilde yüklenecektir.",
+    "languageCopy": "Oyunlar, meta veriler, başarımlar ve Steam önbellekleri en baştan bu dilde yüklenir.",
     "language": "Oyun ve arayüz dili",
-    "languagePlaceholder": "Bir dil seçin...",
+    "languagePlaceholder": "Bir dil seçin…",
     "languageHint": "İlk kütüphane yüklemesi ancak bu seçimden sonra başlar.",
     "introTitle": "Nasıl çalışır?",
-    "introCopy": "AW Next, bilinen kaydetme klasörlerinizi ve oyun kitaplıklarınızı tarar, ardından Watchdog, kilit açma bildirimleri ve oyun içi yer paylaşımı için tepside çalışmaya devam eder.",
     "scanTitle": "Tarama",
-    "scanCopy": "Steam, GOG, Epic, RPCS3/ShadPS4/Xenia ve Goldberg/GBE kurulumları başarım dosyalarından bulunur — örneğin %APPDATA%\\GSE Saves, Goldberg SteamEmu Saves, CODEX/RUNE kayıtları veya steam_settings içeren bir oyun klasörü.",
+    "scanCopy": "Başlatıcı, emülatör ve başarım dosyası konumları otomatik bulunur — ilk taramadan önce her birini siz onaylarsınız.",
     "watchTitle": "İzleme",
-    "watchCopy": "Arka plandaki Watchdog oyun başlatıldığında çalıştırılabilir dosyayı algılar, oynama süresini kaydeder ve oyun sırasında kilit açma bildirimlerini göstermek için başarım dosyalarını izler.",
+    "watchCopy": "Arka plandaki Watchdog oyunu açılışında tanır, oynama süresini tutar ve başarım dosyalarını izler.",
     "fixTitle": "Onarma",
-    "fixCopy": "Emüle edilen Steam oyunlarında sağ tık onarımı (veya otomatik onarım) GBE Fork’u kurar ve achievements.json şemasıyla DLC verilerini oyunun steam_settings klasörüne yazar.",
+    "fixCopy": "Emüle Steam oyunlarında sağ tık düzeltmesi GBE Fork’u kurar, başarım şemasını ve DLC verilerini yazar.",
     "overlayTitle": "Oyun içi overlay",
-    "overlayCopy": "Bir kısayolla (varsayılan Ctrl+Shift+K) oyunun üzerinde açabileceğin küçük bir başarım paneli. İstediğin zaman Ayarlar > Genel bölümünde, kısayol alanının yanından değiştirebilirsin.",
+    "overlayCopy": "Oyunun üzerine kısayolla açtığınız küçük bir başarım paneli — varsayılan olarak Ctrl+Shift+K.",
     "profileTitle": "Profil",
     "profileCopy": "Başlıkta gösterilen adı seçin ve isteğe bağlı olarak yerel bir avatar ayarlayın.",
     "username": "Ekran adı",
@@ -947,7 +944,7 @@
     "libraryList": "Kütüphane klasörleri",
     "emptyList": "Bu oturuma hiçbir şey eklenmedi.",
     "settingsTitle": "Önerilen ayarlar",
-    "settingsCopy": "Bunlar çoğu kullanıcının önce ihtiyaç duyduğu temel ayarlardır. Her şey daha sonra Ayarlar'da düzenlenebilir: panelin üstünden arayın, herhangi bir bölümü başlığından katlayın ve gerisi için Yardım sekmesini açın.",
+    "settingsCopy": "Kitaplık, görünüm ve bildirimler için temel ayarlar. Hepsi sonradan değiştirilebilir.",
     "source": "Steam oyunlarını göster",
     "notifications": "Bildirimler",
     "notificationTest": "Bildirimi test et",
@@ -973,13 +970,13 @@
     "disabled": "Devre dışı",
     "back": "Geri",
     "next": "Sonraki",
-    "finish": "Sona ermek",
-    "skip": "Atlamak",
-    "saving": "Kaydediliyor...",
+    "finish": "Bitir",
+    "skip": "Atla",
+    "saving": "Kaydediliyor…",
     "saved": "Kurulum kaydedildi.",
     "languageRequired": "Devam etmek için bir dil seçin.",
     "invalidFolder": "Bu klasör desteklenen bir başarım klasörü gibi görünmüyor. Beklenen: GSE Saves / Goldberg SteamEmu Saves, CODEX/RUNE kayıtları, AppID alt klasörleri (ör. 1091500) veya steam_settings ya da emülatör .ini dosyası içeren bir oyun klasörü.",
-    "smartRunning": "Arama...",
+    "smartRunning": "Arama…",
     "smartDone": "Arama tamamlandı.",
     "saveError": "Kurulum kaydedilemedi.",
     "modeTitle": "Arayüzünü seç",
@@ -1046,6 +1043,7 @@
     "controllerMove": "Taşı/kaydır"
   },
   "dialogs": {
+    "game-health-title": "Oyun durumu",
     "game-config-title": "Yürütülebilir dosya yapılandırması",
     "launch-args-label": "Başlatma bağımsız değişkenleri:",
     "game-config-placeholder": "…Yürütülebilir dosyayı seçmek için DÜZENLE’ye tıklayın…",
@@ -1075,6 +1073,7 @@
     "enter-the-code-sent-by-email-to-confirm-the-steam-login": "Steam girişini onaylamak için e-postayla gönderilen kodu girin.",
     "steam-guard-code": "Steam Guard kodu",
     "cancel": "İptal",
+    "close": "Kapat",
     "confirm": "Onayla",
     "ubisoft-game-no-achievements-found": "Ubisoft oyunu — başarım bulunamadı",
     "no-achievements-found": "Başarım bulunamadı",
@@ -1088,6 +1087,7 @@
     "steam-achievements": "Steam başarımları",
     "steam-api-64-dll-detected": "steam_api(64).dll algılandı",
     "steam-api-64-dll-not-found": "steam_api(64).dll bulunamadı",
+    "search-games": "Oyun ara…",
     "game": "Oyun",
     "add-game-manually": "Oyunu elle ekle",
     "manual-game-platform": "Platform",
@@ -1105,10 +1105,12 @@
     "aw-history": "AW geçmişi",
     "disk-scan": "disk taraması",
     "found-automatically-via-x": "{source} üzerinden otomatik bulundu.",
-    "checking-watchdog-status": "Watchdog durumu kontrol ediliyor...",
-    "watchdog-stopped": "Watchdog çalışmıyor! (Oyun içi overlay/bildirimler tetiklenmeyecek.)",
-    "i-class-fas-fa-shield-alt-i-click-to-start-watchdog": "<i class=\"fas fa-shield-alt\"></i> Watchdog’u başlatmak için tıklayın!",
-    "watchdog-is-running-in-game-overlay-windows-notifications-should": "Watchdog çalışıyor (oyun içi overlay/bildirimler düzgün çalışmalı)",
+    "checking-watchdog-status": "Watchdog denetleniyor…",
+    "watchdog-stopped": "Watchdog durdu",
+    "watchdog-stopped-detail": "Oyun içi overlay ve bildirim yok",
+    "start-watchdog": "Watchdog’u başlat",
+    "watchdog-running": "Watchdog etkin",
+    "watchdog-running-detail": "Oyun ve başarım takibi çalışıyor",
     "unexpected-error": "Beklenmeyen hata",
     "choose-the-game-executable": "Oyunun çalıştırılabilir dosyasını seç",
     "select": "Seç",
@@ -1295,13 +1297,13 @@
     "uninstalling-game": "Kaldırılıyor…",
     "deleting-game-folder": "Geri Dönüşüm Kutusuna taşınıyor…",
     "delete-preset-title": "Ön ayarı sil",
-    "delete-preset-message": "\"{name}\" ön ayarı silinsin mi?",
+    "delete-preset-message": "“{name}” ön ayarı silinsin mi?",
     "delete-preset-detail": "Ön ayarın dosyaları diskten silinir. Bu işlem geri alınamaz.",
     "export-preset-title": "Ön ayarı dışa aktar",
     "import-preset-title": "Ön ayarı içe aktar",
     "preset-package": "AW ön ayar paketi",
     "import-preset-duplicate-title": "Ön ayar zaten mevcut",
-    "import-preset-duplicate-message": "\"{name}\" adlı bir ön ayar zaten yüklü.",
+    "import-preset-duplicate-message": "“{name}” adlı bir ön ayar zaten yüklü.",
     "import-preset-duplicate-detail": "İkisini de tut, içe aktarılan ön ayarı yeni bir adla yükler. Değiştir, yüklü olanın üzerine yazar.",
     "keep-both-presets": "İkisini de tut",
     "replace-preset": "Değiştir",
@@ -1372,7 +1374,7 @@
     "epic-failed": "Epic girişi başarısız",
     "epic-disconnected": "Epic hesabının bağlantısı kesildi.",
     "epic-title": "Epic Games hesabı",
-    "epic-desc": "İsteğe bağlı. Epic hesabınızı bağlayarak kurulu Epic oyunlarında hangi başarımları açtığınızı gösterin. Başarım adları, açıklamaları ve nadirlikleri bağlantı olmadan da çalışır. Epic token’ınız bu bilgisayarda şifreli olarak saklanır.",
+    "epic-desc": "İsteğe bağlı. Bağlanmak, kurulu Epic oyunlarında hangi başarımları açtığınızı gösterir; adlar, açıklamalar ve nadirlik bağlanmadan da çalışır. Belirteciniz bu bilgisayarda şifreli saklanır.",
     "epic-btn-hint": "Epic giriş penceresini açar",
     "connected": "Bağlandı",
     "disconnect": "Bağlantıyı kes",
@@ -1389,8 +1391,9 @@
     "xbox-imported": "İçe aktarma tamamlandı: {created} oluşturuldu, {updated} güncellendi, {failed} başarısız.",
     "xbox-import-failed": "Xbox kitaplığı içe aktarılamadı",
     "xbox-title": "Xbox PC hesabı",
-    "xbox-desc": "İsteğe bağlı. Xbox PC kitaplığınızı içe aktarmak için Microsoft / Xbox Network hesabınızı bağlayın (Game Pass ve Microsoft Store oyunları): başarım adları, açıklamaları, açılma durumu ve nadirliği Xbox Network’ten alınır ve yerel olarak önbelleğe alınır. Oturum token’ınız bu bilgisayarda şifreli olarak saklanır.",
+    "xbox-desc": "İsteğe bağlı. Xbox PC kitaplığınızı içe aktarır (Game Pass ve Microsoft Store): başarımlar, açılma durumu ve nadirlik Xbox Network’ten gelir ve yerel olarak önbelleğe alınır. Oturum belirteciniz bu bilgisayarda şifreli saklanır.",
     "xbox-btn-hint": "Microsoft giriş penceresini açar",
+    "xbox-import-btn-label": "Xbox PC kitaplığını içe aktar",
     "xbox-import-btn-hint": "başarımları Xbox Network’ten al",
     "xbox-reconnect": "Yeniden bağlan",
     "xbox-connect": "Xbox hesabını bağla",
@@ -1426,7 +1429,7 @@
     "theme-effect-blur-label": "Yoğunluk",
     "scan-complete": "Tarama tamamlandı.",
     "rescan-selected-folders": "Seçili klasörleri yeniden tara",
-    "rescan-selected-help": "Yalnızca yeniden denetlenmesi gereken kayıt verisi veya kitaplık klasörlerini seçin. Tüm kaynakları denetlemek için Yenile'yi kullanın.",
+    "rescan-selected-help": "Yalnızca yeniden denetlenmesi gereken kayıt verisi veya kitaplık klasörlerini seçin. Tüm kaynakları denetlemek için Yenile’yi kullanın.",
     "rescan-select-all": "Tümünü seç",
     "rescan-select-none": "Seçimi temizle",
     "rescan-no-folders": "Yeniden taramadan önce bir klasör ekleyin.",
@@ -1468,9 +1471,9 @@
     "error-editing-custom-folder": "Özel klasör düzenlenirken hata",
     "error-editing-library-folder": "Kitaplık klasörü düzenlenirken hata",
     "avatar-squared": "Kare",
-    "avatar-browse": "Gözat...",
+    "avatar-browse": "Gözat…",
     "avatar-reset-default": "Varsayılan avatara sıfırla",
-    "avatar-import-steam": "Steam’den içe aktar...",
+    "avatar-import-steam": "Steam’den içe aktar…",
     "error": "Hata",
     "failed-to-import-from-steam": "Steam’den içe aktarılamadı.",
     "failed-to-fetch-avatar": "{name} adlı kullanıcının avatarı alınamadı.",
@@ -1684,7 +1687,7 @@
     "rareAchievement": "Nadir başarım",
     "rareDescription": "Oyuncuların yalnızca %{percent}'i açtı.",
     "testAchievement": "Test başarımı",
-    "testDescription": "Bu, AW Next'ten bir test bildirimidir.",
+    "testDescription": "Bu, AW Next’ten bir test bildirimidir.",
     "playedFor": "{duration} oynadınız",
     "trackingPlaytime": "Oyun süresi izleniyor",
     "playtime": "Oyun süresi"
