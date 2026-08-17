@@ -183,6 +183,16 @@ body {
   border: 0;
 }
 
+/*
+  The theme stripes even rows with a hard-coded near-white, which it can do because it also assumes
+  near-black text. In dark mode that puts this file's near-white text on a near-white band and the
+  row becomes unreadable, so the stripe has to come from the palette instead. Matching the theme's
+  specificity is the point of repeating :nth-child(2n) here.
+*/
+.markdown-body table tr:nth-child(2n) {
+  background: var(--aw-surface);
+}
+
 .markdown-body table tr:last-child td {
   border-bottom: 0;
 }
