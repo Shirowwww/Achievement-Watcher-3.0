@@ -4,7 +4,7 @@ AW Next is a Windows desktop application. Packaged releases include their own ru
 
 ## Install
 
-1. Open the [latest release](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/latest).
+1. Open the [latest release](https://github.com/Shirowwww/Achievement-Watcher-Next/releases/latest).
 2. Download `Achievement.Watcher.Setup.<version>.exe`.
 3. Run the installer and choose an installation folder.
 4. Open AW Next from the Start menu or desktop shortcut.
@@ -175,6 +175,6 @@ emulator-fix tools) and lets everything re-fetch itself; settings, saves and bac
 
 <div align="center">
 
-[← Documentation](README.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-3.0)
+[← Documentation](README.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-Next)
 
 </div>

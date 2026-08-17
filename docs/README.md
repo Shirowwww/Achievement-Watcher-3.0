@@ -4,7 +4,7 @@
 
 Practical guides for setup, daily use and maintenance.
 
-[🏠 Project home](https://github.com/Shirowwww/Achievement-Watcher-3.0) · [⬇️ Download](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases/latest) · [📋 Changelog](https://github.com/Shirowwww/Achievement-Watcher-3.0/blob/main/CHANGELOG.md) · [🔐 Security](https://github.com/Shirowwww/Achievement-Watcher-3.0/blob/main/SECURITY.md) · [💬 Report an issue](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues)
+[🏠 Project home](https://github.com/Shirowwww/Achievement-Watcher-Next) · [⬇️ Download](https://github.com/Shirowwww/Achievement-Watcher-Next/releases/latest) · [📋 Changelog](https://github.com/Shirowwww/Achievement-Watcher-Next/blob/main/CHANGELOG.md) · [🔐 Security](https://github.com/Shirowwww/Achievement-Watcher-Next/blob/main/SECURITY.md) · [💬 Report an issue](https://github.com/Shirowwww/Achievement-Watcher-Next/issues)
 
 <img src="screenshot/home.png" width="620" alt="The AW Next library">
 
@@ -45,12 +45,12 @@ Lower-level documentation for contributors and for anyone building AW Next from 
 
 | Topic | Reference |
 |---|---|
-| Contributing, branches, tests and commit style | [CONTRIBUTING.md](https://github.com/Shirowwww/Achievement-Watcher-3.0/blob/main/CONTRIBUTING.md) |
-| Development setup, running and Windows packaging | [BUILD.md](https://github.com/Shirowwww/Achievement-Watcher-3.0/blob/main/BUILD.md) |
+| Contributing, branches, tests and commit style | [CONTRIBUTING.md](https://github.com/Shirowwww/Achievement-Watcher-Next/blob/main/CONTRIBUTING.md) |
+| Development setup, running and Windows packaging | [BUILD.md](https://github.com/Shirowwww/Achievement-Watcher-Next/blob/main/BUILD.md) |
 | App, renderer and Watchdog boundaries; the parser contract | [Architecture](architecture.md) |
 | Goldberg / GBE file formats, detection and repair invariants | [Goldberg / GBE reference](goldberg-gbe.md) |
 | Versioning, publishing, CI and auto-update validation | [Release workflow](RELEASE_WORKFLOW.md) |
-| Locale files and the key-parity rules | [app/locale/README.md](https://github.com/Shirowwww/Achievement-Watcher-3.0/blob/main/app/locale/README.md) |
+| Locale files and the key-parity rules | [app/locale/README.md](https://github.com/Shirowwww/Achievement-Watcher-Next/blob/main/app/locale/README.md) |
 
 ## Where your data lives
 

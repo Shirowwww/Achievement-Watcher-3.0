@@ -100,6 +100,6 @@ when something still does not work.
 
 <div align="center">
 
-[← Documentation](README.md) · [Goldberg / GBE setup](emulator-setup.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-3.0)
+[← Documentation](README.md) · [Goldberg / GBE setup](emulator-setup.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-Next)
 
 </div>

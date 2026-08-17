@@ -119,6 +119,6 @@ or is not being tracked.
 
 <div align="center">
 
-[← Documentation](README.md) · [Overlay guide](overlay.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-3.0)
+[← Documentation](README.md) · [Overlay guide](overlay.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-Next)
 
 </div>

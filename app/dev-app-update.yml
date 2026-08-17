@@ -3,7 +3,7 @@
 # so autoUpdater.getOrCreateDownloadHelper() can resolve the cache directory during dev testing.
 # Mirrors resources/app-update.yml, which electron-builder generates for packaged builds.
 owner: Shirowwww
-repo: Achievement-Watcher-3.0
+repo: Achievement-Watcher-Next
 provider: github
 updaterCacheDirName: achievement-watcher-updater
 publisherName:

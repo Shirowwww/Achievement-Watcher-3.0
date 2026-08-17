@@ -89,7 +89,7 @@ Use them only with games you own.
 **Windows SmartScreen warns about the installer.**
 Releases are signed with the project's own self-signed certificate rather than a commercial one, so
 SmartScreen may still ask for confirmation. You never need to install that certificate. Download only
-from the [official releases page](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases) and
+from the [official releases page](https://github.com/Shirowwww/Achievement-Watcher-Next/releases) and
 check the installer against the SHA-512 value in the matching `latest.yml`.
 
 **Where is my data, and does updating lose it?**
@@ -113,9 +113,9 @@ No, and the issue tracker cannot help with that either. AW Next contains no game
 bypass online ownership checks.
 
 **I found a bug / I have an idea.**
-[Open an issue](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues) with the app version,
+[Open an issue](https://github.com/Shirowwww/Achievement-Watcher-Next/issues) with the app version,
 your Windows version, the source involved and the relevant logs. For a suspected vulnerability, use
-the private process in the [security policy](https://github.com/Shirowwww/Achievement-Watcher-3.0/blob/main/SECURITY.md) instead.
+the private process in the [security policy](https://github.com/Shirowwww/Achievement-Watcher-Next/blob/main/SECURITY.md) instead.
 
 ---
 
@@ -123,6 +123,6 @@ the private process in the [security policy](https://github.com/Shirowwww/Achiev
 
 <div align="center">
 
-[← Documentation](README.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-3.0)
+[← Documentation](README.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-Next)
 
 </div>

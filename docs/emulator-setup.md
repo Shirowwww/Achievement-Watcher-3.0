@@ -108,6 +108,6 @@ and detection rules.*
 
 <div align="center">
 
-[← Documentation](README.md) · [Technical reference](goldberg-gbe.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-3.0)
+[← Documentation](README.md) · [Technical reference](goldberg-gbe.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-Next)
 
 </div>

@@ -1,6 +1,6 @@
 # Commit and release workflow
 
-This is the canonical checklist for `Shirowwww/Achievement-Watcher-3.0`. Other
+This is the canonical checklist for `Shirowwww/Achievement-Watcher-Next`. Other
 project documents link here instead of duplicating the release process.
 
 ## Commit rules
@@ -41,12 +41,12 @@ Do not hand-edit generated `app/dist/latest.yml`; the build creates it.
 Do this for every release, not only ones that "feel" doc-worthy - stale docs accumulate silently
 between releases otherwise:
 
-- **`README.md` "What this fork adds" table**: add a phrase for any genuinely new capability this
-  release ships (a new source, a new tool, a reliability/data-safety change). Bug fixes belong in
-  `CHANGELOG.md`, not this table. If nothing table-worthy shipped, leave it alone.
-- **`README.md` "Quick comparison" table**: only touch a row if this release changed the behavior
-  it describes. Do not re-verify the whole table on every release - that is a separate, occasional
-  audit (see below), not a per-release step.
+- **`README.md` "What it does" list**: add a phrase for any genuinely new capability this release
+  ships (a new source, a new tool, a reliability/data-safety change). Bug fixes belong in
+  `CHANGELOG.md`, not this list. If nothing list-worthy shipped, leave it alone.
+- **`docs/comparison.md`**: only touch a row if this release changed the behavior it describes. Do
+  not re-verify the whole table on every release - that is a separate, occasional audit (see below),
+  not a per-release step.
 - **Stale absolute paths**: if this release changed a user-data path, filename or directory (the
   3.5.3 `%APPDATA%\Achievement Watcher 3.0` split from the legacy `%APPDATA%\Achievement Watcher`
   is the precedent), grep the whole repo for the old form - public docs, `.github/ISSUE_TEMPLATE/`,
@@ -151,14 +151,41 @@ gh release create "v$version" `
   "app/dist/Achievement.Watcher.Setup.$version.exe" `
   "app/dist/Achievement.Watcher.Setup.$version.exe.blockmap" `
   "app/dist/latest.yml" `
-  --repo Shirowwww/Achievement-Watcher-3.0 `
+  --repo Shirowwww/Achievement-Watcher-Next `
   --target $target `
-  --title "AW Next v$version" `
+  --title "Achievement Watcher Next $version" `
   --notes-file RELEASE_NOTES.md
 ```
 
 4. Verify the release page exposes the installer, blockmap and `latest.yml`, and
    that the public manifest is downloadable.
+
+## Identifiers that must not change
+
+The product was renamed to Achievement Watcher Next in 3.9.0, but several identifiers deliberately
+kept their historical value because an existing install is keyed on them. Changing any of these
+breaks upgrades rather than merely renaming something, and `test/core/branding.test.js` pins them:
+
+| Identifier | Value | Why it stays |
+|---|---|---|
+| `appId` (AppUserModelID) | `io.github.shirowwww.achievement.watcher` | Windows matches toasts and taskbar pins against it |
+| `executableName` | `Achievement Watcher` | Fixes the .exe name, install directory and uninstaller filename; the autostart registry value stores that full path, and the Watchdog spawns the app by it |
+| `app.setName()` | `Achievement Watcher` | Names the autostart registry value and the main log file |
+| Installer artifact | `Achievement.Watcher.Setup.<version>.exe` | Referenced by `latest.yml`; published releases are immutable |
+| `updaterCacheDirName` | `achievement-watcher-updater` | Existing partially downloaded updates live there |
+| Legacy data folders | `Achievement Watcher 3.0`, `Achievement Watcher` | Import sources for the one-way migration; never renamed or deleted |
+
+### The repository rename
+
+The repository was renamed `Achievement-Watcher-3.0` → `Achievement-Watcher-Next` for 3.9.0. Clients
+released before 3.9.0 shipped an `app-update.yml` naming the **old** repository, so they reach new
+releases only through GitHub's permanent rename redirect. That redirect was verified end to end
+against electron-updater's own HTTP stack — the `releases.atom` feed, the `latest.yml` channel file
+and the installer asset all follow the 301 transparently.
+
+**Never create a new repository at `Shirowwww/Achievement-Watcher-3.0`.** Doing so takes over the old
+path, kills the redirect and permanently strands every client older than 3.9.0. Releases must also
+stay on this repository: moving them to a different owner or repo breaks the same path.
 
 ## Auto-update proof
 

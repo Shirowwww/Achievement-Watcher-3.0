@@ -4284,7 +4284,7 @@ var app = {
               <li>
                 <div class="notice">
                   <p>${$('#unlock').data('lang-noneUnlocked')}</p>
-                  <p class="notice-aside">${$('#unlock').data('lang-noneUnlockedHint')} <a href="https://github.com/Shirowwww/Achievement-Watcher-3.0/blob/main/docs/troubleshooting.md" target="_blank">${$('#unlock').data('lang-troubleshoot')} ↗</a></p>
+                  <p class="notice-aside">${$('#unlock').data('lang-noneUnlockedHint')} <a href="https://github.com/Shirowwww/Achievement-Watcher-Next/blob/main/docs/troubleshooting.md" target="_blank">${$('#unlock').data('lang-troubleshoot')} ↗</a></p>
                   </div>
               </li>`;
         unlock.append(template);

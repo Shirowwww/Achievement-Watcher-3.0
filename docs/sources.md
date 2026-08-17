@@ -115,6 +115,6 @@ game.
 
 <div align="center">
 
-[← Documentation](README.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-3.0)
+[← Documentation](README.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-Next)
 
 </div>

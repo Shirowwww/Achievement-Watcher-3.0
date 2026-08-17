@@ -12,7 +12,7 @@ test('packaged builds ask before downloading, then silently upgrade and restart'
   assert.deepStrictEqual(builder.publish, {
     provider: 'github',
     owner: 'Shirowwww',
-    repo: 'Achievement-Watcher-3.0',
+    repo: 'Achievement-Watcher-Next',
   });
 
   const init = fs.readFileSync(path.join(appRoot, 'electron', 'init.js'), 'utf8');
@@ -78,10 +78,15 @@ test('a sha512 checksum mismatch clears the update cache and retries the full do
   const devConfig = yaml.load(fs.readFileSync(path.join(appRoot, 'dev-app-update.yml'), 'utf8'));
   assert.equal(devConfig.updaterCacheDirName, 'achievement-watcher-updater');
   assert.equal(devConfig.owner, 'Shirowwww');
-  assert.equal(devConfig.repo, 'Achievement-Watcher-3.0');
+  assert.equal(devConfig.repo, 'Achievement-Watcher-Next');
 
   const builder = yaml.load(fs.readFileSync(path.join(appRoot, 'electron-builder.yml'), 'utf8'));
   assert.ok(builder.files.includes('!dev-app-update.yml'), 'the dev-only config must not ship in packaged builds');
+
+  // The dev config exists to mirror the generated app-update.yml. If the two ever name different
+  // repositories, dev testing validates an update route that shipped builds do not take.
+  assert.equal(devConfig.owner, builder.publish.owner, 'dev-app-update.yml owner must match the publish target');
+  assert.equal(devConfig.repo, builder.publish.repo, 'dev-app-update.yml repo must match the publish target');
 
   // The clear action also sweeps the re-fetchable app caches (Steam/Ubisoft schema, icon and
   // downloaded emulator-tool caches), through the same explicit, unit-tested allowlist —

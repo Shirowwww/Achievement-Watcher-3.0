@@ -38,7 +38,7 @@ Logs are appended, never truncated, so a crash survives the next launch. Each ru
 Right after it, a `[diag]` block records everything a bug report needs and nobody should have to collect by hand - versions, install and data paths, how the app was started, the active language and theme, and the geometry of every display:
 
 ```text
-[diag] app: Achievement Watcher 3.8.6 (packaged)
+[diag] app: Achievement Watcher 3.9.0 (packaged)
 [diag] runtime: electron 43.4.0 · chrome 150.0.7871.224 · node 24.18.1
 [diag] display: 3056414223 1080x1920 @1x work=1080x1872 rotation=270
 [diag] display: 3933707034 (primary) 2048x1152 @1.25x work=2048x1104 rotation=0
@@ -134,7 +134,7 @@ Packaged releases are signed with the project's self-signed publisher certificat
 trusted commercial certificate, so Windows SmartScreen may still warn. You never need to install
 the certificate: the in-app updater accepts the exact `CN=Shirow` identity even when Windows does
 not trust its root, and independently checks the SHA-512 release manifest. Optional emulator DLLs
-can also trigger heuristic detections. Download only from the [official Releases page](https://github.com/Shirowwww/Achievement-Watcher-3.0/releases) and compare the installer against the SHA-512 value stored in the matching `latest.yml`.
+can also trigger heuristic detections. Download only from the [official Releases page](https://github.com/Shirowwww/Achievement-Watcher-Next/releases) and compare the installer against the SHA-512 value stored in the matching `latest.yml`.
 
 Do not disable system-wide protection. Submit a false-positive report to the antivirus vendor when a file from the official release is incorrectly quarantined.
 
@@ -158,7 +158,7 @@ If the issue disappears, restore only the data you need or attach the relevant c
 
 ## Report the problem
 
-Search the [existing issues](https://github.com/Shirowwww/Achievement-Watcher-3.0/issues) first. If no report matches, open a bug using the repository template and attach logs after removing any information you do not want to share publicly.
+Search the [existing issues](https://github.com/Shirowwww/Achievement-Watcher-Next/issues) first. If no report matches, open a bug using the repository template and attach logs after removing any information you do not want to share publicly.
 
 ---
 
@@ -171,6 +171,6 @@ cache clearing and resets · [Game Health](game-health.md) for single-game probl
 
 <div align="center">
 
-[← Documentation](README.md) · [Getting started](getting-started.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-3.0)
+[← Documentation](README.md) · [Getting started](getting-started.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-Next)
 
 </div>

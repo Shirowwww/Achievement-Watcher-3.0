@@ -158,6 +158,6 @@ owns which responsibility.
 
 <div align="center">
 
-[← Documentation](README.md) · [Setup guide](emulator-setup.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-3.0)
+[← Documentation](README.md) · [Setup guide](emulator-setup.md) · [Project home](https://github.com/Shirowwww/Achievement-Watcher-Next)
 
 </div>

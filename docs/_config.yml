@@ -6,7 +6,9 @@
 #
 # No layout, include or Liquid template is added on purpose. The Markdown in this folder stays the
 # single source of truth: it is what GitHub renders when browsing the repository, and what Jekyll
-# renders here. Three plugins that ship with GitHub Pages do the rest without any configuration:
+# renders here. The one addition is assets/css/style.scss, which imports this theme and applies the
+# app's palette on top - styling only, so browsing the same files on GitHub is unaffected.
+# Three plugins that ship with GitHub Pages do the rest without any configuration:
 #   jekyll-readme-index         README.md becomes the site index (/)
 #   jekyll-relative-links       [x](getting-started.md) resolves to the built page
 #   jekyll-optional-front-matter  files without front matter are still rendered as pages

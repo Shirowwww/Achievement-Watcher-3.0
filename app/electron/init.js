@@ -49,7 +49,7 @@ autoUpdater.disableDifferentialDownload = true;
 // Accept the project's self-signed publisher through the tested verifier.
 autoUpdater.verifyUpdateCodeSignature = (publisherNames, tempUpdateFile) =>
   verifyUpdateCodeSignature(publisherNames, tempUpdateFile, (message) => debug.log(message));
-const UPDATE_RELEASES_URL = 'https://github.com/Shirowwww/Achievement-Watcher-3.0/releases';
+const UPDATE_RELEASES_URL = 'https://github.com/Shirowwww/Achievement-Watcher-Next/releases';
 let updateCheckTimer = null;
 let updatePromptOpen = false;
 let updaterErrorNotified = false;

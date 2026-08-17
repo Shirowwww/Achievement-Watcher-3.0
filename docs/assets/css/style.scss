@@ -1,0 +1,211 @@
+---
+# Empty front matter is required: it is what makes Jekyll compile this file.
+---
+
+@import "{{ site.theme }}";
+
+/*
+  AW Next documentation skin.
+
+  The Primer theme above supplies the markdown rendering (tables, code, lists); everything here is
+  the product's own palette on top of it, taken from app/presets/Default Presets/AW Next/style.css
+  so the site and the app read as one thing.
+
+  Light is the default and dark follows the reader's system setting - the docs are read by people
+  who have not installed the app yet, so neither mode is forced.
+*/
+
+:root {
+  --aw-accent: #3d63d8;
+  --aw-accent-soft: #eaefff;
+  --aw-bg: #ffffff;
+  --aw-surface: #f6f8fb;
+  --aw-text: #1c2433;
+  --aw-muted: #5b6b82;
+  --aw-border: #dde3ec;
+  --aw-shadow: rgba(20, 34, 54, 0.09);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --aw-accent: #6c91ff;
+    --aw-accent-soft: #1b2942;
+    --aw-bg: #0c1322;
+    --aw-surface: #16223a;
+    --aw-text: #e7edf6;
+    --aw-muted: #9bacc2;
+    --aw-border: #26344f;
+    --aw-shadow: rgba(0, 0, 0, 0.45);
+  }
+}
+
+body {
+  background: var(--aw-bg);
+  color: var(--aw-text);
+}
+
+.markdown-body {
+  color: var(--aw-text);
+  font-size: 16px;
+  line-height: 1.68;
+}
+
+/* A comfortable measure for prose; the theme's own container is sized for code. */
+.container-lg {
+  max-width: 880px;
+}
+
+.markdown-body a {
+  color: var(--aw-accent);
+  text-decoration: none;
+}
+
+.markdown-body a:hover {
+  text-decoration: underline;
+}
+
+/* The page title block each guide opens with. */
+.markdown-body h1 {
+  font-size: 2.1em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  border-bottom: 0;
+  padding-bottom: 0;
+  margin-bottom: 0.4em;
+}
+
+.markdown-body h2 {
+  font-size: 1.4em;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin-top: 2.2em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--aw-border);
+}
+
+.markdown-body h3 {
+  font-size: 1.12em;
+  font-weight: 650;
+  margin-top: 1.8em;
+}
+
+.markdown-body hr {
+  height: 1px;
+  margin: 2.4em 0;
+  background: var(--aw-border);
+  border: 0;
+}
+
+/* Screenshots carry the app's own frame, so give them an edge instead of letting them
+   bleed into the page background. */
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid var(--aw-border);
+  box-shadow: 0 6px 22px var(--aw-shadow);
+  background: transparent;
+}
+
+/* Badge rows and inline icons must not pick up the screenshot frame. */
+.markdown-body img[src*="shields.io"],
+.markdown-body img[src*=".svg"] {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Every guide is mostly tables: they are the content, not decoration. */
+.markdown-body table {
+  display: table;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--aw-border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 1.4em 0;
+}
+
+.markdown-body table th {
+  background: var(--aw-surface);
+  color: var(--aw-text);
+  font-weight: 650;
+  text-align: left;
+}
+
+.markdown-body table th,
+.markdown-body table td {
+  border: 0;
+  border-bottom: 1px solid var(--aw-border);
+  padding: 10px 14px;
+  vertical-align: top;
+}
+
+.markdown-body table tr {
+  background: transparent;
+  border: 0;
+}
+
+.markdown-body table tr:last-child td {
+  border-bottom: 0;
+}
+
+.markdown-body blockquote {
+  color: var(--aw-text);
+  background: var(--aw-accent-soft);
+  border-left: 3px solid var(--aw-accent);
+  border-radius: 0 8px 8px 0;
+  padding: 12px 16px;
+}
+
+.markdown-body blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body code {
+  background: var(--aw-surface);
+  border: 1px solid var(--aw-border);
+  border-radius: 5px;
+  padding: 0.15em 0.4em;
+  font-size: 88%;
+}
+
+.markdown-body pre {
+  background: var(--aw-surface);
+  border: 1px solid var(--aw-border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.markdown-body pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+/* The centred header and the footer navigation line every page ends with. */
+.markdown-body div[align="center"] {
+  margin-bottom: 2em;
+}
+
+.markdown-body div[align="center"] p {
+  color: var(--aw-muted);
+}
+
+@media (max-width: 600px) {
+  .markdown-body {
+    font-size: 15px;
+  }
+
+  .markdown-body h1 {
+    font-size: 1.7em;
+  }
+
+  /* Wide reference tables scroll on their own instead of stretching the page. */
+  .markdown-body table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
