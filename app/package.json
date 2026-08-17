@@ -40,7 +40,7 @@
     "fast-xml-parser": "^5.3.0",
     "humanize-duration": "^3.34.0",
     "ini": "^7.0.0",
-    "js-yaml": "^5.0.0",
+    "js-yaml": "^5.3.0",
     "lodash.omit": "^4.5.0",
     "minimist": "^1.2.5",
     "moment": "^2.30.1",
