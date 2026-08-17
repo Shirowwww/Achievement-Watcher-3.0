@@ -42,7 +42,6 @@ function buildActivation(message) {
   return { launch: `${scheme}://game/${segments.join('/')}`, type: 'protocol' };
 }
 
-// Build one powertoast payload. Exported for contract tests.
 function buildToastNotification(message, options) {
   const strings = notifyStrings.forLang(
     String((options && (options.lang || (options.toast && options.toast.lang))) || 'english')

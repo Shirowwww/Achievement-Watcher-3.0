@@ -66,7 +66,6 @@ const isGameRunning = () => gamesRunning > 0;
 let promptDownloadedUpdate = null;
 let pendingInstallPrompt = null;
 
-// Update prompt policy lives in the unit-tested update gate.
 const updateGate = require(path.join(__dirname, '../util/updateGate.js'));
 const { isChecksumMismatchError } = require(path.join(__dirname, '../util/updateChecksum.js'));
 const { clearUpdaterCacheDir: clearCacheDirForHelper } = require(path.join(__dirname, '../util/updateCacheClear.js'));
@@ -326,7 +325,6 @@ function t(key, english, french, params) {
   return interpolate(fallback || key);
 }
 
-// Build the locale payload sent to the in-game overlay.
 let cachedOverlayLanguagePayload = null;
 function overlayLanguagePayload() {
   const lang = String((configJS && configJS.achievement && configJS.achievement.lang) || 'english');

@@ -84,18 +84,16 @@ function snapshotOf(entries) {
   return entries.map((entry) => ({ ...entry }));
 }
 
+// Temp sibling + rename, so a crash can never leave a half-written baseline behind.
 async function persist(filePath, achievements) {
-  // Create the cache directory on first use.
   await fs.mkdir(path.dirname(filePath), { recursive: true });
 
   const data = JSON.stringify(achievements);
   const tmpPath = `${filePath}.tmp`;
 
-  // Write a sibling temp file, then rename it atomically.
   try {
     await fs.writeFile(tmpPath, data, 'utf8');
   } catch (err) {
-    // Remove partial temp files.
     await fs.unlink(tmpPath).catch(() => {});
     throw err;
   }
@@ -107,7 +105,6 @@ async function persist(filePath, achievements) {
     try {
       await fs.writeFile(filePath, data, 'utf8');
     } finally {
-      // Remove any leftover temp file.
       await fs.unlink(tmpPath).catch(() => {});
     }
   }

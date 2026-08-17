@@ -477,8 +477,8 @@ const onboardingInterfaceMode = require(path.join(appPath, 'util/interfaceMode.j
     $('#onboarding-prev').prop('disabled', step === 0);
     $('#onboarding-next span').text(step === STEP_COUNT - 1 ? t.finish : t.next);
     $('#onboarding-next i').toggleClass('fa-check', step === STEP_COUNT - 1).toggleClass('fa-chevron-right', step !== STEP_COUNT - 1);
-    // One dismiss affordance, always visible. It used to be hidden on a first run while a click on
-    // the backdrop still dismissed the guide — an escape hatch nobody could see.
+    // One dismiss affordance, always visible: the backdrop dismisses the guide either way, so
+    // hiding the button only made the escape hatch invisible.
     const dismiss = isFirstRunSession ? t.skip : t.close;
     $('#onboarding-close').attr({ title: dismiss, 'aria-label': dismiss });
   }

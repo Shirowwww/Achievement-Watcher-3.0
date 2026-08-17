@@ -12,8 +12,8 @@ function fileStamp(fs, file) {
       // file. Keep the last known-good index and force a retry instead of caching an empty result.
       return { file, unavailable: true };
     }
-    // A permanent path problem (ENOENT, ENOTDIR, EISDIR, …) used to be ignored by the old reader.
-    // Rebuild without this optional file instead of returning potentially stale higher-priority data.
+    // A permanent path problem (ENOENT, ENOTDIR, EISDIR, …) must rebuild without this optional
+    // file rather than return potentially stale higher-priority data.
     return { file, missing: true };
   }
 }

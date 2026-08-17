@@ -155,7 +155,6 @@ module.exports.check = async (dirpath) => {
       if (nested.some(isProbableAppIdFolderName)) return (result = true);
     }
 
-    //check for accepted_files
     scan = await glob('*.{ini,exe}', { cwd: dirpath, onlyFiles: true });
     for (let file of scan) if (accepted_files.some((filename) => filename === file)) return (result = true);
 
