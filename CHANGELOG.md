@@ -3,7 +3,7 @@
 All notable changes to AW Next are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
-## 3.9.0 - 2026-08-17
+## 3.9.0 - 2026-08-18
 
 Achievement Watcher becomes **Achievement Watcher Next** (**AW Next**): notifications that pick their
 own transport, a per-game health report with guided repairs, a rebuilt preset library and designer,
@@ -107,8 +107,11 @@ deleting either source.
   of the transport rules — two already drifted apart — are replaced by one decision taken before
   anything is sent, and a fallback is authorised only on a definite failure.
 - Overlay notifications below 100% scale are no longer cropped or padded, and a custom position is
-  used verbatim again so the popup can sit flush in a corner or over the taskbar. An anchor left on a
-  disconnected monitor is still brought back into view.
+  used verbatim again. An anchor left on a disconnected monitor is still brought back into view.
+- **Notification popups reach the screen edge they were anchored to.** Placement was measured against
+  the desktop work area, so a bottom anchor floated above the taskbar instead of sitting on the edge
+  the preset builder had shown. Every anchor is now measured against the whole display, without the
+  extra inset that kept a popup from touching its side.
 - Notification tests produce one preview consistent with the selected transport and preset, instead of
   sending both an overlay popup and a differently styled toast. A playtime notification with no header
   artwork falls back to the square logo instead of showing an empty image.
@@ -135,7 +138,9 @@ deleting either source.
 - Games with no achievement set show **No achievements** instead of `0%`, and are excluded from
   unlocked totals, completed-game counts and average completion.
 - Disabled auto-detected folders are excluded consistently from the renderer scan, the Watchdog and
-  the Xenia watcher, and library skeletons clear only when the scan actually completes.
+  the Xenia watcher, and library skeletons clear only when the scan actually completes. Their count
+  also follows the installed-only filter, so a rescan no longer shimmers with a full grid of
+  placeholders that collapses to the three tiles the filter actually shows.
 - Initial GBE config generation targets only unconfigured Steam games with no existing fix, protecting
   OnlineFix, TENOKE, ALI213, SmartSteamEmu, UniverseLAN, scene emulators, GBE/Goldberg, Ubisoft,
   official-launcher and console installs. Manual emulator tools no longer offer a GBE install for
@@ -143,6 +148,30 @@ deleting either source.
 - **The Light theme would not stay selected**: the settings validator carried its own copy of the
   built-in theme names and that copy had never learned about `light`. It now reads the theme engine's
   own palette list.
+- **The Light theme has depth again.** Its window, library panel and cards all sat within a few
+  percent of white, so they read as one flat sheet with tiles floating on nothing — the white-alpha
+  highlights the dark themes rely on do not register at that lightness. The surfaces are spread into
+  real steps, cards lift off the panel, and sunken wells sit clearly below the card they are cut into.
+  The Watchdog status dot also keeps its whole glow instead of being sliced flat on one side.
+- **Every registry read has a fallback, so a missing native module no longer empties the library.**
+  `registry-js` is a compiled add-on, and a build whose install step never ran ships without its
+  binary; every read then answered exactly as it would for a key that is not on the machine. Steam
+  accounts and therefore Steam games, Uplay, GreenLuma, playtime and the user avatar all went quiet
+  with nothing written to any log. Those reads now fall back to `reg.exe`, which is present on every
+  Windows install, so losing the binary costs speed instead of answers.
+- **A custom cover applies to the shape you chose it in, and shows up immediately.** Portrait and
+  landscape now hold their own picture instead of overwriting one another, and the stored file is
+  named after its own contents — picking a second cover previously reused the same path, so the tile
+  kept painting the previous image and choosing a cover looked like it had done nothing.
+- **An update that is not newer is never offered.** A manifest naming the installed version or an
+  older one — a rolled-back release, a stale mirror — no longer reaches a prompt or starts an
+  installer download.
+- **Restore points survive the move to the new data folder.** Each entry recorded the absolute path it
+  was created at, so every migrated restore point still pointed into the previous folder and became a
+  dead button the moment that folder was uninstalled or deleted. Entries whose backup is present in
+  the current data folder are repointed at it on startup.
+- Picking a starting point in the Preset Designer says what it did, instead of printing the template's
+  bare name with no explanation, and **Surprise me** reports its result at all.
 - Interface fixes: the Settings sidebar sizes itself to its longest label instead of scrolling
   sideways (checked in all 18 locales at five widths), the game page's duplicate floating achievement
   search is gone and `Ctrl+F` focuses the visible field, the profile block is centred again, and

@@ -49,5 +49,5 @@ The `.blockmap` and `latest.yml` assets are used by automatic updates.
 
 ---
 
-[Full changelog](CHANGELOG.md#390---2026-08-17) · [Documentation](docs/README.md) ·
-[Troubleshooting](docs/troubleshooting.md)
+[Full changelog](CHANGELOG.md#390---2026-08-18) · [Documentation](https://shirowwww.github.io/Achievement-Watcher-Next/) ·
+[Troubleshooting](https://shirowwww.github.io/Achievement-Watcher-Next/troubleshooting.html)
