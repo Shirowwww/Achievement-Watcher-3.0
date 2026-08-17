@@ -4,7 +4,7 @@
 
 Practical guides for setup, daily use and maintenance.
 
-[🏠 Project home](https://github.com/Shirowwww/Achievement-Watcher-Next) · [⬇️ Download](https://github.com/Shirowwww/Achievement-Watcher-Next/releases/latest) · [📋 Changelog](https://github.com/Shirowwww/Achievement-Watcher-Next/blob/main/CHANGELOG.md) · [🔐 Security](https://github.com/Shirowwww/Achievement-Watcher-Next/blob/main/SECURITY.md) · [💬 Report an issue](https://github.com/Shirowwww/Achievement-Watcher-Next/issues)
+[Project home](https://github.com/Shirowwww/Achievement-Watcher-Next) · [Download](https://github.com/Shirowwww/Achievement-Watcher-Next/releases/latest) · [Changelog](https://github.com/Shirowwww/Achievement-Watcher-Next/blob/main/CHANGELOG.md) · [Security](https://github.com/Shirowwww/Achievement-Watcher-Next/blob/main/SECURITY.md) · [Report an issue](https://github.com/Shirowwww/Achievement-Watcher-Next/issues)
 
 <img src="screenshot/home.png" width="620" alt="The AW Next library">
 

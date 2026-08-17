@@ -26,6 +26,14 @@
   --aw-muted: #9bacc2;
   --aw-border: #26344f;
   --aw-shadow: rgba(0, 0, 0, 0.45);
+
+  /* Rouge ships one palette, tuned for a light background. */
+  --aw-tok-comment: #8b949e;
+  --aw-tok-keyword: #ff7b72;
+  --aw-tok-string: #a5d6ff;
+  --aw-tok-number: #f0b072;
+  --aw-tok-function: #d2a8ff;
+  --aw-tok-variable: #79c0ff;
 }
 
 :root {
@@ -37,6 +45,13 @@
   --aw-muted: #5b6b82;
   --aw-border: #dde3ec;
   --aw-shadow: rgba(20, 34, 54, 0.09);
+
+  --aw-tok-comment: #6a737d;
+  --aw-tok-keyword: #d73a49;
+  --aw-tok-string: #032f62;
+  --aw-tok-number: #005cc5;
+  --aw-tok-function: #6f42c1;
+  --aw-tok-variable: #005cc5;
 }
 
 /* System preference, unless the reader explicitly asked for light. */
@@ -256,17 +271,53 @@ body {
   font-size: 88%;
 }
 
-.markdown-body pre {
+/*
+  Rouge wraps every fenced block in .highlight, and the theme styles `.highlight pre` - one class
+  more specific than a bare `pre`. Without matching that here the block keeps the theme's near-white
+  background while the text follows the palette, which in dark mode is white on white.
+*/
+.markdown-body pre,
+.markdown-body .highlight,
+.markdown-body .highlight pre {
   background: var(--aw-surface);
+  color: var(--aw-text);
+}
+
+.markdown-body pre,
+.markdown-body div.highlight {
   border: 1px solid var(--aw-border);
   border-radius: 10px;
   padding: 14px 16px;
+}
+
+/* The inner pre would otherwise draw a second frame inside the wrapper's. */
+.markdown-body div.highlight pre {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
 }
 
 .markdown-body pre code {
   background: transparent;
   border: 0;
   padding: 0;
+}
+
+/*
+  Syntax tokens come from Rouge's single light-background palette, so they are re-mapped onto the
+  theme's own two. Only the token groups the guides actually produce (text, powershell, json, ini)
+  need covering, plus their obvious siblings.
+*/
+.markdown-body .highlight {
+  .c, .c1, .cm, .cd, .cp, .cs { color: var(--aw-tok-comment); font-style: italic; }
+  .k, .kc, .kd, .kn, .kp, .kr, .kt, .kv, .nt { color: var(--aw-tok-keyword); }
+  .s, .s1, .s2, .sa, .sb, .sc, .sd, .se, .sh, .si, .sx, .sr, .ss { color: var(--aw-tok-string); }
+  .m, .mb, .mf, .mh, .mi, .mo, .il { color: var(--aw-tok-number); }
+  .nf, .nd, .nc { color: var(--aw-tok-function); }
+  .nv, .vc, .vg, .vi, .no, .nb, .bp { color: var(--aw-tok-variable); }
+  .n, .na, .nl, .nn, .nx, .py, .o, .ow, .p, .w { color: var(--aw-text); }
+  .err { color: var(--aw-tok-keyword); background: transparent; }
 }
 
 /* The centred header and the footer navigation line every page ends with. */
