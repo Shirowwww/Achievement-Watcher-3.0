@@ -24,6 +24,8 @@ const { mergeTranslatedAchievements } = require('./achievementTranslations.js');
 const steamSchemaFetch = require(path.join(appPath, 'util/steamSchemaFetch.js'));
 
 let listReady = true;
+// Set when the app-list download fails, so it is attempted once per session and not once per appid.
+let appListRefreshFailed = false;
 let steamUsersList;
 let appidListMap = new Map();
 let debug;
@@ -1078,7 +1080,7 @@ async function findInAppList(appID) {
           list = undefined; // corrupt/partial cache -> fall through and re-download
         }
       }
-      if (!Array.isArray(list) || list.length === 0) {
+      if ((!Array.isArray(list) || list.length === 0) && !appListRefreshFailed) {
         try {
           const url = 'https://api.steampowered.com/ISteamApps/GetAppList/v2/?format=json';
           const data = await request.getJson(url, { timeout: 40000 });
@@ -1086,11 +1088,19 @@ async function findInAppList(appID) {
           fs.mkdirSync(path.dirname(filepath), { recursive: true });
           fs.writeFileSync(filepath, JSON.stringify(list, null, 2));
         } catch (err) {
-          // Steam's app-list endpoint is intermittently unreachable / rate-limited (observed as a
-          // 404 even while every other Steam API works). A failed refresh must NOT abort the whole
-          // game load: fall back to any existing cached copy even if it is older than the 3-day
-          // freshness window. A stale list still resolves every long-existing appid; brand-new
-          // appids fall through to the get-steam-data name lookup below.
+          // Steam retired ISteamApps/GetAppList: it answers 404 with "Method 'GetAppList' not found
+          // in interface 'ISteamApps'", and the method is gone from GetSupportedAPIList. The
+          // keyless replacement is the app search in searchAppsByName(), which findAppidByName()
+          // already falls back to, and appid -> name still resolves through get-steam-data below.
+          //
+          // A failed refresh must NOT abort the whole game load: fall back to any existing cached
+          // copy even if it is older than the 3-day freshness window. A stale list still resolves
+          // every long-existing appid.
+          //
+          // Once per session: with no cached copy the map stays empty, so without this flag every
+          // single appid re-ran the request — one dead round trip per game on a library scan, which
+          // is what made the first scan after clearing the cache drag.
+          appListRefreshFailed = true;
           debug.log(`GetAppList refresh failed (${err.code || err}); falling back to cached appList if present`);
           if (fs.existsSync(filepath)) {
             try {

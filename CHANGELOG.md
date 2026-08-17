@@ -177,6 +177,11 @@ deleting either source.
   against a Steam copy — no longer brings the game back on its own either: an appid Steam has
   installed follows the **official Steam games** setting, like a Steam purchase that launches through
   Ubisoft Connect. A cracked copy with an install folder of its own is untouched.
+- **Steam's retired app-list endpoint is asked once, not once per game.** `ISteamApps/GetAppList` now
+  answers 404 and is gone from Steam's own list of supported methods. Names and IDs already resolve
+  without it — through the store data lookup and Steam's app search — but with no cached copy of the
+  list on disk, every appid in a scan retried the same dead request, which is what made the first
+  scan after clearing the cache drag.
 - **An update that is not newer is never offered.** A manifest naming the installed version or an
   older one — a rolled-back release, a stale mirror — no longer reaches a prompt or starts an
   installer download.
