@@ -356,6 +356,16 @@ module.exports.getFolders = async (userDir_file) => {
     /*Do nothing*/
   }
 
+  // userDir.js seeds userdir.db with these same roots, so each arrived twice. Built-ins are pushed
+  // first, so first-wins keeps their uplayR2 / socialClub flags and narrow `file` list.
+  const seen = new Set();
+  steamEmu = steamEmu.filter((entry) => {
+    const key = path.resolve(String((entry && entry.dir) || '')).toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
   const disabled = configuredDirs
     .filter((entry) => entry && entry.enabled === false && entry.path)
     .map((entry) => path.resolve(String(entry.path)).toLowerCase());
