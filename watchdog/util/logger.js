@@ -59,20 +59,33 @@ function rotateIfTooBig(file, maxBytes) {
   }
 }
 
+// Modules sharing a log file share its stream: preparing the same file per module re-scanned the
+// whole file (plus its .1) each time and wrote a session banner per module.
+const streams = new Map();
+
+function openLogStream(file, maxBytes) {
+  const key = path.resolve(file);
+  const existing = streams.get(key);
+  if (existing) return existing;
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  redactLegacySettingsDumps(file);
+  redactLegacySettingsDumps(`${file}.1`);
+  rotateIfTooBig(file, maxBytes);
+  // 'a' also makes every write land at the real end of file, so several processes sharing one
+  // log interleave whole lines instead of overwriting each other.
+  const stream = fs.createWriteStream(file, { flags: 'a', encoding: 'utf8' });
+  stream.on('error', (error) => console.warn(error));
+  // One marker per process, so a reader can tell where a launch (or a second instance) begins.
+  stream.write(`\n===== session ${new Date().toISOString()} pid=${process.pid} =====\n`);
+  streams.set(key, stream);
+  return stream;
+}
+
 class Logger {
   constructor(options = {}) {
     this.consoleEnabled = Boolean(options.console);
     if (options.file) {
-      fs.mkdirSync(path.dirname(options.file), { recursive: true });
-      redactLegacySettingsDumps(options.file);
-      redactLegacySettingsDumps(`${options.file}.1`);
-      rotateIfTooBig(options.file, Number(options.maxBytes) > 0 ? Number(options.maxBytes) : MAX_BYTES);
-      // 'a' also makes every write land at the real end of file, so several processes sharing one
-      // log interleave whole lines instead of overwriting each other.
-      this.stream = fs.createWriteStream(options.file, { flags: 'a', encoding: 'utf8' });
-      this.stream.on('error', (error) => console.warn(error));
-      // One marker per process, so a reader can tell where a launch (or a second instance) begins.
-      this.stream.write(`\n===== session ${new Date().toISOString()} pid=${process.pid} =====\n`);
+      this.stream = openLogStream(options.file, Number(options.maxBytes) > 0 ? Number(options.maxBytes) : MAX_BYTES);
     }
   }
 

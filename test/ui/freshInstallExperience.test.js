@@ -60,7 +60,10 @@ test('the alternate-cover picker resolves and shows the actual current cover', (
 test('streaming scans retain a skeleton tail until the list actually completes', () => {
   const app = fs.readFileSync(path.join(root, 'app', 'app.js'), 'utf8');
   assert.match(app, /const MIN_STREAMING_SKELETON_TILES = 6/);
-  assert.match(app, /if \(skeletonStreamActive\)[\s\S]*?remaining; i < MIN_STREAMING_SKELETON_TILES/);
+  assert.match(app, /if \(!skeletonStreamActive\) return;\s*const budget = skeletonBudget\(MIN_STREAMING_SKELETON_TILES\)/);
+  // The tail is capped by the games still to arrive, so it runs down to nothing instead of
+  // shimmering past the last one (behaviour covered by browser/skeletonTiles.browser.test.js).
+  assert.match(app, /function skeletonBudget\(cap\)[\s\S]*?skeletonExpected - skeletonRendered/);
   assert.match(app, /function clearSkeletonTiles\(\) \{\s*skeletonStreamActive = false/);
 });
 

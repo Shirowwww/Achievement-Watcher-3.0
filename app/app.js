@@ -168,23 +168,34 @@ const NEW_GAME_SCAN_INTERVAL_MS = 3 * 60 * 1000; // 3 minutes
 let newGameScanTimer = null;
 let scanInFlight = false;
 
-// Remember discovered ids that do not reach the rendered list to avoid refresh loops.
-let unrenderedAppids = new Set();
+// Appids the last completed scan discovered. Diffing against the rendered list instead made every
+// discovered-but-unrenderable appid (merged into another source, hidden by "hide 0%", no schema)
+// look new on every tick. Mirrors runBackgroundAutoFix in electron/init.js.
+let knownDiscoveredAppids = null;
 
-// One detection tick: cheap discover, diff against the games on screen, full refresh only on a new one.
+function seedNewGameScanBaseline() {
+  return achievements
+    .detectInstalledAppids(app.config)
+    .then((ids) => {
+      knownDiscoveredAppids = new Set(ids.map(String));
+    })
+    .catch((err) => debug.log(`[new-game-scan] baseline failed: ${err}`));
+}
+
+// One detection tick: cheap discover, diff against the last discovery, full refresh only on a new one.
 async function runNewGameScan() {
   if (scanInFlight) return; // a scan is already running
   if ($('#achievement').is(':visible')) return; // user is reading a game's achievements — don't yank the view
   if ($('title-bar')[0] && $('title-bar')[0].inSettings) return; // user is configuring — leave them be
   scanInFlight = true;
   try {
-    const discovered = await achievements.detectInstalledAppids(app.config);
-    const known = new Set(gameList.map((g) => String(g.appid)));
-    const fresh = discovered.filter((id) => !known.has(id) && !unrenderedAppids.has(id));
+    const discovered = (await achievements.detectInstalledAppids(app.config)).map(String);
+    const previous = knownDiscoveredAppids;
+    knownDiscoveredAppids = new Set(discovered);
+    if (previous === null) return; // no scan has finished yet — this tick only establishes the baseline
+    const fresh = discovered.filter((id) => !previous.has(id));
     if (fresh.length > 0) {
       debug.log(`[new-game-scan] ${fresh.length} new game(s) detected (${fresh.join(', ')}) — refreshing library`);
-      // Avoid retrying ids that still cannot be rendered on the next tick.
-      for (const id of fresh) unrenderedAppids.add(id);
       app.onStart(); // re-seeds the watchdog gameIndex so the new game is tracked
     }
   } catch (err) {
@@ -194,9 +205,8 @@ async function runNewGameScan() {
   }
 }
 
-// Manual refresh clears the background and Steam miss caches.
-function forgetUnrenderedAppids() {
-  unrenderedAppids = new Set();
+// Manual refresh clears the Steam miss caches.
+function forgetScanCaches() {
   try {
     steamParser.forgetUnresolved();
     // Also drop remembered local-schema locations, so a schema added by hand since the last scan
@@ -243,14 +253,18 @@ function setLibraryBusyCursor(busy) {
 }
 
 // Skeleton tiles fill the grid while a scan streams real games in. Without them a fast local
-// install (Big Walk loads in ~30ms, network-backed games take seconds) sits alone on screen,
-// then the whole rest of the library pops in at once. They are inert and removed as real tiles
-// arrive (and any leftover at the end of the scan).
+// install sits alone on screen, then the whole library pops in at once.
 const MAX_SKELETON_TILES = 18;
 const DEFAULT_SKELETON_TILES = 12;
 const MIN_STREAMING_SKELETON_TILES = 6;
 let skeletonStreamActive = false;
 let skeletonSequence = 0;
+// The live placeholders, in document order. Re-querying them per streamed game cost two full
+// `:has()` traversals of a list that grows with every tile.
+let skeletonTiles = [];
+// Games the scan will actually deliver; null until makeList reports it.
+let skeletonExpected = null;
+let skeletonRendered = 0;
 
 function skeletonTileHtml(index) {
   const delay = ((index || 0) % 6 * -0.2).toFixed(1);
@@ -266,30 +280,60 @@ function skeletonTileHtml(index) {
     </li>`;
 }
 
-function addSkeletonTiles(count) {
+// Never show more placeholders than games still to arrive, so a 3-game library does not shimmer
+// with 12 of them.
+function skeletonBudget(cap) {
+  if (skeletonExpected === null) return cap;
+  return Math.max(0, Math.min(cap, skeletonExpected - skeletonRendered));
+}
+
+function appendSkeletonTiles(count) {
   const list = $('#game-list ul');
+  for (let i = 0; i < count; i++) {
+    const tile = $(skeletonTileHtml(skeletonSequence++));
+    list.append(tile);
+    skeletonTiles.push(tile);
+  }
+}
+
+function trimSkeletonTiles(target) {
+  while (skeletonTiles.length > target) skeletonTiles.pop().remove();
+}
+
+function addSkeletonTiles(count) {
   skeletonStreamActive = true;
   skeletonSequence = 0;
-  for (let i = 0; i < count; i++) list.append(skeletonTileHtml(skeletonSequence++));
+  skeletonTiles = [];
+  skeletonExpected = null;
+  skeletonRendered = 0;
+  appendSkeletonTiles(count);
+}
+
+// makeList reports the real count before the first game resolves; resize to it.
+function setSkeletonExpected(total) {
+  if (!skeletonStreamActive || !(total > 0) || skeletonExpected === total) return;
+  skeletonExpected = total;
+  trimSkeletonTiles(skeletonBudget(MAX_SKELETON_TILES));
 }
 
 function replaceSkeletonWith(item) {
-  const skeleton = $('#game-list ul li:has(.game-box.skeleton)').first();
-  if (skeleton.length) skeleton.replaceWith(item);
+  const skeleton = skeletonTiles.shift();
+  if (skeleton && skeleton.parent().length) skeleton.replaceWith(item);
   else $('#game-list ul').append(item);
-  // Once the initial placeholders have been consumed, keep a short animated tail until makeList()
-  // actually resolves. Otherwise a large/slow library looks fully loaded after its first 12 games.
-  if (skeletonStreamActive) {
-    const list = $('#game-list ul');
-    const remaining = list.find('li:has(.game-box.skeleton)').length;
-    for (let i = remaining; i < MIN_STREAMING_SKELETON_TILES; i++) {
-      list.append(skeletonTileHtml(skeletonSequence++));
-    }
-  }
+  skeletonRendered += 1;
+  // Keep a short animated tail until makeList resolves, or a large library looks finished after
+  // its first dozen games. The tail shrinks to nothing as the last games arrive.
+  if (!skeletonStreamActive) return;
+  const budget = skeletonBudget(MIN_STREAMING_SKELETON_TILES);
+  if (skeletonTiles.length > budget) trimSkeletonTiles(budget);
+  else appendSkeletonTiles(budget - skeletonTiles.length);
 }
 
 function clearSkeletonTiles() {
   skeletonStreamActive = false;
+  skeletonTiles = [];
+  skeletonExpected = null;
+  skeletonRendered = 0;
   $('#game-list ul li:has(.game-box.skeleton)').remove();
 }
 
@@ -1316,9 +1360,10 @@ var app = {
     const listLoadPromise = achievements
       .makeList(
         scanConfig,
-        (percent) => {
+        (percent, total) => {
           loadingElem.progress.attr('data-percent', percent);
           loadingElem.meter.css('width', percent + '%');
+          setSkeletonExpected(total);
         },
         (renderGame = (game) => {
           manualUnlock.applyToGame(game, manualUnlockMap, game.appid, game.source);
@@ -1468,6 +1513,9 @@ var app = {
           );
         }
         self.hasCompletedFirstScan = true;
+        // Baseline for the background detector: the appids this scan was built from. Within the
+        // discovery TTL this reuses the scan's own discovery rather than repeating it.
+        seedNewGameScanBaseline();
         if (activeScanScope && previousGames.length > 0 && Array.isArray(list)) {
           const freshAppids = new Set(list.map((game) => String(game && game.appid)));
           const preserved = previousGames.filter(

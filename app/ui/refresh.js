@@ -33,8 +33,8 @@ function resetUI() {
   $("#settings .box section.content[data-view='" + elem.data('view') + "']").addClass('active');
   if (app.args.appid) app.args.appid = null;
   if (app.args.name) app.args.name = null;
-  // An explicit refresh is the user asking for a clean retry, so let the background detector
-  // reconsider appids it had written off as "discovered but never renders" (see app.js).
-  if (typeof forgetUnrenderedAppids === 'function') forgetUnrenderedAppids();
+  // An explicit refresh is the user asking for a clean retry, so drop the caches that remember
+  // which appids failed to resolve (see app.js).
+  if (typeof forgetScanCaches === 'function') forgetScanCaches();
   app.onStart();
 }
