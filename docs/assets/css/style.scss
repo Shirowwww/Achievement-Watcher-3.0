@@ -11,9 +11,22 @@
   the product's own palette on top of it, taken from app/presets/Default Presets/AW Next/style.css
   so the site and the app read as one thing.
 
-  Light is the default and dark follows the reader's system setting - the docs are read by people
-  who have not installed the app yet, so neither mode is forced.
+  There are three theme states, and all three have to be covered or the toggle only works one way:
+  no attribute means follow the system, data-theme="dark"/"light" is an explicit choice the reader
+  made (stored by _includes/head-custom.html). Light is the base palette so a reader who has not
+  installed the app yet is never forced into dark.
 */
+
+@mixin aw-dark-palette {
+  --aw-accent: #6c91ff;
+  --aw-accent-soft: #1b2942;
+  --aw-bg: #0c1322;
+  --aw-surface: #16223a;
+  --aw-text: #e7edf6;
+  --aw-muted: #9bacc2;
+  --aw-border: #26344f;
+  --aw-shadow: rgba(0, 0, 0, 0.45);
+}
 
 :root {
   --aw-accent: #3d63d8;
@@ -26,17 +39,16 @@
   --aw-shadow: rgba(20, 34, 54, 0.09);
 }
 
+/* System preference, unless the reader explicitly asked for light. */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --aw-accent: #6c91ff;
-    --aw-accent-soft: #1b2942;
-    --aw-bg: #0c1322;
-    --aw-surface: #16223a;
-    --aw-text: #e7edf6;
-    --aw-muted: #9bacc2;
-    --aw-border: #26344f;
-    --aw-shadow: rgba(0, 0, 0, 0.45);
+  :root:not([data-theme="light"]) {
+    @include aw-dark-palette;
   }
+}
+
+/* An explicit choice wins in both directions. */
+:root[data-theme="dark"] {
+  @include aw-dark-palette;
 }
 
 body {
@@ -217,9 +229,51 @@ body {
   color: var(--aw-muted);
 }
 
+/* Theme toggle, injected by _includes/head-custom.html. */
+.aw-theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--aw-border);
+  border-radius: 50%;
+  background: var(--aw-surface);
+  color: var(--aw-muted);
+  cursor: pointer;
+  box-shadow: 0 2px 10px var(--aw-shadow);
+}
+
+.aw-theme-toggle:hover {
+  color: var(--aw-accent);
+  border-color: var(--aw-accent);
+}
+
+.aw-theme-toggle:focus-visible {
+  outline: 2px solid var(--aw-accent);
+  outline-offset: 2px;
+}
+
+.aw-theme-toggle svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  fill: currentColor;
+}
+
 @media (max-width: 600px) {
   .markdown-body {
     font-size: 15px;
+  }
+
+  .aw-theme-toggle {
+    top: 10px;
+    right: 10px;
   }
 
   .markdown-body h1 {
