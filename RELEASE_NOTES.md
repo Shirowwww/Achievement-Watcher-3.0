@@ -1,54 +1,57 @@
-# Achievement Watcher Next 3.9.0
+# Achievement Watcher Next 3.9.1
 
-Achievement Watcher is now **Achievement Watcher Next** - **AW Next**. This release consolidates the
-work of the whole 3.x cycle behind a new name, a new icon set and an interface you can scale to how
-much control you actually want.
+A bug-fix release built from the reports that came in after 3.9.0. Thanks to everyone who took the
+time to file one - each of these came from a detailed issue.
 
 ## Highlights
 
-- **Notifications that pick their own transport.** The new **Automatic** mode shows the in-game
-  overlay when it can be seen and a Windows notification when it cannot - never both, and never a
-  silent miss. Overlay, Windows notification and Both are still there if you prefer to decide.
+- **Your library is the same on every scan again.** A game whose metadata lookup failed or timed out
+  was dropped from the list entirely, so the same disk produced a different handful of games each
+  time and a missing card looked exactly like a game that was never installed. What is on disk now
+  decides that a game exists; the online lookup only decorates it. An entry that could not be
+  described yet is listed anyway and fills itself in on a later scan. (#33)
 
-- **Game Health.** Every game now answers the question "why isn't this tracking?" itself: one clear
-  state, the checks behind it, and only the repairs that genuinely apply to that game - locating it,
-  rewriting its achievement data, restoring an emulator file or correcting a mismatched game ID.
+- **No more cards titled with a number.** When the name lookup came back empty, the bare Steam AppID
+  became the title even though the real name was usually already in hand - in the app-list response,
+  in the cache from the previous scan, or in the game's own install folder. All of those are asked
+  first now, and a nameless record is never cached or handed to the Watchdog, so one bad response
+  cannot keep a numeric title alive scan after scan. (#34)
 
-- **A new preset library and a real Preset Designer.** Nine redesigned popups replace the old
-  seventeen, each with a proper 100% completion state. The designer builds your own with ordinary
-  controls and previews the *real* notification - same page, same engine a game gets - at any screen
-  size. Share the result as a single `.awpreset` file.
+- **Middle-button autoscroll is smooth.** A rare achievement row runs an animation that Chromium
+  cannot composite, so every rare row in a game's list repainted on the main thread every frame,
+  on screen or not. Off-screen rows are skipped now. (#35)
 
-- **Simple and Advanced modes.** Pick one during setup. Simple keeps the everyday settings; Advanced
-  restores the full control panel. Nothing is hidden that would explain a missing game.
+- **Updates install again when you ask for them.** A finished download was held back whenever a game
+  was running, and a permanently resident Steam app (a controller utility like DSX, an overlay tool)
+  counts as a running game for as long as the machine is on. On those setups every check downloaded
+  the update, none of them installed it, and nothing said why. An update you explicitly ask for now
+  installs regardless, and one genuinely held back for a game announces itself.
 
-- **Reset and restore achievements.** Replay a game from zero across every local source, always with
-  a backup taken first, and put it back with one action.
+- **Portable and repack releases are found.** A CODEX/RUNE/CPY release installed the usual way
+  writes its saves to a shared public folder, which was scanned. A portable one keeps that same tree
+  next to the game instead, which was not, so the game had no card at all and looked exactly like a
+  game that was never installed. Those layouts are checked now. (#32)
 
-- **Faster where you feel it.** The library no longer refreshes itself minutes after launch, each
-  achievement folder is watched once instead of twice, and startup does markedly less blocking work.
+- **Changing a setting no longer interrupts achievement watching.** The Settings tabs save on every
+  keystroke, and each save restarted the Watchdog - a dozen restarts for one gesture, with an unlock
+  landing in one of the gaps getting missed. A burst of changes is now a single restart.
 
-## Upgrading from 3.8.x
+- **"Choose another cover" opens in about half a second** and offers up to 48 covers instead of 8,
+  including Steam's own store artwork, with the landscape gallery finally populated.
 
-Install over your existing version - nothing else to do.
-
-Your settings, presets, themes, covers, backups, souvenir screenshots and playtime history are
-carried across to the new `%APPDATA%\Achievement Watcher Next` folder on first launch. The previous
-folder is left completely intact, so you can still go back. Shortcuts, the "start with Windows"
-entry and automatic updates continue to work unchanged.
+- **Lighter in the tray.** Playtime tracking no longer spawns a process every three seconds: idle
+  CPU use drops from about 7% of a core to 0.4%.
 
 ## Install
 
-Download `Achievement.Watcher.Setup.3.9.0.exe` from the
-[v3.9.0 release](https://github.com/Shirowwww/Achievement-Watcher-Next/releases/tag/v3.9.0).
+Download `Achievement.Watcher.Setup.3.9.1.exe` from the
+[v3.9.1 release](https://github.com/Shirowwww/Achievement-Watcher-Next/releases/tag/v3.9.1), or let
+the app update itself.
 
 The `.blockmap` and `latest.yml` assets are used by automatic updates.
 
-> The project repository is now **Achievement-Watcher-Next**. Existing installs update normally -
-> GitHub redirects the previous address permanently.
-
 ---
 
-[Full changelog](https://github.com/Shirowwww/Achievement-Watcher-Next/blob/main/CHANGELOG.md#390---2026-08-18) ·
+[Full changelog](https://github.com/Shirowwww/Achievement-Watcher-Next/blob/main/CHANGELOG.md#391---2026-08-18) ·
 [Documentation](https://shirowwww.github.io/Achievement-Watcher-Next/) ·
 [Troubleshooting](https://shirowwww.github.io/Achievement-Watcher-Next/troubleshooting.html)
