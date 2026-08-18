@@ -34,7 +34,24 @@ function normalizeId(value) {
 // Galaxy ids are 64-bit - node:sqlite throws on them unless the statement reads BigInts.
 function queryAll(dbPath, sql) {
   if (!DatabaseSync) throw 'node:sqlite unavailable in this runtime';
-  const db = new DatabaseSync(dbPath, { readOnly: true });
+  /*
+    SQLite reports every open problem as the same opaque "unable to open database file", with no
+    path and no errno - which is all a user's log used to contain, so a real report of GOG toasts
+    never arriving could not be told apart from Galaxy simply not being installed. Name the file and
+    say whether it is the permissions or the database itself, since only one of those is fixable by
+    the user.
+  */
+  try {
+    fs.accessSync(dbPath, fs.constants.R_OK);
+  } catch (err) {
+    throw `cannot read ${dbPath} (${err.code || err}) - check the file's permissions`;
+  }
+  let db;
+  try {
+    db = new DatabaseSync(dbPath, { readOnly: true });
+  } catch (err) {
+    throw `${err.message || err} while opening ${dbPath}`;
+  }
   try {
     const stmt = db.prepare(sql);
     if (typeof stmt.setReadBigInts === 'function') stmt.setReadBigInts(true);

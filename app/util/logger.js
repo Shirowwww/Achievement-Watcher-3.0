@@ -80,10 +80,30 @@ function openLogStream(file, maxBytes) {
   return stream;
 }
 
+/*
+  A test run must never write into the user's real logs.
+
+  Every logger resolves its path from the live userData directory, so `npm test` was appending to
+  the installed app's parser.log and notification.log - hundreds of WARN lines per run, carrying
+  fixture appids and deliberately thrown errors ("offline", "api unavailable"). Those lines then
+  showed up in exported diagnostics as though the app had produced them, which is worse than merely
+  untidy: it sends anyone reading the log after a real fault chasing failures that never happened.
+
+  Console output is untouched, so the test runner still shows everything it did before.
+*/
+function logFilesDisabled() {
+  // NODE_TEST_CONTEXT is set by `node --test` in each test process; the explicit variable covers
+  // anything else that wants file-free logging (a smoke script, a packaging step).
+  return Boolean(process.env.NODE_TEST_CONTEXT || process.env.AW_DISABLE_LOG_FILES);
+}
+
 class Logger {
   constructor(options = {}) {
     this.consoleEnabled = Boolean(options.console);
-    if (options.file) {
+    // `allowDuringTests` is for the suites that exercise the file behaviour itself against a temp
+    // directory. It is the deliberate exception to the rule above, which exists to keep production
+    // modules - whose paths resolve to the live userData directory - from writing during a run.
+    if (options.file && (options.allowDuringTests || !logFilesDisabled())) {
       this.stream = openLogStream(options.file, Number(options.maxBytes) > 0 ? Number(options.maxBytes) : MAX_BYTES);
     }
   }
