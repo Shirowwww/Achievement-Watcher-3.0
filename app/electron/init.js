@@ -2223,10 +2223,59 @@ ipcMain.handle('get-steamdb-cover', async (event, appid) => {
   return await fetchSteamDbCover(appid);
 });
 
+// Steam's own store CDN. The library assets sit at guessable paths, so a HEAD probe lists them in a
+// few hundred ms with no scrape at all - the cheapest source in the picker, and the one that carries
+// the landscape gallery (SteamGridDB has very few 920x430 grids for most games). Probed rather than
+// assumed: a brand-new appid still answers 404 on every one of these paths.
+const STEAM_CDN_BASE = 'https://cdn.cloudflare.steamstatic.com/steam/apps';
+const STEAM_CDN_ASSETS = {
+  // library_600x900_2x is the same artwork at 2x, so it is left out as a visual duplicate.
+  portrait: ['library_600x900.jpg'],
+  landscape: ['header.jpg', 'capsule_616x353.jpg', 'library_hero.jpg'],
+};
+const STEAM_CDN_PROBE_TIMEOUT_MS = 6000;
+const steamCdnCoversCache = new Map();
+
+async function fetchSteamCdnCovers(appid, orientation = 'portrait') {
+  const id = String(appid || '').trim();
+  if (!/^\d+$/.test(id)) return [];
+  const orient = String(orientation || 'portrait').toLowerCase() === 'landscape' ? 'landscape' : 'portrait';
+  const key = `${id}\0${orient}`;
+  if (steamCdnCoversCache.has(key)) return steamCdnCoversCache.get(key);
+
+  const pending = (async () => {
+    const probes = await Promise.all(
+      STEAM_CDN_ASSETS[orient].map(async (asset) => {
+        const url = `${STEAM_CDN_BASE}/${id}/${asset}`;
+        try {
+          const res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(STEAM_CDN_PROBE_TIMEOUT_MS) });
+          return res.ok ? url : '';
+        } catch {
+          return '';
+        }
+      })
+    );
+    return probes.filter(Boolean);
+  })();
+  steamCdnCoversCache.set(key, pending);
+  return pending;
+}
+
 // SteamGridDB covers (bundled public API key): when neither the guessable CDN path nor SteamDB has
-// a portrait, the community grids usually do. Results are cached 30 days per game name.
+// a portrait, the community grids usually do. Cached 30 days per game name and orientation.
 const steamgriddbCoversDir = path.join(userData, 'steam_cache', 'steamgriddb_covers');
 const steamgriddbCoversInFlight = new Map();
+
+// Dimensions are filtered server-side. A popular game carries hundreds of grids of which only a
+// handful are 920x430, so paging through the unfiltered list starves the landscape gallery while
+// still costing two round trips. The first entry of each list is the library's native size.
+const SGDB_DIMENSIONS = {
+  portrait: ['600x900', '660x930', '342x482'],
+  landscape: ['920x430', '460x215'],
+};
+const SGDB_COVER_PAGES = 2; // the API serves 50 grids per page
+const SGDB_COVER_LIMIT = 48;
+const SGDB_COVERS_TTL = 30 * 24 * 60 * 60 * 1000;
 
 // Prefer an exact title match, then a token-level match (all query words present, at most one extra
 // word for edition tags). Never take an unrelated first result - a wrong cover is worse than none.
@@ -2246,60 +2295,111 @@ function pickSteamGridDbGame(games, name) {
   );
 }
 
-async function fetchSteamGridDbCovers(gameName, limit = 8, orientation = 'portrait') {
+// Native size first, then the other accepted dimensions in declared order. The API returns grids by
+// score, and that order is preserved inside each tier, so the best-rated artwork stays on top.
+function rankSteamGridDbGrids(grids, orientation, limit) {
+  const order = SGDB_DIMENSIONS[orientation] || SGDB_DIMENSIONS.portrait;
+  const tierOf = (grid) => {
+    const index = order.indexOf(`${Number(grid.width)}x${Number(grid.height)}`);
+    return index === -1 ? order.length : index;
+  };
+  return (Array.isArray(grids) ? grids : [])
+    .filter((grid) => grid && grid.url)
+    .map((grid, index) => ({ grid, index }))
+    .sort((a, b) => tierOf(a.grid) - tierOf(b.grid) || a.index - b.index)
+    .slice(0, Math.max(1, Number(limit) || SGDB_COVER_LIMIT))
+    .map(({ grid }) => ({
+      url: String(grid.url),
+      // The API ships a small preview next to every grid; the picker paints tiles from it so the
+      // gallery is not downloading dozens of full-size covers just to be looked at.
+      thumb: String(grid.thumb || grid.url),
+      width: Number(grid.width) || 0,
+      height: Number(grid.height) || 0,
+    }));
+}
+
+async function fetchSteamGridDbGrids(name, orientation) {
+  const apiKey = getSteamGridDbApiKey();
+  const sgdb = (url) =>
+    fetch(url, { headers: { Authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(SGDB_FETCH_TIMEOUT_MS) });
+  const searchRes = await sgdb(`${BASE_URL}/search/autocomplete/${encodeURIComponent(name)}`);
+  if (!searchRes.ok) return [];
+  const search = await searchRes.json();
+  const game = pickSteamGridDbGame(search.data, name);
+  if (!game || !game.id) return [];
+
+  const dimensions = (SGDB_DIMENSIONS[orientation] || SGDB_DIMENSIONS.portrait).join(',');
+  const pages = await Promise.all(
+    Array.from({ length: SGDB_COVER_PAGES }, (unused, page) =>
+      sgdb(`${BASE_URL}/grids/game/${game.id}?dimensions=${dimensions}&page=${page}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .catch(() => null)
+    )
+  );
+  let list = pages.flatMap((body) => (Array.isArray(body && body.data) ? body.data : [])).filter((grid) => grid && grid.url);
+  // A game whose artists only ever uploaded odd sizes comes back empty; take whatever exists.
+  if (!list.length) {
+    const anyBody = await sgdb(`${BASE_URL}/grids/game/${game.id}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .catch(() => null);
+    list = (Array.isArray(anyBody && anyBody.data) ? anyBody.data : []).filter((grid) => grid && grid.url);
+  }
+
+  const seen = new Set();
+  return list.filter((grid) => {
+    const url = String(grid.url);
+    if (seen.has(url)) return false;
+    seen.add(url);
+    return true;
+  });
+}
+
+async function fetchSteamGridDbCovers(gameName, limit = SGDB_COVER_LIMIT, orientation = 'portrait') {
   const name = String(gameName || '').trim();
   if (!name) return [];
-  const wantsPortrait = String(orientation || 'portrait').toLowerCase() !== 'landscape';
-  const key = require('crypto').createHash('sha1').update(name.toLowerCase()).digest('hex');
+  const orient = String(orientation || 'portrait').toLowerCase() === 'landscape' ? 'landscape' : 'portrait';
+  const key = require('crypto').createHash('sha1').update(`${name.toLowerCase()}\0${orient}`).digest('hex');
   const cacheFile = path.join(steamgriddbCoversDir, `${key}.json`);
-  const pickUrls = (grids) => {
-    const list = Array.isArray(grids) ? grids : [];
-    let matched = list.filter((g) =>
-      wantsPortrait
-        ? Number(g.width) === 600 && Number(g.height) === 900
-        : Number(g.width) === 920 && Number(g.height) === 430
-    );
-    if (!matched.length) matched = list.filter((g) => g.url);
-    return matched.slice(0, limit).map((g) => String(g.url));
-  };
   try {
-    if (fs.existsSync(cacheFile) && Date.now() - fs.statSync(cacheFile).mtimeMs < 30 * 24 * 60 * 60 * 1000) {
+    if (fs.existsSync(cacheFile) && Date.now() - fs.statSync(cacheFile).mtimeMs < SGDB_COVERS_TTL) {
       const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
-      if (Array.isArray(cached.grids)) return pickUrls(cached.grids);
+      if (Array.isArray(cached.grids)) return rankSteamGridDbGrids(cached.grids, orient, limit);
     }
   } catch {
     /* stale/corrupt -> refetch */
   }
-  if (steamgriddbCoversInFlight.has(key)) return steamgriddbCoversInFlight.get(key);
+  if (steamgriddbCoversInFlight.has(key)) {
+    return rankSteamGridDbGrids(await steamgriddbCoversInFlight.get(key), orient, limit);
+  }
 
   const pending = (async () => {
     try {
-      const apiKey = getSteamGridDbApiKey();
-      const searchRes = await fetch(`${BASE_URL}/search/autocomplete/${encodeURIComponent(name)}`, {
-        headers: { Authorization: `Bearer ${apiKey}` },
-      });
-      if (!searchRes.ok) return [];
-      const search = await searchRes.json();
-      const game = pickSteamGridDbGame(search.data, name);
-      if (!game || !game.id) return [];
-      const gridsRes = await fetch(`${BASE_URL}/grids/game/${game.id}`, {
-        headers: { Authorization: `Bearer ${apiKey}` },
-      });
-      if (!gridsRes.ok) return [];
-      const grids = await gridsRes.json();
-      const gridList = (Array.isArray(grids.data) ? grids.data : []).filter((g) => g.url);
-      if (gridList.length) {
+      const grids = await fetchSteamGridDbGrids(name, orient);
+      if (grids.length) {
         try {
           fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
           fs.writeFileSync(
             cacheFile,
-            JSON.stringify({ name, grids: gridList.map((g) => ({ url: String(g.url), width: Number(g.width), height: Number(g.height) })) }, null, 2)
+            JSON.stringify(
+              {
+                name,
+                orientation: orient,
+                grids: grids.map((grid) => ({
+                  url: String(grid.url),
+                  thumb: String(grid.thumb || grid.url),
+                  width: Number(grid.width),
+                  height: Number(grid.height),
+                })),
+              },
+              null,
+              2
+            )
           );
         } catch {
           /* cache write failure is non-fatal */
         }
       }
-      return pickUrls(gridList);
+      return grids;
     } catch (err) {
       debug.log(`[steamgriddb] cover list failed for "${name}": ${err.message || err}`);
       return [];
@@ -2307,35 +2407,45 @@ async function fetchSteamGridDbCovers(gameName, limit = 8, orientation = 'portra
   })();
   steamgriddbCoversInFlight.set(key, pending);
   try {
-    return await pending;
+    return rankSteamGridDbGrids(await pending, orient, limit);
   } finally {
     steamgriddbCoversInFlight.delete(key);
   }
 }
 
 async function fetchSteamGridDbCover(gameName) {
-  const urls = await fetchSteamGridDbCovers(gameName, 1, 'portrait');
-  return urls[0] || null;
+  const covers = await fetchSteamGridDbCovers(gameName, 1, 'portrait');
+  return (covers[0] && covers[0].url) || null;
 }
 
 ipcMain.handle('get-steamgriddb-cover', async (event, gameName) => {
   return await fetchSteamGridDbCover(gameName);
 });
 
-// Cover picker options: SteamDB library assets plus SteamGridDB community grids, filtered to the
-// library orientation (portrait 600x900 or landscape 920x430), so the gallery matches the current
-// vertical/horizontal tile layout.
+// Cover picker options: the two instant sources only. Steam's CDN answers a HEAD probe and
+// SteamGridDB is a JSON call behind a 30-day disk cache, so the gallery paints in well under a
+// second. SteamDB is deliberately absent - it costs a stealth-browser launch plus a page load for
+// one or two extra assets, and folding it into this call made the whole dialog wait on it.
 ipcMain.handle('get-cover-options', async (event, { name, orientation, steamAppid } = {}) => {
   const gameName = String(name || '').trim();
   const orient = String(orientation || 'portrait').toLowerCase() === 'landscape' ? 'landscape' : 'portrait';
-  // SteamDB is only queried for a real Steam release (explicit numeric steamAppid). Non-Steam ids
-  // (GOG/Xbox/local) would hit a SteamDB page with no assets and stall the gallery.
   const id = /^\d+$/.test(String(steamAppid || '').trim()) ? String(steamAppid).trim() : '';
-  const [steamdb, grids] = await Promise.all([
-    /^\d+$/.test(id) ? fetchSteamDbCovers(id, orient) : Promise.resolve([]),
-    gameName ? fetchSteamGridDbCovers(gameName, 8, orient) : Promise.resolve([]),
+  const [steam, grids] = await Promise.all([
+    id ? fetchSteamCdnCovers(id, orient) : Promise.resolve([]),
+    gameName ? fetchSteamGridDbCovers(gameName, SGDB_COVER_LIMIT, orient) : Promise.resolve([]),
   ]);
-  return { steamdb: Array.isArray(steamdb) ? steamdb : [], grids: Array.isArray(grids) ? grids : [] };
+  return { steam: Array.isArray(steam) ? steam : [], grids: Array.isArray(grids) ? grids : [] };
+});
+
+// The slow half of the picker, asked for separately so its tiles can be appended late. Only a real
+// Steam release is queried (explicit numeric steamAppid): a non-Steam id (GOG/Xbox/local) would
+// scrape a page with no assets and hold the browser tab open for up to 45s.
+ipcMain.handle('get-cover-options-steamdb', async (event, { orientation, steamAppid } = {}) => {
+  const orient = String(orientation || 'portrait').toLowerCase() === 'landscape' ? 'landscape' : 'portrait';
+  const id = /^\d+$/.test(String(steamAppid || '').trim()) ? String(steamAppid).trim() : '';
+  if (!id) return [];
+  const urls = await fetchSteamDbCovers(id, orient);
+  return Array.isArray(urls) ? urls : [];
 });
 
 // Top-owners SteamID pool. Last-resort seed for the keyless schema/rarity scrape: when no SteamHunters
@@ -2399,20 +2509,67 @@ ipcMain.handle('get-top-owners', async () => {
   return await fetchTopOwners();
 });
 
-// SteamDB launch-metadata fallback: when local exe detection fails, scrape the game's SteamDB config
-// page (through the stealth browser - it 403s plain requests) to learn the launch executable's
-// process name so the watchdog can still detect the game running. Disk-cached for 30 days since
-// launch options change rarely. Returns { process_name, best_process_name, arguments } or null.
+// Launch-metadata fallback: when local exe detection fails, learn the launch executable's process
+// name so the watchdog can still detect the game running. Two sources, cheapest first - Steam's own
+// product info over the anonymous connection, then a scrape of the game's SteamDB config page
+// (through the stealth browser, since SteamDB 403s plain requests) for the rare appid whose product
+// info has no launch section. Disk-cached for 30 days since launch options change rarely.
+// Returns { process_name, best_process_name, arguments } or null.
 const steamdbLaunchInFlight = new Map();
+
+// Steam's own product info carries the very launch options SteamDB republishes, over the anonymous
+// connection AW already opens for names and artwork - no browser, no Cloudflare challenge, no Edge.
+// Tried before the scrape; steamdbLaunch.js does the ranking either way, so both sources agree.
+// clientLogOn() only ever resolves on 'loggedOn' (it neither rejects nor times out), and this runs
+// on every library scan, so the whole attempt is bounded - a Steam outage must fall through to the
+// scrape, never stall the scan.
+const STEAM_APPINFO_LAUNCH_TIMEOUT_MS = 8000;
+async function launchMetadataFromAppInfo(id) {
+  const steamdbLaunch = require(path.join(app.getAppPath(), 'parser/steamdbLaunch.js'));
+  const attempt = (async () => {
+    await clientLogOn();
+    const { apps } = await client.getProductInfo([Number(id)], [], false);
+    const info = (apps[id] || apps[Number(id)] || {}).appinfo;
+    return steamdbLaunch.launchMetadataFromAppInfo(id, info && info.config ? info.config.launch : null);
+  })();
+  try {
+    return await Promise.race([
+      attempt,
+      new Promise((resolve) => setTimeout(() => resolve('timeout'), STEAM_APPINFO_LAUNCH_TIMEOUT_MS)),
+    ]).then((result) => (result === 'timeout' ? null : result));
+  } catch (err) {
+    debug.log(`[${id}] Steam appinfo launch metadata unavailable: ${err.message || err}`);
+    return null;
+  }
+}
+
 async function fetchSteamDbLaunch(appid) {
   const id = String(appid || '').trim();
   if (!/^\d+$/.test(id)) return null;
   const cacheFile = path.join(userData, 'steam_cache', 'steamdb_launch', `${id}.json`);
   const TTL = 30 * 24 * 60 * 60 * 1000;
+  // A miss (SteamDB unreachable, no browser, no launch option) used to write nothing, so every
+  // rescan paid another headless-browser launch for the same doomed lookup. Remember the miss too,
+  // on a much shorter TTL so a transient outage still gets retried the same day.
+  const NEGATIVE_TTL = 6 * 60 * 60 * 1000;
+  const writeCache = (payload) => {
+    try {
+      fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
+      fs.writeFileSync(cacheFile, JSON.stringify(payload, null, 2));
+    } catch {
+      /* cache write failure is non-fatal */
+    }
+  };
+  const rememberMiss = () => writeCache({ miss: true, at: new Date().toISOString() });
   try {
-    if (fs.existsSync(cacheFile) && Date.now() - fs.statSync(cacheFile).mtimeMs < TTL) {
+    if (fs.existsSync(cacheFile)) {
+      const age = Date.now() - fs.statSync(cacheFile).mtimeMs;
       const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
-      return cached && cached.best_process_name ? cached : null;
+      if (cached && cached.best_process_name) {
+        if (age < TTL) return cached;
+      } else if (age < NEGATIVE_TTL) {
+        return null;
+      }
     }
   } catch {
     /* stale/corrupt -> refetch */
@@ -2421,6 +2578,14 @@ async function fetchSteamDbLaunch(appid) {
 
   const pending = (async () => {
     const steamdbLaunch = require(path.join(app.getAppPath(), 'parser/steamdbLaunch.js'));
+    // Cheapest usable source first; the scrape below is the last resort for an appid whose
+    // product info carries no launch section at all.
+    const fromAppInfo = await launchMetadataFromAppInfo(id);
+    if (fromAppInfo && fromAppInfo.best_process_name) {
+      writeCache(fromAppInfo);
+      debug.log(`[${id}] Steam appinfo launch metadata: process_name="${fromAppInfo.process_name}"`);
+      return fromAppInfo;
+    }
     let page = null;
     try {
       await startPuppeteer(true, false);
@@ -2446,19 +2611,16 @@ async function fetchSteamDbLaunch(appid) {
       });
       const meta = steamdbLaunch.launchMetadataFromHtml(id, sectionHtml);
       if (meta && meta.best_process_name) {
-        try {
-          fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
-          fs.writeFileSync(cacheFile, JSON.stringify(meta, null, 2));
-        } catch {
-          /* cache write failure is non-fatal */
-        }
+        writeCache(meta);
         debug.log(`[${id}] SteamDB launch metadata: process_name="${meta.process_name}"`);
         return meta;
       }
       debug.log(`[${id}] SteamDB launch metadata: no usable launch option found`);
+      rememberMiss();
       return null;
     } catch (err) {
       debug.log(`[${id}] SteamDB launch metadata fetch failed: ${err.message || err}`);
+      rememberMiss();
       return null;
     } finally {
       if (page) await page.close().catch(() => {});
@@ -4478,7 +4640,7 @@ function checkResources() {
   const resourcesPath = path.join(manifest.config.debug ? path.join(__dirname, '..') : path.join(process.resourcesPath, 'userdata'));
 
   // Media/ is deliberately not copied any more: it held byte-identical duplicates of app/sounds/,
-  // and no code path ever read <userData>/Media — notification sounds resolve against the bundled
+  // and no code path ever read <userData>/Media - notification sounds resolve against the bundled
   // app/sounds plus user-imported <userData>/sounds. An existing Media/ folder from an older install
   // is left in place rather than deleted; it is inert and the user owns that directory.
   const view = path.join(resourcesPath, 'view');

@@ -15,14 +15,30 @@ function discoverTests(directory) {
     .sort((left, right) => left.localeCompare(right, 'en'));
 }
 
-const files = discoverTests(__dirname);
-if (files.length === 0) throw new Error(`No tests found below ${__dirname}`);
+// The Watchdog ships its own tests under watchdog/test/. They resolve their dependencies from
+// watchdog/node_modules (regodit, koffi), so they run as a second process with that cwd rather than
+// being folded into the app suite - a single run with cwd=app resolves the wrong node_modules.
+// Both are run here because `npm test` in app/ is the one command the release checklist calls: a
+// suite this runner cannot see is a suite nobody runs.
+const SUITES = [
+  { name: 'app', dir: __dirname, cwd: path.join(__dirname, '..', 'app') },
+  { name: 'watchdog', dir: path.join(__dirname, '..', 'watchdog', 'test'), cwd: path.join(__dirname, '..', 'watchdog') },
+];
 
-// Native registry integrations can race on Windows runners, so keep this aggregate suite serial.
-const result = spawnSync(process.execPath, ['--test', '--test-concurrency=1', ...process.argv.slice(2), ...files], {
-  cwd: path.join(__dirname, '..', 'app'),
-  stdio: 'inherit',
-});
+let failed = false;
+for (const suite of SUITES) {
+  const files = discoverTests(suite.dir);
+  if (files.length === 0) throw new Error(`No tests found below ${suite.dir}`);
 
-if (result.error) throw result.error;
-process.exitCode = typeof result.status === 'number' ? result.status : 1;
+  console.log(`\n=== ${suite.name} suite (${files.length} files) ===`);
+  // Native registry integrations can race on Windows runners, so keep each suite serial.
+  const result = spawnSync(process.execPath, ['--test', '--test-concurrency=1', ...process.argv.slice(2), ...files], {
+    cwd: suite.cwd,
+    stdio: 'inherit',
+  });
+
+  if (result.error) throw result.error;
+  if (result.status !== 0) failed = true;
+}
+
+process.exitCode = failed ? 1 : 0;

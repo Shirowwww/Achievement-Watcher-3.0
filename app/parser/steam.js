@@ -363,6 +363,17 @@ module.exports.getGameData = async (cfg) => {
         debug.log(`[${cfg.appID}] empty-schema re-check could not run, keeping the cached entry: ${err.code || err}`);
         return staleEmpty;
       }
+      // findInAppList() resolves the canonical store name (app-list dump, or the per-appid `name`
+      // IPC when the dump is missing). It is an INDEPENDENT lookup from the product-info call
+      // inside getSteamDataFromSRV, so when that one comes back nameless the name is very often
+      // already in hand - and throwing it away is what left a card titled with its bare appid while
+      // its artwork (built from the appid alone) rendered fine (issue #34).
+      const listedName = typeof inAppList === 'string' && inAppList.trim() ? inAppList.trim() : '';
+      if (result && !result.name && listedName) {
+        result.name = listedName;
+        debug.log(`[${cfg.appID}] product info returned no name; using the app-list name "${listedName}"`);
+      }
+
       if ((!result || !result.name) && staleEmpty) {
         // The re-check came back empty-handed (offline, rate-limited, store 404). Hand back the
         // record we already had and leave it unstamped: nothing was verified, so the next scan
@@ -409,8 +420,16 @@ module.exports.getGameData = async (cfg) => {
 
     needSaving = needSaving || (!fastStart && (await GetMissingData(result, cfg.showHidden, cfg.lang, cfg.steamSettings)));
     if (needSaving) {
-      fs.mkdirSync(path.dirname(filePath), { recursive: true });
-      fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
+      // A record with no name is not a schema, it is a failed lookup wearing one. Writing it would
+      // serve a nameless entry from cache on the next scan (and JSON.stringify(undefined) writes the
+      // literal "undefined", which only reads back as a corrupt cache). Keep it in memory for this
+      // scan and let the next one retry the fetch (issue #34).
+      if (result && result.name) {
+        fs.mkdirSync(path.dirname(filePath), { recursive: true });
+        fs.writeFileSync(filePath, JSON.stringify(result, null, 2));
+      } else {
+        debug.log(`[${cfg.appID}] not caching a schema with no name - the next scan will retry the lookup`);
+      }
     }
     return result;
   } catch (err) {

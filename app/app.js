@@ -17,6 +17,15 @@ const windowsShellLaunch = require(path.join(appPath, 'util/windowsShellLaunch.j
 const { openExternalSafe } = require(path.join(appPath, 'util/externalLink.js'));
 const gameHealthInterfaceMode = require(path.join(appPath, 'util/interfaceMode.js'));
 
+// The DOM id carried by an achievement row icon. It is built in two places - the row markup and
+// the icon preload pass - and the two must stay byte-identical, so the derivation lives here
+// instead of being spelled out twice.
+function achievementIconId(name) {
+  return String(name)
+    .replace(/\s+/g, '_')
+    .replace(/[^\w\-]/g, '');
+}
+
 /*
   Simple mode reports outcomes ("Achievement data found"), Advanced reports the values behind them
   (the schema count, the watched binary, the transport). Both read the SAME report: only the wording
@@ -721,31 +730,59 @@ function openCoverPicker(game, appid, coverCacheAppid) {
   const steamCoverId = /^\d+$/.test(String((game && (game.steamappid || game.appid)) || ''))
     ? String(game.steamappid || game.appid)
     : '';
-  ipcRenderer
-    .invoke('get-cover-options', {
-      name: game.name,
-      orientation: portraitView ? 'portrait' : 'landscape',
-      // Only a real Steam release should hit SteamDB - passing a non-Steam numeric id (GOG/Xbox)
-      // would scrape a page with no assets and stall the gallery for up to 45s.
-      steamAppid: steamCoverId,
-    })
+
+  // Two lookups on purpose. The instant sources (Steam's CDN and SteamGridDB) paint the gallery in
+  // well under a second; the SteamDB scrape costs a browser launch, so its tiles are appended
+  // whenever it finishes instead of holding the whole dialog on "Loading covers".
+  const fastOptions = ipcRenderer.invoke('get-cover-options', {
+    name: game.name,
+    orientation: pickerOrientation,
+    // Only a real Steam release should hit the Steam CDN probe - a non-Steam numeric id (GOG/Xbox)
+    // would just answer 404 on every asset path.
+    steamAppid: steamCoverId,
+  });
+  const steamdbOptions = steamCoverId
+    ? ipcRenderer.invoke('get-cover-options-steamdb', { orientation: pickerOrientation, steamAppid: steamCoverId })
+    : Promise.resolve([]);
+
+  let pendingSources = 2;
+  const refreshStatus = () => {
+    if (grid.children.length) {
+      status.remove();
+      return;
+    }
+    if (pendingSources > 0) return;
+    status.textContent = t('noCoversFound', 'No alternative covers found.', 'Aucune jaquette alternative trouvée.');
+    if (!status.isConnected) box.insertBefore(status, grid);
+  };
+  const sourceSettled = () => {
+    pendingSources -= 1;
+    refreshStatus();
+  };
+
+  fastOptions
     .then(async (opts = {}) => {
       await currentTilePromise;
-      status.remove();
-      for (const url of Array.isArray(opts.steamdb) ? opts.steamdb : []) addTile(url, 'SteamDB');
-      for (const url of Array.isArray(opts.grids) ? opts.grids : []) addTile(url, 'SteamGridDB');
-      if (!grid.children.length) {
-        status.textContent = t('noCoversFound', 'No alternative covers found.', 'Aucune jaquette alternative trouvée.');
-        box.append(status);
+      for (const url of Array.isArray(opts.steam) ? opts.steam : []) addTile(url, 'Steam');
+      // Tiles preview the SteamGridDB thumbnail; the full-size url is only downloaded on click.
+      for (const cover of Array.isArray(opts.grids) ? opts.grids : []) {
+        addTile(cover && cover.url, 'SteamGridDB', (cover && cover.thumb) || (cover && cover.url));
       }
     })
-    .catch(async (err) => {
-      await currentTilePromise;
+    .catch((err) => {
       debug.warn(`[cover] picker options failed => ${err}`);
-      if (grid.children.length) status.remove();
-      else status.textContent = t('noCoversFound', 'No alternative covers found.', 'Aucune jaquette alternative trouvée.');
-    });
+    })
+    .then(sourceSettled);
 
+  steamdbOptions
+    .then(async (urls) => {
+      await currentTilePromise;
+      for (const url of Array.isArray(urls) ? urls : []) addTile(url, 'SteamDB');
+    })
+    .catch((err) => {
+      debug.warn(`[cover] picker SteamDB options failed => ${err}`);
+    })
+    .then(sourceSettled);
 }
 
 // Styled in-app text prompt (Electron disables window.prompt). Resolves to the trimmed value or null.
@@ -4208,8 +4245,23 @@ var app = {
 
       const hiddenDescLabel = $('#lock').data('lang-hiddenDesc') || 'Hidden description';
 
+      // Every lookup below used to run once per achievement: a jQuery selector plus a data() parse,
+      // a locale lookup and a file URL rebuild, several hundred times before a single row was shown.
+      const globalStatLabel = $('#achievement .achievements').data('lang-globalStat');
+      const manualTitle = escapeHtml(
+        $('#achievement .achievement-list').attr('data-lang-manualUnlocked') ||
+          t('manuallyUnlocked', 'Manually unlocked', 'Débloqué manuellement')
+      );
+      const loadingIcon = cssUrl(pathToFileURL(path.join(appPath, 'resources/img/loading.gif')).href);
+      // Rows are collected and inserted in one append per list. jQuery parses the markup and splices
+      // it into the live DOM on every call, so appending row by row cost one layout pass per row.
+      const unlockRows = [];
+      const lockRows = [];
+
       let i = 0;
       for (let achievement of game.achievement.list) {
+        const iconId = achievementIconId(achievement.name);
+        const unlockMoment = moment.unix(achievement.UnlockTime);
         const progress = getAchievementProgressState(achievement);
         const progressMax = progress.hasProgress ? progress.max : 0;
         const progressLabel = `${progress.current} / ${progress.max}`;
@@ -4228,18 +4280,14 @@ var app = {
 
                          <div class="achievement${achievement.manual ? ' manual' : ''}" data-name="${escapeHtml(achievement.name)}" data-index="${i}" data-achieved="${
           achievement.Achieved ? 1 : 0
-        }" data-manual="${achievement.manual ? 1 : 0}" title="${achievement.manual ? escapeHtml($('#achievement .achievement-list').attr('data-lang-manualUnlocked') || t('manuallyUnlocked', 'Manually unlocked', 'Débloqué manuellement')) : ''}">
+        }" data-manual="${achievement.manual ? 1 : 0}" title="${achievement.manual ? manualTitle : ''}">
                             <div class="box">
                               <div class="glow mask contain">
                                   <div class="glow mask ray ">
                                     <div class="glow fx"></div>
                                   </div>
                               </div>
-                              <div class="icon" id="achievement-${String(achievement.name)
-                                .replace(/\s+/g, '_')
-                                .replace(/[^\w\-]/g, '')}" style="background: ${cssUrl(
-          pathToFileURL(path.join(appPath, 'resources/img/loading.gif')).href
-        )};"></div>
+                              <div class="icon" id="achievement-${iconId}" style="background: ${loadingIcon};"></div>
                             </div>
                             <div class="content">
                                 <div class="title">${
@@ -4260,12 +4308,10 @@ var app = {
                             </div>
                             <div class="stats">
                               <div class="time" data-time="${achievement.UnlockTime}"><i class="fas fa-clock"></i>
-                                <span>${moment.unix(achievement.UnlockTime).format('L LT')}</span>
-                                <span>${moment.unix(achievement.UnlockTime).fromNow()}</span>
+                                <span>${unlockMoment.format('L LT')}</span>
+                                <span>${unlockMoment.fromNow()}</span>
                               </div>
-                              <div class="community"><i class="fab fa-steam"></i> <span class="data">--</span>% ${$(
-                                '#achievement .achievements'
-                              ).data('lang-globalStat')}</div>
+                              <div class="community"><i class="fab fa-steam"></i> <span class="data">--</span>% ${globalStatLabel}</div>
                             </div>
                         </div>
 
@@ -4275,12 +4321,15 @@ var app = {
         // Hidden achievements are no longer collected into a separate "reveal all" row - they render
         // inline in the locked list like any other (with their description masked, click to reveal).
         if (achievement.Achieved) {
-          unlock.append(template);
+          unlockRows.push(template);
         } else {
-          lock.append(template);
+          lockRows.push(template);
         }
         i += 1;
       }
+
+      if (unlockRows.length) unlock.append(unlockRows.join(''));
+      if (lockRows.length) lock.append(lockRows.join(''));
 
       function setAchievementImage(selector, imagePath) {
         return new Promise((resolve, reject) => {
@@ -4308,12 +4357,7 @@ var app = {
           }
         }
         const localPath = EMU_LOCAL_ICON_SOURCES.has(game.source) ? hash : await localPathPromise;
-        await setAchievementImage(
-          `#achievement-${String(achievement.name)
-            .replace(/\s+/g, '_')
-            .replace(/[^\w\-]/g, '')}`,
-          localPath
-        );
+        await setAchievementImage(`#achievement-${achievementIconId(achievement.name)}`, localPath);
       });
 
       if (typeof window.restoreAchievementSorts === 'function') window.restoreAchievementSorts();

@@ -60,6 +60,10 @@ Each log file rotates to `<name>.log.1` past 2 MB, so one older generation is al
 
 If only old save residue remains and the game files are gone, the installed-only filter is expected to hide the entry.
 
+A game whose metadata could not be fetched is never removed from the list: what is on disk decides
+that a game exists, and the online lookup only decorates it. Such an entry appears with whatever
+name is known locally and fills itself in on a later scan.
+
 ## Achievements stay locked or show 0%
 
 No runtime unlock file means 0%, even when a complete achievement list is present.
@@ -83,6 +87,10 @@ See [Goldberg and GBE Fork setup](emulator-setup.md#common-problems) or [Goldber
 - Confirm the game's platform identity is correct; a wrong Steam AppID can return convincing but unrelated metadata.
 - For Goldberg/GBE, a valid local schema can fill some missing text offline.
 - Use the game's cover actions to retry or choose local artwork when automatic sources fail.
+
+A card titled with its bare Steam AppID means the name lookup came back empty for that game while
+its artwork, which is derived from the AppID alone, resolved. The entry is kept rather than hidden,
+and the next scan replaces the number with the real title once the lookup succeeds.
 
 DLC and update achievements show their owning group under the title (e.g. a "Hearts of Stone"
 tag) when SteamHunters knows the groups; games without groups are left untagged.

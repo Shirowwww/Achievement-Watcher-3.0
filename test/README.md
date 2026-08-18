@@ -11,9 +11,13 @@ every `*.test.js` file in these folders:
 - `updates-security`: updater boundaries and security/privacy checks.
 
 Reusable browser cleanup code belongs in `helpers`; binary and HTML samples belong in `fixtures`.
-Watchdog's standalone unit suite remains in `watchdog/test` and is run separately from `watchdog/`
-with `npm test`. Both npm commands run their test files serially (`--test-concurrency=1`) so that
-Chromium and native Windows registry integrations cannot race each other.
+
+Watchdog's standalone unit suite lives in `watchdog/test`. It resolves `regodit` and `koffi` from
+`watchdog/node_modules`, so the runner launches it as a second process with that working directory
+rather than folding it into the app suite. `npm test` from `app/` therefore runs both suites and
+fails if either does; `npm test` from `watchdog/` still runs the Watchdog suite on its own. Each
+suite runs its files serially (`--test-concurrency=1`) so that Chromium and native Windows registry
+integrations cannot race each other.
 
 To run one family or one file directly from `app/`:
 

@@ -20,11 +20,68 @@ test('start() guards against re-entry and rebuilds its watcher list', () => {
 
 test('the options watcher tears down through the shared helper', () => {
   assert.match(source, /closeWatchers: function \(\)/);
-  assert.match(source, /option file change detected -> reloading[\s\S]{0,120}self\.closeWatchers\(\)/);
+  assert.match(source, /scheduleOptionsReload: function \(\)[\s\S]{0,600}this\.closeWatchers\(\)/);
   assert.ok(
     !/self\.watcher\.forEach\(\(watcher\) => watcher\.close\(\)\)/.test(source),
     'the unguarded forEach teardown must be gone (it threw on a hole and skipped the rest)'
   );
+});
+
+test('the options watcher debounces instead of restarting per write', () => {
+  // Settings autosave rewrites options.ini many times per gesture; each write must not cost a full
+  // watchdog restart (23 restarts in 28s were observed in the field).
+  assert.match(source, /const OPTIONS_RELOAD_DEBOUNCE_MS = \d+/, 'the coalescing window must be named');
+  assert.match(
+    source,
+    /if \(evt === 'update'\) self\.scheduleOptionsReload\(\);/,
+    'the watcher callback must only schedule, never restart inline'
+  );
+  assert.match(source, /clearTimeout\(this\.optionsReloadTimer\)/, 'a pending reload must be pushed back by a later write');
+});
+
+test('a burst of option writes collapses into one reload', (t) => {
+  // Mocked timers: the coalescing is asserted on the timer algebra alone, so a loaded machine can
+  // never make a real sleep overshoot the window and turn one burst into two reloads.
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+
+  const DEBOUNCE_MS = 1500;
+  const logged = [];
+  let reloads = 0;
+
+  // Faithful model of scheduleOptionsReload: trailing-edge timer, reset by every further write.
+  const app = {
+    optionsReloadTimer: null,
+    closeWatchers() {},
+    start() {
+      reloads += 1;
+    },
+    scheduleOptionsReload() {
+      if (this.optionsReloadTimer) clearTimeout(this.optionsReloadTimer);
+      else logged.push('option file change detected -> reloading');
+      this.optionsReloadTimer = setTimeout(() => {
+        this.optionsReloadTimer = null;
+        this.closeWatchers();
+        this.start();
+      }, DEBOUNCE_MS);
+    },
+  };
+
+  // Twelve writes, each landing well inside the window - the shape of one settings gesture.
+  for (let i = 0; i < 12; i += 1) {
+    app.scheduleOptionsReload();
+    t.mock.timers.tick(DEBOUNCE_MS / 3);
+  }
+  assert.equal(reloads, 0, 'no restart may fire while writes are still arriving');
+
+  t.mock.timers.tick(DEBOUNCE_MS);
+  assert.equal(reloads, 1, 'a burst of writes must restart the watchdog exactly once');
+  assert.equal(logged.length, 1, 'the burst is announced once, not per write');
+
+  // A write arriving after the window settled starts a fresh cycle.
+  app.scheduleOptionsReload();
+  t.mock.timers.tick(DEBOUNCE_MS);
+  assert.equal(reloads, 2, 'a later, separate save still reloads');
+  assert.equal(logged.length, 2, 'and is announced on its own');
 });
 
 test('overlapping reloads run one pass at a time and leak no watchers', async () => {

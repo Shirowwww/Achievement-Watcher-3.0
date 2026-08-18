@@ -3,10 +3,31 @@
 All notable changes to AW Next are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 3.9.1 - 2026-08-18
+
+A bug-fix release for the field reports that followed 3.9.0. The theme is the same in all of them:
+metadata lookups run over the network, they are allowed to fail, and nothing that fails there may
+decide what your library contains.
 
 ### Changed
 
+- The launch executable used for playtime detection is read from Steam's own product info first,
+  over the anonymous connection AW Next already opens for names and artwork. The SteamDB scrape is
+  kept as the fallback for the rare appid whose product info carries no launch section, and a lookup
+  that comes back empty is remembered for six hours instead of costing another headless-browser
+  launch on every rescan.
+- **"Choose another cover" opens in about half a second and offers far more artwork.** The gallery
+  used to wait on a SteamDB scrape, which costs a headless-browser launch and a page load, before it
+  could draw anything - for one or two extra assets. The instant sources now paint it on their own
+  and SteamDB appends its tiles whenever it arrives. Steam's own store CDN joins the list, probed
+  rather than assumed so a brand-new appid does not offer broken tiles. SteamGridDB is asked for the
+  wanted dimensions server-side across two pages instead of being filtered down from a single
+  unfiltered page, and the picker shows up to 48 covers instead of 8: for Cyberpunk 2077 in
+  horizontal tile mode that is 48 covers where the old query found none and fell back to whatever
+  size it could get. Tiles preview the small thumbnail that SteamGridDB ships next to every grid, so
+  the gallery no longer downloads dozens of full-size covers just to be looked at; only the one you
+  click is fetched at full size. Near-native sizes (660x930 and 342x482 for portrait, 460x215 for
+  horizontal) are accepted after the native ones instead of being discarded.
 - **The tray daemon is ~15x cheaper to leave running.** Playtime tracking polled the process list by
   spawning `tasklist.exe` every 3 seconds, which cost about 440 ms of work per poll for the whole
   time AW Next sat in the tray. The same snapshot now comes from the Win32 ToolHelp API through
@@ -18,6 +39,40 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **The library is a function of what is on disk again, not of how the network behaved during the
+  scan** (#33). A game whose metadata lookup timed out was dropped from the list entirely, so the
+  same disk produced a different handful of games on every scan and a missing card was
+  indistinguishable from a game that was never installed. The timeouts were self-inflicted: the
+  SteamDB launch-metadata scrape (a headless-browser page load, serialized in the main process,
+  5-20s per game) was awaited inside the per-game load under a 30s budget, purely to decorate the
+  Watchdog's playtime index. It now runs detached, and a game whose lookup still fails is listed
+  anyway from what is known locally, with its artwork, then replaced by the full record on the next
+  scan.
+- **A game is no longer listed by its numeric appid while its artwork resolves correctly** (#34).
+  Two independent lookups back a card: the store name and the product-info schema. When the schema
+  came back nameless the appid became the title immediately, even though the name usually sat right
+  there in the app-list response, in the schema cache from the previous scan, or in the install
+  folder's own name. All of those are asked first now. A nameless record is no longer written to the
+  schema cache either, so one bad response cannot serve a numeric title from cache on every later
+  scan, and it never reaches the Watchdog's index where playtime cards and live notifications would
+  inherit it.
+- **Middle-button autoscroll on a game page is as smooth as the wheel** (#35). Nothing was
+  intercepting the scroll: a rare achievement row runs two infinite rotate animations under its
+  icon, and the one carrying `mix-blend-mode` cannot be composited, so every rare row in the list
+  repainted on the main thread every frame, whether or not it was on screen. Wheel scrolling stayed
+  smooth because Chromium animates it on the compositor; autoscroll, driven from the main thread,
+  did not. Off-screen rows are skipped now.
+- **Changing a setting no longer tears the achievement watchers down repeatedly.** The Settings tabs
+  autosave on every keystroke and slider step, and each write of `options.ini` triggered a full
+  Watchdog restart. One user gesture could restart it a dozen times, and an unlock landing in one of
+  those gaps was missed. A burst of writes is now folded into a single restart.
+- A game page with several hundred achievements builds noticeably faster: the rows are inserted in
+  one pass per list instead of one layout pass per row, and the per-row locale, template and icon
+  URL lookups are done once for the page.
+- Two log messages that read like failures but describe ordinary states: GOG Galaxy not being
+  installed reported an opaque SQLite "unable to open database file" on every settings reload, and
+  every Steam account on the machine having a private profile was logged as an error. Both are plain
+  notes now, so a real scan failure still stands out.
 - **A windowed game could lose its notification.** The "only notify if the game is running" guard
   asked `win-tasklist`, whose check filters on `STATUS eq RUNNING` - and Windows reports an ordinary
   console-session process as `Unknown`, so the answer was always "not running". The unlock was then

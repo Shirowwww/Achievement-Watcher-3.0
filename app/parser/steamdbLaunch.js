@@ -124,6 +124,26 @@ function launchMetadataFromHtml(appid, html) {
   return toLaunchMetadata(appid, parseLaunchOptionsFromHtml(html));
 }
 
+// Steam's own product info publishes the same launch options SteamDB republishes, as
+// appinfo.config.launch: entries keyed "0","1",... of { executable, arguments, type, config.oslist }.
+// Reading them needs no browser, so this is the preferred source and the scrape is the fallback.
+function parseLaunchOptionsFromAppInfo(launchSection) {
+  if (!launchSection || typeof launchSection !== 'object') return [];
+  return Object.values(launchSection)
+    .filter((entry) => entry && typeof entry === 'object')
+    .map((entry) => ({
+      executable: entry.executable,
+      arguments: entry.arguments,
+      operatingSystem: (entry.config && entry.config.oslist) || '',
+      launchType: entry.type || '',
+    }));
+}
+
+// Full parse → metadata from an appinfo.config.launch section.
+function launchMetadataFromAppInfo(appid, launchSection) {
+  return toLaunchMetadata(appid, parseLaunchOptionsFromAppInfo(launchSection));
+}
+
 module.exports = {
   normalizeLaunchOption,
   scoreLaunchOption,
@@ -135,4 +155,6 @@ module.exports = {
   toLaunchMetadata,
   parseLaunchOptionsFromHtml,
   launchMetadataFromHtml,
+  parseLaunchOptionsFromAppInfo,
+  launchMetadataFromAppInfo,
 };

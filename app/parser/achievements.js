@@ -44,6 +44,7 @@ const installState = require(path.join(appPath, 'installState.js'));
 const { applyLocalStatProgress } = require(path.join(appPath, 'statProgress.js'));
 const scanScope = require(path.join(appPath, 'scanScope.js'));
 const manualGames = require(path.join(appPath, 'manualGames.js'));
+const gameNameCache = require(path.join(appPath, '..', 'util', 'gameNameCache.js'));
 let debug;
 let _userDataPath = null; // cache root for automatic emulator setup and downloaded tools
 
@@ -94,6 +95,49 @@ function normalizeGameName(name, appid) {
   }
   if (typeof name === 'number') return String(name);
   return String(appid);
+}
+
+/*
+  Everything the machine already knows about this appid's title, without touching the network.
+
+  The bare appid is a legitimate LAST resort, but it was reached far too early: a single nameless
+  product-info response was enough to title a card "2012840" even though the same name sat in the
+  schema cache from the previous scan, in the appList dump, or in the install folder's own name
+  (issue #34). Ordered most authoritative first; returns '' when nothing local knows the title.
+*/
+function resolveLocalGameName(appid) {
+  const id = String((appid && appid.appid) || '').trim();
+  const record = (appid && appid.data) || {};
+
+  // A name the discovery record itself carried (launcher manifests, manual entries, GBE configs).
+  const declared = String((appid && appid.name) || '').trim();
+  if (declared && declared !== id) return declared;
+
+  if (id) {
+    // Written for every game the app has ever listed, so it survives a failed lookup.
+    try {
+      const cached = gameNameCache.lookupSchemaCacheName(_userDataPath || userDataDir(), id);
+      if (cached && cached !== id) return cached;
+    } catch {
+      /* cache unreadable - keep going */
+    }
+    // Offline appid -> name dump (cfg/steamdb.json, else the appList copy).
+    try {
+      const dumped = gameNameCache.lookupSteamDbName(id);
+      if (dumped && dumped !== id) return dumped;
+    } catch {
+      /* dump missing - keep going */
+    }
+  }
+
+  // Last local resort: the folder the game actually lives in. Never the save folder, which is
+  // named after the appid and would just hand the appid back.
+  const dir = String(record.gameDir || '').trim();
+  if (dir) {
+    const base = path.basename(dir);
+    if (base && base !== id && !/^[0-9]+$/.test(base)) return base;
+  }
+  return '';
 }
 
 // The watchdog cannot derive artwork from synthetic/manual appids. Persist the already-resolved
@@ -404,6 +448,83 @@ async function discoverWithCache(option, steamAccFilter) {
 
 // Track background emulator fixes so repeated scans do not launch the same fix twice.
 let _emuFixInFlight = new Set();
+
+// Same idea for the SteamDB launch-metadata lookup: it now runs detached from the game load, so a
+// second scan starting while the first is still fetching must not queue the same page again.
+const _steamDbLaunchInFlight = new Set();
+
+/*
+  A library entry for a game whose metadata lookup failed or timed out.
+
+  Discovery found real achievement data for this appid on disk. That is what makes the game exist;
+  the Steam lookup only decorates it with a title and artwork. Before this, a failed or throttled
+  lookup removed the game from the library entirely, so the same disk produced a different, smaller
+  library on every scan (issue #33).
+
+  Everything here is local and free: the name comes from the caches the app already wrote, the
+  artwork URLs are derived from the appid alone. `provisional` marks the entry as "known to exist,
+  not yet described" - it is never written to the schema cache or the watchdog's index, so the next
+  scan replaces it with the real record as soon as the lookup succeeds.
+*/
+function buildProvisionalGame(appid) {
+  if (!appid || !appid.appid) return null;
+  const id = String(appid.appid);
+  const record = (appid && appid.data) || {};
+  // Only for entries backed by something on disk. A record with no achievement data and no install
+  // folder is exactly the phantom cache import the keep-filter below exists to drop.
+  const dataPath = resolveAchievementDataPath(record);
+  const gameDir = record.gameDir || '';
+  if (!dataPath && !gameDir) return null;
+
+  const name = resolveLocalGameName(appid);
+  // Steam's CDN builds these from the appid, so a numeric appid still gets its real artwork - which
+  // is why a card could show the right cover under a numeric title in the first place (issue #34).
+  const img = /^[0-9]+$/.test(id)
+    ? {
+        header: `https://cdn.akamai.steamstatic.com/steam/apps/${id}/header.jpg`,
+        background: `https://cdn.akamai.steamstatic.com/steam/apps/${id}/page_bg_generated_v6b.jpg`,
+        portrait: `https://cdn.akamai.steamstatic.com/steam/apps/${id}/library_600x900.jpg`,
+        icon: '',
+      }
+    : { header: '', background: '', portrait: '', icon: '' };
+
+  return {
+    appid: appid.appid,
+    name: name || id,
+    nameUnresolved: !name,
+    source: appid.source || '',
+    gameDir: gameDir || undefined,
+    dataPath: dataPath || undefined,
+    provisional: true,
+    img,
+    achievement: { total: 0, unlocked: 0, list: [] },
+  };
+}
+
+/*
+  Fetch a game's main executable from SteamDB and hand it to `apply`, off the critical path.
+
+  The lookup goes through the main process's stealth browser (SteamDB 403s plain requests) and is
+  serialized there, so it costs seconds per game. It only decorates the watchdog's gameIndex - the
+  library entry does not depend on it - so it must never be awaited by a game load; doing so is what
+  made a cold scan drop most of the library on the per-game timeout (issue #33).
+*/
+function seedPlaytimeFromSteamDb(appid, apply) {
+  const id = String(appid || '');
+  if (!id || _steamDbLaunchInFlight.has(id)) return;
+  _steamDbLaunchInFlight.add(id);
+  (async () => {
+    try {
+      const { ipcRenderer } = require('electron');
+      const meta = await ipcRenderer.invoke('get-steamdb-launch', id);
+      if (meta && meta.best_process_name) apply(meta.best_process_name);
+    } catch (err) {
+      debug.log(`[${id}] SteamDB launch fallback failed: ${err.message || err}`);
+    } finally {
+      _steamDbLaunchInFlight.delete(id);
+    }
+  })();
+}
 
 // Record failed fixes and retry after a content change or cooldown.
 let _emuSetupAttempts = new Map();
@@ -1334,7 +1455,11 @@ async function discover(source, steamAccFilter, scope = null) {
       }
       data = data.concat(legit);
     } catch (err) {
-      debug.error(err);
+      // Every Steam account on the machine having a private profile is a user setting, not a
+      // malfunction: the legit-Steam source simply contributes nothing. Keep it out of the error
+      // channel so a genuine scan failure still stands out in the log.
+      if (String(err) === 'Public profile: none.') debug.log('[steam] no public Steam profile - skipping the legit Steam source');
+      else debug.error(err);
     }
   }
 
@@ -1902,10 +2027,19 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     // as "object"/"[object Object]" in the UI and only for certain languages (issue #54). Normalize
     // to a plain string at this single chokepoint so every consumer (list, header, notifications)
     // gets a usable title, and log the raw value to pin down the upstream source if it ever happens.
-    if (typeof game.name !== 'string') {
+    if (typeof game.name !== 'string' || !game.name.trim() || game.name.trim() === String(appid.appid)) {
       const raw = game.name;
-      game.name = normalizeGameName(raw, appid.appid);
-      debug.warn(`[${appid.appid}] schema 'name' was ${raw === null ? 'null' : typeof raw}, coerced to "${game.name}". Raw: ${JSON.stringify(raw)}`);
+      const normalized = normalizeGameName(raw, appid.appid);
+      // normalizeGameName's own fallback is the bare appid. Only accept that once every offline
+      // source has been asked (issue #34) - a numeric title is a failure the user has to look at,
+      // not a name.
+      game.name = normalized && normalized !== String(appid.appid) ? normalized : resolveLocalGameName(appid) || String(appid.appid);
+      if (game.name === String(appid.appid)) {
+        game.nameUnresolved = true;
+        debug.warn(`[${appid.appid}] no title from Steam and none known locally - showing the appid. Raw: ${JSON.stringify(raw)}`);
+      } else {
+        debug.warn(`[${appid.appid}] schema 'name' was ${raw === null ? 'null' : typeof raw}, resolved to "${game.name}". Raw: ${JSON.stringify(raw)}`);
+      }
     }
 
     if (appid.steamappid) game.steamappid = appid.steamappid;
@@ -2312,7 +2446,10 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     // ran exe detection on the emulator's SAVE directory and registered e.g. "SmartSteamEmu" as a
     // real game when a non-SocialClub watched folder was misclassified (folder roots must never
     // become gameIndex entries).
-    if (game.name && !(appid.data && appid.data.type === 'socialclub')) {
+    // A card titled with its bare appid must never reach the watchdog's index: that name is what
+    // playtime cards and live notifications would show, and it would outlive the failed lookup that
+    // produced it. Skip the seed and let the next scan write the real title (issue #34).
+    if (game.name && !game.nameUnresolved && !(appid.data && appid.data.type === 'socialclub')) {
       // Carry the Ubisoft product id into the watchdog's index. The emulator names its save folder
       // with that id, so without the pair the watchdog cannot tell which game an unlock under
       // "Goldberg UplayEmu Saves\<uplayId>" belongs to, and Uplay R2 games never fire a live
@@ -2362,17 +2499,19 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
         //    this inside the folder branch left all of those with no process to match on, and no
         //    playtime. Fetched through the main-process stealth browser (SteamDB 403s plain
         //    requests) and disk-cached, so it hits the network once per game. Best-effort.
+        //
+        //    NOT awaited. This is a stealth-browser page load serialized behind every other game's,
+        //    so it routinely took 5-20s and contributes nothing to the game object being built. It
+        //    was the single reason a cold scan blew the per-game timeout: 11 of 19 games were
+        //    dropped from the library for a lookup that only decorates the watchdog's index
+        //    (issue #33). Detached, it finishes whenever it finishes and the row is there for the
+        //    next scan.
         if (!seeded && /^[0-9]+$/.test(String(appid.appid)) && !gameIndex.has(appid.appid)) {
-          try {
-            const { ipcRenderer } = require('electron');
-            const meta = await ipcRenderer.invoke('get-steamdb-launch', appid.appid);
-            if (meta && meta.best_process_name) {
-              if (resolvedGameDir) _seededGameDirs.add(path.resolve(resolvedGameDir).toLowerCase());
-              seed(meta.best_process_name, ' from SteamDB');
-            }
-          } catch (err) {
-            debug.log(`[${appid.appid}] SteamDB launch fallback failed: ${err.message || err}`);
-          }
+          const dirToMark = resolvedGameDir;
+          seedPlaytimeFromSteamDb(appid.appid, (binary) => {
+            if (dirToMark) _seededGameDirs.add(path.resolve(dirToMark).toLowerCase());
+            seed(binary, ' from SteamDB');
+          });
         }
       } catch (err) {
         debug.log(`[${appid.appid}] playtime auto-seed failed: ${err}`);
@@ -2393,23 +2532,22 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     // under "Goldberg SocialClub Emu Saves\<Game>\<profile>\…" back to this game.
     if (appid.data && appid.data.type === 'socialclub' && game.name && game.steamappid && /^[0-9]+$/.test(String(game.steamappid))) {
       try {
-        let binary = '';
-        try {
-          const { ipcRenderer } = require('electron');
-          const meta = await ipcRenderer.invoke('get-steamdb-launch', game.steamappid);
-          if (meta && meta.best_process_name) binary = meta.best_process_name;
-        } catch {
-          /* binary is optional - the entry itself is what matters */
-        }
-        gameIndex.upsert({
+        // The row itself is what the Watchdog needs; the binary only sharpens process matching.
+        // Write the row now and let the (slow, browser-backed) SteamDB lookup fill the binary in
+        // afterwards, so this never sits on the game-load critical path either (issue #33).
+        const row = {
           appid: appid.appid,
           name: game.name,
-          binary,
           ...gameIndexArtwork(game),
           source: appid.source,
           steamappid: game.steamappid,
+        };
+        gameIndex.upsert(row);
+        debug.log(`[${appid.appid}] seeded SocialClub gameIndex (Steam ${game.steamappid})`);
+        seedPlaytimeFromSteamDb(game.steamappid, (binary) => {
+          gameIndex.upsert({ ...row, binary });
+          debug.log(`[${appid.appid}] SocialClub gameIndex binary resolved: "${binary}"`);
         });
-        debug.log(`[${appid.appid}] seeded SocialClub gameIndex (Steam ${game.steamappid}${binary ? `, binary="${binary}"` : ''})`);
       } catch (err) {
         debug.log(`[${appid.appid}] SocialClub gameIndex seed failed: ${err.message || err}`);
       }
@@ -2762,11 +2900,18 @@ module.exports.makeList = async (option, callbackProgress, onGame = () => {}) =>
             // this scan and let it be retried next time. Intentional exclusions (hardcoded bogus
             // list, server list, manual "blacklist" action) keep working untouched.
             debug.log(`[${appid.appid}] could not load (will retry next scan) - took ${(endTime - startTime) / 1000} seconds.`);
+            // ...but the card must still appear. The achievement data on disk is what proves the
+            // game exists; the lookup that failed only decorates it. Dropping the entry made the
+            // library depend on network luck - each scan listed a different handful of games and a
+            // missing card was indistinguishable from a game that was never installed (issue #33).
+            game = buildProvisionalGame(appid);
           }
           // Keep a game if it has achievements, OR it's a genuine on-disk install even with none
           // (e.g. UNDERTALE has zero Steam achievements) - same rationale as unconfigured installs.
           // Non-installed 0-achievement entries (phantom cache imports) are still filtered out.
-          if (game && (game.unconfigured || game.installed || (game.achievement && game.achievement.total > 0))) {
+          // A provisional entry is admitted on its own terms: it stands for on-disk data that was
+          // found but could not be decorated yet.
+          if (game && (game.provisional || game.unconfigured || game.installed || (game.achievement && game.achievement.total > 0))) {
             result.push(game);
             /*
               Hand the game straight to the caller - never via requestAnimationFrame: rAF only fires for
@@ -2796,6 +2941,8 @@ module.exports.makeList = async (option, callbackProgress, onGame = () => {}) =>
 
 // Exposed for unit tests.
 module.exports._internal = {
+  buildProvisionalGame,
+  resolveLocalGameName,
   buildDiscoveryLookup,
   getDiscoverySources,
   mergeCrossSourceDuplicates,

@@ -85,3 +85,46 @@ const FIXTURE = `
 
   console.log('PASS: steamdbLaunch parses + ranks launch options (synthetic + real TF2 markup)');
 })();
+
+// Steam's own product info is the preferred, browser-free source for the same launch options.
+// The fixture mirrors a real appinfo.config.launch section, checked live against appids 1913120
+// (Tears of Metal -> ToM.exe) and 4113940 (Sovereign Tower, whose Windows entry is a nested path).
+(() => {
+  const APPINFO_LAUNCH = {
+    0: { executable: 'sovereign_tower_windows_build\\sovereign_tower.exe', type: 'default', config: { oslist: 'windows' } },
+    1: { executable: 'sovereign_tower.x86_64', config: { oslist: 'linux' } },
+    2: { executable: 'Sovereign Tower.app', config: { oslist: 'macos' } },
+  };
+
+  // ---- mapping onto the shape the shared ranker already understands
+  const opts = s.parseLaunchOptionsFromAppInfo(APPINFO_LAUNCH);
+  assert.equal(opts.length, 3);
+  assert.equal(opts[0].executable, 'sovereign_tower_windows_build\\sovereign_tower.exe');
+  assert.equal(opts[0].operatingSystem, 'windows');
+  assert.equal(opts[0].launchType, 'default');
+
+  // ---- the watchdog matches one filename: nested path collapses, non-Windows entries lose
+  const meta = s.launchMetadataFromAppInfo('4113940', APPINFO_LAUNCH);
+  assert.equal(meta.appid, '4113940');
+  assert.equal(meta.best_process_name, 'sovereign_tower.exe');
+  assert.ok(!meta.process_name.includes('\\'), 'no path separator survives into a process name');
+  assert.ok(!/x86_64|[.]app/.test(meta.process_name), 'non-Windows entries are not offered');
+
+  // ---- no launch section: must fall through to the SteamDB scrape, not invent a name
+  // (verified live against appid 5, which has no config.launch)
+  assert.equal(s.launchMetadataFromAppInfo('5', null), null);
+  assert.equal(s.launchMetadataFromAppInfo('5', undefined), null);
+  assert.equal(s.launchMetadataFromAppInfo('5', {}), null);
+  assert.deepEqual(s.parseLaunchOptionsFromAppInfo(null), []);
+
+  // ---- malformed entries are skipped rather than thrown on
+  const mixed = s.launchMetadataFromAppInfo('1', {
+    0: null,
+    1: 'garbage',
+    2: { config: { oslist: 'windows' } },
+    3: { executable: 'ToM.exe' },
+  });
+  assert.equal(mixed.best_process_name, 'ToM.exe', 'the one usable entry still wins');
+
+  console.log('PASS: steamdbLaunch maps Steam appinfo launch options (browser-free source)');
+})();

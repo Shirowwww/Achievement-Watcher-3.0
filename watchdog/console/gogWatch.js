@@ -24,6 +24,7 @@ try {
 }
 
 let watchers = [];
+let lastDiscoveryError = '';
 
 function normalizeId(value) {
   const raw = String(value ?? '').trim();
@@ -91,14 +92,19 @@ function read(target) {
 }
 
 function discover() {
-  const products = readProductsByClientId();
   const targets = [];
+  // Galaxy not installed (or installed for another user) is the normal case, not a failure: probe
+  // the two paths first so a missing catalog never reaches SQLite, which would only report the
+  // opaque "unable to open database file" on every settings reload.
+  if (!fs.existsSync(STORAGE_DB)) return targets;
   let clientDirs = [];
   try {
     clientDirs = fs.readdirSync(APPLICATIONS_ROOT, { withFileTypes: true });
   } catch {
     return targets;
   }
+  if (clientDirs.length === 0) return targets;
+  const products = readProductsByClientId();
   for (const clientDir of clientDirs) {
     if (!clientDir.isDirectory()) continue;
     const clientId = normalizeId(clientDir.name);
@@ -240,8 +246,14 @@ module.exports.start = async (ctx) => {
   let targets;
   try {
     targets = discover();
+    lastDiscoveryError = '';
   } catch (err) {
-    debug.warn(`[gog] discovery failed: ${err}`);
+    // start() re-runs on every settings reload, so an unchanged failure would repeat verbatim.
+    const message = String(err);
+    if (message !== lastDiscoveryError) {
+      lastDiscoveryError = message;
+      debug.warn(`[gog] discovery failed: ${message}`);
+    }
     return;
   }
   if (targets.length === 0) return;

@@ -76,6 +76,9 @@ const { buildSchemaIndex, findSchemaAchievement, buildPreviousAchievementIndex }
 const { createIndexedGameLookup } = require('./util/indexedGameLookup.js');
 const { runXboxPoll, matchesActiveXboxPoll } = require('./util/xboxPolling.js');
 
+// Trailing-edge window used to fold a burst of options.ini writes into one watchdog restart.
+const OPTIONS_RELOAD_DEBOUNCE_MS = 1500;
+
 const cfg_file = {
   option: path.join(userDataDir(), 'cfg', 'options.ini'),
   userDir: path.join(userDataDir(), 'cfg', 'userdir.db'),
@@ -488,6 +491,25 @@ var app = {
   toastID: toastIdentity.DEFAULT_TOAST_AUMID,
   starting: false,
   restartPending: false,
+  optionsReloadTimer: null,
+  // Settings tabs autosave on every keystroke/slider step, so one user gesture can rewrite
+  // options.ini a dozen times a second. Each write used to trigger a full watchdog restart, which
+  // tears every achievement watcher down and back up - a burst left the save folders unwatched
+  // repeatedly, so an unlock landing in one of those gaps was missed. Coalesce a burst of writes
+  // into a single restart on the trailing edge.
+  scheduleOptionsReload: function () {
+    if (this.optionsReloadTimer) {
+      clearTimeout(this.optionsReloadTimer);
+    } else {
+      debug.log('option file change detected -> reloading');
+    }
+    this.optionsReloadTimer = setTimeout(() => {
+      this.optionsReloadTimer = null;
+      this.closeWatchers();
+      this.start();
+    }, OPTIONS_RELOAD_DEBOUNCE_MS);
+    if (typeof this.optionsReloadTimer.unref === 'function') this.optionsReloadTimer.unref();
+  },
   start: async function () {
     // Serialize settings reloads so concurrent starts cannot leak watchers.
     if (this.starting) {
@@ -558,11 +580,7 @@ var app = {
 
       try {
         self.watcher[0] = watch(cfg_file.option, function (evt, name) {
-          if (evt === 'update') {
-            debug.log('option file change detected -> reloading');
-            self.closeWatchers();
-            self.start();
-          }
+          if (evt === 'update') self.scheduleOptionsReload();
         });
         self.watcher[0].on('error', (err) => debug.error(`[watch:options] ${err}`));
       } catch (err) {
