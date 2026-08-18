@@ -7,7 +7,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const request = require('request-zero');
+const request = require('./lazyRequire.js').lazyRequire('request-zero');
 
 const CACHE_DIR = path.join(require('./userData.js').userDataDir(), 'steam_cache', 'rarity');
 const DEFAULT_TTL_MS = 6 * 60 * 60 * 1000; // matches app/util/rarity.js
@@ -42,7 +42,7 @@ function payloadToMap(payload) {
   return map;
 }
 
-// Synchronous, no freshness gate — instant lookup for the toast hot path.
+// Synchronous, no freshness gate - instant lookup for the toast hot path.
 function readRarityMap(appid) {
   return payloadToMap(readPayload(appid));
 }
@@ -81,7 +81,7 @@ async function fetchSteamGlobal(appid) {
 }
 
 // Return a Map<achievementName, percent>. Hits the network only when the sidecar is missing or older
-// than ttlMs; on any failure falls back to whatever is cached (possibly empty). Never throws — rarity
+// than ttlMs; on any failure falls back to whatever is cached (possibly empty). Never throws - rarity
 // is a non-essential enrichment of the toast.
 async function getRarityMap(appid, { ttlMs = DEFAULT_TTL_MS } = {}) {
   const payload = readPayload(appid);

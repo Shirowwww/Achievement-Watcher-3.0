@@ -35,7 +35,8 @@ const moment = require('moment');
 const websocket = require('./websocket.js');
 const processPriority = require('./util/priority.js');
 const fs = require('fs');
-const request = require('request-zero');
+// Only reached when an unknown appid needs its Steam name resolved (see loadSteamData below).
+const request = require('./util/lazyRequire.js').lazyRequire('request-zero');
 const settings = require('./settings.js');
 const monitor = require('./monitor.js');
 const parseWithRetry = require('./util/parseWithRetry.js');
@@ -267,7 +268,7 @@ function RegisterOverlayHotkey(hotkey) {
   });
 }
 
-// Shared open/close path for the overlay of the currently running game — used by both the keyboard
+// Shared open/close path for the overlay of the currently running game - used by both the keyboard
 // hotkey and the controller "overlay.toggle" action so they stay in sync (overlayOpened tracks state).
 function toggleOverlayForRunningGame(fromController = false) {
   const opening = !overlayOpened;
@@ -418,7 +419,7 @@ module.exports = { SpawnOverlayNotification };
 
 // The app reports every overlay window that opens or closes, from the window's own lifecycle events
 // rather than from any one button, so `overlayOpened` cannot drift out of sync with what is on
-// screen — a stale "open" would make the next hotkey press send a close for a window that is
+// screen - a stale "open" would make the next hotkey press send a close for a window that is
 // already gone (and a stale "closed" would ask to open one that is already up). Transitions we
 // caused ourselves arrive here too and are dropped by the equality check below.
 process.on('message', (msg) => {
@@ -540,13 +541,13 @@ var app = {
         debug.log('[Toast] will use WinRT');
       } else {
         debug.warn('[Toast] will use PowerShell (WinRT unavailable or disabled)');
-        // #46: when WinRT isn't used, powertoast shells out to PowerShell — if PowerShell isn't on
+        // #46: when WinRT isn't used, powertoast shells out to PowerShell - if PowerShell isn't on
         // PATH (a reported cause of silently-missing toasts) nothing appears. Probe it and surface a
         // clear, actionable error instead of failing silently.
         execFile(resolvePowerShell(), ['-NoProfile', '-NonInteractive', '-Command', 'exit 0'], { windowsHide: true }, (err) => {
           if (err)
             debug.error(
-              '[Toast] PowerShell is not reachable — PowerShell fallback toasts will NOT appear. ' +
+              '[Toast] PowerShell is not reachable - PowerShell fallback toasts will NOT appear. ' +
                 'Fix: enable WinRT in Settings, or repair Windows PowerShell at ' +
                 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0. (issue #46)'
             );
@@ -580,7 +581,7 @@ var app = {
         }
       }
 
-      // ShadPS4 (PS4 emulator) live trophy toasts — isolated from the Steam watch path above. Re-run
+      // ShadPS4 (PS4 emulator) live trophy toasts - isolated from the Steam watch path above. Re-run
       // on each settings reload (start() tears down its previous watchers first). toastID is read live
       // since it resolves asynchronously after start().
       try {
@@ -597,7 +598,7 @@ var app = {
         debug.error(`[ea] ${err}`);
       }
 
-      // Xenia (Xbox 360 emulator) live achievement toasts — watches each title's own GPD under the
+      // Xenia (Xbox 360 emulator) live achievement toasts - watches each title's own GPD under the
       // user's saved folders (cfg/userdir.db) and diffs against a baseline, like shadps4Watch.
       try {
         await xeniaWatch.start({ options: self.options, getToastID: () => self.toastID, notify });
@@ -605,7 +606,7 @@ var app = {
         debug.error(`[xenia] ${err}`);
       }
 
-      // GOG Galaxy official live achievement toasts — watches each game's gameplay.db (SQLite,
+      // GOG Galaxy official live achievement toasts - watches each game's gameplay.db (SQLite,
       // rewritten by Galaxy the moment an achievement pops) and diffs against a baseline.
       try {
         await gogWatch.start({ options: self.options, getToastID: () => self.toastID, notify });
@@ -613,7 +614,7 @@ var app = {
         debug.error(`[gog] ${err}`);
       }
 
-      // Ubisoft Connect official live achievement toasts — watches the client's spool files
+      // Ubisoft Connect official live achievement toasts - watches the client's spool files
       // (protobuf unlock records appended on the spot) and diffs against a baseline.
       try {
         await ubisoftWatch.start({ options: self.options, getToastID: () => self.toastID, notify });
@@ -669,14 +670,14 @@ var app = {
           // Goldberg SocialClub folders are named after the GAME, not an AppID, so the only link
           // back to a library entry is the game index the app writes. That entry also carries the
           // Steam release the title resolved to, which is what actually has a schema and store art
-          // — the namespaced "socialclub-<slug>" id would fail every Steam lookup (issue #9).
+          // - the namespaced "socialclub-<slug>" id would fail every Steam lookup (issue #9).
           const indexed = findIndexedSocialClubGame(dir, filePath.dir);
           if (!indexed) {
-            throw 'Unable to find Goldberg SocialClub game for this save folder — run a library refresh so AW Next can map it';
+            throw 'Unable to find Goldberg SocialClub game for this save folder - run a library refresh so AW Next can map it';
           }
           const steamAppId = String(indexed.steamappid || '').trim();
           if (!/^\d+$/.test(steamAppId)) {
-            throw `Goldberg SocialClub game "${indexed.name}" has no resolved Steam release — cannot load its achievement schema`;
+            throw `Goldberg SocialClub game "${indexed.name}" has no resolved Steam release - cannot load its achievement schema`;
           }
           debug.log(`[socialclub] save folder -> ${indexed.name} (${indexed.appid} -> Steam ${steamAppId})`);
           appID = steamAppId;
@@ -696,7 +697,7 @@ var app = {
 
         if (options.uplayR2) {
           const mapped = uplayR2.steamAppIdForUplayId(appID);
-          if (!mapped) throw `Unknown Ubisoft product id ${appID} — run a library refresh so AW Next can map it`;
+          if (!mapped) throw `Unknown Ubisoft product id ${appID} - run a library refresh so AW Next can map it`;
           debug.log(`[uplay-r2] product id ${appID} -> Steam appid ${mapped}`);
           appID = mapped;
         }
@@ -1004,7 +1005,7 @@ var app = {
             try {
               await track.save(appID, achievements);
             } catch (err) {
-              debug.error(`[track] failed to persist baseline for ${appID}: ${err.message || err} — keeping the in-memory baseline for this session`);
+              debug.error(`[track] failed to persist baseline for ${appID}: ${err.message || err} - keeping the in-memory baseline for this session`);
             }
 
             // Fire a dedicated Platinum toast when this scan flips the game to 100%.
@@ -1155,7 +1156,7 @@ var app = {
 
         monitor.on('disable-overlay', () => {
           runningAppid = null;
-          // Only ask for a close when an overlay is actually up — an unsolicited close reaching the
+          // Only ask for a close when an overlay is actually up - an unsolicited close reaching the
           // app with nothing open made it open the overlay on the desktop instead (issue #19).
           const wasOpen = overlayOpened;
           overlayOpened = false;

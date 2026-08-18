@@ -3,6 +3,34 @@
 All notable changes to AW Next are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Changed
+
+- **The tray daemon is ~15x cheaper to leave running.** Playtime tracking polled the process list by
+  spawning `tasklist.exe` every 3 seconds, which cost about 440 ms of work per poll for the whole
+  time AW Next sat in the tray. The same snapshot now comes from the Win32 ToolHelp API through
+  koffi, the FFI backend the Watchdog already uses, at about 6 ms and with no child process.
+  Measured on an idle install with no window open: 7.0% of a CPU core down to 0.4%.
+- The Watchdog no longer loads its network, scraping and archive dependencies at startup. They are
+  required on first use instead, so a session that never fetches a schema or unlocks an achievement
+  never pays for them.
+
+### Fixed
+
+- **A windowed game could lose its notification.** The "only notify if the game is running" guard
+  asked `win-tasklist`, whose check filters on `STATUS eq RUNNING` - and Windows reports an ordinary
+  console-session process as `Unknown`, so the answer was always "not running". The unlock was then
+  dropped unless the playtime monitor had already caught the game or it held exclusive fullscreen.
+  Both the new and the fallback path now simply ask whether the process exists.
+- The playtime monitor could not see the executable path of a process it detected, so two features
+  were silently dead whenever the task-list backend was in use: telling apart several games that
+  share a binary name, and the filter that ignores processes running from system and profile
+  folders. The path is now resolved for newly started processes only.
+- Searching an unrecognised game folder for an emulator config walks the whole tree, and a folder
+  that contained none was re-walked on every launch of that program. The result is remembered either
+  way, and the memo is capped so a long-running daemon cannot grow it without bound.
+
 ## 3.9.0 - 2026-08-18
 
 Achievement Watcher becomes **Achievement Watcher Next** (**AW Next**): notifications that pick their
@@ -11,20 +39,20 @@ and a Simple interface mode for people who do not want the full control panel.
 
 Existing installs upgrade in place. The executable, its AppUserModelID, shortcuts and the autostart
 entry are deliberately unchanged. User data moves to `%APPDATA%\Achievement Watcher Next`, imported
-forward from the `Achievement Watcher 3.0` and `Achievement Watcher` folders — settings, presets,
-themes, covers, caches, backups, souvenir screenshots and playtime counters — without modifying or
+forward from the `Achievement Watcher 3.0` and `Achievement Watcher` folders - settings, presets,
+themes, covers, caches, backups, souvenir screenshots and playtime counters - without modifying or
 deleting either source.
 
 ### Added
 
 - **Automatic notification delivery**, and the new default: the in-game overlay when it can be seen,
   a Windows notification when it cannot, never both. The choice is made per notification from
-  observable signals only — whether the app can render a popup and report back, whether the game
+  observable signals only - whether the app can render a popup and report back, whether the game
   holds exclusive Direct3D fullscreen (so borderless keeps the overlay), and whether the overlay
   recently failed. **In-game overlay**, **Windows notification** and **Both** remain, and a saved
   choice is never rewritten.
-- **A Game Health panel for every game**, from the tools button on its tile: one state — *Ready*,
-  *Needs attention* or *Not tracking* — the checks behind it, and only the repairs that apply to that
+- **A Game Health panel for every game**, from the tools button on its tile: one state - *Ready*,
+  *Needs attention* or *Not tracking* - the checks behind it, and only the repairs that apply to that
   game (locate it, rewrite its achievement data, restore the emulator file, correct a mismatched
   `steam_appid.txt`, watch it, or send a test notification with its own name and artwork). It also
   reports which transport delivered its last notification, and why.
@@ -35,22 +63,22 @@ deleting either source.
   reach rather than appearing to work.
 - Every reset is backed up to `<userData>\backups\achievements\<appid>\<date>\` first, a file whose
   backup fails is skipped rather than cleared, and **Restore an achievement backup** puts a whole
-  reset back — including AW Next's own unlock record, so restored achievements do not arrive as a
+  reset back - including AW Next's own unlock record, so restored achievements do not arrive as a
   burst of notifications.
 - **Simple and Advanced interface modes**, chosen on their own first-run step. Advanced adds the
   Steam emulator and Advanced tabs plus the deeper rows elsewhere; Game Health states outcomes in
   Simple and exact values in Advanced, with **Technical details** available in both. Simple folds a
   niche source away only while it is still enabled *and* no game came from it, so it can never hide
   the one control that would explain a missing game.
-- **A rebuilt preset library**: nine presets — **AW Next** (the new default), **Steam**, **Epic
-  Games**, **PlayStation**, **Xbox**, **Cover**, **Glass**, **Arcade** and **Slim** — replacing the
+- **A rebuilt preset library**: nine presets - **AW Next** (the new default), **Steam**, **Epic
+  Games**, **PlayStation**, **Xbox**, **Cover**, **Glass**, **Arcade** and **Slim** - replacing the
   previous seventeen. Each has its own composition, typography, motion and colour, renders a real
   **100% completion** state, and shows the game's name and rarity percentage.
 - **A full Preset Designer** in **Settings → Presets**, replacing the slider-based custom builder:
   layout, typography, background (including the game's own artwork), corners, shadow and glow, motion
   and timing, the rare and 100% treatments, and a per-preset sound. It opens on a **Start from**
   gallery of eight designs, with **Surprise me** and **Duplicate**.
-- The designer previews the real notification — the same page, styles and engine a game gets — as a
+- The designer previews the real notification - the same page, styles and engine a game gets - as a
   **Card**, a **Compare** of normal/rare/100%, or a mock **Screen** from 720p to 4K, over a
   transparent, dark, bright or real-artwork backdrop, played at the preset's own timings.
 - **Share a preset as a single `.awpreset` file**, carrying its style, images, fonts, designer
@@ -71,12 +99,12 @@ deleting either source.
 - **Per-type preset settings are gone.** Rare and 100% are states a preset paints itself, so a second
   and third preset for them could only disagree with the first. Per-emulator overrides (Xenia, RPCS3,
   ShadPS4) remain; the Xbox Series rare and platinum variants fold back into **Xbox Series**.
-- All bundled presets render through **one engine** — the one the designer generates — instead of
+- All bundled presets render through **one engine** - the one the designer generates - instead of
   seventeen near-copies of the same script, so a fix to rare tiers, the completion state, the progress
   line or a long scrolling title lands in all of them at once.
 - The bundled preset library is **1.0 MB, down from 10.8 MB**: the removed presets carried megabytes
   of animated GIFs and three copies of the same fonts. Only PlayStation's two typefaces remain.
-  `backdrop-filter` is gone from the bundled presets — it cost a blur pass per frame and blurred
+  `backdrop-filter` is gone from the bundled presets - it cost a blur pass per frame and blurred
   nothing, the notification window being transparent.
 - **Notifications sit closer to the screen edge**, and every bundled preset is the same width, so
   switching preset no longer moves the popup sideways. A preset you already built keeps its own
@@ -105,7 +133,7 @@ deleting either source.
   the outcome of every popup it renders, and a failed one falls back to a Windows notification. A
   send call returning is no longer treated as proof that anything appeared on screen.
 - **Transport selection has a single owner, so a fallback can never duplicate an unlock.** Ten copies
-  of the transport rules — two already drifted apart — are replaced by one decision taken before
+  of the transport rules - two already drifted apart - are replaced by one decision taken before
   anything is sent, and a fallback is authorised only on a definite failure.
 - Overlay notifications below 100% scale are no longer cropped or padded, and a custom position is
   used verbatim again. An anchor left on a disconnected monitor is still brought back into view.
@@ -122,7 +150,7 @@ deleting either source.
 - In the designer: an over-long scrolling title is clipped to its own column instead of painted over
   the icon, the **Advanced** disclosures actually toggle, and a generated preset's window is measured
   from the design rather than a fixed height, so a stacked layout or strong glow is no longer cropped.
-- **Apply emulator fix** no longer disappears from the right-click menu once a game has a setup — it
+- **Apply emulator fix** no longer disappears from the right-click menu once a game has a setup - it
   hid itself on exactly the games that need it most, such as a repack update that wiped
   `steam_settings`. Those games get **Re-apply emulator fix**, which names the setup it found and asks
   before replacing it. **Generate configs** now counts the games it skips and points at **Advanced →
@@ -150,7 +178,7 @@ deleting either source.
   built-in theme names and that copy had never learned about `light`. It now reads the theme engine's
   own palette list.
 - **The Light theme has depth again.** Its window, library panel and cards all sat within a few
-  percent of white, so they read as one flat sheet with tiles floating on nothing — the white-alpha
+  percent of white, so they read as one flat sheet with tiles floating on nothing - the white-alpha
   highlights the dark themes rely on do not register at that lightness. The surfaces are spread into
   real steps, cards lift off the panel, and sunken wells sit clearly below the card they are cut into.
   The Watchdog status dot also keeps its whole glow instead of being sliced flat on one side.
@@ -162,28 +190,28 @@ deleting either source.
   Windows install, so losing the binary costs speed instead of answers.
 - **A custom cover applies to the shape you chose it in, and shows up immediately.** Portrait and
   landscape now hold their own picture instead of overwriting one another, and the stored file is
-  named after its own contents — picking a second cover previously reused the same path, so the tile
+  named after its own contents - picking a second cover previously reused the same path, so the tile
   kept painting the previous image and choosing a cover looked like it had done nothing. Covers picked
   before this release are read once at startup and bound to the shape their own artwork has, since the
   image is the only record of which grid they were chosen in: a 920x430 header stops being cropped
   into a portrait tile, and the orientation it was never meant for falls back to the store's own art.
 - **A game Steam installed is never listed as a cracked one.** Every Steam game ships
-  `steam_api64.dll` and every Source game ships `steam_appid.txt` — the two markers the installed-game
-  scan looks for — so a Steam library inside a watched games folder handed over its own titles, with
+  `steam_api64.dll` and every Source game ships `steam_appid.txt` - the two markers the installed-game
+  scan looks for - so a Steam library inside a watched games folder handed over its own titles, with
   Garry's Mod as the reliable example, and the automatic emulator fix then wrote a `steam_settings`
   folder into it. The scan now asks Steam's own `appmanifest`, which names the `steamapps/common`
   folder it owns, and skips those installs unless the dll in them is genuinely an emulator's. An
-  emulator save folder left behind under `%APPDATA%` — by such a fix, or by an emulator once run
-  against a Steam copy — no longer brings the game back on its own either: an appid Steam has
+  emulator save folder left behind under `%APPDATA%` - by such a fix, or by an emulator once run
+  against a Steam copy - no longer brings the game back on its own either: an appid Steam has
   installed follows the **official Steam games** setting, like a Steam purchase that launches through
   Ubisoft Connect. A cracked copy with an install folder of its own is untouched.
 - **Steam's retired app-list endpoint is asked once, not once per game.** `ISteamApps/GetAppList` now
   answers 404 and is gone from Steam's own list of supported methods. Names and IDs already resolve
-  without it — through the store data lookup and Steam's app search — but with no cached copy of the
+  without it - through the store data lookup and Steam's app search - but with no cached copy of the
   list on disk, every appid in a scan retried the same dead request, which is what made the first
   scan after clearing the cache drag.
 - **An update that is not newer is never offered.** A manifest naming the installed version or an
-  older one — a rolled-back release, a stale mirror — no longer reaches a prompt or starts an
+  older one - a rolled-back release, a stale mirror - no longer reaches a prompt or starts an
   installer download.
 - **Restore points survive the move to the new data folder.** Each entry recorded the absolute path it
   was created at, so every migrated restore point still pointed into the previous folder and became a
@@ -212,15 +240,15 @@ Measured against the installed app's own logs and user data, not synthetic load.
 - **The library no longer reloads itself a few minutes after every launch.** New-game detection
   compared discovery against the games rendered on screen, but those are different populations by
   design, so every session paid a full refresh for a game that was never new.
-- **Each achievement folder is watched once** instead of twice — seven duplicate recursive watchers on
+- **Each achievement folder is watched once** instead of twice - seven duplicate recursive watchers on
   a typical install, one of which could take a Ubisoft unlock down the Steam lookup path.
 - **Less blocking work before the window appears**: the eleven parser modules sharing `parser.log` no
-  longer each re-read it and open their own stream — 111–123 ms of synchronous startup work on a
+  longer each re-read it and open their own stream - 111–123 ms of synchronous startup work on a
   rotated 2.4 MB log, now 21–24 ms.
 - **Placeholder tiles follow the real scan**, and streaming no longer re-queries the DOM for every
-  game added — 28.2 ms for 200 tiles against 4.3 ms.
-- **Theme images are reused instead of duplicated** — one library held 22 byte-identical copies of a
-  7.3 MB image, 168 MB of a 193 MB store — and the Custom theme editor no longer re-renders each
+  game added - 28.2 ms for 200 tiles against 4.3 ms.
+- **Theme images are reused instead of duplicated** - one library held 22 byte-identical copies of a
+  7.3 MB image, 168 MB of a 193 MB store - and the Custom theme editor no longer re-renders each
   layer's blurred copy on every autosave: about 1469 ms per save against 0.4 ms.
 
 ### Security

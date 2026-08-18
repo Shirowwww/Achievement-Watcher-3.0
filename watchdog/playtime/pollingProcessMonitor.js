@@ -23,8 +23,23 @@ function indexProcesses(entries, shouldObserve = () => true) {
 }
 
 // The native WQL observer can terminate the whole Node process on some Windows builds. Polling the
-// task list is slower but keeps process tracking available and has no native callback lifetime.
-function createPollingProcessMonitor({ list, initialProcesses = [], intervalMs = 3000, setIntervalFn = setInterval, clearIntervalFn = clearInterval, onError, shouldObserve = () => true } = {}) {
+// process list keeps process tracking available with no native callback lifetime; the snapshot
+// itself is a ToolHelp call (see util/processSnapshot.js), so the poll is cheap enough to run for
+// the whole life of the tray daemon.
+//
+// `resolvePath` is optional and is called only for processes that appeared since the previous poll,
+// never for the whole snapshot: the image path costs one OpenProcess per row and only a creation
+// event consumes it.
+function createPollingProcessMonitor({
+  list,
+  initialProcesses = [],
+  intervalMs = 3000,
+  setIntervalFn = setInterval,
+  clearIntervalFn = clearInterval,
+  onError,
+  shouldObserve = () => true,
+  resolvePath = null,
+} = {}) {
   if (typeof list !== 'function') throw new TypeError('list must be a function');
 
   const emitter = new EventEmitter();
@@ -40,7 +55,16 @@ function createPollingProcessMonitor({ list, initialProcesses = [], intervalMs =
       if (closed) return;
 
       for (const process of current.values()) {
-        if (!known.has(process.pid)) emitter.emit('creation', [process.process, process.pid, process.filepath]);
+        if (known.has(process.pid)) continue;
+        let filepath = process.filepath;
+        if (!filepath && typeof resolvePath === 'function') {
+          try {
+            filepath = resolvePath(process.pid) || '';
+          } catch {
+            filepath = '';
+          }
+        }
+        emitter.emit('creation', [process.process, process.pid, filepath]);
       }
       for (const process of known.values()) {
         if (!current.has(process.pid)) emitter.emit('deletion', [process.process, process.pid]);

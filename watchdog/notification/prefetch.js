@@ -3,7 +3,7 @@
 const path = require('path');
 const urlParser = require('url');
 const fs = require('fs');
-const request = require('request-zero');
+const request = require('../util/lazyRequire.js').lazyRequire('request-zero');
 
 const debug = require('../util/log.js');
 

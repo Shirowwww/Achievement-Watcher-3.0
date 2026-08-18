@@ -104,3 +104,55 @@ test('shares an in-flight task-list request and stops delivering events after cl
 
   assert.deepEqual(created, []);
 });
+
+test('resolves an image path for new processes only, never for the whole snapshot', async () => {
+  const timers = createTimers();
+  const resolved = [];
+  const snapshots = [
+    [
+      { pid: 1, process: 'already-open.exe' },
+      { pid: 2, process: 'new-game.exe' },
+    ],
+    [
+      { pid: 1, process: 'already-open.exe' },
+      { pid: 2, process: 'new-game.exe' },
+    ],
+  ];
+  const monitor = createPollingProcessMonitor({
+    list: async () => snapshots.shift(),
+    initialProcesses: [{ pid: 1, process: 'already-open.exe' }],
+    resolvePath: (pid) => {
+      resolved.push(pid);
+      return 'D:\Games\new-game.exe';
+    },
+    ...timers,
+  });
+  const created = [];
+  monitor.on('creation', (event) => created.push(event));
+
+  await monitor.poll();
+  await monitor.poll();
+  monitor.close();
+
+  assert.deepEqual(created, [['new-game.exe', 2, 'D:\Games\new-game.exe']]);
+  // Only the process that appeared, and only on the poll it appeared in.
+  assert.deepEqual(resolved, [2]);
+});
+
+test('a failing path resolver degrades to an empty path instead of dropping the event', async () => {
+  const timers = createTimers();
+  const monitor = createPollingProcessMonitor({
+    list: async () => [{ pid: 7, process: 'game.exe' }],
+    resolvePath: () => {
+      throw new Error('OpenProcess denied');
+    },
+    ...timers,
+  });
+  const created = [];
+  monitor.on('creation', (event) => created.push(event));
+
+  await monitor.poll();
+  monitor.close();
+
+  assert.deepEqual(created, [['game.exe', 7, '']]);
+});

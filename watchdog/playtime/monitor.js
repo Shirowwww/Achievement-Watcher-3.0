@@ -3,7 +3,6 @@
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
-const request = require('request-zero');
 const { EventEmitter } = require('events');
 const tasklist = require('../util/tasklist');
 const Timer = require('./timer.js');
@@ -33,6 +32,17 @@ if (!Array.isArray(blacklist.mute)) blacklist.mute = [];
 let gameIndex;
 let gameIndexByBinary;
 let appidByDirCache;
+// A long-running daemon sees an unbounded number of distinct process directories, so the
+// directory -> appid memo is capped and evicts in insertion order. It only exists to avoid
+// repeating the recursive config-file glob; losing an old entry costs one extra scan.
+const APPID_BY_DIR_CACHE_MAX = 512;
+function rememberAppidForDir(dirKey, appid) {
+  if (appidByDirCache.size >= APPID_BY_DIR_CACHE_MAX) {
+    const oldest = appidByDirCache.keys().next();
+    if (!oldest.done) appidByDirCache.delete(oldest.value);
+  }
+  appidByDirCache.set(dirKey, appid);
+}
 let ignoredAppidsCache = { mtimeMs: null, set: new Set() };
 
 const systemTempDir = os.tmpdir() || process.env['TEMP'] || process.env['TMP'];
@@ -47,8 +57,8 @@ const builtinIgnoredAppids = new Set([
 const wallpaperProcessNames = new Set(['wallpaperui.exe', 'wallpaper32.exe', 'wallpaper64.exe', 'wallpaperservice32.exe', 'winrtutil32.exe', 'winrtutil64.exe']);
 
 // Join a path under an environment root, tolerating an unset variable. The mute list below is built
-// at module load, so a missing SystemRoot used to throw before the module even finished loading —
-// path.join() rejects undefined — and take the whole playtime monitor down with it.
+// at module load, so a missing SystemRoot used to throw before the module even finished loading -
+// path.join() rejects undefined - and take the whole playtime monitor down with it.
 function envPath(variable, ...segments) {
   const root = process.env[variable];
   return root ? path.join(root, ...segments) : '';
@@ -187,13 +197,19 @@ async function init() {
     processMonitor = createPollingProcessMonitor({
       list: tasklist.list,
       initialProcesses: snapshot,
+      // Resolved per creation event only. Without it the polling monitor has no image path at all,
+      // so the "more than one game shares this binary" disambiguation and the mute-by-directory
+      // filter below could never fire - they were WQL-only until this was wired up.
+      resolvePath: tasklist.getProcessPath,
       onError: (err) => debug.warn(`[Process trail] process poll failed => ${err}`),
       shouldObserve: ({ process }) => {
         const name = process.toLowerCase();
         return !filter.ignore.some((bin) => bin.toLowerCase() === name);
       },
     });
-    debug.log('[Process trail] using task-list polling monitor');
+    debug.log(
+      `[Process trail] using polling monitor over ${tasklist.usingNativeSnapshot() ? 'the native process snapshot' : 'tasklist.exe (native snapshot unavailable)'}`
+    );
   }
 
   processMonitor.on('creation', async ([process, pid, filepath]) => {
@@ -216,16 +232,20 @@ async function init() {
       }
       if (!filepath) return;
       const gameDir = path.parse(filepath).dir;
-      debug.log(`Try to find appid from a cfg file in "${gameDir}"`);
       try {
         const dirKey = gameDir.toLowerCase();
         let appid;
         if (appidByDirCache.has(dirKey)) {
           appid = appidByDirCache.get(dirKey);
         } else {
-          appid = await findByReadingContentOfKnownConfigfilesIn(gameDir);
-          appidByDirCache.set(dirKey, appid);
+          // findByReadingContentOfKnownConfigfilesIn() globs the whole game tree, so it must run at
+          // most once per directory: cache the miss as well, otherwise every relaunch of the same
+          // non-game binary re-walks it. Both outcomes count towards the cache cap.
+          debug.log(`Try to find appid from a cfg file in "${gameDir}"`);
+          appid = await findByReadingContentOfKnownConfigfilesIn(gameDir).catch(() => null);
+          rememberAppidForDir(dirKey, appid);
         }
+        if (!appid) return;
         debug.log(`Found appid: ${appid}`);
         if (isIgnoredAppid(appid)) {
           debug.log(`Ignoring blacklisted appid ${appid} for "${process}"`);
@@ -238,7 +258,7 @@ async function init() {
           const options = await settings.load(path.join(userDataDir(), 'cfg', 'options.ini'));
           const lang = options.achievement.lang;
           let d = await loadSteamData(appid, lang, process);
-          // Not every app has a Steam "clienticon" (e.g. brand-new releases) — d.img.icon can be
+          // Not every app has a Steam "clienticon" (e.g. brand-new releases) - d.img.icon can be
           // undefined; guard it the same way achievements.js does instead of throwing here.
           const iconHash = d.img && d.img.icon ? String(d.img.icon).split('/').pop().split('.')[0] : '';
           game = { appid, binary: process, icon: iconHash, name: d.name };

@@ -1,6 +1,7 @@
 'use strict';
 
-const { crc32 } = require('crc');
+// crc checksums are only built for the emulators that key achievements by crc32 of the api name.
+const crc = require('./lazyRequire.js').lazyRequire('crc');
 
 function normalizeName(value) {
   return String(value == null ? '' : value).toUpperCase();
@@ -18,7 +19,7 @@ function buildSchemaIndex(entries, { includeCrc = false } = {}) {
     const name = String(achievement.name);
     const normalized = normalizeName(name);
     if (!byName.has(normalized)) byName.set(normalized, achievement);
-    if (includeCrc) crcEntries.push({ checksum: crc32(name).toString(16), achievement });
+    if (includeCrc) crcEntries.push({ checksum: crc.crc32(name).toString(16), achievement });
   }
 
   return { byName, crcEntries };

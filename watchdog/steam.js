@@ -4,9 +4,11 @@ const path = require('path');
 const debug = require('./util/log.js');
 const urlParser = require('url');
 const fs = require('fs');
-const request = require('request-zero');
+const { lazyRequire } = require('./util/lazyRequire.js');
+// Network and scraping only: an idle daemon never reaches either.
+const request = lazyRequire('request-zero');
 const steamLang = require('./steam.json');
-const htmlParser = require('node-html-parser');
+const htmlParser = lazyRequire('node-html-parser');
 const { userDataDir } = require('./util/userData.js');
 
 // The shared schema mappers live in the app folder. In a packaged build the app code is inside

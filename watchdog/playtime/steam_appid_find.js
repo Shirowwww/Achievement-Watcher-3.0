@@ -2,7 +2,8 @@
 
 const path = require('path');
 const fs = require('../util/fsAsync');
-const glob = require('fast-glob');
+// Only used when an unrecognised process needs its directory searched for an emulator config.
+const glob = require('../util/lazyRequire.js').lazyRequire('fast-glob');
 const ini = require('../util/ini');
 
 async function findByReadingContentOfKnownConfigfilesIn(dirPath) {
