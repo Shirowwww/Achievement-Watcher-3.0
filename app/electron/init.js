@@ -452,6 +452,41 @@ let clientLoginPromise;
 // SteamHunters DLC/update groups rarely change; one lookup per appid per session (memory) plus a
 // 30-day disk cache (steam_cache, so "Clear caches" wipes it too) is enough.
 const steamGroupsCache = new Map();
+
+/*
+  Circuit breaker for the SteamHunters achievement-groups endpoint.
+
+  Every game asks for its groups independently, so when the host is unreachable the whole library
+  pays the full 10s timeout each, one after another: a user's log shows 52 consecutive
+  "aborted due to timeout" lines spanning 70 seconds of a scan that had nothing else to wait for.
+  The answer never varies within such a window - it is the host that is down, not the game - so
+  after a few consecutive transport failures the rest of the scan skips the call outright and gets
+  the same empty result instantly.
+
+  Only transport failures count. An HTTP error is a real answer from a reachable host and leaves the
+  breaker alone, and any success closes it immediately.
+*/
+const STEAM_GROUPS_FAILURE_LIMIT = 3;
+const STEAM_GROUPS_COOLDOWN_MS = 5 * 60 * 1000;
+let steamGroupsFailures = 0;
+let steamGroupsSkipUntil = 0;
+
+function steamGroupsUnavailable() {
+  return Date.now() < steamGroupsSkipUntil;
+}
+
+function recordSteamGroupsFailure() {
+  steamGroupsFailures++;
+  if (steamGroupsFailures < STEAM_GROUPS_FAILURE_LIMIT) return false;
+  steamGroupsSkipUntil = Date.now() + STEAM_GROUPS_COOLDOWN_MS;
+  steamGroupsFailures = 0;
+  return true;
+}
+
+function recordSteamGroupsSuccess() {
+  steamGroupsFailures = 0;
+  steamGroupsSkipUntil = 0;
+}
 const STEAM_GROUPS_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 function clientLogOn() {
@@ -836,11 +871,15 @@ async function getSteamData(request) {
         steamGroupsCache.set(cacheKey, cachedGroups);
         return { ok: true, groups: cachedGroups };
       }
+      // The host was unreachable moments ago; do not spend another timeout proving it per game.
+      if (steamGroupsUnavailable()) return { ok: false, groups: [] };
       try {
         const res = await fetch(`https://steamhunters.com/api/GetAchievementGroups/v1?appId=${appid}`, {
           headers: { 'User-Agent': STEAM_FETCH_UA, Accept: 'application/json' },
           signal: AbortSignal.timeout(STEAM_KEYLESS_TIMEOUT_MS),
         });
+        // A status code is an answer from a live host, so it clears the breaker even when unusable.
+        recordSteamGroupsSuccess();
         if (!res.ok) return { ok: false, groups: [] };
         const json = await res.json();
         const groups = Array.isArray(json && json.groups) ? json.groups : [];
@@ -849,7 +888,15 @@ async function getSteamData(request) {
         if (groups.length) saveSteamGroupsCache(appid, groups);
         return { ok: true, groups };
       } catch (err) {
-        debug.log(`[${appid}] SteamHunters groups fetch failed: ${err.message || err}`);
+        if (recordSteamGroupsFailure()) {
+          debug.log(
+            `[${appid}] SteamHunters groups fetch failed: ${err.message || err} - skipping achievement groups for ${
+              STEAM_GROUPS_COOLDOWN_MS / 60000
+            } minutes`
+          );
+        } else {
+          debug.log(`[${appid}] SteamHunters groups fetch failed: ${err.message || err}`);
+        }
         return { ok: false, groups: [] };
       }
     }
@@ -2013,7 +2060,17 @@ function findInstalledEdge() {
   return null;
 }
 
+/*
+  Once per session: when no installed browser can be launched at all, every later browser-backed
+  lookup is going to fail the same way. Without this flag each game re-ran the whole launch attempt
+  (~20s of dead wait each) before falling through to the cheaper sources - four in a row is what a
+  user's log showed while their covers stayed blank. Reset only by restarting the app, which is also
+  when a broken Chrome/Edge install would realistically have been repaired.
+*/
+let browserLaunchFailed = false;
+
 async function startPuppeteer(headless, strip) {
+  if (browserLaunchFailed && !puppeteerWindow.browser) throw new Error('No usable browser this session (a previous launch failed).');
   const puppeteer = require('puppeteer-extra');
   const StealthPlugin = require('puppeteer-extra-plugin-stealth');
   puppeteer.use(StealthPlugin());
@@ -2029,7 +2086,16 @@ async function startPuppeteer(headless, strip) {
   const browserPaths = [installedChromePath, findInstalledEdge()].filter(
     (browserPath, index, paths) => browserPath && fs.existsSync(browserPath) && paths.indexOf(browserPath) === index
   );
-  const launchArgs = ['--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-extensions'];
+  // --no-first-run / --no-default-browser-check matter for Edge above all: driving the browser the
+  // user has installed otherwise lands in its first-run experience, which exits the process we are
+  // waiting on and surfaces as the bare "Failed to launch the browser process: Code: 0".
+  const launchArgs = [
+    '--disable-background-timer-throttling',
+    '--disable-renderer-backgrounding',
+    '--disable-extensions',
+    '--no-first-run',
+    '--no-default-browser-check',
+  ];
   if (!puppeteerWindow.browser) {
     if (browserPaths.length === 0) throw new Error('Steam scraping requires Google Chrome or Microsoft Edge.');
     let lastError;
@@ -2042,7 +2108,10 @@ async function startPuppeteer(headless, strip) {
         debug.log(`puppeteer: browser launch failed for ${executablePath} (${err.message})`);
       }
     }
-    if (!puppeteerWindow.browser) throw lastError;
+    if (!puppeteerWindow.browser) {
+      browserLaunchFailed = true;
+      throw lastError;
+    }
   }
   if (!puppeteerWindow.context) puppeteerWindow.context = await puppeteerWindow.browser.createBrowserContext();
   if (!puppeteerWindow.pagesh) {
@@ -2299,6 +2368,59 @@ const SGDB_COVER_PAGES = 2; // the API serves 50 grids per page
 const SGDB_COVER_LIMIT = 48;
 const SGDB_COVERS_TTL = 30 * 24 * 60 * 60 * 1000;
 
+/*
+  Resolve a SteamGridDB game id from a Steam appid.
+
+  This is an identity mapping, not a guess, so it sidesteps title matching entirely - which is the
+  only way to reach a game SteamGridDB lists under a shorter name than Steam does ("Staffer Retro"
+  vs "Staffer Retro : A Supernatural Mystery Quest"). Loosening pickSteamGridDbGame to a prefix rule
+  would have caught that one and equally matched "LEGO Batman" to "LEGO Batman: Legacy of the Dark
+  Knight"; asking by appid needs no such trade. The title matcher below stays exactly as strict, and
+  is now only reached for sources that have no Steam appid at all (Ubisoft, GOG, Epic, manual).
+
+  Cached with the grids, on the same TTL - a null answer is cached too, since a game SteamGridDB has
+  never heard of does not start existing between two scans.
+*/
+const steamgriddbIdDir = path.join(userData, 'steam_cache', 'steamgriddb_ids');
+const SGDB_ID_TTL = SGDB_COVERS_TTL;
+
+async function fetchSteamGridDbGameIdBySteamAppid(steamAppid) {
+  const id = String(steamAppid || '').trim();
+  if (!/^\d+$/.test(id)) return null;
+  const cacheFile = path.join(steamgriddbIdDir, `${id}.json`);
+  try {
+    if (fs.existsSync(cacheFile) && Date.now() - fs.statSync(cacheFile).mtimeMs < SGDB_ID_TTL) {
+      const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+      return cached && cached.gameId ? cached : null;
+    }
+  } catch {
+    /* stale/corrupt -> refetch */
+  }
+  let resolved = null;
+  try {
+    const res = await fetch(`${BASE_URL}/games/steam/${encodeURIComponent(id)}`, {
+      headers: { Authorization: `Bearer ${getSteamGridDbApiKey()}` },
+      signal: AbortSignal.timeout(SGDB_FETCH_TIMEOUT_MS),
+    });
+    if (res.ok) {
+      const body = await res.json().catch(() => null);
+      const game = body && body.success && body.data;
+      if (game && game.id) resolved = { gameId: Number(game.id), name: String(game.name || '') };
+    }
+  } catch (err) {
+    // A network failure is not an answer - leave the cache alone so the next scan can retry.
+    debug.log(`[steamgriddb] appid lookup failed for ${id}: ${err.message || err}`);
+    return null;
+  }
+  try {
+    fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
+    fs.writeFileSync(cacheFile, JSON.stringify(resolved || { gameId: 0 }, null, 2));
+  } catch {
+    /* cache write failure is non-fatal */
+  }
+  return resolved;
+}
+
 // Prefer an exact title match, then a token-level match (all query words present, at most one extra
 // word for edition tags). Never take an unrelated first result - a wrong cover is worse than none.
 function pickSteamGridDbGame(games, name) {
@@ -2340,15 +2462,26 @@ function rankSteamGridDbGrids(grids, orientation, limit) {
     }));
 }
 
-async function fetchSteamGridDbGrids(name, orientation) {
+async function fetchSteamGridDbGrids(name, orientation, steamAppid = '') {
   const apiKey = getSteamGridDbApiKey();
   const sgdb = (url) =>
     fetch(url, { headers: { Authorization: `Bearer ${apiKey}` }, signal: AbortSignal.timeout(SGDB_FETCH_TIMEOUT_MS) });
-  const searchRes = await sgdb(`${BASE_URL}/search/autocomplete/${encodeURIComponent(name)}`);
-  if (!searchRes.ok) return [];
-  const search = await searchRes.json();
-  const game = pickSteamGridDbGame(search.data, name);
-  if (!game || !game.id) return [];
+
+  // Identity first: a Steam appid names the game outright, so no title has to be matched at all.
+  let gameId = 0;
+  const byAppid = await fetchSteamGridDbGameIdBySteamAppid(steamAppid);
+  if (byAppid && byAppid.gameId) gameId = byAppid.gameId;
+
+  if (!gameId) {
+    if (!name) return [];
+    const searchRes = await sgdb(`${BASE_URL}/search/autocomplete/${encodeURIComponent(name)}`);
+    if (!searchRes.ok) return [];
+    const search = await searchRes.json();
+    const match = pickSteamGridDbGame(search.data, name);
+    if (!match || !match.id) return [];
+    gameId = match.id;
+  }
+  const game = { id: gameId };
 
   const dimensions = (SGDB_DIMENSIONS[orientation] || SGDB_DIMENSIONS.portrait).join(',');
   const pages = await Promise.all(
@@ -2376,11 +2509,15 @@ async function fetchSteamGridDbGrids(name, orientation) {
   });
 }
 
-async function fetchSteamGridDbCovers(gameName, limit = SGDB_COVER_LIMIT, orientation = 'portrait') {
+async function fetchSteamGridDbCovers(gameName, limit = SGDB_COVER_LIMIT, orientation = 'portrait', steamAppid = '') {
   const name = String(gameName || '').trim();
-  if (!name) return [];
+  const appid = /^\d+$/.test(String(steamAppid || '').trim()) ? String(steamAppid).trim() : '';
+  // With an appid the name is decoration; without one it is the only handle there is.
+  if (!name && !appid) return [];
   const orient = String(orientation || 'portrait').toLowerCase() === 'landscape' ? 'landscape' : 'portrait';
-  const key = require('crypto').createHash('sha1').update(`${name.toLowerCase()}\0${orient}`).digest('hex');
+  // The appid belongs in the key: the same title resolved by identity and by search can legitimately
+  // land on different SteamGridDB games, and one must not serve the other's cached grids.
+  const key = require('crypto').createHash('sha1').update(`${appid}\0${name.toLowerCase()}\0${orient}`).digest('hex');
   const cacheFile = path.join(steamgriddbCoversDir, `${key}.json`);
   try {
     if (fs.existsSync(cacheFile) && Date.now() - fs.statSync(cacheFile).mtimeMs < SGDB_COVERS_TTL) {
@@ -2396,7 +2533,7 @@ async function fetchSteamGridDbCovers(gameName, limit = SGDB_COVER_LIMIT, orient
 
   const pending = (async () => {
     try {
-      const grids = await fetchSteamGridDbGrids(name, orient);
+      const grids = await fetchSteamGridDbGrids(name, orient, appid);
       if (grids.length) {
         try {
           fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
@@ -2435,13 +2572,14 @@ async function fetchSteamGridDbCovers(gameName, limit = SGDB_COVER_LIMIT, orient
   }
 }
 
-async function fetchSteamGridDbCover(gameName) {
-  const covers = await fetchSteamGridDbCovers(gameName, 1, 'portrait');
+async function fetchSteamGridDbCover(gameName, steamAppid = '') {
+  const covers = await fetchSteamGridDbCovers(gameName, 1, 'portrait', steamAppid);
   return (covers[0] && covers[0].url) || null;
 }
 
-ipcMain.handle('get-steamgriddb-cover', async (event, gameName) => {
-  return await fetchSteamGridDbCover(gameName);
+// `steamAppid` is optional: the non-Steam callers (Ubisoft, GOG, Epic) still ask by name only.
+ipcMain.handle('get-steamgriddb-cover', async (event, gameName, steamAppid) => {
+  return await fetchSteamGridDbCover(gameName, steamAppid);
 });
 
 // Cover picker options: the two instant sources only. Steam's CDN answers a HEAD probe and
@@ -2454,7 +2592,7 @@ ipcMain.handle('get-cover-options', async (event, { name, orientation, steamAppi
   const id = /^\d+$/.test(String(steamAppid || '').trim()) ? String(steamAppid).trim() : '';
   const [steam, grids] = await Promise.all([
     id ? fetchSteamCdnCovers(id, orient) : Promise.resolve([]),
-    gameName ? fetchSteamGridDbCovers(gameName, SGDB_COVER_LIMIT, orient) : Promise.resolve([]),
+    gameName || id ? fetchSteamGridDbCovers(gameName, SGDB_COVER_LIMIT, orient, id) : Promise.resolve([]),
   ]);
   return { steam: Array.isArray(steam) ? steam : [], grids: Array.isArray(grids) ? grids : [] };
 });

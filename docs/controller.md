@@ -35,11 +35,19 @@ layout you select.
 | Focus the search box | **X** | App + overlay |
 | Open Settings / overlay options | **Y** | App + overlay |
 | Open Settings | **Start** | App |
+| Launch the selected game | **RT** | App, library |
+| Open Game Health for the selected game | **LT** | App, library |
 | Previous / next settings tab | **LB** / **RB** | App, Settings open |
 | Scroll the page | **LB** / **RB** | App, Settings closed |
 
 The overlay toggle uses three buttons on purpose, so it cannot fire by accident
-mid-game. Every shortcut is configurable and accepts one to three buttons.
+mid-game. Every overlay shortcut is configurable and accepts one to three buttons.
+
+In the library the tile itself is what the stick moves between, and **A** opens the
+game - the same thing clicking a tile does. The two controls painted on a tile are
+on the triggers instead, so no other shortcut had to give up a button: **RT** launches
+the selected game and **LT** opens its Game Health panel. Both do nothing unless a
+library tile is selected.
 
 ## Options
 

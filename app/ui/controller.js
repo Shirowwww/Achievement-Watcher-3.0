@@ -29,7 +29,22 @@ function chooseDirectionalCandidate(current, candidates, horizontal, vertical) {
   return best;
 }
 
-if (typeof module !== 'undefined' && module.exports) module.exports = { chooseDirectionalCandidate };
+/*
+  In the library grid the TILE is the navigation unit, never the controls painted on top of it.
+
+  Each tile carries an achievements button (top-left), a health/config button (top-right) and a play
+  button (centre). They are ordinary <button>s, so the generic "button:not([disabled])" rule matched
+  them and directional scoring preferred them over the neighbouring tile every time - pressing right
+  from a tile landed on that same tile's own top-right button instead of moving across the library,
+  which is what made pad navigation unusable. Excluding them makes the grid move tile to tile; A on a
+  tile opens the game exactly as clicking it does, which is all the achievements button ever did.
+*/
+function isGameTileControl(element) {
+  if (!element || typeof element.closest !== 'function') return false;
+  return !!element.closest('#game-list .game-box') && !element.matches('#game-list .game-box');
+}
+
+if (typeof module !== 'undefined' && module.exports) module.exports = { chooseDirectionalCandidate, isGameTileControl };
 
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   (() => {
@@ -43,8 +58,6 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       'textarea:not([disabled])',
       '[role="button"]',
       '#game-list .game-box',
-      '#game-list .play-button',
-      '#game-list .config-button',
       '#sort-box .sort',
       '#sort-box .installed-filter',
       '#home .btn',
@@ -65,7 +78,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       '.aw-prompt-button',
     ].join(',');
 
-    const BUTTON = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, START: 9, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
+    const BUTTON = { A: 0, B: 1, X: 2, Y: 3, LB: 4, RB: 5, LT: 6, RT: 7, START: 9, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
     const held = new Map();
     let selected = null;
     let activeByController = false;
@@ -78,6 +91,10 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       if (!element || !element.isConnected || element.hidden || element.disabled) return false;
       const style = getComputedStyle(element);
       if (style.display === 'none' || style.visibility === 'hidden' || style.pointerEvents === 'none') return false;
+      // A fully transparent control is not on screen. The library tile's play button rests at
+      // opacity 0 until its tile is hovered, yet it still lays out at full size - so without this
+      // the pad could select, outline and activate a button nobody can see.
+      if (parseFloat(style.opacity) === 0) return false;
       const rect = element.getBoundingClientRect();
       return rect.width > 0 && rect.height > 0;
     }
@@ -102,7 +119,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 
     function candidates() {
       const root = activeRoot();
-      return Array.from(root.querySelectorAll(SELECTOR)).filter(isVisible);
+      return Array.from(root.querySelectorAll(SELECTOR)).filter((element) => isVisible(element) && !isGameTileControl(element));
     }
 
     function setSelected(element) {
@@ -183,6 +200,24 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       }
     }
 
+    /*
+      The two tile controls the grid no longer selects directly.
+
+      Making the tile the navigation unit fixed directional movement, but it also took the play and
+      Game Health buttons out of reach: A on a tile opens the game, and every documented shortcut was
+      already spoken for. The triggers were not - LT and RT are the only face/shoulder inputs the app
+      never read - so nothing that was bound before changes meaning here. Both are no-ops unless a
+      library tile is selected, which is the only context in which they mean anything.
+    */
+    function tileAction(controlSelector) {
+      const tile = selected && selected.closest?.('#game-list .game-box');
+      if (!tile) return;
+      const control = tile.querySelector(controlSelector);
+      // The play button rests at opacity 0 until its tile is hovered, so isVisible() rejects it -
+      // clicking it is still exactly what the mouse does, and the tile itself is demonstrably shown.
+      if (control && !control.disabled) control.click();
+    }
+
     function focusSearch() {
       const root = activeRoot();
       const input = root.querySelector('#achievement-search-input, #search-bar input[type="search"]');
@@ -249,7 +284,12 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         const down = pressed(gamepad, BUTTON.DOWN) || axisY > 0;
         const left = pressed(gamepad, BUTTON.LEFT) || axisX < 0;
         const right = pressed(gamepad, BUTTON.RIGHT) || axisX > 0;
-        const anyInput = up || down || left || right || [BUTTON.A, BUTTON.B, BUTTON.X, BUTTON.Y, BUTTON.LB, BUTTON.RB, BUTTON.START].some((b) => pressed(gamepad, b));
+        const anyInput =
+          up ||
+          down ||
+          left ||
+          right ||
+          [BUTTON.A, BUTTON.B, BUTTON.X, BUTTON.Y, BUTTON.LB, BUTTON.RB, BUTTON.LT, BUTTON.RT, BUTTON.START].some((b) => pressed(gamepad, b));
         if (anyInput && !activeByController) {
           activeByController = true;
           document.documentElement.dataset.controllerActive = 'true';
@@ -265,6 +305,8 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         repeat('y', pressed(gamepad, BUTTON.Y), openSettings);
         repeat('lb', pressed(gamepad, BUTTON.LB), () => changeSettingsTab(-1));
         repeat('rb', pressed(gamepad, BUTTON.RB), () => changeSettingsTab(1));
+        repeat('lt', pressed(gamepad, BUTTON.LT), () => tileAction('.config-button'));
+        repeat('rt', pressed(gamepad, BUTTON.RT), () => tileAction('.play-button'));
         repeat('start', pressed(gamepad, BUTTON.START), openSettings);
       }
       schedulePoll();
