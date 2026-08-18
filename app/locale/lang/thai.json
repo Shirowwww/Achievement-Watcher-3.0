@@ -1495,6 +1495,7 @@
     "theme-gradient-angle-270": "บนขวา → ล่างซ้าย",
     "avatar-import-from-steam-user": "นำเข้าอวตาร Steam ของ {name}",
     "update-check-failed-detail": "ตรวจสอบอัปเดตล้มเหลว: {message}",
+    "update-ready-after-game": "เวอร์ชัน {version} พร้อมแล้ว และจะติดตั้งเมื่อปิดเกมที่กำลังทำงานอยู่",
     "diagnosis-emulator": "อีมูเลเตอร์: {emulator}",
     "diagnosis-emulator-none": "ไม่พบ",
     "diagnosis-steam-settings": "steam_settings: {path}",

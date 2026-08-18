@@ -1495,6 +1495,7 @@
     "theme-gradient-angle-270": "Праворуч зверху → Зліва знизу",
     "avatar-import-from-steam-user": "Імпортувати Steam-аватар користувача {name}",
     "update-check-failed-detail": "Не вдалося перевірити оновлення: {message}",
+    "update-ready-after-game": "Версія {version} готова та буде встановлена після закриття запущеної гри.",
     "diagnosis-emulator": "Емулятор: {emulator}",
     "diagnosis-emulator-none": "не виявлено",
     "diagnosis-steam-settings": "steam_settings: {path}",

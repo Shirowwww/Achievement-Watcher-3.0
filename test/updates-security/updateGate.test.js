@@ -174,3 +174,36 @@ test('the single consent prompt persists Later and a downloaded update installs 
   assert.strictEqual((init.match(/await postponeUpdate\(info\.version\)/g) || []).length, 1, 'the download prompt must record "Later"');
   assert.match(init, /autoUpdater\.quitAndInstall\(true, true\)/);
 });
+
+/*
+  A permanently resident Steam app (a controller utility, an overlay tool) is a running game by
+  every signal AW has, for as long as the machine is on. That made the install hold-back permanent:
+  every check downloaded the update and none of them installed it, and because the retry only fires
+  when the last game exits, nothing ever said why. An explicitly requested update overrides it.
+*/
+test('an update the user asked for installs even while a game is running', () => {
+  assert.strictEqual(gate.shouldHoldInstall({ gameRunning: true, acceptedManually: true }), false);
+});
+
+test('an update that arrived on its own still waits for the game to end', () => {
+  assert.strictEqual(gate.shouldHoldInstall({ gameRunning: true, acceptedManually: false }), true);
+});
+
+test('nothing is held back when no game is running, however it was accepted', () => {
+  assert.strictEqual(gate.shouldHoldInstall({ gameRunning: false, acceptedManually: false }), false);
+  assert.strictEqual(gate.shouldHoldInstall({ gameRunning: false, acceptedManually: true }), false);
+  assert.strictEqual(gate.shouldHoldInstall({}), false, 'defaults must not hold an install');
+});
+
+test('the manual acceptance is carried from the prompt to the install step', () => {
+  const init = fs.readFileSync(path.join(appRoot, 'electron', 'init.js'), 'utf8');
+  // The flag only means anything if the accept path records it and the install path reads it.
+  assert.match(init, /updateAcceptedManually = manual;/, 'the accepted download must record whether the check was manual');
+  assert.match(
+    init,
+    /shouldHoldInstall\(\{ gameRunning: isGameRunning\(\), acceptedManually: updateAcceptedManually \}\)/,
+    'the install step must ask the gate, not isGameRunning() alone'
+  );
+  // A held-back install that says nothing is indistinguishable from a broken updater.
+  assert.match(init, /notifyUpdateHeldBack\(info\.version\)/, 'a held-back install must tell the user');
+});

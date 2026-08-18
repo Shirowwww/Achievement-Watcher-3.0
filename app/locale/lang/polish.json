@@ -1495,6 +1495,7 @@
     "theme-gradient-angle-270": "Prawa góra → Lewy dół",
     "avatar-import-from-steam-user": "Importuj awatar Steam użytkownika {name}",
     "update-check-failed-detail": "Sprawdzanie aktualizacji nie powiodło się: {message}",
+    "update-ready-after-game": "Wersja {version} jest gotowa i zostanie zainstalowana po zamknięciu uruchomionej gry.",
     "diagnosis-emulator": "Emulator: {emulator}",
     "diagnosis-emulator-none": "nie wykryto",
     "diagnosis-steam-settings": "steam_settings: {path}",

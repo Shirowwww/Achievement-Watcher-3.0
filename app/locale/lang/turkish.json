@@ -1495,6 +1495,7 @@
     "theme-gradient-angle-270": "Sağ üst → Sol alt",
     "avatar-import-from-steam-user": "{name} Steam avatarını içe aktar",
     "update-check-failed-detail": "Güncelleme kontrolü başarısız: {message}",
+    "update-ready-after-game": "{version} sürümü hazır ve çalışan oyun kapatıldığında yüklenecek.",
     "diagnosis-emulator": "Öykünücü: {emulator}",
     "diagnosis-emulator-none": "hiçbiri algılanmadı",
     "diagnosis-steam-settings": "steam_settings: {path}",

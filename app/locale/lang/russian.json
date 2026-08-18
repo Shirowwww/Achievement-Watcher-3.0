@@ -1495,6 +1495,7 @@
     "theme-gradient-angle-270": "Справа сверху → Слева снизу",
     "avatar-import-from-steam-user": "Импортировать аватар Steam пользователя {name}",
     "update-check-failed-detail": "Не удалось проверить обновления: {message}",
+    "update-ready-after-game": "Версия {version} готова и будет установлена после закрытия запущенной игры.",
     "diagnosis-emulator": "Эмулятор: {emulator}",
     "diagnosis-emulator-none": "не обнаружено",
     "diagnosis-steam-settings": "steam_settings: {path}",

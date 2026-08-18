@@ -9,6 +9,15 @@ A bug-fix release for the field reports that followed 3.9.0. The theme is the sa
 metadata lookups run over the network, they are allowed to fail, and nothing that fails there may
 decide what your library contains.
 
+### Added
+
+- **Export every log as one zip**, from Settings > Advanced > Diagnostics, so a bug report can carry
+  the whole picture instead of one file at a time.
+- **Custom theme layers gain an opacity control**, so a background image can be dimmed to taste
+  rather than replaced.
+- A game whose executable requires administrator rights is retried through the Windows shell with
+  the elevation prompt, instead of failing with a bare access-denied.
+
 ### Changed
 
 - The launch executable used for playtime detection is read from Steam's own product info first,
@@ -39,6 +48,17 @@ decide what your library contains.
 
 ### Fixed
 
+- **An update could download on every check and never install itself.** Once a download finished,
+  the silent upgrade was held back whenever a game was running, so as not to throw installer windows
+  over a session. That check did not distinguish an update that arrived on its own from one the user
+  had just asked for in Settings and explicitly accepted with "Download && Install". It also assumed
+  a running game eventually stops: a permanently resident Steam app (a controller utility such as
+  DSX, an overlay tool, a launcher companion) is a running game by every signal AW has, for as long
+  as the machine is switched on, so the hold-back never lifted and the retry, which only fires when
+  the last game exits, never ran. The result was an app that downloaded the same version on every
+  check, installed none of them and said nothing about it. An explicitly requested update now
+  installs regardless, and an update genuinely held back for a game announces itself instead of
+  waiting in silence.
 - **The library is a function of what is on disk again, not of how the network behaved during the
   scan** (#33). A game whose metadata lookup timed out was dropped from the list entirely, so the
   same disk produced a different handful of games on every scan and a missing card was
@@ -73,6 +93,23 @@ decide what your library contains.
   installed reported an opaque SQLite "unable to open database file" on every settings reload, and
   every Steam account on the machine having a private profile was logged as an error. Both are plain
   notes now, so a real scan failure still stands out.
+- **Portable and repack releases that keep their save data inside the game folder are discovered**
+  (#32). A CODEX/RUNE/CPY release installed normally writes to `%PUBLIC%\Documents\Steam\<source>`,
+  which was scanned; a portable one keeps that same tree next to the game instead, which was not.
+  Nothing was found, so the game had no card and no 0% entry and looked exactly like a game that was
+  never installed. The known portable layouts are probed next to the emulator config now, and a
+  candidate only counts when it actually holds an unlock file the parser can read.
+- A Goldberg/GBE setup that redirects its save path into the game folder was read as a permanent 0%
+  rather than followed.
+- The achievement-data repair no longer keeps a file whose achievement names are blank, and can fill
+  in descriptions that were left empty.
+- Game Health's data repair writes to the folder its own diagnosis resolved, instead of assuming
+  `<gameDir>/steam_settings`, and can write user defaults to clear a missing or malformed user
+  config.
+- A discovered AppID that never produces a library tile no longer re-triggers a full refresh over
+  and over, in the renderer and in the background scan alike.
+- The tray daemon releases its hidden renderer and GPU process after five idle minutes instead of
+  holding about 320 MB for the rest of the session.
 - **A windowed game could lose its notification.** The "only notify if the game is running" guard
   asked `win-tasklist`, whose check filters on `STATUS eq RUNNING` - and Windows reports an ordinary
   console-session process as `Unknown`, so the answer was always "not running". The unlock was then

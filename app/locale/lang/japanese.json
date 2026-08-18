@@ -1495,6 +1495,7 @@
     "theme-gradient-angle-270": "右上 → 左下",
     "avatar-import-from-steam-user": "{name} の Steam アバターをインポート",
     "update-check-failed-detail": "アップデートの確認に失敗しました: {message}",
+    "update-ready-after-game": "バージョン {version} の準備ができました。実行中のゲームを終了するとインストールされます。",
     "diagnosis-emulator": "エミュレーター: {emulator}",
     "diagnosis-emulator-none": "検出されませんでした",
     "diagnosis-steam-settings": "steam_settings: {path}",

@@ -1495,6 +1495,7 @@
     "theme-gradient-angle-270": "Jobb fent → Bal lent",
     "avatar-import-from-steam-user": "{name} Steam-avatárjának importálása",
     "update-check-failed-detail": "Frissítés-ellenőrzés sikertelen: {message}",
+    "update-ready-after-game": "A(z) {version} verzió készen áll, és a futó játék bezárása után lesz telepítve.",
     "diagnosis-emulator": "Emulátor: {emulator}",
     "diagnosis-emulator-none": "nincs észlelve",
     "diagnosis-steam-settings": "steam_settings: {path}",

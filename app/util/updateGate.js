@@ -92,6 +92,26 @@ function shouldSuppressUpdatePrompt(general, offered, { manual = false, now = Da
   return { suppress: false, reason: '' };
 }
 
+/*
+  Whether a finished download has to wait before installing itself.
+
+  quitAndInstall() closes AW, runs the NSIS upgrade and relaunches it, which puts installer windows
+  on screen. Doing that underneath a running game is rude, so an update that arrived on its own
+  waits for the session to end and `setGameActivity` offers it again.
+
+  An update the user asked for is a different thing. They opened Settings, clicked "Check for
+  updates", then clicked "Download && Install" - three deliberate actions - and nothing after that
+  point should quietly decide they did not mean it. That distinction is not hypothetical: a
+  permanently resident Steam app (a controller utility, an overlay tool, a launcher companion) is a
+  running game by every signal AW has, for as long as the machine is switched on. Without this
+  exception such a machine downloads every update and installs none of them, and because the
+  hold-back only retries when the last game exits, an event that never comes, nothing ever tells the
+  user why the app keeps offering the same version.
+*/
+function shouldHoldInstall({ gameRunning = false, acceptedManually = false } = {}) {
+  return Boolean(gameRunning) && !acceptedManually;
+}
+
 // The general-section patch that records a "Later".
 function postponePatch(offered, now = Date.now()) {
   return { updatePostponedVersion: String(offered), updatePostponedUntil: now + POSTPONE_MS };
@@ -111,6 +131,7 @@ module.exports = {
   isVersionSkipped,
   isUpdatePostponed,
   shouldSuppressUpdatePrompt,
+  shouldHoldInstall,
   postponePatch,
   clearPostponePatch,
 };

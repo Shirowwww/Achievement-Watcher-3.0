@@ -60,6 +60,9 @@ let updaterErrorNotified = false;
 let manualUpdateCheckPending = false; // Settings requested a check.
 let manualUpdateResult = null; // 'available' | 'uptodate' | 'error'
 let updateDownloading = false; // true from the accepted "Download && Install" until it lands or fails
+// Set when the download now running was accepted from an explicit Settings > Check for updates.
+// Carried through to the install step so a deliberate request is never held back by a game.
+let updateAcceptedManually = false;
 let checksumRetryInFlight = false; // guards the one automatic retry after a cache-clearing recovery
 const UPDATE_RECHECK_MS = 60 * 60 * 1000; // silent hourly re-check while the app stays resident
 const UPDATE_RETRY_MS = 30 * 60 * 1000; // slower retry after a failed check
@@ -149,6 +152,7 @@ function notifyUpdateError(message) {
   debug.log(`[updater] ${message}`);
   clearUpdateDownloadProgress();
   updateDownloading = false;
+  updateAcceptedManually = false;
   manualUpdateResult = 'error';
   manualUpdateCheckPending = false;
   if (!updaterErrorNotified && tray) {
@@ -161,6 +165,24 @@ function notifyUpdateError(message) {
       });
     } catch {}
   }
+}
+
+// A finished download that cannot install yet. Held-back updates used to be silent, so the only
+// thing the user could observe was an update that downloaded on every check and never arrived.
+function notifyUpdateHeldBack(version) {
+  if (!tray) return;
+  try {
+    tray.displayBalloon({
+      iconType: 'info',
+      title: t('achievement-watcher', 'AW Next'),
+      content: t(
+        'update-ready-after-game',
+        'Version {version} is ready and will be installed once the running game is closed.',
+        'La version {version} est prête et sera installée une fois le jeu en cours fermé.',
+        { version }
+      ),
+    });
+  } catch {}
 }
 
 // Wipes the whole electron-updater cache directory (both the differential-download base files and
@@ -4742,8 +4764,9 @@ try {
         cancelId: 1,
       });
       if (response === 0) {
-        debug.log(`[updater] user accepted download of ${info.version}`);
+        debug.log(`[updater] user accepted download of ${info.version}${manual ? ' (manual check)' : ''}`);
         updateDownloading = true;
+        updateAcceptedManually = manual;
         autoUpdater.downloadUpdate().catch((err) => {
           // A checksum mismatch is handled entirely by the 'error' listener below, which clears
           // the cache and retries once instead of surfacing the raw failure immediately.
@@ -4831,12 +4854,16 @@ try {
   promptDownloadedUpdate = async function (info) {
     // "Download && Install" was already explicit consent. Once downloaded, run the NSIS upgrade
     // silently and relaunch AW; settings/user data live outside the install directory and survive.
-    if (isGameRunning()) {
+    if (updateGate.shouldHoldInstall({ gameRunning: isGameRunning(), acceptedManually: updateAcceptedManually })) {
       debug.log(`[updater] silent upgrade to ${info.version} held back: a game is running`);
       pendingInstallPrompt = info;
+      // Saying nothing here is what made this look like a broken updater: the download completes,
+      // the install never happens, and the next check offers the same version again.
+      notifyUpdateHeldBack(info.version);
       return;
     }
     pendingInstallPrompt = null;
+    updateAcceptedManually = false;
     debug.log(`[updater] installing ${info.version} silently and restarting`);
     autoUpdater.quitAndInstall(true, true);
   };

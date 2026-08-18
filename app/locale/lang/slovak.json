@@ -1495,6 +1495,7 @@
     "theme-gradient-angle-270": "Hore vpravo → Dole vľavo",
     "avatar-import-from-steam-user": "Importovať Steam avatara používateľa {name}",
     "update-check-failed-detail": "Kontrola aktualizácií zlyhala: {message}",
+    "update-ready-after-game": "Verzia {version} je pripravená a nainštaluje sa po zatvorení spustenej hry.",
     "diagnosis-emulator": "Emulátor: {emulator}",
     "diagnosis-emulator-none": "žiaden nezistený",
     "diagnosis-steam-settings": "steam_settings: {path}",

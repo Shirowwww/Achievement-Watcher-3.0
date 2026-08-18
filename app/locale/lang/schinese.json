@@ -1495,6 +1495,7 @@
     "theme-gradient-angle-270": "右上 → 左下",
     "avatar-import-from-steam-user": "导入 {name} 的 Steam 头像",
     "update-check-failed-detail": "检查更新失败：{message}",
+    "update-ready-after-game": "版本 {version} 已准备就绪，将在关闭正在运行的游戏后安装。",
     "diagnosis-emulator": "模拟器：{emulator}",
     "diagnosis-emulator-none": "未检测到",
     "diagnosis-steam-settings": "steam_settings：{path}",
