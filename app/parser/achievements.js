@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const appPath = __dirname;
 const { buildAchievementSchemaIndex, findAchievementInSchema } = require('./achievementSchemaIndex.js');
+const { ipcInvoke } = require('../util/ipcInvoke.js');
 const gog = require(path.join(appPath, 'gog.js'));
 const gogOfficial = require(path.join(appPath, 'gogOfficial.js'));
 const ubisoftOfficial = require(path.join(appPath, 'ubisoftOfficial.js'));
@@ -515,8 +516,7 @@ function seedPlaytimeFromSteamDb(appid, apply) {
   _steamDbLaunchInFlight.add(id);
   (async () => {
     try {
-      const { ipcRenderer } = require('electron');
-      const meta = await ipcRenderer.invoke('get-steamdb-launch', id);
+      const meta = await ipcInvoke('get-steamdb-launch', id);
       if (meta && meta.best_process_name) apply(meta.best_process_name);
     } catch (err) {
       debug.log(`[${id}] SteamDB launch fallback failed: ${err.message || err}`);
@@ -524,6 +524,22 @@ function seedPlaytimeFromSteamDb(appid, apply) {
       _steamDbLaunchInFlight.delete(id);
     }
   })();
+}
+
+/*
+  An empty achievement file is a stable fact about a game that has simply never been played, and it
+  is re-read on every scan. Logged unconditionally it dominated parser.log - 361 lines across a
+  single day's exported log, 30 identical repeats for each of a dozen games - which buries the
+  entries that describe something that actually changed. Reported once per file per session; the
+  next launch reports it again, so nothing is permanently hidden.
+*/
+const _emptyAchievementFilesWarned = new Set();
+
+function warnEmptyAchievementFileOnce(appid, filePath) {
+  const key = String(filePath || appid);
+  if (_emptyAchievementFilesWarned.has(key)) return;
+  _emptyAchievementFilesWarned.add(key);
+  debug.warn(`[${appid}] Warning ! Achievement file in '${filePath}' is probably empty`);
 }
 
 // Record failed fixes and retry after a content change or cooldown.
@@ -1239,7 +1255,7 @@ async function scanUnconfiguredInstalls(linkedExes = [], scope = _activeScanScop
     const entries = readEntries(dir);
     if (!entries) return;
     if (hasAppidMarker(entries)) return; // appid path handles this folder
-    const subdirs = entries.filter((e) => e.isDirectory() && !UNCONFIG_SKIP_DIR.test(e.name));
+    const subdirs = entries.filter((e) => e.isDirectory() && !UNCONFIG_SKIP_DIR.test(e.name) && !exeDetect.ENGINE_DATA_DIRS.test(e.name));
     const childGameFolders = subdirs.filter((e) => {
       const cd = path.join(dir, e.name);
       return (
@@ -1249,8 +1265,14 @@ async function scanUnconfiguredInstalls(linkedExes = [], scope = _activeScanScop
         isGameFolder(cd, readEntries(cd))
       );
     });
-    if (isGameFolder(dir, entries) && childGameFolders.length === 0) {
-      emit(dir, entries); // leaf game folder
+    // A folder holding a game exe of its own IS the game: whatever sits below it is its engine,
+    // runtime or tooling payload, not a sibling install. Only a container with no executable of its
+    // own - a collection root such as a Jackbox pack folder - is descended into. This is the same
+    // rule isGameCollectionDir() applies; without it a Godot C# export emitted its
+    // `data_<name>_windows_x86_64` runtime folder instead of the game beside it.
+    const ownExe = !!exeDetect.shallowGameExe(dir);
+    if (ownExe || (isGameFolder(dir, entries) && childGameFolders.length === 0)) {
+      emit(dir, entries); // game folder
       return;
     }
     for (const e of subdirs) walk(path.join(dir, e.name), depth + 1);
@@ -1839,8 +1861,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       }
       if (!img.header || !img.portrait || !img.background || !img.icon) {
         try {
-          const { ipcRenderer } = require('electron');
-          const fallback = (await ipcRenderer.invoke('get-images-for-game', {
+          const fallback = (await ipcInvoke('get-images-for-game', {
             name: uname,
             platform: appid.data.platform || 'PC',
             gameId: steamappid || appid.appid,
@@ -1890,8 +1911,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       if (!game) {
         let links = {};
         try {
-          const { ipcRenderer } = require('electron');
-          links = (await ipcRenderer.invoke('get-images-for-game', {
+          links = (await ipcInvoke('get-images-for-game', {
             name: requestedTitle,
             platform: appid.data.platform,
             gameId: appid.data.storeAppId,
@@ -1991,8 +2011,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     const benefitsFromFullFallback = ['rpcs3', 'shadps4', 'xenia', 'manual', 'unconfigured'].includes(appid.data.type);
     if (game.name && (needsPrimaryArt || benefitsFromFullFallback)) {
       try {
-        const { ipcRenderer } = require('electron');
-        const fallback = (await ipcRenderer.invoke('get-images-for-game', {
+        const fallback = (await ipcInvoke('get-images-for-game', {
           name: game.name,
           platform: appid.data.platform || game.system || appid.data.type,
           gameId: appid.appid,
@@ -2371,6 +2390,19 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
             if (dir && gameExeStillPresent() && goldberg.readLocalSchema(dir).length === 0) schemaRepairDirs.add(dir);
           }
 
+          /*
+            Icons the last repair gave up on, retried on the same three-day cadence steam.js uses
+            for descriptions and covers. The schema write only ever runs when there is no local
+            schema, so without this pass a game whose art was not published yet would keep its
+            empty images/ folder forever - the marker would suppress the warning and nothing would
+            ever look again. Schema, configs and appid are left untouched: this fetches art only.
+          */
+          const iconRecheckDirs = new Set();
+          for (const dir of [bgSteamSettings, ...fixedSteamSettingsDirs]) {
+            if (!dir || schemaRepairDirs.has(dir) || !gameExeStillPresent()) continue;
+            if (goldberg.needsArtworkRecheck(dir)) iconRecheckDirs.add(dir);
+          }
+
           if (schemaRepairDirs.size > 0) {
             const downloadIcon =
               option.achievement && option.achievement.goldbergDownloadIcons
@@ -2396,6 +2428,9 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
                 debug.log(
                   `[${bgAppid}] wrote missing achievements.json schema (${summary.achievementsJson.length} entries) to ${steamSettingsDir}` +
                     (downloadIcon ? ` + icons: ${summary.icons.downloaded} dl, ${summary.icons.failed} fail` : '') +
+                    // Say why, or the log reads as 150 mystery failures. A whole set that 404s is
+                    // Steam not hosting this appid's achievement art yet, not a broken install.
+                    (summary.icons.unavailable ? ' (no achievement artwork published for this appid yet)' : '') +
                     (summary.dlc ? ` + ${summary.dlc.count} DLC(s)` : '') +
                     (summary.user && summary.user.language ? ` + lang ${summary.user.language}` : '')
                 );
@@ -2416,6 +2451,34 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
                 }
               } catch (err) {
                 debug.log(`[${bgAppid}] could not auto-write achievements.json schema to ${steamSettingsDir} => ${err}`);
+              }
+            }
+          }
+
+          if (iconRecheckDirs.size > 0 && option.achievement && option.achievement.goldbergDownloadIcons) {
+            const request = require('request-zero');
+            for (const steamSettingsDir of iconRecheckDirs) {
+              try {
+                const summary = await goldberg.repair({
+                  steamSettings: steamSettingsDir,
+                  appid: bgAppid,
+                  schema: bgSchema,
+                  downloadIcon: async (url, dir) => {
+                    const r = await request.download(url, dir);
+                    return r && r.path;
+                  },
+                  // Art only: leave the schema, the appid file and every config exactly as they are.
+                  preserveRichSchema: true,
+                  writeAppId: false,
+                  writeDlc: false,
+                  writeMain: false,
+                });
+                debug.log(
+                  `[${bgAppid}] artwork recheck in ${steamSettingsDir}: ${summary.icons.downloaded} dl, ${summary.icons.failed} fail` +
+                    (summary.icons.unavailable ? ' (still not published - will look again in 3 days)' : '')
+                );
+              } catch (err) {
+                debug.log(`[${bgAppid}] artwork recheck failed for ${steamSettingsDir} => ${err}`);
               }
             }
           }
@@ -2582,8 +2645,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
         if (dataType === 'file') {
           root = await steam.getAchievementsFromFile(appid.data.path);
           //Note to self: Empty file should be considered as a 0% game -> do not throw an error just issue a warning
-          if (root.constructor === Object && Object.entries(root).length === 0)
-            debug.warn(`[${appid.appid}] Warning ! Achievement file in '${appid.data.path}' is probably empty`);
+          if (root.constructor === Object && Object.entries(root).length === 0) warnEmptyAchievementFileOnce(appid.appid, appid.data.path);
         } else if (dataType === 'uplayR2') {
           // Goldberg Uplay R2. Unlike the Steam emus there is no single well-known folder: the loader
           // resolves its save dir from its own ini (SaveType/SavePath, plus AchSavePath on builds that
@@ -2804,7 +2866,9 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
 
     return game;
   } catch (err) {
-    debug.error(`[${requestedAppid}] Error parsing local achievements data => ${err} > SKIPPING`);
+    // `requestedAppid` is a discovery RECORD ({appid, data}), not an id - interpolating it printed
+    // "[object Object]" and made the one error line in the log useless for finding the game.
+    debug.error(`[${requestedAppid?.appid ?? requestedAppid}] Error parsing local achievements data => ${err} > SKIPPING`);
   }
 };
 

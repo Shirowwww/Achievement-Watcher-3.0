@@ -591,6 +591,7 @@ function diagnose({ gameDir, appid, schema, savesRoots }) {
       found: 0,
       missing: [], // schema achievement names absent from achievements.json
       missingIcons: [], // referenced icon files that don't exist on disk
+      iconsUnavailable: false, // ...and Steam has no artwork for this appid, so fetching them cannot help
     },
   };
   // `data` carries the values behind the message for the issues a repair can act on, so a caller
@@ -736,7 +737,15 @@ function diagnose({ gameDir, appid, schema, savesRoots }) {
     }
   }
   if (report.achievements.missingIcons.length > 0) {
-    add('warning', 'MISSING_ICONS', `${report.achievements.missingIcons.length} referenced icon file(s) are missing on disk.`);
+    // info, not warning: an unrepairable fact belongs in neither the "points to review" count nor
+    // behind a repair button. issuesAtLevel('warning') is what feeds both, so the level is the fix.
+    const artworkMarker = readArtworkMarker(steamSettings);
+    report.achievements.iconsUnavailable = !!(artworkMarker && !artworkMarker.stale);
+    if (report.achievements.iconsUnavailable) {
+      add('info', 'ICONS_UNAVAILABLE', `${report.achievements.missingIcons.length} icon(s) are missing because Steam publishes no achievement artwork for this appid yet.`);
+    } else {
+      add('warning', 'MISSING_ICONS', `${report.achievements.missingIcons.length} referenced icon file(s) are missing on disk.`);
+    }
   }
 
   const blankDesc = parsed.filter((a) => a && (!a.description || String(a.description).trim() === '')).length;
@@ -919,6 +928,41 @@ function writeUserConfig({ steamSettings, accountName, language, fillDefaults = 
   and description. Pure except for the injected downloadIcon; cfg carries the steamSettings path,
   appid, schema, icon/image options, DLC and account/language values. Returns the write report.
 */
+/*
+  Written into images/ when a repair found that NONE of the schema's icon urls resolve.
+
+  diagnose() can only stat files, so without this it reports the same "N referenced icon files are
+  missing" whether the icons were never fetched or Steam simply has no artwork for this appid yet.
+  Only the first case is repairable; the second put a permanent warning and a repair button that
+  cannot work in front of the user. Any later download clears it, so the day Steam publishes the
+  art the game goes back to an ordinary repairable state on its own.
+*/
+const ARTWORK_UNAVAILABLE_MARKER = '.aw-artwork-unavailable';
+
+// Same three-day cadence as the description backfill and the cover lookup in steam.js: Steam sends
+// no notification when a developer finally uploads the art, so the only way to find out is to look
+// again. The marker suppresses the pointless warning in between, it never closes the case.
+const ARTWORK_RECHECK_MS = 3 * 24 * 60 * 60 * 1000;
+
+/*
+  Read the marker for a steam_settings, if it is still within the recheck window.
+
+  Returns { stale } so a caller can tell the two negatives apart: no marker at all (icons were
+  simply never fetched) versus a marker that has aged out (worth one more look). A marker we cannot
+  parse is treated as aged out, so a corrupt file resolves itself on the next pass.
+*/
+function readArtworkMarker(steamSettings, imagePrefix = 'images') {
+  const file = path.join(steamSettings, imagePrefix, ARTWORK_UNAVAILABLE_MARKER);
+  if (!fs.existsSync(file)) return null;
+  let checkedAt = 0;
+  try {
+    checkedAt = Date.parse(JSON.parse(fs.readFileSync(file, 'utf8')).checkedAt) || 0;
+  } catch {
+    checkedAt = 0;
+  }
+  return { checkedAt, stale: Date.now() - checkedAt >= ARTWORK_RECHECK_MS };
+}
+
 async function repair({
   steamSettings,
   appid,
@@ -936,7 +980,22 @@ async function repair({
   // An explicit repair completes configs.user.ini even with nothing to stamp into it - see
   // writeUserConfig's fillDefaults. Off by default so the silent auto-repair keeps its old reach.
   fillUserDefaults = false,
+  /*
+    Optional progress sink: called as ({phase, done, total}) with phase one of
+    'backup' | 'icons' | 'schema' | 'config' | 'done'. Icon downloads dominate the wall clock (two
+    per achievement, hundreds for a big game), which is why they report per file rather than per
+    phase. Purely observational - a throwing sink must never take the repair down with it.
+  */
+  onProgress = null,
 }) {
+  const report = (phase, done = 0, total = 0) => {
+    if (typeof onProgress !== 'function') return;
+    try {
+      onProgress({ phase, done, total });
+    } catch {
+      /* a broken progress sink is not a repair failure */
+    }
+  };
   if (!steamSettings) throw new Error('repair: steamSettings path is required');
   fs.mkdirSync(steamSettings, { recursive: true });
 
@@ -954,6 +1013,7 @@ async function repair({
   if (fillUserDefaults || (accountName && String(accountName).trim()) || (language && String(language).trim())) {
     filesToReplace.push(path.join(steamSettings, 'configs.user.ini'));
   }
+  report('backup');
   const existing = filesToReplace.filter((file) => fs.existsSync(file));
   if (existing.length > 0) {
     summary.backupDir = path.join(steamSettings, '.aw-backups', backupTimestamp());
@@ -965,24 +1025,120 @@ async function repair({
     const imgDir = path.join(steamSettings, imagePrefix);
     fs.mkdirSync(imgDir, { recursive: true });
     const list = (schema && schema.achievement && schema.achievement.list) || [];
+    // Two images per achievement (unlocked + locked), which is the unit the caller counts down.
+    const totalIcons = list.length * 2;
+    let doneIcons = 0;
+    const step = () => report('icons', ++doneIcons, totalIcons);
+    report('icons', 0, totalIcons);
+
+    // Decide every icon before fetching anything: the skip rules below are pure disk lookups, so
+    // resolving them up front costs nothing and leaves a plain list of urls to fetch in parallel.
+    // Jobs are keyed by basename - `count` is how many schema slots one file satisfies - so a
+    // schema that points two achievements at the same image still makes a single request.
+    const jobs = new Map();
     for (const a of list) {
       for (const key of ['icon', 'icongray']) {
         const url = a && a[key];
         if (!url || !/^https?:\/\//i.test(String(url))) {
           summary.icons.skipped++;
+          step();
           continue;
         }
-        try {
-          const saved = await downloadIcon(String(url), imgDir);
-          if (saved) summary.icons.downloaded++;
-          else summary.icons.failed++;
-        } catch {
-          summary.icons.failed++;
+        /*
+          Never re-fetch an icon that is already sitting where achievements.json will point.
+
+          This is what made "Repair the achievement data" report every single icon as failed on
+          emulator installs. A game with no Steam data gets its schema from the emulator's own
+          achievements.json, and steam.getLocalAchievementSchema rebuilds each icon url from that
+          file's BASENAME. Whenever the emulator named its images after the achievement rather than
+          after the Steam content hash - repacks and hand-made schemas routinely do - the rebuilt url
+          is a 404, so the repair spent one dead request per icon and then declared failure over
+          images that were already complete on disk.
+
+          buildAchievementsJson derives the reference the same way, so matching on the basename here
+          is matching on the exact file the written schema is going to name.
+        */
+        const basename = path.parse(String(url).split('?')[0]).base;
+        if (basename && fs.existsSync(path.join(imgDir, basename))) {
+          summary.icons.skipped++;
+          step();
+          continue;
         }
+        const existing = jobs.get(basename);
+        if (existing) existing.count++;
+        else jobs.set(basename, { url: String(url), count: 1 });
       }
+    }
+
+    /*
+      Fetch what is left with a bounded pool, and give up once it is clear the whole set is doomed.
+
+      Both halves are the same bug report: a brand-new appid whose achievement art is not on the
+      community CDN yet answers 404 for every icon it lists. Sequentially, at roughly a second per
+      dead request (a fresh TLS handshake each time), one 75-achievement game blocked a scan for
+      nearly three minutes. Steam serves a game's icons out of a single per-appid folder, so a long
+      opening run of failures with nothing downloaded means the remaining urls are dead too - there
+      is nothing to learn from spending another 140 requests on them.
+    */
+    const ICON_CONCURRENCY = 8;
+    const ICON_FAILURE_ABORT = 12; // > ICON_CONCURRENCY, so one bad batch alone never trips it
+    const queue = [...jobs.values()];
+    let cursor = 0;
+    let abandoned = false;
+    const worker = async () => {
+      while (cursor < queue.length) {
+        if (summary.icons.downloaded === 0 && summary.icons.failed >= ICON_FAILURE_ABORT) {
+          abandoned = true;
+          return;
+        }
+        const job = queue[cursor++];
+        let ok = false;
+        try {
+          ok = !!(await downloadIcon(job.url, imgDir));
+        } catch {
+          ok = false;
+        }
+        if (ok) summary.icons.downloaded += job.count;
+        else summary.icons.failed += job.count;
+        for (let i = 0; i < job.count; i++) step();
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(ICON_CONCURRENCY, queue.length) }, worker));
+
+    // Whatever the pool walked away from is still a miss, and the bar must still reach the total.
+    if (abandoned) {
+      for (const job of queue.slice(cursor)) {
+        summary.icons.failed += job.count;
+        for (let i = 0; i < job.count; i++) step();
+      }
+      summary.icons.abandoned = true;
+    }
+
+    /*
+      `abandoned` says we stopped early; `unavailable` says the whole referenced set is unobtainable.
+      They are not the same and only the second one may drive the marker: a small game never reaches
+      the abandon threshold, so keying the marker off `abandoned` would leave it unwritten and the
+      recheck would then fire on every single scan instead of every three days.
+
+      `skipped === 0` keeps this to the case it describes. An install with some icons already on
+      disk plainly does have artwork, so a miss there is an ordinary repairable gap, not Steam
+      having published nothing.
+    */
+    summary.icons.unavailable = summary.icons.downloaded === 0 && summary.icons.failed > 0 && summary.icons.skipped === 0;
+
+    const marker = path.join(imgDir, ARTWORK_UNAVAILABLE_MARKER);
+    try {
+      if (summary.icons.unavailable) {
+        fs.writeFileSync(marker, JSON.stringify({ appid: appid == null ? null : String(appid), checkedAt: new Date().toISOString(), referenced: totalIcons }, null, 2));
+      } else if (summary.icons.downloaded > 0 && fs.existsSync(marker)) {
+        fs.unlinkSync(marker); // the artwork exists after all
+      }
+    } catch {
+      /* the marker is an optimisation, never a reason to fail a repair */
     }
   }
 
+  report('schema');
   if (!preserveRichSchema) {
     fs.writeFileSync(path.join(steamSettings, 'achievements.json'), JSON.stringify(achievementsJson, null, 2));
   }
@@ -998,6 +1154,7 @@ async function repair({
   // Enable all DLCs (configs.app.ini). Resolve the list from the injected fetcher when one wasn't
   // passed in; a failed/absent fetch still writes unlock_all=1, which alone covers the common
   // "do I own this DLC?" check. Kept best-effort so a network hiccup never aborts the schema repair.
+  report('config');
   if (writeDlc) {
     let dlcList = Array.isArray(dlcs) ? dlcs : [];
     if (dlcList.length === 0 && typeof fetchDlc === 'function' && appid != null) {
@@ -1032,6 +1189,7 @@ async function repair({
     }
   }
 
+  report('done');
   return summary;
 }
 
@@ -1227,8 +1385,17 @@ function findGameExe(gameDir, dllPaths) {
   return exeDetect.detect(gameDir, '', { dllPaths });
 }
 
+// True when a past repair gave up on the artwork and the recheck window has since elapsed: Steam
+// may have published it in the meantime, and only looking again can tell.
+function needsArtworkRecheck(steamSettings, imagePrefix = 'images') {
+  const marker = readArtworkMarker(steamSettings, imagePrefix);
+  return !!(marker && marker.stale);
+}
+
 module.exports = {
   findSteamSettings,
+  readArtworkMarker,
+  needsArtworkRecheck,
   writeSteamAppId,
   detectEmulator,
   buildAchievementsJson,

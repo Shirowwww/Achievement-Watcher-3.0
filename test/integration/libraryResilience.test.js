@@ -96,8 +96,11 @@ test('makeList admits the provisional entry and no longer silently skips a faile
 
 test('the SteamDB launch lookup is never awaited on the game-load path', () => {
   assert.match(source, /function seedPlaytimeFromSteamDb\(appid, apply\)/, 'it must run through the detached helper');
-  // The only await left is the one inside that helper, which nothing waits on.
-  assert.equal((source.match(/await ipcRenderer\.invoke\('get-steamdb-launch'/g) || []).length, 1);
+  // The only await left is the one inside that helper, which nothing waits on. It goes through
+  // ipcInvoke because achievements.js is also required from the main process, where ipcRenderer is
+  // undefined and a direct call threw a bare TypeError once per game.
+  assert.equal((source.match(/await ipcInvoke\('get-steamdb-launch'/g) || []).length, 1);
+  assert.doesNotMatch(source, /ipcRenderer\.invoke\('get-steamdb-launch'/);
   const load = source.slice(source.indexOf('module.exports.getSavedAchievementsForAppid'));
   assert.ok(
     !/get-steamdb-launch/.test(load),

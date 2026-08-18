@@ -44,6 +44,11 @@ const KNOWN_NON_GAME_EXE = new Set([
   'explorer.exe', 'cmd.exe', 'powershell.exe', 'pwsh.exe', 'regedit.exe', 'taskmgr.exe', 'msconfig.exe', 'control.exe', 'msiexec.exe',
   // dev tools
   'code.exe', 'git.exe', 'node.exe', 'npm.exe', 'npx.exe', 'python.exe', 'java.exe', 'javaw.exe',
+  // .NET runtime companions - every self-contained .NET publish (Godot C#, Unity, MonoGame, ...)
+  // drops createdump.exe next to the runtime dlls. It is the CLR's crash dump writer, and its
+  // version resource reads ".NET Runtime Crash Dump Generator" - which is exactly the name that
+  // surfaced when it was picked as a game.
+  'createdump.exe',
   'r.exe', // IBM SPSS Statistics' bundled R runtime (often picked up as a bogus "game" exe)
   'streaming_client.exe', // Steam Remote Play client process
   'diskspd64.exe', // CrystalDiskMark's bundled benchmark tool
@@ -90,6 +95,12 @@ const SOFT_PENALTY = [
 
 // Directories never worth descending into.
 const META_DIRS = /^(_?CommonRedist|_?Redist|redist|DirectX|dx|dotnet|prerequisites|prereq|Installers)$/i;
+
+// Engine payload folders: the game's own data plus a bundled runtime, never the binary a user
+// launches. Godot 4 C# exports name theirs `data_<product>_<platform>_<arch>` and ship the whole
+// .NET runtime inside; Unity uses `<Game>_Data` and `MonoBleedingEdge`. Descending into them turns
+// a runtime helper into a candidate - and, in an unconfigured scan, into a whole bogus "game".
+const ENGINE_DATA_DIRS = /^(?:data_.+_(?:windows|win|linux|linuxbsd|macos|osx|web)_.*|MonoBleedingEdge|.+_Data)$/i;
 
 const MAX_DEPTH = 5;
 
@@ -164,7 +175,7 @@ function collectCandidates(gameDir) {
     for (const e of entries) {
       if (e.isDirectory()) {
         if (e.name.toLowerCase() === 'steam_settings') continue;
-        if (META_DIRS.test(e.name)) continue;
+        if (META_DIRS.test(e.name) || ENGINE_DATA_DIRS.test(e.name)) continue;
         walk(path.join(dir, e.name), depth + 1);
       } else if (e.isFile() && e.name.toLowerCase().endsWith('.exe')) {
         if (EXE_EXCLUDE.some((r) => r.test(e.name))) continue;
@@ -374,6 +385,7 @@ module.exports = {
   FOLDER_MATCH_THRESHOLD,
   EXE_EXCLUDE,
   SOFT_PENALTY,
+  ENGINE_DATA_DIRS,
   isKnownNonGameExe,
   KNOWN_NON_GAME_EXE,
   CONFIDENCE,

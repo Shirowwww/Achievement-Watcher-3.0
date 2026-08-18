@@ -182,6 +182,16 @@ function schemaCacheFile(sandboxId, locale) {
   return path.join(cacheRoot || '', 'steam_cache', 'epicOfficial', `${String(sandboxId).replace(/[^\w.-]/g, '_')}_${locale}.json`);
 }
 
+// Shared by the success and the "answered, but empty" paths so both land on the same TTL.
+function writeSchemaCache(cacheFile, result) {
+  try {
+    fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
+    fs.writeFileSync(cacheFile, JSON.stringify(result, null, 2));
+  } catch {
+    /* cache write failure is non-fatal */
+  }
+}
+
 function localeFor(lang) {
   return EPIC_LOCALE_MAP[String(lang || '').toLowerCase()] || 'en';
 }
@@ -193,15 +203,30 @@ async function resolveSchema(sandboxId, lang) {
   const cacheFile = schemaCacheFile(sandboxId, locale);
   try {
     if (fs.existsSync(cacheFile) && Date.now() - fs.statSync(cacheFile).mtimeMs < SCHEMA_CACHE_TTL_MS) {
-      return JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+      const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+      // A cached "this sandbox has no achievements" answers as null, exactly like the live path, so
+      // callers never have to handle an empty schema object and a null differently.
+      return cached && Array.isArray(cached.list) && cached.list.length ? cached : null;
     }
   } catch {
     /* stale/corrupt -> refetch */
   }
 
+  /*
+    `answered` separates "Epic replied, this sandbox simply has no achievements" from "Epic could not
+    be reached". Only the first is a fact worth remembering.
+
+    Fortnite is the standing example: sandbox `fn` returns HTTP 200 with a record whose every field
+    is null, so there are no rows and nothing was ever cached - and every scan asked again, forever.
+    A network error must keep that retry (the next scan may well be online), but a real empty answer
+    is cached like any other result, on the same 24h TTL, so it costs one request a day instead of
+    one per scan.
+  */
   let record = null;
+  let answered = false;
   try {
     record = await fetchEpicAchievementSchemaBySandbox(sandboxId, locale);
+    answered = true;
   } catch (err) {
     debug.log(`[epic ${sandboxId}] sandbox schema fetch failed => ${err}`);
   }
@@ -211,17 +236,26 @@ async function resolveSchema(sandboxId, lang) {
   if (!rows.length) {
     // fall back to the public product REST endpoint if we already know a productId
     if (productId) {
+      answered = false;
       try {
         rows = await fetchEpicPublicProductAchievements(productId, locale);
+        answered = true;
       } catch (err) {
         debug.log(`[epic ${sandboxId}] public product achievements fetch failed => ${err}`);
       }
     }
     if (!rows.length) {
-      // serve a stale cache offline rather than nothing
+      let stale = null;
       try {
-        if (fs.existsSync(cacheFile)) return JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
-      } catch {}
+        if (fs.existsSync(cacheFile)) stale = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+      } catch {
+        /* corrupt cache - treat as absent */
+      }
+      // A schema resolved earlier beats an empty answer, so an Epic hiccup can never erase one.
+      if (stale && Array.isArray(stale.list) && stale.list.length) return stale;
+      // Nothing better to serve. Record the empty answer only if Epic actually gave one; re-writing
+      // it on each expiry is what keeps the retry down to once a day instead of once a scan.
+      if (answered) writeSchemaCache(cacheFile, { productId, list: [] });
       return null;
     }
   }
@@ -240,12 +274,7 @@ async function resolveSchema(sandboxId, lang) {
   });
 
   const result = { productId, list };
-  try {
-    fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
-    fs.writeFileSync(cacheFile, JSON.stringify(result, null, 2));
-  } catch {
-    /* cache write failure is non-fatal */
-  }
+  writeSchemaCache(cacheFile, result);
   return result;
 }
 

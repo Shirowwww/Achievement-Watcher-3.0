@@ -12,6 +12,7 @@ const { readRegistryStringAndExpand, regKeyExists, readRegistryInteger, readRegi
 const appPath = path.join(__dirname, '../');
 const steamID = require(path.join(appPath, 'util/steamID.js'));
 const fuzzyAppid = require(path.join(appPath, 'util/fuzzyAppid.js'));
+const { ipcInvoke } = require(path.join(appPath, 'util/ipcInvoke.js'));
 const steamLanguages = require(path.join(appPath, 'locale/steam.json'));
 const sse = require(path.join(appPath, 'parser/sse.js'));
 const htmlParser = require('node-html-parser');
@@ -817,6 +818,45 @@ async function getSteamUserStatsFromSRV(user, appID) {
   return result;
 }
 
+/*
+  Resolve a game's library portrait: product info first, then SteamDB's hashed store_item_assets
+  path, then the SteamGridDB community grids.
+
+  This lives in one place because the two callers must agree. The chain used to be inline in
+  getSteamDataFromSRV, which only ever runs on a cache MISS; the repair path for an already-cached
+  schema (GetMissingData) re-asked product info and nothing else. A game whose cover was missing on
+  the one scan that first resolved it therefore kept a blank tile forever, even when SteamGridDB had
+  artwork for it all along.
+
+  A truthy non-http value is a fetch-icon token the renderer resolves itself - it is returned
+  untouched, never treated as a missing cover.
+*/
+async function resolvePortrait({ appid, name, portrait, invoke }) {
+  // ipcInvoke, not ipcRenderer: GetMissingData also runs from the main process, where ipcRenderer is
+  // undefined and a direct call would throw out of this function instead of falling through.
+  const send = invoke || ipcInvoke;
+  if (!name && !appid) return portrait || null;
+
+  if (portrait && /^https?:\/\//i.test(portrait)) {
+    // Verify a guessable CDN url actually downloads: modern titles live under hashed
+    // store_item_assets paths, so a dead url would leave the tile blank while SteamDB knows better.
+    try {
+      const local = await send('fetch-icon', portrait, appid).catch(() => null);
+      if (!local || local === portrait) portrait = null;
+    } catch {
+      return portrait; // keep the product-info url; the renderer will retry it
+    }
+  }
+
+  if (!portrait) portrait = (await send('get-steamdb-cover', appid).catch(() => null)) || null;
+  // The appid lets SteamGridDB answer by identity; the name is only the fallback handle for a game
+  // that has no Steam appid at all.
+  if (!portrait) portrait = (await send('get-steamgriddb-cover', name, appid).catch(() => null)) || null;
+  return portrait || null;
+}
+
+module.exports.resolvePortrait = resolvePortrait;
+
 async function getSteamDataFromSRV(appID, lang) {
   const langObj = steamLanguages.find((language) => language.api === lang);
   const { ipcRenderer } = require('electron');
@@ -862,28 +902,9 @@ async function getSteamDataFromSRV(appID, lang) {
     achievements = steamSchemaFetch.applySteamHuntersGroups(achievements, groupsResult.groups);
   }
 
-  // No library capsule in the product info (common for brand-new appids) - recover the real hashed
-  // cover from SteamDB (main process: stealth browser + 30-day disk cache). Only worth it for an
-  // actual game with a resolved name. When the product info DID return a portrait, verify it
-  // actually downloads: a dead guessable URL (modern titles live under hashed store_item_assets
-  // paths) would otherwise leave the tile blank while SteamDB knows the real capsule.
-  let portrait = result.portrait;
-  if (!portrait && result.name) {
-    portrait = (await ipcRenderer.invoke('get-steamdb-cover', appID).catch(() => null)) || null;
-  } else if (/^https?:\/\//i.test(portrait || '') && result.name) {
-    try {
-      const local = await ipcRenderer.invoke('fetch-icon', portrait, appID).catch(() => null);
-      if (!local || local === portrait) {
-        portrait = (await ipcRenderer.invoke('get-steamdb-cover', appID).catch(() => null)) || null;
-      }
-    } catch {
-      /* keep the product-info URL; the renderer will retry it */
-    }
-  }
-  // Last resort: SteamGridDB community grids (needs the optional/bundled API key; cached 30 days).
-  if (!portrait && result.name) {
-    portrait = (await ipcRenderer.invoke('get-steamgriddb-cover', result.name).catch(() => null)) || null;
-  }
+  // Product info often carries no library capsule at all (brand-new appids above all). See
+  // resolvePortrait for the recovery chain and why it is shared with the cached-schema repair.
+  const portrait = await resolvePortrait({ appid: appID, name: result.name, portrait: result.portrait });
 
   return {
     name: result.name,
@@ -1532,6 +1553,22 @@ async function GetMissingData(data, showHidden, lang, steamSettings) {
         data.img.background = data.img.background || updatedImgs.background || 'page_bg_generated_v6b';
         data.img.portrait = data.img.portrait || updatedImgs.portrait || null;
         data.img.icon = data.img.icon || updatedImgs.icon;
+      }
+
+      /*
+        Still no portrait: run the same SteamDB -> SteamGridDB chain the first fetch uses. Product
+        info alone is not enough - it has no cover at all for plenty of titles, which is why the
+        tile stayed blank on every later scan even though SteamGridDB had artwork.
+
+        Stamped on the same three-day cadence as the description backfill, so a game that genuinely
+        has no cover anywhere costs one lookup every three days rather than one per scan.
+      */
+      const PORTRAIT_RECHECK_MS = 3 * 24 * 60 * 60 * 1000;
+      const portraitTriedRecently = data.portraitCheckedAt && Date.now() - data.portraitCheckedAt < PORTRAIT_RECHECK_MS;
+      if (!data.img.portrait && data.name && !portraitTriedRecently) {
+        data.img.portrait = await resolvePortrait({ appid: data.appid, name: data.name, portrait: null });
+        data.portraitCheckedAt = Date.now(); // remember the attempt even when nothing was found
+        if (data.img.portrait) debug.log(`[${data.appid}] recovered a library cover for "${data.name}"`);
       }
     }
     // Backfill blank descriptions every 3 days; key-based schemas already include hidden text.
