@@ -11,7 +11,7 @@
     -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'none'; script-src 'self' 'sha256-6hoK2v7NMQ9BztWRLpqwEtRRPqb93qf3AkDWdgjdGyg=' 'sha256-Je35Ely70/P1H6O6qWZNS9gTkodHCRiUd87eGa46sh0=' 'sha256-THGa7wpZpDL0FscpfL87OtsIJ4VNB335gNIloyywCNM='; style-src 'self' 'unsafe-inline' 'unsafe-eval';  font-src 'self'; media-src 'self'; img-src 'self' data: https://*; connect-src 'self' https://api.steampowered.com https://api.epicgames.dev ws://localhost:8082"
+      content="default-src 'none'; script-src 'self' 'sha256-6hoK2v7NMQ9BztWRLpqwEtRRPqb93qf3AkDWdgjdGyg=' 'sha256-Je35Ely70/P1H6O6qWZNS9gTkodHCRiUd87eGa46sh0=' 'sha256-LCO+EOp+OIAnmlKsc+GauK//T1W7PPEuUXNywNLztwk='; style-src 'self' 'unsafe-inline' 'unsafe-eval';  font-src 'self'; media-src 'self'; img-src 'self' data: https://*; connect-src 'self' https://api.steampowered.com https://api.epicgames.dev ws://localhost:8082"
     />
     <link rel="stylesheet" href="../resources/css/normalize.css" type="text/css" />
     <link rel="stylesheet" href="../resources/css/fontawesome.css" type="text/css" />
@@ -139,7 +139,7 @@
         <div class="overlay"></div>
         <div class="box">
           <!-- NB: the i18n loader binds the settings title with `#settings .box .header span`, so
-               NOTHING else in this header may contain a <span> — the search field and the interface
+               NOTHING else in this header may contain a <span> - the search field and the interface
                switch below both label themselves with <i>/<b>/<button> for exactly that reason. -->
           <div class="header">
             <i class="fas fa-cog"></i> <span></span>
@@ -207,12 +207,12 @@
                   <div class="right">
                     <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
                     <select autocomplete="off" id="option_autoApplyNewGames">
-                      <option value="false">Disabled</option>
-                      <option value="true" selected>Enabled</option>
+                      <option value="false" selected>Disabled</option>
+                      <option value="true">Enabled</option>
                     </select>
                     <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
                   </div>
-                  <div class="help">Runs the full Apply emulator fix chain once for a newly detected, unconfigured emulated game.</div>
+                  <div class="help">Runs the full Apply emulator fix chain once for a newly detected, unconfigured emulated game: SteamStub handling, GBE Fork, achievements, DLCs, identity/language, and Advanced data when enabled. Disabled by default.</div>
                 </li>
 
                 <li class="hasHelper">
@@ -238,7 +238,7 @@
                     </select>
                     <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
                   </div>
-                  <div class="help">Steam login lets generate_emu_config pull complete DLC/depot data. Use a THROWAWAY account only — never your main.</div>
+                  <div class="help">Steam login lets generate_emu_config pull complete DLC/depot data. Use a THROWAWAY account only - never your main.</div>
                 </li>
                 </ul>
               </div>
@@ -306,12 +306,12 @@
                   <div class="right">
                     <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
                     <select autocomplete="off" id="option_autoApplyCrackFix">
-                      <option value="false">Disabled</option>
-                      <option value="true" selected>Enabled</option>
+                      <option value="false" selected>Disabled</option>
+                      <option value="true">Enabled</option>
                     </select>
                     <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
                   </div>
-                  <div class="help">On every fix, automatically downloads and applies a confident-match community fix from the CrakFiles list (only an exact name match with a pixeldrain link; overwritten files are backed up). On by default — disable it if you don't want AW downloading/overwriting game files from a community source.</div>
+                  <div class="help">On every fix, automatically downloads and applies a community fix from the CrakFiles list when the name matches with high confidence (pixeldrain links only; overwritten files are backed up). Off by default - enable it if you want AW to download and overwrite game files from a community source.</div>
                 </li>
 
                 <li class="hasHelper">
@@ -341,7 +341,7 @@
                 </li>
 
                 <li class="hasHelper">
-                  <div class="left"><i class="fas fa-images"></i> <span>GBE/Goldberg — download icons</span></div>
+                  <div class="left"><i class="fas fa-images"></i> <span>GBE/Goldberg - download icons</span></div>
                   <div class="right">
                     <div class="previous"><span class="arrow"><i class="fas fa-chevron-left"></i></span></div>
                     <select autocomplete="off" id="option_goldbergDownloadIcons">
@@ -350,7 +350,7 @@
                     </select>
                     <div class="next"><span class="arrow"><i class="fas fa-chevron-right"></i></span></div>
                   </div>
-                  <div class="help">When enabled, the auto-repair that writes a missing steam_settings/achievements.json also downloads achievement icons from Steam CDN.</div>
+                  <div class="help">When enabled, any repair that writes steam_settings/achievements.json - automatic or from Game health - also downloads the achievement icons from the Steam CDN.</div>
                 </li>
                 </ul>
               </div>
@@ -554,15 +554,19 @@
                   </li>
                   <li class="actions-row">
                     <div id="open-logs" class="btn"><i class="fas fa-folder-open"></i> <span>Open logs folder</span></div>
+                    <div id="export-logs" class="btn"><i class="fas fa-file-archive"></i> <span>Export logs (.zip)</span></div>
                     <div id="open-userdata" class="btn"><i class="fas fa-folder-open"></i> <span>Open data folder</span></div>
                     <div id="check-for-updates" class="btn"><i class="fas fa-sync"></i> <span id="check-for-updates-label">Check for updates</span></div>
+                  </li>
+                  <li>
+                    <div id="export-logs-result" class="diag-line"></div>
                   </li>
                 </ul>
               </div>
 
               <!-- Upstream lineage. It belongs with the technical credits rather than under every
                    Settings tab, so it lives here. Bound by id (no .title, so it is not a
-                   collapsible section) — see bindSettings() in app/locale/loader.js. -->
+                   collapsible section) - see bindSettings() in app/locale/loader.js. -->
               <div class="arrow-list">
                 <ul>
                   <!-- Each credit is one nowrap group, so a wrap can only happen between the two
@@ -872,7 +876,7 @@
                 </ul>
               </div>
 
-              <!-- Epic account connect (standalone card — NOT an arrow-list li, so it never
+              <!-- Epic account connect (standalone card - NOT an arrow-list li, so it never
                    disturbs the nth-child i18n bindings above). Modeled on the emulator-login card.
                    Connecting unlocks per-player achievement state for the epic-official source;
                    the schema + rarity already work without connecting. -->
@@ -2204,7 +2208,7 @@
                 <p id="theme-customizer-desc">
                   Pick a color and, optionally, an image for each block. An image shows over the color
                   (which becomes a light veil for readability). Everything previews live and saves with
-                  OK — the in-game overlay follows too.
+                  OK - the in-game overlay follows too.
                 </p>
                 <div id="theme-customizer-layers"></div>
                 <div class="theme-customizer-actions">
@@ -2262,9 +2266,9 @@
                   <div class="right controller-binding">
                     <select autocomplete="off" class="dropdown controller-binding-button binding-first" id="option_controllerToggle1"></select>
                     <span class="controller-binding-plus">+</span>
-                    <select autocomplete="off" class="dropdown controller-binding-button binding-second" id="option_controllerToggle2" data-none="—"></select>
+                    <select autocomplete="off" class="dropdown controller-binding-button binding-second" id="option_controllerToggle2" data-none="-"></select>
                     <span class="controller-binding-plus">+</span>
-                    <select autocomplete="off" class="dropdown controller-binding-button binding-third" id="option_controllerToggle3" data-none="—"></select>
+                    <select autocomplete="off" class="dropdown controller-binding-button binding-third" id="option_controllerToggle3" data-none="-"></select>
                   </div>
                   <div class="help" id="controller-toggle-binding-help">Buttons pressed together to open or close the in-game overlay.</div>
                 </li>
@@ -2273,9 +2277,9 @@
                   <div class="right controller-binding">
                     <select autocomplete="off" class="dropdown controller-binding-button binding-first" id="option_controllerUi1"></select>
                     <span class="controller-binding-plus">+</span>
-                    <select autocomplete="off" class="dropdown controller-binding-button binding-second" id="option_controllerUi2" data-none="—"></select>
+                    <select autocomplete="off" class="dropdown controller-binding-button binding-second" id="option_controllerUi2" data-none="-"></select>
                     <span class="controller-binding-plus">+</span>
-                    <select autocomplete="off" class="dropdown controller-binding-button binding-third" id="option_controllerUi3" data-none="—"></select>
+                    <select autocomplete="off" class="dropdown controller-binding-button binding-third" id="option_controllerUi3" data-none="-"></select>
                   </div>
                   <div class="help" id="controller-ui-binding-help">Toggles in-overlay navigation: focus ring, search and options.</div>
                 </li>
@@ -2284,9 +2288,9 @@
                   <div class="right controller-binding">
                     <select autocomplete="off" class="dropdown controller-binding-button binding-first" id="option_controllerMove1"></select>
                     <span class="controller-binding-plus">+</span>
-                    <select autocomplete="off" class="dropdown controller-binding-button binding-second" id="option_controllerMove2" data-none="—"></select>
+                    <select autocomplete="off" class="dropdown controller-binding-button binding-second" id="option_controllerMove2" data-none="-"></select>
                     <span class="controller-binding-plus">+</span>
-                    <select autocomplete="off" class="dropdown controller-binding-button binding-third" id="option_controllerMove3" data-none="—"></select>
+                    <select autocomplete="off" class="dropdown controller-binding-button binding-third" id="option_controllerMove3" data-none="-"></select>
                   </div>
                   <div class="help" id="controller-move-binding-help">Hold these buttons to move the overlay with the left stick and scroll with the right stick.</div>
                 </li>
@@ -2342,7 +2346,7 @@
             <!-- About / branding. The locale loader still binds this by position:
                  p:nth-child(1) span:eq(0|1) = "Version" + number, a:first = "maintained by".
                  The product name is a <strong> and the icons are <i>, so neither shifts those
-                 indices — see bindSettings() in app/locale/loader.js before reordering anything.
+                 indices - see bindSettings() in app/locale/loader.js before reordering anything.
                  The upstream lineage used to be a second paragraph here; it moved to the foot of
                  the Advanced tab (#advanced-lineage), where it is bound by id instead. -->
             <div class="notice">
@@ -2501,7 +2505,7 @@
                   <div>
                     <i class="fas fa-search"></i>
                     <strong id="onboard-card-scan-title">Scan</strong>
-                    <span id="onboard-card-scan-copy">Launcher, emulator and achievement-file locations are detected automatically — you review each one before the first scan.</span>
+                    <span id="onboard-card-scan-copy">Launcher, emulator and achievement-file locations are detected automatically - you review each one before the first scan.</span>
                   </div>
                   <div>
                     <i class="fas fa-bell"></i>
@@ -2516,7 +2520,7 @@
                   <div>
                     <i class="fas fa-layer-group"></i>
                     <strong id="onboard-card-overlay-title">In-game overlay</strong>
-                    <span id="onboard-card-overlay-copy">A small achievements panel you bring up over the game with a hotkey — Ctrl+Shift+K by default.</span>
+                    <span id="onboard-card-overlay-copy">A small achievements panel you bring up over the game with a hotkey - Ctrl+Shift+K by default.</span>
                   </div>
                 </div>
               </section>
@@ -2544,7 +2548,7 @@
                     <span id="onboard-mode-advanced-copy">The complete AW Next: emulator runtime setup, controller control, diagnostics, repair tools and experimental options.</span>
                   </button>
                 </div>
-                <small class="onboard-field-hint" id="onboard-mode-hint">Nothing is switched off either way — Simple shows less, and you can change this at any time in Settings.</small>
+                <small class="onboard-field-hint" id="onboard-mode-hint">Nothing is switched off either way - Simple shows less, and you can change this at any time in Settings.</small>
               </section>
 
               <section class="onboarding-step" id="onboarding-step-3" data-step="3">

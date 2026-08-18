@@ -9,8 +9,10 @@ test('renderer-side controller polling follows the main tray-window visibility s
   const init = fs.readFileSync(path.join(__dirname, '..', '..', 'app', 'electron', 'init.js'), 'utf8');
   const source = fs.readFileSync(path.join(__dirname, '..', '..', 'app', 'ui', 'controller.js'), 'utf8');
 
-  assert.match(init, /MainWin\.on\('show', \(\) => sendMainWindowVisibility\(true\)\);/);
-  assert.match(init, /MainWin\.on\('hide', \(\) => sendMainWindowVisibility\(false\)\);/);
+  // The handlers also drive the idle renderer release (see backgroundFootprint.test.js), so match
+  // the contract - show reports visible, hide reports hidden - rather than a one-line body.
+  assert.match(init, /MainWin\.on\('show',[\s\S]{0,200}?sendMainWindowVisibility\(true\)/);
+  assert.match(init, /MainWin\.on\('hide',[\s\S]{0,200}?sendMainWindowVisibility\(false\)/);
   assert.match(init, /did-finish-load', \(\) => sendMainWindowVisibility\(MainWin\.isVisible\(\)\)/);
   assert.match(source, /let mainWindowVisible = false;/);
   assert.match(source, /main-window-visibility/);

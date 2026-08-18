@@ -47,7 +47,7 @@
   "achievementSearchPlaceholder": "Buscar logros…",
   "hiddenRemain": "logros ocultos restantes",
   "revealedOnceUnlocked": "Los detalles de cada logro se revelarán al desbloquearlo",
-  "hiddenDescriptionPlaceholder": "Oculto — haz clic para revelar",
+  "hiddenDescriptionPlaceholder": "Oculto - haz clic para revelar",
   "noneUnlocked": "Aún no hay logros desbloqueados",
   "noneUnlockedHint": "¿No ves ningún desbloqueo?",
   "scrollUp": "Subir",
@@ -194,7 +194,7 @@
         "description": "Tema de color de la ventana de la aplicación (vista previa inmediata, se guarda con Aceptar).",
         "customTitle": "Tema personalizado",
         "customHint": "Vista previa por capa",
-        "customDesc": "Elige un color y, opcionalmente, una imagen para cada bloque. Una imagen se muestra sobre el color (que se convierte en un velo claro para la legibilidad). Todo se previsualiza en vivo y se guarda con Aceptar — el overlay del juego también lo sigue.",
+        "customDesc": "Elige un color y, opcionalmente, una imagen para cada bloque. Una imagen se muestra sobre el color (que se convierte en un velo claro para la legibilidad). Todo se previsualiza en vivo y se guarda con Aceptar - el overlay del juego también lo sigue.",
         "resetAll": "Restablecer todo"
       },
       "controller": {
@@ -271,13 +271,13 @@
         "name": "Datos de steam_settings",
         "description": "Simple usa la obtención propia de AW Next (anónima). Advanced ejecuta generate_emu_config para la cobertura de depots/idiomas.",
         "value": {
-          "simple": "Simple (rápido)",
-          "advanced": "Advanced (completo)"
+          "simple": "Simple",
+          "advanced": "Advanced"
         }
       },
       "login": {
         "name": "Fuente de datos (Advanced)",
-        "description": "El inicio de sesión de Steam permite a generate_emu_config obtener datos completos de DLC/depots. Usa SOLO una cuenta desechable — nunca la principal.",
+        "description": "El inicio de sesión de Steam permite a generate_emu_config obtener datos completos de DLC/depots. Usa SOLO una cuenta desechable - nunca la principal.",
         "value": {
           "anonymous": "Anónimo",
           "steam": "Inicio de sesión de Steam"
@@ -301,7 +301,7 @@
       },
       "crackFix": {
         "name": "Aplicar automáticamente un arreglo de la comunidad (CrakFiles)",
-        "description": "En cada arreglo, descarga y aplica automáticamente un arreglo de la comunidad con coincidencia segura de la lista CrakFiles (solo coincidencia exacta de nombre + enlace de pixeldrain; los archivos sobrescritos se respaldan). Activado de forma predeterminada — desactívalo si no quieres que AW descargue/sobrescriba archivos del juego desde una fuente de la comunidad.",
+        "description": "En cada arreglo, descarga y aplica automáticamente un arreglo de la comunidad de la lista CrakFiles cuando el nombre coincide con alta confianza (solo enlaces de pixeldrain; los archivos sobrescritos se respaldan). Desactivado de forma predeterminada - actívalo si quieres que AW descargue y sobrescriba archivos del juego desde una fuente de la comunidad.",
         "value": {
           "false": "Desactivado",
           "true": "Activado"
@@ -324,10 +324,10 @@
         }
       },
       "goldbergIcons": {
-        "name": "GBE/Goldberg — descargar iconos",
-        "description": "Cuando está activado, la reparación automática que escribe una steam_settings/achievements.json faltante también descarga los iconos de logros desde el CDN de Steam.",
+        "name": "GBE/Goldberg - descargar iconos",
+        "description": "Cuando está activado, cualquier reparación que escriba steam_settings/achievements.json - automática o desde el estado del juego - también descarga los iconos de logros del CDN de Steam.",
         "value": {
-          "false": "Desactivado (rápido)",
+          "false": "Desactivado",
           "true": "Activado"
         }
       },
@@ -415,7 +415,7 @@
         "overlayRandomSoundDesc": "Elige un sonido aleatorio de la lista integrada e importada para cada notificación.",
         "overlaySoundImport": "Importar un sonido personalizado…",
         "overlayVolume": "Volumen",
-        "overlayVolumeDesc": "Volumen de los sonidos de notificación — los avisos del overlay en el juego pueden amplificarse hasta 200%; los sonidos toast personalizados se limitan al 100%.",
+        "overlayVolumeDesc": "Volumen de los sonidos de notificación - los avisos del overlay en el juego pueden amplificarse hasta 200%; los sonidos toast personalizados se limitan al 100%.",
         "overlayDuration": "Duración",
         "overlayDurationDesc": "Cuánto tiempo permanece el popup overlay en el juego en pantalla. Auto deja decidir al preajuste; un valor limita el tiempo en pantalla.",
         "overlayDurationAuto": "Automático",
@@ -500,7 +500,7 @@
           },
           "importLabel": "Importar",
           "imported": "Importado y seleccionado:",
-          "importedOnly": "Preajuste importado — puedes exportarlo o eliminarlo aquí; no es editable con los controles.",
+          "importedOnly": "Preajuste importado - puedes exportarlo o eliminarlo aquí; no es editable con los controles.",
           "load": "Editar un preajuste",
           "loaded": "Cargado:",
           "name": "Nombre",
@@ -772,7 +772,7 @@
       "quickTitle": "Primeros pasos",
       "quick": [
         "Agrega las carpetas de guardado/configuración en Configuración > Carpetas y habilita la fuente correspondiente en Configuración > Fuentes.",
-        "El Watchdog se ejecuta en segundo plano — debe estar activo para las notificaciones en vivo y el tiempo de juego.",
+        "El Watchdog se ejecuta en segundo plano - debe estar activo para las notificaciones en vivo y el tiempo de juego.",
         "Todo (ajustes, cachés, registros y temas personalizados) se guarda en %APPDATA%\\Achievement Watcher Next.",
         "Cada sección de ajustes se pliega bajo su encabezado: el signo apunta hacia abajo cuando está abierta y hacia el lado cuando está cerrada. Tus elecciones se recuerdan."
       ],
@@ -828,7 +828,7 @@
       ],
       "shortcutsTitle": "Atajos de teclado",
       "shortcuts": [
-        "Ctrl+Shift+K (predeterminado): muestra u oculta el overlay en el juego — configurable en Configuración > General.",
+        "Ctrl+Shift+K (predeterminado): muestra u oculta el overlay en el juego - configurable en Configuración > General.",
         "Ctrl+Alt+Shift+Flechas mueve el overlay; Ctrl+Alt+Shift+1–5 lo ajusta a una posición predefinida.",
         "Ctrl+Alt+Shift+C activa o desactiva el paso de clics; Ctrl+F enfoca la búsqueda de Configuración."
       ],
@@ -856,8 +856,8 @@
         "description": "Ejecuta el arreglo de emulador (GBE Fork, logros, DLC) en cada juego emulado detectado con una carpeta de instalación conocida.",
         "confirm": "¿Aplicar el arreglo de emulador a cada juego detectado con una carpeta de instalación conocida? Los archivos existentes se respaldan antes de sobrescribirse.",
         "running": "Arreglando juegos…",
-        "progress": "Arreglando %cur% / %total% — %name%",
-        "done": "Listo — %fixed% juego(s) arreglado(s), %skipped% omitido(s), %failed% fallido(s).",
+        "progress": "Arreglando %cur% / %total% - %name%",
+        "done": "Listo - %fixed% juego(s) arreglado(s), %skipped% omitido(s), %failed% fallido(s).",
         "none": "No hay ningún juego detectado con una carpeta de instalación conocida para arreglar."
       },
       "diag": {
@@ -866,7 +866,8 @@
         "dataFolder": "Abrir la carpeta de datos",
         "goldbergTitle": "Goldberg / GBE Fork",
         "goldbergDesc": "Analiza una carpeta de biblioteca de juegos en busca de instalaciones Goldberg / GBE Fork y marca las que carecen de su esquema steam_settings/achievements.json. Usa el menú de clic derecho de un juego (Diagnosticar / Reparar) para arreglar una.",
-        "scanFolder": "Analizar una carpeta…"
+        "scanFolder": "Analizar una carpeta…",
+        "exportLogs": "Exportar registros (.zip)"
       },
       "blacklistTitle": "Lista negra de AppID",
       "blacklistButton": "Restablecer lista negra",
@@ -1096,8 +1097,8 @@
     "manual-game-platform-other": "Otra",
     "manual-source": "Manual",
     "no-config-eligible-games": "No se encontró ningún juego de Steam sin configurar y sin un arreglo existente.",
-    "no-config-eligible-games-configured": "{count} instalación(es) compatible(s) con Steam encontradas — todas ya tienen configuración. Para regenerarlas usa Avanzado > Reparar todos los juegos.",
-    "generate-configs-detail-configured": "{count} instalación(es) ya tienen configuración y no se tocan — Avanzado > Reparar todos los juegos las regenera.",
+    "no-config-eligible-games-configured": "{count} instalación(es) compatible(s) con Steam encontradas - todas ya tienen configuración. Para regenerarlas usa Avanzado > Reparar todos los juegos.",
+    "generate-configs-detail-configured": "{count} instalación(es) ya tienen configuración y no se tocan - Avanzado > Reparar todos los juegos las regenera.",
     "achievements-not-available": "Sin logros",
     "backup": "Copia de seguridad",
     "created": "Creado",
@@ -1114,7 +1115,7 @@
     "unexpected-error": "Error inesperado",
     "choose-the-game-executable": "Elegir el ejecutable del juego",
     "select": "Seleccionar",
-    "goldberg-diagnosis-title": "Diagnóstico de Goldberg/GBE — {gameName}",
+    "goldberg-diagnosis-title": "Diagnóstico de Goldberg/GBE - {gameName}",
     "repair-complete": "Reparación completada",
     "repair-complete-message": "Se escribieron {count} logros en {path}",
     "repair-failed": "Error en la reparación",
@@ -1161,7 +1162,7 @@
     "checking-community-crack": "Comprobando crack comunitario…",
     "ncommunity-crack-x-applied-x-file-s": "Crack comunitario: «{name}» aplicado ({count} archivo(s))",
     "ncommunity-crack-x-already-applied": "Crack comunitario: «{name}» ya aplicado",
-    "ncommunity-crack-found-but-pixeldrain-rate-limited-captcha-requi": "Crack comunitario encontrado, pero pixeldrain limita la descarga (requiere captcha) — descárgalo manualmente: {url}",
+    "ncommunity-crack-found-but-pixeldrain-rate-limited-captcha-requi": "Crack comunitario encontrado, pero pixeldrain limita la descarga (requiere captcha) - descárgalo manualmente: {url}",
     "identify-game-title": "Identificar el juego (ID de aplicación de Steam)",
     "which-game-is-x": "¿Qué juego es «{name}»?",
     "pick-the-match-to-write-the-correct-steam-appid-txt-correct-achi": "Elige la coincidencia para escribir el steam_appid.txt correcto (logros y DLC correctos) u omite.",
@@ -1230,7 +1231,7 @@
     "applying-file": "Aplicando archivo…",
     "apply-failed": "No se pudo aplicar.",
     "failed": "Error.",
-    "uplay-r2-diagnosis-title": "Diagnóstico de Uplay R2 — {gameName}",
+    "uplay-r2-diagnosis-title": "Diagnóstico de Uplay R2 - {gameName}",
     "apply-emulator-fix-uplay-r2": "Aplicar fix de emulador (Uplay R2)…",
     "select-install-folder-uplay-r2-loader": "Seleccionar la carpeta de instalación del juego (donde debe ir la .dll del loader Uplay R2)",
     "resolving-the-steam-equivalent": "Resolviendo el equivalente de Steam…",
@@ -1254,7 +1255,7 @@
     "dllsInstalled": "{count} DLL instalada(s)",
     "loaderAlreadyPresent": "el loader ya está presente",
     "uplay-r2-installed": "Uplay R2 instalado",
-    "uplay-r2-installed-message": "{installedLabel} — {mapped} logro(s) asignado(s)",
+    "uplay-r2-installed-message": "{installedLabel} - {mapped} logro(s) asignado(s)",
     "uplay-r2-install-failed": "Error al instalar Uplay R2",
     "could-not-install-or-configure-goldberg-uplay-r2": "No se pudo instalar o configurar Goldberg Uplay R2.",
     "diagnose-uplay-r2-setup": "Diagnosticar configuración de Uplay R2",
@@ -1329,7 +1330,7 @@
     "fix-all-games": "Reparar todos los juegos",
     "apply-the-emulator-fix-to-x-detected-game-s-existing-files-are-b": "¿Aplicar el fix de emulador a {count} juego(s) detectado(s)? Los archivos existentes se respaldan antes de sobrescribirse.",
     "fixing": "Reparando",
-    "done-x-game-s-fixed-x-skipped-x-failed": "Listo — {fixed} juego(s) reparado(s), {skipped} omitido(s), {failed} con error.",
+    "done-x-game-s-fixed-x-skipped-x-failed": "Listo - {fixed} juego(s) reparado(s), {skipped} omitido(s), {failed} con error.",
     "achievement-watcher": "AW Next",
     "connect-epic-games-account": "Conectar cuenta de Epic Games",
     "connect-microsoft-xbox-network": "Conectar Microsoft / Xbox Network",
@@ -1361,7 +1362,7 @@
     "scan-failed-x": "Error al analizar: {error}",
     "ok": "Aceptar",
     "goldberg-gbe-fork-scan": "Escaneo de Goldberg / GBE Fork",
-    "scan-found-message": "{found} instalación(es) encontrada(s) — {missing} sin configurar",
+    "scan-found-message": "{found} instalación(es) encontrada(s) - {missing} sin configurar",
     "emu-login-missing": "Ingresa primero el usuario y la contraseña de Steam.",
     "emu-login-running": "Conectando con Steam… Ingresa el código de Steam Guard si se solicita.",
     "emu-login-success": "Inicio de sesión en Steam correcto. Se guardó el token de actualización de generate_emu_config.",
@@ -1447,10 +1448,10 @@
     "generate-configs-detail-auto-fix": "Esto inicia ahora un escaneo completo. Durante el escaneo, AW Next aplica el auto-fix GBE/Goldberg a los juegos detectados con una carpeta de instalación conocida. Las reparaciones se ejecutan en segundo plano: vuelve a escanear si un juego recién reparado no aparece todavía como listo.",
     "generate-configs-detail-scan-only": "Esto solo inicia un escaneo de detección completo. La reparación automática está desactivada en Configuración del emulador > Corregir automáticamente los juegos recién detectados.",
     "generate-configs": "Generar configuraciones",
-    "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "Se encontraron {found} instalaciones compatibles con Steam — {missing} sin arreglo existente y aptas.",
+    "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "Se encontraron {found} instalaciones compatibles con Steam - {missing} sin arreglo existente y aptas.",
     "start-scan": "Iniciar escaneo",
-    "scan-started-auto-fix": "Escaneo iniciado — {count} juego(s) apto(s) sin configurar recibirán una configuración GBE inicial.",
-    "scan-started-scan-only": "Escaneo iniciado — reparación automática desactivada, no se cambiará ningún archivo.",
+    "scan-started-auto-fix": "Escaneo iniciado - {count} juego(s) apto(s) sin configurar recibirán una configuración GBE inicial.",
+    "scan-started-scan-only": "Escaneo iniciado - reparación automática desactivada, no se cambiará ningún archivo.",
     "generate-configs-failed-x": "Error al generar las configuraciones: {error}",
     "error-generating-configs": "Error al generar las configuraciones",
     "error-while-auto-finding-folder-s": "Error al buscar carpetas automáticamente",
@@ -1459,7 +1460,7 @@
     "notification-test-failure": "Error en la prueba de notificación.",
     "error-in-connection-establishment-net-err-connection-refused-nis": "Error al establecer la conexión: net::ERR_CONNECTION_REFUSED\n¿Está en ejecución el Watchdog?",
     "test-toast-name": "Logro desbloqueado",
-    "test-toast-desc": "Prueba de notificación — preset {preset}",
+    "test-toast-desc": "Prueba de notificación - preset {preset}",
     "test-rare-name": "Logro raro",
     "test-rare-desc": "Raro · {percent}% de los jugadores",
     "test-progress-name": "Progreso",
@@ -1532,9 +1533,9 @@
     "open-release-page": "Abrir página de versiones",
     "clear-cache": "Vaciar cachés",
     "clear-update-cache-label": "Vaciar cachés",
-    "clear-update-cache-confirm": "¿Eliminar todas las cachés redescargables (archivos de actualización, caché de esquemas e íconos de Steam/Ubisoft, herramientas de corrección de emulador descargadas)? Tus ajustes, partidas guardadas, copias de seguridad y archivos colocados manualmente nunca se tocan — todo lo que se vacía aquí simplemente se vuelve a descargar automáticamente cuando se necesita.",
+    "clear-update-cache-confirm": "¿Eliminar todas las cachés redescargables (archivos de actualización, caché de esquemas e íconos de Steam/Ubisoft, herramientas de corrección de emulador descargadas)? Tus ajustes, partidas guardadas, copias de seguridad y archivos colocados manualmente nunca se tocan - todo lo que se vacía aquí simplemente se vuelve a descargar automáticamente cuando se necesita.",
     "clear-update-cache-failed": "No se pudo vaciar la caché de actualizaciones.",
-    "clear-update-cache-empty": "Nada que vaciar — no se encontraron archivos de actualización en caché.",
+    "clear-update-cache-empty": "Nada que vaciar - no se encontraron archivos de actualización en caché.",
     "clear-update-cache-done": "Caché de actualizaciones vaciada: {folder}",
     "clear-update-cache-done-apps": "{count} carpeta(s) de caché vaciada(s).",
     "clear-update-cache-done-all": "{count} carpeta(s) de caché vaciada(s), incluida la caché de actualizaciones en {folder}.",
@@ -1628,7 +1629,7 @@
     "gh-appid-done-title": "Archivo de identificación del juego corregido",
     "gh-appid-done-message": "steam_appid.txt ahora contiene {appid}.",
     "gh-simple-notifications-failed": "No se pudo enviar la última notificación",
-    "gh-simple-notifications-fallback": "Funcionando — respaldo de Windows activo",
+    "gh-simple-notifications-fallback": "Funcionando - respaldo de Windows activo",
     "gh-notif-unconfirmed": "entrega no confirmada",
     "gh-notif-reason-failed": "el envío falló",
     "gh-notif-reason-fullscreen": "juego en pantalla completa exclusiva",
@@ -1672,12 +1673,21 @@
     "gh-simple-notifications-muted": "Las notificaciones de progreso están silenciadas",
     "gh-simple-notifications-ok": "Notificaciones funcionando",
     "preset-sample-detail": "Ejemplo de descripción de logro",
-    "preset-sample-game": "Juego de ejemplo"
+    "preset-sample-game": "Juego de ejemplo",
+    "launch-needs-admin": "Windows se negó a iniciar este juego sin permisos de administrador.",
+    "launch-needs-admin-detail": "¿Reintentar como administrador? Windows te pedirá confirmación. AW Next sigue sin elevarse: solo el juego se inicia con permisos de administrador.",
+    "launch-as-admin": "Ejecutar como administrador",
+    "export-logs": "Exportar registros",
+    "export-logs-running": "Recopilando registros…",
+    "export-logs-done": "{count} archivo(s) de registro escritos en {path}",
+    "export-logs-failed": "No se pudieron exportar los registros: {error}",
+    "zip-archive": "Archivo zip",
+    "theme-layer-opacity": "Opacidad"
   },
   "watchdog": {
     "rare": "Raro {percent}%",
     "platinumTitle": "Platino",
-    "platinumDesc": "¡Platino desbloqueado — 100 % completado!",
+    "platinumDesc": "¡Platino desbloqueado - 100 % completado!",
     "eaAchievement": "Logro de EA",
     "achievement": "Logro",
     "achievementUnlocked": "Logro desbloqueado",

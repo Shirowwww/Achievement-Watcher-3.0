@@ -16,7 +16,7 @@ test('the detector diffs discovery against the previous discovery, never against
   assert.match(appUi, /let knownDiscoveredAppids = null;/);
   assert.match(scan, /const previous = knownDiscoveredAppids;/);
   assert.match(scan, /knownDiscoveredAppids = new Set\(discovered\);/);
-  assert.match(scan, /discovered\.filter\(\(id\) => !previous\.has\(id\)\)/);
+  assert.match(scan, /discovered\.filter\(\(id\) => !previous\.has\(id\)/);
   assert.doesNotMatch(scan, /gameList/, 'the rendered list must not take part in the diff');
 });
 
@@ -25,8 +25,8 @@ test('the first tick only establishes a baseline, so a cold start cannot refresh
 });
 
 test('a completed scan seeds the baseline, so an install during the scan is still detected', () => {
-  assert.match(appUi, /self\.hasCompletedFirstScan = true;[\s\S]{0,240}seedNewGameScanBaseline\(\);/);
-  assert.match(appUi, /function seedNewGameScanBaseline\(\)[\s\S]*?achievements[\s\S]*?\.detectInstalledAppids\(app\.config\)/);
+  assert.match(appUi, /self\.hasCompletedFirstScan = true;[\s\S]{0,600}seedNewGameScanBaseline\(list\);/);
+  assert.match(appUi, /function seedNewGameScanBaseline\(renderedList\)[\s\S]*?achievements[\s\S]*?\.detectInstalledAppids\(app\.config\)/);
 });
 
 test('a genuinely new appid still triggers the refresh that re-seeds the watchdog index', () => {
@@ -36,6 +36,10 @@ test('a genuinely new appid still triggers the refresh that re-seeds the watchdo
 test('a manual refresh clears the resolve caches without touching the baseline', () => {
   assert.match(refreshUi, /forgetScanCaches\(\);/);
   assert.match(appUi, /function forgetScanCaches\(\)[\s\S]*?steamParser\.forgetUnresolved\(\)[\s\S]*?steamParser\.forgetLocalSchemaLocations\(\)/);
-  // The old memo is gone: with a discovery baseline there is nothing to write off.
+  // The old write-off keyed on the rendered list is gone; the diff is discovery-against-discovery.
   assert.doesNotMatch(appUi, /unrenderedAppids/);
+  // The miss counter that survives it exists for a different failure - discovery itself dropping a
+  // phantom appid and re-finding it - and a manual refresh must reset it, or a game the user just
+  // fixed by hand would stay suppressed.
+  assert.match(appUi, /function forgetScanCaches\(\)[\s\S]{0,300}unrenderableAppids\.clear\(\)/);
 });

@@ -85,16 +85,19 @@
   -webkit-app-region: drag;
   cursor: default;
   /* Header layer (theme-editor "Barre du haut"). Custom-property references so the shadow-DOM host
-     picks up --bg-glow / --aw-img-header / --aw-veil-header directly — a light-DOM rule targeting
-     the `title-bar` element can't win here since :host always outranks it in specificity. */
-  background-color: color-mix(in srgb, var(--bg-glow) 72%, transparent);
+     picks up --bg-glow / --aw-header-scrim / --aw-grad-header / --aw-img-header / --aw-veil-header
+     directly - a light-DOM rule targeting the `title-bar` element can't win here since :host always
+     outranks it in specificity. --aw-header-scrim carries the readability scrim for a header image
+     and the "let the gradient paint it" transparent case; without it those two only ever reached an
+     inert light-DOM rule and the header stayed at the plain-color 72% mix, i.e. visibly see-through. */
+  background-color: var(--aw-header-scrim, color-mix(in srgb, var(--bg-glow) 72%, transparent));
   background-image: linear-gradient(var(--aw-veil-header, transparent), var(--aw-veil-header, transparent)),
-    var(--aw-img-header, none);
-  background-size: cover, var(--aw-img-header-size, cover);
-  background-repeat: no-repeat, var(--aw-img-header-repeat, no-repeat);
+    var(--aw-grad-header, none), var(--aw-img-header, none);
+  background-size: cover, 100% 100%, var(--aw-img-header-size, cover);
+  background-repeat: no-repeat, no-repeat, var(--aw-img-header-repeat, no-repeat);
   background-position: center;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 15%, transparent);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  border-bottom: 1px solid var(--aw-header-border, color-mix(in srgb, var(--border) 15%, transparent));
+  box-shadow: var(--aw-header-shadow, 0 10px 30px rgba(0, 0, 0, 0.06));
 }
 
 ul {

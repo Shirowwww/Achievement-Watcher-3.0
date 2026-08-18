@@ -118,7 +118,9 @@ language=english
 account_steamid=7656119...
 ```
 
-The account name and language follow AW Next settings. An existing `account_steamid` is preserved because changing it can redirect the emulator to a different save identity. Placeholder local-save paths are removed or corrected so the Watchdog can observe the resulting files.
+The account name and language follow AW Next settings. A repair started by hand from Game health fills in the emulator's own defaults (`Player` / `english`) when those settings are empty, so the file is complete either way; a value already in the file is never replaced. An existing `account_steamid` is preserved because changing it can redirect the emulator to a different save identity. Placeholder local-save paths are removed or corrected so the Watchdog can observe the resulting files.
+
+A *real* `local_save_path` is left alone and followed instead. Portable repacks routinely point it back into the game folder so the install carries its own saves; AW Next resolves the configured path (relative ones against the folder holding the Steam API DLL, with or without an `<appid>` level below it) and reads the unlock state from there rather than from `%APPDATA%\GSE Saves`. The classic Goldberg `local_save.txt` marker is read the same way.
 
 ## Runtime installation
 

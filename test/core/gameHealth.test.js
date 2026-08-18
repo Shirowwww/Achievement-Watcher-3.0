@@ -3,7 +3,7 @@
 /*
   Health-state derivation. The point of these is that the state, the explanation and the offered
   repairs stay consistent with each other: a game reported as Ready must have nothing to fix, and a
-  game reported as Not tracking must be one AW Next genuinely cannot observe — not merely one whose
+  game reported as Not tracking must be one AW Next genuinely cannot observe - not merely one whose
   setup is incomplete.
 */
 
@@ -11,7 +11,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const test = require('node:test');
 
-const { deriveHealth, STATE, LEVEL, ACTION } = require(path.join(__dirname, '..', '..', 'app', 'util', 'gameHealth.js'));
+const { deriveHealth, STATE, LEVEL, ACTION, REPAIRABLE_GOLDBERG_CODES } = require(path.join(__dirname, '..', '..', 'app', 'util', 'gameHealth.js'));
 
 // A fully healthy Steam-emulated game. Each test below breaks exactly one thing.
 function healthyGame(overrides = {}) {
@@ -131,7 +131,7 @@ test('a schema present with no emulator dll offers the runtime repair and nothin
   assert.equal(report.state, STATE.NOT_TRACKING);
   assert.equal(report.reason, 'emulator-runtime-missing');
   assert.ok(report.actions.includes(ACTION.INSTALL_RUNTIME));
-  assert.ok(!report.actions.includes(ACTION.REPAIR_DATA), 'the schema is fine — only the runtime is missing');
+  assert.ok(!report.actions.includes(ACTION.REPAIR_DATA), 'the schema is fine - only the runtime is missing');
 });
 
 test('no emulator at all explains the problem without offering a repair AW Next cannot do here', () => {
@@ -171,7 +171,7 @@ test('an emulator row names the subjects at fault instead of counting them', () 
       },
     })
   );
-  // Two distinct subjects from three issues — the row says what to look at, not how many.
+  // Two distinct subjects from three issues - the row says what to look at, not how many.
   assert.deepEqual(checkFor(report, 'emulator').params.topics, ['appid', 'dlc']);
 });
 
@@ -514,4 +514,42 @@ test('the appid repair is offered beside the schema repair, not instead of it', 
   );
   assert.ok(report.actions.includes(ACTION.REPAIR_DATA));
   assert.ok(report.actions.includes(ACTION.FIX_APPID));
+});
+
+/*
+  Every warning Game Health shows has to be answerable. These three were raised with no action
+  attached (or with an action that could not actually clear them), which is how a game ended up with
+  a permanent yellow row that neither the automatic nor the manual fix ever changed.
+*/
+test('a fabricated achievement list is offered the repair that rewrites it', () => {
+  const report = deriveHealth({
+    appid: '480',
+    gameDir: 'C:\Games\X',
+    gameDirExists: true,
+    exe: 'C:\Games\X\game.exe',
+    exeExists: true,
+    emulated: true,
+    achievements: { total: 3, unlocked: 1 },
+    goldberg: {
+      emulator: 'gbe',
+      steamSettings: 'C:\Games\X\steam_settings',
+      dllCount: 1,
+      achievements: { expected: 3, found: 3, missing: [], missingIcons: [] },
+      issues: [
+        { level: 'warning', code: 'BLANK_NAMES', message: '1 achievement entr(ies) have an empty name.' },
+        { level: 'warning', code: 'BLANK_DESCRIPTIONS', message: '2 achievement(s) have no description.' },
+      ],
+    },
+  });
+
+  const emulator = report.checks.find((c) => c.id === 'emulator');
+  assert.strictEqual(emulator.level, 'warn');
+  assert.ok(emulator.actions.includes('repair-data'), 'a blank-entry schema must offer the rewrite');
+  assert.ok(report.actions.includes('repair-data'));
+});
+
+test('the repairable-code list covers the account config the repair now always writes', () => {
+  for (const code of ['NO_USER_CONFIG', 'BAD_USER_CONFIG', 'BLANK_NAMES', 'BLANK_DESCRIPTIONS']) {
+    assert.ok(REPAIRABLE_GOLDBERG_CODES.has(code), `${code} must be answerable by the repair button`);
+  }
 });

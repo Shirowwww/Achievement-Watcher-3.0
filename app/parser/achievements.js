@@ -64,7 +64,7 @@ module.exports.initDebug = ({ isDev, userDataPath }) => {
   ea.initDebug({ isDev, userDataPath });
   steam.initDebug({ isDev, userDataPath });
   exophase.initDebug({ isDev, userDataPath });
-  uplay.initDebug({ isDev, userDataPath }); // was missing — left uplay's `debug` undefined (every UPLAY* game threw and was skipped)
+  uplay.initDebug({ isDev, userDataPath }); // was missing - left uplay's `debug` undefined (every UPLAY* game threw and was skipped)
   socialclub.initDebug({ isDev, userDataPath });
   blacklist.initDebug({ isDev, userDataPath });
   debug = new (require('../util/logger'))({
@@ -200,7 +200,7 @@ function mergeCrossSourceDuplicates(appidList) {
   const byAppid = new Map((appidList || []).map((g) => [String(g.appid), g]));
   const drop = new Set();
   const gameNameCache = require(path.join(appPath, '..', 'util', 'gameNameCache.js'));
-  // Looks in every cached language, not just english — the app writes only the user's own, so an
+  // Looks in every cached language, not just english - the app writes only the user's own, so an
   // english-only lookup found nothing on a non-English profile and the dedupe below never ran.
   const cachedSteamName = (appid) => gameNameCache.lookupSchemaCacheName(userDataDir(), appid);
   // Use named numeric appids as Steam targets; fill missing names from local caches.
@@ -225,7 +225,7 @@ function mergeCrossSourceDuplicates(appidList) {
           continue;
         }
       } catch {
-        /* no mapping — keep both entries */
+        /* no mapping - keep both entries */
       }
     }
     // Drop a save-only Steam phantom when a matching GOG install exists.
@@ -238,7 +238,7 @@ function mergeCrossSourceDuplicates(appidList) {
           debug && debug.log(`[merge] ${g.appid} (${g.source}) deduped phantom Steam ${target.appid} (${g.data.title})`);
         }
       } catch {
-        /* no confident match — keep both entries */
+        /* no confident match - keep both entries */
       }
     }
     merged.push(g);
@@ -284,8 +284,8 @@ function getDiscoverySources(record, cachedList, lookup) {
   Drop records that describe a game Steam has installed, unless official Steam games are shown.
 
   Skipping the install folder is not enough on its own: an emulator save folder under %APPDATA% is a
-  source of its own, so one left behind — by an emulator run against a Steam copy, or by the
-  automatic fix before it learned to leave Steam libraries alone — keeps listing the game with no
+  source of its own, so one left behind - by an emulator run against a Steam copy, or by the
+  automatic fix before it learned to leave Steam libraries alone - keeps listing the game with no
   install folder attached, which is what the "steam_api not found" badge on Garry's Mod was. An appid
   Steam itself installed is that Steam game, and follows the "official Steam games" setting, exactly
   as a Steam purchase that launches through Ubisoft Connect does (issue #20).
@@ -316,7 +316,7 @@ async function dropSteamOwnedRecords(data, showLegitSteam) {
     return false;
   });
   for (const [appid, name] of dropped) {
-    debug.log(`[steam] "${name}" (${appid}) is installed by Steam — hidden because official Steam games are disabled`);
+    debug.log(`[steam] "${name}" (${appid}) is installed by Steam - hidden because official Steam games are disabled`);
   }
   return kept;
 }
@@ -453,7 +453,7 @@ function readUplayR2Save(appid, game) {
   const total = Object.keys(save.entries).length;
   debug.log(`[${appid.appid}] Uplay R2 save '${save.file}': matched ${found}/${total} entr${total === 1 ? 'y' : 'ies'} to the Steam schema`);
   if (found === 0 && total > 0) {
-    debug.warn(`[${appid.appid}] Uplay R2 save keys do not match this game's Steam api-names — re-apply the Uplay R2 fix to regenerate achievements_schema.json`);
+    debug.warn(`[${appid.appid}] Uplay R2 save keys do not match this game's Steam api-names - re-apply the Uplay R2 fix to regenerate achievements_schema.json`);
   }
   return mapped;
 }
@@ -465,7 +465,7 @@ function isPspcGame(gameDir) {
       if (/^PlayStationSdk\.dll$/i.test(f) || /^PsPcSdk.*\.(dll|exe|msi)$/i.test(f) || /pspc_sdk_runtime/i.test(f)) return true;
     }
   } catch {
-    /* unreadable folder — treat as non-PSPC */
+    /* unreadable folder - treat as non-PSPC */
   }
   return false;
 }
@@ -498,12 +498,12 @@ async function tryApplyCrackFix({ gameDir, gameName, appid, detectedExe, proxyFa
     });
     if (cf && cf.applied) {
       debug.log(
-        `[${appid}] CrakFiles: applied "${cf.entry && cf.entry.name}" via "${cf.matchedName || gameName}" (${cf.fix && cf.fix.filename}, ${(cf.files || []).length} file(s)) — installing GBE DLL on top`
+        `[${appid}] CrakFiles: applied "${cf.entry && cf.entry.name}" via "${cf.matchedName || gameName}" (${cf.fix && cf.fix.filename}, ${(cf.files || []).length} file(s)) - installing GBE DLL on top`
       );
       return true;
     }
     if (cf && cf.skipped && cf.reason === 'already-applied') {
-      debug.log(`[${appid}] CrakFiles: "${cf.entry && cf.entry.name}" already applied via "${cf.matchedName || gameName}" — skipping Steamless, installing GBE DLL on top`);
+      debug.log(`[${appid}] CrakFiles: "${cf.entry && cf.entry.name}" already applied via "${cf.matchedName || gameName}" - skipping Steamless, installing GBE DLL on top`);
       return true;
     }
     debug.log(`[${appid}] CrakFiles auto-apply did nothing (${cf && cf.reason})`);
@@ -528,7 +528,7 @@ async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, o
     const eligibility = emulatorFixEligibility.inspect({ gameDir });
     if (!eligibility.eligible) {
       const existing = eligibility.existingFix ? ` (${eligibility.existingFix.name})` : '';
-      debug.log(`[${appid}] automatic emulator fix skipped — ${eligibility.reason}${existing} in ${gameDir}`);
+      debug.log(`[${appid}] automatic emulator fix skipped - ${eligibility.reason}${existing} in ${gameDir}`);
       return { skipped: true, reason: eligibility.reason, tag: '', steamSettingsDirs: [], eligibility };
     }
   }
@@ -537,12 +537,12 @@ async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, o
   detectedExe = detectedExe || exeDetect.detect(gameDir, gameName || '', { dllPaths: detectedEmu.dll });
   const gameExePresent = () => !!(detectedExe && detectedExe.full && fs.existsSync(detectedExe.full));
   if (requireGameExecutable && !gameExePresent()) {
-    debug.log(`[${appid}] automatic emulator fix skipped — no game executable found in ${gameDir}`);
+    debug.log(`[${appid}] automatic emulator fix skipped - no game executable found in ${gameDir}`);
     return { skipped: true, reason: 'no-game-executable', tag: '', steamSettingsDirs: [], emulator: detectedEmu };
   }
   // Apply a confident CrakFiles fix first; it is opt-in, backed up, and idempotent.
   const pspc = isPspcGame(gameDir);
-  if (pspc) debug.log(`[${appid}] PlayStation-PSPC game detected — applying Goldberg/GBE anyway, plus trying a community crack; note PSN trophies never reach the Steam API, so live tracking needs a RUNE release`);
+  if (pspc) debug.log(`[${appid}] PlayStation-PSPC game detected - applying Goldberg/GBE anyway, plus trying a community crack; note PSN trophies never reach the Steam API, so live tracking needs a RUNE release`);
   let crackApplied = false;
   if (cfg.autoApplyCrackFix !== false) {
     crackApplied = await tryApplyCrackFix({ gameDir, gameName, appid, detectedExe, proxyFallback: cfg.pixeldrainProxyFallback !== false });
@@ -550,13 +550,13 @@ async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, o
       detectedEmu = goldberg.detectEmulator(gameDir);
       detectedExe = exeDetect.detect(gameDir, gameName || '', { dllPaths: detectedEmu.dll }) || detectedExe;
     } else if (pspc) {
-      debug.log(`[${appid}] PSPC: no confident community crack for "${gameName}" — install a RUNE release; AW tracks it via %PUBLIC%\\Documents\\Steam\\RUNE`);
+      debug.log(`[${appid}] PSPC: no confident community crack for "${gameName}" - install a RUNE release; AW tracks it via %PUBLIC%\\Documents\\Steam\\RUNE`);
     }
   }
 
-  // STEP 2 — SteamStub DRM. AW applies the emulator the SteamAutoCrack way: strip the stub with
+  // STEP 2 - SteamStub DRM. AW applies the emulator the SteamAutoCrack way: strip the stub with
   // Steamless so the plain GBE steam_api DLL loads, then replace the DLL below. There is no ColdClient
-  // fallback — if Steamless can't strip a detected stub the DLL is still installed (the game may fail
+  // fallback - if Steamless can't strip a detected stub the DLL is still installed (the game may fail
   // to launch, the same tradeoff SteamAutoCrack makes).
   const hasSteamStub = !crackApplied && !!(detectedExe && detectedExe.full && pe.detectSteamStub(detectedExe.full));
   const shouldRunSteamless = !crackApplied && !!(detectedExe && detectedExe.full && (cfg.steamlessAutoUnpack || hasSteamStub));
@@ -575,7 +575,7 @@ async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, o
       debug.log(`[${appid}] SteamStub: Steamless failed => ${e}`);
     }
     if (hasSteamStub && !stripped) {
-      debug.log(`[${appid}] SteamStub: not stripped (${reason || 'unknown'}); installing the plain DLL anyway — the game may fail to launch`);
+      debug.log(`[${appid}] SteamStub: not stripped (${reason || 'unknown'}); installing the plain DLL anyway - the game may fail to launch`);
     }
   }
 
@@ -606,7 +606,7 @@ async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, o
     if (!interfaces.generated) debug.log(`[${appid}] steam_interfaces.txt skipped (${interfaces.reason})`);
   }
 
-  // ── Standalone (replace steam_api dll) — the only emulator-apply path ──
+  // ── Standalone (replace steam_api dll) - the only emulator-apply path ──
   const fallbackDllDir =
     steamSettings && path.basename(steamSettings).toLowerCase() === 'steam_settings'
       ? path.dirname(steamSettings)
@@ -619,14 +619,14 @@ async function autoApplyEmulatorFix({ gameDir, gameName, appid, steamSettings, o
       (file) => path.basename(file).toLowerCase() === wantedFile && runtimeDirKeys.has(path.resolve(path.dirname(file)).toLowerCase())
     );
   if (requireGameExecutable && !gameExePresent()) {
-    debug.log(`[${appid}] automatic emulator fix cancelled — game executable disappeared from ${gameDir}`);
+    debug.log(`[${appid}] automatic emulator fix cancelled - game executable disappeared from ${gameDir}`);
     return { skipped: true, reason: 'game-executable-gone', tag: '', steamSettingsDirs: [], emulator: detectedEmu };
   }
   gbeInstaller.installDlls({ dllDirs, dlls, writeIfMissing: wantedArch, log: debug });
   if (wantedArch && wantedFile && detectedEmu.dll.length > 0 && !hasWantedDll) {
     const exeDir = detectedExe && detectedExe.full ? path.dirname(detectedExe.full) : fallbackDllDir;
     if (requireGameExecutable && !gameExePresent()) {
-      debug.log(`[${appid}] automatic emulator fix cancelled — game executable disappeared from ${gameDir}`);
+      debug.log(`[${appid}] automatic emulator fix cancelled - game executable disappeared from ${gameDir}`);
       return { skipped: true, reason: 'game-executable-gone', tag: '', steamSettingsDirs: [], emulator: detectedEmu };
     }
     gbeInstaller.installDlls({ dllDirs: [exeDir], dlls, ensureArch: wantedArch, log: debug });
@@ -730,7 +730,7 @@ async function getFolderIndex() {
       const addDir = (dir) => {
         const key = dir.toLowerCase();
         if (seen.has(key)) return;
-        if (_claimedDirs.has(key)) return; // already linked by appid — never name-match it
+        if (_claimedDirs.has(key)) return; // already linked by appid - never name-match it
         seen.add(key);
         index.push({ dir, name: path.basename(dir) });
       };
@@ -783,7 +783,7 @@ function unconfiguredDisplayName(folderName, exeName, productName) {
 
 // Resolve an install folder by name, using a conservative match threshold.
 /*
-  Is this folder a collection root rather than a game folder — i.e. does it merely CONTAIN other
+  Is this folder a collection root rather than a game folder - i.e. does it merely CONTAIN other
   games' installs?
 
   "The Jackbox Party Pack Collection" holds one subfolder per pack, each already linked to its own
@@ -840,7 +840,7 @@ function isKnownNonGameToolInstall(gameDir) {
     const dirs = new Set(entries.filter((e) => e.isDirectory()).map((e) => e.name.toLowerCase()));
     if (names.has('dolphin.exe') && (names.has('dolphintool.exe') || dirs.has('sys') || dirs.has('qtplugins'))) return true;
   } catch {
-    /* unreadable folder — let the normal scanner decide */
+    /* unreadable folder - let the normal scanner decide */
   }
   return false;
 }
@@ -894,7 +894,7 @@ async function scanInstalledGoldbergGames(data, scope = _activeScanScope) {
           detectedEmu = detectEmulatorCached(g.gameDir);
           detectedExe = goldberg.findGameExe(g.gameDir, detectedEmu.dll);
         } catch {
-          /* leave exe/emu detection empty — the merge/creation below tolerates nulls */
+          /* leave exe/emu detection empty - the merge/creation below tolerates nulls */
         }
       }
       if (!appid && g.gameDir) {
@@ -945,6 +945,37 @@ async function scanInstalledGoldbergGames(data, scope = _activeScanScope) {
       const emulatorType = g.emulator === 'goldberg' ? 'goldberg' : 'gbe';
       const steamSettings = g.steamSettings || (g.gameDir ? path.join(g.gameDir, 'steam_settings') : null);
       const hasSchema = steamSettings ? goldberg.readLocalSchema(steamSettings).length > 0 || g.hasSchema : g.hasSchema;
+      /*
+        Portable repacks routinely redirect the emulator's save folder back into the game directory
+        (`[user::saves] local_save_path`, or classic Goldberg's local_save.txt). Nothing is then ever
+        written to %APPDATA%\\GSE Saves, so pointing the record at the standard root read a fully
+        played game as a permanent 0%. Read the setup's own configured folder when it has one.
+      */
+      let savePath = goldbergSaveFolder(emulatorType, appid);
+      let saveSource = null;
+      try {
+        const redirected = goldberg.resolveLocalSaveDir({ steamSettings, appid });
+        if (redirected) {
+          savePath = redirected;
+          debug.log(`[goldberg-scan] ${appid} reads its saves from the configured local_save_path: ${redirected}`);
+        } else if (g.emulator === 'none' && g.gameDir) {
+          /*
+            The scan also reaches installs that are not Goldberg at all: a CODEX/RUNE release is
+            recognised here through its steam_emu.ini, and pointing it at %APPDATA%\\GSE Saves - a
+            folder its emulator never writes - read a played game as 0% (issue #32). Those releases
+            keep the same Steam\\<SOURCE>\\<appid> tree the installed ones put under %PUBLIC%, only
+            inside the game folder when the release is portable.
+          */
+          const scene = userDir.findSceneSaveDir(g.gameDir, appid);
+          if (scene) {
+            savePath = scene.path;
+            saveSource = scene.source;
+            debug.log(`[goldberg-scan] ${appid} is a scene-emulator install; saves read from ${scene.path}`);
+          }
+        }
+      } catch (err) {
+        debug.log(`[goldberg-scan] ${appid} save-folder resolution failed => ${err}`);
+      }
 
       const existing = byAppid.get(appid);
       if (existing) {
@@ -955,6 +986,18 @@ async function scanInstalledGoldbergGames(data, scope = _activeScanScope) {
           if (!existing.data.gameDir && g.gameDir) existing.data.gameDir = g.gameDir;
           if (detectedExe && !existing.data.exe) existing.data.exe = detectedExe.full;
           if (detectedEmu && detectedEmu.dll.length > 0) existing.data.hasSteamApiDll = true;
+          // The record found earlier (from an empty %APPDATA% save folder that the emulator created
+          // once and then abandoned) points at a path with nothing in it. The install tells us where
+          // the unlocks really are, so it wins - but only when that folder actually holds a save.
+          if (
+            existing.data.type === 'file' &&
+            savePath !== existing.data.path &&
+            fs.existsSync(path.join(savePath, 'achievements.json')) &&
+            !fs.existsSync(path.join(String(existing.data.path || ''), 'achievements.json'))
+          ) {
+            debug.log(`[goldberg-scan] ${appid} save folder corrected to ${savePath} (nothing written in ${existing.data.path})`);
+            existing.data.path = savePath;
+          }
           if (!hasSchema && !existing.data.needsSchema) {
             existing.data.needsSchema = true;
             attached++;
@@ -965,10 +1008,12 @@ async function scanInstalledGoldbergGames(data, scope = _activeScanScope) {
 
       const item = {
         appid,
-        source: emulatorType === 'gbe' ? 'GBE Fork' : 'Goldberg',
+        // Naming a CODEX/RUNE install "GBE Fork" is wrong on the badge and wrong in every diagnosis
+        // that keys off the source, so the resolved scene source wins when there is one.
+        source: saveSource || (emulatorType === 'gbe' ? 'GBE Fork' : 'Goldberg'),
         data: {
           type: 'file',
-          path: goldbergSaveFolder(emulatorType, appid),
+          path: savePath,
           steamSettings,
           gameDir: g.gameDir,
           exe: detectedExe && detectedExe.full,
@@ -1032,13 +1077,13 @@ async function scanUnconfiguredInstalls(linkedExes = [], scope = _activeScanScop
   const emit = (dir, entries) => {
     if (_claimedDirs.has(dir.toLowerCase())) return;
     if (isKnownNonGameToolInstall(dir)) return;
-    if (launcherDetect.isOfficialLauncherInstall(dir)) return; // legit launcher game — never "Unconfigured"
+    if (launcherDetect.isOfficialLauncherInstall(dir)) return; // legit launcher game - never "Unconfigured"
     if (isLinkedSubtree(dir)) return; // this folder already hosts a real-appid game (avoid duplicate)
     const exe = exeDetect.detect(dir, path.basename(dir), {});
     if (!exe) return;
     // Repacks often rename the folder ("Game123", "0xDEADBEEF"); the exe's own version resource
     // (FileDescription/ProductName) is a much better display name.
-    // Some tools expose only a generic descriptor ("Installer", "Launcher", "Application") — those
+    // Some tools expose only a generic descriptor ("Installer", "Launcher", "Application") - those
     // say nothing about the game, so fall back to the folder/exe name instead.
     const rawProductName = (pe.readExeProductName(exe.full) || '').trim();
     const productName = rawProductName && !/^(application|app|installer|setup|launcher|loader|program|game|update|updater|uninstall|uninstaller|config|configuration|service|daemon|tool|tools|client)$/i.test(rawProductName)
@@ -1195,7 +1240,7 @@ async function discover(source, steamAccFilter, scope = null) {
     debug.log(err);
   }
 
-  //Goldberg SocialClub Emulator — %APPDATA%\Goldberg SocialClub Emu Saves is auto-scanned like the
+  //Goldberg SocialClub Emulator - %APPDATA%\Goldberg SocialClub Emu Saves is auto-scanned like the
   //other known emulator roots, even when the user never added it to Settings.
   if (!scope && source.socialClub) {
     try {
@@ -1212,7 +1257,7 @@ async function discover(source, steamAccFilter, scope = null) {
     }
   }
 
-  //ShadPS4 stores trophies in %APPDATA%/shadPS4 regardless of where the .exe lives — auto-scan that
+  //ShadPS4 stores trophies in %APPDATA%/shadPS4 regardless of where the .exe lives - auto-scan that
   //known location so the user doesn't have to add it as a watched folder. De-dupe against anything the
   //watched-folder pass already found (portable installs that keep game_data next to the binary).
   if (!scope && source.shadps4) {
@@ -1253,9 +1298,9 @@ async function discover(source, steamAccFilter, scope = null) {
       const legit = await steam.scanLegit(source.legitSteam, steamAccFilter);
       // Attach the authoritative install folder from Steam's own library manifests so the Play
       // button / launch panel can auto-detect the exe instead of asking for one by hand. This also
-      // corrects scanLegit's per-app registry "Installed" flag, which can go stale — e.g. a folder
+      // corrects scanLegit's per-app registry "Installed" flag, which can go stale - e.g. a folder
       // deleted outside Steam, or an interrupted "move install folder" that leaves the manifest
-      // behind pointing at a common\<installdir> that no longer exists — and keep reporting
+      // behind pointing at a common\<installdir> that no longer exists - and keep reporting
       // Installed=1 for a game that is not actually on disk (owned-but-uninstalled games wrongly
       // staying in "show installed games only").
       let localInstalls;
@@ -1279,7 +1324,7 @@ async function discover(source, steamAccFilter, scope = null) {
             attached++;
           } else if (rec.data.installed) {
             // The registry says installed but Steam's own manifest disagrees (missing entirely, or
-            // its installdir isn't on disk) — trust the manifest over the stale registry flag.
+            // its installdir isn't on disk) - trust the manifest over the stale registry flag.
             rec.data.installed = false;
             corrected++;
           }
@@ -1294,7 +1339,7 @@ async function discover(source, steamAccFilter, scope = null) {
   }
 
   if (!scope && source.lumaPlay) {
-    //Lumaplay (emulated/cracked Ubisoft — the actual point of this source toggle)
+    //Lumaplay (emulated/cracked Ubisoft - the actual point of this source toggle)
     try {
       data = data.concat(await uplay.scan());
     } catch (err) {
@@ -1303,7 +1348,7 @@ async function discover(source, steamAccFilter, scope = null) {
 
     // NOTE: uplay.scanLegit() (legit Ubisoft Connect cache) is intentionally NOT called here.
     // Legit Ubisoft Connect exposes no local unlock-state, so those entries always resolve to
-    // root = {} (see getAchievements 'uplay' branch) and show as permanent 0% clutter — games
+    // root = {} (see getAchievements 'uplay' branch) and show as permanent 0% clutter - games
     // the user owns legitimately but for which we can never report progress. The "Émulateur
     // Ubisoft Connect" toggle is for emulated saves only.
   }
@@ -1316,7 +1361,7 @@ async function discover(source, steamAccFilter, scope = null) {
     }
   }
 
-  //GOG Galaxy official (legit client data — schema, unlocks and rarity read from Galaxy's SQLite)
+  //GOG Galaxy official (legit client data - schema, unlocks and rarity read from Galaxy's SQLite)
   if (!scope && source.gogOfficial) {
     try {
       data = data.concat(await gogOfficial.scan());
@@ -1325,11 +1370,11 @@ async function discover(source, steamAccFilter, scope = null) {
     }
   }
 
-  //Ubisoft Connect official (legit client data — spool unlock state + cached achievements archive)
+  //Ubisoft Connect official (legit client data - spool unlock state + cached achievements archive)
   if (!scope && source.ubisoftOfficial) {
     try {
       // A Steam purchase that launches Ubisoft Connect is an owned Steam game, so "don't display
-      // official Steam games" has to hide it too — it used to stay in the library no matter how the
+      // official Steam games" has to hide it too - it used to stay in the library no matter how the
       // filters were set, because its achievement data comes from Ubisoft (issue #20).
       const ubisoft = ubisoftOfficial.partitionBySteamFilter(ubisoftOfficial.scan(), source.legitSteam > 0);
       if (ubisoft.hidden.length > 0) {
@@ -1341,7 +1386,7 @@ async function discover(source, steamAccFilter, scope = null) {
     }
   }
 
-  //Epic official (installed Epic games — public localized schema + rarity; unlocks when connected)
+  //Epic official (installed Epic games - public localized schema + rarity; unlocks when connected)
   if (!scope && source.epicOfficial) {
     try {
       data = data.concat(epicOfficial.scan());
@@ -1366,7 +1411,7 @@ async function discover(source, steamAccFilter, scope = null) {
     }
   }
 
-  //Xbox PC (Game Pass / Microsoft Store / Online-Fix) — local installs + imported Xbox Network cache.
+  //Xbox PC (Game Pass / Microsoft Store / Online-Fix) - local installs + imported Xbox Network cache.
   if (!scope && source.xboxPc) {
     try {
       const xboxPc = require(path.join(appPath, 'xboxPc.js'));
@@ -1414,7 +1459,7 @@ async function discover(source, steamAccFilter, scope = null) {
     }
   }
 
-  //Installed Goldberg/GBE games never launched yet (no %APPDATA% save folder) — Objective 3.
+  //Installed Goldberg/GBE games never launched yet (no %APPDATA% save folder) - Objective 3.
   //Runs last so it can dedupe against every other source by appid.
   if (source.steamEmu) {
     try {
@@ -1442,10 +1487,10 @@ async function discover(source, steamAccFilter, scope = null) {
         let real = null;
         let resolved = null;
 
-        // Ubisoft/uPlay install (Goldberg Uplay R2 territory — no steam_api.dll to look at). Identify it
+        // Ubisoft/uPlay install (Goldberg Uplay R2 territory - no steam_api.dll to look at). Identify it
         // against uplay-steam.json and promote it to its Steam appid, so the game gets its real title,
         // art and achievement schema from the ordinary Steam pipeline and its unlocks are read from
-        // GSE Saves\<steamAppid> — the folder the Uplay R2 fix redirects the emulator's save into.
+        // GSE Saves\<steamAppid> - the folder the Uplay R2 fix redirects the emulator's save into.
         if (u.data && uplayR2.isUbisoftInstall(u.data.gameDir)) {
           u.source = 'Uplay R2';
           u.data.uplayR2 = true;
@@ -1454,7 +1499,7 @@ async function discover(source, steamAccFilter, scope = null) {
           if (!mapping) {
             data.push(u); // keep it visible; the Uplay R2 fix can still be run on it manually
             added++;
-            debug.log(`[unconfigured-scan] Ubisoft install "${u.name}" has no uplay-steam.json match — left unconfigured`);
+            debug.log(`[unconfigured-scan] Ubisoft install "${u.name}" has no uplay-steam.json match - left unconfigured`);
             continue;
           }
           const known = data.find((g) => String(g.appid) === String(mapping.steam_appid));
@@ -1504,7 +1549,7 @@ async function discover(source, steamAccFilter, scope = null) {
           if (hasLocalSteamEvidence) resolved = await resolveUnconfiguredSteamAppid(u);
           if (resolved) real = data.find((g) => String(g.appid) === String(resolved.appid));
         } catch {
-          /* no match — keep as unconfigured */
+          /* no match - keep as unconfigured */
         }
         if (real) {
           if (real.data) {
@@ -1642,7 +1687,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     for (const sourceRecord of appids) appid = mergeDiscoveryRecord(appid, sourceRecord);
     if (!appid) return;
 
-    // Unconfigured install (no appid): there is no Steam schema to fetch — return a minimal game so it
+    // Unconfigured install (no appid): there is no Steam schema to fetch - return a minimal game so it
     // shows in the list (achievement-less) and can be right-clicked. Empty img fields are tolerated by
     // the renderer (guarded `if (game.img.*)`), so the box keeps its placeholder background.
     if (appid.data && appid.data.type === 'unconfigured') {
@@ -1665,7 +1710,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
 
         }
       } catch {
-        /* no art — placeholder */
+        /* no art - placeholder */
       }
       if (!img.header || !img.portrait || !img.background || !img.icon) {
         try {
@@ -1681,7 +1726,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
           img.icon = img.icon || fallback.icon || fallback.logo || '';
           img.logo = img.logo || fallback.logo || '';
         } catch {
-          /* no community art — placeholder */
+          /* no community art - placeholder */
         }
       }
       return {
@@ -1763,7 +1808,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     } else if (appid.data.type === 'uplay' || appid.data.type === 'lumaplay') {
       game = await uplay.getGameData(appid.appid, option.achievement.lang);
       // If local image extraction yielded no header (e.g. Uplay configurations YAML doesn't carry
-      // image filenames for newer titles), fall back to Steam store art looked up by game name —
+      // image filenames for newer titles), fall back to Steam store art looked up by game name -
       // same pattern used for unconfigured installs. Uses the in-memory appList (no extra request
       // when already loaded) so the cost is a single find() on the cached array.
       if (game && game.name && game.img && !game.img.header) {
@@ -1807,7 +1852,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
         showHidden: !!(option.achievement && option.achievement.showHidden),
         fastStart: option.fastStart === true,
         forceRecheck: option.forceAchievementRecheck === true,
-        // Known emulator config dir (Goldberg discover) — lets the schema fetch resolve cover art
+        // Known emulator config dir (Goldberg discover) - lets the schema fetch resolve cover art
         // from the local app_product_info.json dump before hitting the network.
         steamSettings: (appid.data && appid.data.steamSettings) || null,
       });
@@ -1886,8 +1931,8 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
     const dataPath = resolveAchievementDataPath(appid.data);
     if (dataPath) game.dataPath = dataPath;
     // One entry per source that contributed to this card. A merged card is the case where "where
-    // does this come from?" is hardest to answer — the same game read from two emulators, or a GOG
-    // copy sitting next to a Steam one — so each source keeps its own folder rather than collapsing
+    // does this come from?" is hardest to answer - the same game read from two emulators, or a GOG
+    // copy sitting next to a Steam one - so each source keeps its own folder rather than collapsing
     // to whichever record happened to win the merge (issue #21).
     const perSource = [];
     for (const record of Array.isArray(appid._sources) && appid._sources.length > 0 ? appid._sources : [appid]) {
@@ -1904,7 +1949,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       try {
         if (fs.existsSync(appid.data.exe)) {
           // Launcher manifests/DBs (Epic, GOG Galaxy, EA logs, Xbox config) name the exact exe the
-          // launcher runs — that is authoritative. Unconfigured-scan hints are NOT authoritative:
+          // launcher runs - that is authoritative. Unconfigured-scan hints are NOT authoritative:
           // they go through the same conservative confidence gate as any other folder.
           const authoritative = appid.data.exeAuthoritative === true;
           resolvedExe = {
@@ -2047,7 +2092,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
             language: option.achievement && option.achievement.lang,
           });
           debug.log(
-            `[${appid.appid}] Uplay R2 setup was incomplete (${report.issues.map((i) => i.code).join(', ')}) — re-applied into ${summary.dir}` +
+            `[${appid.appid}] Uplay R2 setup was incomplete (${report.issues.map((i) => i.code).join(', ')}) - re-applied into ${summary.dir}` +
               `${summary.loader && !summary.loader.supportsAchRedirect ? ' (legacy loader: unlocks read from the emulator save folder)' : ''}`
           );
         } else if (broken) {
@@ -2103,11 +2148,11 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       (appid.data.needsSchema || needsRuntimeFix)
     ) {
       // Run slow emulator repair in the background, but never on a game a loader like OnlineFix
-      // already hooks in place — swapping the DLL breaks its emulation. The manual "Apply emulator
+      // already hooks in place - swapping the DLL breaks its emulation. The manual "Apply emulator
       // fix" action can still override.
       const workingCrackLoader = resolvedGameDir ? crackLoaderDetect.detectWorkingCrackLoader(resolvedGameDir) : null;
       if (workingCrackLoader) {
-        debug.log(`[${appid.appid}] automatic emulator fix skipped — ${workingCrackLoader.name} loader already present in ${resolvedGameDir}`);
+        debug.log(`[${appid.appid}] automatic emulator fix skipped - ${workingCrackLoader.name} loader already present in ${resolvedGameDir}`);
       }
       const canAutoApply = !!(
         option.emulator &&
@@ -2120,7 +2165,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       const fixKey = `${appid.appid}:${resolvedGameDir || appid.data.steamSettings}`;
       // Fingerprint the steam_settings content BEFORE the attempt: a successful setup writes into
       // the folder (schema/configs), so an unchanged version on a later scan means the last attempt
-      // achieved nothing — don't relaunch it until the cool-down passes or someone changes the folder.
+      // achieved nothing - don't relaunch it until the cool-down passes or someone changes the folder.
       let settingsVersion = null;
       try {
         settingsVersion = computeFolderContentVersion(appid.data.steamSettings, { prefix: 'emusetup' });
@@ -2129,11 +2174,11 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       }
       const lastAttempt = settingsVersion ? _emuSetupAttempts.get(fixKey) : null;
       if (!realGameExePresent()) {
-        debug.log(`[${appid.appid}] automatic emulator fix skipped — no game executable found in ${resolvedGameDir}`);
+        debug.log(`[${appid.appid}] automatic emulator fix skipped - no game executable found in ${resolvedGameDir}`);
       } else if (_emuFixInFlight.has(fixKey)) {
-        debug.log(`[${appid.appid}] emulator setup already running in background — will appear fixed on a later scan`);
+        debug.log(`[${appid.appid}] emulator setup already running in background - will appear fixed on a later scan`);
       } else if (lastAttempt && lastAttempt.version === settingsVersion && Date.now() - lastAttempt.at < EMU_SETUP_RETRY_MS) {
-        debug.log(`[${appid.appid}] emulator setup skipped — steam_settings unchanged since the last attempt (cool-down)`);
+        debug.log(`[${appid.appid}] emulator setup skipped - steam_settings unchanged since the last attempt (cool-down)`);
       } else {
         if (settingsVersion) _emuSetupAttempts.set(fixKey, { version: settingsVersion, at: Date.now() });
         _emuFixInFlight.add(fixKey);
@@ -2174,7 +2219,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
               fixedSteamSettingsDirs = setup.steamSettingsDirs || [];
               fixApplied = !setup.skipped;
               if (setup.skipped) {
-                debug.log(`[${bgAppid}] automatic emulator fix skipped — ${setup.reason}`);
+                debug.log(`[${bgAppid}] automatic emulator fix skipped - ${setup.reason}`);
               } else {
                 debug.log(
                   `[${bgAppid}] automatic emulator fix complete (GBE Fork ${setup.tag || 'cached'}${runtimeFixReason ? `, ${runtimeFixReason}` : ''})`
@@ -2242,7 +2287,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
           }
 
           // Notify the daemon so it can fire the "emulator fix applied" toast (the old in-band
-          // emulatorJustFixed marker can't reach it anymore — this setup finishes after onGame ran).
+          // emulatorJustFixed marker can't reach it anymore - this setup finishes after onGame ran).
           if (fixApplied && _onEmulatorFixed) {
             try {
               _onEmulatorFixed({ appid: bgAppid, name: bgGameName });
@@ -2271,7 +2316,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       // Carry the Ubisoft product id into the watchdog's index. The emulator names its save folder
       // with that id, so without the pair the watchdog cannot tell which game an unlock under
       // "Goldberg UplayEmu Saves\<uplayId>" belongs to, and Uplay R2 games never fire a live
-      // notification — they only appear after a manual refresh.
+      // notification - they only appear after a manual refresh.
       const seedUplayId = (appid.data && appid.data.uplayId) || (appid.data && appid.data.uplayR2 ? uplayR2.resolveGameIdentity({ appid: appid.appid, name: game.name, gameDir: resolvedGameDir }).uplayId : '');
       const seed = (binary, how) => {
         gameIndex.upsert({
@@ -2310,7 +2355,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
           }
         }
 
-        // 2) Launch metadata, for every game the step above could not name a binary for — whether
+        // 2) Launch metadata, for every game the step above could not name a binary for - whether
         //    because the folder holds no recognizable exe (obfuscated/renamed build, launcher-only
         //    install) or because no install folder was resolved at all. That second case is the
         //    normal state of a game AW Next only knows through its emulator's save folder: keeping
@@ -2336,7 +2381,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
 
     // Surface the launch exe for the renderer's launch panel only when it is either supplied by
     // the launcher itself (Epic/GOG/EA/Xbox manifests) or passed the conservative confidence gate.
-    // Ambiguous folders are deliberately NOT exposed here — reconcile() / Play will ask the user
+    // Ambiguous folders are deliberately NOT exposed here - reconcile() / Play will ask the user
     // instead of guessing.
     if (resolvedExe && resolvedExeConfident) {
       game.exe = resolvedExe.full;
@@ -2354,7 +2399,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
           const meta = await ipcRenderer.invoke('get-steamdb-launch', game.steamappid);
           if (meta && meta.best_process_name) binary = meta.best_process_name;
         } catch {
-          /* binary is optional — the entry itself is what matters */
+          /* binary is optional - the entry itself is what matters */
         }
         gameIndex.upsert({
           appid: appid.appid,
@@ -2372,7 +2417,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
 
     // Ubisoft Connect official entries also need a gameIndex row so the Watchdog's live spool
     // watcher can attribute a <productId>.spool change back to the app's resolved game name and
-    // Steam release — including titles resolved generically from the configurations block or the
+    // Steam release - including titles resolved generically from the configurations block or the
     // local Steam library (issue #7).
     if (appid.data && appid.data.type === 'ubisoftOfficial' && game.name && appid.data.uplayId) {
       try {
@@ -2452,7 +2497,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
         }
       } catch (err) {
         // A missing save file is the normal 0%-game case (emulator made the folder but nothing is
-        // unlocked yet) — the game still shows with its full schema, all locked. Log it as info, not
+        // unlocked yet) - the game still shows with its full schema, all locked. Log it as info, not
         // a scary error, so the debug log highlights real parse failures instead of expected 0% games.
         if (String(err).includes('No achievement file found')) {
           debug.log(`[${appid.appid}] No unlocked achievements yet (0%) in '${appid.data.path}'`);
@@ -2471,16 +2516,16 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
       }
 
       if (root && typeof root === 'object' && Array.isArray(root.__rawStatKeys)) {
-        // Raw Stats.ini values merged in by steam.js purely to feed applyLocalStatProgress above —
+        // Raw Stats.ini values merged in by steam.js purely to feed applyLocalStatProgress above -
         // not real achievement records. Left in place they'd each fail schema matching below (e.g.
         // a schema entry literally named "stat_1" never exists) and spam one warning per stat.
         for (const key of root.__rawStatKeys) delete root[key];
       }
 
       if (game.achievement.list.length === 0 && root && typeof root === 'object' && Object.keys(root).length > 0) {
-        // No schema to match against at all (e.g. the game has no real Steam achievements) —
+        // No schema to match against at all (e.g. the game has no real Steam achievements) -
         // iterating would just spam one ACH_NOT_FOUND_IN_SCHEMA warning per save entry.
-        debug.warn(`[${appid.appid}] Local save has ${Object.keys(root).length} achievement entr${Object.keys(root).length === 1 ? 'y' : 'ies'} but the schema has none — skipping match`);
+        debug.warn(`[${appid.appid}] Local save has ${Object.keys(root).length} achievement entr${Object.keys(root).length === 1 ? 'y' : 'ies'} but the schema has none - skipping match`);
         root = {};
       }
 
@@ -2489,6 +2534,12 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
         includeCrc: rootEntries.some((entry) => entry && entry.crc),
       });
 
+      // Counted, not logged one by one: a save whose api-names no longer line up with the schema
+      // (renamed prefix, deleted achievements, a repack that swapped the emulator layer) misses on
+      // every single entry, and logging each one wrote hundreds of identical lines per game per
+      // scan - enough to churn the 2 MB parser.log rotation on its own. The aggregate below carries
+      // the same diagnostic signal.
+      let schemaMissCount = 0;
       for (let i in root) {
         if (Object.prototype.hasOwnProperty.call(root, i)) {
           try {
@@ -2580,19 +2631,24 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
             }
           } catch (err) {
             if (err === 'ACH_NOT_FOUND_IN_SCHEMA') {
-              debug.warn(`[${appid.appid}] Achievement not found in game schema data ?! ... Achievement was probably deleted or renamed over time`);
+              schemaMissCount++;
             } else {
               debug.error(`[${appid.appid}] Unexpected Error: ${err}`);
             }
           }
         }
       }
+      if (schemaMissCount > 0) {
+        debug.warn(
+          `[${appid.appid}] ${schemaMissCount} saved achievement${schemaMissCount === 1 ? '' : 's'} not found in the game schema - probably deleted or renamed over time`
+        );
+      }
     }
     game.achievement.unlocked = game.achievement.list.filter((ach) => ach.Achieved == 1).length;
     // Reconcile the denominator with the real achievement list. A schema/list desync could leave
     // `total` at 0 (or below the number actually displayed), producing the "39 / 0" the UI shows for a
     // completed game and percentages above 100%. The list is what the detail view renders, so it is the
-    // authoritative count; never let total be smaller than it. (Objective 6/7 — display reliability.)
+    // authoritative count; never let total be smaller than it. (Objective 6/7 - display reliability.)
     if (!Number.isFinite(game.achievement.total) || game.achievement.total < game.achievement.list.length) {
       game.achievement.total = game.achievement.list.length;
     }
@@ -2708,12 +2764,12 @@ module.exports.makeList = async (option, callbackProgress, onGame = () => {}) =>
             debug.log(`[${appid.appid}] could not load (will retry next scan) - took ${(endTime - startTime) / 1000} seconds.`);
           }
           // Keep a game if it has achievements, OR it's a genuine on-disk install even with none
-          // (e.g. UNDERTALE has zero Steam achievements) — same rationale as unconfigured installs.
+          // (e.g. UNDERTALE has zero Steam achievements) - same rationale as unconfigured installs.
           // Non-installed 0-achievement entries (phantom cache imports) are still filtered out.
           if (game && (game.unconfigured || game.installed || (game.achievement && game.achievement.total > 0))) {
             result.push(game);
             /*
-              Hand the game straight to the caller — never via requestAnimationFrame: rAF only fires for
+              Hand the game straight to the caller - never via requestAnimationFrame: rAF only fires for
               a VISIBLE document, and this tray window is usually hidden with backgroundThrottling, so
               deferred callbacks never run and a background scan would look empty, retriggering full
               refreshes every few minutes.

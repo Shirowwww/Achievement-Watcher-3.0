@@ -52,6 +52,14 @@ That covers **Goldberg** and **GBE Fork** (the two AW Next can also install and 
 scene releases writing a compatible layout. A game whose files are in a custom location can be added
 under **Settings → Folders**.
 
+Portable releases are covered too, and they are the case worth knowing about. A CODEX/RUNE/CPY
+release normally writes to `%PUBLIC%\Documents\Steam\<SOURCE>\<appid>`, but a portable copy keeps
+that same tree inside the game folder, where nothing is looking for it. Adding the game's own folder
+under **Settings → Folders** is enough: its `steam_emu.ini` (or `cpy.ini`) names the AppID, and the
+matching save tree is looked for beside it before the shared location is tried. If no save has been
+written yet the game is still added, at 0% - a missing card would be indistinguishable from a game
+that was never installed, and would say nothing about what went wrong.
+
 Two of these have their own switch because they are a different shape:
 
 - **Goldberg SocialClub** - the Rockstar / Social Club variant.

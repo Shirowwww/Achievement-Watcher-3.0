@@ -42,7 +42,7 @@ module.exports.load = async (lang = 'english') => {
       /*
         Views that write their own text instead of being reached by the DOM walk below: the Help
         panel (built from locale + live settings), the title-bar Watchdog status (painted from an
-        IPC push) and the Settings account cards. Without this they keep the previous language —
+        IPC push) and the Settings account cards. Without this they keep the previous language -
         the status bar until the next poll, the others until the panel is rebuilt. None of them may
         break loading a language, so each is optional and its failure is contained.
       */
@@ -85,7 +85,7 @@ function translateUI(lang, locale, template) {
   $('#sort-box .installed-filter').attr('title', clear(template.installedOnly));
   if (template.sort) {
     // Expose the dynamic sort labels for sort.js (built on click), and set the static button tooltips.
-    // NB: must NOT be named `sortLabels` — sort.js declares a global `function sortLabels()` that
+    // NB: must NOT be named `sortLabels` - sort.js declares a global `function sortLabels()` that
     // shares the same window slot, so reusing the name would overwrite that function (→ TypeError).
     window.sortLabelStrings = template.sort;
     if (template.sort.tooltip) {
@@ -114,7 +114,7 @@ function translateUI(lang, locale, template) {
     selector.attr('data-ctx-backupgbe', clear(template.contextMenu.backupGBE));
     if (template.contextMenu.restoreGBE) selector.attr('data-ctx-restoregbe', clear(template.contextMenu.restoreGBE));
     selector.attr('data-ctx-installgbe', clear(template.contextMenu.installGBE));
-    // Same action on a game that already has a setup — named differently so "replace what is there"
+    // Same action on a game that already has a setup - named differently so "replace what is there"
     // is visible before the click, not only in the confirmation.
     if (template.contextMenu.reinstallGBE) selector.attr('data-ctx-reinstallgbe', clear(template.contextMenu.reinstallGBE));
     if (template.contextMenu.removeDRM) selector.attr('data-ctx-removedrm', clear(template.contextMenu.removeDRM));
@@ -272,7 +272,7 @@ function translateUI(lang, locale, template) {
   }
   $('#general-options-title').text(clear(template.settings.general.sectionTitle));
 
-  // Emulator setup section (own settings tab) — bound by stable id, not nth-child.
+  // Emulator setup section (own settings tab) - bound by stable id, not nth-child.
   if (template.settings.emulator) {
     const emu = template.settings.emulator;
     if (emu.nav) $('#emulator-nav-label').text(clear(emu.nav));
@@ -403,7 +403,7 @@ function translateUI(lang, locale, template) {
   $('#notify_progress_test span').text(clear(template.settings.notification.test.progress));
   $('#notify_playtime_test span').text(clear(template.settings.notification.test.playtime));
   $('#notify_platinum_test span').text(clear(template.settings.notification.test.platinum));
-  // Overlay (in-game) notification section — bound by stable ids to avoid nth-child fragility.
+  // Overlay (in-game) notification section - bound by stable ids to avoid nth-child fragility.
   $('#overlay-notify-title').text(clear(template.settings.notification.title.overlay));
   $('#lbl-notifMode').text(clear(template.settings.notification.option.mode.name));
   $("#option_notifMode option[value='auto']").text(clear(template.settings.notification.option.mode.value.auto));
@@ -413,7 +413,7 @@ function translateUI(lang, locale, template) {
   $('#lbl-overlayPreset').text(clear(template.settings.notification.option.overlayPreset));
   if (template.settings.notification.option.presetSameAsMain) {
     const opt = template.settings.notification.option;
-    // "Same as main" is dynamic (the dropdowns are (re)populated async) — expose it as a data attr
+    // "Same as main" is dynamic (the dropdowns are (re)populated async) - expose it as a data attr
     // and refresh the '' option if it is already there.
     $('#option_overlayPresetXenia, #option_overlayPresetRpcs3, #option_overlayPresetShadps4').attr('data-lang-same', clear(opt.presetSameAsMain));
     $("#option_overlayPresetXenia option[value=''], #option_overlayPresetRpcs3 option[value=''], #option_overlayPresetShadps4 option[value='']").text(
@@ -463,8 +463,8 @@ function translateUI(lang, locale, template) {
     const c = template.settings.notification.option.designer;
     /*
       The preset designer is bound by `data-lang="<dotted path>"` rather than one selector per label:
-      it has a control for every editable property, and its labels — a group title, a property name,
-      the words in a dropdown — are all leaves of this same block. One pass keeps the markup and the
+      it has a control for every editable property, and its labels - a group title, a property name,
+      the words in a dropdown - are all leaves of this same block. One pass keeps the markup and the
       locale in step, and a control added to app.html cannot silently ship with a blank label.
     */
     $("#settingNav li[data-view='presets'] span").text(clear(template.settings.sideMenu.presets));
@@ -496,8 +496,8 @@ function translateUI(lang, locale, template) {
       .attr('data-reset', clear(c.resetDone))
       .attr('data-fail', clear(c.failed))
       // The three template actions read these back off the element the same way the ones above do.
-      // They were never bound, so picking a starting point printed its bare name — "Slate" on its
-      // own, in green, with nothing saying what had happened — and "Surprise me" said nothing at all.
+      // They were never bound, so picking a starting point printed its bare name - "Slate" on its
+      // own, in green, with nothing saying what had happened - and "Surprise me" said nothing at all.
       .attr('data-template', clear(c.templates.applied))
       .attr('data-randomized', clear(c.templates.randomized))
       .attr('data-duplicated', clear(c.templates.duplicated));
@@ -525,7 +525,7 @@ function translateUI(lang, locale, template) {
   if (template.settings.folder.smartFindHelp) $('#smartFind-help').text(clear(template.settings.folder.smartFindHelp));
   // First line = what the folder is for, shown in both modes. The rest names the emulator .ini
   // files that identify one, which is only useful once you know which emulator you are pointing
-  // at — so it lives in its own paragraph that Simple mode hides.
+  // at - so it lives in its own paragraph that Simple mode hides.
   {
     const addInfo = template.settings.folder.addInfo || [];
     $('#folder-add-info').text(clear(addInfo[0]));
@@ -607,7 +607,7 @@ function translateUI(lang, locale, template) {
       .attr('data-done', clear(template.onboarding.smartDone))
       .attr('data-invalid', clear(template.onboarding.invalidFolder));
   }
-  // Maintenance + Fix-all (Avancé tab) — stable ids.
+  // Maintenance + Fix-all (Avancé tab) - stable ids.
   if (template.settings.advanced.maintenanceTitle) $('#adv-maintenance-title').text(clear(template.settings.advanced.maintenanceTitle));
   if (template.settings.advanced.fixAll) {
     $('#fix-all-label').text(clear(template.settings.advanced.fixAll.name));
@@ -630,11 +630,12 @@ function translateUI(lang, locale, template) {
       .attr('title', clear(template.settings.advanced.checkUpdates))
       .attr('aria-label', clear(template.settings.advanced.checkUpdates));
   }
-  // Diagnostics block (merged into the Avancé tab) — stable ids.
+  // Diagnostics block (merged into the Avancé tab) - stable ids.
   if (template.settings.advanced.diag) {
     const d = template.settings.advanced.diag;
     $('#adv-diag-title').text(clear(d.title));
     $('#open-logs span').text(clear(d.logsFolder));
+    $('#export-logs span').text(clear(d.exportLogs));
     $('#open-userdata span').text(clear(d.dataFolder));
     $('#adv-goldberg-title').text(clear(d.goldbergTitle));
     $('#adv-goldberg-desc').text(clear(d.goldbergDesc));
@@ -661,7 +662,7 @@ function translateUI(lang, locale, template) {
   $("#settingNav li[data-view='source'] span").text(clear(template.settings.sideMenu.source));
   if (template.settings.general.theme) $("#settingNav li[data-view='appearance'] span").text(clear(template.settings.general.theme.name));
   $("#settingNav li[data-view='advanced'] span").text(clear(template.settings.sideMenu.advanced));
-  // Simple / Advanced switch at the foot of the nav — bound by id, the nav has no positional i18n.
+  // Simple / Advanced switch at the foot of the nav - bound by id, the nav has no positional i18n.
   if (template.settings.interfaceMode) {
     $('#settings-mode-label').text(clear(template.settings.interfaceMode.title));
     $('#settings-mode-simple').text(clear(template.settings.interfaceMode.simple));

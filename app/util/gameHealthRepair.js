@@ -37,7 +37,19 @@ function planRuntimeInstall({ gbeInstaller, gameDir, exePath = null, steamSettin
   object; every other argument is passed straight through to goldberg.repair(), including the
   backup it performs first.
 */
-async function repairAchievementData({ goldberg, plan, appid, schema, downloadIcon = null, fetchDlc = null, accountName = '', language = '' } = {}) {
+async function repairAchievementData({
+  goldberg,
+  plan,
+  appid,
+  schema,
+  downloadIcon = null,
+  fetchDlc = null,
+  accountName = '',
+  language = '',
+  // Complete configs.user.ini even when the app has no name or language to stamp into it - the two
+  // user-config warnings are listed as repairable, so the repair has to be able to clear them.
+  fillUserDefaults = false,
+} = {}) {
   if (!plan || !plan.target) throw new Error('repairAchievementData: no steam_settings target resolved');
   return goldberg.repair({
     steamSettings: plan.target,
@@ -47,6 +59,7 @@ async function repairAchievementData({ goldberg, plan, appid, schema, downloadIc
     fetchDlc,
     accountName,
     language,
+    fillUserDefaults,
   });
 }
 
@@ -54,7 +67,7 @@ async function repairAchievementData({ goldberg, plan, appid, schema, downloadIc
   Install the supported GBE Fork runtime dll(s) into the planned directories. Used for the one case
   Game Health diagnoses as a runtime fault: a complete steam_settings with no steam_api dll beside
   it, so nothing will ever read the schema. steam_interfaces.txt is regenerated when the original
-  dll is still recoverable — a best-effort step that never fails the install.
+  dll is still recoverable - a best-effort step that never fails the install.
 */
 async function installEmulatorRuntime({ gbeInstaller, plan, cacheDir, steamSettings = null, log } = {}) {
   if (!plan || !Array.isArray(plan.dirs) || plan.dirs.length === 0) {

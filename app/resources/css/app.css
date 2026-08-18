@@ -27,7 +27,7 @@
     url(../font/Open_Sans/opensans-bold-webfont.woff) format('woff');
 }
 
-/* Design tokens — single source of truth for the Steam-inspired dark palette. Values are the exact
+/* Design tokens - single source of truth for the Steam-inspired dark palette. Values are the exact
    hex literals previously hardcoded throughout this stylesheet (zero visual change); centralizing
    them removes palette drift and makes future theming/accent tweaks a one-line edit. */
 :root {
@@ -59,14 +59,14 @@
 
   /* Settings-modal-only surface tokens. Default to the same value as the card surface (so built-in
      themes look exactly as before), but the custom theme engine (themeLayers.js) repoints these at
-     the dedicated "settings" layer instead of "card" — so a custom Cards/tiles color never bleeds
+     the dedicated "settings" layer instead of "card" - so a custom Cards/tiles color never bleeds
      into the Settings UI, per the layer-independence contract. Every --set-* chrome token below reads
      from these, not from --surface directly. */
   --set-surface: var(--surface);
   --set-surface-elevated: color-mix(in srgb, var(--set-surface) 88%, white 12%);
   --set-surface-sunken: color-mix(in srgb, var(--set-surface) 82%, black);
 
-  /* Settings modal chrome — derived from the active theme tokens (via color-mix) so the whole panel,
+  /* Settings modal chrome - derived from the active theme tokens (via color-mix) so the whole panel,
      its controls and buttons follow OLED / Dracula / Graphite instead of staying locked to Steam blue.
      Change a theme's base tokens above and the Settings modal recolours with it. */
   --set-scrim: color-mix(in srgb, var(--surface-sunken) 78%, transparent);
@@ -89,7 +89,7 @@
      own --warning hue so the cards recolour with the palette instead of staying Steam-blue amber
      under every theme (the literal here is only the fallback for a theme that defines no warning). */
   /* Account cards (Steam login / Epic connect) read as part of the theme, not as a warning. They
-     were a fixed amber, then a per-theme amber — still amber, still the odd one out in a blue or
+     were a fixed amber, then a per-theme amber - still amber, still the odd one out in a blue or
      purple palette. They now use the accent like every other highlighted surface; the "throwaway
      account" badge on the Steam card keeps the caution hue, which is where it belongs. */
   --set-account-border: color-mix(in srgb, var(--accent) 26%, transparent);
@@ -107,17 +107,17 @@
 
 /* The one light-base theme. Text and surfaces are inverted; the faint rgba(255,255,255,…) depth
    tints elsewhere in this file simply stop reading against a pale surface instead of inverting,
-   which costs a little shading but never legibility — every foreground colour is token-driven.
+   which costs a little shading but never legibility - every foreground colour is token-driven.
    The semantic hues are darkened so they still pass contrast on a near-white background. */
 :root[data-theme='light'] {
   /* Shadows here are the same black as everywhere else, just far weaker: at full strength the
      dark-theme alphas turn every card into a grey halo on a near-white surface. Kept low, but not
-     so low that cards lose their lift — depth is the only separation a white card on a pale panel
+     so low that cards lose their lift - depth is the only separation a white card on a pale panel
      gets, now that the white-alpha highlights the dark themes rely on no longer register. */
   --shadow-scale: 0.5;
   /* These four were all within a few percent of white, so the window, the library panel and the
      cards inside it read as one flat sheet with tiles floating on nothing. They are spread into
-     real steps instead — base darkest, panel between, cards white — so the hierarchy comes from
+     real steps instead - base darkest, panel between, cards white - so the hierarchy comes from
      the surfaces themselves rather than from borders that barely register at this lightness. */
   --bg-base: #e6ebf3;
   --bg-glow: #f6f9fc; /* a tint, not a pure-white block across the whole header */
@@ -474,7 +474,11 @@ body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  border: 1px solid var(--border);
+  /* No layout border. A 1px border here pushed every child in by one pixel, and the first child is
+     the title bar: it stopped short of the window's top and side edges and the body background
+     showed through as a hairline frame around it (most visible when maximized, where a window
+     outline buys nothing anyway). The frameless window still gets its own edge and shadow from DWM.
+     The window outline the border used to draw is painted by the non-layout ring below instead. */
   box-sizing: border-box;
   /* Soft top-centre glow for depth behind the header (flat fill before; JS swaps in game art on
      the detail view, so this only affects the home screen). */
@@ -482,6 +486,18 @@ body {
   background-size: cover !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
+}
+
+/* The window outline, drawn instead of the old body border. `fixed` + `pointer-events: none` keeps
+   it out of layout and out of hit-testing, so it costs the title bar nothing; the low z-index puts
+   it under the title bar (z-index 999) so the bar still reaches the very top and both sides. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
 }
 
 main {
@@ -583,7 +599,7 @@ main {
   }
 }
 
-/* Average achievement completion — a single clean fill bar that mirrors the "average %" stat
+/* Average achievement completion - a single clean fill bar that mirrors the "average %" stat
    shown just above it (simple and self-explanatory, vs. the old 3-tier stacked spread). */
 #user-info .info .completion-dist {
   position: relative;
@@ -820,7 +836,7 @@ main {
   border-color: color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
-/* Sort: a three-state segmented control — normal, reversed, then cleared. */
+/* Sort: a three-state segmented control - normal, reversed, then cleared. */
 #sort-box .sort-group {
   display: flex;
   align-items: center;
@@ -974,7 +990,7 @@ main {
   box-shadow: 0 20px 44px rgba(0, 0, 0, calc(0.42 * var(--shadow-scale)));
 }
 
-/* Empty state — actionable onboarding instead of a bare "No Games" + sad face. */
+/* Empty state - actionable onboarding instead of a bare "No Games" + sad face. */
 #game-list .isEmpty {
   text-align: center;
   max-width: 360px;
@@ -1983,7 +1999,7 @@ main {
   color: #ffc04ec7;
 }
 
-/* Rarity tiers — layered on top of the .rare glow base.
+/* Rarity tiers - layered on top of the .rare glow base.
    gold <3% (bright yellow-gold), silver <6% (bright silver), bronze <=10% (copper). */
 .achievement.rare.rarity-gold .box {
   border-color: rgba(255, 224, 105, 0.92);
@@ -2107,7 +2123,7 @@ main {
   display: inline-block;
 }
 
-/* Hidden-achievement "reveal all" disclaimer styles removed — hidden achievements now reveal inline
+/* Hidden-achievement "reveal all" disclaimer styles removed - hidden achievements now reveal inline
    per-row via .description.masked-desc (see above). */
 
 #lock .achievement .progressBar:not([data-max='0']) {
@@ -2477,6 +2493,47 @@ main {
   width: auto;
   min-width: 0;
   scroll-padding-block: 18px 32px;
+}
+
+/* The tail of the card you just scrolled past keeps showing in the strip above the next card's
+   pinned header, where the top edge of the scroller cut it off mid-sentence with a hard line. This
+   band spans that strip - the top of the panel down to the section header - and blurs and fades
+   whatever passes under it, so a row leaves the view the same way it does under a pinned header
+   instead of being sliced. It sits below those headers (z-index 2), which therefore stay crisp,
+   takes no space in the flow (the margins cancel its own height), and swallows no clicks. */
+#settings .box .content::before {
+  content: '';
+  display: block;
+  position: sticky;
+  /* Chromium pins a sticky child against the scroller's CONTENT box, so `top: 0` would park the
+     band 18px down - level with the pinned headers, leaving the strip above it (the one that
+     needed covering) untouched. The negative offset is exactly the padding it has to climb back. */
+  top: -18px;
+  z-index: 1;
+  height: 46px;
+  /* -18px/-24px cancel the scroller's own padding so the band starts at the very top edge and
+     reaches both sides; -28px gives back the height it would otherwise add above the first card. */
+  margin: -18px -24px -28px;
+  pointer-events: none;
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 38%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 38%, transparent 100%);
+  /* At the top of a tab there is nothing scrolling out yet, so a band there is just a haze over
+     the first card. It belongs to the act of scrolling: a scroll-driven animation fades it in over
+     the first 24px and back out on the way home, with no listener to keep in sync. Where the
+     timeline is unsupported the declaration below simply leaves it hidden, which is the state the
+     panel had before it existed. */
+  opacity: 0;
+  animation: aw-settings-scroll-veil linear both;
+  animation-timeline: scroll(nearest block);
+  animation-range: 0 24px;
+}
+
+@keyframes aw-settings-scroll-veil {
+  to {
+    opacity: 1;
+  }
 }
 
 #settings .box .content::-webkit-scrollbar {
@@ -3272,7 +3329,7 @@ main {
 }
 
 /* No min-height: the grid already equalises the two cards of a row, and a floor only added dead
-   space in the languages whose copy runs short — while pushing the 2x2 grid past the step. */
+   space in the languages whose copy runs short - while pushing the 2x2 grid past the step. */
 .onboarding-cards > div {
   display: grid;
   align-content: start;
@@ -4228,7 +4285,7 @@ main {
   font-size: 14px;
 }
 
-/* "saved automatically" cue — clarifies that this tab persists changes instantly (unlike the
+/* "saved automatically" cue - clarifies that this tab persists changes instantly (unlike the
    General/Source/Advanced tabs, which apply on Save + rescan). */
 #options-notify .autosave-hint {
   display: flex;
@@ -4341,7 +4398,7 @@ main {
   word-break: break-word;
 }
 
-/* Blacklist manager (Advanced tab): one row per hidden game — name, appid, restore button. */
+/* Blacklist manager (Advanced tab): one row per hidden game - name, appid, restore button. */
 .blacklist-manager-row {
   flex-direction: column;
   align-items: stretch;
@@ -4730,7 +4787,7 @@ main {
   border-radius: 12px;
   background: var(--set-account-bg);
 }
-/* The Epic connect card sits under the Sources arrow-list — give it breathing room above. */
+/* The Epic connect card sits under the Sources arrow-list - give it breathing room above. */
 #settings #epic-connect {
   margin-top: 16px;
 }
@@ -5045,7 +5102,7 @@ main {
   }
 }
 
-/* Cover picker modal (right-click -> "Choose another cover...") — mirrors the shared
+/* Cover picker modal (right-click -> "Choose another cover...") - mirrors the shared
    aw-prompt chrome and the app surface tokens so it follows every theme. */
 .aw-cover-picker {
   width: min(960px, calc(100vw - 48px));
@@ -5559,7 +5616,7 @@ body {
   /* Without its own cap the nav (14 items across 5 groups) grows past the window on short
      screens and drags the whole modal off-screen with it, since .container stretches to fit
      its tallest child. The 30px it runs taller than `.box .content` below is deliberate margin,
-     not a mismatch — don't "align" the two. */
+     not a mismatch - don't "align" the two. */
   height: min(590px, calc(100vh - 250px));
   /* The column follows its labels rather than cropping them: `max-content` sizes it to the longest
      one in whatever language is loaded, `min-width` keeps it from looking cramped in the short ones,
@@ -5575,7 +5632,7 @@ body {
   box-sizing: border-box;
 }
 
-/* Same thin, track-less scrollbar as `.box .content` — without it the nav falls back to the
+/* Same thin, track-less scrollbar as `.box .content` - without it the nav falls back to the
    default Chromium bar and looks nothing like the panel scrolling next to it. */
 #settingNav::-webkit-scrollbar {
   width: 11px;
@@ -6045,7 +6102,7 @@ body {
 
 /* One row of peers: every button takes an equal share of the line, with one gap between them all.
    Sized from a basis rather than a column count, so the row still fills itself if it ever has to
-   wrap — and equal shares mean the widest label decides the width, not the order they are in. */
+   wrap - and equal shares mean the widest label decides the width, not the order they are in. */
 #settings #options-notify-test > li {
   display: block;
   flex: 1 1 120px;
@@ -6114,7 +6171,7 @@ body {
   transform: translateY(-3px);
 }
 
-/* Advanced tab: sections use the shared card+header model above — nothing tab-specific
+/* Advanced tab: sections use the shared card+header model above - nothing tab-specific
    is needed for shape any more. Only behaviour tweaks remain. */
 /* Collapse empty status/result lines so they never leave a gap. */
 #settings .content[data-view='advanced'] li:has(> .diag-line:empty:only-child) {
@@ -6562,7 +6619,7 @@ body {
   text-transform: uppercase;
 }
 
-/* Hero/inline headings are not card headers — no bleed, no rule. */
+/* Hero/inline headings are not card headers - no bleed, no rule. */
 #settings .emulator-hero .title,
 #settings .emulator-login-heading > .title {
   margin: 0;
@@ -6572,26 +6629,45 @@ body {
 
 /* A tab scrolls well past one screen, so the header of the block you are reading pins to the top of
    the viewport: the row under the cursor always names the section it belongs to. The card must use
-   `overflow: clip` rather than `hidden` for this — `hidden` makes the card its own (never-scrolling)
+   `overflow: clip` rather than `hidden` for this - `hidden` makes the card its own (never-scrolling)
    scrollport, which cancels sticky positioning outright. `clip` still clips to the rounded corners. */
 #settings .box .content .arrow-list,
 #settings .box .content .emulator-group,
 #settings .box .content #epic-connect,
+#settings .box .content .emulator-login,
 #settings .box .content .settings-card {
   overflow: clip;
 }
+/*
+  The account and custom-theme cards (Steam login, Epic, Xbox, the theme builder) wrap their title in
+  an `.emulator-login-heading` row so it can carry a status badge beside the text. That put the title
+  one level deeper than every selector here reached, so those cards were the only ones in Settings
+  whose header did not pin - the section name scrolled away and smeared under the top blur while
+  every other section kept a crisp bar. The row is the header, so the row is what pins.
+*/
 #settings .box .content .arrow-list > .title,
 #settings .box .content .settings-card > .title,
 #settings .box .content #epic-connect > .title,
+#settings .box .content .settings-card > .emulator-login-heading,
+#settings .box .content .emulator-login > .emulator-login-heading,
 #settings .box .content .emulator-group > .emulator-group-title {
   position: sticky;
   top: 0;
   z-index: 2;
-  /* --set-panel is translucent, which let the rows scroll visibly THROUGH the pinned header — the
-     section title and the first row printed on top of each other. A pinned header has to be opaque:
-     same colour, composited over the modal surface instead of over whatever is passing behind it. */
+  /* --set-panel on its own is translucent enough that rows scrolled visibly THROUGH the pinned
+     header. Compositing it over the modal surface first gives the header a colour of its own
+     instead of one borrowed from whatever is passing behind it. */
   background: color-mix(in srgb, var(--set-panel) 100%, var(--set-modal-top));
-  background-color: color-mix(in srgb, var(--set-surface) 60%, var(--set-modal-top));
+  /* Frosted pane. Fully opaque, the pinned header cut the row passing under it off mid-sentence with
+     a hard edge; fully translucent it printed two lines of text on top of each other. Both are
+     avoided by keeping the same colour at 84% and blurring what is behind it: the row scrolling
+     under reads as an out-of-focus wash, and the heading stays the only legible text on the line. */
+  background-color: color-mix(in srgb, color-mix(in srgb, var(--set-surface) 60%, var(--set-modal-top)) 84%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  /* The blur has to end somewhere: a short downward shade under the existing hairline is what makes
+     the pinned header read as floating over the list rather than clipped out of it. */
+  box-shadow: 0 10px 14px -12px rgba(0, 0, 0, 0.55);
 }
 /* Inline headings live inside a hero/heading block, not at the top of a scrolling card. */
 #settings .emulator-hero .title,
@@ -6603,7 +6679,7 @@ body {
    Every section card folds under its own header. The header becomes the control
    (pointer, hover tint, focus ring, chevron); the card's non-header children are
    hidden by state, which is why this is one of the few justified `!important`s in
-   the file — it has to beat each child's own layout rule (grid/flex/block) without
+   the file - it has to beat each child's own layout rule (grid/flex/block) without
    restating them all. Nothing is wrapped or moved: the i18n loader binds labels
    positionally, so the DOM has to stay exactly as authored. */
 #settings .settings-section-header {
@@ -6683,7 +6759,7 @@ body {
 }
 
 /* A search looks through every section, so a match is never buried in a folded card. The chevrons
-   stay put — the sections have not been opened, the filter is just seeing past them. */
+   stay put - the sections have not been opened, the filter is just seeing past them. */
 #settings.searching .settings-section.is-collapsed > *:not(.settings-section-header) {
   animation: none;
 }
@@ -6771,7 +6847,7 @@ body {
   font-size: 10px;
 }
 
-/* The list inside a section is no longer its own card — the section is. `.emulator-list` also
+/* The list inside a section is no longer its own card - the section is. `.emulator-list` also
    carries `.arrow-list`, so its padding must be cleared or its rows double-indent. */
 #settings .arrow-list > ul,
 #settings .emulator-list,
@@ -6831,7 +6907,7 @@ body {
 
 /* Selective folder rescan: a compact, explicit scope rather than a second opaque full-scan button.
    It is an ordinary settings section (`.settings-card`), so its frame, header and hairline come from
-   the shared section model above and follow the active theme like every other card — it used to
+   the shared section model above and follow the active theme like every other card - it used to
    carry its own accent-washed frame, which read as a foreign element in every palette. */
 #settings .folder-rescan-help {
   margin: 8px 0 0;
@@ -6983,7 +7059,7 @@ body {
 
 /* Rows inside a data list (folder paths) sit within their own sunken panel. These lists are
    direct <ul> children of the section, so they'd otherwise inherit the section-row bleed
-   (margin: 0 -14px) and hang outside the panel — clipping the first character of each path. */
+   (margin: 0 -14px) and hang outside the panel - clipping the first character of each path. */
 #settings #defaultdir > li,
 #settings #dirlist > li,
 #settings #libdirlist > li {
@@ -7147,10 +7223,22 @@ body {
 #settings .emulator-group,
 #settings .emulator-login {
   margin: 0 0 12px;
+  /* No padding above: its heading is a pinned header bar like every other card's and has to start
+     at the card's own top edge, with its own 9px of padding doing the spacing. */
+  padding-top: 0;
   border: 1px solid var(--set-hairline-soft);
   border-radius: 10px;
   background: var(--set-panel);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+/* This card pads itself by 16px rather than the 14px a .settings-card uses, so its header bleeds
+   by that much instead - a pinned bar has to reach both edges or the seam shows. */
+#settings .emulator-login > .emulator-login-heading {
+  margin-left: -16px;
+  margin-right: -16px;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 #settings .emulator-hero {
@@ -7191,7 +7279,7 @@ body {
   margin-bottom: 18px;
 }
 
-/* Emulator group headers use the shared card header (see the section model above) —
+/* Emulator group headers use the shared card header (see the section model above) -
    the old filled bar is gone so Emulator reads like every other tab. */
 
 #settings .emulator-login {
@@ -7202,7 +7290,7 @@ body {
   display: block;
 }
 
-/* Account cards (Steam login, Epic connect) are the SAME card — identical geometry AND the same
+/* Account cards (Steam login, Epic connect) are the SAME card - identical geometry AND the same
    amber account surface, so the two account windows read as one component. */
 #settings .emulator-login,
 #settings #epic-connect {
@@ -7244,7 +7332,7 @@ body {
   text-transform: uppercase;
 }
 
-/* Success state (e.g. "Epic account connected") — a connected account is not a warning. */
+/* Success state (e.g. "Epic account connected") - a connected account is not a warning. */
 #settings .emulator-warning.is-success {
   border-color: color-mix(in srgb, var(--success) 34%, transparent);
   color: var(--success);
@@ -7344,7 +7432,7 @@ body {
 }
 
 /* A one-line fact, not a finding: it reads as a caption above the sections rather than as a card
-   competing with them. The Folders disclaimer above keeps the card — it carries a real warning. */
+   competing with them. The Folders disclaimer above keeps the card - it carries a real warning. */
 #options-notify .autosave-hint {
   min-height: 0;
   margin: 0 0 12px;
@@ -7377,7 +7465,7 @@ body {
 }
 
 /* Folder actions use the shared "rich button" shape (icon column + title over sub-label),
-   the same one the account cards use — instead of the old fixed 248×58 box with an
+   the same one the account cards use - instead of the old fixed 248×58 box with an
    absolutely-positioned icon. Buttons without a sub-label stay single-line. */
 #settings .folder-actions .btn {
   min-width: 220px;
@@ -7536,10 +7624,10 @@ body {
 
 /* Preset designer. Everything the designer itself draws follows the app theme; the notification
    being authored is rendered by the generated stylesheet inside #pd-frame, which is deliberately
-   NOT themed — it is the popup, painted from the user's own choices.
+   NOT themed - it is the popup, painted from the user's own choices.
 
    An ordinary settings row (`li.hasHelper`) is a two-column label|control grid with explicit row
-   placement. The designer is not that shape — it is a stack of full-width blocks — so its row opts
+   placement. The designer is not that shape - it is a stack of full-width blocks - so its row opts
    out of the grid entirely rather than fighting the column widths and pinned rows. */
 #settings #options-notify-designer > li {
   display: block;
@@ -7878,7 +7966,7 @@ body {
 }
 
 /* Where the popup appears on screen. Nine cells with the middle one empty: that is the setting's own
-   shape, and it is the same value the Notifications tab keeps — the designer only mirrors it. */
+   shape, and it is the same value the Notifications tab keeps - the designer only mirrors it. */
 #settings .pd-anchors {
   display: grid;
   grid-template-columns: repeat(3, 24px);
@@ -7912,7 +8000,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Scale is an app setting, like the position beside it — the designer only mirrors both. */
+/* Scale is an app setting, like the position beside it - the designer only mirrors both. */
 #settings #pd-scale {
   min-height: 26px;
   padding: 0 6px;
@@ -8069,7 +8157,7 @@ body {
 }
 
 /* The action row also carries `.right`, whose `#settings .arrow-list li .right` rule pins a 230px
-   column — so this needs the extra id to claim the full width and its natural height. */
+   column - so this needs the extra id to claim the full width and its natural height. */
 #settings #options-notify-designer .pd-actions {
   display: flex;
   flex-wrap: wrap;
@@ -8167,6 +8255,16 @@ body {
   body *::after {
     transition: none !important;
     animation: none !important;
+  }
+
+  /* One exception. The settings scroll veil is not motion: its "animation" maps how far the list
+     has scrolled onto an opacity, exactly as a scroll listener toggling a class would, and it never
+     plays on its own. Blanking it does not calm anything - it strands the band at opacity 0 and
+     silently removes the feature for everyone who asked Windows to reduce animation. */
+  #settings .box .content::before {
+    animation: aw-settings-scroll-veil linear both !important;
+    animation-timeline: scroll(nearest block) !important;
+    animation-range: 0 24px !important;
   }
 }
 
@@ -8397,6 +8495,16 @@ body {
   background: var(--set-control-bg);
 }
 
+/*
+  Layer colors carry an alpha channel, and a translucent swatch on a dark panel is indistinguishable
+  from a dark opaque one, so the classic checkerboard is what makes "60% of this blue" readable as
+  transparency rather than as a slightly different blue.
+
+  It has to be UNDER the color, which is why the swatch paints it itself and hands the color and any
+  artwork to ::after. In a `::before` at z-index -1 it was still painted above its parent's own
+  background - negative z-index only goes behind the parent's CONTENT - so the checkerboard tinted
+  every swatch and a layer at 100% opacity looked see-through.
+*/
 #theme-customizer .theme-layer-preview {
   flex: 0 0 auto;
   align-self: flex-start;
@@ -8405,10 +8513,30 @@ body {
   height: 38px;
   border: 1px solid var(--set-hairline);
   border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  position: relative;
+  overflow: hidden;
+  background-color: var(--set-surface-sunken, #1b2432);
+  background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.13) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.13) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.13) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.13) 75%);
+  background-size: 10px 10px;
+  background-position: 0 0, 0 5px, 5px -5px, -5px 0;
+}
+
+/* The layer as it will actually be composited. settings.js writes the two custom properties; at
+   100% this covers the checkerboard completely, which is the whole point. */
+#theme-customizer .theme-layer-preview::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: var(--swatch-color, transparent);
+  background-image: var(--swatch-image, none);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 #theme-customizer .theme-layer-label {
@@ -8455,20 +8583,50 @@ body {
   max-width: 100%;
   flex-wrap: nowrap;
   /* Pin the controls to the right edge exactly like every other layer row, whatever
-     the label width or panel state — nothing may pull them toward the middle. */
+     the label width or panel state - nothing may pull them toward the middle. */
   margin-left: auto;
 }
 
 /* Only the filename may shrink inside the controls: the picker/buttons/selects keep
    their size, and a long image name is truncated with an ellipsis based on the space
-   left by the (localized) label — so the row never wraps or overflows. */
+   left by the (localized) label - so the row never wraps or overflows. */
 #theme-customizer .theme-layer-color,
 #theme-customizer .theme-layer-custom-toggle,
 #theme-customizer .theme-layer-image,
 #theme-customizer .theme-layer-clear-image,
 #theme-customizer .theme-layer-fit,
+#theme-customizer .theme-layer-alpha-group,
 #theme-customizer .theme-layer-effect-toggle {
   flex-shrink: 0;
+}
+
+/* Opacity of the layer color, beside its picker. `<input type="color">` cannot express alpha, so
+   this slider carries it and settings.js recombines the two into the #rrggbbaa the theme stores. */
+#theme-customizer .theme-layer-alpha-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#theme-customizer .theme-layer-alpha {
+  /* Kept short on purpose: the row already carries a picker, an image button, a fit select and
+     two toggles, and the slider is the one control that can afford to give width back to them. */
+  width: 56px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+#theme-customizer .theme-layer-alpha:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+#theme-customizer .theme-layer-alpha-value {
+  min-width: 29px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 #theme-customizer .theme-layer-color {
@@ -8607,7 +8765,11 @@ body {
   border-top-color: var(--set-hairline-soft);
 }
 
-#theme-customizer .theme-layer-effect-type {
+/* Same control, two panels. The gradient's direction select must NOT carry the effect-type class:
+   it sits earlier in the row, so `row.find('.theme-layer-effect-type')` picked it up first and read
+   an angle where the code expected 'veil' or 'blur'. */
+#theme-customizer .theme-layer-effect-type,
+#theme-customizer .theme-layer-gradient-angle {
   height: 26px;
   padding: 0 6px;
   border: 1px solid var(--set-control-border);
@@ -8637,7 +8799,7 @@ body {
 }
 
 #theme-customizer .theme-layer-effect-group input[type='range'] {
-  width: 90px;
+  width: 68px;
   accent-color: var(--accent);
 }
 

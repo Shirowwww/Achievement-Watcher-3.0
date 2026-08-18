@@ -246,6 +246,53 @@ function normalizeColor(value, fallback) {
   return fallback;
 }
 
+/*
+  Alpha support for the layer colors, so a layer can be made partly (or fully) see-through.
+
+  A color is stored the way CSS wants to read it - an 8-digit #rrggbbaa - but `<input type="color">`
+  only ever produces and accepts #rrggbb. These two split a stored color into the pair the editor
+  needs and put it back together, so the alpha survives a round trip through a control that has no
+  concept of it. Everything downstream (color-mix, the gradients, the overlay) already handles an
+  alpha channel, which is why nothing else needed to change.
+*/
+function colorAlpha(value) {
+  const raw = String(value || '').trim();
+  const hex8 = /^#([0-9a-f]{6})([0-9a-f]{2})$/i.exec(raw);
+  if (hex8) return Math.round((parseInt(hex8[2], 16) / 255) * 100);
+  const hex4 = /^#([0-9a-f]{3})([0-9a-f])$/i.exec(raw);
+  if (hex4) return Math.round((parseInt(hex4[2] + hex4[2], 16) / 255) * 100);
+  const rgba = /^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*([\d.]+)\s*\)$/i.exec(raw);
+  if (rgba) {
+    const alpha = Number(rgba[1]);
+    return Number.isFinite(alpha) ? Math.round(Math.min(1, Math.max(0, alpha)) * 100) : 100;
+  }
+  return 100;
+}
+
+// The opaque #rrggbb half of a stored color - what `<input type="color">` can actually display.
+function colorWithoutAlpha(value, fallback = DEFAULT_THEME_COLOR) {
+  const raw = String(value || '').trim();
+  const hex = /^#([0-9a-f]{3,8})$/i.exec(raw);
+  if (hex) {
+    const digits = hex[1];
+    if (digits.length === 3 || digits.length === 4) {
+      return `#${digits.slice(0, 3).split('').map((c) => c + c).join('')}`.toLowerCase();
+    }
+    if (digits.length === 6 || digits.length === 8) return `#${digits.slice(0, 6)}`.toLowerCase();
+  }
+  if (isRgb(raw)) return `#${hexToRgbTriplet(raw).split(',').map((n) => Number(n.trim()).toString(16).padStart(2, '0')).join('')}`;
+  return fallback;
+}
+
+// Recombine the picker's #rrggbb with an opacity percentage. 100% stays a plain 6-digit hex so a
+// theme that never touches opacity keeps writing exactly the files it wrote before.
+function colorWithAlpha(value, opacityPercent) {
+  const base = colorWithoutAlpha(value);
+  const percent = clampInt(opacityPercent, 0, 100, 100);
+  if (percent >= 100) return base;
+  return `${base}${Math.round((percent / 100) * 255).toString(16).padStart(2, '0')}`;
+}
+
 function normalizeFit(value) {
   return FITS.includes(value) ? value : 'cover';
 }
@@ -353,10 +400,16 @@ function saveCustomTheme(userDataPath, theme) {
   return clean;
 }
 
+// The r, g, b of a color, with any alpha channel dropped: the callers that use this all rebuild the
+// alpha themselves (rgba() veils, --accent-soft), so an #rrggbbaa must resolve to its rgb half
+// rather than falling through to the default accent - which is what turned every translucent
+// layer colour into the stock blue.
 function hexToRgbTriplet(value) {
   const raw = String(value || DEFAULT_ACCENT_COLOR).trim().toLowerCase();
-  if (/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/.test(raw)) {
-    const full = raw.length === 4 ? raw.slice(1).split('').map((c) => c + c).join('') : raw.slice(1);
+  if (/^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/.test(raw)) {
+    const digits = raw.slice(1);
+    const short = digits.length === 3 || digits.length === 4;
+    const full = short ? digits.slice(0, 3).split('').map((c) => c + c).join('') : digits.slice(0, 6);
     const n = parseInt(full, 16);
     return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
   }
@@ -399,10 +452,22 @@ function veilLayer(layer) {
   return `linear-gradient(${veilRgba(layer)}, ${veilRgba(layer)})`;
 }
 
+/*
+  Whether the layer's gradient is the thing actually painting it.
+
+  A gradient is listed BEFORE the image in `background-image`, so in CSS it sits on top of the art -
+  an opaque gradient simply hides the picture. An image therefore wins: the stored gradient is left
+  untouched (removing the image brings it back) but nothing is emitted for it, which is why the
+  editor hides the Gradient toggle for a layer that has one.
+*/
+function gradientActive(layer) {
+  return !!(layer && layer.gradient && layer.gradient.enabled === true && !layer.image);
+}
+
 // Optional per-layer gradient: a subtle top-to-bottom depth fade of the chosen color. Used as an
 // extra background layer on surface layers (bg/header/panel/card/settings) when the toggle is on.
 function layerGradient(layer) {
-  if (!layer || !layer.gradient || layer.gradient.enabled !== true) return 'none';
+  if (!gradientActive(layer)) return 'none';
   const from = layer.gradient.from || layer.color || DEFAULT_THEME_COLOR;
   const to = layer.gradient.to || from;
   const angle = Number.isFinite(Number(layer.gradient.angle)) ? Number(layer.gradient.angle) : 180;
@@ -410,7 +475,38 @@ function layerGradient(layer) {
 }
 
 function gradientEnabled(layer) {
-  return !!(layer && layer.gradient && layer.gradient.enabled === true);
+  return gradientActive(layer);
+}
+
+/*
+  A layer the user made see-through with the editor's opacity slider (the alpha half of the stored
+  #rrggbbaa, since `<input type="color">` cannot express one).
+
+  That slider has to be the only thing deciding how much of a layer you see. app.css frosts these
+  surfaces with a backdrop blur, and a blur survives its own color going transparent: at 0% the
+  library panel was still a blurred pane of exactly its own shape rather than being gone, which
+  reads as "the opacity does nothing". A translucent layer therefore drops the blur.
+*/
+function layerIsTranslucent(layer) {
+  return colorAlpha(layer && layer.color) < 100;
+}
+
+/*
+  The blur radius a layer asks for through Effect -> Blur, or 0.
+
+  This is the only thing that can put a blur back on a see-through layer, and it is deliberate: the
+  frost app.css paints automatically is removed the moment the opacity slider leaves 100%, because
+  an unasked-for blur is a second, invisible opacity control. Turning Blur on says "blur what is
+  behind this layer", which is what makes a transparent layer real frosted glass rather than plain
+  glass - and it keeps working all the way down to 0%, where there is nothing left BUT the blur.
+
+  On a layer that also has an image the effect already bakes a blurred copy of the artwork; the two
+  agree, and under an opaque image the backdrop blur is simply invisible.
+*/
+function layerBlurRadius(layer) {
+  const effect = layer && layer.effect;
+  if (!effect || effect.enabled !== true || effect.type !== 'blur') return 0;
+  return clampInt(effect.blur, 0, 40, 8);
 }
 
 function fitProps(fit) {
@@ -465,11 +561,40 @@ function buildCustomAppCss(theme) {
   const panelGrad = gradientEnabled(clean.panel);
   const cardGrad = gradientEnabled(clean.card);
   const settingsGrad = gradientEnabled(clean.settings);
+  // title-bar is a shadow-DOM custom element: a light-DOM `title-bar { background-color: ... }`
+  // rule can never win against the shadow tree's own :host rule (:host always outranks a bare type
+  // selector on specificity), so the readability scrim/gradient overrides have to be handed in
+  // through a custom property that :host itself reads - see titlebar.css.
+  //
+  // The plain-color 72% mix only reads as an elegant glow, not a washed-out bar, because --bg-glow
+  // feeds the SAME color into body's radial-gradient top stop, so what shows through the header is
+  // normally a close match for the header's own color. A Background image replaces that gradient
+  // outright (see the `body {}` override below), so the header would instead blend with someone
+  // else's unrelated, unevenly-lit artwork - a custom theme with a photo background is exactly what
+  // "half-transparent title bar" bug reports turned out to be. Once that assumption is gone, the
+  // header falls back to its own picked color at full strength (still honouring any alpha the user
+  // set on it) instead of an extra, unconditional 72% dampening on top.
+  const headerScrim = headerGrad
+    ? 'transparent'
+    : clean.header.image
+      ? 'rgba(0, 0, 0, 0.30)'
+      : clean.bg.image
+        ? header
+        : `color-mix(in srgb, ${header} 72%, transparent)`;
+  // Same trap for the header's border/shadow: crisp() below clears these via a light-DOM
+  // `title-bar { border-color: transparent; box-shadow: none; }` rule for every other layer, but
+  // :host already declares both, so for title-bar specifically that clear needs the var path too.
+  const headerFullyInvisible = colorAlpha(clean.header.color) === 0;
+  const headerBorder = headerFullyInvisible ? 'transparent' : 'color-mix(in srgb, var(--border) 15%, transparent)';
+  const headerShadow = headerFullyInvisible ? 'none' : '0 10px 30px rgba(0, 0, 0, 0.06)';
 
   const rules = [
     ':root {',
     `  --bg-base: ${bg};`,
     `  --bg-glow: ${header};`,
+    `  --aw-header-scrim: ${headerScrim};`,
+    `  --aw-header-border: ${headerBorder};`,
+    `  --aw-header-shadow: ${headerShadow};`,
     `  --bg-panel: ${panel};`,
     '  --bg-panel-translucent: color-mix(in srgb, var(--bg-panel) 78%, transparent);',
     `  --surface: ${card};`,
@@ -496,14 +621,6 @@ function buildCustomAppCss(theme) {
     `  background-size: auto, 100% 100%, 100% 100%, var(--aw-img-bg-size, cover) !important;`,
     '  background-repeat: no-repeat, no-repeat, no-repeat, var(--aw-img-bg-repeat, no-repeat) !important;',
     '  background-position: center !important;',
-    '}',
-    '',
-    'title-bar {',
-    `  background-color: ${headerGrad ? 'transparent' : `color-mix(in srgb, ${header} 72%, transparent)`};`,
-    `  background-image: ${veilLayer(clean.header)}, var(--aw-grad-header, none), var(--aw-img-header, none);`,
-    '  background-size: auto, 100% 100%, var(--aw-img-header-size, cover);',
-    '  background-repeat: no-repeat, no-repeat, var(--aw-img-header-repeat, no-repeat);',
-    '  background-position: center;',
     '}',
     '',
     `#game-list {
@@ -548,11 +665,6 @@ function buildCustomAppCss(theme) {
   background-repeat: no-repeat, no-repeat, no-repeat, var(--aw-img-bg-repeat, no-repeat) !important;
 }`);
   }
-  if (clean.header.image) {
-    rules.push(`title-bar {
-  background-color: rgba(0, 0, 0, 0.30);
-}`);
-  }
   if (clean.panel.image) {
     rules.push(`#game-list {
   background-color: rgba(0, 0, 0, 0.28);
@@ -580,6 +692,54 @@ function buildCustomAppCss(theme) {
   if (clean.settings.image) {
     rules.push(`#settings .box {
   background-color: rgba(0, 0, 0, 0.12);
+}`);
+  }
+
+  /*
+    Crisp opacity. Whatever the slider leaves visible has to be the layer itself, never a frosted
+    copy of what sits behind it, so a translucent layer clears the backdrop blur app.css gives its
+    surface. At 0% the surface must also stop being traceable at all: the outline and the drop
+    shadow go too, otherwise an "invisible" panel still draws its own silhouette.
+  */
+  const crisp = (selector, layer) => {
+    const radius = layerBlurRadius(layer);
+    if (radius > 0) {
+      rules.push(`${selector} {
+  backdrop-filter: blur(${radius}px);
+  -webkit-backdrop-filter: blur(${radius}px);
+}`);
+      return;
+    }
+    if (!layerIsTranslucent(layer)) return;
+    const cleared =
+      colorAlpha(layer.color) === 0
+        ? `
+  border-color: transparent;
+  box-shadow: none;`
+        : '';
+    rules.push(`${selector} {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;${cleared}
+}`);
+  };
+  crisp('title-bar', clean.header);
+  crisp('#game-list', clean.panel);
+  crisp('#game-list .game-box', clean.card);
+  crisp(`#settings .box,
+#game-config .box`, clean.settings);
+
+  /*
+    The scrim behind the Settings modal belongs to the same layer as the modal itself: dimmed and
+    blurred, it is what keeps the library panel behind it looking soft and washed out even with the
+    Settings layer taken all the way down to 0%. It fades with that layer instead.
+  */
+  if (layerIsTranslucent(clean.settings)) {
+    rules.push(`#settings .overlay,
+#game-config .overlay {
+  background-color: color-mix(in srgb, var(--set-scrim) ${colorAlpha(clean.settings.color)}%, transparent);
+  background-image: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }`);
   }
 
@@ -678,7 +838,7 @@ function buildOverlayCss(colors, imageTheme) {
   ];
 
   // Same rule as the main window: when an image is set, the layer color must not
-  // cover it — keep a light dark scrim for readability instead.
+  // cover it - keep a light dark scrim for readability instead.
   if (images.bg && images.bg.image) {
     rules.push(`.overlay-panel {
   background-color: rgba(0, 0, 0, 0.25);
@@ -760,6 +920,9 @@ module.exports = {
   IMAGE_LAYER_IDS,
   FITS,
   BUILTIN_COLORS,
+  colorAlpha,
+  colorWithAlpha,
+  colorWithoutAlpha,
   customThemeFile,
   themeImagesDir,
   defaultCustomTheme,

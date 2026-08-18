@@ -13,6 +13,7 @@ const args_split = require('argv-split');
 const { cssUrl } = require(path.join(appPath, 'util/cssUrl.js'));
 const { stripTags } = require(path.join(appPath, 'util/stripTags.js'));
 const { splitLaunchArgs } = require(path.join(appPath, 'util/launchArgs.js'));
+const windowsShellLaunch = require(path.join(appPath, 'util/windowsShellLaunch.js'));
 const { openExternalSafe } = require(path.join(appPath, 'util/externalLink.js'));
 const gameHealthInterfaceMode = require(path.join(appPath, 'util/interfaceMode.js'));
 
@@ -173,11 +174,38 @@ let scanInFlight = false;
 // look new on every tick. Mirrors runBackgroundAutoFix in electron/init.js.
 let knownDiscoveredAppids = null;
 
-function seedNewGameScanBaseline() {
+/*
+  Appids a completed scan discovered but deliberately did not render - no achievements and not
+  installed, merged into another source, filtered out by the current view. Discovery is not stable
+  for these: a phantom save folder can drop out of one poll and reappear in the next, and every
+  reappearance read as "a new game was installed" and triggered a full library refresh. One appid
+  did that 89 times in a single log, each time costing a 2-13s rescan plus its network traffic.
+
+  Counting the misses and ignoring an appid once it has failed to render twice breaks the loop while
+  still letting a genuinely new game through: a transient first-load failure costs one extra scan
+  rather than permanent suppression. A manual refresh clears the memory.
+*/
+const UNRENDERABLE_MISS_LIMIT = 2;
+const unrenderableAppids = new Map();
+
+function isPersistentlyUnrenderable(appid) {
+  return (unrenderableAppids.get(String(appid)) || 0) >= UNRENDERABLE_MISS_LIMIT;
+}
+
+function seedNewGameScanBaseline(renderedList) {
   return achievements
     .detectInstalledAppids(app.config)
     .then((ids) => {
       knownDiscoveredAppids = new Set(ids.map(String));
+      // Within DISCOVER_TTL_MS this reuses the discovery the finished scan was built from, so the
+      // two sets are directly comparable: anything discovered but absent from the rendered list is
+      // a miss for this pass.
+      if (!Array.isArray(renderedList)) return;
+      const rendered = new Set(renderedList.map((game) => String(game && game.appid)));
+      for (const id of knownDiscoveredAppids) {
+        if (rendered.has(id)) unrenderableAppids.delete(id);
+        else unrenderableAppids.set(id, (unrenderableAppids.get(id) || 0) + 1);
+      }
     })
     .catch((err) => debug.log(`[new-game-scan] baseline failed: ${err}`));
 }
@@ -185,17 +213,17 @@ function seedNewGameScanBaseline() {
 // One detection tick: cheap discover, diff against the last discovery, full refresh only on a new one.
 async function runNewGameScan() {
   if (scanInFlight) return; // a scan is already running
-  if ($('#achievement').is(':visible')) return; // user is reading a game's achievements — don't yank the view
-  if ($('title-bar')[0] && $('title-bar')[0].inSettings) return; // user is configuring — leave them be
+  if ($('#achievement').is(':visible')) return; // user is reading a game's achievements - don't yank the view
+  if ($('title-bar')[0] && $('title-bar')[0].inSettings) return; // user is configuring - leave them be
   scanInFlight = true;
   try {
     const discovered = (await achievements.detectInstalledAppids(app.config)).map(String);
     const previous = knownDiscoveredAppids;
     knownDiscoveredAppids = new Set(discovered);
-    if (previous === null) return; // no scan has finished yet — this tick only establishes the baseline
-    const fresh = discovered.filter((id) => !previous.has(id));
+    if (previous === null) return; // no scan has finished yet - this tick only establishes the baseline
+    const fresh = discovered.filter((id) => !previous.has(id) && !isPersistentlyUnrenderable(id));
     if (fresh.length > 0) {
-      debug.log(`[new-game-scan] ${fresh.length} new game(s) detected (${fresh.join(', ')}) — refreshing library`);
+      debug.log(`[new-game-scan] ${fresh.length} new game(s) detected (${fresh.join(', ')}) - refreshing library`);
       app.onStart(); // re-seeds the watchdog gameIndex so the new game is tracked
     }
   } catch (err) {
@@ -207,6 +235,9 @@ async function runNewGameScan() {
 
 // Manual refresh clears the Steam miss caches.
 function forgetScanCaches() {
+  // A manual refresh is the user saying "look again properly", so stop suppressing the appids that
+  // previously failed to render.
+  unrenderableAppids.clear();
   try {
     steamParser.forgetUnresolved();
     // Also drop remembered local-schema locations, so a schema added by hand since the last scan
@@ -258,7 +289,7 @@ const MAX_SKELETON_TILES = 18;
 const DEFAULT_SKELETON_TILES = 12;
 const MIN_STREAMING_SKELETON_TILES = 6;
 // One placeholder past whatever is still coming, so the grid keeps saying "there is more" until the
-// scan actually finishes — clearSkeletonTiles() takes it away at the end.
+// scan actually finishes - clearSkeletonTiles() takes it away at the end.
 const EXTRA_SKELETON_TILES = 1;
 let skeletonStreamActive = false;
 let skeletonSequence = 0;
@@ -284,7 +315,7 @@ function skeletonTileHtml(index) {
 }
 
 // Never show more placeholders than games still to arrive, so a 3-game library does not shimmer
-// with 12 of them — plus the one deliberate extra.
+// with 12 of them - plus the one deliberate extra.
 function skeletonBudget(cap) {
   if (skeletonExpected === null) return cap;
   const remaining = Math.max(0, skeletonExpected - skeletonRendered);
@@ -338,7 +369,7 @@ function replaceSkeletonWith(item) {
   else $('#game-list ul').append(item);
   // makeList reports every game it will deliver, but installed-only hides part of them in CSS, so
   // that total counts tiles the user will never see. A hidden arrival is removed from what is still
-  // expected instead of counting as one delivered — either way the remaining budget drops by one,
+  // expected instead of counting as one delivered - either way the remaining budget drops by one,
   // and the placeholders keep matching the games the grid is actually going to show.
   if (tileHiddenByInstalledFilter(item)) {
     if (skeletonExpected !== null) skeletonExpected -= 1;
@@ -389,7 +420,7 @@ function refreshLibraryProgressFor(appid, games) {
   The Watchdog keeps each game's unlock baseline in memory, so deleting the .db file is only half of
   a reset: the running monitor would still diff the re-earned achievement against a baseline that
   has it and report "already unlocked", costing the user every future notification for that game.
-  Best effort — a monitor that is not running has no memory to clear, and starts from the file.
+  Best effort - a monitor that is not running has no memory to clear, and starts from the file.
 */
 async function forgetWatchdogBaseline(appid) {
   try {
@@ -659,7 +690,7 @@ function openCoverPicker(game, appid, coverCacheAppid) {
           ipcRenderer.invoke('fetch-icon', url, coverCacheAppid),
           new Promise((_, reject) => setTimeout(() => reject(new Error('fetch-icon timeout')), 15000)),
         ]).catch((err) => {
-          debug.warn(`[cover] picker download failed (${err.message || err}) — applying remote URL`);
+          debug.warn(`[cover] picker download failed (${err.message || err}) - applying remote URL`);
           return null;
         });
         const target = coverStore.persist(String(appid), local && local !== url ? local : url, getUserDataPath(), pickerOrientation);
@@ -694,7 +725,7 @@ function openCoverPicker(game, appid, coverCacheAppid) {
     .invoke('get-cover-options', {
       name: game.name,
       orientation: portraitView ? 'portrait' : 'landscape',
-      // Only a real Steam release should hit SteamDB — passing a non-Steam numeric id (GOG/Xbox)
+      // Only a real Steam release should hit SteamDB - passing a non-Steam numeric id (GOG/Xbox)
       // would scrape a page with no assets and stall the gallery for up to 45s.
       steamAppid: steamCoverId,
     })
@@ -803,7 +834,7 @@ function isLegitSteamLibraryGame(game) {
 /*
   Which badge a source label earns. ONE table, because this decision is silently forgiving: an
   unrecognised label does not raise anything, it just falls through to the Steam badge at the end of
-  sourcePresentationFor(). Both directions of a sloppy test therefore ship a plausible wrong badge —
+  sourcePresentationFor(). Both directions of a sloppy test therefore ship a plausible wrong badge -
   too narrow (`=== 'gog'` missing 'GOG Galaxy') mislabelled every official GOG game as Steam, and
   too loose (`includes('ea')` catching 'SmartSteamEmu') mislabelled every cracked Steam game as EA.
 
@@ -825,7 +856,7 @@ const SOURCE_BADGE = {
 
 /*
   Labels that legitimately end on the Steam badge: Steam games seen through an emulator or crack,
-  and the placeholder records. Listing them is what makes the coverage test meaningful — without it
+  and the placeholder records. Listing them is what makes the coverage test meaningful - without it
   "falls through to Steam" would swallow genuinely unclassified labels too.
 */
 const STEAM_BADGE_SOURCES =
@@ -845,7 +876,7 @@ function sourcePresentationFor(game) {
     if (isUbisoft) {
       return {
         img: getSourceImg('ubisoft'),
-        label: t('ubisoft-game-no-achievements-found', 'Ubisoft game — no achievements found', 'Jeu Ubisoft — aucun succès trouvé'),
+        label: t('ubisoft-game-no-achievements-found', 'Ubisoft game - no achievements found', 'Jeu Ubisoft - aucun succès trouvé'),
         kind: 'ubisoft-empty',
       };
     }
@@ -1111,7 +1142,7 @@ function setStartWatchdogButton(button, label) {
 
 /*
   The status reads "<state> | <what that means>". Both halves are locale keys and the separator is
-  drawn in CSS, so no language has to carry punctuation or markup — and the detail can be dropped on
+  drawn in CSS, so no language has to carry punctuation or markup - and the detail can be dropped on
   a narrow window without touching the state.
 */
 function setWatchdogStatus(label, state, detail) {
@@ -1157,7 +1188,7 @@ window.refreshAccessibleNames = () => {
   markDecorativeIcons(document);
 };
 
-// Every Font Awesome glyph in this app is decorative — it always sits beside its own text or inside
+// Every Font Awesome glyph in this app is decorative - it always sits beside its own text or inside
 // a labelled control. Rows are built at runtime (folders, blacklist, presets, game tiles), so an
 // observer keeps marking them instead of each template having to remember.
 function markDecorativeIcons(root) {
@@ -1433,7 +1464,7 @@ var app = {
                 })
             );
 
-            // Last-played timestamp (watchdog playtime tracking) — drives the "recently played" sort.
+            // Last-played timestamp (watchdog playtime tracking) - drives the "recently played" sort.
             let lastPlayed = PlaytimeTracking.lastPlayedSync(game.appid);
 
             let portrait = self.config.achievement.thumbnailPortrait;
@@ -1507,7 +1538,7 @@ var app = {
 
             setTimeout(() => {
               // Keyed off the display setting, not `isPortrait` (which also depends on this game
-              // having portrait art) — a custom pick applies to the orientation the user chose it
+              // having portrait art) - a custom pick applies to the orientation the user chose it
               // in, regardless of whether the default source has art for that shape.
               const tileOrientation = portrait ? 'portrait' : 'landscape';
               const coverOverride = coverOverrideFor(game.appid, tileOrientation);
@@ -1544,7 +1575,7 @@ var app = {
         })
       )
       .then((list) => {
-        // Scan finished — release the re-entry guard. If a refresh was requested while this run was in
+        // Scan finished - release the re-entry guard. If a refresh was requested while this run was in
         // flight, run exactly one more pass now (the just-finished list is stale) and skip finalising it.
         clearTimeout(self.listLoadGuardTimer);
         self.listLoadInFlight = false;
@@ -1562,8 +1593,10 @@ var app = {
         }
         self.hasCompletedFirstScan = true;
         // Baseline for the background detector: the appids this scan was built from. Within the
-        // discovery TTL this reuses the scan's own discovery rather than repeating it.
-        seedNewGameScanBaseline();
+        // discovery TTL this reuses the scan's own discovery rather than repeating it. Passing the
+        // rendered list lets it also record which discovered appids produced no tile, so a phantom
+        // that flickers in and out of discovery stops re-triggering full refreshes.
+        seedNewGameScanBaseline(list);
         if (activeScanScope && previousGames.length > 0 && Array.isArray(list)) {
           const freshAppids = new Set(list.map((game) => String(game && game.appid)));
           const preserved = previousGames.filter(
@@ -1613,7 +1646,7 @@ var app = {
             try {
               const entries = await exeList.list();
               // Known non-game executables (R.exe from SPSS, browser/office tools, …) must never
-              // count as an install proof — a stale "configure executable" pointing at one of those
+              // count as an install proof - a stale "configure executable" pointing at one of those
               // used to mark uninstalled games (e.g. The Last of Us Part II) as installed.
               const withExe = new Set(
                 entries.filter((e) => e.exe && !exeDetect.isKnownNonGameExe(path.basename(e.exe))).map((e) => String(e.appid))
@@ -1762,7 +1795,7 @@ var app = {
           const rawSystem = self.data('system');
           const isConsoleSystem = !!rawSystem && rawSystem !== 'uplay';
           // Manual per-game override (right-click → Emulator source) lets the user force GBE Fork or
-          // Uplay R2 when the on-disk marker heuristic (isUbisoftGame) guesses wrong — e.g. a Ubisoft
+          // Uplay R2 when the on-disk marker heuristic (isUbisoftGame) guesses wrong - e.g. a Ubisoft
           // title repacked with both a steam_api dll and leftover Ubisoft engine files (a Steam-store
           // Ubisoft remaster). `null` means no override: keep the automatic detection.
           const emulatorSourceForced = emulatorSourceOverride.get(appid);
@@ -1795,7 +1828,7 @@ var app = {
           // the install folder, so nothing about it is Steam-specific. It used to live inside the
           // Steam-only branch, which silently denied it to cracked Ubisoft games.
           const appendCrackFixItem = () => {
-            // Community "Fixes & Bypasses" from the CrakFiles list — a SEPARATE launch helper. These
+            // Community "Fixes & Bypasses" from the CrakFiles list - a SEPARATE launch helper. These
             // can overwrite game files (incl. steam_api), so it warns that achievement detection runs
             // through the emulator and the emulator fix may need re-applying. Overwritten files are
             // backed up under <gameDir>/.aw-crackfix-backups/.
@@ -1858,8 +1891,8 @@ var app = {
                         (fix.filename ? `${fix.filename}${badges ? ` [${badges}]` : ''}\n` : '') +
                         t(
                           'crackfix-overwrite-warning',
-                          '\n⚠ A community crack may overwrite game files (incl. steam_api(64).dll). Achievement detection runs through the emulator — if the crack replaces steam_api, re-run "Apply emulator fix" afterwards. Overwritten files are backed up.',
-                          "\n⚠ Un crack communautaire peut écraser des fichiers du jeu (dont steam_api(64).dll). La détection des succès passe par l'émulateur — si le crack remplace steam_api, relance « Appliquer le fix émulateur » après. Les fichiers écrasés sont sauvegardés."
+                          '\n⚠ A community crack may overwrite game files (incl. steam_api(64).dll). Achievement detection runs through the emulator - if the crack replaces steam_api, re-run "Apply emulator fix" afterwards. Overwritten files are backed up.',
+                          "\n⚠ Un crack communautaire peut écraser des fichiers du jeu (dont steam_api(64).dll). La détection des succès passe par l'émulateur - si le crack remplace steam_api, relance « Appliquer le fix émulateur » après. Les fichiers écrasés sont sauvegardés."
                         ),
                       // NB: Windows treats `&` in a button label as the Alt-mnemonic marker and hides
                       // it ("Download  apply"); double it so a literal ampersand shows.
@@ -1931,8 +1964,8 @@ var app = {
                         message: t('pixeldrain-captcha-required-for-this-file', 'Pixeldrain captcha required for this file.', 'Captcha pixeldrain requis pour ce fichier.'),
                         detail: t(
                           'pixeldrain-rate-limited',
-                          "Pixeldrain rate-limited this file (too many downloads): you must solve a captcha in the browser.\n\n1) Open the page and download the .rar.\n2) Come back and select the downloaded file — AW will extract and apply it automatically (overwritten files are backed up).",
-                          "Pixeldrain limite ce fichier (trop de téléchargements) : il faut résoudre un captcha dans le navigateur.\n\n1) Ouvre la page et télécharge le .rar.\n2) Reviens et sélectionne le fichier téléchargé — AW l'extraira et l'appliquera automatiquement (les fichiers écrasés sont sauvegardés)."
+                          "Pixeldrain rate-limited this file (too many downloads): you must solve a captcha in the browser.\n\n1) Open the page and download the .rar.\n2) Come back and select the downloaded file - AW will extract and apply it automatically (overwritten files are backed up).",
+                          "Pixeldrain limite ce fichier (trop de téléchargements) : il faut résoudre un captcha dans le navigateur.\n\n1) Ouvre la page et télécharge le .rar.\n2) Reviens et sélectionne le fichier téléchargé - AW l'extraira et l'appliquera automatiquement (les fichiers écrasés sont sauvegardés)."
                         ),
                         buttons: [
                           t('cancel', 'Cancel', 'Annuler'),
@@ -2019,22 +2052,9 @@ var app = {
           const emulatorMenu = new Menu();
           const folderMenu = new Menu();
           const linkMenu = new Menu();
-          const diagnosisRepairCodes = [
-            'NO_ACHIEVEMENTS_JSON',
-            'BAD_ACHIEVEMENTS_JSON',
-            'ACHIEVEMENTS_JSON_NOT_ARRAY',
-            'MISSING_ACHIEVEMENTS',
-            'NO_STEAM_SETTINGS',
-            'NO_APPID_TXT',
-            'MISSING_ICONS',
-            'NO_DLC_CONFIG',
-            'NO_MAIN_CONFIG',
-            'NO_NEW_APP_TICKET',
-            'NO_GC_TOKEN',
-            'NO_USER_CONFIG',
-            'BAD_DLC_CONFIG',
-            'BAD_USER_CONFIG',
-          ];
+          // One list, shared with Game Health: a second hand-maintained copy is how the two views
+          // came to disagree about which issues the very same repair can fix.
+          const diagnosisRepairCodes = [...gameHealth.REPAIRABLE_GOLDBERG_CODES];
           const canRepairGoldbergReport = (report) => report.issues.some((i) => diagnosisRepairCodes.includes(i.code));
           const buildGoldbergDiagnosisLines = (report) => {
             const emuLabel = {
@@ -2074,7 +2094,7 @@ var app = {
               return r && r.path;
             };
             // Also enable all DLCs (configs.app.ini) and stamp the app's username/language into
-            // configs.user.ini — the full GBE setup, not just achievements.json.
+            // configs.user.ini - the full GBE setup, not just achievements.json.
             return goldberg.repair({
               steamSettings: target,
               appid: writableAppid,
@@ -2142,7 +2162,7 @@ var app = {
 
               const choice = await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
                 type: report.ok && !repairError ? 'info' : 'warning',
-                title: t('goldberg-diagnosis-title', 'Goldberg/GBE diagnosis — {gameName}', 'Diagnostic Goldberg/GBE — {gameName}', { gameName: game?.name || appid }),
+                title: t('goldberg-diagnosis-title', 'Goldberg/GBE diagnosis - {gameName}', 'Diagnostic Goldberg/GBE - {gameName}', { gameName: game?.name || appid }),
                 message: report.ok
                   ? t('setupLooksValid', 'Setup looks valid.', 'La configuration semble valide.')
                   : t('problemsWereDetected', 'Problems were detected.', 'Des problèmes ont été détectés.'),
@@ -2222,7 +2242,7 @@ var app = {
             })
           );
 
-          // Manual override for which emulator family this game's tools should target — for the
+          // Manual override for which emulator family this game's tools should target - for the
           // rare Ubisoft title (e.g. a Steam-store Ubisoft remaster) whose folder trips the on-disk
           // marker heuristic the wrong way, or a genuine Ubisoft install the user wants to try GBE
           // Fork on anyway. Hidden for legit Steam-owned/GOG/Epic records and console emulators,
@@ -2339,7 +2359,7 @@ var app = {
               for (const backup of backups.slice(0, 10)) {
                 restoreMenu.append(
                   new MenuItem({
-                    label: `${backup.at ? new Date(backup.at).toLocaleString() : backup.id} — ${t('reset-ach-backup-files', '{count} file(s)', '{count} fichier(s)', {
+                    label: `${backup.at ? new Date(backup.at).toLocaleString() : backup.id} - ${t('reset-ach-backup-files', '{count} file(s)', '{count} fichier(s)', {
                       count: backup.files,
                     })}`,
                     async click() {
@@ -2563,7 +2583,7 @@ var app = {
 
               // Counterpart to "Back up GBE/Goldberg setup": copy the files from a backup folder
               // (one created by the item above, identified by its backup.json manifest) back over the
-              // live install — the manual undo for a bad emulator fix / DLC edit / DRM strip.
+              // live install - the manual undo for a bad emulator fix / DLC edit / DRM strip.
               emulatorMenu.append(
                 new MenuItem({
                   icon: menuIcon('redo-alt.png'),
@@ -2581,7 +2601,7 @@ var app = {
                         if (picked.canceled || !picked.filePaths || picked.filePaths.length === 0) return;
                         const backupDir = path.resolve(picked.filePaths[0]);
                         const manifest = backupManifestFor(backupDir);
-                        if (!manifest) throw new Error('restore: backup.json manifest is missing — not an AW Next GBE backup');
+                        if (!manifest) throw new Error('restore: backup.json manifest is missing - not an AW Next GBE backup');
                         backup = { backupDir, manifest, createdAt: manifest.createdAt, source: 'manual' };
                       }
                       const confirm = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
@@ -2629,9 +2649,9 @@ var app = {
               Ubisoft installs use Uplay R2 instead of the Steam GBE fix.
 
               A game that already has a setup ('existing-fix') is offered a RE-APPLY rather than
-              nothing at all. The eligibility gate stays conservative where it has to be — the
+              nothing at all. The eligibility gate stays conservative where it has to be - the
               automatic scan and the bulk "fix all found games" pass still refuse those games, so
-              nothing is ever rewritten behind the user's back — but from this menu the absence of
+              nothing is ever rewritten behind the user's back - but from this menu the absence of
               any entry was itself the bug: a repack update that wipes steam_settings, or a setup
               that was applied for the wrong appid, leaves a game that can only be fixed by
               re-applying, and the item silently disappeared exactly then.
@@ -2665,7 +2685,7 @@ var app = {
                         });
                         if (proceed !== 1) return;
                       }
-                      // 1 — reuse the install folder discover() already found; only prompt when
+                      // 1 - reuse the install folder discover() already found; only prompt when
                       // it's genuinely unknown (e.g. a manually-added custom-dir game).
                       const game = list.find((g) => g.appid == appid);
                       let gameDir = game?.gameDir && fs.existsSync(game.gameDir) ? game.gameDir : null;
@@ -2679,7 +2699,7 @@ var app = {
                         gameDir = picked.filePaths[0];
                       }
 
-                      // 1a — Create a portable restore point before any write step. CrakFiles remains
+                      // 1a - Create a portable restore point before any write step. CrakFiles remains
                       // the first actual fix applied, but the user can now undo the pre-fix
                       // steam_settings + steam_api(64).dll state from "Restore latest GBE/Goldberg backup".
                       setGameBoxBusy(self, t('backing-up-before-fix', 'Backing up before fix…', 'Sauvegarde avant fix…'));
@@ -2731,13 +2751,13 @@ var app = {
                             crackNote = t('ncommunity-crack-x-already-applied', '\nCommunity crack: "{name}" already applied', '\nCrack communautaire : « {name} » déjà appliqué', { name: cf.entry?.name });
                             debug.log(`[${appid}] CrakFiles (manual emu fix): already applied "${cf.entry?.name}" via "${cf.matchedName || game?.name}"`);
                           } else if (cf && cf.reason === 'pixeldrain-unavailable') {
-                            // A crack matched but pixeldrain rate-limited it (captcha/paid) — can't be
+                            // A crack matched but pixeldrain rate-limited it (captcha/paid) - can't be
                             // auto-fetched. Note it so the user knows to grab it manually; the emulator
                             // install still proceeds below.
                             crackNote = t(
                               'ncommunity-crack-found-but-pixeldrain-rate-limited-captcha-requi',
-                              '\nCommunity crack found but pixeldrain-rate-limited (captcha required) — download it manually: {url}',
-                              '\nCrack communautaire trouvé mais limité par pixeldrain (captcha requis) — à télécharger à la main : {url}',
+                              '\nCommunity crack found but pixeldrain-rate-limited (captcha required) - download it manually: {url}',
+                              '\nCrack communautaire trouvé mais limité par pixeldrain (captcha requis) - à télécharger à la main : {url}',
                               { url: cf.href || '' }
                             );
                             debug.log(`[${appid}] CrakFiles (manual emu fix): pixeldrain-unavailable (${cf.availability}) ${cf.href || ''}`);
@@ -2749,7 +2769,7 @@ var app = {
                         }
                       }
 
-                      // 1b — if we still don't have a real Steam appid (unconfigured game, no
+                      // 1b - if we still don't have a real Steam appid (unconfigured game, no
                       // steam_appid.txt), resolve it interactively with the fuzzy name search and write
                       // it via repair below. Skipped silently when the name yields no candidates.
                       if (!writableAppid && game?.name) {
@@ -2770,7 +2790,7 @@ var app = {
                         }
                       }
 
-                      // 2 — detect where the dll currently lives. Both arches are handled: an existing
+                      // 2 - detect where the dll currently lives. Both arches are handled: an existing
                       // steam_api.dll and/or steam_api64.dll is replaced in place; a folder with
                       // neither (fresh manual install) gets a 64-bit dll by default.
                       setGameBoxBusy(self, t('preparing', 'Preparing…', 'Préparation…'));
@@ -2822,7 +2842,7 @@ var app = {
                             preferredTag: dlls && dlls.tag ? dlls.tag : null,
                             log: debug,
                           });
-                          const onPrompt = (q) => promptText(`generate_emu_config — ${q}`);
+                          const onPrompt = (q) => promptText(`generate_emu_config - ${q}`);
                           const res = await genEmu.generate({ tool, appid: writableAppid, login, onPrompt, log: debug });
                           let added = 0;
                           for (const dir of steamSettingsDirs) added += genEmu.mergeIntoGame(res.steamSettings, dir).length;
@@ -2844,11 +2864,11 @@ var app = {
                       let drmNote = '';
 
                       // SteamStub: strip it with Steamless so the plain DLL works (the SteamAutoCrack
-                      // way). There is no ColdClient fallback — if Steamless can't strip a detected stub
+                      // way). There is no ColdClient fallback - if Steamless can't strip a detected stub
                       // the plain DLL is still installed and the game may fail to launch.
                       try {
                         const pe = require(path.join(appPath, 'util/pe.js'));
-                        // Skip DRM stripping when the community crack already replaced the runtime — a
+                        // Skip DRM stripping when the community crack already replaced the runtime - a
                         // cracked exe is DRM-free, same call the auto flow makes.
                         const hasSteamStub = !crackApplied && !!(detectedRuntimeExe && detectedRuntimeExe.full && pe.detectSteamStub(detectedRuntimeExe.full));
                         const shouldRunSteamless = !crackApplied && !!(detectedRuntimeExe && detectedRuntimeExe.full && (emuCfg.steamlessAutoUnpack || hasSteamStub));
@@ -2900,7 +2920,7 @@ var app = {
                       }
 
                       {
-                        // ── Standalone (replace steam_api dll) — the only emulator-apply path ──
+                        // ── Standalone (replace steam_api dll) - the only emulator-apply path ──
                         setGameBoxBusy(self, t('installing-the-dll', 'Installing the DLL…', 'Installation de la DLL…'));
                         const pe = require(path.join(appPath, 'util/pe.js'));
                         const missingArch = detectedRuntimeExe && detectedRuntimeExe.full ? pe.exeArch(detectedRuntimeExe.full) : 'x64';
@@ -3036,7 +3056,7 @@ var app = {
                         title: t('remove-steam-drm-steamless', 'Remove Steam DRM (Steamless)', 'Retirer le DRM Steam (Steamless)'),
                         message: exePath
                           ? t('remove-steamstub-from-x', 'Remove SteamStub from: {exe}?', 'Retirer le SteamStub de : {exe} ?', { exe: path.basename(exePath) })
-                          : t('no-exe-detected-choose-one', 'No exe detected — choose one?', 'Aucun exe détecté — en choisir un ?'),
+                          : t('no-exe-detected-choose-one', 'No exe detected - choose one?', 'Aucun exe détecté - en choisir un ?'),
                         detail: t(
                           'steamless-detail',
                           'Modifies the game executable (the original is kept as .steamstub.bak). No effect if the game has no SteamStub DRM.',
@@ -3072,7 +3092,7 @@ var app = {
                         message: result.stripped
                           ? t('steamstub-drm-removed', 'SteamStub DRM removed.', 'DRM SteamStub retiré.')
                           : result.reason === 'no-steamstub'
-                          ? t('no-steamstub-drm-detected-exe-left-unchanged', 'No SteamStub DRM detected — exe left unchanged.', 'Aucun DRM SteamStub détecté — exe inchangé.')
+                          ? t('no-steamstub-drm-detected-exe-left-unchanged', 'No SteamStub DRM detected - exe left unchanged.', 'Aucun DRM SteamStub détecté - exe inchangé.')
                           : t('drm-removal-failed', 'DRM removal failed.', 'Échec du retrait du DRM.'),
                         detail:
                           path.basename(exePath) +
@@ -3101,7 +3121,7 @@ var app = {
 
             // Ubisoft/uPlay counterpart of the GBE Fork block above: maps the game to its Steam
             // equivalent, writes a matching achievements_schema.json for the Uplay R2 loader, and
-            // redirects its save path into %AppData%\GSE Saves\<steamAppid> — already read by AW.
+            // redirects its save path into %AppData%\GSE Saves\<steamAppid> - already read by AW.
             if (isUbisoftSource) {
               if (emulatorMenu.items.length) {
                 emulatorMenu.append(new MenuItem({ type: 'separator' }));
@@ -3123,7 +3143,7 @@ var app = {
                   for (const issue of report.issues) lines.push(`[${issue.level}] ${issue.code}: ${issue.message}`);
                   remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                     type: report.ok ? 'info' : 'warning',
-                    title: t('uplay-r2-diagnosis-title', 'Uplay R2 diagnosis — {gameName}', 'Diagnostic Uplay R2 — {gameName}', { gameName: game?.name || appid }),
+                    title: t('uplay-r2-diagnosis-title', 'Uplay R2 diagnosis - {gameName}', 'Diagnostic Uplay R2 - {gameName}', { gameName: game?.name || appid }),
                     message: report.ok
                       ? t('setupLooksValid', 'Setup looks valid.', 'La configuration semble valide.')
                       : t('problemsWereDetected', 'Problems were detected.', 'Des problèmes ont été détectés.'),
@@ -3189,7 +3209,7 @@ var app = {
                         return;
                       }
 
-                      // Most Ubisoft repacks already ship the Goldberg Uplay R2 loader — they just never
+                      // Most Ubisoft repacks already ship the Goldberg Uplay R2 loader - they just never
                       // configure its achievement half. Only fall back to the user-seeded dll cache when
                       // the game has no loader at all, so a game that already has one is fixable with an
                       // empty cache (all it needs is achievements_schema.json + the ini keys).
@@ -3214,7 +3234,7 @@ var app = {
                       } else if (!uplayR2.inspectInstalledLoaders(emu.dll).supportsAchRedirect) {
                         // The game has a loader, but one too old to understand AchSaveType/AchSavePath.
                         // Everything still works on such a build (AW reads the emulator's own save
-                        // folder), so this is an optional upgrade — and swapping a loader the game
+                        // folder), so this is an optional upgrade - and swapping a loader the game
                         // currently launches with is not something to do behind the user's back.
                         const cacheDir = path.join(getUserDataPath(), 'cache/uplayR2');
                         let cached = { seeded: false, files: {} };
@@ -3266,7 +3286,7 @@ var app = {
                       remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
                         type: 'info',
                         title: t('uplay-r2-installed', 'Uplay R2 installed', 'Uplay R2 installé'),
-                        message: t('uplay-r2-installed-message', '{installedLabel} — {mapped} achievement(s) mapped', '{installedLabel} — {mapped} succès mappé(s)', {
+                        message: t('uplay-r2-installed-message', '{installedLabel} - {mapped} achievement(s) mapped', '{installedLabel} - {mapped} succès mappé(s)', {
                           installedLabel,
                           mapped: Object.keys(summary.achievementsSchemaJson).length,
                         }),
@@ -3333,7 +3353,7 @@ var app = {
               );
 
               // Undo the last fix. Every Uplay R2 repair snapshots the schema + ini files it is about
-              // to overwrite, but nothing could read those back — the Steam side has had its
+              // to overwrite, but nothing could read those back - the Steam side has had its
               // "restore a backup" entry from the start, which is most of why this submenu looked so
               // much thinner. Only offered when a snapshot actually exists.
               {
@@ -3387,7 +3407,7 @@ var app = {
               }
 
               // A cracked Ubisoft game is exactly what the CrakFiles list is full of, and the entry
-              // needs nothing Steam-specific — it was simply unreachable from this branch.
+              // needs nothing Steam-specific - it was simply unreachable from this branch.
               appendCrackFixItem();
 
               emulatorMenu.append(new MenuItem({ type: 'separator' }));
@@ -3469,7 +3489,7 @@ var app = {
                 dataMenu.append(
                   new MenuItem({
                     icon: menuIcon('folder-open.png'),
-                    label: labelCounts.get(label) > 1 ? `${label} — ${rootOf(entry.path)}` : label,
+                    label: labelCounts.get(label) > 1 ? `${label} - ${rootOf(entry.path)}` : label,
                     click: () => revealDataPath(entry.path),
                   })
                 );
@@ -3700,7 +3720,7 @@ var app = {
             const uninstallMenu = new Menu();
             let uninstallEntries = 0;
 
-            // 1) Steam client uninstall (steam://uninstall/<appid>) — offered for real
+            // 1) Steam client uninstall (steam://uninstall/<appid>) - offered for real
             //    Steam-owned games, or any numeric AppID the Steam client confirms as
             //    installed (covers GreenLuma-style libraries too).
             const steamUrl = uninstall.steamUninstallUrl(catalogAppid);
@@ -3759,7 +3779,7 @@ var app = {
               }
             }
 
-            // 2) Local uninstaller / folder removal — never for legit Steam games
+            // 2) Local uninstaller / folder removal - never for legit Steam games
             //    (Steam owns those files and should be the one removing them).
             if (uninstallDir && !isLegitSteamOwned) {
               const local = uninstall.findLocalUninstaller(uninstallDir);
@@ -3852,7 +3872,7 @@ var app = {
                       });
                       if (confirm.response !== 1) return;
                       // Moving a game folder to the Recycle Bin takes as long as the folder is big,
-                      // and the tile gave no sign of it — the same spinner the emulator fix uses says
+                      // and the tile gave no sign of it - the same spinner the emulator fix uses says
                       // the work started and is still going.
                       setGameBoxBusy(self, t('deleting-game-folder', 'Moving to the Recycle Bin…', 'Déplacement vers la Corbeille…'));
                       try {
@@ -4075,7 +4095,7 @@ var app = {
           // resolved used to repaint the *home* screen with this game's artwork, because the
           // back button had already cleared body's style by the time this ran. The header carries
           // the appid only while that game's page is on screen, so it doubles as the freshness
-          // check — it is cleared on the way out and overwritten when another game opens.
+          // check - it is cleared on the way out and overwritten when another game opens.
           if (String($('#achievement .wrapper > .header').attr('data-appid')) !== String(game.appid)) return;
           if (game.system === 'uplay' || game.img?.overlay === true) {
             let gradient = `linear-gradient(to bottom right, color-mix(in srgb, var(--bg-base) 88%, black) 0%, color-mix(in srgb, var(--bg-glow) 78%, black) 100%)`;
@@ -4097,13 +4117,13 @@ var app = {
         $('#achievement .wrapper > .header').removeAttr('data-system');
       }
 
-      // Steam doesn't set a "clienticon" for every app (notably brand-new releases — their store
+      // Steam doesn't set a "clienticon" for every app (notably brand-new releases - their store
       // page/product info simply has no icon hash yet), which used to leave this box empty. Fall
       // back to the header/portrait art so there's always something recognizable to show.
       const headerIconSource = game.img.icon || game.img.header || game.img.portrait;
       const iconEl = $('#achievement .wrapper > .header .title .icon');
       // The icon element is shared across game pages. When this game has no artwork at all it must
-      // be reset to the neutral CSS surface — otherwise the previous game's icon stays behind,
+      // be reset to the neutral CSS surface - otherwise the previous game's icon stays behind,
       // which reads as "this page belongs to another game" (issue #15).
       const resetIconToPlaceholder = () => iconEl.css('background', '');
       if (headerIconSource) {
@@ -4252,7 +4272,7 @@ var app = {
                 </li>
                 `;
 
-        // Hidden achievements are no longer collected into a separate "reveal all" row — they render
+        // Hidden achievements are no longer collected into a separate "reveal all" row - they render
         // inline in the locked list like any other (with their description masked, click to reveal).
         if (achievement.Achieved) {
           unlock.append(template);
@@ -4362,7 +4382,7 @@ var app = {
           rarityContext.kind === 'emulator' ? 'fas fa-trophy' : 'fab fa-steam'
         );
         if (rarityContext.kind === 'xbox') {
-          // Rarity was cached at import time on each schema entry — paint it directly, no network.
+          // Rarity was cached at import time on each schema entry - paint it directly, no network.
           const entries = (game.achievement.list || [])
             .filter((a) => a && a.rarityPct != null && Number.isFinite(Number(a.rarityPct)))
             .map((a) => ({ name: a.name, percent: Number(a.rarityPct) }));
@@ -4411,7 +4431,7 @@ var app = {
         .first();
       if (box.length && typeof this.onGameBoxClick === 'function') {
         // Re-rendering the detail view is what re-applies the overrides to the in-memory game, so
-        // the tile and the header counters are refreshed from it afterwards — otherwise the library
+        // the tile and the header counters are refreshed from it afterwards - otherwise the library
         // kept showing the percentage from the last full scan.
         this.onGameBoxClick(box, gameList);
       }
@@ -4423,7 +4443,7 @@ var app = {
     }
   },
   /*
-    Reset a game's achievements so they can be earned — and announced — again.
+    Reset a game's achievements so they can be earned - and announced - again.
 
     Everything is backed up before a single byte is written (parser/achievementReset.js), the user
     approves the actual file list rather than a promise, and the Watchdog is told to drop its
@@ -4527,7 +4547,7 @@ var app = {
       detail:
         result.errors.length > 0
           ? `${t('reset-ach-done-detail', 'Backup: {path}', 'Sauvegarde : {path}', { path: result.backupDir })}\n${result.errors
-              .map((entry) => `• ${entry.path} — ${entry.message}`)
+              .map((entry) => `• ${entry.path} - ${entry.message}`)
               .join('\n')}`
           : t('reset-ach-done-detail', 'Backup: {path}', 'Sauvegarde : {path}', { path: result.backupDir }),
       buttons: [t('ok', 'OK', 'OK'), t('open-backup-folder', 'Open backup folder', 'Ouvrir la sauvegarde')],
@@ -4591,7 +4611,7 @@ var app = {
       message: t('restored-x-item-s', 'Restored {count} item(s)', '{count} élément(s) restauré(s)', { count: result.restored }),
       detail:
         result.errors.length > 0
-          ? result.errors.map((entry) => `• ${entry.path} — ${entry.message}`).join('\n')
+          ? result.errors.map((entry) => `• ${entry.path} - ${entry.message}`).join('\n')
           : t('reset-ach-restore-rescan', 'Refresh the library to read the restored unlocks back in.', 'Rafraîchis la bibliothèque pour relire les succès restaurés.'),
     });
     return true;
@@ -4637,7 +4657,7 @@ var app = {
           debug.warn(`[${appid}] disabled broken Steam API bypass before launch: ${recovery.files.map((file) => file.from).join(', ')}`);
         }
       }
-      // spawn() takes (command, args, options) — there is no callback overload, so the old 4th-arg
+      // spawn() takes (command, args, options) - there is no callback overload, so the old 4th-arg
       // callback was dead code and launch failures (missing/blocked exe) were swallowed silently.
       // Listen on 'error' and surface it so the user knows the click did something.
       const reportLaunchFailure = (error) => {
@@ -4650,12 +4670,83 @@ var app = {
           detail: `${error}`,
         });
       };
+      const shellLaunch = (elevate = false) =>
+        ipcRenderer.invoke('launch-game-via-shell', {
+          executable: cfg.exe,
+          args: cfg.args || '',
+          workingDirectory: path.dirname(cfg.exe),
+          elevate,
+        });
+      /*
+        spawn() is CreateProcess, which cannot start an executable whose manifest requires
+        administrator: Windows fails it with ERROR_ELEVATION_REQUIRED, reported here as EACCES, and
+        the user just saw "Could not start the game" on a game that runs fine from Explorer.
+        ShellExecute (Start-Process) does honour the manifest and raises the normal UAC prompt, so an
+        EACCES is retried through it before anything is reported as broken. If even that is refused -
+        a launcher that needs administrator without declaring it - the elevated retry is offered
+        explicitly rather than performed silently, because it is a prompt the user has to consent to.
+      */
+      const recoverFromLaunchDenied = async (error) => {
+        if (process.platform !== 'win32' || !windowsShellLaunch.isElevationLikeError(error)) {
+          reportLaunchFailure(error);
+          return;
+        }
+        debug.warn(`[${appid}] direct launch was denied (${error && error.code ? error.code : error}) - retrying through the Windows shell`);
+        const viaShell = await shellLaunch(false);
+        if (viaShell && viaShell.ok) {
+          clearGameBoxBusy(gameBox);
+          return;
+        }
+        if (viaShell && viaShell.declined) {
+          // The UAC prompt was dismissed. Nothing failed, so nothing is reported.
+          clearGameBoxBusy(gameBox);
+          return;
+        }
+        const answer = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+          type: 'question',
+          title: t('launch-failed', 'Launch failed', 'Échec du lancement'),
+          message: t(
+            'launch-needs-admin',
+            'Windows refused to start this game without administrator rights.',
+            'Windows a refusé de démarrer ce jeu sans les droits administrateur.'
+          ),
+          detail: t(
+            'launch-needs-admin-detail',
+            'Retry as administrator? Windows will ask you to confirm. AW Next itself stays unelevated - only the game is started with administrator rights.',
+            'Réessayer en tant qu’administrateur ? Windows vous demandera de confirmer. AW Next reste sans élévation : seul le jeu est démarré avec les droits administrateur.'
+          ),
+          buttons: [t('cancel', 'Cancel', 'Annuler'), t('launch-as-admin', 'Run as administrator', 'Exécuter en tant qu’administrateur')],
+          defaultId: 1,
+          cancelId: 0,
+          noLink: true,
+        });
+        if (answer !== 1) {
+          clearGameBoxBusy(gameBox);
+          return;
+        }
+        const elevated = await shellLaunch(true);
+        if (elevated && elevated.ok) {
+          clearGameBoxBusy(gameBox);
+          return;
+        }
+        if (elevated && elevated.declined) {
+          clearGameBoxBusy(gameBox);
+          return;
+        }
+        reportLaunchFailure((elevated && elevated.error) || (viaShell && viaShell.error) || error);
+      };
       try {
         if (process.platform === 'win32' && gameRecord && gameRecord.manual) {
           // ShellExecute gives GUI/.NET programs a normal Windows launch environment. Ryujinx
           // crashes in Console.Title when started as a detached child with ignored stdio handles.
-          const result = await ipcRenderer.invoke('launch-game-via-shell', { executable: cfg.exe, args: cfg.args || '' });
-          if (!result || !result.ok) throw new Error((result && result.error) || 'Windows shell launch failed');
+          const result = await shellLaunch(false);
+          if (!result || !result.ok) {
+            if (result && result.declined) {
+              clearGameBoxBusy(gameBox);
+              return;
+            }
+            throw new Error((result && result.error) || 'Windows shell launch failed');
+          }
           clearGameBoxBusy(gameBox);
           return;
         }
@@ -4668,10 +4759,14 @@ var app = {
           stdio: 'ignore',
         });
         game.once('spawn', () => setTimeout(() => clearGameBoxBusy(gameBox), 350));
-        game.on('error', reportLaunchFailure);
+        // 'error' fires after the click has already returned, so the recovery has to own its own
+        // failures: an unhandled rejection here would leave the tile spinning with nothing said.
+        game.on('error', (error) => {
+          recoverFromLaunchDenied(error).catch((err) => reportLaunchFailure(err));
+        });
         game.unref();
       } catch (error) {
-        reportLaunchFailure(error);
+        await recoverFromLaunchDenied(error);
       }
     }
   },
@@ -4767,7 +4862,7 @@ function setGameConfigView(view) {
 
 /*
   Everything Game Health reasons about, read once per panel open. Anything unavailable stays absent
-  rather than being guessed at — deriveHealth() reports only on the signals it is actually given.
+  rather than being guessed at - deriveHealth() reports only on the signals it is actually given.
 */
 async function collectGameHealthSignals(appid) {
   const game = gameList.find((g) => g.appid == appid) || {};
@@ -4881,7 +4976,7 @@ function gameHealthExplanation(report) {
     case 'not-installed':
       return t('gh-why-not-installed', "This game isn't installed on this PC, or AW Next can't tell where it is. Choose its executable so it can be watched.", "Ce jeu n'est pas installé sur ce PC, ou AW Next ne sait pas où il se trouve. Choisis son exécutable pour qu'il puisse être suivi.");
     case 'install-gone':
-      return t('gh-why-install-gone', 'The game folder AW Next knew about is gone — it was moved, uninstalled, or is on a drive that is not connected. Point AW Next at the game again.', "Le dossier du jeu connu d'AW Next a disparu : déplacé, désinstallé, ou sur un disque non connecté. Indique à nouveau son emplacement.", p);
+      return t('gh-why-install-gone', 'The game folder AW Next knew about is gone - it was moved, uninstalled, or is on a drive that is not connected. Point AW Next at the game again.', "Le dossier du jeu connu d'AW Next a disparu : déplacé, désinstallé, ou sur un disque non connecté. Indique à nouveau son emplacement.", p);
     case 'no-achievement-data':
       return t('gh-why-no-achievement-data', 'No achievement list could be found for this game, so there is nothing to track yet. Games with no achievements at all are normal here.', "Aucune liste de succès n'a été trouvée pour ce jeu, il n'y a donc rien à suivre. C'est normal pour un jeu sans succès.");
     case 'emulator-missing':
@@ -4899,7 +4994,7 @@ function gameHealthExplanation(report) {
     case 'not-watched':
       return t('gh-why-not-watched', "Everything needed is in place, but AW Next isn't watching this game while it runs, so playtime and live unlock notifications won't happen.", "Tout est en place, mais AW Next ne surveille pas ce jeu pendant qu'il tourne : ni temps de jeu ni notifications en direct.");
     case 'appid-mismatch':
-      return t('gh-why-appid-mismatch', 'The emulator in this game’s folder announces game ID {appidOnDisk}, but AW Next matched this game to {appidExpected}. Achievements unlocked under the wrong ID are recorded against another game. Correct the file if {appidExpected} is the right game — the current value is kept.', 'L’émulateur du dossier de ce jeu annonce l’identifiant {appidOnDisk}, alors qu’AW Next a associé ce jeu à {appidExpected}. Les succès débloqués sous le mauvais identifiant sont enregistrés sur un autre jeu. Corrige le fichier si {appidExpected} est le bon jeu — la valeur actuelle est conservée.', p);
+      return t('gh-why-appid-mismatch', 'The emulator in this game’s folder announces game ID {appidOnDisk}, but AW Next matched this game to {appidExpected}. Achievements unlocked under the wrong ID are recorded against another game. Correct the file if {appidExpected} is the right game - the current value is kept.', 'L’émulateur du dossier de ce jeu annonce l’identifiant {appidOnDisk}, alors qu’AW Next a associé ce jeu à {appidExpected}. Les succès débloqués sous le mauvais identifiant sont enregistrés sur un autre jeu. Corrige le fichier si {appidExpected} est le bon jeu - la valeur actuelle est conservée.', p);
     case 'notification-failed':
       return t('gh-why-notification-failed', 'This game is tracked correctly and its unlocks are being seen, but the last notification could not be sent. Send a test notification to check the display path.', "Ce jeu est correctement suivi et ses déblocages sont bien vus, mais la dernière notification n'a pas pu être envoyée. Envoie une notification de test pour vérifier l'affichage.");
     case 'progress-muted':
@@ -4998,11 +5093,11 @@ function gameHealthSimpleCheckValue(entry) {
         return t('gh-simple-notifications-muted', 'Progress notifications are muted', 'Notifications de progression coupées');
       if (entry.level === gameHealth.LEVEL.WARN)
         return t('gh-simple-notifications-failed', 'The last notification could not be sent', "La dernière notification n'a pas pu être envoyée");
-      // Working, but not the way the setting alone would suggest — say which, since "no overlay
+      // Working, but not the way the setting alone would suggest - say which, since "no overlay
       // appeared" is otherwise read as a fault rather than as the fallback doing its job. The
       // comparison lives in gameHealth.js; Simple only picks the sentence.
       if (p.fallbackActive)
-        return t('gh-simple-notifications-fallback', 'Working — Windows fallback active', 'Fonctionnel — repli Windows actif');
+        return t('gh-simple-notifications-fallback', 'Working - Windows fallback active', 'Fonctionnel - repli Windows actif');
       return t('gh-simple-notifications-ok', 'Notifications working', 'Notifications opérationnelles');
     }
   }
@@ -5034,7 +5129,7 @@ function gameHealthTransportLabel(transport) {
 /*
   Why the last notification went where it went. Only the states the user could otherwise misread are
   named: a transport that simply did what the setting says needs no explanation, while one chosen
-  over the configured overlay — or one whose delivery could not be confirmed — does.
+  over the configured overlay - or one whose delivery could not be confirmed - does.
 */
 function gameHealthNotificationReason(params) {
   if (params.outcome === 'unknown') return t('gh-notif-unconfirmed', 'delivery not confirmed', 'diffusion non confirmée');
@@ -5085,10 +5180,10 @@ function gameHealthCheckValue(entry, simple) {
   const missing = t('gh-value-missing', 'not found', 'introuvable');
   switch (entry.id) {
     case 'install':
-      if (p.path) return entry.level === gameHealth.LEVEL.OK ? p.path : `${p.path} — ${missing}`;
+      if (p.path) return entry.level === gameHealth.LEVEL.OK ? p.path : `${p.path} - ${missing}`;
       return missing;
     case 'executable':
-      if (p.path) return entry.level === gameHealth.LEVEL.OK ? p.path : `${p.path} — ${missing}`;
+      if (p.path) return entry.level === gameHealth.LEVEL.OK ? p.path : `${p.path} - ${missing}`;
       return missing;
     case 'identity':
       return [p.appid, p.source].filter(Boolean).join(' · ') || missing;
@@ -5210,7 +5305,7 @@ async function renderGameHealth(appid) {
     chip.attr('data-state', gameHealth.STATE.ATTENTION);
     chip.find('i').attr('class', `fas ${GAME_HEALTH_STATE_ICON[gameHealth.STATE.ATTENTION]}`);
     chip.find('.gh-state-label').text(gameHealthStateLabel(gameHealth.STATE.ATTENTION));
-    root.find('.gh-explanation').text(`${t('unexpected-error', 'Unexpected Error', 'Erreur inattendue')} — ${err && (err.message || err)}`);
+    root.find('.gh-explanation').text(`${t('unexpected-error', 'Unexpected Error', 'Erreur inattendue')} - ${err && (err.message || err)}`);
   }
 }
 
@@ -5297,7 +5392,7 @@ async function runGameHealthAction(appid, action, button) {
 
   if (action === gameHealth.ACTION.TEST_NOTIFICATION) {
     // The same path the Settings and first-run tests use, so it exercises the transport the user
-    // actually configured and reports its own failure the same way they already know — but carrying
+    // actually configured and reports its own failure the same way they already know - but carrying
     // THIS game, so the preview shows what an unlock in it will actually look like.
     const art = game.img || {};
     const artAppid = game.steamappid || appid;
@@ -5305,7 +5400,7 @@ async function runGameHealthAction(appid, action, button) {
       game.img holds fetch-icon TOKENS, not usable URLs: `icon` is a bare Steam content hash and
       `header` a fragment like "header.jpg" or "<hash>/header.jpg". Handing those straight to a
       notification showed no artwork at all. Resolve them the way every other view does, then hand
-      over a plain local path — the overlay's iconPath is a filesystem path, and the Watchdog's
+      over a plain local path - the overlay's iconPath is a filesystem path, and the Watchdog's
       prefetch returns an existing local file untouched.
     */
     const resolveArt = async (token) => {
@@ -5336,8 +5431,20 @@ async function runGameHealthAction(appid, action, button) {
   }
 
   if (action === gameHealth.ACTION.REPAIR_DATA) {
+    /*
+      Repair the folder the diagnosis actually read, not a guess.
+
+      `game.steamSettings` is absent for plenty of games, and the fallback is <gameDir>/steam_settings
+      - which is the wrong folder whenever the emulator lives in a nested engine directory (Unreal's
+      <Name>/Binaries/Win64 is the common one). The repair then created a brand new steam_settings
+      the emulator never reads: it reported success, nothing changed, and every warning came straight
+      back on the next report. The report's own `steamSettings` is the path diagnose() resolved, so it
+      is the one that gets repaired.
+    */
+    const diagnosed = $('#game-health').data('report');
+    const diagnosedSettings = (diagnosed && diagnosed.technical && diagnosed.technical.goldberg && diagnosed.technical.goldberg.steamSettings) || '';
     const plan = gameHealthRepair.planAchievementDataRepair({
-      steamSettings: game.steamSettings,
+      steamSettings: diagnosedSettings || game.steamSettings,
       gameDir: game.gameDir,
       achievementCount: (game.achievement && game.achievement.total) || 0,
       downloadIcons: !!(app.config.achievement && app.config.achievement.goldbergDownloadIcons),
@@ -5372,6 +5479,10 @@ async function runGameHealthAction(appid, action, button) {
       fetchDlc: (id) => steamParser.getDLCList(id),
       accountName: app.config?.general?.username,
       language: app.config?.achievement?.lang,
+      // An explicit repair must be able to clear NO_USER_CONFIG / BAD_USER_CONFIG. Without this the
+      // file was only written when the app had a username or language to stamp into it, so on a
+      // default install the repair skipped it entirely and both warnings survived every run.
+      fillUserDefaults: true,
     });
     remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
       type: 'info',
@@ -5503,7 +5614,7 @@ async function runGameHealthAction(appid, action, button) {
           t('game-config-placeholder', '…Click EDIT to choose the executable…', '…Cliquez sur MODIFIER pour choisir l’exécutable…')
         );
         $('#game-config .unlink').attr('title', t('game-config-unlink', 'Unlink executable', "Dissocier l'exécutable"));
-        // The tab labels are (re)applied every time the panel opens, in onConfigButtonClick — this
+        // The tab labels are (re)applied every time the panel opens, in onConfigButtonClick - this
         // startup pass only covers the case where it is inspected before its first open.
         applyGameConfigTabLabels();
       } catch (err) {
@@ -5612,7 +5723,7 @@ async function runGameHealthAction(appid, action, button) {
       $('#fix-all-games').on('click', async function () {
         if (fixAllRunning) return;
         const result = $('#fix-all-result');
-        // Only games with a live install dir, a usable appid/schema and an emulator signal —
+        // Only games with a live install dir, a usable appid/schema and an emulator signal -
         // never touch plain legit Steam installs.
         const targets = gameList.filter(
           (g) =>
@@ -5651,7 +5762,7 @@ async function runGameHealthAction(appid, action, button) {
         let failed = 0;
         for (let i = 0; i < targets.length; i++) {
           const game = targets[i];
-          result.text((t('fixing', 'Fixing', 'Réparation')) + ` ${i + 1} / ${targets.length} — ${game.name}`);
+          result.text((t('fixing', 'Fixing', 'Réparation')) + ` ${i + 1} / ${targets.length} - ${game.name}`);
           try {
             const detectedEmu = goldberg.detectEmulator(game.gameDir);
             const detectedExe = exeDetect.detect(game.gameDir, game.name || '', { dllPaths: detectedEmu.dll });
@@ -5721,7 +5832,7 @@ async function runGameHealthAction(appid, action, button) {
         }
         const skipped = targets.length - fixed - failed;
         result.text(
-          t('done-x-game-s-fixed-x-skipped-x-failed', 'Done — {fixed} game(s) fixed, {skipped} skipped, {failed} failed.', 'Terminé — {fixed} jeu(x) réparé(s), {skipped} ignoré(s), {failed} en échec.', { fixed, skipped, failed })
+          t('done-x-game-s-fixed-x-skipped-x-failed', 'Done - {fixed} game(s) fixed, {skipped} skipped, {failed} failed.', 'Terminé - {fixed} jeu(x) réparé(s), {skipped} ignoré(s), {failed} en échec.', { fixed, skipped, failed })
         );
         $(this).css('pointer-events', 'initial');
         fixAllRunning = false;

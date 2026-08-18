@@ -75,40 +75,58 @@ exports.default = async function afterPack(context) {
     console.log(`[afterPack] Pruned ${removedLocales} Chromium locale .pak files (kept en-US)`);
   }
 
-    // Prune non-Windows binaries.
+  // Prune payloads that cannot load on a Windows x64 install.
+  //
+  // Each rule is listed explicitly so a dependency that changes its on-disk layout shows up as
+  // "already absent" in the build log instead of silently reclaiming nothing - which is exactly how
+  // the old koffi rule went stale: koffi 3.x moved its prebuilt binaries out of
+  // koffi/build/koffi/<platform>/ into the scoped @koromix/koffi-win32-<arch> package, so the rule
+  // kept running against a path that no longer existed and reported success for years.
   if (electronPlatformName === 'win32') {
-    // Keep koffi's win32 binaries.
-    const koffiDir = path.join(dest, 'koffi', 'build', 'koffi');
-    if (fs.existsSync(koffiDir)) {
-      let removedKoffi = 0;
-      for (const d of fs.readdirSync(koffiDir)) {
-        if (!d.startsWith('win32')) {
-          saved += rm(path.join(koffiDir, d));
-          removedKoffi++;
-        }
-      }
-      console.log(`[afterPack] Pruned ${removedKoffi} non-Windows koffi platform binaries`);
-    }
+    const unpacked = path.join(appOutDir, 'resources', 'app.asar.unpacked', 'node_modules');
+    const targetArch = 'x64'; // win/x64 is the only Windows target this project publishes.
 
-    // Keep only 7zip-bin's Windows binary.
-    const sevenZipDir = path.join(
-      appOutDir,
-      'resources',
-      'app.asar.unpacked',
-      'node_modules',
-      '7zip-bin'
-    );
-    for (const plat of ['mac', 'linux']) {
+    const rules = [
+      // regodit picks its DLL as `regodit.${process.arch}.dll` (lib/util/ffi.js), so only the
+      // running architecture's copy is ever opened.
+      ...['arm64', 'x86'].map((a) => [`watchdog regodit/${a} DLL`, path.join(dest, 'regodit', 'dist', `regodit.${a}.dll`)]),
+      // koffi's prebuilt .node lives in @koromix/koffi-win32-x64, but koffi/src is NOT build-only:
+      // koffi/index.cjs is a one-line `require("./src/koffi/index.cjs")`, so pruning src/ leaves the
+      // module unloadable and silently kills every koffi consumer - the monitor still starts, and
+      // only "[controller] XInput backend missing" in the log gives it away. Prune vendor/ (a
+      // node-api-headers tree referenced solely by the cnoke build config) and doc/, never src/.
+      ...['vendor', 'doc'].map((d) => [`watchdog koffi/${d}`, path.join(dest, 'koffi', d)]),
+      // Moment's pre-minified bundle is never required by the watchdog.
+      ['watchdog moment/min', path.join(dest, 'moment', 'min')],
+      // 7zip-bin ships every platform and architecture; node-7z resolves one by process.arch.
+      ...['mac', 'linux'].map((p) => [`7zip-bin/${p}`, path.join(unpacked, '7zip-bin', p)]),
+      ...['ia32', 'arm64'].map((a) => [`7zip-bin/win/${a}`, path.join(unpacked, '7zip-bin', 'win', a)]),
+    ];
+
+    for (const [label, target] of rules) {
       const before = saved;
-      saved += rm(path.join(sevenZipDir, plat));
-      if (saved > before) console.log(`[afterPack] Pruned 7zip-bin/${plat}`);
+      saved += rm(target);
+      const delta = saved - before;
+      console.log(delta > 0 ? `[afterPack] Pruned ${label} (${MB(delta)})` : `[afterPack] ${label}: already absent`);
     }
 
-    // Moment's min/ bundle is unused by the watchdog.
-    const momentMin = path.join(dest, 'moment', 'min');
-    const before = saved;
-    saved += rm(momentMin);
-    if (saved > before) console.log('[afterPack] Pruned watchdog moment/min');
+    // Guard the assumptions the rules above are built on. Each of these failures is silent at
+    // runtime - the monitor still starts, one capability just stops working - so the build has to
+    // be what catches them.
+    const mustKeep = [
+      // The architecture regodit will actually dlopen.
+      path.join(dest, 'regodit', 'dist', `regodit.${targetArch}.dll`),
+      // koffi/index.cjs is a one-line require of this file, and it in turn loads the prebuilt .node.
+      path.join(dest, 'koffi', 'src', 'koffi', 'index.cjs'),
+      path.join(dest, '@koromix', `koffi-win32-${targetArch}`, `win32_${targetArch}`, 'koffi.node'),
+      // The 7-Zip build node-7z resolves by process.arch.
+      path.join(unpacked, '7zip-bin', 'win', targetArch, '7za.exe'),
+    ];
+    const missing = mustKeep.filter((file) => !fs.existsSync(file));
+    if (missing.length) {
+      throw new Error(`[afterPack] pruning removed or missed required runtime file(s):\n  ${missing.join('\n  ')}`);
+    }
+    console.log(`[afterPack] Verified ${mustKeep.length} required runtime file(s) survived pruning`);
   }
 
   console.log(`[afterPack] Total reclaimed: ${MB(saved)}`);

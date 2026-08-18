@@ -26,7 +26,7 @@ migrateLegacyUserData(app.getPath('userData'));
 migrateSouvenirFolder(app.getPath('userData'));
 // Runs on every start, not only on the hop that imported: the folders migrated before this existed
 // still hold a restore-point index pointing at the folder they came from, which keeps working only
-// until that folder is uninstalled or deleted. Idempotent — a repointed entry is skipped next time.
+// until that folder is uninstalled or deleted. Idempotent - a repointed entry is skipped next time.
 retargetBackupIndex(app.getPath('userData'));
 // Keep GPU acceleration enabled, but avoid Chromium background services AW does not use in tray mode.
 for (const sw of ['disable-extensions', 'disable-component-extensions-with-background-pages', 'disable-default-apps', 'disable-background-networking', 'disable-accelerated-video-decode']) {
@@ -133,7 +133,7 @@ function setUpdateDownloadProgress(fraction) {
   try {
     tray.setToolTip(
       fraction >= 0
-        ? `Achievement Watcher Next — ${t('downloading-update', 'downloading update {percent}%', 'téléchargement de la mise à jour {percent} %', { percent: Math.round(fraction * 100) })}`
+        ? `Achievement Watcher Next - ${t('downloading-update', 'downloading update {percent}%', 'téléchargement de la mise à jour {percent} %', { percent: Math.round(fraction * 100) })}`
         : 'Achievement Watcher Next',
     );
   } catch {}
@@ -291,7 +291,7 @@ function setGameActivity(count) {
 }
 const minimist = require('minimist');
 const { execFileSync, execFile, spawn } = require('child_process');
-const { launchViaWindowsShell } = require('../util/windowsShellLaunch.js');
+const { launchViaWindowsShell, isElevationDeclinedError } = require('../util/windowsShellLaunch.js');
 const fs = require('fs');
 const ipc = require(path.join(__dirname, 'ipc.js'));
 const notificationSounds = require(path.join(__dirname, '../util/notificationSounds.js'));
@@ -391,7 +391,7 @@ const SGDB_FETCH_TIMEOUT_MS = 8000;
 const startupArgs = normalizeWindowArgs(minimist(process.argv.slice(1)));
 const safeMode = startupArgs['safe-mode'] === true || startupArgs.safeMode === true || startupArgs['reset-window'] === true;
 
-// SteamGridDB artwork key: the bundled public fallback is used directly — no per-user key.
+// SteamGridDB artwork key: the bundled public fallback is used directly - no per-user key.
 function getSteamGridDbApiKey() {
   return DEFAULT_API_KEY;
 }
@@ -482,6 +482,41 @@ if (!manifest.config.debug) {
 
 let puppeteerWindow = {};
 let MainWin = null;
+/*
+  Tray daemon memory: hiding the window to the tray leaves its renderer (measured ~180 MB) and the
+  GPU process it keeps alive (~140 MB) resident for the rest of the session, even though nothing in
+  the page runs while hidden - every background job (playtime, notifications, achievement polling)
+  belongs to the monitor process, and the headless new-game scan already has a main-process
+  fallback that only engages while MainWin is null (runBackgroundAutoFix).
+
+  So the window is *released* - not just hidden - once it has stayed hidden for a while. The delay
+  keeps a quick hide/show round trip instant; past it, the tray footprint drops to the daemon plus
+  the monitor. Reopening goes through the ordinary createMainWindow() path.
+*/
+const MAIN_WINDOW_IDLE_RELEASE_MS = 5 * 60 * 1000;
+let mainWindowReleaseTimer = null;
+
+function cancelMainWindowRelease() {
+  if (!mainWindowReleaseTimer) return;
+  clearTimeout(mainWindowReleaseTimer);
+  mainWindowReleaseTimer = null;
+}
+
+function scheduleMainWindowRelease() {
+  cancelMainWindowRelease();
+  mainWindowReleaseTimer = setTimeout(() => {
+    mainWindowReleaseTimer = null;
+    // Re-check everything: the user may have reopened the window, or the app may be quitting.
+    if (app.isQuiting) return;
+    if (!MainWin || MainWin.isDestroyed() || MainWin.isVisible()) return;
+    debug.log(`[MainWindow] hidden for ${MAIN_WINDOW_IDLE_RELEASE_MS / 60000} min -> releasing the renderer`);
+    // destroy() fires 'closed' (not 'close'), so it bypasses the close-to-tray interception and runs
+    // the existing teardown: MainWin = null, status poller cleared, Puppeteer closed.
+    MainWin.destroy();
+  }, MAIN_WINDOW_IDLE_RELEASE_MS);
+  // Never let this timer alone hold the process awake.
+  if (typeof mainWindowReleaseTimer.unref === 'function') mainWindowReleaseTimer.unref();
+}
 let overlayWindow = null;
 let overlayVisible = false;
 let overlayWarmupTimer = null;
@@ -751,7 +786,7 @@ async function getSteamData(request) {
 
     if (type === 'data' || type === 'steamhunters') {
       let info = { appid };
-      // Prefer the official endpoint — Steam serves this schema without a key. null means
+      // Prefer the official endpoint - Steam serves this schema without a key. null means
       // transport/auth failure: fall through to the keyless chain, then to the browser scrape.
       const keyless = await getAchievementsKeyless(appid, request.lang);
       if (keyless.source === 'none') {
@@ -1198,15 +1233,70 @@ ipcMain.on('fetch-source-img', async (event, arg) => {
 // Manually-added Windows programs are launched through ShellExecute (Start-Process) with their own
 // working directory. A detached Node child has no valid console handle; .NET GUI programs such as
 // Ryujinx still touch Console.Title during startup and otherwise terminate immediately.
-ipcMain.handle('launch-game-via-shell', async (event, { executable, args = '' } = {}) => {
+//
+// The same route is the fallback for ANY game whose spawn() failed with EACCES: an executable whose
+// manifest requires administrator cannot be started with CreateProcess at all, while ShellExecute
+// elevates it through the normal UAC prompt. `elevate` forces that prompt for the executables that
+// need administrator rights without declaring it in their manifest.
+ipcMain.handle('launch-game-via-shell', async (event, { executable, args = '', workingDirectory = '', elevate = false } = {}) => {
   try {
     if (process.platform !== 'win32') {
       const error = await shell.openPath(String(executable || ''));
       if (error) throw new Error(error);
     } else {
-      await launchViaWindowsShell({ executable, args, workingDirectory: path.dirname(String(executable || '')) });
+      await launchViaWindowsShell({
+        executable,
+        args,
+        workingDirectory: workingDirectory || path.dirname(String(executable || '')),
+        elevate: elevate === true,
+      });
     }
     return { ok: true };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err && err.message ? err.message : String(err),
+      // Declining the UAC prompt is a decision, not a fault - the caller must not report it as one.
+      declined: isElevationDeclinedError(err),
+    };
+  }
+});
+
+/*
+  Settings > Advanced > Diagnostics: write every log file into one .zip the user chooses.
+
+  "Open logs folder" is not enough on its own - the tray daemon, the monitor and each transient
+  notification process keep their streams open and keep appending, so hand-copying picks up
+  half-written lines and some compressors refuse a file whose size changes under them. Reading each
+  log once here and writing the bytes into an archive gives a consistent snapshot without stopping
+  anything, which is what a bug report actually needs.
+*/
+ipcMain.handle('export-logs', async () => {
+  try {
+    const logArchive = require(path.join(__dirname, '..', 'util', 'logArchive.js'));
+    const AdmZip = require('adm-zip');
+    const logsDir = path.join(app.getPath('userData'), 'logs');
+    if (!fs.existsSync(logsDir)) return { ok: false, error: 'no-logs' };
+
+    const res = await dialog.showSaveDialog(MainWin && !MainWin.isDestroyed() ? MainWin : undefined, {
+      title: t('export-logs', 'Export logs', 'Exporter les journaux'),
+      defaultPath: path.join(app.getPath('downloads'), logArchive.suggestedArchiveName(app.getVersion())),
+      filters: [{ name: t('zip-archive', 'Zip archive', 'Archive zip'), extensions: ['zip'] }],
+    });
+    if (res.canceled || !res.filePath) return { ok: false, canceled: true };
+
+    const summary = logArchive.exportLogs({
+      logsDir,
+      destination: res.filePath,
+      Zip: AdmZip,
+      meta: {
+        appVersion: app.getVersion(),
+        versions: process.versions,
+        platform: process.platform,
+        release: os.release(),
+      },
+    });
+    return { ok: true, path: summary.destination, count: summary.files.length, skipped: summary.skipped.length };
   } catch (err) {
     return { ok: false, error: err && err.message ? err.message : String(err) };
   }
@@ -1242,13 +1332,13 @@ ipcMain.handle('check-for-updates', async () => {
   }
 });
 
-// Settings > Advanced: one action that clears every disposable cache the app knows about — the
+// Settings > Advanced: one action that clears every disposable cache the app knows about - the
 // updater's own download cache (the same corrupted-cache scenario the automatic checksum-mismatch
 // recovery handles on its own, offered here pre-emptively or after the "still failed" dialog above)
 // plus the re-fetchable Steam/Ubisoft schema, icon and emulator-tool caches under userData
 // (util/clearableCaches.js's explicit allowlist). Never touches settings, GBE restore-point
 // backups, notification presets, theme images, or the user-seeded Uplay R2 loader cache (no public
-// download source for that one — see the allowlist file for the full "never add" list).
+// download source for that one - see the allowlist file for the full "never add" list).
 ipcMain.handle('clear-update-cache', async () => {
   if (updateDownloading || checksumRetryInFlight) return { ok: false, error: 'download-in-progress' };
   const result = { ok: true, error: null, updateFolder: null, updateCleared: false, updateError: null, clearedCaches: [] };
@@ -1445,7 +1535,7 @@ ipcMain.handle('xbox-pc:login', async () => {
       if (settled || !wc) return;
       // Navigation events carry the redirect URL before it commits; fall back to the current URL
       // for the poll timer and for flows that never surface navigation events (blocked localhost
-      // load — the URL is still readable from getURL() once the navigation is attempted).
+      // load - the URL is still readable from getURL() once the navigation is attempted).
       const result = xboxPc.extractXboxDirectAuthResult(url || wc.getURL(), state);
       if (!result) return;
       if (result.error) {
@@ -1571,7 +1661,7 @@ function handleMonitorMessage(msg) {
 
 /*
   Tell the monitor what became of an overlay notification it asked for. It cannot see this window, so
-  without a report its only evidence would be that process.send() returned — which says nothing about
+  without a report its only evidence would be that process.send() returned - which says nothing about
   a popup appearing. Two stages: 'accepted' (the request is renderable, sent before any artwork is
   fetched so a fallback decision is not held up behind a download or a queued popup) and 'rendered'
   (the window actually loaded, or did not). See watchdog/notification/overlayAck.js.
@@ -1640,12 +1730,12 @@ function launchWatchdog() {
   // Clearing the handle is not enough: scheduleMonitorRespawn() treats a non-null monitorRespawnTimer
   // as "a respawn is already pending" and returns early. A manual restart (tray/Settings) landing
   // while a respawn was pending used to leave the stale, already-cleared handle in place, which
-  // silently disabled supervised respawn for the rest of the session — the next monitor crash then
+  // silently disabled supervised respawn for the rest of the session - the next monitor crash then
   // killed notifications and playtime tracking with no way back short of restarting the app.
   clearTimeout(monitorRespawnTimer);
   monitorRespawnTimer = null;
   if (monitorProc && monitorProc.exitCode === null && !monitorProc.killed) {
-    return { ok: true }; // already running — idempotent
+    return { ok: true }; // already running - idempotent
   }
 
   const baseDir = manifest.config.debug ? path.join(__dirname, '../../') : path.dirname(process.execPath);
@@ -1665,7 +1755,7 @@ function launchWatchdog() {
   }
 
   // Run the monitor under Electron's own Node (ELECTRON_RUN_AS_NODE; replaces the bundled node.exe),
-  // with a 128 MB V8 ceiling — the watchdog is a lightweight event-driven process.
+  // with a 128 MB V8 ceiling - the watchdog is a lightweight event-driven process.
   const nodeOpts = [process.env.NODE_OPTIONS, '--max-old-space-size=128'].filter(Boolean).join(' ');
   const env = {
     ...process.env,
@@ -1768,7 +1858,7 @@ ipcMain.handle('start-watchdog', async (event) => {
 // Watchdog to reload it so non-Steam games added while it is already up are tracked without a
 // restart. No-op when the Watchdog is down; the next launch reads the fresh index anyway.
 // A game's achievements were reset. The monitor caches its unlock baseline in memory, so deleting
-// the file is not enough — ask it to drop the game, or nothing that game unlocks again will notify.
+// the file is not enough - ask it to drop the game, or nothing that game unlocks again will notify.
 ipcMain.handle('watchdog-forget-achievement-baseline', (event, appid) => {
   if (!appid) return false;
   if (!monitorProc || monitorProc.exitCode !== null || monitorProc.killed || !monitorProc.connected) return false;
@@ -1798,6 +1888,22 @@ ipcMain.handle('watchdog-reload-playtime-index', () => {
 let bgAutoFixTimer = null;
 let bgAutoFixInFlight = false;
 let bgKnownAppids = null; // baseline of discovered appids; null until the first full pass seeds it
+// Mirror of the renderer's unrenderable-appid memory (see seedNewGameScanBaseline in app.js): an
+// appid that discovery keeps finding but makeList never returns must not re-trigger a headless scan
+// every poll. This matters more here than in the renderer now that the window is released after
+// sitting hidden, because that hands the polling back to this fallback for most of a session.
+const BG_UNRENDERABLE_MISS_LIMIT = 2;
+const bgUnrenderableAppids = new Map();
+
+function recordBackgroundScanMisses(discoveredIds, renderedList) {
+  if (!Array.isArray(renderedList)) return;
+  const rendered = new Set(renderedList.map((game) => String(game && game.appid)));
+  for (const id of discoveredIds) {
+    const key = String(id);
+    if (rendered.has(key)) bgUnrenderableAppids.delete(key);
+    else bgUnrenderableAppids.set(key, (bgUnrenderableAppids.get(key) || 0) + 1);
+  }
+}
 const BG_AUTOFIX_INTERVAL_MS = 15 * 60 * 1000;
 
 function notifyEmulatorFixed(game) {
@@ -1807,7 +1913,7 @@ function notifyEmulatorFixed(game) {
     const name = (game && game.name) || `AppID ${game && game.appid}`;
     new Notification({
       title: t('emulator-fix-applied', 'Emulator fix applied', 'Correctif émulateur appliqué'),
-      body: t('x-is-ready-achievements-enabled', '{name} is ready — achievements enabled.', '{name} est prêt — succès activés.', { name }),
+      body: t('x-is-ready-achievements-enabled', '{name} is ready - achievements enabled.', '{name} est prêt - succès activés.', { name }),
       icon: path.join(__dirname, '../resources/icon/icon.png'),
     }).show();
     debug.log(`[bg-autofix] toast: emulator fix applied for ${name}`);
@@ -1832,23 +1938,26 @@ async function runBackgroundAutoFix(reason) {
     // when a genuinely new install appears (mirrors the renderer's runNewGameScan).
     if (bgKnownAppids !== null) {
       const discovered = await achievementsJS.detectInstalledAppids(configJS);
-      const fresh = discovered.filter((id) => !bgKnownAppids.has(String(id)));
+      const fresh = discovered.filter(
+        (id) => !bgKnownAppids.has(String(id)) && (bgUnrenderableAppids.get(String(id)) || 0) < BG_UNRENDERABLE_MISS_LIMIT
+      );
       bgKnownAppids = new Set(discovered.map(String));
       if (fresh.length === 0) return;
       debug.log(`[bg-autofix] ${fresh.length} new install(s) detected: ${fresh.join(', ')}`);
     }
-    if (MainWin) return; // user opened the window during the poll — defer to the renderer
+    if (MainWin) return; // user opened the window during the poll - defer to the renderer
     debug.log(`[bg-autofix] running headless scan (${reason})`);
     // makeList drives the same one-shot auto-fix as the UI scan, but the per-game emulator setup now
     // runs in the background and completes AFTER makeList returns. The "emulator fix applied" toast is
     // therefore fired by the setEmulatorFixedHandler callback (registered in startEngines) as each fix
-    // actually lands — not collected from onGame here.
-    await achievementsJS.makeList(configJS, () => {}, () => {});
+    // actually lands - not collected from onGame here.
+    const scanned = await achievementsJS.makeList(configJS, () => {}, () => {});
     try {
       const all = await achievementsJS.detectInstalledAppids(configJS);
       bgKnownAppids = new Set(all.map(String));
+      recordBackgroundScanMisses(all, scanned);
     } catch {}
-    debug.log(`[bg-autofix] done — background emulator setup (if any) will toast on completion`);
+    debug.log(`[bg-autofix] done - background emulator setup (if any) will toast on completion`);
   } catch (err) {
     debug.log(`[bg-autofix] failed: ${err.message || err}`);
   } finally {
@@ -2000,7 +2109,7 @@ async function scrapeWithPuppeteer(info = { appid: 269770 }, alternate) {
           return;
         }
 
-        // NB: the old steamcommunity-in-page and steamdb scrape branches were removed — every caller
+        // NB: the old steamcommunity-in-page and steamdb scrape branches were removed - every caller
         // goes through the steamhunters paths above (the steamcommunity schema now uses a plain HTTP
         // fetch, see fetchSteamCommunityAchievements), and the steamdb branch relied on a
         // `puppeteerWindow.page` that startPuppeteer never created.
@@ -2013,7 +2122,7 @@ async function scrapeWithPuppeteer(info = { appid: 269770 }, alternate) {
 
 // Drop the payloads a SteamDB/HTML scrape never reads: video, fonts and (optionally) images. The
 // shared SteamHunters page does this via startPuppeteer(strip), but the on-demand SteamDB pages open
-// their own page — without this they pull the whole capsule/screenshot gallery over the wire.
+// their own page - without this they pull the whole capsule/screenshot gallery over the wire.
 async function blockHeavyResources(page, { keepImages = false } = {}) {
   const blockedTypes = new Set(['media', 'font', 'stylesheet']);
   if (!keepImages) blockedTypes.add('image');
@@ -2025,7 +2134,7 @@ async function blockHeavyResources(page, { keepImages = false } = {}) {
 }
 
 // SteamDB library-capsule covers: modern Steam covers live under a hashed store_item_assets path
-// that cannot be derived from the appid. SteamDB's app-info page lists the real asset links —
+// that cannot be derived from the appid. SteamDB's app-info page lists the real asset links -
 // scrape it (stealth browser: it 403s plain requests) and cache the whole list for 30 days. The
 // scrape is serialized through one queue so a cold first scan never opens N parallel browser pages.
 const steamdbCoversDir = path.join(userData, 'steam_cache', 'steamdb_covers');
@@ -2120,7 +2229,7 @@ const steamgriddbCoversDir = path.join(userData, 'steam_cache', 'steamgriddb_cov
 const steamgriddbCoversInFlight = new Map();
 
 // Prefer an exact title match, then a token-level match (all query words present, at most one extra
-// word for edition tags). Never take an unrelated first result — a wrong cover is worse than none.
+// word for edition tags). Never take an unrelated first result - a wrong cover is worse than none.
 function pickSteamGridDbGame(games, name) {
   const list = Array.isArray(games) ? games : [];
   const queryTokens = name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(/\s+/).filter(Boolean);
@@ -2291,7 +2400,7 @@ ipcMain.handle('get-top-owners', async () => {
 });
 
 // SteamDB launch-metadata fallback: when local exe detection fails, scrape the game's SteamDB config
-// page (through the stealth browser — it 403s plain requests) to learn the launch executable's
+// page (through the stealth browser - it 403s plain requests) to learn the launch executable's
 // process name so the watchdog can still detect the game running. Disk-cached for 30 days since
 // launch options change rarely. Returns { process_name, best_process_name, arguments } or null.
 const steamdbLaunchInFlight = new Map();
@@ -2548,7 +2657,7 @@ function createMainWindow() {
       // throttle its background timers then (cuts idle CPU). Safe here because the only renderer
       // timer is the 15-min new-game scan (far slower than the ~1/min throttle floor) and WebSocket
       // message handling is unaffected by throttling. The hidden scrape window (searchForSteamAppId)
-      // and the overlay/notification windows keep backgroundThrottling:false — they must run hidden.
+      // and the overlay/notification windows keep backgroundThrottling:false - they must run hidden.
       backgroundThrottling: true,
     };
     // The manifest stores the icon relative to the app root, but BrowserWindow and fs both resolve a
@@ -2583,8 +2692,18 @@ function createMainWindow() {
       if (!MainWin || MainWin.isDestroyed() || MainWin.webContents.isDestroyed()) return;
       MainWin.webContents.send('main-window-visibility', visible);
     };
-    MainWin.on('show', () => sendMainWindowVisibility(true));
-    MainWin.on('hide', () => sendMainWindowVisibility(false));
+    // Hiding to the tray starts the idle countdown that releases the renderer; showing cancels it.
+    // Minimizing deliberately does not: a minimized window keeps its taskbar button, so the user
+    // expects an instant restore, and it is still "open" as far as the background fallbacks are
+    // concerned.
+    MainWin.on('show', () => {
+      cancelMainWindowRelease();
+      sendMainWindowVisibility(true);
+    });
+    MainWin.on('hide', () => {
+      scheduleMainWindowRelease();
+      sendMainWindowVisibility(false);
+    });
     MainWin.webContents.on('did-finish-load', () => sendMainWindowVisibility(MainWin.isVisible()));
 
     //Frameless
@@ -2595,7 +2714,7 @@ function createMainWindow() {
       if (openDevTools) MainWin.webContents.openDevTools({ mode: 'undocked' });
       MainWin.isDev = true;
       console.info((({ node, electron, chrome }) => ({ node, electron, chrome }))(process.versions));
-      // electron-context-menu is ESM-only in v4+ — must use dynamic import
+      // electron-context-menu is ESM-only in v4+ - must use dynamic import
       import('electron-context-menu').then((mod) => {
         const contextMenuFn = mod.default || mod;
         if (typeof contextMenuFn === 'function') {
@@ -2617,7 +2736,7 @@ function createMainWindow() {
       callback({ cancel: false, requestHeaders: details.requestHeaders });
     });
 
-    // External open links: only http(s) reaches the OS — forwarding anything else turned in-page
+    // External open links: only http(s) reaches the OS - forwarding anything else turned in-page
     // navigation into arbitrary protocol launches (ms-msdt:, search-ms:, UNC…).
     const openExternal = function (event, url) {
       if (url.startsWith('file:///')) return;
@@ -2628,14 +2747,14 @@ function createMainWindow() {
     MainWin.webContents.on('will-navigate', openExternal); //a href
 
     // Hardening: never let the renderer spawn its own BrowserWindow; route real links to the OS
-    // browser instead (a href target="_blank" lands here — the legacy 'new-window' event no longer
+    // browser instead (a href target="_blank" lands here - the legacy 'new-window' event no longer
     // exists on Electron ≥22).
     MainWin.webContents.setWindowOpenHandler(({ url }) => {
       if (/^https?:\/\//i.test(url)) shell.openExternal(url).catch(() => {});
       return { action: 'deny' };
     });
 
-    // Hardening: the app needs no web permissions (camera, mic, geolocation, web-notifications, …) —
+    // Hardening: the app needs no web permissions (camera, mic, geolocation, web-notifications, …) -
     // its toasts are native and audio samples use <audio>/main-process playback. Deny every request
     // and check so a compromised renderer can't obtain one.
     session.defaultSession.setPermissionRequestHandler((wc, permission, callback) => callback(false));
@@ -2731,7 +2850,7 @@ function createMainWindow() {
       new Promise(function (resolve) {
         // Clear any handler left behind by a window that was closed before its renderer reported in:
         // handleOnce only unregisters when it actually fires, and registering a second handler for
-        // the same channel throws — which would take the whole window creation down with it.
+        // the same channel throws - which would take the whole window creation down with it.
         ipcMain.removeHandler('components-loaded');
         ipcMain.handleOnce('components-loaded', () => {
           debug.log('[MainWindow] components-loaded');
@@ -2870,7 +2989,7 @@ function scrollOverlayPage(direction) {
 function setOverlayControlMode(active) {
   // No overlayVisible check here on purpose: hideOverlayWindow() calls this to reset click-through
   // state during the hide transition itself, after overlayVisible has already been set false but
-  // while the window is still valid — an overlayVisible guard would silently skip that reset.
+  // while the window is still valid - an overlayVisible guard would silently skip that reset.
   if (!overlayWindow || overlayWindow.isDestroyed()) return;
   // In control mode the overlay must receive stick/dpad-driven moves, so force it interactive
   // (not click-through). Leaving control mode restores the last click-through state.
@@ -3107,7 +3226,7 @@ async function createOverlayWindow(info) {
       if (openDevTools) overlayWindow.webContents.openDevTools({ mode: 'undocked' });
       overlayWindow.isDev = true;
       console.info((({ node, electron, chrome }) => ({ node, electron, chrome }))(process.versions));
-      // electron-context-menu is ESM-only in v4+ — must use dynamic import (same as the MainWin path;
+      // electron-context-menu is ESM-only in v4+ - must use dynamic import (same as the MainWin path;
       // the old require() always threw here and popped a warning dialog on every debug overlay open).
       import('electron-context-menu').then((mod) => {
         const contextMenuFn = mod.default || mod;
@@ -3182,7 +3301,7 @@ async function createOverlayWindow(info) {
 
 function shouldQuitApp() {
   // Resident tray daemon: the app stays alive in the system tray with no window. Closing the main
-  // window (or finishing notifications/overlay) must NEVER quit the process — the monitor keeps
+  // window (or finishing notifications/overlay) must NEVER quit the process - the monitor keeps
   // running in the background. The app quits only via the tray "Quit" item (which sets app.isQuiting
   // and calls app.quit() directly). All the historical `if (shouldQuitApp()) app.quit()` call sites
   // therefore become no-ops.
@@ -3197,7 +3316,7 @@ function parseArgs(args) {
   let description = args['description']; // text
   // What was ASKED for, not what will happen: an overlay request carries an action (open/close/
   // refresh) and createOverlayWindow may well decide to do nothing with it. Logging "opening
-  // overlay window" for an incoming close — which is what this said before — made issue #19 look
+  // overlay window" for an incoming close - which is what this said before - made issue #19 look
   // like it was still happening in the logs long after it was fixed.
   debug.log(`${windowType} window request` + (description ? ` (${description})` : ''));
   switch (windowType) {
@@ -3206,7 +3325,7 @@ function parseArgs(args) {
       break;
     case 'notification':
       // Styled overlay notification. The monitor forwards these args over IPC (handleMonitorMessage)
-      // and they are rendered as a BrowserWindow inside this resident daemon — no transient process,
+      // and they are rendered as a BrowserWindow inside this resident daemon - no transient process,
       // no single-instance forwarding, so no self-quit safety net is needed any more.
       enqueueNotificationFromArgs(args);
       break;
@@ -3234,7 +3353,7 @@ function parseToastActivation(argv) {
       const [appid, achievement] = url.pathname.replace(/^\/+/, '').split('/').map((s) => decodeURIComponent(s || ''));
       if (appid) return { appid, achievement: achievement || '' };
     } catch {
-      /* malformed URI — ignore it rather than crash the launch path */
+      /* malformed URI - ignore it rather than crash the launch path */
     }
   }
   return null;
@@ -3492,7 +3611,7 @@ function createNotificationWindow(data = {}) {
       },
     });
     notif.showInactive();
-    // Optional notification sound — played inside the (renderer) notification window. Volume is a
+    // Optional notification sound - played inside the (renderer) notification window. Volume is a
     // 0–200 percent setting: use a WebAudio gain node for >100% (Audio.volume caps at 1.0), and fall
     // back to Audio.volume (clamped) if WebAudio is unavailable.
     if (data.soundPath) {
@@ -3518,7 +3637,7 @@ function createNotificationWindow(data = {}) {
         .catch(() => {});
     }
     // Custom duration: hold the notification on screen by FREEZING all animations after ~3s for the
-    // chosen time, then resume. Preset-agnostic — it pauses existing AND newly-started animations during
+    // chosen time, then resume. Preset-agnostic - it pauses existing AND newly-started animations during
     // the hold (an interval catches the exit animation), and the close is deferred (see ipc.js, via
     // awFrozenUntil) so a preset's own self-close can't cut the hold short. 'auto' = no freeze.
     const holdMs = Number.isFinite(Number(data.durationMs)) && Number(data.durationMs) > 0 ? Number(data.durationMs) : 0;
@@ -3560,7 +3679,7 @@ function createNotificationWindow(data = {}) {
 
   // Safety net: the preset normally closes itself via window.api.closeNotificationWindow(). With a
   // custom duration the freeze-hold above plays ~3s, freezes for that time, then exits, so the catch-all
-  // must outlast 3s + hold + exit (never cut it short — the close defer in ipc.js targets ~3s+hold+1.2s).
+  // must outlast 3s + hold + exit (never cut it short - the close defer in ipc.js targets ~3s+hold+1.2s).
   // 'auto' keeps the 20s catch-all; the reposition witness stays up much longer so there's time to place it.
   const customMs = Number(data.durationMs);
   const closeAfter = data.reposition ? 120000 : Number.isFinite(customMs) && customMs > 0 ? 3000 + customMs + 4000 : 20000;
@@ -3664,7 +3783,7 @@ ipcMain.on('spawn-overlay-notification', (event, data) => {
 
 // Settings > Notifications "preview" button next to the hotkey field: opens the real in-game overlay
 // with a real game's achievement data so the look (and the configured hotkey binding) can be checked
-// without a game actually running. Toggles like the hotkey itself — a second click while it is open
+// without a game actually running. Toggles like the hotkey itself - a second click while it is open
 // closes it rather than stacking a duplicate window.
 ipcMain.on('overlay-preview', (event, appid) => {
   if (overlayVisible) {
@@ -3705,7 +3824,7 @@ function resolvePrimaryNotificationIcon({ notificationType, iconPath, gameIconPa
 
 // Build an overlay notification from the CLI args the Watchdog passes to a `--wintype=notification`
 // process. This process never runs startEngines (that's the main-window path), so configJS is null
-// here — load the user's overlay settings (preset/position/scale/sound) directly from options.ini so
+// here - load the user's overlay settings (preset/position/scale/sound) directly from options.ini so
 // the notification respects them. The icon is passed as a URL and resolved from the on-disk cache the
 // Watchdog already prefetched into; a short race guards against a slow/offline fetch hanging the
 // transient process (it would otherwise never reach window-all-closed and quit).
@@ -3740,12 +3859,12 @@ async function enqueueNotificationFromArgs(args) {
   /*
     Answer the monitor before fetching any artwork. With no preset folder on disk there is nothing to
     render and saying so immediately is what lets the watchdog put this one notification on a Windows
-    toast instead — a report sent after the downloads, or after this popup waited its turn in the
+    toast instead - a report sent after the downloads, or after this popup waited its turn in the
     queue, would arrive far too late to be the difference between one notification and none.
   */
   const presetFolder = resolvePresetFolder(preset);
   if (!presetFolder) {
-    debug.log(`[overlay-notif] no usable preset folder for "${preset}" — telling the monitor this notification cannot be shown`);
+    debug.log(`[overlay-notif] no usable preset folder for "${preset}" - telling the monitor this notification cannot be shown`);
     reportNotificationOutcome(notifyId, 'accepted', false, 'no-preset');
     return;
   }
@@ -3792,7 +3911,7 @@ async function enqueueNotificationFromArgs(args) {
     A preset may name its own sound, which then wins over the one picked in the Notifications tab:
     that is what lets a shared package sound the way its author designed it, and what makes a
     per-emulator or platinum preset able to bring its own fanfare. '' means the preset has no opinion.
-    Random sound still overrides everything — it is an explicit "surprise me" for every popup.
+    Random sound still overrides everything - it is an explicit "surprise me" for every popup.
   */
   const presetOwnSound = customPreset.presetSound(presetFolder);
   const chosenSound = silent
@@ -3877,7 +3996,7 @@ const presetPackage = require(path.join(__dirname, '../util/presetPackage.js'));
 
 /*
   Where a preset the builder generates is written: <userData>, never the app folder. Once packaged,
-  app/presets lives inside app.asar — a single file — so mkdir below it fails with ENOTDIR, which
+  app/presets lives inside app.asar - a single file - so mkdir below it fails with ENOTDIR, which
   broke Preview and Save on every installed build while a dev run worked. Sounds (userSoundsDir) and
   user themes already work this way, and it also means generated presets survive an update.
   The rule itself lives in util/customPreset.js so it can be unit-tested.
@@ -3893,7 +4012,7 @@ const bundledPresetRoots = () => [
 
 // The builder's own options, stored next to the generated files. Without it a generated preset is
 // write-only: the CSS can be read back but the eight slider/colour values that produced it cannot,
-// so tweaking a preset meant rebuilding it from memory. Purely additive — the notification engine
+// so tweaking a preset meant rebuilding it from memory. Purely additive - the notification engine
 // never reads this file, and a preset that predates it simply cannot be re-opened.
 const { PRESET_OPTIONS_FILE } = customPreset;
 
@@ -3945,7 +4064,7 @@ ipcMain.handle('list-custom-presets', async () => {
 
 /*
   Load one managed preset back into the builder. `editable` is false for an imported preset with no
-  builder options behind it — its look lives in files a slider cannot reproduce, so the builder shows
+  builder options behind it - its look lives in files a slider cannot reproduce, so the builder shows
   it for export and deletion only rather than loading meaningless defaults over the user's controls.
   null when the preset is not one of ours at all.
 */
@@ -3964,7 +4083,7 @@ ipcMain.handle('read-custom-preset', async (event, name) => {
   Delete a preset the app installed. Deliberately narrow: the folder must sit directly under
   "Users Presets" AND carry one of the app's own markers, so a bundled preset (or anything a user
   hand-authored in there) can never be removed through this channel. Without it the builder could
-  only ever add to the preset list — a throwaway attempt had to be deleted from Explorer.
+  only ever add to the preset list - a throwaway attempt had to be deleted from Explorer.
 */
 ipcMain.handle('delete-custom-preset', async (event, name) => {
   const safe = sanitizePresetName(name);
@@ -4012,7 +4131,7 @@ function findPresetFolder(name) {
 }
 
 /*
-  `request` is either `{ name }` — export the preset of that name from disk — or `{ name, options }`,
+  `request` is either `{ name }` - export the preset of that name from disk - or `{ name, options }`,
   which exports the design currently in the builder, saved or not. The second form is what keeps a
   package matching what the user is looking at instead of some other preset that happened to be
   selected elsewhere.
@@ -4134,7 +4253,7 @@ ipcMain.handle('import-preset', async (event, opts = {}) => {
   and a flat placeholder hides exactly the problems (contrast over a bright cover, a cropped icon)
   that the test exists to reveal. So it borrows a game from the library the user already has.
 
-  Returns {} when nothing is cached yet — the caller keeps its placeholder in that case.
+  Returns {} when nothing is cached yet - the caller keeps its placeholder in that case.
 */
 ipcMain.handle('notification-sample-art', async () => {
   try {
@@ -4151,7 +4270,7 @@ ipcMain.handle('notification-sample-art', async () => {
     /*
       Prefer a game the index can name. A preview that shows one game's cover while the line above it
       reads "Sample Game" is worse than either on its own, so the name and the artwork have to come
-      from the same entry — and only the index has both.
+      from the same entry - and only the index has both.
     */
     let named = [];
     try {
@@ -4257,14 +4376,17 @@ ipcMain.handle('pick-theme-image', async (event, layer) => {
     fs.mkdirSync(dir, { recursive: true });
     const ext = path.extname(src).toLowerCase() || '.png';
     const stem = path.basename(src, ext).replace(/[^a-z0-9-_]/gi, '_').slice(0, 48) || 'image';
+    // Adopt any stored copy with identical bytes, no matter which layer imported it first. The old
+    // check only compared against the name THIS layer would use, so one wallpaper applied to several
+    // layers was stored once per layer.
+    const shared = themeImages.findByContent(dir, src);
+    if (shared) {
+      debug.log(`[theme-image] ${layer} <- ${shared} (reused)`);
+      return { ok: true, layer, file: shared };
+    }
     let dest = path.join(dir, `${layer}-${stem}${ext}`);
     let i = 1;
     while (fs.existsSync(dest)) {
-      // Re-picking an image already in the store used to copy it again under " (n)".
-      if (themeImages.sameContent(src, dest)) {
-        debug.log(`[theme-image] ${layer} <- ${dest} (reused)`);
-        return { ok: true, layer, file: dest };
-      }
       dest = path.join(dir, `${layer}-${stem} (${i++})${ext}`);
     }
     fs.copyFileSync(src, dest);
@@ -4304,7 +4426,7 @@ ipcMain.handle('import-sound', async () => {
     const stem = path.basename(src, ext);
     let base = stem + ext;
     let dest = path.join(dir, base);
-    // Don't clobber a different existing file of the same name — suffix " (n)".
+    // Don't clobber a different existing file of the same name - suffix " (n)".
     let i = 1;
     while (fs.existsSync(dest)) {
       try {
@@ -4355,9 +4477,10 @@ function checkResources() {
 
   const resourcesPath = path.join(manifest.config.debug ? path.join(__dirname, '..') : path.join(process.resourcesPath, 'userdata'));
 
-  const media = path.join(resourcesPath, 'Media');
-  copyFolderRecursive(media, path.join(userData, 'Media'));
-
+  // Media/ is deliberately not copied any more: it held byte-identical duplicates of app/sounds/,
+  // and no code path ever read <userData>/Media — notification sounds resolve against the bundled
+  // app/sounds plus user-imported <userData>/sounds. An existing Media/ folder from an older install
+  // is left in place rather than deleted; it is inert and the user owns that directory.
   const view = path.join(resourcesPath, 'view');
   copyFolderRecursive(view, path.join(userData, 'view'));
 
@@ -4367,7 +4490,7 @@ function checkResources() {
   // Startup registration is user-controlled from Settings > General.
 }
 
-// System tray — the app lives here. Single left-click / "Open" shows the UI window; "Quit" is the only
+// System tray - the app lives here. Single left-click / "Open" shows the UI window; "Quit" is the only
 // way to actually exit (it sets app.isQuiting so before-quit tears down the monitor).
 let tray = null;
 function createTray() {
@@ -4413,7 +4536,7 @@ try {
   autoUpdater.on('checking-for-update', () => debug.log('[updater] checking for updates'));
   autoUpdater.on('update-available', async (info) => {
     // A manifest that names the running version, or an older one, is not an update however it got
-    // here — answer it as "up to date" before anything reports an update or downloads an installer.
+    // here - answer it as "up to date" before anything reports an update or downloads an installer.
     if (updateGate.isNotAnUpgrade(info.version, app.getVersion())) {
       debug.log(`[updater] ignoring ${info.version}: not newer than the installed ${app.getVersion()}`);
       manualUpdateResult = 'uptodate';
@@ -4440,7 +4563,7 @@ try {
       }
       if (shouldSuppressUpdatePrompt(info.version, { manual })) return;
       // A game can start between the check being fired and this handler running, and a manual check
-      // is a deliberate request that should still answer. Nothing is recorded — the offer is only
+      // is a deliberate request that should still answer. Nothing is recorded - the offer is only
       // held back, and the game-exit signal brings it straight back.
       if (!manual && isGameRunning()) {
         debug.log(`[updater] version ${info.version} held back: a game is running`);
@@ -4616,13 +4739,13 @@ try {
       openGameFromLaunchArgs(startupToast || startupArgs); // toast activation on a cold start (issue #8)
     })
     .on('window-all-closed', function () {
-      // Resident tray daemon: do NOT quit when the window closes — the tray + background monitor stay
+      // Resident tray daemon: do NOT quit when the window closes - the tray + background monitor stay
       // alive. The app exits only via the tray "Quit" item.
     })
     .on('web-contents-created', (event, contents) => {
       // Default-deny popups for every window (overlay, notification presets, hidden scrape window).
       // MainWin overrides this right after creation with its own handler that routes http(s) links
-      // to the OS browser. (Replaces the dead 'new-window' listener — removed in Electron 22.)
+      // to the OS browser. (Replaces the dead 'new-window' listener - removed in Electron 22.)
       contents.setWindowOpenHandler(() => ({ action: 'deny' }));
     })
     .on('second-instance', async (event, argv, cwd) => {

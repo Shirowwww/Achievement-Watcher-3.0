@@ -55,8 +55,11 @@ body {
   border-radius: 20px;
   /* leave space on the right for the ring */
   padding: 15px 56px 15px 20px;
-  width: fit-content;
-  max-width: 450px;
+  /* One length for every notification, like the PlayStation preset this one is modelled on.
+     `fit-content` sized the card to the achievement name, so the same toast arrived a different
+     width every time and the shortest names produced a stub. The cap it used to grow to is now
+     simply the width. */
+  width: 450px;
   opacity: 0;
   transform: translateX(0) scale(var(--scale, 1));
   transform-origin: center center;

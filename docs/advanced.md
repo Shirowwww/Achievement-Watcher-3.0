@@ -28,9 +28,12 @@ control at the top of Settings if you do not see it. Nothing is lost by switchin
 </div>
 
 The Diagnostics card prints the app, Electron, Node and Chrome versions, and opens the logs folder,
-the data folder or an update check. Those versions and the log files are what a bug report needs -
-see [Troubleshooting](troubleshooting.md#open-logs-and-local-data) for what to collect and how to
-strip private data from it first.
+the data folder or an update check. **Export logs (.zip)** bundles every log file into one archive
+without closing the app first - the processes writing those files never stop, so copying them by
+hand is unreliable in exactly the situation the logs are wanted for. Those versions and the log
+files are what a bug report needs - see
+[Troubleshooting](troubleshooting.md#open-logs-and-local-data) for what to collect and how to strip
+private data from it first.
 
 ## AppID blacklist
 

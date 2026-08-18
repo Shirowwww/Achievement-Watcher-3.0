@@ -25,7 +25,7 @@ const RANDOM_SOUND_VALUE = '__random__';
 
 /*
   Cards whose labels are written imperatively rather than by locale/loader.js's DOM walk. They run
-  once while the panel is wired, so without this they would keep the language that was active then —
+  once while the panel is wired, so without this they would keep the language that was active then -
   and, when they run before the locale bundle is in place, the English/French literal in the `t()`
   call. The loader replays them after applying a language.
 */
@@ -58,7 +58,7 @@ const SETTINGS_SAVE_TIMEOUT_MS = 30000;
    Simple hides three settings tabs and a handful of rows inside the tabs it keeps. Everything is
    hidden with a class and nothing is ever detached: the panel is translated positionally
    (locale/loader.js binds `li:nth-child(n)`), so a mode switch that moved rows would silently
-   re-label the UI in every language. No setting is written, reset or ignored by switching — the
+   re-label the UI in every language. No setting is written, reset or ignored by switching - the
    controls behind Advanced keep the values they already have.
 */
 function currentInterfaceMode() {
@@ -68,7 +68,7 @@ function currentInterfaceMode() {
 /*
   The Sources tab is the one place the mode reasons instead of following a list. A niche source is
   folded away only while it is doing nothing for you: switched off, or already contributing games to
-  the library, and its switch stays. Reading the saved config rather than the <select> matters — this
+  the library, and its switch stays. Reading the saved config rather than the <select> matters - this
   runs before the form is populated when Settings first opens.
 */
 function applySourceVisibility(mode) {
@@ -165,8 +165,8 @@ function applyThemeValue(value) {
 }
 
 // Eighteen built-ins is too many to choose from cold, so the picker opens on a short, deliberately
-// contrasting set — the one light theme, the pure black one, a neutral grey, then four clearly
-// different accent families — and keeps the rest one step away behind "More themes…". Nothing is
+// contrasting set - the one light theme, the pure black one, a neutral grey, then four clearly
+// different accent families - and keeps the rest one step away behind "More themes…". Nothing is
 // removed: expanding appends the remaining built-ins to the same <select>.
 const PRIMARY_THEMES = [
   ['default', 'Steam Blue'],
@@ -197,8 +197,8 @@ let themeListExpanded = false;
 // been saved yet instead of snapping back to the persisted value.
 let themeSelection = null;
 
-// Plain rows on purpose. Tinting each option with its theme's colours was tried both ways — the
-// full palette and a faint accent wash — and neither looked right: a native <select> gives no
+// Plain rows on purpose. Tinting each option with its theme's colours was tried both ways - the
+// full palette and a faint accent wash - and neither looked right: a native <select> gives no
 // control over how the swatch is drawn, so the list reads as a patchwork and the tint competes
 // with Chromium's own highlight for the selected row, which is the one thing it has to make clear.
 function themeOption(value, label) {
@@ -381,7 +381,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const previous = select.val();
       select.empty();
       if (includeNone) {
-        select.append($('<option>').attr('value', '').text(select.attr('data-none') || '—'));
+        select.append($('<option>').attr('value', '').text(select.attr('data-none') || '-'));
       }
       allowedButtons.forEach((button) => {
         select.append(
@@ -551,7 +551,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         }
       }
 
-      // Overlay (in-game) notification controls — enable lives in notification_transport, the look in
+      // Overlay (in-game) notification controls - enable lives in notification_transport, the look in
       // overlay.notification*. The preset dropdown is filled from the bundled preset library.
       const cfgOverlay = app.config.overlay || {};
       $('#option_notifMode').val(app.config.notification_transport.mode || 'auto').change();
@@ -612,7 +612,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           /*
             "Random" is a sound you pick, not a switch beside the list. It used to be its own row,
             which meant the sound dropdown could read "Steam.wav" while every notification played
-            something else — two controls describing one outcome, and the wrong one on top.
+            something else - two controls describing one outcome, and the wrong one on top.
           */
           sel.append($('<option>').attr('value', RANDOM_SOUND_VALUE).text(sel.attr('data-lang-random') || ''));
           (sounds || []).forEach((name) => sel.append($('<option>').attr('value', name).text(name.replace(/\.[^.]+$/, ''))));
@@ -724,6 +724,54 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         debug.log(err);
       }
     });
+    /*
+      Bundle the logs into a .zip the user picks. This exists because copying them by hand while the
+      app runs does not reliably work: the tray daemon, the monitor and each transient notification
+      process keep appending to those files, so a copy catches half-written lines and some
+      compressors fail outright on the size changing under them. The main process reads each log once
+      and writes the bytes into an archive, so a report can be produced without closing anything.
+    */
+    $('#export-logs').click(async function () {
+      const btn = $(this);
+      const result = $('#export-logs-result');
+      if (btn.hasClass('busy')) return;
+      btn.addClass('busy');
+      setTransientStatus(result, t('export-logs-running', 'Collecting logs…', 'Collecte des journaux…'), { sticky: true });
+      try {
+        const summary = await ipcRenderer.invoke('export-logs');
+        if (summary && summary.ok) {
+          // Sticky: the destination path is the whole point of the message, and it is longer than
+          // anyone can read inside the usual 4.5s fade.
+          setTransientStatus(
+            result,
+            t('export-logs-done', '{count} log file(s) written to {path}', '{count} fichier(s) de journal écrits dans {path}', {
+              count: summary.count,
+              path: summary.path,
+            }),
+            { sticky: true }
+          );
+        } else if (summary && summary.canceled) {
+          setTransientStatus(result, '');
+        } else {
+          setTransientStatus(
+            result,
+            t('export-logs-failed', 'Could not export the logs: {error}', 'Impossible d’exporter les journaux : {error}', {
+              error: (summary && summary.error) || 'unknown',
+            }),
+            { duration: 6500 }
+          );
+        }
+      } catch (err) {
+        debug.log(err);
+        setTransientStatus(
+          result,
+          t('export-logs-failed', 'Could not export the logs: {error}', 'Impossible d’exporter les journaux : {error}', { error: `${err}` }),
+          { duration: 6500 }
+        );
+      } finally {
+        btn.removeClass('busy');
+      }
+    });
     $('#open-userdata').click(function () {
       try {
         remote.shell.openPath(ipcRenderer.sendSync('get-user-data-path-sync'));
@@ -774,14 +822,14 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       runUpdateCheck($(this), $('#footer-update-status'));
     });
     // The download runs in the background regardless of which button (if any) started it, so both
-    // status labels track it live — this is the only in-app feedback while it's in progress.
+    // status labels track it live - this is the only in-app feedback while it's in progress.
     ipcRenderer.on('update-download-progress', (event, percent) => {
       const text = t('downloading-update', 'downloading update {percent}%', 'téléchargement de la mise à jour {percent} %', { percent: Math.round(percent) });
       $('#check-for-updates-label, #footer-update-status').removeClass('update-ok update-error').addClass('update-info').text(text);
     });
 
     // Settings > Advanced: clears every disposable cache the app knows about (updater cache +
-    // Steam/Ubisoft schema, icon and downloaded emulator-tool caches — see
+    // Steam/Ubisoft schema, icon and downloaded emulator-tool caches - see
     // util/clearableCaches.js for the exact, individually-verified allowlist). Never touches game
     // data, settings, backups, presets, theme images, logs, or the user-seeded Uplay R2 loader cache.
     $('#clear-update-cache').click(async function () {
@@ -797,8 +845,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         title: t('clear-update-cache-label', 'Clear caches', 'Vider les caches'),
         message: t(
           'clear-update-cache-confirm',
-          'Delete every re-downloadable cache (update files, Steam/Ubisoft schema & icon cache, downloaded emulator-fix tools)? Your settings, saves, backups and manually placed files are never touched — everything cleared here is simply re-fetched or re-downloaded automatically when needed.',
-          'Supprimer tous les caches retéléchargeables (fichiers de mise à jour, cache des schémas et icônes Steam/Ubisoft, outils de correction d’émulateur téléchargés) ? Vos réglages, sauvegardes, backups et fichiers placés manuellement ne sont jamais touchés — tout ce qui est vidé ici est simplement retéléchargé automatiquement en cas de besoin.'
+          'Delete every re-downloadable cache (update files, Steam/Ubisoft schema & icon cache, downloaded emulator-fix tools)? Your settings, saves, backups and manually placed files are never touched - everything cleared here is simply re-fetched or re-downloaded automatically when needed.',
+          'Supprimer tous les caches retéléchargeables (fichiers de mise à jour, cache des schémas et icônes Steam/Ubisoft, outils de correction d’émulateur téléchargés) ? Vos réglages, sauvegardes, backups et fichiers placés manuellement ne sont jamais touchés - tout ce qui est vidé ici est simplement retéléchargé automatiquement en cas de besoin.'
         ),
       });
       if (confirm.response !== 0) return;
@@ -816,7 +864,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
             { duration: 6500 }
           );
         } else if (!res.updateCleared && appCacheCount === 0) {
-          setTransientStatus(result, t('clear-update-cache-empty', 'Nothing to clear — no cached update files found.', 'Rien à vider — aucun fichier de mise à jour en cache.'));
+          setTransientStatus(result, t('clear-update-cache-empty', 'Nothing to clear - no cached update files found.', 'Rien à vider - aucun fichier de mise à jour en cache.'));
         } else if (res.updateCleared && appCacheCount > 0) {
           setTransientStatus(
             result,
@@ -881,7 +929,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const unconfigured = found.filter((g) => !g.hasSchema);
         const emuLabel = { gbe: 'GBE Fork', goldberg: 'Goldberg', none: 'unknown' };
         const detail = found
-          .map((g) => `${g.appid || '?'} · ${emuLabel[g.emulator] || g.emulator} — ${g.hasSchema ? `${g.schemaCount} achievements` : 'MISSING achievements.json'}\n  ${g.steamSettings}`)
+          .map((g) => `${g.appid || '?'} · ${emuLabel[g.emulator] || g.emulator} - ${g.hasSchema ? `${g.schemaCount} achievements` : 'MISSING achievements.json'}\n  ${g.steamSettings}`)
           .join('\n');
         result.text(
           t(
@@ -894,7 +942,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         remote.dialog.showMessageBox(remote.getCurrentWindow(), {
           type: unconfigured.length ? 'warning' : 'info',
           title: t('goldberg-gbe-fork-scan', 'Goldberg / GBE Fork scan', 'Analyse Goldberg / GBE Fork'),
-          message: t('scan-found-message', '{found} install(s) found — {missing} unconfigured', '{found} installation(s) trouvée(s) — {missing} non configurée(s)', {
+          message: t('scan-found-message', '{found} install(s) found - {missing} unconfigured', '{found} installation(s) trouvée(s) - {missing} non configurée(s)', {
             found: found.length,
             missing: unconfigured.length,
           }),
@@ -949,7 +997,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         .children('select')
         .each(function (index) {
           try {
-            // These General-tab selects persist under `general`, not `achievement` — handled explicitly below.
+            // These General-tab selects persist under `general`, not `achievement` - handled explicitly below.
             if (
               $(this)[0].id === 'option_startWithWindows' ||
               $(this)[0].id === 'option_disableHardwareAccel' ||
@@ -1187,7 +1235,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         });
         const onPrompt = async (question) => {
           if (typeof window.awPromptText !== 'function') throw new Error('2FA prompt UI is unavailable');
-          return window.awPromptText(`Steam / GSE — ${question}`, '', /password/i.test(question) ? 'password' : 'text');
+          return window.awPromptText(`Steam / GSE - ${question}`, '', /password/i.test(question) ? 'password' : 'text');
         };
         generated = await genEmu.generate({
           tool,
@@ -1394,7 +1442,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       });
 
       ipcRenderer.on('xbox-pc:import-progress', (_event, p) => {
-        if (p && p.detail) setStatus(`${T().importing} ${p.current}/${p.total} — ${p.detail}`, 'running');
+        if (p && p.detail) setStatus(`${T().importing} ${p.current}/${p.total} - ${p.detail}`, 'running');
       });
 
       disconnectBtn.off('click').on('click', async function () {
@@ -1496,7 +1544,14 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const row = $(`#theme-customizer-layers .theme-layer-row[data-layer="${meta.id}"]`);
         if (!row.length) continue;
         const current = (customThemeDraft && customThemeDraft[meta.id]) || {};
-        const layer = { color: row.find('.theme-layer-color').val() || current.color || DEFAULT_THEME_COLOR };
+        // `<input type="color">` has no alpha channel, so the opacity slider beside it carries that
+        // half and the two are recombined into the #rrggbbaa the theme actually stores. 100% still
+        // produces a plain 6-digit hex, so a theme that never touches opacity is written unchanged.
+        const alphaInput = row.find('.theme-layer-alpha');
+        const alpha = alphaInput.length ? Number(alphaInput.val()) : themeLayers.colorAlpha(current.color);
+        const layer = {
+          color: themeLayers.colorWithAlpha(row.find('.theme-layer-color').val() || current.color || DEFAULT_THEME_COLOR, alpha),
+        };
         if (CUSTOM_IMAGE_LAYERS.includes(meta.id)) {
           layer.image = current.image || '';
           layer.fit = row.find('.theme-layer-fit').val() || current.fit || 'cover';
@@ -1533,16 +1588,20 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           effect.enabled === true && effect.type === 'blur' && effect.blurImage ? effect.blurImage : layer.image || '';
         const grad = (layer.gradient && typeof layer.gradient === 'object' ? layer.gradient : {});
         const gradAngle = Number.isFinite(Number(grad.angle)) ? Number(grad.angle) : 180;
-        const gradStyle = grad.enabled === true
+        // An image is painted by the layer instead of the gradient (see gradientActive in
+        // themeLayers.js), so the swatch must not keep showing a gradient the window will not use.
+        const gradStyle = grad.enabled === true && !layer.image
           ? `linear-gradient(${gradAngle}deg, ${grad.from || layer.color || DEFAULT_THEME_COLOR} 0%, ${grad.to || grad.from || layer.color || DEFAULT_THEME_COLOR} 100%)`
           : '';
+        // The swatch paints the checkerboard itself and composites the layer over it in ::after,
+        // so what the row shows is these two custom properties, never the element's own background.
         const previewStyle =
-          `background-color:${grad.enabled === true ? 'transparent' : (layer.color || DEFAULT_THEME_COLOR)};` +
+          `--swatch-color:${gradStyle ? 'transparent' : (layer.color || DEFAULT_THEME_COLOR)};` +
           (previewImage
-            ? `background-image:${gradStyle ? gradStyle + ',' : ''}${require(path.join(appPath, 'util/cssUrl.js')).cssUrl(require('url').pathToFileURL(previewImage).href)};`
+            ? `--swatch-image:${gradStyle ? gradStyle + ',' : ''}${require(path.join(appPath, 'util/cssUrl.js')).cssUrl(require('url').pathToFileURL(previewImage).href)};`
             : gradStyle
-            ? `background-image:${gradStyle};`
-            : 'background-image:none;');
+            ? `--swatch-image:${gradStyle};`
+            : '--swatch-image:none;');
         const preview = $('<div>').addClass('theme-layer-preview').attr('style', previewStyle);
         // Remember the resolved preview image (source or blur copy) so the live gradient
         // refresh can rebuild the swatch exactly like the real renderer does.
@@ -1555,9 +1614,27 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
               `<div class="theme-layer-hint">${escapeHtml(meta.hint || '')}</div></div>`
           );
         const controls = $('<div>').addClass('theme-layer-controls');
-        controls.append($('<input>').attr('type', 'color').addClass('theme-layer-color').val(layer.color || DEFAULT_THEME_COLOR));
+        const layerAlpha = themeLayers.colorAlpha(layer.color);
+        // The picker only understands #rrggbb: feeding it the stored #rrggbbaa makes Chromium reject
+        // the value and fall back to black, which is how a translucent layer would lose its colour.
+        controls.append(
+          $('<input>').attr('type', 'color').addClass('theme-layer-color').val(themeLayers.colorWithoutAlpha(layer.color || DEFAULT_THEME_COLOR))
+        );
+        const alphaGroup = $('<label>')
+          .addClass('theme-layer-alpha-group')
+          .attr('title', t('theme-layer-opacity', 'Opacity', 'Opacité'));
+        alphaGroup.append(
+          $('<input>')
+            .attr('type', 'range')
+            .attr('min', '0')
+            .attr('max', '100')
+            .addClass('theme-layer-alpha')
+            .val(layerAlpha),
+          $('<span>').addClass('theme-layer-alpha-value').text(`${layerAlpha}%`)
+        );
+        controls.append(alphaGroup);
         if (CUSTOM_IMAGE_LAYERS.includes(meta.id)) {
-          const gradientToggle = $('<label>').addClass('theme-layer-effect-toggle');
+          const gradientToggle = $('<label>').addClass('theme-layer-effect-toggle theme-layer-gradient-toggle');
           gradientToggle.append(
             $('<input>').attr('type', 'checkbox').addClass('theme-layer-gradient-enabled').prop('checked', grad.enabled === true)
           );
@@ -1580,7 +1657,10 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
           const toGroup = $('<div>').addClass('theme-layer-effect-group');
           toGroup.append($('<label>').text(t('theme-gradient-to', 'To', 'À')));
           toGroup.append($('<input>').attr('type', 'color').addClass('theme-layer-gradient-to').val(grad.to || grad.from || layer.color || DEFAULT_THEME_COLOR));
-          const angleSelect = $('<select>').addClass('theme-layer-gradient-angle theme-layer-effect-type');
+          // Styled like the effect-type select but deliberately NOT one: it renders earlier in the
+          // row, so sharing that class made row.find('.theme-layer-effect-type') return this angle -
+          // which is why picking Blur kept offering a veil colour and was never saved as blur.
+          const angleSelect = $('<select>').addClass('theme-layer-gradient-angle');
           for (const [deg, labelText] of Object.entries(angleLabels)) {
             angleSelect.append($('<option>').attr('value', deg).text(labelText));
           }
@@ -1668,8 +1748,16 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         if (CUSTOM_IMAGE_LAYERS.includes(meta.id)) {
           const hasImage = !!layer.image;
           // An image replaces the color visually, so the picker is hidden; an enabled gradient
-          // just disables it (kept in place to avoid shifting the row controls).
+          // just disables it (kept in place to avoid shifting the row controls). The opacity slider
+          // belongs to the color, so it follows the picker exactly.
           row.find('.theme-layer-color').toggle(!hasImage).prop('disabled', grad.enabled === true);
+          row.find('.theme-layer-alpha-group').toggle(!hasImage);
+          row.find('.theme-layer-alpha').prop('disabled', grad.enabled === true);
+          // The gradient would be painted over the image rather than under it, so it does not
+          // apply while one is set: its toggle and editor disappear with the color picker. The
+          // stored gradient is left alone, so removing the image brings both back as they were.
+          row.find('.theme-layer-gradient-toggle').toggle(!hasImage);
+          if (hasImage) row.find('.theme-layer-gradient-panel').removeClass('open');
           row.find('.theme-layer-image').show();
           row.find('.theme-layer-filename, .theme-layer-clear-image, .theme-layer-fit').toggle(hasImage);
         }
@@ -1729,8 +1817,35 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     // already reflects its own value natively; this mirrors it onto our custom preview box, which
     // otherwise only gets its background from the initial render).
     $('#theme-customizer-layers').on('input change', '.theme-layer-color', function () {
-      $(this).closest('.theme-layer-row').find('.theme-layer-preview').css('background-color', $(this).val());
+      refreshLayerSwatch($(this).closest('.theme-layer-row'));
     });
+
+    // Opacity slider: the alpha half of the layer color. The swatch is drawn over a checkerboard so
+    // "40%" and "black" are not the same picture, which is the only way to see transparency at all
+    // in a 22px square.
+    $('#theme-customizer-layers').on('input change', '.theme-layer-alpha', function () {
+      const row = $(this).closest('.theme-layer-row');
+      row.find('.theme-layer-alpha-value').text(`${$(this).val()}%`);
+      refreshLayerSwatch(row);
+      scheduleCustomThemeSave();
+    });
+
+    // The swatch shows the color as it will actually be composited - alpha included.
+    function refreshLayerSwatch(row) {
+      const base = row.find('.theme-layer-color').val() || DEFAULT_THEME_COLOR;
+      const alphaInput = row.find('.theme-layer-alpha');
+      const alpha = alphaInput.length ? Number(alphaInput.val()) : 100;
+      setSwatch(row, { color: themeLayers.colorWithAlpha(base, alpha) });
+    }
+
+    // `.css()` cannot be trusted with custom properties across jQuery versions, and these two carry
+    // the whole swatch, so they are set straight on the style declaration.
+    function setSwatch(row, { color, image } = {}) {
+      const el = row.find('.theme-layer-preview')[0];
+      if (!el) return;
+      if (color !== undefined) el.style.setProperty('--swatch-color', color);
+      if (image !== undefined) el.style.setProperty('--swatch-image', image);
+    }
 
     $('#theme-customizer-layers').on('change', '.theme-layer-effect-enabled', function () {
       updateEffectPanel($(this).closest('.theme-layer-row'));
@@ -1755,20 +1870,26 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     // Gradient editor: keep the collapsed panel, the layer preview and the saved theme
     // in sync while the user picks the two colors and the direction.
     function refreshGradientPreview(row) {
-      const baseColor = row.find('.theme-layer-color').val() || DEFAULT_THEME_COLOR;
-      const enabled = row.find('.theme-layer-gradient-enabled').is(':checked');
+      const alphaInput = row.find('.theme-layer-alpha');
+      const baseColor = themeLayers.colorWithAlpha(
+        row.find('.theme-layer-color').val() || DEFAULT_THEME_COLOR,
+        alphaInput.length ? Number(alphaInput.val()) : 100
+      );
+      const imageSet = !!row.data('previewImage');
+      const enabled = row.find('.theme-layer-gradient-enabled').is(':checked') && !imageSet;
       const from = row.find('.theme-layer-gradient-from').val() || baseColor;
       const to = row.find('.theme-layer-gradient-to').val() || from;
       const angle = gradientAngleFromDom(row);
-      const preview = row.find('.theme-layer-preview');
-      // An enabled gradient replaces the layer's base color entirely (the generated app/overlay
-      // CSS drops the opaque color backdrop too), so the swatch must not keep the base color.
-      preview.css('background-color', enabled ? 'transparent' : baseColor);
       const layers = [];
       if (enabled) layers.push(`linear-gradient(${angle}deg, ${from} 0%, ${to} 100%)`);
       const imageSrc = row.data('previewImage') || '';
       if (imageSrc) layers.push(require(path.join(appPath, 'util/cssUrl.js')).cssUrl(imageSrc));
-      preview.css('background-image', layers.length ? layers.join(',') : 'none');
+      // An enabled gradient replaces the layer's base color entirely (the generated app/overlay
+      // CSS drops the opaque color backdrop too), so the swatch must not keep the base color.
+      setSwatch(row, {
+        color: enabled ? 'transparent' : baseColor,
+        image: layers.length ? layers.join(',') : 'none',
+      });
     }
 
     $('#theme-customizer-layers').on('change', '.theme-layer-gradient-enabled', function () {
@@ -1776,7 +1897,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const panel = row.find('.theme-layer-gradient-panel');
       panel.toggleClass('open', this.checked);
       // Keep the picker in place (no layout shift) but disable it while the gradient replaces it.
-      row.find('.theme-layer-color').prop('disabled', this.checked);
+      row.find('.theme-layer-color, .theme-layer-alpha').prop('disabled', this.checked);
       if (this.checked) {
         // A freshly enabled gradient follows the layer color unless the user already
         // picked custom colors for it (detected by comparing with the stored base color).
@@ -1895,7 +2016,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
     /* ---- Collapsible sections ----------------------------------------------
        Cards fold under their header; state is per section and persisted. Nothing is moved or
-       removed — the i18n loader binds labels positionally, so the DOM must survive untouched.
+       removed - the i18n loader binds labels positionally, so the DOM must survive untouched.
     */
     const sectionRules = require(path.join(appPath, 'util/settingsSections.js'));
     const SECTION_STATE_KEY = 'settingsCollapsedSections';
@@ -1982,7 +2103,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
     /* ---- Settings search ---------------------------------------------------
        Typing filters every tab at once and nav counters show where the matches are. Search sees
-       through collapsed sections, and rows are hidden with a class, never removed — positional i18n
+       through collapsed sections, and rows are hidden with a class, never removed - positional i18n
        requires the DOM structure to survive. */
     const searchRules = require(path.join(appPath, 'util/settingsSearch.js'));
 
@@ -2011,7 +2132,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#settings').toggleClass('no-search-result', total === 0);
 
       // Land the user on results rather than on an empty tab, but never yank them off a tab that
-      // still has matches — that would fight their own typing.
+      // still has matches - that would fight their own typing.
       if (total > 0 && $('#settingNav li.active').hasClass('no-match')) {
         $('#settingNav li[data-view]:not(.no-match)').first().trigger('click');
       }
@@ -2175,7 +2296,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const uniqueFound = [...new Map(found.map((game) => [path.resolve(game.gameDir).toLowerCase(), game])).values()];
         /*
           Two groups, counted separately. This pass only ever configures games that have no setup at
-          all — it runs unattended during the scan, so it must never overwrite one. The games it
+          all - it runs unattended during the scan, so it must never overwrite one. The games it
           skips are not a dead end though: re-applying to them is exactly what Advanced > Fix all
           games does (with a backup per game), and saying nothing about them left a user whose whole
           library is already configured with "nothing to do" and no idea where the re-apply lives.
@@ -2189,8 +2310,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
             alreadyConfigured > 0
               ? t(
                   'no-config-eligible-games-configured',
-                  '{count} Steam-compatible install(s) found — all of them already have a setup. To rebuild those, use Advanced > Fix all games.',
-                  '{count} installation(s) compatible(s) Steam détectée(s) — toutes ont déjà une configuration. Pour les régénérer, utilise Avancé > Réparer tous les jeux.',
+                  '{count} Steam-compatible install(s) found - all of them already have a setup. To rebuild those, use Advanced > Fix all games.',
+                  '{count} installation(s) compatible(s) Steam détectée(s) - toutes ont déjà une configuration. Pour les régénérer, utilise Avancé > Réparer tous les jeux.',
                   { count: alreadyConfigured }
                 )
               : t('no-config-eligible-games', 'No unconfigured Steam game without an existing fix was found.', 'Aucun jeu Steam sans fix existant ne nécessite de configuration.')
@@ -2212,13 +2333,13 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         const choice = remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
           type: autoFixEnabled ? 'info' : 'warning',
           title: t('generate-configs', 'Generate configs', 'Génération des configs'),
-          message: t('x-emulated-game-s-found-in-your-libraries-x-without-achievements', '{found} Steam-compatible install(s) found — {missing} have no existing fix and are eligible.', '{found} installation(s) compatible(s) Steam détectée(s) — {missing} sans fix existant et éligible(s).', {
+          message: t('x-emulated-game-s-found-in-your-libraries-x-without-achievements', '{found} Steam-compatible install(s) found - {missing} have no existing fix and are eligible.', '{found} installation(s) compatible(s) Steam détectée(s) - {missing} sans fix existant et éligible(s).', {
             found: uniqueFound.length,
             missing: unconfigured,
           }),
           // Say what happens to the rest, so the two numbers add up instead of leaving a silent gap.
           detail: alreadyConfigured > 0
-            ? `${detail}\n\n${t('generate-configs-detail-configured', '{count} install(s) already have a setup and are left untouched — Advanced > Fix all games rebuilds those.', '{count} installation(s) ont déjà une configuration et ne sont pas touchées — Avancé > Réparer tous les jeux les régénère.', { count: alreadyConfigured })}`
+            ? `${detail}\n\n${t('generate-configs-detail-configured', '{count} install(s) already have a setup and are left untouched - Advanced > Fix all games rebuilds those.', '{count} installation(s) ont déjà une configuration et ne sont pas touchées - Avancé > Réparer tous les jeux les régénère.', { count: alreadyConfigured })}`
             : detail,
           buttons: [t('start-scan', 'Start scan', 'Lancer le scan'), t('cancel', 'Cancel', 'Annuler')],
           defaultId: 0,
@@ -2227,11 +2348,11 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         });
         if (choice !== 0) return;
 
-        // 3) full rescan — discovers the folders and applies the one-shot emulator fix to unconfigured games
+        // 3) full rescan - discovers the folders and applies the one-shot emulator fix to unconfigured games
         result.text(
           autoFixEnabled
-            ? t('scan-started-auto-fix', 'Scan started — {count} eligible unconfigured game(s) will receive an initial GBE config.', 'Scan lancé — {count} jeu(x) éligible(s) sans configuration recevront une config GBE initiale.', { count: unconfigured })
-            : t('scan-started-scan-only', 'Scan started — automatic repair is disabled, no files will be changed.', 'Scan lancé — réparation automatique désactivée, aucun fichier ne sera modifié.')
+            ? t('scan-started-auto-fix', 'Scan started - {count} eligible unconfigured game(s) will receive an initial GBE config.', 'Scan lancé - {count} jeu(x) éligible(s) sans configuration recevront une config GBE initiale.', { count: unconfigured })
+            : t('scan-started-scan-only', 'Scan started - automatic repair is disabled, no files will be changed.', 'Scan lancé - réparation automatique désactivée, aucun fichier ne sera modifié.')
         );
         resetUI();
       } catch (err) {
@@ -2596,7 +2717,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     /*
       Presets style the in-game overlay, and the transport decides whether that overlay is used at
       all: on Windows notifications, nothing a preset describes is ever drawn. So the whole tab goes
-      away rather than offering an authoring surface with no effect — and if it was the tab on screen
+      away rather than offering an authoring surface with no effect - and if it was the tab on screen
       when the transport changed, the panel falls back to the Notification tab that caused it.
     */
     function updatePresetTabVisibility() {
@@ -2714,7 +2835,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       const texts = {
         toast: {
           displayName: t('test-toast-name', 'Achievement Unlocked', 'Succès débloqué'),
-          description: t('test-toast-desc', 'Notification test — {preset} preset', 'Test de notification — preset {preset}', { preset: presetLabel }),
+          description: t('test-toast-desc', 'Notification test - {preset} preset', 'Test de notification - preset {preset}', { preset: presetLabel }),
         },
         rare: {
           displayName: t('test-rare-name', 'Rare Achievement', 'Succès rare'),
@@ -2741,7 +2862,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         A game-scoped preview shows that game's own artwork; the generic tester keeps the app icon
         and the neutral sample wording.
 
-        The overlay window has no game-name field of its own — createNotificationWindow() forwards
+        The overlay window has no game-name field of its own - createNotificationWindow() forwards
         only `displayName`, which carries the ACHIEVEMENT title, so a real unlock never prints the
         game's name either. Naming the game in the description is therefore the only place a preview
         can say which game it is previewing, and playtime keeps its own convention of putting the
@@ -2840,7 +2961,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       fireNotificationTest('platinum', this);
     });
     // Preview a sound at the configured overlay volume (0–200%). >100% needs a WebAudio gain node
-    // (Audio.volume caps at 1.0) — mirrors how the real notification window plays it (init.js).
+    // (Audio.volume caps at 1.0) - mirrors how the real notification window plays it (init.js).
     let previewAudioCtx = null;
     /*
       A real file for whatever the sound dropdown is showing.
@@ -2899,7 +3020,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     $('#option_overlayVolume').on('input', updateOverlayVolumeLabel);
     $('#option_overlayVolume').on('change', function () {
       updateOverlayVolumeLabel();
-      if (!settingsReady) return; // form is being populated — not a user interaction
+      if (!settingsReady) return; // form is being populated - not a user interaction
       previewSoundAtVolume($('#option_overlaySound').val());
     });
     // Mouse wheel nudges the slider one step, then commits via a debounced change so the
@@ -2981,8 +3102,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
     /* ---- Preset designer ------------------------------------------------------------------------
        The controls, the live preview and the generator all work from util/presetSchema.js, so a
-       property can only exist in one shape. The preview is the REAL preset — the same markup, the
-       same engine and the same generated stylesheet the notification window loads — rendered in an
+       property can only exist in one shape. The preview is the REAL preset - the same markup, the
+       same engine and the same generated stylesheet the notification window loads - rendered in an
        iframe, which is why it cannot drift from what an unlock actually looks like.
     */
     const presetSchema = require(path.join(appPath, 'util/presetSchema.js'));
@@ -3067,7 +3188,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     /*
       Artwork for the preview: one of the user's own game headers, because that is what a notification
       is actually seen over. The app already keeps landscape art for the games in the library, so the
-      designer borrows one rather than shipping a picture — and nothing copyrighted lives in the repo.
+      designer borrows one rather than shipping a picture - and nothing copyrighted lives in the repo.
 
       With an empty library there is nothing to borrow, so the backdrop falls back to a painted scene
       rather than the app's own logo, which told the user nothing about contrast.
@@ -3172,7 +3293,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     const previewFrame = () => document.getElementById('pd-frame');
 
     /*
-      Rebuild the preview document. Only needed when the frame has to be re-created — switching to a
+      Rebuild the preview document. Only needed when the frame has to be re-created - switching to a
       one-off play-through, or the very first render. Editing a property swaps the stylesheet inside
       the existing document instead, which is what keeps dragging a slider cheap.
     */
@@ -3227,7 +3348,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
       Card view shows the popup at its own size, shrunk only if the stage is narrower than the popup.
       Screen view shows it at its true size relative to a display of the chosen resolution, in the
-      corner the Notifications tab is set to — the popup's window box includes its transparent
+      corner the Notifications tab is set to - the popup's window box includes its transparent
       margin, so what the stage shows is what the screen edge will look like.
     */
     /*
@@ -3279,7 +3400,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         wrap.style.top = '';
       }
       /*
-        The popup's real size, and how much the preview had to shrink it to fit — otherwise a card
+        The popup's real size, and how much the preview had to shrink it to fit - otherwise a card
         shown at 70% reads as the design being smaller than it is. A manually placed popup is drawn
         at the bottom centre and says so: only the app knows where it was dragged to, and quietly
         showing it in the default corner would be the one thing a position preview must not do.
@@ -3349,7 +3470,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       The three notifications side by side.
 
       Switching states one at a time answers "what does a rare unlock look like?"; only seeing them
-      together answers "does a rare unlock look DIFFERENT?" — which is the question a preset with a
+      together answers "does a rare unlock look DIFFERENT?" - which is the question a preset with a
       rare colour is actually asking, and the one a single card cannot show.
     */
     function comparePayload(state) {
@@ -3403,8 +3524,8 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     }
 
     /*
-      What the popup is judged against. A notification is never seen on the app's own panel colour —
-      it is seen over a game — and a design that reads well on dark can vanish on a bright scene, so
+      What the popup is judged against. A notification is never seen on the app's own panel colour -
+      it is seen over a game - and a design that reads well on dark can vanish on a bright scene, so
       the backdrop is a preview control rather than a fixed stage.
     */
     $('#pd-backdrop button').on('click', function () {
@@ -3424,14 +3545,14 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       $('#pd-state button').removeClass('is-on');
       $(this).addClass('is-on');
       // Looking at the rare or completion card is when its colours are worth having in reach, and
-      // they live in a group that starts collapsed — so asking for the state opens it.
+      // they live in a group that starts collapsed - so asking for the state opens it.
       if (previewState === 'rare' || previewState === 'completion' || previewState === 'progress') {
         $("#options-notify-designer .pd-group[data-group='state']").addClass('is-open');
       }
       replayPreview();
     });
 
-    // Play the whole thing once — entry, hold and exit at the preset's own timings — then go back to
+    // Play the whole thing once - entry, hold and exit at the preset's own timings - then go back to
     // holding the card on screen so the controls stay usable.
     let previewPlayTimer = null;
     $('#pd-play').on('click', function () {
@@ -3464,7 +3585,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     }
     /*
       The way from choosing a preset to designing one. The choice belongs with the other notification
-      settings — it is what the popup will look like tonight — and the designer is a workshop, so the
+      settings - it is what the popup will look like tonight - and the designer is a workshop, so the
       row that picks one carries a button through to it rather than the two being merged.
     */
     $('#btn-open-presets').on('click', function () {
@@ -3511,7 +3632,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
     /*
       Presets the app installed here: `{ name, editable }`, where editable means the designer made it
-      and can load it back. An imported preset is listed too — it can be exported and deleted — but
+      and can load it back. An imported preset is listed too - it can be exported and deleted - but
       it is not editable, and the Create button must not offer to "Update" it: doing so would
       regenerate its files from the controls and destroy artwork they cannot reproduce.
     */
@@ -3547,14 +3668,14 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     }
 
     // Deleting only ever applies to a preset the app installed, so the button appears once one is
-    // actually loaded — never next to a bundled preset or a half-typed new name.
+    // actually loaded - never next to a bundled preset or a half-typed new name.
     function updateDeleteButtonVisibility() {
       const loaded = String($('#pd-load').val() || '');
       $('#btn-delete-preset').toggle(Boolean(loaded) && managedPresetNames().includes(loaded));
     }
 
     /*
-      Repopulate every notification-preset menu after the preset list changed — the main one AND the
+      Repopulate every notification-preset menu after the preset list changed - the main one AND the
       five per-type overrides, which offer the same list plus "same as main".
 
       Both halves matter. Keeping the current choice comes first; when it was the preset just
@@ -3688,7 +3809,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
 
     /*
       Riff on a preset without overwriting it: the controls keep the design, the name becomes a free
-      one, and the picker lets go — so the next Create adds a preset instead of replacing the one it
+      one, and the picker lets go - so the next Create adds a preset instead of replacing the one it
       was based on.
     */
     $('#btn-duplicate-preset').click(function () {
@@ -3712,7 +3833,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       Put a managed preset into the designer's controls. Returns 'editable', 'imported' or 'failed'.
 
       Shared by the picker and by Import: selecting a preset in the picker fires this through the
-      change event, but an import selects the preset in code, where no event fires — so importing a
+      change event, but an import selects the preset in code, where no event fires - so importing a
       preset the designer can edit used to leave the controls showing the previous draft.
     */
     async function loadPresetIntoBuilder(name) {
@@ -3756,7 +3877,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       }
     });
 
-    // Render the design as a real overlay popup without saving it first — the inline preview is
+    // Render the design as a real overlay popup without saving it first - the inline preview is
     // exact, but only a real popup shows it over whatever is on screen, at the configured position
     // and scale, with the sound.
     $('#btn-preview-preset').click(async function () {
@@ -3765,7 +3886,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       try {
         /*
           Preview whatever the picker holds. For a preset the designer made that is the same thing as
-          the draft, since loading it filled the controls — but an imported preset has no control
+          the draft, since loading it filled the controls - but an imported preset has no control
           values behind it, so building a scratch preset from the controls previewed an unrelated
           design instead of the preset the user had just selected.
         */
@@ -3782,12 +3903,12 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         if (res && res.ok) {
           setPresetStatus('');
           // Only name the design when the user actually named it. Falling back to the picker's
-          // "New preset…" placeholder produced "Notification test — New preset… preset", which
+          // "New preset…" placeholder produced "Notification test - New preset… preset", which
           // reads like a bug; an unnamed draft just shows the plain sample text instead.
           const label = ($('#pd-name').val() || '').trim();
           const data = overlayTestData(kind, res.name, label);
           // A preset that names its own sound is what a real unlock would play, so the preview does
-          // too — otherwise the one thing the designer cannot show inline stays untested.
+          // too - otherwise the one thing the designer cannot show inline stays untested.
           if (options.sound) data.soundPath = resolveSoundFile(options.sound);
           ipcRenderer.send('spawn-overlay-notification', data);
         } else {
@@ -3861,7 +3982,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
       the preview shows.
 
       This used to fall back to the ACTIVE notification preset whenever the picker sat on "New
-      preset…", so exporting a design in progress silently wrote the user's current preset instead —
+      preset…", so exporting a design in progress silently wrote the user's current preset instead -
       a file named "goat.awpreset" whose manifest said "Shirow", which then clashed with the bundled
       Shirow on import and rendered as Shirow everywhere.
     */
@@ -3949,7 +4070,7 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
     updatePresetTabVisibility();
     /*
       The stage is only measurable once the Notifications tab has been laid out, and the popup is
-      scaled to fit it — so re-measure whenever the stage itself changes width rather than baking in
+      scaled to fit it - so re-measure whenever the stage itself changes width rather than baking in
       whatever it measured while the panel was still hidden. Guarded on the width actually changing:
       laying out writes inside the stage, and re-measuring on that would observe itself forever.
     */
@@ -3984,7 +4105,7 @@ function boolifyValue(v) {
 }
 
 // Default folder where souvenir screenshots are written when no custom folder is set.
-// Mirrors defaultDir() in watchdog/notification/souvenir.js — the Watchdog is what actually writes
+// Mirrors defaultDir() in watchdog/notification/souvenir.js - the Watchdog is what actually writes
 // the file, so the two must agree or the UI would show a folder nothing is saved to.
 function souvenirDefaultDir() {
   try {
@@ -4025,7 +4146,7 @@ function readNotificationSettings() {
   if ($('#option_groupToast').val() !== '') app.config.notification_toast.groupToast = boolifyValue($('#option_groupToast').val());
   if ($('#option_urgent').val() !== '') app.config.notification_toast.urgent = boolifyValue($('#option_urgent').val());
 
-  // Overlay (in-game) notification — enable in notification_transport, look in overlay.notification*.
+  // Overlay (in-game) notification - enable in notification_transport, look in overlay.notification*.
   app.config.notification_transport.mode = $('#option_notifMode').val() || 'auto';
   if (!app.config.overlay) app.config.overlay = {};
   app.config.overlay.notificationPreset = $('#option_overlayPreset').val() || 'AW Next';
@@ -4044,7 +4165,7 @@ function readNotificationSettings() {
   const durRaw = $('#option_overlayDuration').val();
   app.config.overlay.notificationDuration = durRaw === 'auto' || !durRaw ? 'auto' : parseInt(durRaw, 10) || 'auto';
 
-  // Souvenir screenshot — dir is set by its own folder-picker button and preserved here.
+  // Souvenir screenshot - dir is set by its own folder-picker button and preserved here.
   if (!app.config.souvenir) app.config.souvenir = {};
   app.config.souvenir.screenshot = $('#option_souvenirScreenshot').val() === 'true';
 }

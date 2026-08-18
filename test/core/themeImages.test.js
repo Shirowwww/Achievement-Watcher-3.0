@@ -65,3 +65,49 @@ test('a missing derived copy is never treated as current', () => {
     assert.equal(themeImages.isDerivedUpToDate(source, path.join(dir, 'absent.png')), false);
   });
 });
+
+// The store keyed copies as "<layer>-<stem><ext>" and only compared against the name the current
+// layer would use, so one wallpaper applied to several layers was stored once per layer. A single
+// 7.3 MB image was observed occupying 193 MB of <userData>/theme-images that way.
+test('findByContent adopts an identical copy imported under a different layer', () => {
+  withTmp((store) => {
+    withTmp((pictures) => {
+      const bytes = Buffer.from([7, 7, 7, 7, 7]);
+      fs.writeFileSync(path.join(store, 'bg-wall.png'), bytes);
+      const source = path.join(pictures, 'wall.png');
+      fs.writeFileSync(source, bytes);
+
+      assert.equal(themeImages.findByContent(store, source), path.join(store, 'bg-wall.png'));
+    });
+  });
+});
+
+test('findByContent never adopts a generated blur or veil copy as a layer source', () => {
+  withTmp((store) => {
+    withTmp((pictures) => {
+      const bytes = Buffer.from([4, 2]);
+      // Only derived copies hold these bytes, so a match here could only be a derived file.
+      fs.writeFileSync(path.join(store, 'bg-wall-blur-14.png'), bytes);
+      fs.writeFileSync(path.join(store, 'panel-wall-veilblur-1.2.png'), bytes);
+      const source = path.join(pictures, 'wall.png');
+      fs.writeFileSync(source, bytes);
+
+      assert.equal(themeImages.findByContent(store, source), null);
+    });
+  });
+});
+
+test('findByContent returns null for a genuinely new image and never throws', () => {
+  withTmp((store) => {
+    withTmp((pictures) => {
+      fs.writeFileSync(path.join(store, 'bg-old.png'), Buffer.from([1, 1, 1]));
+      const source = path.join(pictures, 'new.png');
+      // Same length as the stored file: proves the comparison reads bytes, not just the size.
+      fs.writeFileSync(source, Buffer.from([2, 2, 2]));
+
+      assert.equal(themeImages.findByContent(store, source), null);
+      assert.equal(themeImages.findByContent(path.join(store, 'absent'), source), null);
+      assert.equal(themeImages.findByContent(store, path.join(pictures, 'ghost.png')), null);
+    });
+  });
+});

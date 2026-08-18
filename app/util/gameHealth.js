@@ -14,16 +14,16 @@
 const STATE = { READY: 'ready', ATTENTION: 'attention', NOT_TRACKING: 'not-tracking' };
 const LEVEL = { OK: 'ok', WARN: 'warn', FAIL: 'fail', INFO: 'info' };
 
-// Repair actions. Each one maps to a capability AW Next already has — nothing here is aspirational.
+// Repair actions. Each one maps to a capability AW Next already has - nothing here is aspirational.
 const ACTION = {
   CHOOSE_EXE: 'choose-exe', //    the panel's own executable picker
   OPEN_FOLDER: 'open-folder', //  shell.openPath(gameDir)
-  REPAIR_DATA: 'repair-data', //  goldberg.repair() — writes schema + icons + configs, backs up first
-  INSTALL_RUNTIME: 'install-runtime', // gbeInstaller.installDlls() — backs up replaced dlls as .bak
-  START_TRACKING: 'start-tracking', //  gameIndex.upsert() — the same seed the scan writes
+  REPAIR_DATA: 'repair-data', //  goldberg.repair() - writes schema + icons + configs, backs up first
+  INSTALL_RUNTIME: 'install-runtime', // gbeInstaller.installDlls() - backs up replaced dlls as .bak
+  START_TRACKING: 'start-tracking', //  gameIndex.upsert() - the same seed the scan writes
   UNMUTE_PROGRESS: 'unmute-progress', // progressMute.toggle()
   TEST_NOTIFICATION: 'test-notification', // the watchdog websocket test the Settings panel uses
-  FIX_APPID: 'fix-appid', //          goldberg.writeSteamAppId() — one file, previous value kept
+  FIX_APPID: 'fix-appid', //          goldberg.writeSteamAppId() - one file, previous value kept
 };
 
 // goldberg.diagnose() issue codes that goldberg.repair() actually rewrites. Mirrors the list the
@@ -43,6 +43,11 @@ const REPAIRABLE_GOLDBERG_CODES = new Set([
   'NO_USER_CONFIG',
   'BAD_DLC_CONFIG',
   'BAD_USER_CONFIG',
+  // Both are properties of achievements.json, which the repair rewrites from the fetched schema.
+  // They were raised as warnings with no action attached, so a game whose only fault was a fabricated
+  // achievement list showed a permanent yellow row and offered no way to clear it.
+  'BLANK_NAMES',
+  'BLANK_DESCRIPTIONS',
 ]);
 
 /*
@@ -100,7 +105,7 @@ function issuesAtLevel(report, level) {
 /*
   The appid the emulator will announce disagrees with the one AW Next resolved. It is the one
   diagnosis whose fix is a single known value written to a single file, so it gets its own action
-  instead of being folded into "rewrite the achievement data" — which deliberately never overwrites
+  instead of being folded into "rewrite the achievement data" - which deliberately never overwrites
   an existing steam_appid.txt, and would therefore have left this exact warning standing.
 */
 function appidMismatch(report) {
@@ -111,7 +116,7 @@ function appidMismatch(report) {
 }
 
 /*
-  One check row. `blocking` marks the failures that mean AW Next cannot observe this game at all —
+  One check row. `blocking` marks the failures that mean AW Next cannot observe this game at all -
   those are what separate "Not tracking" from "Needs attention", so a merely incomplete setup never
   gets reported as untracked.
 */
@@ -122,7 +127,7 @@ function check(id, level, { params = {}, blocking = false, actions = [] } = {}) 
 /*
   An unknown install folder limits repairs and playtime; it does not by itself stop tracking. Most
   cracked games are known to AW Next only through their emulator's save folder, which it re-reads on
-  every scan — reporting those as untracked called a whole library broken when nothing was.
+  every scan - reporting those as untracked called a whole library broken when nothing was.
 */
 function readableWithoutInstall(signals) {
   if (Array.isArray(signals.saveSources) && signals.saveSources.length > 0) return true;
@@ -259,7 +264,7 @@ function uplayCheck(signals) {
 
 /*
   Has anything actually been unlocked or recorded yet. The distinction that matters is "AW Next has
-  progress data" vs "AW Next has nowhere to read progress from" — a genuine 0% game is not a fault.
+  progress data" vs "AW Next has nowhere to read progress from" - a genuine 0% game is not a fault.
 */
 function progressCheck(signals) {
   const unlocked = num(signals.achievements && signals.achievements.unlocked);
@@ -290,7 +295,7 @@ function trackingCheck(signals) {
 }
 
 /*
-  What is configured, and — when the Watchdog has actually delivered something for this game — what
+  What is configured, and - when the Watchdog has actually delivered something for this game - what
   carried it. `effective` is an observation, not a setting: the transport that ran, why it was
   chosen and how it ended ('delivered' | 'fallback' | 'unknown' | 'failed'). It is what lets the row
   say "working, through the Windows fallback" instead of naming a mode that was overridden.
@@ -311,7 +316,7 @@ function notificationCheck(signals) {
   if (notifications.progressMuted) {
     return check('notifications', LEVEL.INFO, { params, actions: [ACTION.UNMUTE_PROGRESS, ACTION.TEST_NOTIFICATION] });
   }
-  // The transport itself reported the send failing — the one notification state that is a fault
+  // The transport itself reported the send failing - the one notification state that is a fault
   // rather than a routing detail.
   if (effective && effective.outcome === 'failed') {
     return check('notifications', LEVEL.WARN, { params, actions: [ACTION.TEST_NOTIFICATION] });
@@ -355,7 +360,7 @@ function explain(state, checks, signals) {
   }
   if (data && data.level === LEVEL.FAIL && data.blocking) return { reason: 'no-achievement-data', params: data.params };
   // Only a blocking emulator failure means "there is no emulator here". An emulator report that
-  // merely carries schema or config errors is explained by the check that owns those instead —
+  // merely carries schema or config errors is explained by the check that owns those instead -
   // otherwise a repairable achievements.json would be reported as a missing emulator.
   if (emulator && emulator.level === LEVEL.FAIL && emulator.blocking) {
     const canInstall = emulator.actions.includes(ACTION.INSTALL_RUNTIME);
@@ -379,7 +384,7 @@ function explain(state, checks, signals) {
   // a common one for cracked games. Saying "nothing unlocked yet" here would contradict the chip.
   if (install && install.level === LEVEL.WARN) return { reason: 'install-unknown', params: install.params };
   if (tracking && tracking.level === LEVEL.WARN) return { reason: 'not-watched', params: tracking.params };
-  // Everything is set up and unlocks are being seen — the last one just could not be announced.
+  // Everything is set up and unlocks are being seen - the last one just could not be announced.
   if (notifications && notifications.level === LEVEL.WARN) return { reason: 'notification-failed', params: notifications.params };
   if (notifications && notifications.level === LEVEL.INFO) return { reason: 'progress-muted', params: notifications.params };
   if (progress && progress.level === LEVEL.INFO) return { reason: 'nothing-unlocked-yet', params: progress.params };
@@ -447,7 +452,7 @@ function buildTechnical(signals) {
 }
 
 /*
-  signals — see buildTechnical() for the full accepted shape. Every field is optional; a game the
+  signals - see buildTechnical() for the full accepted shape. Every field is optional; a game the
   app knows almost nothing about still produces a usable report.
 */
 function deriveHealth(signals = {}) {

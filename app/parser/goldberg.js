@@ -158,7 +158,7 @@ function backupTimestamp(date = new Date()) {
 
   repair() writes this file only when it is missing, on purpose: overwriting a working setup with a
   detection that might be wrong is not something an automatic repair may decide. Correcting a genuine
-  mismatch is a decision the user makes explicitly, so it lives here, as its own one-file operation —
+  mismatch is a decision the user makes explicitly, so it lives here, as its own one-file operation -
   the previous value is copied into the same .aw-backups folder every other repair uses.
 */
 function writeSteamAppId({ steamSettings, appid }) {
@@ -235,14 +235,14 @@ function backupSetup({ gameDir, destinationRoot, steamSettings } = {}) {
 // manifest and copies each recorded relative path back over the live files (DLLs + steam_settings),
 // preserving the nested Unreal/Unity DLL locations the backup captured. Restores into the manifest's
 // recorded gameDir by default; pass `gameDir` to redirect to a relocated install. A tampered manifest
-// can't escape the target folder — the same containment guard as copyIntoBackup is applied per path.
+// can't escape the target folder - the same containment guard as copyIntoBackup is applied per path.
 function restoreSetup({ backupDir, gameDir } = {}) {
   if (!backupDir || !fs.existsSync(backupDir) || !fs.statSync(backupDir).isDirectory()) {
     throw new Error(`restore: backup folder not found: ${backupDir}`);
   }
   const manifestFile = path.join(backupDir, 'backup.json');
   if (!fs.existsSync(manifestFile)) {
-    throw new Error('restore: backup.json manifest is missing — not an AW Next GBE backup');
+    throw new Error('restore: backup.json manifest is missing - not an AW Next GBE backup');
   }
   let manifest;
   try {
@@ -291,7 +291,7 @@ function detectEmulator(gameDir) {
   if (!gameDir || !fs.existsSync(gameDir)) return result;
 
   // Replaced steam_api dll(s) anywhere shallow under the game root (the dll sits next to the binary).
-  // Read each directory once with dirents instead of a statSync() per entry — a syscall-per-file walk
+  // Read each directory once with dirents instead of a statSync() per entry - a syscall-per-file walk
   // over a large game folder dominated detectEmulator's cost; this matches findSteamSettings/walk below.
   const findDll = (dir, depth) => {
     if (depth > 4) return;
@@ -346,15 +346,39 @@ function buildAchievementsJson(schema, imagePrefix = 'images') {
   }));
 }
 
+/*
+  Is the achievements.json already on disk worth keeping over a freshly generated one?
+
+  Only when it carries progress definitions AW cannot reproduce AND rewriting it would not be an
+  improvement. That second half is what makes "Repair the achievement data" honest: a file with
+  progress operands but blank entries used to be preserved unconditionally, so the repair wrote
+  nothing, the BLANK_NAMES / BLANK_DESCRIPTIONS warnings it was offered for survived it, and the
+  button could be pressed forever without changing anything.
+
+  A blank name is always a broken entry (GBE matches on it), so it always loses. A blank description
+  only loses to a schema that actually has one - plenty of Steam achievements, hidden ones above all,
+  genuinely have none, and throwing away real progress definitions over that would be a bad trade.
+*/
 function hasRichProgressSchema(steamSettings, schema) {
   try {
     const parsed = JSON.parse(fs.readFileSync(path.join(steamSettings, 'achievements.json'), 'utf8'));
     if (!Array.isArray(parsed)) return false;
     if (!parsed.some((item) => item && item.progress && item.progress.value && item.progress.value.operand1)) return false;
+    if (parsed.some((item) => !item || item.name == null || String(item.name).trim() === '')) return false;
     const expected = (schema && schema.achievement && Array.isArray(schema.achievement.list) && schema.achievement.list) || [];
     if (expected.length === 0) return true;
     const names = new Set(parsed.filter((item) => item && item.name != null).map((item) => String(item.name).toUpperCase()));
-    return expected.every((item) => item && item.name != null && names.has(String(item.name).toUpperCase()));
+    if (!expected.every((item) => item && item.name != null && names.has(String(item.name).toUpperCase()))) return false;
+
+    const described = new Map(
+      expected
+        .filter((item) => item && item.name != null && item.description && String(item.description).trim())
+        .map((item) => [String(item.name).toUpperCase(), true])
+    );
+    const wouldFillABlank = parsed.some(
+      (item) => (!item.description || String(item.description).trim() === '') && described.has(String(item.name).toUpperCase())
+    );
+    return !wouldFillABlank;
   } catch {
     return false;
   }
@@ -362,7 +386,7 @@ function hasRichProgressSchema(steamSettings, schema) {
 
 // Default runtime save roots, newest emulator first. GBE Fork writes to GSE Saves; classic Goldberg
 // to "Goldberg SteamEmu Saves". Both keep one <appid>/ subfolder with an achievements.json holding
-// only the unlock STATE ({ "<apiname>": { "earned": true, "earned_time": ... } }) — this is separate
+// only the unlock STATE ({ "<apiname>": { "earned": true, "earned_time": ... } }) - this is separate
 // from the steam_settings/achievements.json SCHEMA. A missing/empty save just means a 0% game.
 function defaultSavesRoots() {
   const appdata = process.env['APPDATA'];
@@ -373,14 +397,96 @@ function defaultSavesRoots() {
   ];
 }
 
+/*
+  The save path a setup redirects itself to, verbatim as configured.
+
+  Repacks routinely make a game portable by pointing the emulator's save folder back into the game
+  directory (`[user::saves] local_save_path` for GBE, `local_save.txt` for classic Goldberg). When
+  they do, nothing is ever written to %APPDATA%\GSE Saves - which is the only place the scan used to
+  look - so a game with a full shelf of unlocked achievements was read as a permanent 0%.
+
+  Returns '' when nothing is configured, and also for the placeholder value the GBE Fork template
+  ships with: "path/relative/to/dll" is documentation, not a folder.
+*/
+function readConfiguredSavePath(steamSettings) {
+  if (!steamSettings) return '';
+  let value = '';
+  try {
+    const text = fs.readFileSync(path.join(steamSettings, 'configs.user.ini'), 'utf8');
+    const match = text.match(/^\s*local_save_path\s*=\s*(.+?)\s*$/im);
+    if (match) value = match[1].trim();
+  } catch {
+    /* no configs.user.ini - fall through to the classic Goldberg marker file */
+  }
+  if (!value) {
+    // Classic Goldberg reads local_save.txt from beside the dll; some setups keep a copy inside
+    // steam_settings, so both are accepted.
+    for (const file of [path.join(steamSettings, 'local_save.txt'), path.join(path.dirname(steamSettings), 'local_save.txt')]) {
+      try {
+        const first = fs.readFileSync(file, 'utf8').split(/\r?\n/)[0].trim();
+        if (first) {
+          value = first;
+          break;
+        }
+      } catch {
+        /* absent or unreadable - not an error, most setups have neither file */
+      }
+    }
+  }
+  if (!value) return '';
+  if (/^[.\\/]*path[\\/]relative[\\/]to[\\/]dll[\\/]*$/i.test(value)) return '';
+  return value;
+}
+
+/*
+  The folder a redirected setup actually keeps this game's unlock state in, or null.
+
+  A relative path is resolved against the folder holding the steam_api dll - steam_settings sits
+  beside it, so its parent is that folder. Goldberg appends the appid under its save root and GBE
+  Fork inherits that, but not every build does, so both shapes are probed and the one that has an
+  achievements.json wins; with neither written yet, the first existing folder is still returned so
+  the watcher has somewhere to watch.
+*/
+function resolveLocalSaveDir({ steamSettings, appid } = {}) {
+  const configured = readConfiguredSavePath(steamSettings);
+  if (!configured) return null;
+  let root;
+  try {
+    root = path.isAbsolute(configured) ? path.resolve(configured) : path.resolve(path.dirname(steamSettings), configured);
+  } catch {
+    return null;
+  }
+  const candidates = appid != null && String(appid) ? [path.join(root, String(appid)), root] : [root];
+  for (const dir of candidates) {
+    try {
+      if (fs.existsSync(path.join(dir, 'achievements.json'))) return dir;
+    } catch {
+      /* unreadable candidate - try the next shape */
+    }
+  }
+  for (const dir of candidates) {
+    try {
+      if (fs.existsSync(dir) && fs.statSync(dir).isDirectory()) return dir;
+    } catch {
+      /* not on disk yet */
+    }
+  }
+  return null;
+}
+
 // Inspect the runtime save folder(s) for an appid and report whether the emulator has actually
 // written any unlocked-achievement state yet. Explains the common "achievements show locked even
 // though GBE Fork files are present" case: the save is simply absent/empty (nothing unlocked).
-function inspectSaveState(appid, savesRoots = defaultSavesRoots()) {
+// `localSaveDir` (from resolveLocalSaveDir) is checked first: when a setup redirects its saves, the
+// standard roots are empty by design and reporting from them would describe the wrong folder.
+function inspectSaveState(appid, savesRoots = defaultSavesRoots(), localSaveDir = null) {
   const state = { root: null, type: null, file: null, earned: 0, total: 0, exists: false };
   if (appid == null) return state;
-  for (const { type, root } of savesRoots) {
-    const file = path.join(root, String(appid), 'achievements.json');
+  const locations = [];
+  if (localSaveDir) locations.push({ type: 'local', root: path.dirname(localSaveDir), file: path.join(localSaveDir, 'achievements.json') });
+  for (const { type, root } of savesRoots) locations.push({ type, root, file: path.join(root, String(appid), 'achievements.json') });
+
+  for (const { type, root, file } of locations) {
     if (!fs.existsSync(file)) continue;
     state.root = root;
     state.type = type;
@@ -394,7 +500,7 @@ function inspectSaveState(appid, savesRoots = defaultSavesRoots()) {
         (e) => e && (e.earned === true || e.Achieved === true || e.earned === 1 || e.unlocked === true || String(e.earned) === '1')
       ).length;
     } catch {
-      /* unreadable save — leave counts at 0 */
+      /* unreadable save - leave counts at 0 */
     }
     break;
   }
@@ -477,6 +583,7 @@ function diagnose({ gameDir, appid, schema, savesRoots }) {
     steamSettings: null,
     emulator: 'none', // 'gbe' | 'goldberg' | 'none'
     save: null, // runtime unlock-state summary (from inspectSaveState)
+    localSaveDir: null, // set when configs.user.ini / local_save.txt redirects the save folder
     ok: false,
     issues: [],
     achievements: {
@@ -490,7 +597,9 @@ function diagnose({ gameDir, appid, schema, savesRoots }) {
   // never has to parse an English sentence to know what to write (see APPID_MISMATCH below).
   const add = (level, code, message, data = null) => report.issues.push(data ? { level, code, message, data } : { level, code, message });
 
-  // Runtime unlock state is independent of the steam_settings schema, so report it regardless.
+  // Runtime unlock state is independent of the steam_settings schema, so report it regardless. It is
+  // re-read below once steam_settings is known, because a setup that redirects its save folder keeps
+  // nothing in the standard roots this first pass looks at.
   report.save = inspectSaveState(appid, savesRoots);
 
   if (!gameDir || !fs.existsSync(gameDir)) {
@@ -503,9 +612,13 @@ function diagnose({ gameDir, appid, schema, savesRoots }) {
   const steamSettings = emu.steamSettings || findSteamSettings(gameDir);
   report.steamSettings = steamSettings;
   if (!steamSettings) {
-    add('error', 'NO_STEAM_SETTINGS', 'No steam_settings folder found beside the emulator — Goldberg/GBE is likely not set up.');
+    add('error', 'NO_STEAM_SETTINGS', 'No steam_settings folder found beside the emulator - Goldberg/GBE is likely not set up.');
     return report;
   }
+
+  const localSaveDir = resolveLocalSaveDir({ steamSettings, appid: report.appid });
+  report.localSaveDir = localSaveDir || null;
+  if (localSaveDir) report.save = inspectSaveState(appid, savesRoots, localSaveDir);
 
   // steam_appid.txt (GBE reads the appid from here or the dll name)
   const appidTxt = path.join(steamSettings, 'steam_appid.txt');
@@ -527,7 +640,7 @@ function diagnose({ gameDir, appid, schema, savesRoots }) {
   // not make the setup complete when DLC ownership or the configured user identity is absent.
   const appConfigFile = path.join(steamSettings, 'configs.app.ini');
   if (!fs.existsSync(appConfigFile)) {
-    add('warning', 'NO_DLC_CONFIG', 'configs.app.ini is missing — DLC unlock/enumeration is not configured.');
+    add('warning', 'NO_DLC_CONFIG', 'configs.app.ini is missing - DLC unlock/enumeration is not configured.');
   } else {
     const appConfig = fs.readFileSync(appConfigFile, 'utf8');
     if (!/^\s*\[app::dlcs\][\s\S]*?^\s*unlock_all\s*=\s*1\s*$/im.test(appConfig)) {
@@ -536,7 +649,7 @@ function diagnose({ gameDir, appid, schema, savesRoots }) {
   }
   const mainConfigFile = path.join(steamSettings, 'configs.main.ini');
   if (!fs.existsSync(mainConfigFile)) {
-    add('warning', 'NO_MAIN_CONFIG', 'configs.main.ini is missing — modern Steam ticket/token compatibility is not configured.');
+    add('warning', 'NO_MAIN_CONFIG', 'configs.main.ini is missing - modern Steam ticket/token compatibility is not configured.');
   } else {
     const mainConfig = fs.readFileSync(mainConfigFile, 'utf8');
     if (!/^\s*\[main::general\][\s\S]*?^\s*new_app_ticket\s*=\s*1\s*$/im.test(mainConfig)) {
@@ -548,7 +661,7 @@ function diagnose({ gameDir, appid, schema, savesRoots }) {
   }
   const userConfigFile = path.join(steamSettings, 'configs.user.ini');
   if (!fs.existsSync(userConfigFile)) {
-    add('warning', 'NO_USER_CONFIG', 'configs.user.ini is missing — account name and language are not configured.');
+    add('warning', 'NO_USER_CONFIG', 'configs.user.ini is missing - account name and language are not configured.');
   } else {
     const userConfig = fs.readFileSync(userConfigFile, 'utf8');
     if (!/^\s*\[user::general\]/im.test(userConfig) || !/^\s*account_name\s*=\s*\S/im.test(userConfig) || !/^\s*language\s*=\s*\S/im.test(userConfig)) {
@@ -556,14 +669,27 @@ function diagnose({ gameDir, appid, schema, savesRoots }) {
     }
     const savePathMatch = userConfig.match(/^\s*local_save_path\s*=\s*(.+?)\s*$/im);
     if (savePathMatch && savePathMatch[1] && savePathMatch[1].trim()) {
-      add('warning', 'CUSTOM_SAVE_PATH', `configs.user.ini sets local_save_path=${savePathMatch[1].trim()} — runtime saves may be written outside AW's monitored GSE Saves folder.`);
+      // A redirected save folder is only a problem when AW cannot find it. It usually can now
+      // (resolveLocalSaveDir resolves the configured path and report.save reads from it), and
+      // reporting a working setup as a fault is exactly the unfixable yellow warning this check
+      // used to leave standing on every portable repack.
+      if (localSaveDir) {
+        add('info', 'CUSTOM_SAVE_PATH', `Saves are redirected by configs.user.ini to ${localSaveDir} - AW reads them there.`, { path: localSaveDir });
+      } else {
+        add(
+          'warning',
+          'CUSTOM_SAVE_PATH',
+          `configs.user.ini sets local_save_path=${savePathMatch[1].trim()}, and no save folder was found there - runtime saves are written outside AW's monitored GSE Saves folder.`,
+          { configured: savePathMatch[1].trim() }
+        );
+      }
     }
   }
 
   // achievements.json
   const achFile = path.join(steamSettings, 'achievements.json');
   if (!fs.existsSync(achFile)) {
-    add('error', 'NO_ACHIEVEMENTS_JSON', 'achievements.json is missing — in-game achievement pop-ups/icons will not work.');
+    add('error', 'NO_ACHIEVEMENTS_JSON', 'achievements.json is missing - in-game achievement pop-ups/icons will not work.');
     return report;
   }
 
@@ -653,7 +779,7 @@ function writeDlcConfig({ steamSettings, dlcs = [], unlockAll = true } = {}) {
   }
 
   const body = [
-    '; Managed by AW Next — enable all DLCs for this game.',
+    '; Managed by AW Next - enable all DLCs for this game.',
     "; unlock_all=1 reports every DLC as owned; the id=name list below lets games that enumerate",
     '; their DLCs (GetDLCCount/BGetDLCDataByIndex) see them too.',
     `unlock_all=${unlockAll ? '1' : '0'}`,
@@ -700,7 +826,7 @@ function writeMainConfig({ steamSettings } = {}) {
 }
 
 // Append a language to supported_languages.txt only when the file already exists and lacks it. GBE
-// ignores a configured language that isn't listed there — but if the file is ABSENT there's nothing
+// ignores a configured language that isn't listed there - but if the file is ABSENT there's nothing
 // to restrict, so we deliberately don't create one (creating a single-line file would hide every
 // other language the game actually supports).
 function ensureSupportedLanguage(steamSettings, language) {
@@ -737,19 +863,37 @@ function neutralizePlaceholderSavePath(doc) {
   Write/merge configs.user.ini with the app's account_name and achievement language, preserving
   account_steamid and every other key (changing the steamid would orphan the save folder).
 */
-function writeUserConfig({ steamSettings, accountName, language } = {}) {
+/*
+  `fillDefaults` is what an explicit repair passes. Game Health lists NO_USER_CONFIG and
+  BAD_USER_CONFIG as repairable, but the repair only wrote configs.user.ini when the app had a name
+  or a language to stamp into it - so for anyone who never filled in a Steam username (the default),
+  "Repair the achievement data" left both warnings exactly where they were, run after run. With the
+  flag set, an absent account name or language falls back to the emulator's own defaults, which is
+  enough to satisfy the check and is what the emulator would have used anyway.
+*/
+const DEFAULT_EMU_ACCOUNT_NAME = 'Player';
+const DEFAULT_EMU_LANGUAGE = 'english';
+
+function writeUserConfig({ steamSettings, accountName, language, fillDefaults = false } = {}) {
   if (!steamSettings) throw new Error('writeUserConfig: steamSettings path is required');
   const updates = {};
   if (accountName && String(accountName).trim()) updates.account_name = sanitizeIniValue(accountName);
   if (language && String(language).trim()) updates.language = sanitizeIniValue(language);
   const file = path.join(steamSettings, 'configs.user.ini');
   const fileExists = fs.existsSync(file);
+  const previous = fileExists ? fs.readFileSync(file, 'utf8') : '';
+  if (fillDefaults) {
+    // Only for a key the file does not already answer: a default must complete a setup, never
+    // replace an identity the user (or the repack) deliberately chose.
+    const hasKey = (key) => new RegExp(`^\\s*${key}\\s*=\\s*\\S`, 'im').test(previous);
+    if (!updates.account_name && !hasKey('account_name')) updates.account_name = DEFAULT_EMU_ACCOUNT_NAME;
+    if (!updates.language && !hasKey('language')) updates.language = DEFAULT_EMU_LANGUAGE;
+  }
   // Nothing to stamp and no existing file to repair the save path in.
   if (Object.keys(updates).length === 0 && !fileExists) {
     return { file: null, accountName: null, language: null, changed: false, savePathFixed: false };
   }
 
-  const previous = fileExists ? fs.readFileSync(file, 'utf8') : '';
   const doc = parseIni(previous);
   if (Object.keys(updates).length > 0) {
     let section = getIniSection(doc, 'user::general');
@@ -789,6 +933,9 @@ async function repair({
   unlockAllDlc = true,
   accountName,
   language,
+  // An explicit repair completes configs.user.ini even with nothing to stamp into it - see
+  // writeUserConfig's fillDefaults. Off by default so the silent auto-repair keeps its old reach.
+  fillUserDefaults = false,
 }) {
   if (!steamSettings) throw new Error('repair: steamSettings path is required');
   fs.mkdirSync(steamSettings, { recursive: true });
@@ -804,7 +951,7 @@ async function repair({
   if (writeAppId && appid != null) filesToReplace.push(path.join(steamSettings, 'steam_appid.txt'));
   if (writeDlc) filesToReplace.push(path.join(steamSettings, 'configs.app.ini'));
   if (writeMain) filesToReplace.push(path.join(steamSettings, 'configs.main.ini'));
-  if ((accountName && String(accountName).trim()) || (language && String(language).trim())) {
+  if (fillUserDefaults || (accountName && String(accountName).trim()) || (language && String(language).trim())) {
     filesToReplace.push(path.join(steamSettings, 'configs.user.ini'));
   }
   const existing = filesToReplace.filter((file) => fs.existsSync(file));
@@ -858,7 +1005,7 @@ async function repair({
         const fetched = await fetchDlc(appid);
         if (Array.isArray(fetched)) dlcList = fetched;
       } catch {
-        /* offline / rate-limited — fall back to unlock_all only */
+        /* offline / rate-limited - fall back to unlock_all only */
       }
     }
     try {
@@ -877,9 +1024,9 @@ async function repair({
   }
 
   // Stamp the app's identity (account name + language) into configs.user.ini, preserving account_steamid.
-  if ((accountName && String(accountName).trim()) || (language && String(language).trim())) {
+  if (fillUserDefaults || (accountName && String(accountName).trim()) || (language && String(language).trim())) {
     try {
-      summary.user = writeUserConfig({ steamSettings, accountName, language });
+      summary.user = writeUserConfig({ steamSettings, accountName, language, fillDefaults: fillUserDefaults });
     } catch {
       summary.user = null;
     }
@@ -888,7 +1035,7 @@ async function repair({
   return summary;
 }
 
-// Read the on-disk GBE/Goldberg SCHEMA (steam_settings/achievements.json — the array of
+// Read the on-disk GBE/Goldberg SCHEMA (steam_settings/achievements.json - the array of
 // {name, displayName, description, hidden, icon, icongray}). This is a fully offline source of
 // achievement names and descriptions: useful to fill blanks when there's no internet. Returns [] if
 // the file is absent, unreadable, or not a JSON array.
@@ -947,14 +1094,14 @@ function findCompatibleGames(roots, { maxDepth = 5, onSkip = null } = {}) {
         if (!e.isDirectory()) continue;
         const lower = e.name.toLowerCase();
         if (lower === 'steam_settings') continue;
-        if (TOOL_SUBDIR.test(e.name)) continue; // editor/SDK/dedicated-server shipped with the game — not the game
+        if (TOOL_SUBDIR.test(e.name)) continue; // editor/SDK/dedicated-server shipped with the game - not the game
         walk(path.join(dir, e.name), depth + 1);
       }
     };
     walk(gameDir, 0);
     if (candidates.length === 0) return null;
     // Light tiebreak only: prefer an appid whose folder name resembles the game's root folder, else the
-    // shallowest. Folder names are often renamed/scene-tagged, so this never *filters* — it just orders.
+    // shallowest. Folder names are often renamed/scene-tagged, so this never *filters* - it just orders.
     candidates.sort(
       (a, b) =>
         exeDetect.nameSimilarity(rootName, path.basename(b.dir)) - exeDetect.nameSimilarity(rootName, path.basename(a.dir)) ||
@@ -1071,7 +1218,7 @@ function findCompatibleGames(roots, { maxDepth = 5, onSkip = null } = {}) {
 
 /*
   Find the most likely game executable inside a game folder. Thin wrapper around the shared
-  exeDetect module — kept for the existing call sites that only have a gameDir + emulator dll(s)
+  exeDetect module - kept for the existing call sites that only have a gameDir + emulator dll(s)
   and no game name. Pass a game name to exeDetect.detect directly for name-aware scoring.
 
   Returns { name, full, size, score } or null.
@@ -1093,6 +1240,8 @@ module.exports = {
   writeUserConfig,
   diagnose,
   inspectSaveState,
+  readConfiguredSavePath,
+  resolveLocalSaveDir,
   buildRuntimeAchievementsState,
   seedRuntimeSave,
   findCompatibleGames,

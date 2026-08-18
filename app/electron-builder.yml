@@ -5,7 +5,7 @@
 #   productName      is what people read. electron-builder writes it into the executable's
 #                    FileDescription and ProductName, which is the name Task Manager shows, and
 #                    uses it for the installer's own branding text.
-#   executableName   pins everything an existing install is keyed on — the executable filename
+#   executableName   pins everything an existing install is keyed on - the executable filename
 #                    ("Achievement Watcher.exe"), the installation directory and the uninstaller
 #                    filename. The "Start with Windows" entry written by app/electron/ipc.js stores
 #                    the full path of that executable, so renaming it silently kills autostart and
@@ -80,7 +80,7 @@ nsis:
   uninstallerIcon: build/icon.ico
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  # Shortcut and Control Panel entry carry the full product name — both have room for it. The
+  # Shortcut and Control Panel entry carry the full product name - both have room for it. The
   # executable behind them keeps its historical name (see the note at the top of this file). The
   # uninstaller entry drops the version electron-builder appends by default: the product name is
   # not a version string, and the release tag already carries the number.
@@ -112,6 +112,18 @@ files:
   - '!watchdog/patches/**'
   # Dev-only electron-updater config; packaged builds get their own generated app-update.yml.
   - '!dev-app-update.yml'
+  # Bare-runtime shims (~5.6 MB). tar-fs and tar-stream reach them only through the "bare" subpath
+  # import condition ("fs": { "bare": "bare-fs", "default": "fs" }); under Node and Electron that
+  # always resolves to the built-in module, so these never load. Verified by removing them and
+  # running a real tar-stream pack/extract round trip plus a @puppeteer/browsers load - the
+  # Chromium-download path that actually uses tar-fs.
+  # bare-events is NOT excluded: streamx -> events-universal requires it unconditionally.
+  - '!node_modules/bare-fs/**'
+  - '!node_modules/bare-url/**'
+  - '!node_modules/bare-path/**'
+  - '!node_modules/bare-stream/**'
+  # Installer artwork and the packaging scripts are build-time only; app.asar does not need them.
+  - '!build/**'
 
 extraFiles:
   # Keep the attribution notice beside the installed application as well as in source releases.
@@ -120,7 +132,7 @@ extraFiles:
 
   - from: ../watchdog
     to: ./watchdog
-    # Filter globs resolve against `from`, so they must NOT be prefixed with "watchdog/" — a
+    # Filter globs resolve against `from`, so they must NOT be prefixed with "watchdog/" - a
     # prefixed pattern silently matches nothing and the excluded files ship anyway.
     #
     # notification-test.js is deliberately NOT excluded: websocket.js requires it at module load,
@@ -135,8 +147,10 @@ extraFiles:
   # NOTE: the portable Node 14 runtime is gone since the A2 koffi migration. The monitor runs
   # under Electron's bundled Node runtime (see launchWatchdog in electron/init.js).
 
-  - from: ./media
-    to: resources/userData/Media
+  # NOTE: ./media is gone. Its 11 .wav files were byte-identical duplicates of app/sounds/, which is
+  # the folder every playback path actually resolves against (bundled app/sounds + user-imported
+  # <userData>/sounds). Nothing ever read the Media/ copy, so it shipped ~3.4 MB twice - once inside
+  # app.asar and once here - and checkResources() then wrote a third copy into every user profile.
 
   - from: ./Source
     to: resources/userData/Source

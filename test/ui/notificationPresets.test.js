@@ -129,3 +129,19 @@ test('no bundled default preset uses effects that cost frames over a game', () =
       `${name} animates a property that forces layout or repaint`);
   }
 });
+
+/*
+  The PlayStation-styled presets keep one card size whatever the achievement is called. PS5 Steam
+  used `width: fit-content`, so the same notification arrived a different width every time and a
+  short name produced a stub next to a long one - the card has a fixed slot for the ring on the
+  right, which only reads as deliberate when the card itself does not move.
+*/
+test('the PlayStation-styled presets have one card width, not one per achievement name', () => {
+  for (const relative of ['presets/Default Presets/PlayStation', 'presets/Users Presets/PS5 Steam']) {
+    const css = fs.readFileSync(path.join(appRoot, ...relative.split('/'), 'style.css'), 'utf8');
+    const card = css.slice(css.indexOf('.ach {'), css.indexOf('}', css.indexOf('.ach {')));
+    assert.ok(card, `${relative} has no .ach rule`);
+    assert.match(card, /width:\s*\d+px;/, `${relative} must state a fixed card width`);
+    assert.doesNotMatch(card, /width:\s*(fit-content|max-content|auto)/, `${relative} must not size itself to its text`);
+  }
+});

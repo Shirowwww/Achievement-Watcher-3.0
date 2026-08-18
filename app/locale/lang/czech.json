@@ -47,7 +47,7 @@
   "achievementSearchPlaceholder": "Hledat úspěchy…",
   "hiddenRemain": "skrytých achievementů zbývá",
   "revealedOnceUnlocked": "Podrobnosti každého achievementu se zobrazí po jeho odemčení",
-  "hiddenDescriptionPlaceholder": "Skryté — klikněte pro zobrazení",
+  "hiddenDescriptionPlaceholder": "Skryté - klikněte pro zobrazení",
   "noneUnlocked": "Zatím žádný odemčený achievement",
   "noneUnlockedHint": "Nevidíte žádná odemčení?",
   "scrollUp": "Nahoru",
@@ -194,7 +194,7 @@
         "description": "Barevný motiv okna aplikace (okamžitý náhled, uložení tlačítkem OK).",
         "customTitle": "Vlastní motiv",
         "customHint": "Náhled po vrstvách",
-        "customDesc": "Vyber barvu a případně obrázek pro každý blok. Obrázek se zobrazí nad barvou (která se pro čitelnost změní na světlý závoj). Vše se zobrazuje živě a ukládá tlačítkem OK — overlay ve hře se řídí stejně.",
+        "customDesc": "Vyber barvu a případně obrázek pro každý blok. Obrázek se zobrazí nad barvou (která se pro čitelnost změní na světlý závoj). Vše se zobrazuje živě a ukládá tlačítkem OK - overlay ve hře se řídí stejně.",
         "resetAll": "Obnovit vše"
       },
       "controller": {
@@ -229,7 +229,7 @@
         },
         "priority": {
           "name": "Zaostřit overlay při otevření",
-          "description": "Předá overlayi při otevření fokus klávesnice, aby hry pauzující při ztrátě fokusu zapauzovaly. Windows nedá aplikaci třetí strany ovladač na výhradní použití — hra může tlačítka stále vidět."
+          "description": "Předá overlayi při otevření fokus klávesnice, aby hry pauzující při ztrátě fokusu zapauzovaly. Windows nedá aplikaci třetí strany ovladač na výhradní použití - hra může tlačítka stále vidět."
         },
         "escape": {
           "name": "Poslat Esc do hry při otevření ovladačem",
@@ -271,13 +271,13 @@
         "name": "Data steam_settings",
         "description": "Simple používá vlastní načítání AW Next (anonymně). Advanced spustí generate_emu_config pro pokrytí depotů/jazyků.",
         "value": {
-          "simple": "Simple (rychlé)",
-          "advanced": "Advanced (úplné)"
+          "simple": "Simple",
+          "advanced": "Advanced"
         }
       },
       "login": {
         "name": "Zdroj dat (Advanced)",
-        "description": "Přihlášení do Steamu umožní generate_emu_config stáhnout úplná data DLC/depotů. Používejte POUZE jednorázový účet — nikdy hlavní.",
+        "description": "Přihlášení do Steamu umožní generate_emu_config stáhnout úplná data DLC/depotů. Používejte POUZE jednorázový účet - nikdy hlavní.",
         "value": {
           "anonymous": "Anonymně",
           "steam": "Přihlášení do Steamu"
@@ -301,7 +301,7 @@
       },
       "crackFix": {
         "name": "Automaticky použít komunitní opravu (CrakFiles)",
-        "description": "Při každé opravě automaticky stáhne a použije jistě odpovídající komunitní opravu ze seznamu CrakFiles (pouze přesná shoda názvu + odkaz pixeldrain; přepsané soubory se zálohují). Ve výchozím nastavení zapnuto — vypněte, pokud nechcete, aby AW stahoval/přepisoval soubory hry z komunitního zdroje.",
+        "description": "Při každé opravě automaticky stáhne a použije komunitní opravu ze seznamu CrakFiles, pokud název odpovídá s vysokou jistotou (pouze odkazy pixeldrain; přepsané soubory se zálohují). Ve výchozím nastavení vypnuto - zapněte, pokud chcete, aby AW stahoval a přepisoval soubory hry z komunitního zdroje.",
         "value": {
           "false": "Vypnuto",
           "true": "Zapnuto"
@@ -324,10 +324,10 @@
         }
       },
       "goldbergIcons": {
-        "name": "GBE/Goldberg — stáhnout ikony",
-        "description": "Když je zapnuto, automatická oprava, která zapisuje chybějící steam_settings/achievements.json, stáhne také ikony achievementů ze Steam CDN.",
+        "name": "GBE/Goldberg - stáhnout ikony",
+        "description": "Když je zapnuto, každá oprava, která zapisuje steam_settings/achievements.json - automatická i ze stavu hry - stáhne také ikony úspěchů z CDN Steamu.",
         "value": {
-          "false": "Vypnuto (rychlé)",
+          "false": "Vypnuto",
           "true": "Zapnuto"
         }
       },
@@ -415,7 +415,7 @@
         "overlayRandomSoundDesc": "Pro každé oznámení vybere náhodný zvuk z vestavěného a importovaného seznamu.",
         "overlaySoundImport": "Importovat vlastní zvuk…",
         "overlayVolume": "Hlasitost",
-        "overlayVolumeDesc": "Hlasitost zvuků oznámení — překryvná okna lze zesílit až na 200 %, vlastní zvuky toastů jsou omezeny na 100 %.",
+        "overlayVolumeDesc": "Hlasitost zvuků oznámení - překryvná okna lze zesílit až na 200 %, vlastní zvuky toastů jsou omezeny na 100 %.",
         "overlayDuration": "Doba trvání",
         "overlayDurationDesc": "Jak dlouho vyskakovací overlay zůstane na obrazovce. Auto nechá rozhodnout předvolbu; hodnota omezí dobu na obrazovce.",
         "overlayDurationAuto": "Automaticky",
@@ -500,7 +500,7 @@
           },
           "importLabel": "Importovat",
           "imported": "Importováno a vybráno:",
-          "importedOnly": "Importovaná předvolba — lze ji zde exportovat nebo smazat; posuvníky ji upravit nelze.",
+          "importedOnly": "Importovaná předvolba - lze ji zde exportovat nebo smazat; posuvníky ji upravit nelze.",
           "load": "Upravit předvolbu",
           "loaded": "Načteno:",
           "name": "Název",
@@ -764,7 +764,7 @@
     "help": {
       "nav": "Nápověda",
       "title": "Nápověda a tipy",
-      "intro": "Vše, co je užitečné vědět — detekce, oznámení, ovladač, overlay, motivy a řešení problémů.",
+      "intro": "Vše, co je užitečné vědět - detekce, oznámení, ovladač, overlay, motivy a řešení problémů.",
       "setupTitle": "Vaše aktuální nastavení",
       "topicsTitle": "Procházet podle tématu",
       "searchPlaceholder": "Hledat v nápovědě…",
@@ -772,15 +772,15 @@
       "quickTitle": "První kroky",
       "quick": [
         "Přidejte složky s uloženými pozicemi/konfigurací v Nastavení > Složky a poté zapněte odpovídající zdroj v Nastavení > Zdroje.",
-        "Watchdog běží na pozadí — pro živá oznámení a měření herní doby musí být spuštěný.",
+        "Watchdog běží na pozadí - pro živá oznámení a měření herní doby musí být spuštěný.",
         "Vše (nastavení, mezipaměti, protokoly a vlastní motivy) je uloženo v %APPDATA%\\Achievement Watcher Next.",
-        "Každou sekci nastavení lze sbalit pod její záhlaví — šipka dolů znamená otevřeno, do strany zavřeno. Vaše volby se pamatují."
+        "Každou sekci nastavení lze sbalit pod její záhlaví - šipka dolů znamená otevřeno, do strany zavřeno. Vaše volby se pamatují."
       ],
       "gameHealthTitle": "Stav hry",
       "gameHealth": [
         "Otevři u hry tlačítko nástrojů (vpravo nahoře na dlaždici) a uvidíš, zda je Připravená, Vyžaduje pozornost nebo Nesledovaná.",
         "Věta pod stavem vysvětlí příčinu srozumitelně; kontroly níže ukážou, která část selhává.",
-        "Tlačítka oprav se objeví jen tehdy, když AW Next hru skutečně umí opravit — každé řekne, co změní a kde zůstanou předchozí soubory.",
+        "Tlačítka oprav se objeví jen tehdy, když AW Next hru skutečně umí opravit - každé řekne, co změní a kde zůstanou předchozí soubory.",
         "Technické podrobnosti obsahují přesné cesty, počty a kódy emulátoru; zkopíruj je do hlášení chyby."
       ],
       "troubleshootTitle": "Řešení problémů",
@@ -788,7 +788,7 @@
         "Pokud hra chybí: přidejte složky, spusťte nové hledání a zkontrolujte přepínač zdroje i seznam blokovaných.",
         "Pokud se oznámení nezobrazují: zkontrolujte Pomocníka pro lepší soustředění ve Windows a spusťte aplikaci se stejnými právy jako hry.",
         "Pokročilé > Diagnostika otevře protokoly a datové složky; při hlášení problému je přiložte.",
-        "Protokoly se připojují, takže pád přežije další spuštění. Každý běh začíná značkou relace a blokem [diag] (verze, cesty, obrazovky) — vložte jej do hlášení."
+        "Protokoly se připojují, takže pád přežije další spuštění. Každý běh začíná značkou relace a blokem [diag] (verze, cesty, obrazovky) - vložte jej do hlášení."
       ],
       "sourcesTitle": "Spouštěče a zdroje",
       "sources": [
@@ -828,7 +828,7 @@
       ],
       "shortcutsTitle": "Klávesové zkratky",
       "shortcuts": [
-        "Ctrl+Shift+K (výchozí): zobrazí nebo skryje herní překryv — lze změnit v Nastavení > Obecné.",
+        "Ctrl+Shift+K (výchozí): zobrazí nebo skryje herní překryv - lze změnit v Nastavení > Obecné.",
         "Ctrl+Alt+Shift+Šipky přesouvají překryv; Ctrl+Alt+Shift+1–5 ho přichytí na předvolenou pozici.",
         "Ctrl+Alt+Shift+C přepíná propouštění kliknutí; Ctrl+F zaměří hledání v Nastavení."
       ],
@@ -856,8 +856,8 @@
         "description": "Spustí opravu emulátoru (GBE Fork, achievementy, DLC) na každé zjištěné emulované hře se známou instalační složkou.",
         "confirm": "Použít opravu emulátoru na každou zjištěnou hru se známou instalační složkou? Existující soubory se před přepsáním zálohují.",
         "running": "Opravování her…",
-        "progress": "Opravování %cur% / %total% — %name%",
-        "done": "Hotovo — opraveno her: %fixed%, přeskočeno: %skipped%, selhalo: %failed%.",
+        "progress": "Opravování %cur% / %total% - %name%",
+        "done": "Hotovo - opraveno her: %fixed%, přeskočeno: %skipped%, selhalo: %failed%.",
         "none": "Žádná zjištěná hra se známou instalační složkou k opravě."
       },
       "diag": {
@@ -866,7 +866,8 @@
         "dataFolder": "Otevřít složku dat",
         "goldbergTitle": "Goldberg / GBE Fork",
         "goldbergDesc": "Prohledá složku knihovny her na instalace Goldberg / GBE Fork a označí ty, kterým chybí schéma steam_settings/achievements.json. Pro opravu jedné použijte kontextovou nabídku hry (Diagnostikovat / Opravit).",
-        "scanFolder": "Prohledat složku…"
+        "scanFolder": "Prohledat složku…",
+        "exportLogs": "Exportovat protokoly (.zip)"
       },
       "blacklistTitle": "Černá listina AppID",
       "blacklistButton": "Resetovat černou listinu",
@@ -918,13 +919,13 @@
     "languageHint": "První načtení knihovny se spustí až po této volbě.",
     "introTitle": "Jak to funguje",
     "scanTitle": "Skenovat",
-    "scanCopy": "Umístění launcherů, emulátorů a souborů s achievementy se rozpoznají automaticky — každé před prvním skenem potvrdíte.",
+    "scanCopy": "Umístění launcherů, emulátorů a souborů s achievementy se rozpoznají automaticky - každé před prvním skenem potvrdíte.",
     "watchTitle": "Sledovat",
     "watchCopy": "Watchdog na pozadí rozpozná hru při spuštění, měří odehraný čas a hlídá její soubory s achievementy.",
     "fixTitle": "Opravit",
     "fixCopy": "U emulovaných her ze Steamu oprava z pravého tlačítka nainstaluje GBE Fork a zapíše schéma achievementů a data DLC.",
     "overlayTitle": "Overlay ve hře",
-    "overlayCopy": "Malý panel achievementů, který nad hrou vyvoláte klávesovou zkratkou — ve výchozím stavu Ctrl+Shift+K.",
+    "overlayCopy": "Malý panel achievementů, který nad hrou vyvoláte klávesovou zkratkou - ve výchozím stavu Ctrl+Shift+K.",
     "profileTitle": "Profil",
     "profileCopy": "Vyberte jméno zobrazené v záhlaví a volitelně nastavte místního avatara.",
     "username": "Zobrazovaný název",
@@ -985,7 +986,7 @@
     "modeSimpleCopy": "Přehledné rozhraní zaměřené na každodenní používání: knihovna, oznámení, vzhled a zdroje.",
     "modeAdvanced": "Pokročilé",
     "modeAdvancedCopy": "Celý AW Next: nastavení emulátoru, ovládání gamepadem, diagnostika, nástroje pro opravu a experimentální volby.",
-    "modeHint": "Ani v jednom případě se nic nevypíná — Jednoduché jen zobrazuje méně a kdykoli to změníš v Nastavení.",
+    "modeHint": "Ani v jednom případě se nic nevypíná - Jednoduché jen zobrazuje méně a kdykoli to změníš v Nastavení.",
     "modeRequired": "Pro pokračování vyber Jednoduché nebo Pokročilé."
   },
   "overlay": {
@@ -1075,7 +1076,7 @@
     "cancel": "Zrušit",
     "close": "Zavřít",
     "confirm": "Potvrdit",
-    "ubisoft-game-no-achievements-found": "Hra Ubisoft — nebyly nalezeny žádné úspěchy",
+    "ubisoft-game-no-achievements-found": "Hra Ubisoft - nebyly nalezeny žádné úspěchy",
     "no-achievements-found": "Nebyly nalezeny žádné úspěchy",
     "playstation-trophies": "Trofeje PlayStation",
     "xbox-achievements": "Úspěchy Xbox",
@@ -1096,8 +1097,8 @@
     "manual-game-platform-other": "Jiné",
     "manual-source": "Ručně",
     "no-config-eligible-games": "Nebyla nalezena žádná nenakonfigurovaná hra Steam bez existující opravy.",
-    "no-config-eligible-games-configured": "Nalezeno instalací kompatibilních se Steamem: {count} — všechny už konfiguraci mají. Pro jejich obnovu použijte Pokročilé > Opravit všechny hry.",
-    "generate-configs-detail-configured": "Instalací s hotovou konfigurací: {count} — zůstávají nedotčené; obnoví je Pokročilé > Opravit všechny hry.",
+    "no-config-eligible-games-configured": "Nalezeno instalací kompatibilních se Steamem: {count} - všechny už konfiguraci mají. Pro jejich obnovu použijte Pokročilé > Opravit všechny hry.",
+    "generate-configs-detail-configured": "Instalací s hotovou konfigurací: {count} - zůstávají nedotčené; obnoví je Pokročilé > Opravit všechny hry.",
     "achievements-not-available": "Žádné úspěchy",
     "backup": "Záloha",
     "created": "Vytvořeno",
@@ -1114,7 +1115,7 @@
     "unexpected-error": "Neočekávaná chyba",
     "choose-the-game-executable": "Vyberte spustitelný soubor hry",
     "select": "Vybrat",
-    "goldberg-diagnosis-title": "Diagnostika Goldberg/GBE — {gameName}",
+    "goldberg-diagnosis-title": "Diagnostika Goldberg/GBE - {gameName}",
     "repair-complete": "Oprava dokončena",
     "repair-complete-message": "Zapsáno {count} úspěchů do {path}",
     "repair-failed": "Oprava se nezdařila",
@@ -1161,7 +1162,7 @@
     "checking-community-crack": "Kontrola komunitního cracku…",
     "ncommunity-crack-x-applied-x-file-s": "Komunitní crack: „{name}“ použit ({count} souborů)",
     "ncommunity-crack-x-already-applied": "Komunitní crack: „{name}“ již použit",
-    "ncommunity-crack-found-but-pixeldrain-rate-limited-captcha-requi": "Komunitní crack nalezen, ale pixeldrain omezuje stahování (vyžaduje captcha) — stáhněte jej ručně: {url}",
+    "ncommunity-crack-found-but-pixeldrain-rate-limited-captcha-requi": "Komunitní crack nalezen, ale pixeldrain omezuje stahování (vyžaduje captcha) - stáhněte jej ručně: {url}",
     "identify-game-title": "Identifikovat hru (ID aplikace Steam)",
     "which-game-is-x": "Která hra je „{name}“?",
     "pick-the-match-to-write-the-correct-steam-appid-txt-correct-achi": "Vyberte shodu pro zápis správného steam_appid.txt (správné úspěchy + DLC) nebo přeskočte.",
@@ -1187,14 +1188,14 @@
     "select-game-install-folder": "Vybrat složku instalace hry",
     "remove-steam-drm-steamless": "Odstranit DRM Steamu (Steamless)",
     "remove-steamstub-from-x": "Odstranit SteamStub z: {exe}?",
-    "no-exe-detected-choose-one": "Nebyl zjištěn žádný exe — vyberte jeden?",
+    "no-exe-detected-choose-one": "Nebyl zjištěn žádný exe - vyberte jeden?",
     "steamless-detail": "Upraví spustitelný soubor hry (originál zůstane jako .steamstub.bak). Bez účinku, pokud hra nemá DRM SteamStub.",
     "choose-an-exe": "Vyberte .exe…",
     "remove-drm": "Odstranit DRM",
     "select-game-executable": "Vybrat spustitelný soubor hry",
     "steamless": "Steamless",
     "steamstub-drm-removed": "DRM SteamStub odstraněn.",
-    "no-steamstub-drm-detected-exe-left-unchanged": "Nebyl zjištěn DRM SteamStub — exe ponechán beze změny.",
+    "no-steamstub-drm-detected-exe-left-unchanged": "Nebyl zjištěn DRM SteamStub - exe ponechán beze změny.",
     "drm-removal-failed": "Odstranění DRM se nezdařilo.",
     "original-kept-as": "Originál ponechán jako:",
     "steamless-failed": "Steamless selhal",
@@ -1218,7 +1219,7 @@
     "applied-x-file-s": "Použito {count} souborů.",
     "n-nif-steam-api-was-replaced-re-run-apply-emulator-fix-to-keep-a": "Pokud byla steam_api nahrazena, spusťte znovu „Použít fix emulátoru“, aby detekce úspěchů fungovala.",
     "pixeldrain-captcha-required-for-this-file": "Pro tento soubor je vyžadováno captcha pixeldrain.",
-    "pixeldrain-rate-limited": "Pixeldrain tento soubor omezil (příliš mnoho stažení): v prohlížeči musíte vyřešit captcha.\n\n1) Otevřete stránku a stáhněte .rar.\n2) Vraťte se a vyberte stažený soubor — AW jej automaticky extrahuje a použije (přepsané soubory jsou zálohovány).",
+    "pixeldrain-rate-limited": "Pixeldrain tento soubor omezil (příliš mnoho stažení): v prohlížeči musíte vyřešit captcha.\n\n1) Otevřete stránku a stáhněte .rar.\n2) Vraťte se a vyberte stažený soubor - AW jej automaticky extrahuje a použije (přepsané soubory jsou zálohovány).",
     "open-page": "Otevřít stránku",
     "select-downloaded-file": "Vybrat stažený soubor…",
     "once-the-download-is-finished": "Až stahování skončí…",
@@ -1230,7 +1231,7 @@
     "applying-file": "Použití souboru…",
     "apply-failed": "Použití se nezdařilo.",
     "failed": "Selhalo.",
-    "uplay-r2-diagnosis-title": "Diagnostika Uplay R2 — {gameName}",
+    "uplay-r2-diagnosis-title": "Diagnostika Uplay R2 - {gameName}",
     "apply-emulator-fix-uplay-r2": "Použít fix emulátoru (Uplay R2)…",
     "select-install-folder-uplay-r2-loader": "Vyberte složku instalace hry (kam má jít .dll loaderu Uplay R2)",
     "resolving-the-steam-equivalent": "Zjišťování ekvivalentu ve Steamu…",
@@ -1254,7 +1255,7 @@
     "dllsInstalled": "{count} DLL nainstalováno",
     "loaderAlreadyPresent": "loader již přítomen",
     "uplay-r2-installed": "Uplay R2 nainstalován",
-    "uplay-r2-installed-message": "{installedLabel} — {mapped} úspěchů namapováno",
+    "uplay-r2-installed-message": "{installedLabel} - {mapped} úspěchů namapováno",
     "uplay-r2-install-failed": "Instalace Uplay R2 se nezdařila",
     "could-not-install-or-configure-goldberg-uplay-r2": "Goldberg Uplay R2 se nepodařilo nainstalovat nebo nakonfigurovat.",
     "diagnose-uplay-r2-setup": "Diagnostikovat nastavení Uplay R2",
@@ -1329,12 +1330,12 @@
     "fix-all-games": "Opravit všechny hry",
     "apply-the-emulator-fix-to-x-detected-game-s-existing-files-are-b": "Použít fix emulátoru na {count} zjištěnou hru/her? Existující soubory se před přepsáním zazálohují.",
     "fixing": "Oprava",
-    "done-x-game-s-fixed-x-skipped-x-failed": "Hotovo — {fixed} hra/her opraveno, {skipped} přeskočeno, {failed} selhalo.",
+    "done-x-game-s-fixed-x-skipped-x-failed": "Hotovo - {fixed} hra/her opraveno, {skipped} přeskočeno, {failed} selhalo.",
     "achievement-watcher": "AW Next",
     "connect-epic-games-account": "Připojit účet Epic Games",
     "connect-microsoft-xbox-network": "Připojit Microsoft / Xbox Network",
     "emulator-fix-applied": "Fix emulátoru použit",
-    "x-is-ready-achievements-enabled": "{name} je připravena — úspěchy zapnuty.",
+    "x-is-ready-achievements-enabled": "{name} je připravena - úspěchy zapnuty.",
     "achievement-unlocked": "Úspěch odemčen",
     "choose-theme-image": "Vyberte obrázek na pozadí",
     "choose-a-notification-sound": "Vyberte zvuk oznámení",
@@ -1361,7 +1362,7 @@
     "scan-failed-x": "Kontrola se nezdařila: {error}",
     "ok": "OK",
     "goldberg-gbe-fork-scan": "Sken Goldberg / GBE Fork",
-    "scan-found-message": "{found} instalací nalezeno — {missing} nenakonfigurováno",
+    "scan-found-message": "{found} instalací nalezeno - {missing} nenakonfigurováno",
     "emu-login-missing": "Nejprve zadejte uživatelské jméno a heslo Steamu.",
     "emu-login-running": "Připojování ke Steamu… V případě výzvy zadejte kód Steam Guard.",
     "emu-login-success": "Přihlášení ke Steamu úspěšné. Obnovovací token generate_emu_config byl uložen.",
@@ -1449,8 +1450,8 @@
     "generate-configs": "Generovat konfigurace",
     "x-emulated-game-s-found-in-your-libraries-x-without-achievements": "Nalezeno instalací kompatibilních se Steamem: {found}; {missing} nemá existující opravu a lze je nakonfigurovat.",
     "start-scan": "Spustit sken",
-    "scan-started-auto-fix": "Sken spuštěn — {count} způsobilých nenakonfigurovaných her obdrží počáteční konfiguraci GBE.",
-    "scan-started-scan-only": "Sken spuštěn — automatická oprava je vypnutá, žádné soubory se nezmění.",
+    "scan-started-auto-fix": "Sken spuštěn - {count} způsobilých nenakonfigurovaných her obdrží počáteční konfiguraci GBE.",
+    "scan-started-scan-only": "Sken spuštěn - automatická oprava je vypnutá, žádné soubory se nezmění.",
     "generate-configs-failed-x": "Generování konfigurací se nezdařilo: {error}",
     "error-generating-configs": "Chyba při generování konfigurací",
     "error-while-auto-finding-folder-s": "Chyba při automatickém hledání složek",
@@ -1459,7 +1460,7 @@
     "notification-test-failure": "Test oznámení se nezdařil.",
     "error-in-connection-establishment-net-err-connection-refused-nis": "Chyba při navazování připojení: net::ERR_CONNECTION_REFUSED\nBěží Watchdog?",
     "test-toast-name": "Úspěch odemčen",
-    "test-toast-desc": "Test oznámení — preset {preset}",
+    "test-toast-desc": "Test oznámení - preset {preset}",
     "test-rare-name": "Vzácný úspěch",
     "test-rare-desc": "Vzácný · {percent}% hráčů",
     "test-progress-name": "Průběh",
@@ -1532,9 +1533,9 @@
     "open-release-page": "Otevřít stránku s vydáními",
     "clear-cache": "Vymazat mezipaměti",
     "clear-update-cache-label": "Vymazat mezipaměti",
-    "clear-update-cache-confirm": "Odstranit všechny znovu stažitelné mezipaměti (soubory aktualizace, mezipaměť schémat a ikon Steam/Ubisoft, stažené nástroje pro opravu emulátoru)? Vaše nastavení, uložené pozice, zálohy a ručně umístěné soubory nejsou nikdy dotčeny — vše, co je zde vymazáno, se v případě potřeby jednoduše automaticky znovu stáhne.",
+    "clear-update-cache-confirm": "Odstranit všechny znovu stažitelné mezipaměti (soubory aktualizace, mezipaměť schémat a ikon Steam/Ubisoft, stažené nástroje pro opravu emulátoru)? Vaše nastavení, uložené pozice, zálohy a ručně umístěné soubory nejsou nikdy dotčeny - vše, co je zde vymazáno, se v případě potřeby jednoduše automaticky znovu stáhne.",
     "clear-update-cache-failed": "Mezipaměť aktualizací se nepodařilo vymazat.",
-    "clear-update-cache-empty": "Není co mazat — v mezipaměti nebyly nalezeny žádné soubory aktualizace.",
+    "clear-update-cache-empty": "Není co mazat - v mezipaměti nebyly nalezeny žádné soubory aktualizace.",
     "clear-update-cache-done": "Mezipaměť aktualizací vymazána: {folder}",
     "clear-update-cache-done-apps": "Vymazáno {count} složek mezipaměti.",
     "clear-update-cache-done-all": "Vymazáno {count} složek mezipaměti, včetně mezipaměti aktualizací ve složce {folder}.",
@@ -1583,7 +1584,7 @@
     "gh-why-ready": "Tato hra je rozpoznána, data úspěchů jsou k dispozici a AW Next sleduje její odemykání.",
     "gh-why-attention": "Hra funguje, ale část nastavení není úplná. Kontroly níže ukazují která.",
     "gh-why-not-installed": "Tato hra není na tomto PC nainstalována, nebo AW Next neví, kde je. Vyber její spustitelný soubor, aby ji bylo možné sledovat.",
-    "gh-why-install-gone": "Složka hry, kterou AW Next znal, zmizela — byla přesunuta, odinstalována nebo je na nepřipojeném disku. Ukaž AW Next hru znovu.",
+    "gh-why-install-gone": "Složka hry, kterou AW Next znal, zmizela - byla přesunuta, odinstalována nebo je na nepřipojeném disku. Ukaž AW Next hru znovu.",
     "gh-why-no-achievement-data": "Pro tuto hru nebyl nalezen žádný seznam úspěchů, takže zatím není co sledovat. Hry zcela bez úspěchů jsou zde běžné.",
     "gh-why-emulator-missing": "Tato hra potřebuje pro zaznamenávání úspěchů emulátor Steamu a v její složce žádný není. Použij opravu emulátoru z nabídky po pravém kliknutí na hru.",
     "gh-why-emulator-runtime-missing": "Data úspěchů jsou na místě, ale ve složce hry chybí soubor emulátoru, který je čte, takže se nikdy nic nezaznamená. AW Next jej dokáže vrátit.",
@@ -1621,14 +1622,14 @@
     "reapply-gbe-detail": "Současné soubory se nejprve zálohují a lze je obnovit ze stejné nabídky.",
     "reapply-gbe-button": "Použít znovu",
     "gh-action-fix-appid": "Opravit soubor s ID hry",
-    "gh-why-appid-mismatch": "Emulátor ve složce této hry hlásí ID {appidOnDisk}, ale AW Next přiřadil hru k {appidExpected}. Úspěchy odemčené pod špatným ID se zapíšou jiné hře. Opravte soubor, pokud je správná hra {appidExpected} — současná hodnota zůstane zachována.",
+    "gh-why-appid-mismatch": "Emulátor ve složce této hry hlásí ID {appidOnDisk}, ale AW Next přiřadil hru k {appidExpected}. Úspěchy odemčené pod špatným ID se zapíšou jiné hře. Opravte soubor, pokud je správná hra {appidExpected} - současná hodnota zůstane zachována.",
     "gh-appid-confirm-title": "Opravit soubor s ID hry?",
     "gh-appid-confirm-message": "steam_appid.txt se změní z {appidOnDisk} na {appidExpected}.",
     "gh-appid-confirm-detail": "Udělejte to jen tehdy, pokud je {game} na Steamu opravdu hra {appidExpected}. Pokud byl emulátor záměrně nastaven na {appidOnDisk}, zrušte to: soubor je správně a opravit je potřeba záznam v knihovně. Současný soubor se zálohuje do steam_settings\\.aw-backups.",
     "gh-appid-done-title": "Soubor s ID hry opraven",
     "gh-appid-done-message": "steam_appid.txt nyní obsahuje {appid}.",
     "gh-simple-notifications-failed": "Poslední oznámení se nepodařilo odeslat",
-    "gh-simple-notifications-fallback": "Funguje — aktivní záloha přes Windows",
+    "gh-simple-notifications-fallback": "Funguje - aktivní záloha přes Windows",
     "gh-notif-unconfirmed": "doručení nepotvrzeno",
     "gh-notif-reason-failed": "odeslání selhalo",
     "gh-notif-reason-fullscreen": "hra ve výhradním celoobrazovkovém režimu",
@@ -1637,7 +1638,7 @@
     "gh-notif-reason-remembered": "co u této hry fungovalo",
     "gh-why-not-watched": "Vše potřebné je připraveno, ale AW Next tuto hru za běhu nesleduje, takže nebude ani doba hraní, ani živá oznámení.",
     "gh-why-progress-muted": "Tato hra je nastavena správně. Oznámení o postupu jsou pro ni ztlumena, takže se ohlásí jen úplná odemčení.",
-    "gh-why-nothing-unlocked-yet": "Tato hra je nastavena správně a AW Next ji sleduje. Zatím nebylo nic odemčeno — jde prostě o hru, ve které jsi ještě nepostoupil.",
+    "gh-why-nothing-unlocked-yet": "Tato hra je nastavena správně a AW Next ji sleduje. Zatím nebylo nic odemčeno - jde prostě o hru, ve které jsi ještě nepostoupil.",
     "gh-confirm-repair-title": "Přepsat data úspěchů?",
     "gh-confirm-repair-message": "AW Next zapíše seznam úspěchů, ikony a nastavení emulátoru pro tuto hru.",
     "gh-confirm-repair-detail": "Soubory zapsané do:\n{target}\n\n{writes}\n\nPřípadné stávající verze těchto souborů se nejprve zkopírují do {backup}.",
@@ -1672,12 +1673,21 @@
     "gh-simple-notifications-muted": "Oznámení o postupu jsou ztlumena",
     "gh-simple-notifications-ok": "Oznámení fungují",
     "preset-sample-detail": "Ukázkový popis úspěchu",
-    "preset-sample-game": "Ukázková hra"
+    "preset-sample-game": "Ukázková hra",
+    "launch-needs-admin": "Windows odmítl spustit tuto hru bez práv správce.",
+    "launch-needs-admin-detail": "Zkusit znovu jako správce? Windows požádá o potvrzení. Samotný AW Next zůstává bez zvýšených práv - s právy správce se spouští pouze hra.",
+    "launch-as-admin": "Spustit jako správce",
+    "export-logs": "Exportovat protokoly",
+    "export-logs-running": "Sbírání protokolů…",
+    "export-logs-done": "Zapsáno souborů protokolu: {count} - do {path}",
+    "export-logs-failed": "Protokoly se nepodařilo exportovat: {error}",
+    "zip-archive": "Archiv zip",
+    "theme-layer-opacity": "Krytí"
   },
   "watchdog": {
     "rare": "Vzácný {percent}%",
     "platinumTitle": "Platina",
-    "platinumDesc": "Platina odemčena — 100 % dokončeno!",
+    "platinumDesc": "Platina odemčena - 100 % dokončeno!",
     "eaAchievement": "Úspěch EA",
     "achievement": "Úspěch",
     "achievementUnlocked": "Úspěch odemčen",

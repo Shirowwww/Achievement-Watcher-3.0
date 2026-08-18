@@ -24,7 +24,84 @@ const steam_emu_cfg_file_supported = [
   'SteamConfig.ini',
   'tenoke.ini',
   'UniverseLAN.ini',
+  // CODEX/RUNE and the CPY variant. Their default save root (%PUBLIC%\Documents\Steam\<SOURCE>) is
+  // already scanned, but a PORTABLE release never writes there: it keeps that same tree inside the
+  // game folder instead, so nothing was discovered and the game was absent from the library
+  // entirely - no card, no 0% entry, indistinguishable from a game that was never installed.
+  'steam_emu.ini',
+  'cpy.ini',
 ];
+
+// Scene-emulator save roots, relative to the folder holding the emulator config. A portable release
+// keeps the same layout it would otherwise write to %PUBLIC%\Documents\Steam, so these are the
+// shapes actually seen on disk, most specific first.
+const PORTABLE_SCENE_SAVE_DIRS = [
+  path.join('Steam', 'RUNE'),
+  path.join('Steam', 'CODEX'),
+  path.join('Steam', 'CPY'),
+  path.join('Documents', 'Steam', 'RUNE'),
+  path.join('Documents', 'Steam', 'CODEX'),
+  'RUNE',
+  'CODEX',
+  'SteamEmu',
+  'Saves',
+  'Save',
+];
+
+// The unlock-state files steam.getAchievementsFromFile() knows how to read. Used to tell a real save
+// folder from a folder that merely happens to be named right.
+const SCENE_SAVE_FILES = ['achievements.ini', 'achievements.json', 'Achievements.ini', 'stats.ini', 'achiev.ini', 'user_stats.ini'];
+
+function hasSceneSaveFile(dir) {
+  try {
+    if (!fs.statSync(dir).isDirectory()) return false;
+  } catch {
+    return false;
+  }
+  return SCENE_SAVE_FILES.some((name) => {
+    try {
+      return fs.statSync(path.join(dir, name)).isFile();
+    } catch {
+      return false;
+    }
+  });
+}
+
+/*
+  Where a portable CODEX/RUNE release keeps its unlock state, for `appid`.
+
+  `dir` is the folder holding steam_emu.ini / cpy.ini. Every known layout is probed with the appid
+  folder appended and again without it, and a candidate only wins if it actually holds one of the
+  save files the Steam parser can read. `%PUBLIC%\Documents\Steam\<SOURCE>\<appid>` is checked last so
+  a normally-installed copy still resolves through this path.
+
+  Returns { path, source } for the folder found, or null.
+*/
+function findSceneSaveDir(dir, appid) {
+  if (!dir || !appid) return null;
+  const candidates = [];
+  const push = (base, source) => {
+    if (!base) return;
+    candidates.push({ path: path.join(base, String(appid)), source });
+    candidates.push({ path: base, source });
+  };
+  for (const relative of PORTABLE_SCENE_SAVE_DIRS) {
+    push(path.join(dir, relative), /rune/i.test(relative) ? 'Rune' : /codex/i.test(relative) ? 'Codex' : 'Steam-emulator');
+  }
+  push(dir, 'Steam-emulator');
+  for (const root of saveRoots.defaultSteamEmuSaveRoots({ existingOnly: true })) {
+    push(root, /rune/i.test(root) ? 'Rune' : /codex/i.test(root) ? 'Codex' : 'Steam-emulator');
+  }
+
+  const seen = new Set();
+  for (const candidate of candidates) {
+    const key = path.resolve(candidate.path).toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (hasSceneSaveFile(candidate.path)) return candidate;
+  }
+  return null;
+}
 
 function isProbableAppIdFolderName(name) {
   const value = String(name || '').trim();
@@ -68,14 +145,14 @@ module.exports.getEntries = async () => {
         .filter((entry) => entry.path);
     } catch (parseErr) {
       // Genuine corruption (e.g. a write interrupted by a crash/power loss). A transient I/O lock
-      // throws before JSON.parse and is handled by the outer catch — so we never quarantine a good
+      // throws before JSON.parse and is handled by the outer catch - so we never quarantine a good
       // file just because antivirus/the indexer held it open for a moment.
       quarantineCorruptConfig(file, parseErr);
       try { await this.save([]); } catch {}
       return [];
     }
   } catch (err) {
-    // I/O error (file locked, permission issue, …) — degrade to empty without destroying the file.
+    // I/O error (file locked, permission issue, …) - degrade to empty without destroying the file.
     console.warn(`[userDir] could not read ${file}: ${err.message}`);
     return [];
   }
@@ -138,7 +215,7 @@ module.exports.check = async (dirpath) => {
     const accepted_files = steam_emu_cfg_file_supported.concat(['rpcs3.exe', 'shadPS4.exe', 'shadps4.exe', 'xenia.exe', 'xenia_canary.exe']);
 
     // Goldberg SocialClub Emu Saves keeps game folders named after the game (GTA V, RDR2, …) with
-    // hex profile subfolders — there is no numeric AppID and no emulator .ini to match. Accept the
+    // hex profile subfolders - there is no numeric AppID and no emulator .ini to match. Accept the
     // root, a game folder or a profile folder explicitly (issue #9).
     const socialclub = require('./socialclub.js');
     if (socialclub.isSocialClubPath(dirpath)) return (result = true);
@@ -170,6 +247,33 @@ module.exports.check = async (dirpath) => {
   }
 };
 
+/*
+  Emulator configs kept below the selected folder: one per game under a library root, or a repack
+  that buries its config a few levels down (<Game>/Engine/Binaries/.../UniverseLAN.ini). Each config
+  folder is scanned as if the user had picked it directly.
+*/
+async function scanBelow(dir) {
+  const nested = await glob(steam_emu_cfg_file_supported.map((name) => `**/${name}`), {
+    cwd: dir,
+    onlyFiles: true,
+    absolute: true,
+    deep: 4,
+    suppressErrors: true,
+  });
+  const result = [];
+  const seen = new Set([path.resolve(dir).toLowerCase()]);
+  for (const filepath of nested) {
+    // fast-glob returns posix separators even on Windows, and this path is handed on as the game
+    // folder: resolve it so every record carries a native path.
+    const cfgDir = path.resolve(path.parse(filepath).dir);
+    const key = cfgDir.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(...(await module.exports.scan(cfgDir)));
+  }
+  return result;
+}
+
 module.exports.scan = async (dir) => {
   let result = [];
 
@@ -181,7 +285,14 @@ module.exports.scan = async (dir) => {
         break;
       } catch (e) {}
     }
-    if (!info) return result;
+    /*
+      No emulator config at the top of the selected folder. That is the ordinary case when the user
+      adds their games LIBRARY rather than one game folder - and check() accepts such a folder
+      precisely because of the configs sitting below it, so scan() has to look in the same place.
+      Returning empty here is what left a portable release with no library entry at all (issue #32):
+      the folder was accepted, then read as holding nothing.
+    */
+    if (!info) return await scanBelow(dir);
 
     /*
       parentFind:
@@ -354,7 +465,7 @@ module.exports.scan = async (dir) => {
         let steamDataDir = path.join(dir, 'SteamData');
         if (!fs.existsSync(steamDataDir)) {
           // Unreal Engine titles keep tenoke.ini at the game root but the SteamData folder nested
-          // deeper (e.g. <game>/<Name>/Binaries/Win64/SteamData) — locate it instead of assuming
+          // deeper (e.g. <game>/<Name>/Binaries/Win64/SteamData) - locate it instead of assuming
           // it sits next to the cfg (issue #12). Bounded depth keeps the search cheap.
           const found = await glob('**/SteamData', { cwd: dir, onlyDirectories: true, absolute: true, deep: 6, suppressErrors: true });
           if (found.length > 0) steamDataDir = found[0];
@@ -367,25 +478,44 @@ module.exports.scan = async (dir) => {
     } else if (file === 'UniverseLAN.ini') {
       if (info.GameSettings && info.GameSettings.AppID)
         result.push({ appid: info.GameSettings.AppID, data: { type: 'file', path: path.join(dir, 'UniverseLANData') } });
-    }
-
-    if (result.length === 0) {
-      const nested = await glob(steam_emu_cfg_file_supported.map((name) => `**/${name}`), {
-        cwd: dir,
-        onlyFiles: true,
-        absolute: true,
-        deep: 4,
-        suppressErrors: true,
-      });
-      const seen = new Set([path.resolve(dir).toLowerCase()]);
-      for (const filepath of nested) {
-        const cfgDir = path.parse(filepath).dir;
-        const key = path.resolve(cfgDir).toLowerCase();
-        if (seen.has(key)) continue;
-        seen.add(key);
-        result.push(...(await module.exports.scan(cfgDir)));
+    } else if (file === 'steam_emu.ini' || file === 'cpy.ini') {
+      /*
+        CODEX / RUNE / CPY. Section and key casing vary between builds and between the releases of a
+        single group, so the appid is read case-insensitively from whatever section carries it rather
+        than from one hard-coded path (issue #32).
+      */
+      let appid = '';
+      for (const section of Object.values(info || {})) {
+        if (!section || typeof section !== 'object') continue;
+        for (const [key, value] of Object.entries(section)) {
+          if (!/^app_?id$/i.test(key)) continue;
+          const digits = String(value).match(/\d+/);
+          if (digits) {
+            appid = digits[0];
+            break;
+          }
+        }
+        if (appid) break;
+      }
+      if (appid) {
+        const found = findSceneSaveDir(dir, appid);
+        /*
+          A game with no save folder yet is still added, pointing at the layout this release would
+          write to. steam.getAchievementsFromFile() treats a missing file as a plain 0% game, so the
+          card appears with its full achievement list all locked - which is the whole point: a
+          missing card is indistinguishable from a game that was never installed and tells the user
+          nothing, while a 0% card says "found, nothing unlocked yet" and starts being watched.
+        */
+        const fallback = path.join(dir, 'Steam', 'RUNE', appid);
+        result.push({
+          appid,
+          source: found ? found.source : 'Steam-emulator',
+          data: { type: 'file', path: found ? found.path : fallback, gameDir: dir },
+        });
       }
     }
+
+    if (result.length === 0) result.push(...(await scanBelow(dir)));
   } catch (err) {
     /*Do nothing*/
     console.warn(err);
@@ -393,3 +523,7 @@ module.exports.scan = async (dir) => {
 
   return result;
 };
+
+// Exposed so the library scan can point a scene-emulator game at the folder its release actually
+// writes to, instead of the %APPDATA% root that only the Goldberg family uses.
+module.exports.findSceneSaveDir = findSceneSaveDir;

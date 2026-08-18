@@ -27,7 +27,9 @@ Use **Settings → Advanced → Diagnostics** to open the log or data directory.
 %APPDATA%\Achievement Watcher Next\logs
 ```
 
-The most useful files are usually `Achievement Watcher.log`, `renderer.log`, `parser.log` and the Watchdog logs created for the affected source. Zip several files when the failure crosses scanning, UI and notification behavior.
+The most useful files are usually `Achievement Watcher.log`, `renderer.log`, `parser.log` and the Watchdog logs created for the affected source. A failure that crosses scanning, UI and notification behavior needs several of them, so **Export logs (.zip)** in the same Diagnostics card writes all of them into one archive you choose the location of.
+
+Use that button rather than copying the files by hand. The tray daemon, the Watchdog monitor and every transient notification process keep their log streams open and keep appending, so a manual copy can catch a half-written line and some compressors refuse a file whose size changes under them. The export reads each file once and writes the bytes into the archive, which is why it works while the app is running - there is no need to quit first. The archive also carries an `about.txt` with the app, Electron, Node and Chrome versions the logs were produced by.
 
 Logs are appended, never truncated, so a crash survives the next launch. Each run starts with a marker, which is how you tell one launch from the next:
 
@@ -106,7 +108,7 @@ are deleted - settings, game data and logs are untouched.
    that actually delivered the last notification for that game, and why.
 3. Use the normal, rare and overlay tests under **Settings → Notification**.
 4. Confirm the delivery mode and selected preset. On **Automatic**, a missing overlay popup is often
-   the intended fallback rather than a fault — see [Notifications](notifications.md#how-automatic-decides).
+   the intended fallback rather than a fault - see [Notifications](notifications.md#how-automatic-decides).
 5. Check Windows notification permissions for AW Next.
 6. If the issue happens only while playing or in full screen, turn on **Priority notifications** under
    **Settings → Notification** and accept the Windows permission prompt.
@@ -114,6 +116,22 @@ are deleted - settings, game data and logs are untouched.
 8. Review the logs immediately after a failed test or unlock.
 
 If the library updates but no notification appears, the source watcher works and the problem is likely in the selected notification transport. If the library also stays unchanged, diagnose the source or save path first.
+
+## A game will not start from the Play button
+
+Some games require administrator rights, either because their own manifest asks for it or because
+their launcher expects it. Windows refuses to start those the way AW Next normally starts a game and
+reports it as `EACCES`, which used to surface as a bare "Could not start the game" on a title that
+runs perfectly from Explorer.
+
+AW Next now retries through the Windows shell when that happens, which is the route that raises the
+ordinary UAC prompt, so a game whose manifest declares it needs administrator simply starts after
+you confirm. If even that is refused - a launcher that needs administrator without declaring it -
+AW Next offers to retry as administrator explicitly. Only the game is elevated; AW Next itself keeps
+running without elevated rights, which is deliberate: an elevated AW Next would create its files
+with permissions your normal account cannot rewrite.
+
+Dismissing the UAC prompt is treated as a decision, not a failure, so nothing is reported.
 
 ## Playtime is not tracked
 
