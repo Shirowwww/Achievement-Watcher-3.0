@@ -13,7 +13,7 @@ const { PRESET_PROPERTIES, FONT_STACKS, MOTION_OFFSETS, EASINGS, normalizeOption
 /*
   The preset engine: the inline script every generated preset carries.
 
-  It is the only JavaScript in a generated preset and it is identical in all of them — the design
+  It is the only JavaScript in a generated preset and it is identical in all of them - the design
   lives entirely in the generated stylesheet. That split is what lets the designer preview a draft by
   rendering this same markup and this same engine with a different stylesheet, instead of a second
   renderer that would drift from the real one.
@@ -55,7 +55,7 @@ const PRESET_ENGINE = [
   "    var type = String((data && data.notificationType) || '').toLowerCase();",
   "    if ((data && data.isPlatinum) || type === 'platinum') { root.classList.add('state-platinum'); return; }",
   "    if (type === 'progress' || type === 'playtime') return;",
-  '    // An ordinary unlock carries rarityPercent null, and Number(null) is 0 — which would make',
+  '    // An ordinary unlock carries rarityPercent null, and Number(null) is 0 - which would make',
   '    // every notification the rarest tier there is. Absence has to be checked before the number.',
   '    var raw = data && data.rarityPercent;',
   "    if (raw == null || raw === '') return;",
@@ -163,7 +163,7 @@ const PRESET_ENGINE = [
   One spelling for an inline script, and the CSP hash that matches it.
 
   The designer previews a draft in an iframe inside the Settings page, and a srcdoc document inherits
-  the embedder's Content-Security-Policy — so the preview's scripts only run because view/app.html
+  the embedder's Content-Security-Policy - so the preview's scripts only run because view/app.html
   lists these hashes. Pinning them is deliberately strict: change the engine by one character and the
   preview stops running until the policy is updated, which is what the test enforcing this checks.
 */
@@ -187,12 +187,12 @@ const PRESET_MARKUP = [
 
 /*
   Slack around the card inside its host window. The window is sized from the meta box below, so
-  anything painted outside the card's own rectangle — the drop shadow, and the accent glow a rare or
-  completion state adds — is clipped unless the box allows for it.
+  anything painted outside the card's own rectangle - the drop shadow, and the accent glow a rare or
+  completion state adds - is clipped unless the box allows for it.
 
   It is also, exactly, the gap the user sees between the popup and the corner of their screen: the
   host places the WINDOW against the edge, so every pixel reserved here pushes the visible card
-  further in. That is why the shadow and the glow are deliberately tight — a softer, wider shadow
+  further in. That is why the shadow and the glow are deliberately tight - a softer, wider shadow
   looks better in isolation and costs twice this margin on all four sides.
 */
 const CUSTOM_PRESET_WINDOW_MARGIN = 22;
@@ -203,7 +203,7 @@ const MAX_PRESET_HEIGHT = 460;
 /*
   Extra room the strongest glow of any state needs, per side, beyond the slack the base margin
   already leaves. The card is centred in its window, so half of each margin sits on either side and
-  a modest glow costs nothing — only a design that glows harder than that widens the box, which
+  a modest glow costs nothing - only a design that glows harder than that widens the box, which
   keeps the popup anchored where it has always been for the presets that do not.
 */
 function glowRoom(values, margin) {
@@ -225,7 +225,7 @@ function presetBoxSize(options = {}) {
   const titleHeight = values.fontSize * lineHeight;
   const detailHeight = values.fontSize * (values.detailScale / 100) * lineHeight * values.descriptionLines;
   // Everything below only appears for some notifications, but the window cannot be resized once it
-  // is up — so a preset that CAN show a row is measured as though it does.
+  // is up - so a preset that CAN show a row is measured as though it does.
   const metaHeight = values.showGameName || values.showRarity ? values.fontSize * 0.66 * 1.2 + 2 : 0;
   const progressHeight = values.showProgress ? values.progressHeight + 12 : 0;
   const textHeight = metaHeight + titleHeight + detailHeight + progressHeight;
@@ -352,7 +352,7 @@ function borderRules(values) {
 }
 
 /*
-  The description line. One line is the original behaviour — clipped with an ellipsis, and scrolled
+  The description line. One line is the original behaviour - clipped with an ellipsis, and scrolled
   by the engine when it does not fit. Asking for more lets it wrap and clamps it instead, which is
   what a wide card wants and what the marquee cannot do.
 */
@@ -457,7 +457,7 @@ function buildCustomPresetCss(options) {
 
 /*
   Where generated presets are written. Under <userData>, never under the app folder: once packaged,
-  app/presets sits inside app.asar, and a mkdir below a file fails with ENOTDIR — which silently
+  app/presets sits inside app.asar, and a mkdir below a file fails with ENOTDIR - which silently
   broke Preview and Save on every installed build while a dev run, where the same path is a real
   directory, worked. Keeping them in userData also means they survive an update.
 
@@ -475,7 +475,7 @@ function generatedPresetsDir(userDataPath) {
 const PRESET_OPTIONS_FILE = 'aw-preset.json';
 
 // The installed manifest of an imported preset. Owned here, beside the options file, because both
-// name a preset's bookkeeping and presetSound() reads whichever one a preset has — util/presetPackage
+// name a preset's bookkeeping and presetSound() reads whichever one a preset has - util/presetPackage
 // imports it from here rather than spelling it a second time.
 const PRESET_PACKAGE_FILE = 'aw-package.json';
 
@@ -484,7 +484,7 @@ const PRESET_PACKAGE_FILE = 'aw-package.json';
 
   A preset that names a sound plays that sound instead of the one picked in the Notifications tab, so
   a shared package sounds the way its author intended. Reading it from the folder means an imported
-  preset gets the same treatment as one built here — its manifest options land in the same file.
+  preset gets the same treatment as one built here - its manifest options land in the same file.
 
   Deliberately tolerant: an unreadable or sound-less preset returns '', which means "use the app's
   setting", so this can never be the reason a notification goes silent.
@@ -492,7 +492,7 @@ const PRESET_PACKAGE_FILE = 'aw-package.json';
 function presetSound(presetDir) {
   if (!presetDir) return '';
   /*
-    The designer's own options are authoritative wherever they exist — including an empty sound,
+    The designer's own options are authoritative wherever they exist - including an empty sound,
     which is a preset saying it has no opinion rather than one that never had the chance to say so.
     Only a preset without them (hand-authored, installed from a package) falls back to the manifest,
     which is the one place such a preset can name a sound at all.

@@ -50,7 +50,7 @@ function upsertIniSection(doc, name, body) {
 // append any keys that weren't present. `updates` keys are matched case-insensitively.
 function upsertIniKeys(body, updates) {
   // Keep the caller's spelling alongside the lookup key: an appended line must use the emulator's
-  // documented casing (`AchKeyPrefix`, not `achkeyprefix`) — Goldberg's Uplay R2 loader compares
+  // documented casing (`AchKeyPrefix`, not `achkeyprefix`) - Goldberg's Uplay R2 loader compares
   // key names case-sensitively, so a lower-cased append is silently ignored by the emulator.
   const remaining = new Map(Object.entries(updates).map(([k, v]) => [k.toLowerCase(), { name: k, value: v }]));
   const out = body.map((line) => {

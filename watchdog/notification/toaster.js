@@ -24,7 +24,7 @@ overlayAck.onResult(({ ok, stage, reason }) => {
     transportPolicy.recordOverlaySuccess();
     return;
   }
-  debug.warn(`[notify] the overlay could not show this notification (${stage}: ${reason || 'no reason given'}) — falling back to Windows notifications`);
+  debug.warn(`[notify] the overlay could not show this notification (${stage}: ${reason || 'no reason given'}) - falling back to Windows notifications`);
   transportPolicy.recordOverlayFailure();
 });
 
@@ -54,7 +54,7 @@ function normalizeProgress(progress) {
 }
 
 // Load ESM-only controller dependencies lazily; rumble remains best effort. regodit is loaded
-// through its synchronous API only — the `regodit/promises` subpath segfaults (0xC0000005) under
+// through its synchronous API only - the `regodit/promises` subpath segfaults (0xC0000005) under
 // the pinned koffi 3.x when writing DWORDs, so the Watchdog must never import it.
 let regeditPromise = null;
 const loadRegedit = () => regeditPromise || (regeditPromise = import('regodit'));
@@ -91,7 +91,7 @@ module.exports = async (message, option = {}) => {
       signals,
     });
     // A toast may still have to be built after the overlay reports a definite failure, so everything
-    // its payload needs is prepared whenever one is possible — not only when one is planned.
+    // its payload needs is prepared whenever one is possible - not only when one is planned.
     const toastPossible = plan.toast || plan.fallbackToToast;
 
     const options = {
@@ -145,7 +145,7 @@ module.exports = async (message, option = {}) => {
       // Spawn the styled overlay; the main process handles it when already running.
       let overlayAckId = null;
       if (plan.overlay) {
-        debug.log(`Overlay notification (spawn) — ${plan.reason}`);
+        debug.log(`Overlay notification (spawn) - ${plan.reason}`);
         try {
           const watchdog = require('../watchdog.js');
           const progress = normalizeProgress(message.progress);
@@ -173,7 +173,7 @@ module.exports = async (message, option = {}) => {
           // Some notifications (e.g. playtime) must never play the overlay sound.
           if (message.silent) overlayArgs.push('--silent=1');
           // Ask for an acknowledgement only when one can come back (the app renders it over IPC) and
-          // only when this notification is allowed a fallback — an untracked id would otherwise sit
+          // only when this notification is allowed a fallback - an untracked id would otherwise sit
           // in the registry until its TTL for no purpose.
           if (signals.overlayHost === 'ipc' && plan.fallbackToToast) {
             overlayAckId = overlayAck.nextId();
@@ -188,7 +188,7 @@ module.exports = async (message, option = {}) => {
         }
       }
 
-      // Souvenir screenshot — achievement unlocks only (never progress/playtime). Non-blocking; a short
+      // Souvenir screenshot - achievement unlocks only (never progress/playtime). Non-blocking; a short
       // delay lets the on-screen toast or overlay popup appear so it's included in the shot. Saved under
       // <dir>/<game>/<date> - <achievement>.png.
       if (options.souvenir && options.souvenir.screenshot && !message.silent && !message.progress) {
@@ -223,7 +223,7 @@ module.exports = async (message, option = {}) => {
 
       // The toast's app-logo slot is square. Steam library art is portrait/landscape, so center-
       // crop a high-res local copy for playtime cards; overlay/websocket keep the original art.
-      // Only local sources are cropped — forcing a download when the user disabled prefetch would
+      // Only local sources are cropped - forcing a download when the user disabled prefetch would
       // add latency/offline failures for no benefit on the square requirement.
       if (toastPossible && message.notificationType === 'playtime') {
         const squareSource = message.gameIcon || message.image;
@@ -257,7 +257,7 @@ module.exports = async (message, option = {}) => {
           deliverToast = true;
           outcome = 'fallback';
         } else if (ack === overlayAck.RESULT.UNKNOWN) {
-          debug.warn('No overlay delivery report — not duplicating this notification; the next one will use Windows notifications');
+          debug.warn('No overlay delivery report - not duplicating this notification; the next one will use Windows notifications');
           outcome = 'unknown';
           transportPolicy.recordOverlayFailure();
         }
@@ -298,7 +298,7 @@ module.exports = async (message, option = {}) => {
           .then((suppressed) => {
             if (suppressed) {
               debug.warn(
-                'Windows is suppressing notification popups (full screen / presentation / quiet hours) — this toast went straight to the notification centre. ' +
+                'Windows is suppressing notification popups (full screen / presentation / quiet hours) - this toast went straight to the notification centre. ' +
                   'Turn off the automatic "do not disturb" rules in Windows notification settings, or use the in-game overlay transport.'
               );
             }

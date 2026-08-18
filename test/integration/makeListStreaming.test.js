@@ -36,7 +36,7 @@ test('the renderer builds its game list from that callback', () => {
   const app = fs.readFileSync(path.join(__dirname, '..', '..', 'app', 'app.js'), 'utf8');
   assert.match(app, /gameList\.push\(game\)/, 'the renderer tracks loaded games in gameList');
   // gameList drives the tiles, the profile counters and the sort, so it must still be filled from
-  // the stream. The periodic new-game check no longer reads it — it diffs discovery against the
+  // the stream. The periodic new-game check no longer reads it - it diffs discovery against the
   // previous discovery instead (see integration/newGameScanBaseline.test.js).
   assert.match(app, /refreshProfileStats\(\)/, 'the profile counters follow the streamed list');
 });

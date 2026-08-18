@@ -4,8 +4,8 @@
   Per-game achievement reset: put a game back to zero unlocks so it can earn them again, and be able
   to undo it.
 
-  Nothing is ever destroyed in place without a copy. Every file the reset is about to touch — the
-  emulator save, AW Next's own unlock baseline, this game's manual overrides — is copied into
+  Nothing is ever destroyed in place without a copy. Every file the reset is about to touch - the
+  emulator save, AW Next's own unlock baseline, this game's manual overrides - is copied into
   <userData>/backups/achievements/<appid>/<timestamp>/ with a manifest first; restore() copies them
   back to the exact paths they came from.
 
@@ -18,7 +18,7 @@
     manual overrides      cfg/manual-unlocks.json, which would keep re-marking the same achievements
                           as unlocked on the next render whatever the save says.
 
-  Which folders belong to a game comes from the scan (`game.dataPaths`), not from the source label —
+  Which folders belong to a game comes from the scan (`game.dataPaths`), not from the source label -
   the same reasoning Game Health uses, and the only thing that stays correct for a merged card whose
   unlocks come from two different emulators.
 */
@@ -136,7 +136,7 @@ function plan(game) {
     blocked,
     baseline,
     manualEntries,
-    // Nothing to act on is not a failure — it is a game that has never recorded an unlock here.
+    // Nothing to act on is not a failure - it is a game that has never recorded an unlock here.
     supported: files.length > 0 || !!baseline || manualEntries > 0,
   };
 }
@@ -191,7 +191,7 @@ function run(resetPlan, { now = new Date() } = {}) {
   let cleared = 0;
 
   const queue = resetPlan.files.slice();
-  // AW Next's own baseline goes through the same backup/restore path as a game save — it is not a
+  // AW Next's own baseline goes through the same backup/restore path as a game save - it is not a
   // game source, so it carries no source label.
   if (resetPlan.baseline) queue.push({ path: resetPlan.baseline, action: targets.ACTION.DELETE, kind: 'baseline' });
 
@@ -212,7 +212,7 @@ function run(resetPlan, { now = new Date() } = {}) {
     }
   });
 
-  // Manual overrides live in a shared sidecar, so only this game's entries are removed — and they
+  // Manual overrides live in a shared sidecar, so only this game's entries are removed - and they
   // are kept in the manifest rather than backing up the whole file, which would take another game's
   // later overrides down with it on restore.
   const sidecar = manualUnlock.sidecarFile();
@@ -263,7 +263,7 @@ function listBackups(appid) {
 }
 
 /*
-  Put a backup back. Files return to the exact paths they were taken from — including AW Next's
+  Put a backup back. Files return to the exact paths they were taken from - including AW Next's
   baseline, so restoring does not turn the restored unlocks into a burst of new notifications.
 */
 function restore(appid, backupId) {

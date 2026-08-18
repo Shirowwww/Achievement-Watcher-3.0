@@ -287,7 +287,7 @@ test('a package cannot write outside the preset storage', (t) => {
   const outside = path.join(dirs.root, 'outside.html');
 
   // adm-zip normalizes a path it is asked to add, so the hostile name is written into the archive
-  // afterwards — which is what a package built by hand carries anyway.
+  // afterwards - which is what a package built by hand carries anyway.
   const traversals = [
     'preset/../../../outside.html',
     'preset/../../outside.html',
@@ -656,7 +656,7 @@ test('every designed property survives the round trip, not just the eight the bu
 
 test('a preset that brings its own sound keeps pointing at the file that arrived with it', (t) => {
   const dirs = makeWorkspace(t);
-  // The user already has a different sound under that name, so the import lands beside it — and the
+  // The user already has a different sound under that name, so the import lands beside it - and the
   // preset has to follow, or it silently plays the sound it was never designed with.
   fs.writeFileSync(path.join(dirs.sounds, 'fanfare.wav'), 'MINE');
   const file = writeZip(path.join(dirs.out, 'sound-preset.awpreset'), {
@@ -715,7 +715,7 @@ test('a preset with no builder options still tells the app which sound it wants'
   const customPreset = require(path.join(appRoot, 'util', 'customPreset.js'));
 
   // A hand-authored preset has no options file at all, so its manifest is the only place its sound
-  // can be recorded — and the only place the notification path can read it back from.
+  // can be recorded - and the only place the notification path can read it back from.
   const file = writeZip(path.join(dirs.out, 'handmade.awpreset'), {
     'manifest.json': manifest({ sound: 'Xbox.wav' }),
     'preset/index.html': INDEX_HTML,
@@ -745,7 +745,7 @@ test('a preset with no sound of its own is not given the exporter\u2019s', (t) =
   /*
     The manifest also records the sound the preset was DESIGNED with, which is not the same as the
     sound it asks for. Options carrying an empty sound mean "use whatever the Notifications tab is
-    set to" — inheriting the exporter's selection over that would pin a sound onto a preset that
+    set to" - inheriting the exporter's selection over that would pin a sound onto a preset that
     deliberately had no opinion, and an export/import round trip would make it permanent.
   */
   const file = writeZip(path.join(dirs.out, 'no-opinion.awpreset'), {

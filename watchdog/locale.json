@@ -2,7 +2,7 @@
   "brazilian": {
     "rare": "Raro {percent}%",
     "platinumTitle": "Platina",
-    "platinumDesc": "Platina desbloqueada — 100% concluído!",
+    "platinumDesc": "Platina desbloqueada - 100% concluído!",
     "eaAchievement": "Conquista da EA",
     "achievement": "Conquista",
     "achievementUnlocked": "Conquista desbloqueada",
@@ -20,7 +20,7 @@
   "czech": {
     "rare": "Vzácný {percent}%",
     "platinumTitle": "Platina",
-    "platinumDesc": "Platina odemčena — 100 % dokončeno!",
+    "platinumDesc": "Platina odemčena - 100 % dokončeno!",
     "eaAchievement": "Úspěch EA",
     "achievement": "Úspěch",
     "achievementUnlocked": "Úspěch odemčen",
@@ -38,7 +38,7 @@
   "english": {
     "rare": "Rare {percent}%",
     "platinumTitle": "Platinum",
-    "platinumDesc": "Platinum unlocked — 100% completed!",
+    "platinumDesc": "Platinum unlocked - 100% completed!",
     "eaAchievement": "EA Achievement",
     "achievement": "Achievement",
     "achievementUnlocked": "Achievement Unlocked",
@@ -56,7 +56,7 @@
   "french": {
     "rare": "Rare {percent} %",
     "platinumTitle": "Trophée Platine",
-    "platinumDesc": "Trophée platine débloqué — 100 % complété !",
+    "platinumDesc": "Trophée platine débloqué - 100 % complété !",
     "eaAchievement": "Succès EA",
     "achievement": "Succès",
     "achievementUnlocked": "Succès débloqué",
@@ -74,7 +74,7 @@
   "german": {
     "rare": "Selten {percent}%",
     "platinumTitle": "Platin",
-    "platinumDesc": "Platin freigeschaltet — 100 % abgeschlossen!",
+    "platinumDesc": "Platin freigeschaltet - 100 % abgeschlossen!",
     "eaAchievement": "EA-Erfolg",
     "achievement": "Erfolg",
     "achievementUnlocked": "Erfolg freigeschaltet",
@@ -92,7 +92,7 @@
   "hungarian": {
     "rare": "Ritka {percent}%",
     "platinumTitle": "Platina",
-    "platinumDesc": "Platina feloldva — 100% kész!",
+    "platinumDesc": "Platina feloldva - 100% kész!",
     "eaAchievement": "EA-eredmény",
     "achievement": "Eredmény",
     "achievementUnlocked": "Eredmény feloldva",
@@ -110,7 +110,7 @@
   "italian": {
     "rare": "Raro {percent}%",
     "platinumTitle": "Platino",
-    "platinumDesc": "Platino sbloccato — 100 % completato!",
+    "platinumDesc": "Platino sbloccato - 100 % completato!",
     "eaAchievement": "Risultato EA",
     "achievement": "Risultato",
     "achievementUnlocked": "Risultato sbloccato",
@@ -128,7 +128,7 @@
   "japanese": {
     "rare": "レア {percent}%",
     "platinumTitle": "プラチナ",
-    "platinumDesc": "プラチナ解除 — 100% コンプリート！",
+    "platinumDesc": "プラチナ解除 - 100% コンプリート！",
     "eaAchievement": "EA実績",
     "achievement": "実績",
     "achievementUnlocked": "実績を解除",
@@ -146,7 +146,7 @@
   "latam": {
     "rare": "Raro {percent}%",
     "platinumTitle": "Platino",
-    "platinumDesc": "¡Platino desbloqueado — 100 % completado!",
+    "platinumDesc": "¡Platino desbloqueado - 100 % completado!",
     "eaAchievement": "Logro de EA",
     "achievement": "Logro",
     "achievementUnlocked": "Logro desbloqueado",
@@ -164,7 +164,7 @@
   "polish": {
     "rare": "Rzadkie {percent}%",
     "platinumTitle": "Platyna",
-    "platinumDesc": "Odblokowano platynę — 100% ukończone!",
+    "platinumDesc": "Odblokowano platynę - 100% ukończone!",
     "eaAchievement": "Osiągnięcie EA",
     "achievement": "Osiągnięcie",
     "achievementUnlocked": "Odblokowano osiągnięcie",
@@ -182,7 +182,7 @@
   "portuguese": {
     "rare": "Raro {percent}%",
     "platinumTitle": "Platina",
-    "platinumDesc": "Platina desbloqueada — 100 % concluído!",
+    "platinumDesc": "Platina desbloqueada - 100 % concluído!",
     "eaAchievement": "Conquista EA",
     "achievement": "Conquista",
     "achievementUnlocked": "Conquista desbloqueada",
@@ -200,7 +200,7 @@
   "russian": {
     "rare": "Редкое {percent}%",
     "platinumTitle": "Платина",
-    "platinumDesc": "Платина получена — 100 % завершено!",
+    "platinumDesc": "Платина получена - 100 % завершено!",
     "eaAchievement": "Достижение EA",
     "achievement": "Достижение",
     "achievementUnlocked": "Достижение открыто",
@@ -218,7 +218,7 @@
   "schinese": {
     "rare": "稀有 {percent}%",
     "platinumTitle": "白金",
-    "platinumDesc": "已解锁白金 — 100% 完成！",
+    "platinumDesc": "已解锁白金 - 100% 完成！",
     "eaAchievement": "EA 成就",
     "achievement": "成就",
     "achievementUnlocked": "已解锁成就",
@@ -236,7 +236,7 @@
   "slovak": {
     "rare": "Vzácný {percent}%",
     "platinumTitle": "Platina",
-    "platinumDesc": "Platina odomknutá — 100 % dokončené!",
+    "platinumDesc": "Platina odomknutá - 100 % dokončené!",
     "eaAchievement": "Úspech EA",
     "achievement": "Úspech",
     "achievementUnlocked": "Úspech odomknutý",
@@ -254,7 +254,7 @@
   "spanish": {
     "rare": "Raro {percent}%",
     "platinumTitle": "Platino",
-    "platinumDesc": "¡Platino desbloqueado — 100 % completado!",
+    "platinumDesc": "¡Platino desbloqueado - 100 % completado!",
     "eaAchievement": "Logro de EA",
     "achievement": "Logro",
     "achievementUnlocked": "Logro desbloqueado",
@@ -272,7 +272,7 @@
   "thai": {
     "rare": "หายาก {percent}%",
     "platinumTitle": "แพลตตินัม",
-    "platinumDesc": "ปลดล็อกแพลตตินัม — สำเร็จ 100%!",
+    "platinumDesc": "ปลดล็อกแพลตตินัม - สำเร็จ 100%!",
     "eaAchievement": "ความสำเร็จ EA",
     "achievement": "ความสำเร็จ",
     "achievementUnlocked": "ปลดล็อกความสำเร็จ",
@@ -290,7 +290,7 @@
   "turkish": {
     "rare": "Nadir {percent}%",
     "platinumTitle": "Platin",
-    "platinumDesc": "Platin açıldı — %100 tamamlandı!",
+    "platinumDesc": "Platin açıldı - %100 tamamlandı!",
     "eaAchievement": "EA Başarımı",
     "achievement": "Başarım",
     "achievementUnlocked": "Başarım açıldı",
@@ -308,7 +308,7 @@
   "ukrainian": {
     "rare": "Рідкісне {percent}%",
     "platinumTitle": "Платина",
-    "platinumDesc": "Платину отримано — 100 % завершено!",
+    "platinumDesc": "Платину отримано - 100 % завершено!",
     "eaAchievement": "Досягнення EA",
     "achievement": "Досягнення",
     "achievementUnlocked": "Досягнення відкрито",

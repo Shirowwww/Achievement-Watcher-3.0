@@ -6,8 +6,8 @@
 const fs = require('fs');
 const path = require('path');
 
-// Given folders [{ dir, size, atimeMs }] and a byte cap, return the dirs to delete — oldest access
-// first — until the running total is at or below the cap. Returns [] when already under the cap.
+// Given folders [{ dir, size, atimeMs }] and a byte cap, return the dirs to delete - oldest access
+// first - until the running total is at or below the cap. Returns [] when already under the cap.
 function selectStaleIconFolders(folders, capBytes) {
   let total = folders.reduce((s, f) => s + f.size, 0);
   if (total <= capBytes) return [];

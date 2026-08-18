@@ -153,7 +153,7 @@ function migratePlaytimeRegistry(fromRoot = LEGACY_PLAYTIME_ROOT) {
 
 // The new directory can already exist without ever having been migrated: the Watchdog and the
 // loggers create `<userData>\logs` as soon as they write their first line. So "already initialized"
-// has to mean "has AW configuration or a migration marker", never "is non-empty" — otherwise a
+// has to mean "has AW configuration or a migration marker", never "is non-empty" - otherwise a
 // single stray log file would silently block the import forever.
 function isAlreadyInitialized(target) {
   return fs.existsSync(path.join(target, MARKER_REL)) || fs.existsSync(path.join(target, SETTINGS_REL));
@@ -161,7 +161,7 @@ function isAlreadyInitialized(target) {
 
 // One import hop. Never deletes the source, never overwrites a file that already exists in the
 // destination (so an interrupted run resumes and a second run is a no-op), and never lets a single
-// unreadable entry abort the rest — placeTree() logs and moves on.
+// unreadable entry abort the rest - placeTree() logs and moves on.
 function importUserData({ source, target: rawTarget, plan, files, markerRel, label }) {
   const target = String(rawTarget || '').trim();
   if (!source || !target) return null;
@@ -206,7 +206,7 @@ function importUserData({ source, target: rawTarget, plan, files, markerRel, lab
     warn(`imported ${placed} file(s) from ${source}`);
     return source;
   } catch (err) {
-    // Non-fatal: a failed import must not brick first launch — AW Next starts with a fresh config
+    // Non-fatal: a failed import must not brick first launch - AW Next starts with a fresh config
     // and the source folder is still intact for a manual copy. Log it so it reaches the main log.
     warn(`${label} import failed: ${(err && err.message) || err}`);
     return null;
@@ -250,12 +250,12 @@ function migrateAw3UserData(newUserDataDir, options = {}) {
 /**
  * Point the GBE restore-point index at the copies that now live in this data folder.
  *
- * `backups/` is migrated like everything else, so each restore point exists here — but the index
+ * `backups/` is migrated like everything else, so each restore point exists here - but the index
  * records an absolute `backupDir`, and importing a file does not rewrite what is inside it. Every
  * entry therefore kept naming the folder it came from. That reads as working, because the old
  * folder is still on disk: right up until it is not. The uninstaller removes
  * `%APPDATA%\Achievement Watcher 3.0` outright, and it is the obvious thing to delete by hand once
- * AW Next has taken over — either one silently turns every "restore backup" button into a dead path.
+ * AW Next has taken over - either one silently turns every "restore backup" button into a dead path.
  *
  * Only entries whose backup is actually present here are rewritten, so an entry pointing somewhere
  * this cannot vouch for is left exactly as it was rather than repointed at nothing.
@@ -311,7 +311,7 @@ function configuredSouvenirDir(userDataDir) {
  * Point screenshot souvenirs at the AW Next default folder, carrying the existing shots across.
  *
  * Only the *default* location is ever touched. A user who chose their own souvenir folder keeps it
- * exactly where it is — that path is theirs, and silently relocating someone's screenshots would be
+ * exactly where it is - that path is theirs, and silently relocating someone's screenshots would be
  * the one genuinely destructive thing this file could do. Shots are hard-linked, so both folders
  * show them and no disk space is used twice.
  */

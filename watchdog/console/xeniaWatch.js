@@ -14,7 +14,7 @@ const notifyStrings = require('../util/notifyStrings.js');
 
 const { userDataDir } = require('../util/userData.js');
 const cacheDir = path.join(userDataDir(), 'steam_cache/console');
-// Same icon cache the app parser extracts into — icons written by either side are shared.
+// Same icon cache the app parser extracts into - icons written by either side are shared.
 const iconCacheRoot = path.join(userDataDir(), 'icon_cache/xenia');
 const userDirFile = path.join(userDataDir(), 'cfg', 'userdir.db');
 
@@ -248,7 +248,7 @@ function ensureIcon(titleId, imageId, imagesById) {
   }
 }
 
-// Discover per-title achievement GPDs under the user's saved folders (cfg/userdir.db — the same list
+// Discover per-title achievement GPDs under the user's saved folders (cfg/userdir.db - the same list
 // the app scans). A Xenia root is any folder holding content/<XUID>/<titleID>/00000001/<titleID>.gpd.
 function discover(configFile = userDirFile) {
   const targets = [];
@@ -432,7 +432,7 @@ module.exports.start = async (ctx) => {
       const wantedFile = path.basename(target.gpdPath).toLowerCase();
       const w = watch(target.dataDir, { recursive: false }, (evt, name) => {
         if (evt !== 'update') return;
-        // Only the title's own GPD matters — Xenia touching sibling files must not re-trigger.
+        // Only the title's own GPD matters - Xenia touching sibling files must not re-trigger.
         if (String(path.basename(name || '')).toLowerCase() !== wantedFile) return;
         handleChange(target, ctx);
       });

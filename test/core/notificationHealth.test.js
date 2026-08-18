@@ -36,7 +36,7 @@ test('what the Watchdog recorded is what the app reads back', () => {
   assert.ok(reader.forGame('480').at > 0, 'the record must carry when it was observed');
 });
 
-// A game that has never fired a notification has nothing observed about it — the panel falls back to
+// A game that has never fired a notification has nothing observed about it - the panel falls back to
 // the configured mode rather than inventing a delivery that never happened.
 test('an unknown game and an unreadable store both read as "nothing observed"', () => {
   assert.equal(reader.forGame('999999'), null);

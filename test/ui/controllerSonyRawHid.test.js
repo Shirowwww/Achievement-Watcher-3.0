@@ -55,7 +55,7 @@ test('mergeSonyRawHidStandardState ORs buttons/systemButtons and keeps the large
 
 test('mergeSonyRawHidStandardState prefers the raw-HID stick when the base reading has drifted to near-zero', () => {
   // This is the DS4-specific correction: XInput/GameInput sometimes reports a resting/near-zero
-  // stick for a DS4 while the raw HID report shows real deflection — prefer the raw HID reading.
+  // stick for a DS4 while the raw HID report shows real deflection - prefer the raw HID reading.
   const base = {
     leftStickX: 0.02,
     leftStickY: -0.01,

@@ -30,7 +30,7 @@ const steam = require('../../app/parser/steam.js');
 const request = require(path.join(__dirname, '..', '..', 'app', 'node_modules', 'request-zero'));
 
 /*
-  Steam retired ISteamApps/GetAppList — it answers 404 ("Method 'GetAppList' not found in interface
+  Steam retired ISteamApps/GetAppList - it answers 404 ("Method 'GetAppList' not found in interface
   'ISteamApps'") and no longer appears in GetSupportedAPIList. With no cached copy on disk the map
   therefore stays empty, which used to send every single appid back to the same dead endpoint: one
   wasted round trip per game on every scan, and the reason the first scan after clearing the cache

@@ -3,8 +3,8 @@
 /*
   What a per-game achievement reset is allowed to touch, and how.
 
-  Deliberately pure: no fs, no Electron. It answers two questions — "may this source be reset at
-  all?" and "what does this file need?" — so both can be tested without a game install, and so the
+  Deliberately pure: no fs, no Electron. It answers two questions - "may this source be reset at
+  all?" and "what does this file need?" - so both can be tested without a game install, and so the
   fs side (parser/achievementReset.js) never has to reason about formats.
 
   Three kinds of file exist, and confusing them is how a reset destroys a library:
@@ -56,7 +56,7 @@ const PROTECTED_FILES = new Set(['tropconf.sfm', 'trophy.trp', 'appid.txt', 'ste
 /*
   Libraries whose unlocks are held by the platform, not by a file on this PC. Steam, GOG Galaxy,
   Ubisoft Connect, EA, Epic and Xbox all re-synchronise from the account, so there is nothing a reset
-  here could achieve — deleting a local cache would only make the next sync put it back. Saying so is
+  here could achieve - deleting a local cache would only make the next sync put it back. Saying so is
   the honest answer; offering a button that appears to work would not be.
 */
 const OFFICIAL_PLATFORM_SOURCES = /^(?:steam\s*\(|gog(?:\s|$)|gog galaxy|epic(?:-official)?$|ea$|ubisoft connect|xbox)/i;

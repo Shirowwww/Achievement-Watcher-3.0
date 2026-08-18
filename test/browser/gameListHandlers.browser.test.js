@@ -89,7 +89,7 @@ test('library rescan removes only its own handlers and preserves game-view inter
 
   const { browser, userDataDir, failures } = await launchBrowser();
   if (!browser) {
-    t.skip(failures.length ? `no usable Chromium-family browser — ${failures.join(' | ')}` : 'no Chromium-family browser installed');
+    t.skip(failures.length ? `no usable Chromium-family browser - ${failures.join(' | ')}` : 'no Chromium-family browser installed');
     return;
   }
 

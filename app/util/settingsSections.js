@@ -1,8 +1,8 @@
 'use strict';
 
 /*
-  Which Settings blocks are collapsible sections. Collapsing only toggles a class — positional i18n
-  requires the DOM to survive — so the selectors are part of the contract, tested against app.html.
+  Which Settings blocks are collapsible sections. Collapsing only toggles a class - positional i18n
+  requires the DOM to survive - so the selectors are part of the contract, tested against app.html.
 */
 
 /*
@@ -12,17 +12,17 @@ const SECTION_SELECTOR = '.arrow-list, .emulator-group, .settings-card, #epic-co
 
 /*
   The clickable header of a section, as a DIRECT child. Three shapes exist:
-    .title                  — the ordinary card header
-    .emulator-group-title   — emulator groups
-    .emulator-login-heading — account/customizer cards, whose .title is nested one level deeper
+    .title                  - the ordinary card header
+    .emulator-group-title   - emulator groups
+    .emulator-login-heading - account/customizer cards, whose .title is nested one level deeper
 */
 const HEADER_SELECTOR = '.title, .emulator-group-title, .emulator-login-heading';
 
 /*
   Sections that start collapsed on a fresh profile.
 
-  Empty on purpose. The preset designer used to be listed here — a large authoring surface sitting
-  between the notification options and the souvenir settings — but it now has a tab of its own, where
+  Empty on purpose. The preset designer used to be listed here - a large authoring surface sitting
+  between the notification options and the souvenir settings - but it now has a tab of its own, where
   it is the reason the user opened the tab. Nothing else in the panel is big enough to be worth
   hiding from someone who has just arrived.
 */

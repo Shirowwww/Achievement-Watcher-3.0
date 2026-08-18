@@ -13,7 +13,7 @@ function ok(cond, msg) {
   else failures.push(msg);
 }
 function eq(actual, expected, msg) {
-  ok(actual === expected, `${msg} — got ${JSON.stringify(actual)}, want ${JSON.stringify(expected)}`);
+  ok(actual === expected, `${msg} - got ${JSON.stringify(actual)}, want ${JSON.stringify(expected)}`);
 }
 
 const tmpDirs = [];
@@ -101,4 +101,4 @@ if (failures.length) {
   for (const f of failures) console.error('  ✗ ' + f);
   process.exit(1);
 }
-console.log(`PASS: crackLoaderDetect — ${passed} assertions`);
+console.log(`PASS: crackLoaderDetect - ${passed} assertions`);

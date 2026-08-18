@@ -62,7 +62,7 @@ function nextActionLabel(mode, direction) {
 function sortTitle(mode, direction) {
   const labels = sortLabels().label || SORT_LABEL_FALLBACK.label;
   const label = (labels[mode] || {})[direction];
-  return label + ' — ' + nextActionLabel(mode, direction);
+  return label + ' - ' + nextActionLabel(mode, direction);
 }
 
 function achievementSortTitle(mode, direction) {
@@ -70,12 +70,12 @@ function achievementSortTitle(mode, direction) {
     const labels = sortLabels().label || SORT_LABEL_FALLBACK.label;
     const rarity = labels.rarity || SORT_LABEL_FALLBACK.label.rarity;
     const action = sortLabels().action || SORT_LABEL_FALLBACK.action;
-    return rarity[direction] + ' — ' + (direction === 'asc' ? action.reverse : action.clear);
+    return rarity[direction] + ' - ' + (direction === 'asc' ? action.reverse : action.clear);
   }
   return sortTitle(mode, direction);
 }
 
-// The arrow indicator reflects *default vs reversed* order, not asc/desc — so the first click shows
+// The arrow indicator reflects *default vs reversed* order, not asc/desc - so the first click shows
 // the same arrow (default order) on every criterion instead of ▲ for names and ▼ for the rest.
 // `defaultDir` lets the achievement panel pass its own initial direction (percent starts ascending).
 function paintSortButton(button, mode, direction, defaultDir = defaultSortDirection(mode)) {
@@ -233,7 +233,7 @@ function installedOnlyEnabled() {
 
 function updateInstalledEmptyState() {
   const ul = $('#game-list ul');
-  if (ul.children('li').length === 0) return; // nothing loaded yet — resetUI() owns the empty state
+  if (ul.children('li').length === 0) return; // nothing loaded yet - resetUI() owns the empty state
   const visible = ul.children('li').filter(function () {
     return $(this).css('display') !== 'none';
   }).length;

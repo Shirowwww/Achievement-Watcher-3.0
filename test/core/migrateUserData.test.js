@@ -61,7 +61,7 @@ test('imports the Achievement Watcher payload without copying the Chromium profi
   }
 
   // The Chromium profile is regenerated on first launch and is by far the biggest part of the
-  // legacy folder — importing it would stall startup and double disk usage for nothing.
+  // legacy folder - importing it would stall startup and double disk usage for nothing.
   for (const rel of [['Cache', 'Cache_Data'], ['Code Cache'], ['GPUCache'], ['Local Storage'], ['Preferences'], ['logs']]) {
     assert.equal(fs.existsSync(path.join(target, ...rel)), false, `${rel.join('/')} must NOT be imported`);
   }

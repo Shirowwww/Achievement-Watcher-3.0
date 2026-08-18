@@ -22,7 +22,7 @@ function gameIndexFiles() {
   Resolve a Ubisoft product id to the Steam AppID the app mapped it to.
 
   Returns '' when the app has not scanned this game yet. The caller must treat that as "skip", never
-  as "use the Ubisoft id" — feeding a product id to the Steam pipeline is what used to stall the
+  as "use the Ubisoft id" - feeding a product id to the Steam pipeline is what used to stall the
   library scan for 30s a game.
 */
 function steamAppIdForUplayId(uplayId, { files = gameIndexFiles() } = {}) {

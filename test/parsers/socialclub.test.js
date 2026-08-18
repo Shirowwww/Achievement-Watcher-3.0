@@ -31,7 +31,7 @@ function writeFixture() {
 
 // Real layout produced by the Goldberg SocialClub Emulator: the game folder only contains the
 // redirected Rockstar profile (hex profile id + settings/cfg.dat + SAVE/SGTA…). There is no
-// achievements.json — the parser must still discover the game and report it honestly.
+// achievements.json - the parser must still discover the game and report it honestly.
 function writeRockstarProfileFixture() {
   const rdrGame = path.join(ROOT, 'RDR2');
   const rdrProfile = path.join(rdrGame, '0F74F4C4');
@@ -51,12 +51,12 @@ function writeRockstarProfileFixture() {
     writeFixture();
     writeRockstarProfileFixture();
     // A game folder created by the emulator but not yet populated (no profile, no save) is still a
-    // valid Settings target — it must be accepted even though there is nothing to parse yet.
+    // valid Settings target - it must be accepted even though there is nothing to parse yet.
     const emptyGame = path.join(ROOT, 'Empty Game');
     fs.mkdirSync(emptyGame, { recursive: true });
 
     // Regression (issue #11): a hex profile folder that exists but holds NOTHING (no achievement
-    // file, no Rockstar save data — the emulator created the shape but the game was never played)
+    // file, no Rockstar save data - the emulator created the shape but the game was never played)
     // must not be listed as a game named after the raw folder.
     const emptyProfileGame = path.join(ROOT, 'GTA_DEF');
     fs.mkdirSync(path.join(emptyProfileGame, '0F74F4C4'), { recursive: true });

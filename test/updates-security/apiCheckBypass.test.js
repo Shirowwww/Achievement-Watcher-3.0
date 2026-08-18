@@ -89,7 +89,7 @@ try {
 }
 
 /*
-  pickBypassDllEntries — the pure filter/rename step factored out of extractDllsFromRar so the RAR
+  pickBypassDllEntries - the pure filter/rename step factored out of extractDllsFromRar so the RAR
   extraction (moved behind the `apicheckbypass-extract-rar` IPC handler; see ipc.js / crackFix.js's
   extractRarToDir for why node-unrar-js cannot run in the renderer) stays testable without a real RAR
   fixture. node-unrar-js's own reading is unchanged by that move and needs no re-test here.
@@ -127,7 +127,7 @@ function entry(name, extraction) {
 }
 
 // extractDllsFromRarDirect is exported and CSP-safe by construction: it is only ever called directly
-// from main-process/plain-Node code (the `apicheckbypass-extract-rar` IPC handler, or here) — never
+// from main-process/plain-Node code (the `apicheckbypass-extract-rar` IPC handler, or here) - never
 // from the renderer, which must go through the IPC round-trip instead. This just pins that it exists
 // with the expected shape.
 assert.strictEqual(typeof bypass.extractDllsFromRarDirect, 'function', 'extractDllsFromRarDirect is exported for the main-process IPC handler');

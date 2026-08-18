@@ -45,7 +45,7 @@ let lastReportedFailure = null;
 function reportFailure(reason) {
   if (lastReportedFailure === reason) return;
   lastReportedFailure = reason;
-  debug.warn(`Could not read the user notification state (${reason}) — full-screen/quiet-hours detection is unavailable`);
+  debug.warn(`Could not read the user notification state (${reason}) - full-screen/quiet-hours detection is unavailable`);
 }
 
 function queryUserNotificationState() {
@@ -94,7 +94,7 @@ async function arePopupsSuppressed() {
   our popup on top of it. A borderless/windowed game reports one of the other busy states and the
   overlay does appear over it, which is why this deliberately does not reuse FULLSCREEN_STATES.
 
-  Returns null when the state could not be read — the caller must treat that as "unknown", not as
+  Returns null when the state could not be read - the caller must treat that as "unknown", not as
   "fine": tri-state is what keeps a failed query from silently selecting an invisible transport.
 */
 async function isOverlayLikelyHidden() {

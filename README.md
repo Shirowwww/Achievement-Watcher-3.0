@@ -4,7 +4,7 @@
 
 <p><strong>Every achievement. One experience.</strong></p>
 
-Track achievements, rarity and playtime across launchers, local saves and supported emulators — with
+Track achievements, rarity and playtime across launchers, local saves and supported emulators - with
 live Windows notifications or an in-game overlay.
 
 [![Latest release](https://img.shields.io/github/v/release/Shirowwww/Achievement-Watcher-Next?display_name=tag&sort=semver&style=flat-square)](https://github.com/Shirowwww/Achievement-Watcher-Next/releases/latest)
@@ -39,11 +39,11 @@ live Windows notifications or an in-game overlay.
   single list, with search, filters, rarity tiers, progress achievements and covers.
 - **Notifications that choose their own transport.** Leave delivery on **Automatic** and each unlock
   arrives through the in-game overlay when it can be seen, and as a Windows notification when it
-  cannot — never both.
+  cannot - never both.
 - **A popup you can actually design.** Nine bundled presets, a no-code **Preset Designer** that
   previews the real popup, and one-file `.awpreset` sharing.
 - **An in-game overlay list.** The running game's full achievement list on `Ctrl+Shift+K`, with
-  search, filters and rarity badges — drivable entirely from a gamepad.
+  search, filters and rarity badges - drivable entirely from a gamepad.
 - **Answers when something is wrong.** Each game has a **Game Health** panel that says whether it is
   tracked, why not, and offers only the repairs that genuinely apply.
 - **Repair tools for local setups.** Read-only diagnosis, `steam_settings` repair, matched GBE Fork
@@ -103,7 +103,7 @@ public endpoints and are cached locally.
 [Uplay R2 setup](https://shirowwww.github.io/Achievement-Watcher-Next/uplay-r2.html)
 
 > [!WARNING]
-> Reading achievements is read-only. The emulator repair tools do modify game files — always after a
+> Reading achievements is read-only. The emulator repair tools do modify game files - always after a
 > confirmation and always with a backup. Use them only with games you own.
 
 ---
@@ -136,14 +136,14 @@ npm workspaces; `npm run build` writes the installer and updater files to `app\d
 ## Security and support
 
 Found a problem, have an idea, or simply want something improved?
-[Open an issue](https://github.com/Shirowwww/Achievement-Watcher-Next/issues) — reports and
+[Open an issue](https://github.com/Shirowwww/Achievement-Watcher-Next/issues) - reports and
 suggestions are what help AW Next get better. For a vulnerability, use the private process in the
 [security policy](SECURITY.md) rather than a public issue.
 
 Download builds only from the
 [official releases page](https://github.com/Shirowwww/Achievement-Watcher-Next/releases); `latest.yml`
 carries the installer's SHA-512 digest. Installers use the project's self-signed `CN=Shirow`
-certificate, which you do not need to install or trust — SmartScreen or antivirus warnings remain
+certificate, which you do not need to install or trust - SmartScreen or antivirus warnings remain
 possible because it is not issued by a publicly trusted authority. Sensitive settings and
 connected-account tokens are encrypted before local storage, and the project contains no game files
 and does not bypass online ownership checks.

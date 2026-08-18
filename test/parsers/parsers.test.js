@@ -2,7 +2,7 @@
 
 // Standalone test runner (no framework). Run with: node test/parsers/parsers.test.js
 // Verifies the pure parsing logic of the console-emulator parsers (shadps4 XML, xenia GPD/XDBF)
-// against synthetic fixtures — the highest-risk part, exercised headless.
+// against synthetic fixtures - the highest-risk part, exercised headless.
 const assert = require('assert');
 const fs = require('fs');
 const os = require('os');

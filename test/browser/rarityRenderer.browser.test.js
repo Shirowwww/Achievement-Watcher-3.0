@@ -109,7 +109,7 @@ function buildHarness() {
 test('rarity renderer indexes rendered rows without selector injection or duplicate loss', { concurrency: 1, timeout: 180000 }, async (t) => {
   const { browser, userDataDir, failures } = await launchBrowser();
   if (!browser) {
-    t.skip(failures.length ? `no usable Chromium-family browser — ${failures.join(' | ')}` : 'no Chromium-family browser installed');
+    t.skip(failures.length ? `no usable Chromium-family browser - ${failures.join(' | ')}` : 'no Chromium-family browser installed');
     return;
   }
 

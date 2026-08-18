@@ -3,7 +3,7 @@
 // Per-appid cover-art overrides. A small JSON map { "<appid>": "<file:// or http(s) url>" } stored in
 // cfg/covers.db. When an entry exists it takes precedence over the normal Steam/emulator cover, so a
 // user can fix a mis-matched cracked game (wrong AppID), point at a local image, or force a redownload.
-// Pure fs/JSON — no Electron — so it is usable from the renderer and unit-testable headless.
+// Pure fs/JSON - no Electron - so it is usable from the renderer and unit-testable headless.
 
 const crypto = require('crypto');
 const fs = require('fs');
@@ -72,7 +72,7 @@ function valueForOrientation(entry, orientation) {
   The stored filename carries a digest of the image itself.
 
   It used to be just `<appid>.<ext>`, so choosing a second cover for the same game overwrote the
-  first one at the same path — and the value handed to CSS was that same file:// URL both times.
+  first one at the same path - and the value handed to CSS was that same file:// URL both times.
   Chromium keys its decoded-image cache on the URL, so the tile kept painting the previous picture
   and choosing a cover looked like it did nothing at all. Including the digest means different
   bytes are a different URL, which is what makes the new cover appear; identical bytes reuse the
@@ -105,7 +105,7 @@ function coverFilesFor(root, appid) {
 
 // Drop the copies this game no longer points at. Called only after the new selection is recorded,
 // so an interrupted run leaves a stale file rather than a cover with nothing behind it. Portrait and
-// landscape can each hold their own local file, so every currently-referenced path must be kept —
+// landscape can each hold their own local file, so every currently-referenced path must be kept -
 // pruning against just the one just written would delete the other orientation's pick out from
 // under it.
 function pruneOldCovers(root, appid, keepPaths) {
@@ -239,7 +239,7 @@ function persist(appid, coverUrl, root = userDataDir(), orientation) {
 /*
   Which tile shape an image was made for, from its own pixels.
 
-  Store art comes in two unmistakable shapes — a header is about 2:1, a portrait grid 2:3 — so the
+  Store art comes in two unmistakable shapes - a header is about 2:1, a portrait grid 2:3 - so the
   ratio is the answer, not a guess. Anything close to square (a fan-made square cover, an icon) is
   deliberately left unclassified: it suits both shapes about equally badly, and forcing it into one
   would silently drop it from the other.
@@ -258,7 +258,7 @@ function orientationOfImage(file) {
 
   Before covers were stored per orientation a pick was one URL for the game, so switching the grid
   to the other shape kept painting it: a 920x430 header cropped into a portrait tile, or a 600x900
-  grid letterboxed into a landscape one. Splitting the two is only half the fix — the entries already
+  grid letterboxed into a landscape one. Splitting the two is only half the fix - the entries already
   on disk have to be told apart as well, and the file itself is the only record of which shape the
   user picked. Entries that cannot be measured (a remote URL, a deleted file, a square image) keep
   applying to both, exactly as before.

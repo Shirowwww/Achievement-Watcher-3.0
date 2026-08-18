@@ -10,7 +10,7 @@ const { scanRootOnce } = require('./util/rootCascade.js');
 const { SOCIALCLUB_ACHIEVEMENT_FILES } = require('./util/socialClub.js');
 
 // A user-added folder belongs to the Goldberg SocialClub emulator when the SocialClub root is on
-// its path — the root itself, a <Game> folder, or a <Game>\<hex profile> folder. Guessing from the
+// its path - the root itself, a <Game> folder, or a <Game>\<hex profile> folder. Guessing from the
 // folder's shape instead would be wrong: a plain numeric Steam AppID folder such as "1546990" is
 // also valid hexadecimal, and would be watched with the wrong parser (issue #9).
 const SOCIALCLUB_ROOT_RE = /^goldberg\s*social\s*club\s*emu\s*saves$/i;
@@ -90,7 +90,7 @@ module.exports.getFolders = async (userDir_file) => {
       // through the game index (watchdog.js handles options.socialClub).
       dir: path.join(process.env['APPDATA'], 'Goldberg SocialClub Emu Saves'),
       // The directory layout is <GameName>\<hex profile>\…, so unlike the Steam emulator roots the
-      // filter must accept game-name folders as well as profile folders — a numeric-AppID filter
+      // filter must accept game-name folders as well as profile folders - a numeric-AppID filter
       // would never match anything here. `file` is restricted to the achievement files the parser
       // can actually read: Rockstar's own save blobs are written constantly during play and nothing
       // can decode them, so watching them would only wake the monitor for nothing (issue #9).
@@ -100,7 +100,7 @@ module.exports.getFolders = async (userDir_file) => {
       // Goldberg Uplay R2. Folders here are named with the UBISOFT product id, not a Steam AppID,
       // so watchdog.js maps it through the gameIndex `uplayId` pair before loading the game and
       // re-keys the objective ids onto the schema's api-names. Without this entry a Ubisoft unlock
-      // never fired a live notification at all — it only showed up on the next manual refresh.
+      // never fired a live notification at all - it only showed up on the next manual refresh.
       dir: path.join(process.env['APPDATA'], 'Goldberg UplayEmu Saves'),
       options: { recursive: true, filter: /([0-9]+)/, file: [files.achievement[1]], uplayR2: true },
     },

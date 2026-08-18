@@ -98,7 +98,7 @@ test('a legit game whose TITLE contains a tool word (e.g. "Engine") still resolv
   const root = mkRoot();
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
 
-  // Folder name contains "Engine", but the appid lives in a normal "Binaries/Win64" subfolder — the
+  // Folder name contains "Engine", but the appid lives in a normal "Binaries/Win64" subfolder - the
   // tool filter must not stop us descending into ordinary game folders.
   const game = path.join(root, 'Train Engine Simulator');
   fs.mkdirSync(path.join(game, 'steam_settings'), { recursive: true });

@@ -18,7 +18,7 @@ test('help stays focused instead of duplicating the settings sidebar', () => {
   // Game health leads the topic list: it is the panel a player reaches for when a game misbehaves.
   assert.match(html, /id="help-gamehealth-list"/, 'the Game health panel must exist');
   assert.match(loader, /bindHelpList\('help-gamehealth-list', help\.gameHealth\)/);
-  // "Generated configs" was folded into Steam emulators — same subject, one card fewer.
+  // "Generated configs" was folded into Steam emulators - same subject, one card fewer.
   assert.doesNotMatch(html, /id="help-config-list"/, 'the Generated configs panel is merged away');
   assert.doesNotMatch(loader, /help\.config\b/);
   assert.match(html, /<script src="\.\.\/ui\/help\.js"/, 'the dynamic help module must be loaded by the settings page');

@@ -11,9 +11,9 @@ const { preserveCachedOverrides } = require('./coverStore.js');
 // which userData folders are disposable caches versus irreplaceable local state.
 //
 // Deliberately NOT here, and never add without re-reading migrateUserData.js first:
-//   cache/uplayR2   — user-seeded Uplay R2 loader dll; no public download source, cannot be refetched
-//   backups         — GBE restore points; local safety net, not derived from anything external
-//   cfg, covers, presets, theme-images, epic_tokens.enc, lockfile — settings and user-authored content
+//   cache/uplayR2   - user-seeded Uplay R2 loader dll; no public download source, cannot be refetched
+//   backups         - GBE restore points; local safety net, not derived from anything external
+//   cfg, covers, presets, theme-images, epic_tokens.enc, lockfile - settings and user-authored content
 const SAFE_CACHE_DIRS = [
   'steam_cache', // Steam/GOG/Epic/SteamDB/SteamGridDB schema, icon, cover and rarity cache
   'uplay_cache', // Ubisoft Connect schema + icon cache
@@ -26,7 +26,7 @@ const SAFE_CACHE_DIRS = [
 
 // Removes every folder in the allowlist that exists under userDataDir. Returns the list of
 // userData-relative paths that actually existed and were removed (an empty list means there was
-// nothing to clear). A missing individual folder is not an error — most users have never touched
+// nothing to clear). A missing individual folder is not an error - most users have never touched
 // every source, so most of this list is normally absent.
 async function clearSafeCaches(userDataDir) {
   // Older builds stored downloaded custom-cover selections inside steam_cache while covers.db kept

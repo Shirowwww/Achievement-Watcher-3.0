@@ -210,7 +210,7 @@ body {
   text-overflow: ellipsis;
 }
 /* The progress row is laid out at the text block's full width from the first frame, while the pill
-   is still expanding — so it used to hang outside the pill until the animation caught up. Fade it in
+   is still expanding - so it used to hang outside the pill until the animation caught up. Fade it in
    on the pill's own timeline, exactly like the title and detail lines above. */
 .ach .text_wrap .progress_line {
   opacity: 0;

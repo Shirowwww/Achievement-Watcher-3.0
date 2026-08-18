@@ -159,7 +159,7 @@ function buildGameplayDb(file, { retrieved = '1', mode = 'all_visible' } = {}) {
     try {
       fs.rmSync(tmp, { recursive: true, force: true });
     } catch {
-      /* best-effort cleanup — never mask the real test failure */
+      /* best-effort cleanup - never mask the real test failure */
     }
   }
 })().catch((err) => {

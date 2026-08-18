@@ -2,7 +2,7 @@
 
 /*
   Recognise official launcher installs (Steam, Ubisoft Connect, GOG Galaxy, Epic, Microsoft Store) by
-  their on-disk markers so the broad "Unconfigured" scan skips them — they are already listed by the
+  their on-disk markers so the broad "Unconfigured" scan skips them - they are already listed by the
   official sources. A cracked Uplay R2 install keeps launcher markers but also ships its loader DLL,
   which is what tells the two apart; the Steam case uses the same idea with the steam_api dll.
 */
@@ -16,7 +16,7 @@ const STEAM_API_DLL = /^steam_api(?:64)?\.dll$/i;
 /*
   Strings a Goldberg / GSE / SmartSteamEmu build reads at runtime. Neither Valve's steam_api dll nor
   an emulated one carries version-resource metadata, so the file name and the folder it sits in prove
-  nothing — these markers are what actually tells a replaced dll from the original.
+  nothing - these markers are what actually tells a replaced dll from the original.
 */
 const EMULATED_DLL_MARKERS = ['steam_settings', 'Goldberg', 'GSE Saves', 'SmartSteamEmu', 'ColdClientLoader'];
 const MARKER_OVERLAP = Math.max(...EMULATED_DLL_MARKERS.map((m) => m.length)) - 1;
@@ -117,7 +117,7 @@ function steamManagedNames(steamapps) {
   The appid of the game Steam installed in this folder, or null.
 
   A Steam install is not recognisable from its contents: every Steam game ships steam_api64.dll and
-  many (every Source game, for one) ship steam_appid.txt — exactly the two markers the emulator scan
+  many (every Source game, for one) ship steam_appid.txt - exactly the two markers the emulator scan
   keys on, which is why Garry's Mod turned up as a cracked install. The authority is Steam's own
   appmanifest: it names the `steamapps/common` folder it owns.
 */
@@ -158,7 +158,7 @@ function isOfficialLauncherInstall(gameDir) {
   if (hasUplayMarker) {
     try {
       const loader = require('./uplayR2.js').detectEmulator(gameDir);
-      if (loader.dll.length > 0) return false; // real Uplay R2 emulated install — keep it
+      if (loader.dll.length > 0) return false; // real Uplay R2 emulated install - keep it
     } catch {
       /* if the loader detector fails, treat it as legit rather than risk a false positive */
     }

@@ -12,7 +12,7 @@
     * the package format (util/presetPackage.js re-clamps a manifest through the same normalizer)
 
   Adding a property means adding one entry here, one control in view/app.html and one label in the
-  locales — never a fifth place where a value can be clamped differently.
+  locales - never a fifth place where a value can be clamped differently.
 
   Compatibility rules that must not be broken:
 
@@ -82,7 +82,7 @@ const PRESET_PROPERTIES = [
   { key: 'align', type: 'select', def: 'left', values: ['left', 'center', 'right'], group: 'layout' },
   /*
     The game's name, on the line above the achievement. The notification window forwards it for any
-    preset that asks — a popup otherwise only ever prints what was unlocked, never where.
+    preset that asks - a popup otherwise only ever prints what was unlocked, never where.
   */
   { key: 'showGameName', type: 'toggle', def: false, group: 'layout' },
   { key: 'width', type: 'number', def: 420, min: 280, max: 620, step: 10, group: 'layout', css: '--width', unit: 'px' },
@@ -95,14 +95,14 @@ const PRESET_PROPERTIES = [
   { key: 'fontSize', type: 'number', def: 16, min: 10, max: 28, step: 1, group: 'text', css: '--font-size', unit: 'px' },
   { key: 'detailScale', type: 'number', def: 100, min: 60, max: 130, step: 5, group: 'text', css: '--detail-scale', scale: 100 },
   /*
-    How many lines the description may use. One keeps the single-line look the builder always had —
+    How many lines the description may use. One keeps the single-line look the builder always had -
     too long a line is scrolled instead. Two or three wrap it, which is what a card wide enough to
     read a full sentence wants.
   */
   { key: 'descriptionLines', type: 'number', def: 1, min: 1, max: 3, step: 1, group: 'text', css: '--detail-lines' },
   /*
-    What colours the title. It has always followed the accent — including the accent a rare or a
-    completion notification swaps in — so that stays the default; the other two are for designs where
+    What colours the title. It has always followed the accent - including the accent a rare or a
+    completion notification swaps in - so that stays the default; the other two are for designs where
     a coloured title fights the rest of the card.
   */
   { key: 'titleColorMode', type: 'select', def: 'accent', values: ['accent', 'text', 'custom'], group: 'text' },
@@ -171,7 +171,7 @@ const PRESET_PROPERTIES = [
   { key: 'platinumGlow', type: 'number', def: 70, min: 0, max: 100, step: 5, group: 'state', css: '--platinum-glow', scale: 100 },
   { key: 'showProgress', type: 'toggle', def: true, group: 'state' },
   /*
-    The rarity chip: the unlock rate the popup was told about, printed on the card. Off by default —
+    The rarity chip: the unlock rate the popup was told about, printed on the card. Off by default -
     it is information a preset opts into, not something an existing design should suddenly grow.
   */
   { key: 'showRarity', type: 'toggle', def: false, group: 'state' },
@@ -191,7 +191,7 @@ const PROPERTY_BY_KEY = new Map(PRESET_PROPERTIES.map((property) => [property.ke
 // hand-edited options file cannot smuggle declarations into the generated stylesheet.
 const COLOR_RE = /^(#[0-9a-f]{3,8}|rgba?\([^)]*\)|[a-z]+)$/i;
 
-// A sound is a bare filename in the app's or the user's sounds folder — never a path.
+// A sound is a bare filename in the app's or the user's sounds folder - never a path.
 const SOUND_RE = /^[^\\/:*?"<>|\x00-\x1f]+\.(?:wav|mp3|ogg|flac|m4a|aac)$/i;
 
 function clampNumber(value, property) {
@@ -225,7 +225,7 @@ function normalizeValue(raw, property) {
 
 /*
   Every option, normalized. Unknown keys are dropped and missing ones take their default, so this is
-  also what makes an options file from an older build — or from a newer one — safe to load.
+  also what makes an options file from an older build - or from a newer one - safe to load.
 */
 function normalizeOptions(options = {}) {
   const source = options && typeof options === 'object' ? options : {};

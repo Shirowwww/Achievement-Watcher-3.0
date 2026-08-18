@@ -59,7 +59,7 @@ test('resolveEpicArtifactIdentity resolves namespace + catalogItemId + displayNa
   );
 });
 
-test('resolveEpicArtifactIdentity caches a positive result — second call does not refetch', async () => {
+test('resolveEpicArtifactIdentity caches a positive result - second call does not refetch', async () => {
   epicIdentity.clearEpicIdentityCache();
   let calls = 0;
   await withFetchStub(

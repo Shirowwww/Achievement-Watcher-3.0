@@ -12,8 +12,8 @@ function tmpGame(name) {
   return fs.mkdtempSync(path.join(os.tmpdir(), `aw-conf-${name}-`));
 }
 
-// Unlike tmpGame(), the returned directory's own basename is exactly `name` — no tmp-prefix/suffix
-// noise — so folder-name-similarity assertions see the same basename a real install folder would have.
+// Unlike tmpGame(), the returned directory's own basename is exactly `name` - no tmp-prefix/suffix
+// noise - so folder-name-similarity assertions see the same basename a real install folder would have.
 function tmpGameNamed(name) {
   const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-conf-'));
   const dir = path.join(parent, name);
@@ -121,7 +121,7 @@ test('a loader never outranks a real exe in raw selection, even with a large siz
   const gameDir = tmpGame('loader-outsizes-real-exe');
   const dll = path.join(gameDir, 'steam_api64.dll');
   writeBytes(dll, 1);
-  // The loader sits next to the dll (max dll bonus) and dwarfs the real exe in size — without the
+  // The loader sits next to the dll (max dll bonus) and dwarfs the real exe in size - without the
   // non-utility-first tie-break this can outscore the genuine candidate on raw score alone.
   writeBytes(path.join(gameDir, 'upc_r2_loader64.exe'), 50 * 1024 * 1024);
   writeBytes(path.join(gameDir, 'AC4BFSP.exe'), 128);

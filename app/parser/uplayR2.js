@@ -11,7 +11,7 @@ const goldberg = require(path.join(__dirname, 'goldberg.js'));
 
 const EMU_DLL_NAMES = ['uplay_r2_loader.dll', 'uplay_r2_loader64.dll', 'upc_r2_loader.dll', 'upc_r2_loader64.dll'];
 // Config precedence, NOT alphabetical: the loader looks for "\upc_r2.ini" first and only falls back
-// to "\uplay_r2.ini" (verified in the binary's string table — the two literals appear in that order
+// to "\uplay_r2.ini" (verified in the binary's string table - the two literals appear in that order
 // in the config-open path). A game that ships both therefore runs on upc_r2.ini, so that is the file
 // diagnose() must read and the one repair() must get right.
 const INI_NAMES = ['upc_r2.ini', 'uplay_r2.ini'];
@@ -24,7 +24,7 @@ const UPLAY_GAME_SAVE_SUBDIR = 'saves';
 const ACH_SAVE_FILE = 'achievements.json';
 const ACH_SCHEMA_FILE = 'achievements_schema.json';
 
-// The demde build's own shipped default (captured from a real release) — used as the starting
+// The demde build's own shipped default (captured from a real release) - used as the starting
 // document when a game has no ini yet, so repair() produces a fully faithful file (comments
 // included), the same spirit as GBE Fork's steam_settings.EXAMPLE in goldberg.js.
 const DEFAULT_INI_TEMPLATE = `[Settings]
@@ -189,7 +189,7 @@ function uplayDefaultSaveRoot() {
 
 /*
   Every directory the emulator could write achievements.json into, most-likely first (SaveType +
-  AchSavePath, plus leftovers from reconfigs/repack updates — reading all of them costs a few stats
+  AchSavePath, plus leftovers from reconfigs/repack updates - reading all of them costs a few stats
   and survives an ini that changed under us).
 */
 function resolveAchievementSaveDirs({ gameDir, runtimeDir, uplayId, steamAppid, iniFile } = {}) {
@@ -310,7 +310,7 @@ function mapSaveToSchemaKeys(entries, { prefix = '', apiNames = [] } = {}) {
     let resolved = candidates.map((c) => byName.get(c.toUpperCase())).find(Boolean);
     if (!resolved && /^\d+$/.test(key)) resolved = byDigits.get(key);
     if (!resolved) continue;
-    // Two source keys can land on the same achievement — a merged save can hold both the bare id a
+    // Two source keys can land on the same achievement - a merged save can hold both the bare id a
     // legacy loader wrote and the prefixed key a newer one writes. Same rule as the merge: an unlock
     // is never un-earned.
     const current = out[resolved];
@@ -471,7 +471,7 @@ function resolveSteamMapping({ appid, name, gameDir } = {}) {
 }
 
 // Given the Steam schema's achievement list ([{name, ...}]), verify every api-name ends in
-// "<one shared prefix><digits>" — the convention the Ubisoft objective id is embedded in for many
+// "<one shared prefix><digits>" - the convention the Ubisoft objective id is embedded in for many
 // Ubisoft-published Steam ports. Returns { prefix, count } when the whole list agrees, else null
 // (this game isn't auto-supported; diagnose() surfaces that instead of writing a broken schema).
 function derivePrefixedIds(achievementList) {
@@ -590,7 +590,7 @@ function diagnose({ gameDir, appid, name } = {}) {
 
   const emu = detectEmulator(gameDir);
   if (emu.type === 'none') {
-    add('error', 'NO_UPLAY_R2_DLL', 'No uplay_r2_loader(64).dll / upc_r2_loader(64).dll found — Goldberg Uplay R2 is not installed here.');
+    add('error', 'NO_UPLAY_R2_DLL', 'No uplay_r2_loader(64).dll / upc_r2_loader(64).dll found - Goldberg Uplay R2 is not installed here.');
     return report;
   }
   const dir = path.dirname(emu.dll[0]);
@@ -610,13 +610,13 @@ function diagnose({ gameDir, appid, name } = {}) {
       'info',
       'LOADER_NO_ACH_REDIRECT',
       'This loader build predates AchSaveType/AchSavePath support, so the emulator cannot be redirected. ' +
-        'AW Next reads its own save folder instead — update the loader dll for the redirect.'
+        'AW Next reads its own save folder instead - update the loader dll for the redirect.'
     );
   }
 
   const schemaFile = path.join(dir, ACH_SCHEMA_FILE);
   if (!fs.existsSync(schemaFile)) {
-    add('error', 'NO_SCHEMA_JSON', `${ACH_SCHEMA_FILE} is missing — run "Apply emulator fix (Uplay R2)" to generate it. A game update re-extracting the repack removes it.`);
+    add('error', 'NO_SCHEMA_JSON', `${ACH_SCHEMA_FILE} is missing - run "Apply emulator fix (Uplay R2)" to generate it. A game update re-extracting the repack removes it.`);
   } else {
     try {
       const parsedSchema = JSON.parse(fs.readFileSync(schemaFile, 'utf8'));
@@ -627,9 +627,9 @@ function diagnose({ gameDir, appid, name } = {}) {
       if (keys.length > 0) {
         const bareIds = keys.every((k) => /^\d+$/.test(k));
         if (caps.supportsAchKeyPrefix && bareIds) {
-          add('warning', 'SCHEMA_KEYS_UNPREFIXED', `${ACH_SCHEMA_FILE} uses bare objective ids but this loader expects AchKeyPrefix keys — re-apply the fix.`);
+          add('warning', 'SCHEMA_KEYS_UNPREFIXED', `${ACH_SCHEMA_FILE} uses bare objective ids but this loader expects AchKeyPrefix keys - re-apply the fix.`);
         } else if (!caps.supportsAchKeyPrefix && !bareIds) {
-          add('warning', 'SCHEMA_KEYS_PREFIXED', `${ACH_SCHEMA_FILE} uses prefixed keys but this loader only understands bare objective ids — re-apply the fix.`);
+          add('warning', 'SCHEMA_KEYS_PREFIXED', `${ACH_SCHEMA_FILE} uses prefixed keys but this loader only understands bare objective ids - re-apply the fix.`);
         }
       }
     } catch (e) {
@@ -645,7 +645,7 @@ function diagnose({ gameDir, appid, name } = {}) {
   } else {
     const settings = readIniSettings(iniFile);
     if (String(settings.achievements || '').trim() !== '1') {
-      add('error', 'ACHIEVEMENTS_DISABLED', `Achievements=1 is not set in ${path.basename(iniFile)} — the emulator records no unlocks at all.`);
+      add('error', 'ACHIEVEMENTS_DISABLED', `Achievements=1 is not set in ${path.basename(iniFile)} - the emulator records no unlocks at all.`);
     }
     if (caps.supportsAchRedirect) {
       const configured = String(settings.achsavepath || '').trim();
@@ -656,7 +656,7 @@ function diagnose({ gameDir, appid, name } = {}) {
   }
 
   // Where the unlocks really are. On a redirected install that is GSE Saves\<steamAppid>; on an old
-  // loader it is the emulator's own folder — read both rather than reporting 0% from the wrong one.
+  // loader it is the emulator's own folder - read both rather than reporting 0% from the wrong one.
   const saveDirs = resolveAchievementSaveDirs({
     gameDir,
     runtimeDir: dir,
@@ -694,7 +694,7 @@ function repair({ dir, steamAppid, schema, prefix, accountName, language } = {})
   fs.mkdirSync(dir, { recursive: true });
 
   // The schema's keys and the ini's redirect must both match what THIS loader build parses, so the
-  // capability probe drives them together — a schema keyed one way and an ini written the other is
+  // capability probe drives them together - a schema keyed one way and an ini written the other is
   // exactly the silent no-op this pair of checks exists to prevent.
   const caps = inspectInstalledLoaders(detectEmulator(dir).dll);
   const achievementsSchemaJson = buildAchievementsSchemaJson(schema, { keyed: caps.supportsAchKeyPrefix });
@@ -753,7 +753,7 @@ function listConfigBackups(dir) {
         files = fs.readdirSync(full).filter((name) => name === ACH_SCHEMA_FILE || INI_NAMES.includes(name));
         createdAt = fs.statSync(full).mtime;
       } catch {
-        /* unreadable snapshot — reported with no files so the caller can skip it */
+        /* unreadable snapshot - reported with no files so the caller can skip it */
       }
       return { name: entry.name, dir: full, files, createdAt };
     })

@@ -86,7 +86,7 @@ test('persist copies a cache-backed selection into the durable covers folder', (
 /*
   Choosing a second cover for a game used to write it over the first one, at the same
   covers/<appid>.<ext> path. The value handed to CSS was therefore the same file:// URL both times,
-  and Chromium keys its decoded-image cache on the URL — so the tile kept painting the old picture
+  and Chromium keys its decoded-image cache on the URL - so the tile kept painting the old picture
   and choosing a cover looked like it silently did nothing.
 */
 test('a different cover for the same game gets a different URL, so the tile actually repaints', () => {
@@ -175,7 +175,7 @@ test('recoverRemote reconstructs an exact SteamGridDB selection from its legacy 
 
 /*
   Before orientation-scoped entries, one override applied to a game no matter which shape was on
-  screen — so picking a portrait cover and then switching to the landscape grid kept showing that
+  screen - so picking a portrait cover and then switching to the landscape grid kept showing that
   same portrait image instead of falling back to the default landscape art.
 */
 test('portrait and landscape overrides are independent, and legacy values apply to both', () => {
@@ -231,7 +231,7 @@ test('persist keeps both orientations’ files when they differ, and prunes only
 
 /*
   The split above only helps covers picked from now on. Entries written before it exist as one plain
-  string, and nothing in them records which shape the user picked — except the image itself.
+  string, and nothing in them records which shape the user picked - except the image itself.
 */
 function writePng(file, width, height) {
   const png = Buffer.alloc(33);

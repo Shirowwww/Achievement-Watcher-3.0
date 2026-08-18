@@ -58,7 +58,7 @@ test('achievement toast payload carries the intended AUMID under the key powerto
 
 // powertoast accepts `group` only when both fields are non-empty STRINGS. Given anything else its
 // option parser stores a null group and then dereferences it, throwing
-// "Cannot read properties of null (reading 'activation')" before the toast is ever shown — and both
+// "Cannot read properties of null (reading 'activation')" before the toast is ever shown - and both
 // callers fall back to a tray balloon, so the failure looked like a delivered notification that
 // simply never appeared (issue #18). A numeric appid alone was enough to trigger it.
 test('a grouped toast never hands powertoast a group it will reject', async () => {
@@ -81,7 +81,7 @@ test('a grouped toast never hands powertoast a group it will reject', async () =
   assert.doesNotThrow(() => new Toast({ aumid: 'x', title: 't', message: 'm', group: numeric.group }));
   assert.throws(
     () => new Toast({ aumid: 'x', title: 't', message: 'm', group: { id: 367520, title: 'Hollow Knight' } }),
-    'a numeric group id must still be rejected by powertoast — this test is the reason we coerce it'
+    'a numeric group id must still be rejected by powertoast - this test is the reason we coerce it'
   );
 });
 
@@ -200,7 +200,7 @@ test('the payload renders a valid toast XML (hero image, progress, protocol acti
   assert.match(xml, /activationType="protocol"/);
   assert.match(xml, /launch="achievement-watcher:\/\/game\/480\/ACH_XML"/);
   // powertoast inlines `launch` into the XML verbatim, so the URI must contain nothing that breaks
-  // an attribute — a raw "&" from a query string would make Windows discard the whole toast.
+  // an attribute - a raw "&" from a query string would make Windows discard the whole toast.
   assert.ok(!/launch="[^"]*[&<>]/.test(xml), 'the activation URI must be XML-attribute safe');
   assert.match(xml, /displayTimestamp="1970-01-02/);
 });

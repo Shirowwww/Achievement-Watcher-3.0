@@ -11,12 +11,12 @@
     overlayHost   'ipc'   the resident app renders overlay popups and reports back what happened
                   'spawn' no IPC channel (standalone/dev run): a popup can be spawned but its
                           outcome cannot be observed at all
-    overlayHidden true    Windows reports an exclusive full-screen D3D app — an always-on-top
+    overlayHidden true    Windows reports an exclusive full-screen D3D app - an always-on-top
                           window is not composited over one, so the popup would play invisibly
                   false   nothing is covering the screen
                   null    the state could not be read (see queryUserNotificationState.js)
     remembered    the transport that last worked for this game, used only when the live signal is
-                  unknown — never as a substitute for one
+                  unknown - never as a substitute for one
 
   Automatic never guesses in the optimistic direction: a signal it cannot read leaves the overlay
   selected (the mode the user sees) and the delivery layer decides on the acknowledgement it gets
@@ -68,7 +68,7 @@ function isOverlayCoolingDown(now = Date.now()) {
   clients keep receiving unlocks whichever popup the user sees.
 
   Returns { overlay, toast, websocket, fallbackToToast, reason }. `fallbackToToast` authorizes ONE
-  toast for this notification and only when the overlay reports a definite failure — the delivery
+  toast for this notification and only when the overlay reports a definite failure - the delivery
   layer owns that decision so a fallback can never race the primary transport into a duplicate.
 */
 function planDelivery({ mode, websocket = false, signals = {}, now = Date.now() } = {}) {
@@ -89,7 +89,7 @@ function planDelivery({ mode, websocket = false, signals = {}, now = Date.now() 
   }
 
   // Automatic. Without the IPC channel the app cannot report what became of a popup, and Automatic
-  // is defined by acting on observed outcomes — so it uses the transport it can account for.
+  // is defined by acting on observed outcomes - so it uses the transport it can account for.
   if (signals.overlayHost !== 'ipc') return { ...plan, toast: true, reason: REASON.OVERLAY_UNAVAILABLE };
   if (isOverlayCoolingDown(now)) return { ...plan, toast: true, reason: REASON.OVERLAY_FAILING };
   if (signals.overlayHidden === true) return { ...plan, toast: true, reason: REASON.FULLSCREEN_HIDDEN };

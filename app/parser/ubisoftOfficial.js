@@ -160,7 +160,7 @@ function readUbisoftSpoolFile(filePath) {
   return { appid: path.basename(filePath, path.extname(filePath)), filePath, records };
 }
 
-// {achievementId: {earned, earned_time(s)}} — first (earliest) unlock wins on duplicates.
+// {achievementId: {earned, earned_time(s)}} - first (earliest) unlock wins on duplicates.
 function buildUbisoftOfficialSnapshot(records) {
   const snapshot = {};
   for (const record of Array.isArray(records) ? records : []) {
@@ -227,7 +227,7 @@ function normalizeAchievementsSpec(value) {
   return prefixed ? prefixed[1] : base;
 }
 
-// The configurations index can name the LAUNCHER ("Steam", "Ubisoft Connect") instead of the game —
+// The configurations index can name the LAUNCHER ("Steam", "Ubisoft Connect") instead of the game -
 // treat known launcher names as "no title" so the real title wins.
 const LAUNCHER_TITLE_BLOCKLIST = new Set([
   'steam',
@@ -258,7 +258,7 @@ function isLauncherTitle(value) {
   return !v || LAUNCHER_TITLE_BLOCKLIST.has(v);
 }
 
-// `root.name` is very often an UNRESOLVED localization key rather than a name — real values seen in
+// `root.name` is very often an UNRESOLVED localization key rather than a name - real values seen in
 // the index include "l1", "NAME", "RELATED_GAMENAME_116", "THUMBIMAGE". Using one as a title puts
 // gibberish in the library; using one as a Steam search term produces a wrong match, which is worse.
 const PLACEHOLDER_TITLES = new Set(['name', 'gamename', 'title', 'displayname', 'null', 'none']);
@@ -285,7 +285,7 @@ function specToWords(value) {
   const raw = String(value || '').trim().replace(/^['"]+|['"]+$/g, '').trim();
   if (!raw) return [];
   // Most specs are just a content hash ("e58f2672942d2a930e591c55f54f75c6"). Splitting one into
-  // "words" yields digit soup that a fuzzy catalog lookup can still match — to the WRONG game. Only
+  // "words" yields digit soup that a fuzzy catalog lookup can still match - to the WRONG game. Only
   // specs that actually spell something out ("FarCry4") are usable as a name candidate.
   const body = raw.replace(/\.(zip|bin)$/i, '').replace(/^\d+_/, '');
   if (/^[0-9a-f]{16,}$/i.test(body)) return [];
@@ -324,7 +324,7 @@ function buildNameCandidates(block, archiveSpec = '') {
   }
   // The achievements archive filename is the last offline signal that survives a missing
   // configurations index: Ubisoft names those caches "<productId>_<spec>" and the spec often
-  // spells the title ("971_FarCry4" → "far cry 4"). It is a search candidate only — the resolved
+  // spells the title ("971_FarCry4" → "far cry 4"). It is a search candidate only - the resolved
   // Steam release's own name wins for display (see resolveIdentity).
   const archiveWords = specToWords(archiveSpec);
   if (archiveWords.length >= 2) {
@@ -336,7 +336,7 @@ function buildNameCandidates(block, archiveSpec = '') {
 
 // A title distributed on several stores gets SEVERAL configuration blocks sharing one achievements
 // spec: the real game block, plus one per storefront whose only name is the storefront itself
-// ("root: name: Steam"). Picking the first match is therefore a coin flip — that is how Far Cry 4
+// ("root: name: Steam"). Picking the first match is therefore a coin flip - that is how Far Cry 4
 // ended up in the library titled "Steam" with no cover (issue #7). Merge them instead and take the
 // first usable value for each field, so the storefront block can only ever fill gaps.
 function mergeConfigBlocks(blocks) {
@@ -488,7 +488,7 @@ function resolveAchievementsArchive(appid, options = {}) {
   return { archivePath: best.archivePath, spec: best.spec || '', title: best.metadata?.title || '', metadata: best.metadata || null };
 }
 
-// Minimal stored/deflate ZIP reader — the archives are plain ZIPs but carry no .zip extension, so
+// Minimal stored/deflate ZIP reader - the archives are plain ZIPs but carry no .zip extension, so
 // going through the central directory directly avoids adm-zip's extension assumptions.
 function readZipEntries(zipPath) {
   const buffer = fs.readFileSync(zipPath);
@@ -648,7 +648,7 @@ function normalizePathKey(value) {
 
 // Where Ubisoft Connect installed a product. For a Steam purchase that launches Ubisoft Connect,
 // this points straight inside the Steam library (…\steamapps\common\Far Cry 4), which identifies
-// the Steam release WITHOUT going through any name at all — no asset row, no fuzzy match, no
+// the Steam release WITHOUT going through any name at all - no asset row, no fuzzy match, no
 // network. This is the resolution path that survives titles nobody has mapped yet (issue #7).
 function ubisoftInstallDir(productId) {
   const id = String(productId || '').trim();
@@ -659,7 +659,7 @@ function ubisoftInstallDir(productId) {
         const dir = readRegistryString(hive, `${root}/${id}`, 'InstallDir');
         if (dir && String(dir).trim()) return String(dir).trim();
       } catch {
-        /* key absent on this hive/bitness — try the next one */
+        /* key absent on this hive/bitness - try the next one */
       }
     }
   }
@@ -727,7 +727,7 @@ async function scanLocalSteamLibrary(options = {}) {
       roots.push(...parseSteamVdfLibraryFolders(fs.readFileSync(libraryFile, 'utf8')).map((r) => path.join(r, 'steamapps')));
     }
   } catch {
-    /* unreadable library file — the main steamapps root still works */
+    /* unreadable library file - the main steamapps root still works */
   }
 
   const names = [];
@@ -769,7 +769,7 @@ let identityCache = new Map();
 // HKLM/HKCU Installs (32/64-bit views), but it also leaves stale subkeys behind after uninstalls,
 // so a bare registry key is NOT install proof (it kept owned-but-uninstalled titles such as
 // Assassin's Creed Mirage in the "installed" filter). Only a subkey whose InstallDir still exists
-// on disk counts. Memoized for the session — the launcher rarely changes mid-run.
+// on disk counts. Memoized for the session - the launcher rarely changes mid-run.
 let _installedUbisoftProducts = null;
 function isUbisoftProductInstalled(productId) {
   const id = String(productId || '').trim();
@@ -788,7 +788,7 @@ function isUbisoftProductInstalled(productId) {
           }
         }
       } catch {
-        /* key absent on this hive/bitness — try the next one */
+        /* key absent on this hive/bitness - try the next one */
       }
     }
   }
@@ -978,7 +978,7 @@ module.exports.scan = () => {
       archive = resolveAchievementsArchive(entry.appid);
     } catch (err) {
       debug.log(
-        `[${entry.appid}] Ubisoft spool found but no cached achievements archive (${err}) — open the game's achievements page in Ubisoft Connect once to populate it`
+        `[${entry.appid}] Ubisoft spool found but no cached achievements archive (${err}) - open the game's achievements page in Ubisoft Connect once to populate it`
       );
       continue;
     }
@@ -1001,7 +1001,7 @@ module.exports.scan = () => {
       data: {
         type: 'ubisoftOfficial',
         uplayId: entry.appid,
-        // Registered install dir (registry InstallDir, verified on disk) — lets the launch panel
+        // Registered install dir (registry InstallDir, verified on disk) - lets the launch panel
         // auto-detect the executable instead of asking for one by hand.
         gameDir: (() => {
           const dir = ubisoftInstallDir(entry.appid);
@@ -1033,7 +1033,7 @@ module.exports.getGameData = async (appid, lang) => {
   const schema = collectSchemaData(data.archivePath);
   if (!schema.ids.length) throw `Empty Ubisoft achievements archive for ${appid.appid}`;
 
-  // extract icons once — the renderer displays local paths directly (no network)
+  // extract icons once - the renderer displays local paths directly (no network)
   const imgDir = path.join(cacheRoot || '', 'steam_cache', 'ubisoftOfficial', String(appid.appid), 'img');
   fs.mkdirSync(imgDir, { recursive: true });
   const iconPathFor = (id) => {

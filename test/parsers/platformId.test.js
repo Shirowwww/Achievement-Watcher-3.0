@@ -27,7 +27,7 @@ const { sanitizeAppIdForPlatform, officialAppId, rawAppId, normalizeType } = req
   assert.equal(officialAppId('steam', '440'), '440');
   assert.equal(officialAppId('steamOfficial', '440'), '440');
   assert.equal(officialAppId('file', '480'), '480');
-  // idempotent — an already-namespaced id isn't double-prefixed
+  // idempotent - an already-namespaced id isn't double-prefixed
   assert.equal(officialAppId('ubisoftOfficial', 'uplay-1843'), 'uplay-1843');
 
   // ---- the collision that motivated this: Ubisoft 1843 and Steam 1843 now get DIFFERENT keys

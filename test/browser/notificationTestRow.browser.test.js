@@ -5,9 +5,9 @@
   of all eighteen locales.
 
   It is a row of peers, so it should read as one: every button an equal share of the line, one gap
-  between them all, nothing spilling out of a button. None of that is visible to a unit test — the
+  between them all, nothing spilling out of a button. None of that is visible to a unit test - the
   rule that broke it was a later `#settings` override turning the row back into content-width flex
-  items, which left a ragged gap at the end of the line — and the labels differ by more than twice in
+  items, which left a ragged gap at the end of the line - and the labels differ by more than twice in
   length between languages, so the one that overflows first is never the one you are looking at.
 */
 
@@ -150,7 +150,7 @@ async function measureRow(page, labels, width) {
 test('the notification test buttons share the line evenly, in every locale', { concurrency: 1, timeout: 300000 }, async (t) => {
   const { browser, userDataDir, failures } = await launchBrowser();
   if (!browser) {
-    t.skip(failures.length ? `no usable Chromium-family browser — ${failures.join(' | ')}` : 'no Chromium-family browser installed');
+    t.skip(failures.length ? `no usable Chromium-family browser - ${failures.join(' | ')}` : 'no Chromium-family browser installed');
     return;
   }
 
@@ -163,15 +163,15 @@ test('the notification test buttons share the line evenly, in every locale', { c
       const row = await measureRow(page, labels, 720);
       assert.equal(row.lines.length, 1, `${name}: the five buttons should fit one line at the normal panel width`);
       const [line] = row.lines;
-      assert.equal(new Set(line.widths).size, 1, `${name}: the buttons are not equal shares — ${line.widths.join(', ')}`);
-      assert.equal(new Set(line.gaps).size, 1, `${name}: the gaps between the buttons differ — ${line.gaps.join(', ')}`);
+      assert.equal(new Set(line.widths).size, 1, `${name}: the buttons are not equal shares - ${line.widths.join(', ')}`);
+      assert.equal(new Set(line.gaps).size, 1, `${name}: the gaps between the buttons differ - ${line.gaps.join(', ')}`);
       assert.ok(Math.abs(line.used - row.listWidth) <= 1, `${name}: the row leaves ${row.listWidth - line.used}px unused at the end of the line`);
       assert.equal(row.overflowing, 0, `${name}: a label is clipped by its button`);
     }
 
     /*
       Cramped: at the app's minimum window the row has to wrap. Every line it wraps into must still
-      fill itself in equal shares — the failure this guards against is a last line holding one button
+      fill itself in equal shares - the failure this guards against is a last line holding one button
       at its natural width, which is what the row looked like before.
     */
     for (const { name, labels } of locales) {

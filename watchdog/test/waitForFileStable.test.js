@@ -29,7 +29,7 @@ const tmp = (suffix) => path.join(os.tmpdir(), `aw-wffs-${process.pid}-${suffix}
     const total = 6;
     fs.writeFileSync(file, '{');
     // Writer appends on a cadence faster than the settle poll interval, then stops, so consecutive
-    // samples keep differing until the last chunk lands. (Content assertion, not timing — a settle
+    // samples keep differing until the last chunk lands. (Content assertion, not timing - a settle
     // that returned mid-write would observe fewer than `total` chunks.)
     let chunks = 0;
     const timer = setInterval(() => {

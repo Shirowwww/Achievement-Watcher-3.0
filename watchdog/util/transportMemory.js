@@ -66,7 +66,7 @@ function prune(games, now) {
 
 /*
   Record what happened. `transport` is what actually delivered ('overlay' | 'toast'), `reason` the
-  planner's identifier and `outcome` how it ended ('delivered' | 'fallback' | 'unknown') — the app
+  planner's identifier and `outcome` how it ended ('delivered' | 'fallback' | 'unknown') - the app
   needs the last two to say "Windows fallback active" rather than just naming a transport.
 */
 function remember(appid, { transport, reason = '', outcome = 'delivered', now = Date.now() } = {}) {

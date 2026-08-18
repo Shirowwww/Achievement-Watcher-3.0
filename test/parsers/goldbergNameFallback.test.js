@@ -115,6 +115,6 @@ test('Goldberg install with steam_settings but no appid resolves by game name, b
   assert.equal(
     locals.length,
     2,
-    `only the nested games may be local entries — official Epic/GOG/Ubisoft games and Dolphin tools must be skipped (got: ${locals.join(', ')})`
+    `only the nested games may be local entries - official Epic/GOG/Ubisoft games and Dolphin tools must be skipped (got: ${locals.join(', ')})`
   );
 });

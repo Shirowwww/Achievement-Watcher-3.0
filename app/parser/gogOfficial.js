@@ -30,7 +30,7 @@ const IMAGES_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 // ---- SQLite helpers ----------------------------------------------------------------------------
 
 // node:sqlite ships with the runtime but only from Node 22.5; keep the require guarded so merely
-// loading this parser can never crash an unexpected runtime — sources just come back empty.
+// loading this parser can never crash an unexpected runtime - sources just come back empty.
 let DatabaseSync = null;
 try {
   DatabaseSync = require('node:sqlite').DatabaseSync;
@@ -71,7 +71,7 @@ async function withRetry(fn, { label = 'database', attempts = 3, delayMs = 500 }
     } catch (err) {
       lastErr = err;
       if (attempt < attempts) {
-        debug.log(`GOG ${label} attempt ${attempt}/${attempts} failed (${err}) — retrying in ${delayMs}ms`);
+        debug.log(`GOG ${label} attempt ${attempt}/${attempts} failed (${err}) - retrying in ${delayMs}ms`);
         await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
     }
@@ -95,7 +95,7 @@ function fileSignature(filePath) {
   }
 }
 
-// One-entry memo keyed on db+wal+shm signatures — Galaxy writes in WAL mode, so all three files
+// One-entry memo keyed on db+wal+shm signatures - Galaxy writes in WAL mode, so all three files
 // participate in "has anything changed".
 let productCache = { key: '', value: null };
 
@@ -397,7 +397,7 @@ module.exports.scan = async () => {
         title: entry.title,
         // feeds the shared playtime auto-seed / installed-on-disk machinery in achievements.js
         gameDir: entry.installationPath && fs.existsSync(entry.installationPath) ? entry.installationPath : null,
-        // Galaxy's own launch task = the exact exe the launcher runs — zero-guess launch path.
+        // Galaxy's own launch task = the exact exe the launcher runs - zero-guess launch path.
         exe: resolveInstalledExe(entry.executablePath, entry.installationPath) || null,
         exeAuthoritative: true,
       },
@@ -412,7 +412,7 @@ module.exports.getGameData = async (appid) => {
   if (!isGameplayReady(gameplay)) throw `No GOG achievement data yet for ${appid.appid}`;
 
   // Galaxy flags most achievements "not visible while locked" even when its own UI shows them all
-  // (database_info.achievements_mode = all_visible) — honor the mode, not just the per-row flag,
+  // (database_info.achievements_mode = all_visible) - honor the mode, not just the per-row flag,
   // or entire games would render as spoiler-masked "…" rows.
   const allVisible = String(gameplay.databaseInfo.achievements_mode || '').trim() === 'all_visible';
 
@@ -430,7 +430,7 @@ module.exports.getGameData = async (appid) => {
     };
   });
 
-  // Rarity is baked into gameplay.db — seed the shared sidecar cache so the detail view paints
+  // Rarity is baked into gameplay.db - seed the shared sidecar cache so the detail view paints
   // tiers instantly and fully offline (the online GOG rarity endpoint needs an access token).
   try {
     const entries = gameplay.achievements

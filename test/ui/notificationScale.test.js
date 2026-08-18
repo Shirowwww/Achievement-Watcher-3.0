@@ -72,7 +72,7 @@ test('a preset never sets a CSS variable nothing reads', () => {
 
 test('every bundled preset declares the meta box the host sizes its window from', () => {
   // Without it getPresetDimensions() falls back to 400x200 and the window no longer matches what
-  // the preset paints — the same mismatch, from the other end, that the zoom fix removes.
+  // the preset paints - the same mismatch, from the other end, that the zoom fix removes.
   for (const preset of readPresets()) {
     assert.match(preset.html, /<meta\s+width\s*=\s*"\d+"\s+height\s*=\s*"\d+"\s*\/?>/i, `${preset.name} has no <meta width height>`);
   }

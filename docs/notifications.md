@@ -49,7 +49,7 @@ primary transport reported a definite failure. The same unlock is therefore neve
 ### Where the current state is shown
 
 Open a game and check its **Game Health** panel. The Notifications row reports the transport that
-actually delivered the last notification for that game and why - for example *Working — Windows
+actually delivered the last notification for that game and why - for example *Working - Windows
 fallback active* in Simple mode, or *Windows notification · game in exclusive fullscreen* in
 Advanced. Until a game has had a notification, the row shows the configured mode instead of claiming
 an observation that has not happened. See [Game Health](game-health.md).

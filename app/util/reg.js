@@ -11,7 +11,7 @@ try {
 
 // `registry-js` is a compiled addon: a build that never ran its install script ships without
 // `build/Release/registry.node`. That used to make every read here return null/[]/false, which is
-// indistinguishable from "the key is not there" — Steam accounts (and therefore Steam games), Uplay,
+// indistinguishable from "the key is not there" - Steam accounts (and therefore Steam games), Uplay,
 // GreenLuma, playtime and the user avatar all went quiet with nothing in the log. Everything below
 // falls back to reg.exe, which is present on every Windows install, so a missing binary costs speed
 // instead of functionality.
@@ -22,7 +22,7 @@ function usingFallback() {
   if (!warnedAboutFallback) {
     warnedAboutFallback = true;
     const message = registryLoadError && registryLoadError.message ? registryLoadError.message : 'unknown error';
-    console.warn(`[reg] registry-js unavailable (${message}) — falling back to reg.exe`);
+    console.warn(`[reg] registry-js unavailable (${message}) - falling back to reg.exe`);
   }
   return true;
 }
@@ -38,7 +38,7 @@ function requireRegistry() {
 // ---- reg.exe fallback ---------------------------------------------------------------------------
 
 // reg.exe accepts either spelling on input but always echoes the long one, and the output is what
-// subkey lines are matched against — so use the long form throughout.
+// subkey lines are matched against - so use the long form throughout.
 const HIVE_NAMES = {
   hkcr: 'HKEY_CLASSES_ROOT',
   hkcu: 'HKEY_CURRENT_USER',

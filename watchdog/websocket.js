@@ -48,7 +48,7 @@ module.exports = (option = {}) => {
   // whole monitor: websocket broadcast is an optional transport, so log and keep running.
   server.on('error', (err) => {
     if (err && err.code === 'EADDRINUSE') {
-      debug.error(`Websocket server error: port ${options.port} is already in use — continuing without websocket broadcast`);
+      debug.error(`Websocket server error: port ${options.port} is already in use - continuing without websocket broadcast`);
       return;
     }
     debug.error(`Websocket server error: ${err}`);

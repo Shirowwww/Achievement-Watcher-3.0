@@ -7,7 +7,7 @@ const saveRoots = require(path.join(__dirname, 'saveRoots.js'));
 // Library roots (e.g. C:\Jeux, D:\Games, E:\SteamLibrary): folders that hold many game install
 // dirs, used by achievements.js as scan roots for Goldberg/GBE/unconfigured install detection.
 // Distinct from userDir.js, which stores per-game SAVE folders validated against known emulator
-// marker files — a library root has no such marker, it's just a folder full of game subfolders.
+// marker files - a library root has no such marker, it's just a folder full of game subfolders.
 let file;
 
 function normalizeEntries(data, fallbackOrigin = 'manual') {
@@ -57,14 +57,14 @@ module.exports.getEntries = async () => {
       return normalizeEntries(JSON.parse(raw));
     } catch (parseErr) {
       // Genuine corruption (e.g. a write interrupted by a crash/power loss). A transient I/O lock
-      // throws before JSON.parse and is handled by the outer catch — so we never quarantine a good
+      // throws before JSON.parse and is handled by the outer catch - so we never quarantine a good
       // file just because antivirus/the indexer held it open for a moment.
       quarantineCorruptConfig(file, parseErr);
       try { await module.exports.save([]); } catch {}
       return [];
     }
   } catch (err) {
-    // I/O error (file locked, permission issue, …) — degrade without destroying the file.
+    // I/O error (file locked, permission issue, …) - degrade without destroying the file.
     console.warn(`[libraryDirs] could not read ${file}: ${err.message}`);
     return [];
   }

@@ -179,7 +179,7 @@ function absoluteUrl(u, baseUrl) {
   }
 }
 
-// ---- Rarity (global unlock %) — Exophase serves it on every award card ----
+// ---- Rarity (global unlock %) - Exophase serves it on every award card ----
 
 function normalizeExophaseRarityPct(value) {
   if (value === null || value === undefined) return null;
@@ -310,7 +310,7 @@ async function loadPageStatic(url) {
     });
     return { html: body, status: code };
   } catch (err) {
-    // request-zero rejects on non-2xx. A plain 404 is just a slug miss — report it as an empty
+    // request-zero rejects on non-2xx. A plain 404 is just a slug miss - report it as an empty
     // page so the caller tries the next candidate instead of escalating to the browser.
     if (err && err.code === 404) return { html: '', status: 404 };
     throw err;
@@ -430,9 +430,9 @@ async function fetchExophaseAchievementsMultiLang(options = {}) {
       try {
         const { html, status } = await loadPageStatic(url);
         if (!looksBlocked(html, status)) return { html, status };
-        debug.log(`exophase: static fetch blocked (${status}) — switching to stealth browser`);
+        debug.log(`exophase: static fetch blocked (${status}) - switching to stealth browser`);
       } catch (err) {
-        debug.log(`exophase: static fetch failed (${err.code || err.message || err}) — switching to stealth browser`);
+        debug.log(`exophase: static fetch failed (${err.code || err.message || err}) - switching to stealth browser`);
       }
       useBrowser = true;
     }

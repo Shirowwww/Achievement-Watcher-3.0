@@ -8,8 +8,8 @@ const DEFAULT_MARGIN = 2;
 // How much of a custom-positioned window must stay on its display for the saved anchor to be used
 // as-is. A preset's window is its <meta> box, usually a little larger than the pixels it paints
 // (glow and shadow room), so a popup only looks flush against a screen edge when that transparent
-// padding may hang past it. Below this ratio the anchor is treated as stale — a monitor that is no
-// longer connected — and clamped back into view instead.
+// padding may hang past it. Below this ratio the anchor is treated as stale - a monitor that is no
+// longer connected - and clamped back into view instead.
 const MIN_VISIBLE_RATIO = 0.5;
 
 function number(value, fallback = 0) {

@@ -197,7 +197,7 @@ test('a download failure aborts the install instead of reporting a partial succe
 });
 
 /*
-  Correcting steam_appid.txt. repair() writes that file only when it is missing — deliberately, since
+  Correcting steam_appid.txt. repair() writes that file only when it is missing - deliberately, since
   an automatic repair must not overwrite a working setup with a detection that could be wrong. This
   is the explicit, user-confirmed version of the same write, and it keeps the previous value.
 */

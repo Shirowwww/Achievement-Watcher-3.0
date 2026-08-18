@@ -2,13 +2,13 @@
 
 /*
   Resolve a Steam AppID from a messy folder/exe/game name (three-tier exact/token/fuzzy search). The
-  automatic path only auto-commits high-confidence matches — writing a wrong AppID corrupts a game's
+  automatic path only auto-commits high-confidence matches - writing a wrong AppID corrupts a game's
   identity; fuzzy hits are returned as candidates for manual confirmation. Pure + dependency-free.
 */
 
 // Scene/repack groups, store/source tags and packaging words that wrap a real title in a folder name.
 // Removing them turns "Cyberpunk 2077 [FitGirl Repack]" into "cyberpunk 2077", which then matches the
-// store name exactly. Edition words (deluxe/goty/…) are deliberately NOT stripped — they're part of
+// store name exactly. Edition words (deluxe/goty/…) are deliberately NOT stripped - they're part of
 // many real Steam names, and the token matcher already tolerates them on either side.
 const JUNK_TOKENS = new Set([
   'repack', 'fitgirl', 'dodi', 'elamigos', 'kaos', 'codex', 'plaza', 'cpy', 'skidrow', 'reloaded',
@@ -108,7 +108,7 @@ function rankAppidCandidates(query, apps, { limit = 5, minScore = 0.5 } = {}) {
 }
 
 // Best high-confidence AppID for automatic use, or null. Only an exact match or a near-length token
-// match (every cleaned query word present, lengths close) is trusted — a fuzzy guess is never
+// match (every cleaned query word present, lengths close) is trusted - a fuzzy guess is never
 // auto-applied, since the AppID gets written to steam_appid.txt.
 function bestConfidentAppid(query, apps) {
   const ranked = rankAppidCandidates(query, apps, { limit: 10, minScore: 0.6 });

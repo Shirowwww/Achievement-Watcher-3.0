@@ -61,7 +61,7 @@ test('the header title binding still resolves to exactly one span', () => {
 });
 
 test('each nav entry keeps exactly one span for its label and a non-span counter', () => {
-  // loader.js: $("#settingNav li[data-view='…'] span").text(…) — a counter <span> would be clobbered.
+  // loader.js: $("#settingNav li[data-view='…'] span").text(…) - a counter <span> would be clobbered.
   const items = settings.querySelectorAll('#settingNav li[data-view]');
   assert.ok(items.length >= 7, 'the settings nav must list every tab');
   for (const item of items) {
@@ -88,7 +88,7 @@ test('every nav entry points at a real content section, and vice versa', () => {
 });
 
 test('a query finds the rows it names, in the tab that owns them', () => {
-  // By option id — the language-independent handle, and the reason ids are part of the haystack.
+  // By option id - the language-independent handle, and the reason ids are part of the haystack.
   const byId = search('steamlessAutoUnpack');
   assert.deepStrictEqual(Object.keys(byId), ['emulator']);
   assert.strictEqual(byId.emulator, 1, 'an option id must identify exactly one row');
@@ -100,7 +100,7 @@ test('a query finds the rows it names, in the tab that owns them', () => {
   // A term nothing carries matches nothing, which is what drives the empty state.
   assert.deepStrictEqual(search('zzzznotasetting'), {}, 'an unmatched query must find nothing');
 
-  // An empty query is not a filter at all — settings.js clears the search instead of hiding rows.
+  // An empty query is not a filter at all - settings.js clears the search instead of hiding rows.
   assert.deepStrictEqual(searchRules.parseTerms('   '), []);
 });
 

@@ -34,7 +34,7 @@ function headerOf(el) {
   return null;
 }
 
-// The outermost section cards of one tab — the same set sectionsIn() computes in the renderer.
+// The outermost section cards of one tab - the same set sectionsIn() computes in the renderer.
 function sectionsOf(section) {
   return section.querySelectorAll(sectionRules.SECTION_SELECTOR).filter((card) => {
     if (!headerOf(card)) return false;
@@ -97,7 +97,7 @@ test('section keys are unique, so two cards never share one open/closed state', 
 });
 
 test('anything collapsed by default is a section that actually exists', () => {
-  // Empty since the preset designer moved to a tab of its own — but a name left here that no longer
+  // Empty since the preset designer moved to a tab of its own - but a name left here that no longer
   // matches a card would silently collapse nothing, so the list is still checked against the markup.
   const keys = allSections().map(keyOf);
   for (const key of sectionRules.DEFAULT_COLLAPSED) {
@@ -123,7 +123,7 @@ test('the collapse never depends on wrapping or reordering the panel', () => {
   const source = fs.readFileSync(path.join(appDir, 'ui', 'settings.js'), 'utf8');
   const wiring = source.slice(source.indexOf('function initCollapsibleSections'), source.indexOf('function toggleSection'));
   for (const forbidden of ['.wrap(', '.append(this)', '.detach(', '.remove(']) {
-    assert.ok(!wiring.includes(forbidden), `section wiring must not use ${forbidden} — i18n binds labels positionally`);
+    assert.ok(!wiring.includes(forbidden), `section wiring must not use ${forbidden} - i18n binds labels positionally`);
   }
   assert.ok(wiring.includes("addClass('settings-section')"), 'sections must be marked with a class, not restructured');
 });

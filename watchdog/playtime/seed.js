@@ -79,7 +79,7 @@ function buildSeededSessions({ gameIndex, processes, now = Date.now(), createTim
     if (!proc || !Number.isFinite(Number(proc.pid))) continue;
     const pid = Number(proc.pid);
     const matches = getBinaryMatches(gamesByProcessName, proc.process || proc.name);
-    if (matches.length !== 1) continue; // ambiguous or unknown — the normal creation watcher handles launches from now on
+    if (matches.length !== 1) continue; // ambiguous or unknown - the normal creation watcher handles launches from now on
     const game = matches[0];
     const existing = sessionsByAppid.get(game.appid);
     if (existing) {

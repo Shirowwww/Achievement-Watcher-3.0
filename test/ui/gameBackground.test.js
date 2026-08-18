@@ -9,8 +9,8 @@ const path = require('node:path');
   Opening a game paints its artwork onto <body>; going back clears it. The artwork arrives from an
   async fetch-icon call, so the two can cross: leave the page before the fetch resolves and the late
   reply repaints the *library* with that game's background, which then stays until another game is
-  opened. The guard is the header's data-appid — it names the game currently on screen, is cleared
-  on the way out and overwritten when another game opens — so the late reply can tell it is stale.
+  opened. The guard is the header's data-appid - it names the game currently on screen, is cleared
+  on the way out and overwritten when another game opens - so the late reply can tell it is stale.
 
   Both halves are pinned here because either one alone silently stops working: without the check the
   paint still lands, and without the clear the check always passes.

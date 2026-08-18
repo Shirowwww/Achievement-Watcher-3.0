@@ -25,7 +25,7 @@ test('a changed file deep inside a SocialClub profile maps back to its indexed g
   ]);
 
   // The library entry is titled with the RESOLVED Steam name while the folder keeps the emulator's
-  // own name, so matching on the title alone never fires — the slug derived from the folder does.
+  // own name, so matching on the title alone never fires - the slug derived from the folder does.
   const changed = path.join(root, 'RDR2', '0F74F4C4', 'achievements.json');
   const found = findIndexedSocialClubGame(root, changed, { files: [index] });
   assert.ok(found, 'entry is found through the socialclub-<slug> appid, not the display name');
@@ -69,7 +69,7 @@ test('the game folder is resolved whether the root or a single game folder is wa
 test('the slug matches the app-side socialClubAppId for the same folder name', () => {
   // Both sides derive the id from the folder name; if these ever drift, live unlocks stop resolving.
   const { _internal } = require('../../app/parser/socialclub.js');
-  for (const name of ['GTA V', 'Red Dead Redemption 2', 'L.A. Noire', 'Grand Theft Auto: Vice City — Definitive Edition']) {
+  for (const name of ['GTA V', 'Red Dead Redemption 2', 'L.A. Noire', 'Grand Theft Auto: Vice City - Definitive Edition']) {
     assert.equal(socialClubSlug(name), _internal.socialClubAppId(name), `slug mismatch for "${name}"`);
   }
 });

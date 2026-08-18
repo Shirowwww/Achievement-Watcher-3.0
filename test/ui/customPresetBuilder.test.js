@@ -1,7 +1,7 @@
 'use strict';
 
 // The Settings > Notification preset designer writes a real preset folder, so a generated preset has
-// to satisfy the same contract createNotificationWindow expects from a bundled one — and every
+// to satisfy the same contract createNotificationWindow expects from a bundled one - and every
 // property the designer offers has to survive the round trip through the generator unchanged.
 
 const assert = require('node:assert/strict');
@@ -228,12 +228,12 @@ test('the host window is sized from the design, so a taller or glowing preset is
   assert.equal(Number(/<meta width="(\d+)"/.exec(buildCustomPresetHtml({ width: 5000, glow: 0, rareGlow: 0, platinumGlow: 0 }))[1]), clamped + CUSTOM_PRESET_WINDOW_MARGIN);
 
   // A stacked layout is taller than the row layout it replaced, and the box has to follow or the
-  // popup is cropped on screen — the meta box is the whole window the notification gets.
+  // popup is cropped on screen - the meta box is the whole window the notification gets.
   const row = presetBoxSize({ layout: 'icon-left', iconSize: 96 });
   const stacked = presetBoxSize({ layout: 'icon-top', iconSize: 96 });
   assert.ok(stacked.height > row.height + 60, 'stacking the icon above the text did not grow the window');
 
-  // A glow paints outside the card, so it widens the box — but only past the slack already there.
+  // A glow paints outside the card, so it widens the box - but only past the slack already there.
   const calm = presetBoxSize({ glow: 0, rareGlow: 0, platinumGlow: 0 });
   const glowing = presetBoxSize({ glow: 100, rareGlow: 100, platinumGlow: 100 });
   assert.ok(glowing.width > calm.width, 'a strong glow is not given room');
@@ -258,7 +258,7 @@ test('the generated preset satisfies the notification-window contract', () => {
 
 test('the designer previews the real preset rather than a second renderer', () => {
   const preview = buildPresetPreviewHtml(FULL);
-  // Same engine, same markup, same generated stylesheet — the preview only adds the bridge that
+  // Same engine, same markup, same generated stylesheet - the preview only adds the bridge that
   // stands in for the notification window's IPC.
   assert.ok(preview.includes(generator.PRESET_ENGINE), 'the preview does not run the preset engine');
   assert.ok(preview.includes(generator.PRESET_MARKUP), 'the preview does not use the preset markup');
@@ -275,7 +275,7 @@ test('the designer previews the real preset rather than a second renderer', () =
 
 test('the preview scripts are pinned in the Settings page CSP, or the preview silently dies', () => {
   /*
-    The preview frame is a srcdoc document, which inherits the embedder's Content-Security-Policy —
+    The preview frame is a srcdoc document, which inherits the embedder's Content-Security-Policy -
     so its two inline scripts only run because view/app.html lists their hashes. Nothing else fails
     loudly when they drift: the frame just renders an empty card.
   */
@@ -283,7 +283,7 @@ test('the preview scripts are pinned in the Settings page CSP, or the preview si
   const csp = /content="(default-src[^"]+)"/.exec(appHtml);
   assert.ok(csp, 'the Settings page has no CSP to pin against');
   for (const hash of generator.PREVIEW_SCRIPT_HASHES) {
-    assert.ok(csp[1].includes(`'${hash}'`), `CSP is missing ${hash} — regenerate it from PREVIEW_SCRIPT_HASHES`);
+    assert.ok(csp[1].includes(`'${hash}'`), `CSP is missing ${hash} - regenerate it from PREVIEW_SCRIPT_HASHES`);
   }
   // The hashes have to be over exactly what is embedded, or they would be decorative. Match the tag
   // case-insensitively and allow attributes: a bare lowercase `<script>` pattern would quietly find

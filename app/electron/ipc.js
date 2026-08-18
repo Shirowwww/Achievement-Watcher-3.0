@@ -48,7 +48,7 @@ ipcMain.handle('startup:set-start-with-windows', async (_event, enabled) => {
 });
 
 // RAR extraction for the CrakFiles community-fix apply. node-unrar-js is WASM+Embind and uses
-// `new Function`, which the renderer's strict CSP forbids — so the renderer delegates the extraction to
+// `new Function`, which the renderer's strict CSP forbids - so the renderer delegates the extraction to
 // here (main process, no CSP). Writes the archive's contents into destDir; the renderer then installs
 // them into the game folder. Returns { ok } or { error } (never throws across the IPC boundary).
 const crackFixJS = require(path.join(__dirname, '../parser/crackFix.js'));

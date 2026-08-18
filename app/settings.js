@@ -71,12 +71,12 @@ module.exports.load = () => {
       // profile; only the missing-file defaults below should launch first-run onboarding.
       options.general.onboardingCompleted = true;
     }
-    // Simple / Advanced interface mode (util/interfaceMode.js). Purely how much of the UI is shown —
+    // Simple / Advanced interface mode (util/interfaceMode.js). Purely how much of the UI is shown -
     // it changes no parser, no watchdog behaviour and no achievement tracking.
     //
     // Migration is deliberate: a profile that already finished onboarding predates this setting, and
     // silently dropping it into Simple would hide the emulator, controller and diagnostics tabs from
-    // someone who has been using them. Those installs get Advanced — nothing disappears on upgrade.
+    // someone who has been using them. Those installs get Advanced - nothing disappears on upgrade.
     // A profile still in onboarding gets '' and is asked to choose, with neither option preselected.
     if (options.general.interfaceMode !== 'simple' && options.general.interfaceMode !== 'advanced') {
       options.general.interfaceMode = options.general.onboardingCompleted === true ? 'advanced' : '';
@@ -96,7 +96,7 @@ module.exports.load = () => {
     if (typeof options.general.uninstallContextMenu !== 'boolean') {
       options.general.uninstallContextMenu = true;
     }
-    // App color theme (Settings > General) — built-in variants applied via <html data-theme="...">,
+    // App color theme (Settings > General) - built-in variants applied via <html data-theme="...">,
     // plus the layer-based Custom theme ("custom") and user themes from <userData>\themes
     // (stored as "user:<name>"). The built-ins come from the theme engine rather than a second list:
     // a copy here silently reset any theme it had not been told about ("light" shipped that way).
@@ -117,7 +117,7 @@ module.exports.load = () => {
     } else if (options.overlay.hotkey === 'Ctrl+Shift+O') {
       options.overlay.hotkey = 'Ctrl+Shift+K';
     }
-    // Overlay (in-game) notification look — re-introduced as an OPTIONAL transport. The overlay
+    // Overlay (in-game) notification look - re-introduced as an OPTIONAL transport. The overlay
     // is now the default delivery mode (with the AW Next preset).
     // A saved name that no longer names a preset is NOT rewritten here: resolvePresetFolder() maps
     // a removed bundled preset onto the one that replaced it only after failing to find the name
@@ -140,7 +140,7 @@ module.exports.load = () => {
       options.overlay.notificationPosition = 'center-bottom';
     }
     // INI values come back as strings (the compatibility parser only type-coerces booleans), so numbers must be
-    // parsed with Number() before validating — a typeof 'number' check would otherwise reset a valid
+    // parsed with Number() before validating - a typeof 'number' check would otherwise reset a valid
     // persisted value to its default on every reload.
     {
       const scl = Number(options.overlay.notificationScale);
@@ -300,10 +300,10 @@ module.exports.load = () => {
       options.achievement_source.importCache = true;
     }
 
-    //Emulator (GBE Fork setup) — new section, may be absent in older configs.
+    //Emulator (GBE Fork setup) - new section, may be absent in older configs.
     if (!options.emulator || typeof options.emulator !== 'object') options.emulator = {};
     if (typeof options.emulator.autoApplyNewGames !== 'boolean') {
-      // Migrate the short-lived General-tab key; installs without either key default to OFF — the
+      // Migrate the short-lived General-tab key; installs without either key default to OFF - the
       // automatic full setup (DLL swap) is opt-in, so AW never touches game files unprompted.
       options.emulator.autoApplyNewGames =
         typeof options.achievement.autoApplyNewGames === 'boolean' ? options.achievement.autoApplyNewGames : false;
@@ -368,14 +368,14 @@ module.exports.load = () => {
     //Transport
 
     // Drop legacy display-transport flags so the file stays clean. NOTE: `mode` is intentionally
-    // NOT dropped here — it is the (re-introduced) notification delivery mode and must persist
+    // NOT dropped here - it is the (re-introduced) notification delivery mode and must persist
     // across restarts; it is validated/defaulted a few lines below.
     delete options.notification_transport.chromium;
     delete options.notification_transport.toast;
     delete options.notification_transport.gntp;
 
     // WinRT (faster native toast) and balloon (toast fallback) are internal auto-details of the
-    // toast path — not surfaced in the UI but still honored by the toaster.
+    // toast path - not surfaced in the UI but still honored by the toaster.
     if (typeof options.notification_transport.winRT !== 'boolean') {
       options.notification_transport.winRT = true;
     }
@@ -384,12 +384,12 @@ module.exports.load = () => {
       options.notification_transport.balloon = true;
     }
 
-    // Websocket broadcast to external clients — independent of the chosen display mode.
+    // Websocket broadcast to external clients - independent of the chosen display mode.
     if (typeof options.notification_transport.websocket !== 'boolean') {
       options.notification_transport.websocket = true;
     }
 
-    // Notification delivery mode: 'auto' (the Watchdog picks per event — see
+    // Notification delivery mode: 'auto' (the Watchdog picks per event - see
     // watchdog/notification/transportPolicy.js), 'toast' (Windows toast), 'overlay' (in-game
     // HTML/CSS preset), or 'both'. A saved choice is never rewritten; only an unset or corrupt one
     // lands on 'auto'.
@@ -420,7 +420,7 @@ module.exports.load = () => {
       options.steam.main = '0';
     }
 
-    //Souvenir — drop the stale flat keys (OBS video stays removed); keep the simple screenshot section.
+    //Souvenir - drop the stale flat keys (OBS video stays removed); keep the simple screenshot section.
     delete options.souvenir_screenshot;
     delete options.souvenir_video;
     if (!options.souvenir || typeof options.souvenir !== 'object') options.souvenir = {};
@@ -441,7 +441,7 @@ module.exports.load = () => {
       options.action.hide = true;
     }
 
-    // Emulator Steam-login password — AES-encrypted on disk.
+    // Emulator Steam-login password - AES-encrypted on disk.
     if (options.emulator && typeof options.emulator.loginPassword === 'string' && options.emulator.loginPassword.includes(':')) {
       try {
         options.emulator.loginPassword = aes.decrypt(options.emulator.loginPassword);
@@ -507,17 +507,17 @@ module.exports.load = () => {
       },
       emulator: {
         autoApplyNewGames: false, // opt-in: one-shot full setup for newly detected unconfigured emulated games (off = never touch game files unprompted)
-        mode: 'regular', // standalone DLL swap — the only mode (ColdClient was removed)
+        mode: 'regular', // standalone DLL swap - the only mode (ColdClient was removed)
         steamlessAutoUnpack: false, // run Steamless on the game exe before patching
         steamlessExperimental: false, // pass --realign for heavily-protected exes
-        autoApplyCrackFix: false, // opt-in: try a confident CrakFiles community-crack match (confident name only, backed-up, idempotent) — off by default since it downloads/overwrites game files
+        autoApplyCrackFix: false, // opt-in: try a confident CrakFiles community-crack match (confident name only, backed-up, idempotent) - off by default since it downloads/overwrites game files
         steamSettingsMode: 'simple', // 'simple' (AW fetch: DLC + achievements) | 'advanced' (generate_emu_config: + depots/languages)
-        createLaunchBat: true, // legacy, unused (ColdClient removed) — kept so saved configs round-trip
+        createLaunchBat: true, // legacy, unused (ColdClient removed) - kept so saved configs round-trip
         apiCheckBypass: false, // opt-in: drop SteamAutoCrack's Steam API ownership-check bypass proxy (winmm.dll) for games that re-check the original DLL/exe after the swap
         checkUpdates: true, // force a same-day GBE Fork release re-check before applying
-        login: 'anonymous', // 'anonymous' | 'steam' (generate_emu_config richer data — throwaway account!)
+        login: 'anonymous', // 'anonymous' | 'steam' (generate_emu_config richer data - throwaway account!)
         loginAccountName: '', // optional Steam login username (throwaway account)
-        loginPassword: '', // optional Steam login password — AES-encrypted on disk
+        loginPassword: '', // optional Steam login password - AES-encrypted on disk
         steamId: '', // optional account_steamid override for configs.user.ini ('' = let GBE pick)
       },
       notification: {

@@ -176,7 +176,7 @@ function looksLikeProfileDir(dir) {
   return HEX_PROFILE_RE.test(base) && !/^\d{12,}$/.test(base);
 }
 
-// A hex-named profile folder that holds nothing at all (issue #11 — "GTA_DEF\0F74F4C4\", both levels
+// A hex-named profile folder that holds nothing at all (issue #11 - "GTA_DEF\0F74F4C4\", both levels
 // empty) is not evidence of a real SocialClub game: the emulator only creates that folder shape once
 // it has actually written something into it. Bounded depth keeps this cheap for a deep, populated tree.
 function isDirEmptyDeep(dir, depth = 3) {
@@ -208,7 +208,7 @@ function hasAchievementFileDirect(dir) {
   return ACHIEVEMENT_FILE_GLOB.some((f) => names.has(String(f).toLowerCase()));
 }
 
-// Accept the SocialClub root, a game folder, or a profile folder — conservatively OUTSIDE the root:
+// Accept the SocialClub root, a game folder, or a profile folder - conservatively OUTSIDE the root:
 // hex-looking subfolders alone are not proof (Steam emu roots are full of numeric AppIDs that also
 // match), so hard Rockstar profile evidence is required.
 function isSocialClubPath(dir) {
@@ -235,7 +235,7 @@ function isSocialClubPath(dir) {
 async function scan(dir) {
   const result = [];
   if (!dir || !fs.existsSync(dir)) return result;
-  // Never scan an unrelated save root as if it were Goldberg SocialClub — e.g. SmartSteamEmu,
+  // Never scan an unrelated save root as if it were Goldberg SocialClub - e.g. SmartSteamEmu,
   // CODEX or OnlineFix would otherwise surface the folder itself as a fake game entry.
   if (!isSocialClubPath(dir)) return result;
 
@@ -244,7 +244,7 @@ async function scan(dir) {
     for (const ent of safeReaddir(dir)) {
       if (!ent.isDirectory()) continue;
       // The emulator keeps its own global settings next to the game folders ("settings/"), which
-      // is not a game — never surface it as an entry.
+      // is not a game - never surface it as an entry.
       if (String(ent.name).toLowerCase() === 'settings') continue;
       const gameDir = path.join(dir, ent.name);
       if (looksLikeSocialClubGameFolder(gameDir)) gameRoots.push(gameDir);
@@ -275,7 +275,7 @@ async function scan(dir) {
     });
     if (!hasAchievements) {
       debug.log(
-        `[socialclub] ${gameName}: valid SocialClub profile folder but no readable achievement file — ` +
+        `[socialclub] ${gameName}: valid SocialClub profile folder but no readable achievement file - ` +
           'achievements for this Rockstar title may be embedded in its proprietary save files, which no local tracker can decode yet'
       );
     }

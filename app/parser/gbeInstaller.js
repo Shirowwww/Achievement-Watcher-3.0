@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  Emulator-DLL installer — the runtime "crack" half of the pipeline. Downloads the maintained
+  Emulator-DLL installer - the runtime "crack" half of the pipeline. Downloads the maintained
   Detanup01/gbe_fork release once, caches steam_api(64).dll + generate_interfaces, and drops them into
   game folders (one-time .bak of the original), always from one matched build. The config tooling
   lives in genEmuConfig.js; network failures degrade to the cached build.
@@ -19,7 +19,7 @@ const RECHECK_TTL_MS = 24 * 60 * 60 * 1000; // only re-ask GitHub for a newer bu
 const USER_AGENT = 'Achievement-Watcher'; // GitHub's API 403s requests without a User-Agent
 
 // steam_api.dll = 32-bit, steam_api64.dll = 64-bit. The release archive keeps them under
-// release/regular/<arch>/ — "x32" historically, with "x86" tolerated since gbe uses that spelling.
+// release/regular/<arch>/ - "x32" historically, with "x86" tolerated since gbe uses that spelling.
 const ARCH = {
   x64: { file: 'steam_api64.dll', dirs: ['x64'] },
   x86: { file: 'steam_api.dll', dirs: ['x86', 'x32'] },
@@ -361,7 +361,7 @@ async function ensureEmulatorDlls({ cacheDir, force = false, log = noopLog } = {
     throw new Error('GitHub returned no release tag for GBE Fork');
   }
 
-  // Already have this exact build cached — just refresh the throttle marker.
+  // Already have this exact build cached - just refresh the throttle marker.
   const haveThis = cachedDlls(cacheDir, tag);
   if (haveThis && haveThis.interfaces) {
     try {

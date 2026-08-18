@@ -11,7 +11,7 @@ const path = require('path');
 
 const blacklist = require(path.join(__dirname, '..', '..', 'app', 'parser', 'blacklist.js'));
 // Resolve request-zero from app/node_modules so it is the *same* cached module object the parser
-// uses (Node keys the module cache by absolute path) — patching .getJson then affects the parser.
+// uses (Node keys the module cache by absolute path) - patching .getJson then affects the parser.
 const request = require(path.join(__dirname, '..', '..', 'app', 'node_modules', 'request-zero'));
 const realGetJson = request.getJson;
 // Same crc32 the app uses to mint `local-<hash>` ids for unconfigured installs.
@@ -158,7 +158,7 @@ const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-blacklist-'));
       fs.writeFileSync(exclusionFile, JSON.stringify([id]));
 
       assert.deepStrictEqual(await blacklist.getUserDetailed(), [{ appid: id, name: 'Some Cracked Game' }]);
-      // Resolved once, then remembered — the walk must not run again on the next render.
+      // Resolved once, then remembered - the walk must not run again on the next render.
       assert.strictEqual(JSON.parse(fs.readFileSync(path.join(temp, 'cfg', 'exclusion-names.json'), 'utf8'))[id], 'Some Cracked Game');
     });
 

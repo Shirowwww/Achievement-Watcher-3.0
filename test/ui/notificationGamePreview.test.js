@@ -6,7 +6,7 @@
   The trap this guards: the overlay has two entry points with different payload shapes.
   enqueueNotificationFromArgs() (the Watchdog CLI path, used by real unlocks) accepts
   `gameDisplayName` and normalises it; enqueueNotification() (the object path the renderer's test
-  uses) does not — createNotificationWindow() forwards a fixed field list. Setting a field the
+  uses) does not - createNotificationWindow() forwards a fixed field list. Setting a field the
   window never reads produces a preview that silently ignores it, which is exactly what happened.
 */
 
@@ -94,7 +94,7 @@ test('the artwork is resolved before it is sent, never passed as a raw token', (
   /*
     game.img holds fetch-icon TOKENS, not URLs: `icon` is a bare Steam content hash
     ("3714884d0e78…") and `header` a fragment ("header.jpg", "<hash>/header.jpg"). Handing those to
-    a notification produces no artwork at all — the failure is silent, the popup simply shows the
+    a notification produces no artwork at all - the failure is silent, the popup simply shows the
     placeholder. Every other view in the app resolves them through the fetch-icon IPC first.
   */
   const runner = appSource.slice(appSource.indexOf('async function runGameHealthAction'));

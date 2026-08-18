@@ -54,7 +54,7 @@ test('Export writes the design on screen, never some other preset', () => {
 
   /*
     Falling back to the ACTIVE notification preset when the picker sat on "New preset…" exported a
-    package named for the design in the builder whose contents were the user's current preset — a
+    package named for the design in the builder whose contents were the user's current preset - a
     "goat.awpreset" whose manifest said "Shirow", which then clashed with the bundled Shirow on
     import and rendered as Shirow everywhere. Export now takes the controls, except for an imported
     preset, whose look the controls cannot describe.
@@ -173,7 +173,7 @@ test('a refresh rebuilds the per-type preset menus, not just the main one', () =
 
   /*
     Rebuilding only the main menu left an imported preset unpickable for rare/platinum/emulator
-    notifications, so those kept rendering whatever they already pointed at — which is what "the
+    notifications, so those kept rendering whatever they already pointed at - which is what "the
     tests still show Shirow" looked like from the outside.
   */
   assert.match(helper[0], /for \(const id of OVERLAY_PRESET_TYPE_IDS\)/, 'the per-type menus are not rebuilt');
@@ -210,7 +210,7 @@ test('Preview shows the imported preset, not the unrelated slider draft', () => 
   // The designer's own drafts still go through the scratch preset, so an unsaved one stays previewable.
   assert.match(handler[0], /const options = readPresetOptions\(\);/);
   assert.match(handler[0], /invoke\('preview-custom-preset', options\)/);
-  // A preset that carries its own sound previews with it — the one thing the inline preview cannot show.
+  // A preset that carries its own sound previews with it - the one thing the inline preview cannot show.
   assert.match(handler[0], /if \(options\.sound\) data\.soundPath = resolveSoundFile\(options\.sound\);/);
 });
 

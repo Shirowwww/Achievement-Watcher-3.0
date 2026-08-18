@@ -36,7 +36,7 @@ test('avatarStore persists the avatar under cfg/, which the migration plan alrea
   assert.equal(fs.existsSync(file), true, 'avatar.txt must be written under cfg/');
   assert.equal(avatarStore.getAvatar(), dataUri);
 
-  // The migration plan copies the whole `cfg` folder — confirm avatar.txt rides along by construction
+  // The migration plan copies the whole `cfg` folder - confirm avatar.txt rides along by construction
   // rather than needing its own entry.
   const cfgEntry = MIGRATION_PLAN.find((p) => p.rel === 'cfg');
   assert.ok(cfgEntry, 'migration plan must have a cfg entry');

@@ -75,7 +75,7 @@ test('clearUpdaterCacheDir resets the helper in-memory state (never re-offers a 
     fs.writeFileSync(updateFile, 'bytes');
 
     const helper = new DownloadedUpdateHelper(cacheDir);
-    // Simulate a prior successful in-memory record of "we already have this file" — the exact
+    // Simulate a prior successful in-memory record of "we already have this file" - the exact
     // state validateDownloadedPath() would trust without clear() resetting it first.
     helper._file = updateFile;
     helper.versionInfo = { version: '3.8.5' };

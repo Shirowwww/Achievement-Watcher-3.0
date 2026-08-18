@@ -1,7 +1,7 @@
 'use strict';
 
 // electron-updater raises this specific error when a downloaded file's sha512 doesn't match the
-// release metadata — the exact symptom of a corrupted or stale cached download. Pulled out of
+// release metadata - the exact symptom of a corrupted or stale cached download. Pulled out of
 // init.js so the classification itself is unit-testable without an Electron runtime.
 function isChecksumMismatchError(err) {
   if (!err) return false;

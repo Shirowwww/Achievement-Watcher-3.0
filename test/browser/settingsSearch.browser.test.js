@@ -9,7 +9,7 @@ const { execFileSync } = require('node:child_process');
 const { removeBrowserProfile } = require('../helpers/browserProfileCleanup');
 
 /*
-  Runs the real filter over the real app.html in a real browser engine — the only layer that proves the
+  Runs the real filter over the real app.html in a real browser engine - the only layer that proves the
   selector/toggle behaviour and the no-restructure promise. Skipped when no Chromium browser is present.
 */
 
@@ -56,7 +56,7 @@ function killProcessesUsing(userDataDir) {
   }
 }
 
-// An installed browser is not necessarily a usable one, so try each until one actually starts —
+// An installed browser is not necessarily a usable one, so try each until one actually starts -
 // this machine has a working Chrome sitting right behind an Edge that cannot start headless, and
 // the first candidate failing used to fail the whole test. The explicit `timeout` matters just as
 // much: without it a browser that starts but never speaks CDP hangs this test, and the suite with
@@ -117,7 +117,7 @@ test('the settings filter behaves correctly in a real DOM', { concurrency: 1, ti
     // Skipped, not failed: with no browser that will start, this test can say nothing at all about
     // the filter. The reasons are printed so an environment fault stays visible instead of hiding
     // behind a quiet skip.
-    t.skip(failures.length ? `no usable Chromium-family browser — ${failures.join(' | ')}` : 'no Chromium-family browser installed');
+    t.skip(failures.length ? `no usable Chromium-family browser - ${failures.join(' | ')}` : 'no Chromium-family browser installed');
     return;
   }
 
@@ -166,7 +166,7 @@ test('the settings filter behaves correctly in a real DOM', { concurrency: 1, ti
     assert.ok(blocks.hidden > 0, 'blocks with no visible row must collapse');
     assert.ok(blocks.shown > 0, 'the block holding the match must stay');
 
-    // Filtering must never restructure the panel — positional i18n depends on it.
+    // Filtering must never restructure the panel - positional i18n depends on it.
     assert.strictEqual(await signature(), before, 'filtering moved or removed rows');
     assert.strictEqual(await rowCount(), totalRows, 'filtering changed the number of rows in the DOM');
 
@@ -198,7 +198,7 @@ test('the settings filter behaves correctly in a real DOM', { concurrency: 1, ti
 test('the Help filter behaves correctly in a real DOM', { concurrency: 1, timeout: 180000 }, async (t) => {
   const { browser, userDataDir, failures } = await launchBrowser();
   if (!browser) {
-    t.skip(failures.length ? `no usable Chromium-family browser — ${failures.join(' | ')}` : 'no Chromium-family browser installed');
+    t.skip(failures.length ? `no usable Chromium-family browser - ${failures.join(' | ')}` : 'no Chromium-family browser installed');
     return;
   }
 

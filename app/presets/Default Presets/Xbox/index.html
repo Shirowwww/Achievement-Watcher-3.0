@@ -33,7 +33,7 @@ window.addEventListener('DOMContentLoaded', function () {
     var type = String((data && data.notificationType) || '').toLowerCase();
     if ((data && data.isPlatinum) || type === 'platinum') { root.classList.add('state-platinum'); return; }
     if (type === 'progress' || type === 'playtime') return;
-    // An ordinary unlock carries rarityPercent null, and Number(null) is 0 — which would make
+    // An ordinary unlock carries rarityPercent null, and Number(null) is 0 - which would make
     // every notification the rarest tier there is. Absence has to be checked before the number.
     var raw = data && data.rarityPercent;
     if (raw == null || raw === '') return;

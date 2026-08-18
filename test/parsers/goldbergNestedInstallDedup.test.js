@@ -2,7 +2,7 @@
 
 // End-to-end regression test for the "Big Walk" duplicate-tile bug: a Unity-shaped install (Goldberg
 // config nested under "<Game>_Data/Plugins/x86_64/") must resolve to exactly ONE discovered game, with
-// its exe attached — not a numeric-appid entry with no exe plus a separate "local-*" clone that found
+// its exe attached - not a numeric-appid entry with no exe plus a separate "local-*" clone that found
 // the exe independently because the real install folder was never marked as claimed.
 
 const assert = require('assert');

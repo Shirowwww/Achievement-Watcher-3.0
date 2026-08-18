@@ -2,7 +2,7 @@
 
 /*
   Manual achievement unlocks: the user can mark an achievement unlocked via a small sidecar
-  (cfg/manual-unlocks.json) keyed by appid::source + achievement name — game saves are never touched.
+  (cfg/manual-unlocks.json) keyed by appid::source + achievement name - game saves are never touched.
   Renderer-friendly so the pure logic stays unit-testable.
 */
 
@@ -81,7 +81,7 @@ function applyToGame(game, map, appid, source) {
         changed++;
       }
     } else if (achievement.manual) {
-      // Override cleared — drop the marker, and take the unlock back when the override is what
+      // Override cleared - drop the marker, and take the unlock back when the override is what
       // created it. The real save's own unlock state is left alone: only a forced one is undone.
       delete achievement.manual;
       if (achievement.manualForced) {

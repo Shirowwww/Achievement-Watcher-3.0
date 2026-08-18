@@ -4,7 +4,7 @@
   What a designed preset actually paints.
 
   The rest of the preset tests read the generated stylesheet as text, which proves a property was
-  written but not that it renders — a variable can be declared and never read, a state class can be
+  written but not that it renders - a variable can be declared and never read, a state class can be
   added to an element no rule matches, and a card can overflow the window it was measured for. This
   renders the real preset (markup, engine and generated stylesheet) in a Chromium-family browser and
   reads back what the engine produced.
@@ -178,7 +178,7 @@ async function renderPreset(page, options, state = 'normal') {
 test('a designed preset renders every property it was given', { concurrency: 1, timeout: 300000 }, async (t) => {
   const { browser, userDataDir, failures } = await launchBrowser();
   if (!browser) {
-    t.skip(failures.length ? `no usable Chromium-family browser — ${failures.join(' | ')}` : 'no Chromium-family browser installed');
+    t.skip(failures.length ? `no usable Chromium-family browser - ${failures.join(' | ')}` : 'no Chromium-family browser installed');
     return;
   }
 
@@ -218,7 +218,7 @@ test('a designed preset renders every property it was given', { concurrency: 1, 
 
         Asserted as "more than none", not as a number of pixels: the radius is the glow strength
         times util/customPreset.js's GLOW_RADIUS_PX, and that constant is tuned for how close the
-        popup lands to the corner of the screen — every pixel of glow is a pixel of transparent
+        popup lands to the corner of the screen - every pixel of glow is a pixel of transparent
         margin the window has to reserve. Pinning the product here made a placement decision fail as
         if it were a rendering bug.
       */
@@ -230,7 +230,7 @@ test('a designed preset renders every property it was given', { concurrency: 1, 
       assert.match(gold.boxShadow, /1 0\.823529 0\.305882|255, 210, 78/, 'the glow is not the rare colour');
 
       /*
-        An unlock whose rarity the app does not know sends rarityPercent null, and Number(null) is 0 —
+        An unlock whose rarity the app does not know sends rarityPercent null, and Number(null) is 0 -
         the rarest tier there is. Every ordinary notification came out gold until the engine checked
         for absence before converting.
       */

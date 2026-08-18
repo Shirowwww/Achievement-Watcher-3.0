@@ -30,7 +30,7 @@ function normalizeId(value) {
   return /^[0-9]+$/.test(raw) ? raw : '';
 }
 
-// Galaxy ids are 64-bit — node:sqlite throws on them unless the statement reads BigInts.
+// Galaxy ids are 64-bit - node:sqlite throws on them unless the statement reads BigInts.
 function queryAll(dbPath, sql) {
   if (!DatabaseSync) throw 'node:sqlite unavailable in this runtime';
   const db = new DatabaseSync(dbPath, { readOnly: true });
@@ -233,7 +233,7 @@ module.exports.start = async (ctx) => {
   if (ctx.options.notification && ctx.options.notification.notify === false) return;
   if (typeof ctx.notify !== 'function') return;
   if (!DatabaseSync) {
-    debug.warn('[gog] node:sqlite unavailable — GOG official live toasts disabled');
+    debug.warn('[gog] node:sqlite unavailable - GOG official live toasts disabled');
     return;
   }
 

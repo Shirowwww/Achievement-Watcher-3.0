@@ -5,7 +5,7 @@
 
   1. "Call of Duty: Black Ops III" (SmartSteamEmu) was badged as an EA title, because the source
      test was a substring match and "SmartSt(ea)mEmu" contains "ea".
-  2. Cyberpunk 2077 appeared twice — once from its GOG install, once from a leftover CODEX save —
+  2. Cyberpunk 2077 appeared twice - once from its GOG install, once from a leftover CODEX save -
      because the dedupe resolved names from an english-only cache path on a French profile.
   3. "The Jackbox Party Pack" (not installed) adopted the whole Jackbox collection folder as its
      install directory and was handed another pack's executable.
@@ -97,7 +97,7 @@ test('every official platform label is recognised, in both spellings the parsers
     assert.equal(badgeOf(label), expected, `${label} must earn the ${expected} badge`);
   }
 
-  // Anchored, so an emulator is never mistaken for an official platform — the EA bug in reverse.
+  // Anchored, so an emulator is never mistaken for an official platform - the EA bug in reverse.
   for (const label of ['gog galaxy emulator', 'not gog', 'epicfail', 'Goldberg', 'SmartSteamEmu', 'Steam (Shirow)', 'GBE Fork']) {
     assert.equal(badgeOf(label), null, `${label} must not match any official platform`);
   }
@@ -129,7 +129,7 @@ test('no source label the parsers emit can go unclassified', () => {
 
 test('the Steam-badged list stays a list of real emulators, not a catch-all', () => {
   const { SOURCE_BADGE, STEAM_BADGE_SOURCES } = badgeTables();
-  // It must not swallow a platform label — that would defeat the coverage test above.
+  // It must not swallow a platform label - that would defeat the coverage test above.
   for (const label of ['gog', 'gog galaxy', 'epic', 'epic-official', 'ea', 'goldberg socialclub', 'xenia emulator']) {
     assert.ok(!STEAM_BADGE_SOURCES.test(label), `${label} belongs to a platform, not to the Steam fallback list`);
   }

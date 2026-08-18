@@ -45,7 +45,7 @@ async function resolveToastIdentity(options, { env = process.env, log } = {}) {
   if (candidates[0] && candidates[0].why === 'user override') {
     const override = candidates.shift();
     const known = await startApps.hasAumid(override.id, registered);
-    if (!known) debug.warn(`[Toast] "${override.id}" (user override) is not a registered app id — toasts may not appear`);
+    if (!known) debug.warn(`[Toast] "${override.id}" (user override) is not a registered app id - toasts may not appear`);
     debug.log(`[Toast] will use appid: "${override.id}" (${override.why})`);
     return { ...override, registered: known };
   }
@@ -59,7 +59,7 @@ async function resolveToastIdentity(options, { env = process.env, log } = {}) {
   }
 
   debug.error(
-    '[Toast] no registered AppUserModelID found — Windows will silently discard these toasts. ' +
+    '[Toast] no registered AppUserModelID found - Windows will silently discard these toasts. ' +
       'Fix: reinstall so the Start Menu shortcut is recreated, or set a registered app id in ' +
       'Settings > Notifications > Advanced. Overlay notifications are unaffected.'
   );

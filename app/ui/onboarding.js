@@ -207,7 +207,7 @@ const onboardingInterfaceMode = require(path.join(appPath, 'util/interfaceMode.j
   }
 
   /*
-    Interface mode. Nothing is ticked until the user ticks it — the cards carry no default state and
+    Interface mode. Nothing is ticked until the user ticks it - the cards carry no default state and
     the guide will not move past this step while `chosenInterfaceMode` is empty.
   */
   function renderInterfaceMode() {

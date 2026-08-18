@@ -109,7 +109,7 @@
   }
 
   // Community rarity when the source provides it (Epic/GOG official schemas,
-  // emulator sidecars). Null when unknown — the overlay simply hides it.
+  // emulator sidecars). Null when unknown - the overlay simply hides it.
   function rarityPercent(achievement) {
     const a = achievement || {};
     const raw =
@@ -123,7 +123,7 @@
 
   // Single source of truth for the rarity tiers shared by the game window and
   // the in-game overlay. Matches the historical behavior: only achievements with
-  // a community unlock rate of 0–10% get a tier — gold <3%, silver <6%, bronze ≤10%.
+  // a community unlock rate of 0–10% get a tier - gold <3%, silver <6%, bronze ≤10%.
   function rarityTier(percent) {
     if (percent === null || percent === undefined || percent === '') return null;
     const raw = Number(percent);
@@ -150,7 +150,7 @@
         if (aTitle > bTitle) return 1 * sortState.achievement;
       }
       if (sortState && sortState.rarity) {
-        // Missing rarity always sorts last regardless of direction — there is nothing to compare it
+        // Missing rarity always sorts last regardless of direction - there is nothing to compare it
         // against, and burying unranked rows at the bottom beats scattering them through the list.
         const aRarity = rarityPercent(a);
         const bRarity = rarityPercent(b);

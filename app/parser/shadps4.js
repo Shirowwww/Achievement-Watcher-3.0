@@ -220,7 +220,7 @@ module.exports.getGameData = async (dir, lang) => {
   Relock every trophy in a TROP*.XML, as a text edit.
 
   ShadPS4 keeps the trophy definitions and their unlock state in the same file, so a reset rewrites
-  the three state attributes (`unlockstate`, `unlocked`, `timestamp`) and touches nothing else — not
+  the three state attributes (`unlockstate`, `unlocked`, `timestamp`) and touches nothing else - not
   the trophy list, not the names, not the formatting. Re-serializing the parsed XML would rewrite the
   whole document, and any attribute or entity this reader does not model would be lost with it.
 

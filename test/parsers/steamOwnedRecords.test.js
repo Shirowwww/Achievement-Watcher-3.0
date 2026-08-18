@@ -70,7 +70,7 @@ test.after(() => {
 
 /*
   Skipping the install folder is not enough: an emulator save folder is a source of its own, so one
-  left behind for a Steam game keeps listing it with no install folder attached — the "steam_api not
+  left behind for a Steam game keeps listing it with no install folder attached - the "steam_api not
   found" Garry's Mod entry.
 */
 test('a leftover emulator save cannot resurrect a game Steam installed', async () => {
@@ -90,7 +90,7 @@ test('a leftover emulator save cannot resurrect a game Steam installed', async (
     'only the phantom save folder of an installed Steam game is dropped'
   );
 
-  // With official Steam games shown, nothing is filtered — the game is meant to be in the library.
+  // With official Steam games shown, nothing is filtered - the game is meant to be in the library.
   assert.equal((await dropSteamOwnedRecords(records, true)).length, records.length);
 });
 

@@ -144,7 +144,7 @@ test('the monitor is the only source of game activity, and losing it never wedge
   assert.match(watchdog, /forwardGameActivity\(\);/);
   assert.ok((watchdog.match(/forwardGameActivity\(\)/g) || []).length >= 3, 'startup state + launch/exit must all be published');
 
-  // The app consumes it, and clears the count if the monitor dies mid-session — otherwise a stuck
+  // The app consumes it, and clears the count if the monitor dies mid-session - otherwise a stuck
   // "a game is running" would silence updates forever.
   assert.match(init, /msg\.gameActivity\) setGameActivity\(msg\.gameActivity\.count\)/);
   assert.strictEqual((init.match(/setGameActivity\(0\)/g) || []).length, 2, 'both monitor-loss paths must reset the count');
@@ -162,7 +162,7 @@ test('the download prompt claims the dialog before its first await', () => {
     const firstAwait = body.indexOf('await ');
     assert.ok(claim > 0, `${event}: never claims the prompt`);
     assert.ok(firstAwait > 0, `${event}: expected an await in the handler`);
-    assert.ok(claim < firstAwait, `${event}: claims the prompt only AFTER awaiting — two events can stack dialogs`);
+    assert.ok(claim < firstAwait, `${event}: claims the prompt only AFTER awaiting - two events can stack dialogs`);
   }
 });
 

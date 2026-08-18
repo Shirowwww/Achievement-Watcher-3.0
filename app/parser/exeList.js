@@ -50,7 +50,7 @@ module.exports.add = async (app) => {
   try {
     debug.log(`Adding ${app.appid} to exeList ...`);
     let currentList = await getCurrentList();
-    // Note: no collision guard here on purpose — `add` also serves the manual file-picker, and the
+    // Note: no collision guard here on purpose - `add` also serves the manual file-picker, and the
     // user is allowed to choose any exe. Auto-detection avoids duplicates by passing `taken` to
     // exeDetect, and reconcile() repairs duplicates left over from corrupt/old data at scan time.
     let existingEntry = currentList.find((ap) => String(ap.appid) === String(app.appid));
@@ -132,7 +132,7 @@ module.exports.reconcile = async (games) => {
       }
     }
 
-    // 2) Resolve collisions — group by lowercased exe path.
+    // 2) Resolve collisions - group by lowercased exe path.
     const groups = new Map();
     for (const e of list) {
       if (!e.exe) continue;
@@ -196,7 +196,7 @@ module.exports.reconcile = async (games) => {
     }
 
     // 3) Fill empty entries: launcher-provided exe first (Epic/GOG/EA/Xbox manifests are the exact
-    // command the launcher runs — zero guesswork), then conservative on-disk detection for every
+    // command the launcher runs - zero guesswork), then conservative on-disk detection for every
     // game whose install folder we know. Ambiguous folders stay empty for a manual pick.
     const taken = new Set(list.filter((e) => e.exe).map((e) => e.exe.toLowerCase()));
     const takenGameDirs = new Set();

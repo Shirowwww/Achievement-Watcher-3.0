@@ -21,7 +21,7 @@ test('a cached local file becomes a file:// URL', () => {
 
 test('the fetchIcon failure sentinel is reported as a miss, not a file URL', () => {
   // fetchIcon() returns the URL it was handed when it could not download the art. Wrapping that in
-  // pathToFileURL() produced file:///…/app/https:/cdn…/header.jpg — truthy, and never equal to the
+  // pathToFileURL() produced file:///…/app/https:/cdn…/header.jpg - truthy, and never equal to the
   // requested URL, so callers read the miss as a success: the portrait<->header fallback never ran
   // and "Use another Steam AppID…" persisted the broken value into cfg/covers.db.
   const url = 'https://cdn.cloudflare.steamstatic.com/steam/apps/440/header.jpg';

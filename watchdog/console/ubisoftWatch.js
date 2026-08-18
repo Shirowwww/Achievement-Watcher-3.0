@@ -82,7 +82,7 @@ function findFirstProtoVarint(buffer, targetField, start, end, depth = 0) {
   return null;
 }
 
-// [{id, time(unix s)}] — deduped, sorted by time
+// [{id, time(unix s)}] - deduped, sorted by time
 function readSpool(filePath) {
   const buffer = fs.readFileSync(filePath);
   const records = [];
@@ -254,7 +254,7 @@ function cleanConfigTitle(value) {
 
 // Product titles from the configurations index (best effort). Path injectable for tests.
 function readTitles(configurationsPath = CONFIGURATIONS_PATH) {
-  const out = new Map(); // normalizedSpec is not needed here — map by product id prefix of archives
+  const out = new Map(); // normalizedSpec is not needed here - map by product id prefix of archives
   let text = '';
   try {
     text = fs.readFileSync(configurationsPath).toString('latin1').replace(/\0/g, '');
@@ -429,7 +429,7 @@ module.exports.start = async (ctx) => {
   const titles = readTitles();
   const watchedDirs = new Set();
   for (const target of targets) {
-    // resolve a display name: archive spec title match is complex — configurations titles are keyed
+    // resolve a display name: archive spec title match is complex - configurations titles are keyed
     // by spec, so best effort: gameIndex (the app's resolved identity) first, then any title whose
     // spec starts with the product id, else a generic label. Never "Steam"/"Ubisoft Connect".
     const titleKey = Array.from(titles.keys()).find((k) => k.startsWith(`${target.appid}_`));

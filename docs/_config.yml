@@ -22,7 +22,7 @@ lang: en
 # GitHub re-enables Markdown after a blank line inside a block-level HTML element; kramdown, which
 # is what Jekyll uses here, does not unless it is told to. Every page centres its header, its
 # screenshots and its footer nav in a <div>/<p>, so without this the site serves the contents of
-# those blocks as raw text — literal [label](url) instead of links. This makes the two renderers
+# those blocks as raw text - literal [label](url) instead of links. This makes the two renderers
 # agree, and keeps the fix in one line rather than markdown="1" on every block in every file.
 kramdown:
   parse_block_html: true

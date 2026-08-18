@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  GBE Fork "generate_emu_config" integration — the Advanced steam_settings path. Shells out to the
+  GBE Fork "generate_emu_config" integration - the Advanced steam_settings path. Shells out to the
   cached alex47exe/gse_fork_tools generator for deeper coverage (depots, languages, inventory…).
   Anonymous by default; an optional Steam login (env vars, never persisted) pulls private data.
   Use a throwaway account; 2FA prompts are forwarded to onPrompt. Windows-only.
@@ -230,7 +230,7 @@ async function generate({ tool, appid, login = null, onPrompt, timeout = 300000,
     cleanOutputs();
     const toolArgs = Array.isArray(tool.args) ? tool.args : [];
     const child = spawn(tool.exe, [...toolArgs, ...args], { cwd: workDir, env, windowsHide: true });
-    // Unattended runs (no onPrompt — the automatic/bulk emulator fix) must never block on interactive
+    // Unattended runs (no onPrompt - the automatic/bulk emulator fix) must never block on interactive
     // input. Close stdin right away so a tool that prompts (a login question it can't ask here, a
     // "press enter", an unexpected Steam Guard) gets EOF and fails fast instead of hanging the full
     // timeout. Interactive callers pass onPrompt and keep stdin open to answer.

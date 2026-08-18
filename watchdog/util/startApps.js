@@ -23,7 +23,7 @@ function isPackagedAUMID(appID) {
 }
 
 // A usable AppUserModelID. Windows accepts any string of at most 128 characters with no whitespace,
-// which is exactly what a desktop app's Start Menu shortcut carries — Achievement Watcher's own id
+// which is exactly what a desktop app's Start Menu shortcut carries - Achievement Watcher's own id
 // is "io.github.shirowwww.achievement.watcher", with no "!" and no "_". The old check only accepted
 // the packaged shape, so the app's real identity was reported as invalid (issue #8).
 function isValidAUMID(appID) {
@@ -66,7 +66,7 @@ async function listAumids() {
   }
 }
 
-// Exact Start Menu AppUserModelID lookup — the only check that answers the question that actually
+// Exact Start Menu AppUserModelID lookup - the only check that answers the question that actually
 // matters: "will Windows display a toast posted under this id?". Windows silently drops toasts for
 // an id that no installed app owns, which is how the hardcoded "Microsoft.XboxApp_…" default kept
 // failing on Windows 11 (the classic Xbox app no longer ships) while the format check said the id

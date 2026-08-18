@@ -96,8 +96,8 @@ test('the overlay and shortcut text show the real hotkey instead of the default'
     'Open it with the overlay hotkey (Ctrl+Alt+O) or Guide on a controller.'
   );
   assert.equal(
-    help.formatHelpText('Ctrl+Shift+K (default): toggle the in-game overlay — configurable in Settings > General.', values, 'shortcuts'),
-    'Ctrl+Alt+O: toggle the in-game overlay — configurable in Settings > General.'
+    help.formatHelpText('Ctrl+Shift+K (default): toggle the in-game overlay - configurable in Settings > General.', values, 'shortcuts'),
+    'Ctrl+Alt+O: toggle the in-game overlay - configurable in Settings > General.'
   );
   assert.equal(
     help.formatHelpText('Öffne es mit dem Overlay-Hotkey (standardmäßig Ctrl+Shift+K) oder Guide.', values, 'overlay'),

@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  Steam DRM (SteamStub) removal via atom0s/Steamless — the same tool ARMGDDN bundles. Downloads and
+  Steam DRM (SteamStub) removal via atom0s/Steamless - the same tool ARMGDDN bundles. Downloads and
   caches the CLI once, runs it on a game exe, and swaps in the unpacked exe (original kept as .bak).
   A clean exe is a safe no-op. Windows-only.
 */
@@ -14,7 +14,7 @@ const request = require('request-zero');
 
 const RELEASE_API = 'https://api.github.com/repos/atom0s/Steamless/releases/latest';
 const RELEASES_PAGE = 'https://github.com/atom0s/Steamless/releases';
-const RECHECK_TTL_MS = 7 * 24 * 60 * 60 * 1000; // Steamless changes rarely — re-check weekly at most
+const RECHECK_TTL_MS = 7 * 24 * 60 * 60 * 1000; // Steamless changes rarely - re-check weekly at most
 const USER_AGENT = 'Achievement-Watcher';
 
 const noopLog = { log() {}, error() {} };
@@ -164,7 +164,7 @@ async function stripDrm({ steamless, exePath, experimental = false, log = noopLo
     /* ignore */
   }
 
-  // --quiet trims the log spam; --keepbind preserves the .bind section (safest default — some games
+  // --quiet trims the log spam; --keepbind preserves the .bind section (safest default - some games
   // misbehave without it). Steamless writes "<exe>.unpacked.exe" next to the input on success.
   const args = ['--quiet', '--keepbind'];
   if (experimental) args.push('--realign');

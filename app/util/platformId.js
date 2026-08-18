@@ -55,7 +55,7 @@ function sanitizeAppIdForPlatform(value, type) {
 }
 
 // Collision-safe cache key for a source's appid. Native-id official sources get a `<prefix>-<id>`
-// key; everything else keeps its bare appid (so Steam/emulator caches are unchanged — back-compat).
+// key; everything else keeps its bare appid (so Steam/emulator caches are unchanged - back-compat).
 function officialAppId(type, rawId) {
   const id = String(rawId || '').trim();
   if (!id) return id;

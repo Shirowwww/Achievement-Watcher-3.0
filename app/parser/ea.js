@@ -68,7 +68,7 @@ function parseGrantDateMs(value) {
 // source. Returns true for the standard EA / Origin install roots.
 function isLikelyOfficialEaInstall(installPath) {
   const p = String(installPath || '').toLowerCase().replace(/\\/g, '/');
-  if (!p) return false; // unknown location — keep it (assume non-standard)
+  if (!p) return false; // unknown location - keep it (assume non-standard)
   return (
     p.includes('/ea games/') ||
     p.includes('/origin games/') ||
@@ -462,7 +462,7 @@ module.exports.scan = async () => {
     for (const entry of sets) {
       if (!entry.appid || seen.has(entry.appid)) continue;
       // Cracked-only: a game launched from its default EA/Origin managed location is legitimately
-      // owned — skip it. Keep games installed in custom/non-standard locations.
+      // owned - skip it. Keep games installed in custom/non-standard locations.
       if (isLikelyOfficialEaInstall(entry.installPath)) {
         debug.log(`[ea] skipping official EA install: ${entry.gameName || entry.appid} (${entry.installPath})`);
         continue;

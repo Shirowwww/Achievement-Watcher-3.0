@@ -33,7 +33,7 @@ function deferred() {
 }
 
 // SHQueryUserNotificationState tells us when Windows will accept a toast but never pop it on
-// screen. Achievement toasts are fired while the game is on top, playtime toasts after it exits —
+// screen. Achievement toasts are fired while the game is on top, playtime toasts after it exits -
 // which is exactly why one kind looked broken and the other did not (issue #18).
 test('full-screen and quiet-hours states are the ones that swallow toast popups', () => {
   for (const suppressed of ['QUNS_BUSY', 'QUNS_RUNNING_D3D_FULL_SCREEN', 'QUNS_PRESENTATION_MODE', 'QUNS_APP', 'QUNS_QUIET_TIME']) {
@@ -70,7 +70,7 @@ test('on Windows the query returns a real notification state', { skip: process.p
 });
 
 // Off Windows the query cannot answer at all, and both predicates must say "not suppressed" rather
-// than guess — a wrong guess would swallow a working notification.
+// than guess - a wrong guess would swallow a working notification.
 test('an unreadable notification state never suppresses a notification', { skip: process.platform === 'win32' ? 'non-Windows only' : false }, async () => {
   state._resetCache();
   assert.strictEqual(await state.queryUserNotificationState(), null);
@@ -113,7 +113,7 @@ test('a slow query starts the TTL when its result arrives', async () => {
 });
 
 // A batch unlock asks all at once, before any answer is cached. Without in-flight sharing every
-// caller starts its own PowerShell — twenty of them, each compiling the shell32 import — which is
+// caller starts its own PowerShell - twenty of them, each compiling the shell32 import - which is
 // exactly the burst the notification path produces when a save file unlocks a whole set.
 test('a burst of simultaneous reads shares a single query', async () => {
   let queries = 0;

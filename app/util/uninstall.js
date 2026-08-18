@@ -22,7 +22,7 @@ const INNO_DATA_RE = /^unins\d{3}\.dat$/i;
 const NSIS_UNINSTALLER_RE = /^uninstall(?:er)?\.exe$/i;
 
 // Generic uninstallers (GOG/Ubisoft/EA and others): uninst.exe, uninstall_x64.exe,
-// Uninstaller-64.exe, uninstall32.exe, … no reliable silent flag — run them visible.
+// Uninstaller-64.exe, uninstall32.exe, … no reliable silent flag - run them visible.
 const GENERIC_UNINSTALLER_RE = /^unins(?:t(?:al(?:l)?(?:er)?)?)?(?:[-_ ]?(?:x(?:64|86)|(?:64|32)|[0-9]+))?\.exe$/i;
 
 // Never offer to trash folders that hold achievement saves or an entire drive root.
@@ -147,7 +147,7 @@ function cleanupSilentUninstaller(local) {
     const dir = path.dirname(local.file);
     if (fs.existsSync(dir) && fs.readdirSync(dir).length === 0) fs.rmdirSync(dir);
   } catch {
-    /* folder not empty (uninstall left other files) or already gone — fine either way */
+    /* folder not empty (uninstall left other files) or already gone - fine either way */
   }
 }
 

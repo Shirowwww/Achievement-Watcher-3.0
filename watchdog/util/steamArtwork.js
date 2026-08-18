@@ -36,12 +36,12 @@ function isPredictableLegacySteamUrl(value) {
   );
 }
 
-// A real, non-placeholder image URL — worth using, but may still be a legacy-shaped guess.
+// A real, non-placeholder image URL - worth using, but may still be a legacy-shaped guess.
 function isUsableArt(value) {
   return isImageUrl(value) && !isKnownPlaceholder(value);
 }
 
-// Usable *and* not a legacy-shaped guess likely to 404 on modern titles — the best tier.
+// Usable *and* not a legacy-shaped guess likely to 404 on modern titles - the best tier.
 function isResolvedArt(value) {
   return isUsableArt(value) && !isPredictableLegacySteamUrl(value);
 }

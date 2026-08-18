@@ -207,7 +207,7 @@ function buildApiNameIndex(achievements) {
 }
 
 // Recovers real apiNames for the degraded SteamCommunity-only fallback via the index above. No
-// match just keeps the title-based placeholder name — never worse than before this lookup existed.
+// match just keeps the title-based placeholder name - never worse than before this lookup existed.
 function applyApiNameIndex(achievements, index) {
   if (!index || typeof index !== 'object' || Object.keys(index).length === 0) return achievements;
   return (Array.isArray(achievements) ? achievements : []).map((a) => {

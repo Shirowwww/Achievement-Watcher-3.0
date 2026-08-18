@@ -61,7 +61,7 @@ function pickBypassDllEntries(files) {
 }
 
 // Extract the proxy DLLs from the release RAR5 with node-unrar-js, loaded lazily. Must run in a Node
-// context: its Emscripten glue uses new Function(), which the renderer CSP forbids — a renderer goes
+// context: its Emscripten glue uses new Function(), which the renderer CSP forbids - a renderer goes
 // through extractDllsFromRar / the IPC handler.
 async function extractDllsFromRarDirect(rarPath, destDir) {
   const { createExtractorFromData } = require('node-unrar-js');
@@ -76,7 +76,7 @@ async function extractDllsFromRarDirect(rarPath, destDir) {
 }
 
 // Renderer-safe entry point: delegates the actual extraction to the main process over IPC (CSP blocks
-// node-unrar-js in the renderer — see extractDllsFromRarDirect); runs directly in main/plain-Node.
+// node-unrar-js in the renderer - see extractDllsFromRarDirect); runs directly in main/plain-Node.
 async function extractDllsFromRar(rarPath, destDir) {
   if (typeof process !== 'undefined' && process.type === 'renderer') {
     const { ipcRenderer } = require('electron');
@@ -193,7 +193,7 @@ function applyBypass({ gameDir, exePath, dlls, dllVariant = 'winmm', mode = 'nth
 
   for (const name of HIJACK_NAMES) {
     if (fs.existsSync(path.join(exeDir, name))) {
-      log.log(`[bypass] ${name} already present beside the exe — skipping (won't clobber an existing proxy/real DLL)`);
+      log.log(`[bypass] ${name} already present beside the exe - skipping (won't clobber an existing proxy/real DLL)`);
       return { applied: false, reason: 'hijack-dll-exists' };
     }
   }

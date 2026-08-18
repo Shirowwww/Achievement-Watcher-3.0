@@ -22,16 +22,16 @@ const EXE_EXCLUDE = [
   /^dotnet/i,
   /^oalinst/i,
   /^7za?$/i,
-  /^update(r)?\.exe$/i, // Updater.exe / Update.exe — companion tools, never the game itself
-  /media.?player\.exe$/i, // steamvr_media_player.exe & co — helper players, never the game
+  /^update(r)?\.exe$/i, // Updater.exe / Update.exe - companion tools, never the game itself
+  /media.?player\.exe$/i, // steamvr_media_player.exe & co - helper players, never the game
   /saveconverter/i, // Jackbox per-pack save tool
-  /utility/i, // e.g. JackboxUtility.exe — companion tools, not the game
+  /utility/i, // e.g. JackboxUtility.exe - companion tools, not the game
   /decompressor/i,
   /\bcli\b/i, // command-line tools (wabbajack-cli, lootcli, …)
 ];
 
 // Well-known NON-game executables. A library root is supposed to hold games, but users sometimes
-// point one at a folder that also (or only) contains applications — browsers, chat, office,
+// point one at a folder that also (or only) contains applications - browsers, chat, office,
 // system/driver tools, launchers. Those must never surface as "Unconfigured" games.
 const KNOWN_NON_GAME_EXE = new Set([
   // browsers
@@ -93,7 +93,7 @@ const META_DIRS = /^(_?CommonRedist|_?Redist|redist|DirectX|dx|dotnet|prerequisi
 
 const MAX_DEPTH = 5;
 
-// Scoring weights — name match dominates size so a strong name beats a bigger unrelated exe,
+// Scoring weights - name match dominates size so a strong name beats a bigger unrelated exe,
 // while size still breaks ties between similarly-named candidates.
 const W_NAME = 100;
 const W_SIZE = 10;
@@ -106,7 +106,7 @@ const PENALTY_SHADOWED_L_SUFFIX = 5; // foo-l.exe next to foo.exe is usually a l
 
 // Confidence thresholds for auto-filling the launch panel: an authoritative exe, a single plausible
 // exe, a strong name/folder match, a decent match beside the emulator dll, or a clear margin win.
-// Anything else is left for the user — the launch panel never guesses.
+// Anything else is left for the user - the launch panel never guesses.
 const CONFIDENCE = {
   STRONG_NAME: 0.85,
   DLL_NAME: 0.6,
@@ -126,7 +126,7 @@ function tokenize(s) {
     .filter((t) => t.length >= 2);
 }
 
-// A short string being a mere substring of a much longer one is weak evidence on its own — e.g. a
+// A short string being a mere substring of a much longer one is weak evidence on its own - e.g. a
 // generic "Content" or "Fallout" folder elsewhere on disk must never satisfy "Content Warning" or
 // "Fallout New Vegas" (both real false-positive "installed" reports). Require the shorter side to
 // cover a majority of the longer one before trusting a bare substring match.
@@ -197,7 +197,7 @@ function confidenceFor(best, candidates, gameDir, gameName, opts = {}) {
 
   // A strong name match alone is not enough when the winner is a nested helper that merely shares
   // the product's brand (steamvr_tutorial.exe, steamvr_room_setup.exe, …). Require the candidate to
-  // sit near the root or next to the Steam dll — real game binaries are almost always there.
+  // sit near the root or next to the Steam dll - real game binaries are almost always there.
   if ((gameSim >= CONFIDENCE.STRONG_NAME || folderSim >= CONFIDENCE.STRONG_NAME) && (best.depth <= 1 || best._dllBonus > 0)) {
     return {
       confident: true,
@@ -208,8 +208,8 @@ function confidenceFor(best, candidates, gameDir, gameName, opts = {}) {
   if (best._dllBonus > 0 && gameSim >= CONFIDENCE.DLL_NAME) return { confident: true, reason: 'dll-and-name' };
   if (best._dllBonus > 0 && folderSim >= CONFIDENCE.DLL_NAME) return { confident: true, reason: 'dll-and-folder-name' };
 
-  // A launcher/loader/helper/updater-style exe is never auto-assigned on its own — even when it is
-  // the only exe in the folder — unless the name evidence above said it is the game itself.
+  // A launcher/loader/helper/updater-style exe is never auto-assigned on its own - even when it is
+  // the only exe in the folder - unless the name evidence above said it is the game itself.
   if (SOFT_PENALTY.some((r) => r.test(best.name))) return { confident: false, reason: 'soft-penalty' };
 
   if (candidates.length === 1) return { confident: true, reason: 'single-candidate' };
@@ -218,7 +218,7 @@ function confidenceFor(best, candidates, gameDir, gameName, opts = {}) {
   // to patch the ownership check (e.g. a Goldberg-cracked Steam release wrapped with a second Uplay R2
   // loader). The internal binary name is frequently a codename with zero lexical overlap with the
   // storefront title ("AC4BFSP.exe" for "Assassin's Creed IV Black Flag"), so gameSim/folderSim can
-  // never clear a name-based threshold above — but once every soft-penalized candidate is filtered out,
+  // never clear a name-based threshold above - but once every soft-penalized candidate is filtered out,
   // "best" being the only thing left is exactly as strong a signal as candidates.length === 1 above.
   const nonUtility = candidates.filter((c) => !SOFT_PENALTY.some((r) => r.test(c.name)));
   if (nonUtility.length === 1 && nonUtility[0] === best) return { confident: true, reason: 'sole-non-utility-candidate' };
@@ -346,7 +346,7 @@ function bestFolderMatch(gameName, folders) {
 }
 
 // Does this folder DIRECTLY contain a real (non-utility, non-launcher) game .exe? Used to decide
-// whether a folder is a "game folder" when scanning for unconfigured installs (no recursion — the
+// whether a folder is a "game folder" when scanning for unconfigured installs (no recursion - the
 // recursive detect() is used afterwards to pick the actual exe of an emitted game).
 function shallowGameExe(dir) {
   let entries;

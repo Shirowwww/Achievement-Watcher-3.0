@@ -7,7 +7,7 @@ const path = require('node:path');
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-ubi-official-'));
 process.env.APPDATA = tmp; // keep the rarity sidecar inside the sandbox
-// watchdog/util/log.js opens its log file at require time — give it a home inside the sandbox
+// watchdog/util/log.js opens its log file at require time - give it a home inside the sandbox
 fs.mkdirSync(path.join(tmp, 'Achievement Watcher Next', 'logs'), { recursive: true });
 
 const ubi = require('../../app/parser/ubisoftOfficial.js');
@@ -117,7 +117,7 @@ function spoolRecord(achId, time) {
     assert.equal(unlocks['28'].earned_time, T2);
 
     // ---- end-to-end generic identity (issue #7): a Steam purchase that launches Ubisoft Connect
-    // has NO row in uplay-steam.json (product 999997 is deliberately absent) — the game is resolved
+    // has NO row in uplay-steam.json (product 999997 is deliberately absent) - the game is resolved
     // through the configurations block's own name via the same Steam lookup the app uses.
     const fc4SpoolDir = path.join(tmp, 'spool', 'user-guid-fc4');
     fs.mkdirSync(fc4SpoolDir, { recursive: true });
@@ -299,7 +299,7 @@ function spoolRecord(achId, time) {
     try {
       fs.rmSync(tmp, { recursive: true, force: true });
     } catch {
-      /* best-effort cleanup — never mask the real test failure */
+      /* best-effort cleanup - never mask the real test failure */
     }
   }
 })().catch((err) => {

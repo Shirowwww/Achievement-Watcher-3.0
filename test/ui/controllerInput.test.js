@@ -18,7 +18,7 @@ const {
 } = require('../../watchdog/console/controller/controller-input-manager.js');
 
 // The renderer (app/util/controllerLabels.js) and the watchdog (controller-input-manager.js) each
-// keep their own hand-written copy of the canonical button vocabulary — app/ ships to the browser
+// keep their own hand-written copy of the canonical button vocabulary - app/ ships to the browser
 // via a <script> tag and watchdog/ is a separate npm package with its own node_modules, packaged
 // standalone (electron-builder copies ../watchdog beside the app.asar rather than into it), so a
 // plain require() across the two at runtime would work in dev but break the installed build. Until
@@ -115,7 +115,7 @@ test('createNormalizedBindingCache only re-normalizes when the raw value actuall
 
 test('the renderer and watchdog agree on the full canonical button vocabulary', () => {
   // Every button the renderer (app/util/controllerLabels.js) knows about must be accepted by the
-  // watchdog's own normalizer, and vice versa — otherwise a binding that validates and displays
+  // watchdog's own normalizer, and vice versa - otherwise a binding that validates and displays
   // correctly in Settings could silently fail to match at runtime, or a button the watchdog accepts
   // could never be selected in the UI.
   for (const name of controllerLabels.CONTROLLER_BUTTON_ORDER) {

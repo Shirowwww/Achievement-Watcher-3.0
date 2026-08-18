@@ -62,7 +62,7 @@ test('a manual restart during a pending respawn leaves the scheduler armed', () 
   assert.equal(launches, 1);
   assert.equal(timers.size, 0, 'the pending respawn timer must have been cancelled');
 
-  // The monitor crashes again — supervision must still work.
+  // The monitor crashes again - supervision must still work.
   scheduleMonitorRespawn();
   assert.notEqual(monitorRespawnTimer, null, 'the supervisor must still be able to queue a respawn');
 

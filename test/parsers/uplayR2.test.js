@@ -69,7 +69,7 @@ process.env.APPDATA = path.join(temp, 'AppData');
     assert.strictEqual(byId.uplay_id, '4');
 
     // Regression (issue #14): the Steam variant of Far Cry 4 registers as Ubisoft product 971.
-    // It deliberately has NO direct row in uplay-steam.json — the app resolves it by the archive
+    // It deliberately has NO direct row in uplay-steam.json - the app resolves it by the archive
     // spec name ("FarCry4" → "far cry 4") through the mapping's name tier, exactly like the other
     // Far Cry 4 variants, when the install-folder registry key and configurations titles are
     // unavailable. No per-game row may be reintroduced.
@@ -164,7 +164,7 @@ process.env.APPDATA = path.join(temp, 'AppData');
     assert.strictEqual(noDllReport.ok, false);
     assert.ok(noDllReport.issues.some((i) => i.code === 'NO_UPLAY_R2_DLL'));
 
-    // repair(): full round trip — schema + ini written, DLC/Items/Chunks preserved, GSE Saves pre-created.
+    // repair(): full round trip - schema + ini written, DLC/Items/Chunks preserved, GSE Saves pre-created.
     const repair1 = uplayR2.repair({
       dir: dllDir,
       steamAppid: 33230,
@@ -243,7 +243,7 @@ process.env.APPDATA = path.join(temp, 'AppData');
       Legacy loader (no AchSaveType/AchSavePath/AchKeyPrefix support).
 
       Writing the redirect keys to such a build produces an ini that reads as fully configured while
-      the emulator quietly keeps saving to its own folder and looks unlocks up by bare objective id —
+      the emulator quietly keeps saving to its own folder and looks unlocks up by bare objective id -
       the exact silent failure behind "the achievements don't work". repair() must therefore adapt
       both the ini it writes and the way it keys the schema.
     */
@@ -296,7 +296,7 @@ process.env.APPDATA = path.join(temp, 'AppData');
     );
 
     /*
-      Several candidate folders routinely hold an achievements.json at once — the emulator seeds a
+      Several candidate folders routinely hold an achievements.json at once - the emulator seeds a
       fully-locked copy from the schema, a previous SaveType leaves one behind, and repair()
       pre-creates the redirect target. Stopping at the first file found would let any of those stale,
       all-zero copies mask the one the game is really writing, so the read merges them and an unlock

@@ -27,7 +27,7 @@ function writeConfigurations(content, name = 'configurations') {
 
 // Shaped after a real %LOCALAPPDATA%\Ubisoft Game Launcher\cache\configuration\configurations:
 // the game's own name lives in `installer: game_identifier:`, while `root: name:` is usually a
-// localization key ("l1", "NAME") — or, for a storefront variant block, the storefront itself.
+// localization key ("l1", "NAME") - or, for a storefront variant block, the storefront itself.
 const GAME_BLOCK = [
   'version: 2.0',
   'root:',
@@ -43,7 +43,7 @@ const GAME_BLOCK = [
 ].join('\n');
 
 // The block a title sold on Steam also gets. Its ONLY name is the storefront's, and it can appear
-// before the real block in the file — which is how Far Cry 4 landed in the library titled "Steam"
+// before the real block in the file - which is how Far Cry 4 landed in the library titled "Steam"
 // with no cover art (issue #7).
 const STOREFRONT_BLOCK = [
   'version: 2.0',
@@ -85,7 +85,7 @@ test('blocks sharing one achievements spec are merged, storefront last', () => {
   assert.equal(ubi._internal.mergeConfigBlocks([]), null);
 });
 
-// A Steam purchase that launches Ubisoft Connect states its store outright, in its own block —
+// A Steam purchase that launches Ubisoft Connect states its store outright, in its own block -
 // there is no separate storefront block to infer it from. Without reading it, the library had no
 // way to tell such a copy from a Ubisoft-store one, so the "official Steam games" filter could
 // never hide it (issue #20).
@@ -139,8 +139,8 @@ test('an install inside a Steam library counts as a Steam purchase on its own', 
 
 // The library-facing half of issue #20: recognising a Steam purchase only matters if the entry is
 // then actually withheld. discover() delegates the whole decision here, so this is the behaviour
-// the report describes — "disable the display of official Steam games, rescan, the entry is still
-// listed" — checked without needing a Ubisoft install to reproduce it against.
+// the report describes - "disable the display of official Steam games, rescan, the entry is still
+// listed" - checked without needing a Ubisoft install to reproduce it against.
 test('Steam purchases are withheld exactly when official Steam games are disabled (issue #20)', () => {
   const farCry4 = { appid: 'uplay-971', data: { title: 'Far Cry 4', gameDir: 'D:\\SteamLibrary\\steamapps\\common\\Far Cry 4' } };
   const rainbowSix = { appid: 'uplay-1843', data: { title: 'Rainbow Six Siege', storefronts: ['steam'] } };
@@ -274,7 +274,7 @@ test('uplay 971 (Far Cry 4 Steam variant) resolves from the archive spec with no
     { appid: 'uplay-971', data: { uplayId: '971', title: '', configBlock: null, spec: 'FarCry4' } },
     { ubisoftInstallDir: () => '', localSteamInstalls: [], localSteamLibrary: [{ appid: 298110, name: 'Far Cry 4' }], findAppidByName: async () => null }
   );
-  // The mapping asset still answers by TITLE through its other Far Cry 4 rows — no 971 row needed.
+  // The mapping asset still answers by TITLE through its other Far Cry 4 rows - no 971 row needed.
   assert.equal(identity.method, 'uplay-name');
   assert.equal(identity.steamAppId, '298110');
   assert.equal(identity.title, 'Far Cry® 4'); // canonical Steam name wins over the lower-case spec words

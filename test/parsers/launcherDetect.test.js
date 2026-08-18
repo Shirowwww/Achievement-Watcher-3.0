@@ -75,7 +75,7 @@ test('a game Steam installed is a launcher install, not a cracked one', () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-steam-library-'));
   try {
     const library = makeSteamLibrary(tmp, 'Jeux');
-    // Source games ship steam_appid.txt, and every Steam game ships steam_api64.dll — the two
+    // Source games ship steam_appid.txt, and every Steam game ships steam_api64.dll - the two
     // markers the emulator scan keys on. Steam's own manifest is what settles it (Garry's Mod).
     const gmod = library.install(4000, 'GarrysMod');
     assert.equal(steamLibraryAppid(gmod), '4000');

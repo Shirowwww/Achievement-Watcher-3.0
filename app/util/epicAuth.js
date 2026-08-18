@@ -197,7 +197,7 @@ async function authenticateEpicWithCode(code, options = {}) {
 }
 
 // Return a valid access token, refreshing (and re-persisting) it when expired. Throws when no
-// stored token exists — callers treat that as "not connected".
+// stored token exists - callers treat that as "not connected".
 async function ensureEpicAccessToken(options = {}) {
   const filePath = resolveEpicTokensFile(options?.userDataDir, options?.tokensFile);
   const tokenSecret = String(options?.tokenSecret || process.env.EPIC_TOKEN_SECRET || DEFAULT_EPIC_TOKEN_SECRET);

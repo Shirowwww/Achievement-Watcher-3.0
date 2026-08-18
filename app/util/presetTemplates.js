@@ -3,7 +3,7 @@
 /*
   Starting points for the preset designer.
 
-  A template is an ordinary set of designer options — nothing here is a special case for the
+  A template is an ordinary set of designer options - nothing here is a special case for the
   generator, and a template applied to the controls is indistinguishable from having moved every
   slider by hand. That is the whole point: they are a faster way to reach a design, never a second
   kind of preset.

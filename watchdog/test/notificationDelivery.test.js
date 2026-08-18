@@ -3,7 +3,7 @@
 /*
   The delivery layer as a whole: one notification in, and exactly the transports the plan called for
   out. These drive notification/toaster.js with stub transports, so what is asserted is how many
-  notifications a user would actually have seen — the property that matters for the fallback, since
+  notifications a user would actually have seen - the property that matters for the fallback, since
   a fallback that fires beside a working overlay is a duplicate rather than a rescue.
 */
 
@@ -177,7 +177,7 @@ test('overlay mode stays on the overlay in fullscreen and does not add a toast',
   assert.equal(calls.toasts.length, 0);
 });
 
-test('Both sends one of each — and a failing overlay adds nothing on top', async () => {
+test('Both sends one of each - and a failing overlay adds nothing on top', async () => {
   const { notify, calls } = loadToaster({ reply: REPLY.REJECT });
   await notify(unlock(), options('both'));
   assert.equal(calls.overlays.length, 1);

@@ -100,7 +100,7 @@ module.exports.upsert = (entry) => {
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, JSON.stringify(list, null, 2), 'utf8');
   } catch {
-    /* non-fatal — playtime seeding is best-effort */
+    /* non-fatal - playtime seeding is best-effort */
   }
 };
 

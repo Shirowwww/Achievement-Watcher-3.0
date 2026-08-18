@@ -38,7 +38,7 @@ function pixeldrainFileId(href) {
 }
 
 // Convert a pixeldrain "view" link (pixeldrain.com/u/<id>) to its direct-download API URL. Other
-// hosts (cs.rin.ru, etc.) are returned as-is — they usually need a browser, so the UI opens them.
+// hosts (cs.rin.ru, etc.) are returned as-is - they usually need a browser, so the UI opens them.
 function pixeldrainDirectUrl(href) {
   const id = pixeldrainFileId(href);
   return id ? `https://pixeldrain.com/api/file/${id}?download` : null;
@@ -91,7 +91,7 @@ async function fetchPixeldrainProxies({ cacheDir, force = false, log = noopLog }
         if (Array.isArray(cached) && cached.length) return cached;
       }
     } catch {
-      /* corrupt cache — refetch */
+      /* corrupt cache - refetch */
     }
   }
   try {
@@ -115,7 +115,7 @@ async function fetchPixeldrainProxies({ cacheDir, force = false, log = noopLog }
   } catch (e) {
     log.log(`[crackfix] pixeldrain proxy list fetch failed => ${e && (e.message || e)}`);
   }
-  // remote down/empty — fall back to the last good cache, then the hardcoded list
+  // remote down/empty - fall back to the last good cache, then the hardcoded list
   if (cacheFile && fs.existsSync(cacheFile)) {
     try {
       const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
@@ -137,7 +137,7 @@ function hostOf(href) {
   return null;
 }
 
-// True only for hosts AW can download without a browser — pixeldrain. Any other host (buzzheavier, which
+// True only for hosts AW can download without a browser - pixeldrain. Any other host (buzzheavier, which
 // is behind a Cloudflare challenge headless automation can't clear; vikingfile; cs.rin.ru; …) is surfaced
 // to the UI to open in a browser instead of silently failing.
 function isApplicableHost(href) {
@@ -171,14 +171,14 @@ async function fetchList({ cacheDir, force = false, log = noopLog } = {}) {
         if (Array.isArray(cached)) return cached;
       }
     } catch {
-      /* corrupt cache — refetch */
+      /* corrupt cache - refetch */
     }
   }
   const merged = [];
   let anyOk = false;
   for (const src of LIST_SOURCES) {
     const list = await fetchOne(src.url, log);
-    if (list === null) continue; // this source errored — keep whatever the others give
+    if (list === null) continue; // this source errored - keep whatever the others give
     anyOk = true;
     for (const entry of list) if (entry && entry.name) merged.push({ ...entry, _source: src.name });
   }
@@ -193,7 +193,7 @@ async function fetchList({ cacheDir, force = false, log = noopLog } = {}) {
     }
     return merged;
   }
-  // every source down — fall back to the last good cache
+  // every source down - fall back to the last good cache
   if (cacheFile && fs.existsSync(cacheFile)) {
     try {
       const cached = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
@@ -226,7 +226,7 @@ function distinctiveTokens(name) {
 
 /*
   A shared franchise is not a match: reject a candidate carrying a distinguishing word the query never
-  mentions (e.g. "Mirage" vs "Assassin's Creed Black Flag Resynced"). One-directional — the query may
+  mentions (e.g. "Mirage" vs "Assassin's Creed Black Flag Resynced"). One-directional - the query may
   add words ("resynced") the candidate lacks.
 */
 function candidateContradictsQuery(queryName, candidateName) {
@@ -249,8 +249,8 @@ function findFixes(list, gameName, { limit = 5 } = {}) {
 }
 
 // The single best entry for AUTOMATIC use, or null. Unlike findFixes (which returns ranked candidates
-// for the user to confirm, accepting fuzzy hits), this only trusts a high-confidence match — an exact
-// normalized-name equality or a near-length token containment — exactly the bar fuzzyAppid uses before
+// for the user to confirm, accepting fuzzy hits), this only trusts a high-confidence match - an exact
+// normalized-name equality or a near-length token containment - exactly the bar fuzzyAppid uses before
 // it will auto-write a steam_appid. A fuzzy guess is never auto-cracked. Requires the entry to actually
 // carry at least one fix. Returns { entry, score, tier } or null.
 function findBestMatch(list, gameName) {
@@ -371,20 +371,20 @@ function ts() {
 async function downloadAndApply({ fix, gameDir, cacheDir, entryName = '', proxyFallback = true, log = noopLog } = {}) {
   if (!fix || !fix.href) throw new Error('crackfix: fix has no download link');
   if (!gameDir || !fs.existsSync(gameDir)) throw new Error(`crackfix: game folder not found: ${gameDir}`);
-  if (!isApplicableHost(fix.href)) throw new Error('crackfix: this host needs a browser — open the page instead');
+  if (!isApplicableHost(fix.href)) throw new Error('crackfix: this host needs a browser - open the page instead');
   const fileId = pixeldrainFileId(fix.href);
   if (!fileId) throw new Error('crackfix: malformed pixeldrain link');
 
   // pixeldrain.net is the same CDN as pixeldrain.com but is NOT subject to .com's hotlink/rate-limit
   // gate, so it doubles as a fallback when a popular file 403s on .com. Probe availability to choose the
-  // host order: a rate-limited file goes straight to the .net mirror (skipping the doomed — and
-  // internally-retried — .com hit); an available file uses .com first with .net as a backup.
+  // host order: a rate-limited file goes straight to the .net mirror (skipping the doomed - and
+  // internally-retried - .com hit); an available file uses .com first with .net as a backup.
   const avail = await pixeldrainAvailability(fix.href, { log });
   const officialHosts = avail.available ? ['pixeldrain.com', 'pixeldrain.net'] : ['pixeldrain.net', 'pixeldrain.com'];
   const candidates = officialHosts.map((host) => ({ label: host, url: `https://${host}/api/file/${fileId}?download` }));
 
   // LAST RESORT only: if BOTH pixeldrain-owned hosts fail (e.g. a rate-limited file with no captcha-free
-  // path), fall back to the auto-updating community proxy list. These are third-party — kept strictly
+  // path), fall back to the auto-updating community proxy list. These are third-party - kept strictly
   // last so a normal download never routes through one. Disabled with proxyFallback:false.
   if (proxyFallback) {
     try {
@@ -416,7 +416,7 @@ async function downloadAndApply({ fix, gameDir, cacheDir, entryName = '', proxyF
       // Every host (incl. proxies) failed. If pixeldrain had flagged the file, report it as the actionable
       // rate-limit case so the UI offers "open the page"; otherwise it's a plain download failure.
       if (!avail.available) {
-        const err = new Error(`crackfix: ${availabilityMessage(avail.reason)} — open the page to download it manually`);
+        const err = new Error(`crackfix: ${availabilityMessage(avail.reason)} - open the page to download it manually`);
         err.code = 'PIXELDRAIN_UNAVAILABLE';
         err.availability = avail.reason;
         err.href = fix.href;
@@ -443,7 +443,7 @@ async function downloadAndApply({ fix, gameDir, cacheDir, entryName = '', proxyF
   .tar/etc. go through node-7z + the bundled 7za. Throws on failure / empty archive.
 */
 // Run the node-unrar-js (WASM) RAR extraction directly, writing every entry to destDir with its nested
-// layout preserved. MUST run in a Node context (Electron main process or the watchdog) — NEVER the
+// layout preserved. MUST run in a Node context (Electron main process or the watchdog) - NEVER the
 // Chromium renderer: node-unrar-js's Emscripten/Embind glue calls `new Function()`, which the renderer's
 // strict CSP forbids (and 'wasm-unsafe-eval' does NOT cover `new Function`). extractArchive() routes a
 // renderer call here over IPC instead. Throws on an empty/garbage archive.

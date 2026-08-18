@@ -14,7 +14,7 @@ function ok(cond, msg) {
   else failures.push(msg);
 }
 function eq(actual, expected, msg) {
-  ok(actual === expected, `${msg} — got ${JSON.stringify(actual)}, want ${JSON.stringify(expected)}`);
+  ok(actual === expected, `${msg} - got ${JSON.stringify(actual)}, want ${JSON.stringify(expected)}`);
 }
 
 const tmpDirs = [];
@@ -68,10 +68,10 @@ eq(crackFix.hostOf('https://buzzheavier.com/abc123'), 'buzzheavier', 'buzzheavie
 eq(crackFix.hostOf('https://vikingfile.com/f/xyz'), 'vikingfile', 'vikingfile host');
 eq(crackFix.hostOf('https://cs.rin.ru/forum/x'), null, 'unknown host → null');
 ok(crackFix.isApplicableHost('https://pixeldrain.com/u/abc'), 'pixeldrain is auto-applicable');
-ok(!crackFix.isApplicableHost('https://buzzheavier.com/abc'), 'buzzheavier needs a browser (Cloudflare) — discovery only, not auto-applied');
+ok(!crackFix.isApplicableHost('https://buzzheavier.com/abc'), 'buzzheavier needs a browser (Cloudflare) - discovery only, not auto-applied');
 ok(!crackFix.isApplicableHost('https://vikingfile.com/f/x'), 'vikingfile needs a browser (not auto-applicable)');
 ok(!crackFix.isApplicableHost('https://cs.rin.ru/x'), 'cs.rin.ru needs a browser');
-// A buzzheavier-only entry has no auto-applicable fix (Cloudflare) — the caller opens the browser.
+// A buzzheavier-only entry has no auto-applicable fix (Cloudflare) - the caller opens the browser.
 eq(
   crackFix.pickBestFix(
     { fixes: [{ href: 'https://buzzheavier.com/bz', filename: 'hv.crack.rar', badges: ['Crack'] }] },
@@ -102,7 +102,7 @@ eq(crackFix.findFixes(list, '').length, 0, 'empty name → []');
 
 // ---- a shared franchise is not a match ---------------------------------------------------------
 // Ranking alone scores "Assassin's Creed: Mirage" ~0.57 against "Assassin's Creed Black Flag
-// Resynced" on the words the franchise shares — above the 0.5 floor, so an unrelated game was
+// Resynced" on the words the franchise shares - above the 0.5 floor, so an unrelated game was
 // offered as "fix found". A candidate that carries a distinguishing word the query never mentions
 // is rejected; the query is still free to add its own (repack tags, re-release words).
 const franchise = [
@@ -231,7 +231,7 @@ eq(crackFix.pickBestFix({}), null, 'missing fixes array → null');
     eq(got[0].name, 'Cached Game', 'cache content is parsed through');
   }
 
-  // applyBestFix — every "did nothing" path returns a structured reason instead of throwing.
+  // applyBestFix - every "did nothing" path returns a structured reason instead of throwing.
   {
     const gameDir = tmp('aw-crackfix-apply-');
     eq((await crackFix.applyBestFix({ list, gameName: '', gameDir })).reason, 'no-game-name', 'missing name → no-game-name');
@@ -280,7 +280,7 @@ eq(crackFix.pickBestFix({}), null, 'missing fixes array → null');
     eq(r3.matchedName, 'Cyberpunk 2077', 'applyBestFix reports alternate matched name');
   }
 
-  // applyLocalArchive — extract a real archive and apply it into the game folder with backup + marker.
+  // applyLocalArchive - extract a real archive and apply it into the game folder with backup + marker.
   // This is the "I downloaded it myself past the captcha" path. Uses the bundled 7za to build the archive.
   {
     const Seven = require(path.join(__dirname, '..', '..', 'app', 'node_modules', 'node-7z'));
@@ -313,7 +313,7 @@ eq(crackFix.pickBestFix({}), null, 'missing fixes array → null');
     ok(marker.applied.some((a) => a.key.includes('crack.7z')), 'marker keyed by the archive file name when no fix object');
   }
 
-  // applyLocalArchive on a RAR — the actual CrakFiles format, which the bundled 7za CANNOT open (so it
+  // applyLocalArchive on a RAR - the actual CrakFiles format, which the bundled 7za CANNOT open (so it
   // must go through node-unrar-js). Uses a small committed .rar fixture with a nested folder structure.
   {
     const rarFixture = path.join(__dirname, '..', 'fixtures', 'sample.rar');
@@ -330,7 +330,7 @@ eq(crackFix.pickBestFix({}), null, 'missing fixes array → null');
       eq(res.backedUp, 1, 'RAR: the pre-existing file was backed up');
       ok(res.backupDir && fs.readFileSync(path.join(res.backupDir, 'Folder1', 'Folder Space', 'long.txt'), 'utf8') === 'OLD', 'RAR: backup kept the original bytes');
     } else {
-      console.warn('  (skipped RAR test — fixtures/sample.rar missing)');
+      console.warn('  (skipped RAR test - fixtures/sample.rar missing)');
     }
   }
 
@@ -345,7 +345,7 @@ eq(crackFix.pickBestFix({}), null, 'missing fixes array → null');
     for (const f of failures) console.error('  ✗ ' + f);
     process.exit(1);
   }
-  console.log(`PASS: CrakFiles — ${passed} assertions (pixeldrain URL, findFixes, findBestMatch, pickBestFix, marker, fetchList cache, applyBestFix)`);
+  console.log(`PASS: CrakFiles - ${passed} assertions (pixeldrain URL, findFixes, findBestMatch, pickBestFix, marker, fetchList cache, applyBestFix)`);
 })().catch((e) => {
   console.error(e);
   process.exit(1);

@@ -85,7 +85,7 @@ test('the random sound is chosen from the sound list, not from a row of its own'
   assert.match(settings, /cfgOverlay\.randomSound === true \? RANDOM_SOUND_VALUE :/, 'a saved Random choice does not come back selected');
 
   /*
-    And the sentinel is never played as if it were a file — it is resolved to a real one first.
+    And the sentinel is never played as if it were a file - it is resolved to a real one first.
 
     Silencing it instead would have been the easy answer and the wrong one: Random is an entry in
     the list like any other, so previewing it, dragging the volume under it and firing a test with

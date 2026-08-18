@@ -16,7 +16,7 @@ function resolveOverlayRequest({ action, appid, isOpen, openAppid } = {}) {
     return { action: 'ignore' }; // same game already shown
   }
 
-  // Nothing is open. Close and refresh only ever act on an existing window — treating them as an
+  // Nothing is open. Close and refresh only ever act on an existing window - treating them as an
   // implicit "open" is what made the overlay appear by itself on game exit (issue #19).
   if (wantedAction === 'close' || wantedAction === 'refresh') return { action: 'ignore' };
   return wanted === '0' ? { action: 'fallback' } : { action: 'open', appid: wanted };

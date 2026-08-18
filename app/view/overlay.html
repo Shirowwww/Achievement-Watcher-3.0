@@ -821,7 +821,7 @@
         display: none !important;
       }
 
-      /* Gamepad navigation focus ring — visible only after real controller input, so
+      /* Gamepad navigation focus ring - visible only after real controller input, so
          mouse and keyboard users keep the existing visual treatment. */
       html[data-controller-active='true'] .controller-focus {
         outline: 3px solid var(--accent) !important;
@@ -1429,7 +1429,7 @@
         $('overlay-close').addEventListener('click', closeOverlay);
         document.addEventListener('keydown', (e) => {
           if (e.key === 'Escape') {
-            // Escape unwinds one layer at a time — the options panel, then the search — and closes
+            // Escape unwinds one layer at a time - the options panel, then the search - and closes
             // the overlay only once there is nothing left to dismiss.
             if ($('overlay-settings').classList.contains('open')) toggleSettings(false);
             else if (query) {

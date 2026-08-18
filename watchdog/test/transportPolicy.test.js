@@ -79,7 +79,7 @@ test('Windows notification mode never spawns an overlay, whatever the signals sa
 });
 
 /*
-  "Prefer the overlay" holds the overlay through the prediction that it will be invisible — that is
+  "Prefer the overlay" holds the overlay through the prediction that it will be invisible - that is
   the user's call and a prediction is not an outcome. It gives way only to a reported failure, where
   the alternative is no notification at all.
 */

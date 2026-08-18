@@ -2,7 +2,7 @@
 
 const { readRegistryInteger, writeRegistryDword } = require('../util/reg');
 
-// Read side of the playtime counters the Watchdog writes in watchdog/playtime/track.js — the two
+// Read side of the playtime counters the Watchdog writes in watchdog/playtime/track.js - the two
 // must name the same registry key. Counters recorded under the older "Achievement Watcher" and
 // "Achievement Watcher 3.0" namespaces are copied here once by migratePlaytimeRegistry().
 const PLAYTIME_KEY = 'Software/Achievement Watcher Next/Playtime/Steam/';

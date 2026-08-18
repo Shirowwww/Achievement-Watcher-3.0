@@ -341,7 +341,7 @@ module.exports.getAchievements = async (appid) => {
   try {
     token = await epicAuth.ensureEpicAccessToken({ userDataDir: cacheRoot });
   } catch {
-    return {}; // not connected — everything locked
+    return {}; // not connected - everything locked
   }
   const accountId = epicAuth.normalizeEpicAccountId(token?.account_id);
   if (!accountId || !token?.access_token) return {};
@@ -374,7 +374,7 @@ module.exports.getAchievements = async (appid) => {
   return out;
 };
 
-// Localized schema lookup by raw Epic namespace (sandbox id) — used by parser/epic.js once
+// Localized schema lookup by raw Epic namespace (sandbox id) - used by parser/epic.js once
 // util/epicIdentity.js has resolved a NemirtingasEpicEmu artifact id to its real namespace, so those
 // installs get the same cached, rarity-annotated schema real Epic installs get instead of a direct
 // (and often mis-targeted) achievements-by-id lookup.

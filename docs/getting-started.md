@@ -106,7 +106,7 @@ If a folder is rejected, select the directory that directly contains the support
 Open **Settings → Notification** and choose a delivery mode:
 
 - **Automatic** (default) uses the in-game overlay when it can be shown, and a Windows notification
-  when it cannot — for example while a game holds exclusive fullscreen, where an overlay popup would
+  when it cannot - for example while a game holds exclusive fullscreen, where an overlay popup would
   not be visible. The same unlock is never announced twice.
 - **In-game overlay** always displays a styled popup over the running game.
 - **Windows notification** always uses native Windows notifications.

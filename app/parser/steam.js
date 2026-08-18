@@ -74,13 +74,13 @@ module.exports.scan = async (additionalSearch = []) => {
       } else if (dirKeyLower.includes('onlinefix')) {
         game.source = 'OnlineFix';
       } else if (dirKeyLower.includes('goldberg uplayemu')) {
-        // "Goldberg UplayEmu Saves" folders are named with the Ubisoft product id, not a Steam AppID —
+        // "Goldberg UplayEmu Saves" folders are named with the Ubisoft product id, not a Steam AppID -
         // asking Steam about them burned a 30s timeout per game and re-triggered full refreshes.
         // Translate the id via uplay-steam.json and skip folders with no Steam counterpart.
         const mapping = uplayR2.resolveSteamMapping({ appid: `UPLAY${game.appid}` });
         if (!mapping) {
           // scan() can run before initDebug() (the watchdog seeds its index straight from it).
-          if (debug) debug.log(`[uplay-r2] ignoring save folder '${dir}' — no Steam equivalent for Ubisoft product id ${game.appid}`);
+          if (debug) debug.log(`[uplay-r2] ignoring save folder '${dir}' - no Steam equivalent for Ubisoft product id ${game.appid}`);
           continue;
         }
         game.data.type = 'uplayR2';
@@ -107,7 +107,7 @@ module.exports.scan = async (additionalSearch = []) => {
         game.source = 'Steam';
       } else {
         // A custom watched folder (issue #12) that doesn't match any known emulator/scene layout by
-        // name still holds a real numeric-AppID save folder — leaving source unset let the game object
+        // name still holds a real numeric-AppID save folder - leaving source unset let the game object
         // downstream carry an undefined source instead of a readable label.
         game.source = 'Steam-emulator';
       }
@@ -217,7 +217,7 @@ module.exports.saveGameToCache = async (cfg) => {
   A cached schema whose name resolved but whose achievement list is empty is ambiguous: the game
   may genuinely have none (UNDERTALE), or the entry was written by a fetch that reached the store
   page but not the schema. getCachedData has no TTL and getGameData only tests `name`, so the
-  second case used to freeze forever — and every scan then paid a full local-schema walk to
+  second case used to freeze forever - and every scan then paid a full local-schema walk to
   compensate. Re-check such an entry at most once per window; the check is stamped on the record
   so a genuinely achievement-less game costs one lookup per window, not one per scan.
 */
@@ -357,7 +357,7 @@ module.exports.getGameData = async (cfg) => {
         result = await getSteamDataFromSRV(cfg.appID, cfg.lang);
       } catch (err) {
         // Offline, every one of these lookups throws. This is a re-check of an entry we already
-        // have, so a throw must not be able to lose it — otherwise one offline scan drops every
+        // have, so a throw must not be able to lose it - otherwise one offline scan drops every
         // re-checked game at once. With nothing cached, the original error path is untouched.
         if (!staleEmpty) throw err;
         debug.log(`[${cfg.appID}] empty-schema re-check could not run, keeping the cached entry: ${err.code || err}`);
@@ -381,8 +381,8 @@ module.exports.getGameData = async (cfg) => {
     }
 
     if (staleEmpty && Array.isArray(result?.achievement?.list) && result.achievement.list.length === 0) {
-      // Verified: this game really has no achievements. Keep the entry we already had — its
-      // artwork may have been resolved over several runs — and stamp the check onto it.
+      // Verified: this game really has no achievements. Keep the entry we already had - its
+      // artwork may have been resolved over several runs - and stamp the check onto it.
       result = staleEmpty;
       result.emptyCheckedAt = Date.now();
       needSaving = true;
@@ -503,7 +503,7 @@ module.exports.getAchievementsFromFile = async (filePath) => {
         const timeMatch = /time\s*=\s*(\d+)/i.exec(raw);
         // Older Tenoke saves can store progress inline on the achievement entry itself. Only trust
         // the value when it is a finite number (a malformed tail like "12.5.3" must not become NaN
-        // in the baseline — it would poison progress notifications for the rest of the session).
+        // in the baseline - it would poison progress notifications for the rest of the session).
         const progressMatch = /(?:progress|value)\s*=\s*([\d.]+)/i.exec(raw);
         const progressNum = progressMatch ? Number(progressMatch[1]) : NaN;
 
@@ -550,7 +550,7 @@ module.exports.getAchievementsFromFile = async (filePath) => {
         try {
           statsSize = fs.statSync(statsPath).size;
         } catch {
-          continue; // doesn't exist under this casing — try the next candidate
+          continue; // doesn't exist under this casing - try the next candidate
         }
         if (statsSize === 0) break; // present but empty: nothing to merge, not an error
         try {
@@ -568,7 +568,7 @@ module.exports.getAchievementsFromFile = async (filePath) => {
               rawStatKeys.push(name);
             }
           }
-          // These are raw stat values, not achievement records — they only exist so
+          // These are raw stat values, not achievement records - they only exist so
           // statProgress.js's applyLocalStatProgress can resolve progress-type achievements via the
           // local GBE schema's operand1. Tag them non-enumerable so achievements.js can strip them
           // out of `root` after that mapping runs, instead of the achievement-matching loop trying
@@ -614,7 +614,7 @@ module.exports.getAchievementsFromAPI = async (cfg) => {
     }
 
     if (time.steam > time.local) {
-      // Local-first: the freshly rewritten bin IS the state we're after — parse it together with
+      // Local-first: the freshly rewritten bin IS the state we're after - parse it together with
       // the sibling UserGameStatsSchema bin (statId/bit mapping) instead of asking the network.
       // Works offline/keyless and also carries achievement progress. Only when the schema bin is
       // absent/unreadable does the old WebAPI/steamcommunity round-trip run.
@@ -668,7 +668,7 @@ const getSteamPath = (module.exports.getSteamPath = async () => {
 // ---- installed-games map (libraryfolders.vdf + appmanifest_*.acf) --------------------------------
 
 // A Steam install's folder is authoritative: appmanifest_<appid>.acf names the installdir, and
-// libraryfolders.vdf names every library root. This powers the launch panel — a legit Steam game
+// libraryfolders.vdf names every library root. This powers the launch panel - a legit Steam game
 // now gets a real gameDir (and therefore exe detection) instead of asking the user to browse for
 // the executable manually.
 function unescapeSteamVdf(value) {
@@ -714,7 +714,7 @@ module.exports.scanLocalInstalls = async () => {
       roots.push(...parseSteamLibraryFoldersVdf(fs.readFileSync(libraryFile, 'utf8')).map((r) => path.join(r, 'steamapps')));
     }
   } catch {
-    /* unreadable library file — the main steamapps root still works */
+    /* unreadable library file - the main steamapps root still works */
   }
 
   const installs = new Map();
@@ -811,7 +811,7 @@ async function getSteamDataFromSRV(appID, lang) {
 
   // The supplemental fetchers can legitimately come back empty (obscure title, scrape failed,
   // site unreachable). Default to [] instead of dereferencing `.achievements` on the result, or
-  // the whole load throws and the game silently vanishes from the list — same failure as #56.
+  // the whole load throws and the game silently vanishes from the list - same failure as #56.
   let achievements = result.isGame && Array.isArray(steamhunters?.achievements) ? steamhunters.achievements : [];
 
   // SteamCommunity translations are only needed when the primary source is English-only
@@ -843,7 +843,7 @@ async function getSteamDataFromSRV(appID, lang) {
     achievements = steamSchemaFetch.applySteamHuntersGroups(achievements, groupsResult.groups);
   }
 
-  // No library capsule in the product info (common for brand-new appids) — recover the real hashed
+  // No library capsule in the product info (common for brand-new appids) - recover the real hashed
   // cover from SteamDB (main process: stealth browser + 30-day disk cache). Only worth it for an
   // actual game with a resolved name. When the product info DID return a portrait, verify it
   // actually downloads: a dead guessable URL (modern titles live under hashed store_item_assets
@@ -1013,7 +1013,7 @@ const getDLCList = (module.exports.getDLCList = async (appID) => {
       if (Array.isArray(cached.dlcs)) return cached.dlcs;
     }
   } catch {
-    /* corrupt cache — refetch */
+    /* corrupt cache - refetch */
   }
 
   const writeCache = (dlcs) => {
@@ -1098,7 +1098,7 @@ async function findInAppList(appID) {
           // every long-existing appid.
           //
           // Once per session: with no cached copy the map stays empty, so without this flag every
-          // single appid re-ran the request — one dead round trip per game on a library scan, which
+          // single appid re-ran the request - one dead round trip per game on a library scan, which
           // is what made the first scan after clearing the cache drag.
           appListRefreshFailed = true;
           debug.log(`GetAppList refresh failed (${err.code || err}); falling back to cached appList if present`);
@@ -1177,7 +1177,7 @@ async function loadAppListBestEffort() {
   try {
     await findInAppList(753); // ensures appidListMap is loaded (Steam/Spacewar always resolves)
   } catch {
-    /* list unavailable — callers can fall back to direct Steam search */
+    /* list unavailable - callers can fall back to direct Steam search */
   }
 }
 
@@ -1213,12 +1213,12 @@ function localizedTenokeValue(local, key, lang) {
 }
 
 /*
-  Locating a local schema means walking an entire game install (depth 6, synchronous) — 0.3-2.1s on
+  Locating a local schema means walking an entire game install (depth 6, synchronous) - 0.3-2.1s on
   a large install, and it blocks the renderer's event loop while it runs, so makeList's worker pool
   serializes behind it and every game in the batch ends up reporting the whole batch time. Two
   guards keep that cost off the per-scan path: probe the handful of places emulators actually drop
-  these files before walking anything, and memoize the outcome — including "not here", which is the
-  expensive answer — so a rescan costs one stat per install instead of one full walk.
+  these files before walking anything, and memoize the outcome - including "not here", which is the
+  expensive answer - so a rescan costs one stat per install instead of one full walk.
 */
 const LOCATE_MISS_TTL_MS = 10 * 60 * 1000;
 const SCHEMA_WALK_MAX_DEPTH = 6;
@@ -1234,7 +1234,7 @@ function schemaCandidateDirs(dir) {
     return dirs;
   }
   for (const entry of top) {
-    // Unity keeps the emulator dll — and whatever it dumped beside it — under <Game>_Data/Plugins.
+    // Unity keeps the emulator dll - and whatever it dumped beside it - under <Game>_Data/Plugins.
     if (!entry.isDirectory() || !/_Data$/i.test(entry.name)) continue;
     const plugins = path.join(dir, entry.name, 'Plugins');
     dirs.push(plugins);
@@ -1254,7 +1254,7 @@ function probeFileByName(dir, filename, candidates) {
     try {
       if (fs.statSync(full).isFile()) return full;
     } catch {
-      /* Not in this spot — try the next one. */
+      /* Not in this spot - try the next one. */
     }
   }
   return null;
@@ -1279,7 +1279,7 @@ function findFileByName(dir, filename, probed) {
   const memo = _locateCache.get(key);
   if (memo) {
     // A remembered hit is revalidated with a single stat; a remembered miss expires, so a file that
-    // appears later is still found — just not at the price of a walk on every scan in between.
+    // appears later is still found - just not at the price of a walk on every scan in between.
     if (memo.path) {
       if (fs.existsSync(memo.path)) return memo.path;
     } else if (Date.now() - memo.at < LOCATE_MISS_TTL_MS) {
@@ -1400,7 +1400,7 @@ module.exports.getLocalAchievementSchema = (gameDir, appid, lang = 'english') =>
   /*
     Probe the known emulator locations for BOTH layouts before walking anything. tenoke.ini is
     the rarer file, so looking for it first used to force a full walk of every non-TENOKE
-    install just to prove its absence — the single most expensive thing a scan did. Both files
+    install just to prove its absence - the single most expensive thing a scan did. Both files
     are probed across the same directories, so TENOKE still wins wherever the two sit together,
     which is the only layout that exists in practice (both land beside the emulator dll).
   */
@@ -1416,21 +1416,21 @@ module.exports.getLocalAchievementSchema = (gameDir, appid, lang = 'english') =>
     if (schema.length > 0) return schema;
   }
 
-  // Unusual layout: fall back to the walk, whose result — hit or miss — is memoized. The probes
+  // Unusual layout: fall back to the walk, whose result - hit or miss - is memoized. The probes
   // above are handed down so neither is repeated.
   const tenoke = findFileByName(gameDir, TENOKE_SCHEMA_FILE, probedTenoke);
   if (tenoke) {
     const schema = getTenokeSchemaFromFile(tenoke, appid, lang);
     if (schema.length > 0) return schema;
   }
-  // Fall back to the emulator's own schema dump (Goldberg / GBE Fork) — present on cracked installs.
+  // Fall back to the emulator's own schema dump (Goldberg / GBE Fork) - present on cracked installs.
   const goldberg = findFileByName(gameDir, 'achievements.json', probedGoldberg);
   if (goldberg) return getGoldbergSchemaFromFile(goldberg, appid, lang);
   return [];
 };
 
 // Ranked AppID candidates for a name, best first: [{ appid, name, score, tier }]. Includes fuzzy
-// (typo-tolerant) matches — meant for a confirm/pick dialog, not silent auto-application.
+// (typo-tolerant) matches - meant for a confirm/pick dialog, not silent auto-application.
 module.exports.findAppidCandidatesByName = async (name, limit = 6) => {
   if (!name) return [];
   await loadAppListBestEffort();
@@ -1490,7 +1490,7 @@ async function GetMissingData(data, showHidden, lang, steamSettings) {
       updated = true;
       // Local-first: a GBE/Goldberg install often ships the store's own library-asset metadata in
       // steam_settings/steam_misc/app_info/app_product_info.json. Resolve the real cover/header
-      // from that dump before the network lookup — it is authoritative for the install and still
+      // from that dump before the network lookup - it is authoritative for the install and still
       // works for delisted games whose store page is gone.
       if (steamSettings) {
         try {
@@ -1535,7 +1535,7 @@ async function GetMissingData(data, showHidden, lang, steamSettings) {
         );
         for (let ach of data.achievement.list) {
           // Treat a whitespace-only description (e.g. the scraper's single-space fallback baked into an
-          // older cache) as blank too — otherwise `!ach.description` is false for " " and the real text
+          // older cache) as blank too - otherwise `!ach.description` is false for " " and the real text
           // never replaces it, leaving the achievement stuck on the UI's "..." fallback forever.
           if ((!ach.description || String(ach.description).trim() === '') && (map.has(ach.displayName) || map.has(ach.name))) {
             ach.description = map.get(ach.displayName) || map.get(ach.name);
@@ -1544,7 +1544,7 @@ async function GetMissingData(data, showHidden, lang, steamSettings) {
       }
       // Exophase fallback for whatever SteamHunters still left blank. Unlike SteamHunters it also
       // serves the schema's own language, so a localized schema gets localized text. Matching is by
-      // displayName only (localized title first, english title second) — never by list position, so
+      // displayName only (localized title first, english title second) - never by list position, so
       // a miss can't attach another achievement's description. Runs inside the same weekly
       // three-day descBackfilledAt stamp as the SteamHunters attempt, so it adds no recurring cost.
       const stillBlank = data.achievement.list.some((ac) => !ac.description || String(ac.description).trim() === '');
@@ -1586,7 +1586,7 @@ async function GetMissingData(data, showHidden, lang, steamSettings) {
 
 const fetchIcon = (module.exports.fetchIcon = async (url, appID) => {
   // Some games have no icon/background/portrait URL (null in the schema). Bail out instead of letting
-  // `url.startsWith`/`path.parse(null)` throw — that surfaced as a noisy "Error occurred in handler
+  // `url.startsWith`/`path.parse(null)` throw - that surfaced as a noisy "Error occurred in handler
   // for 'fetch-icon': Cannot read property 'startsWith' of null" on every scan with such a game.
   if (!url || typeof url !== 'string') return null;
   // Local file paths (e.g. Uplay schemas store absolute Windows paths like "C:/..."):

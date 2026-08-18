@@ -26,7 +26,7 @@ function withEnv(values, fn) {
 
 // Regression (issue #12): a manually added custom folder whose name doesn't match any known
 // emulator/scene layout (SmartSteamEmu, CODEX, RUNE, Goldberg, ...) still holds a real numeric-AppID
-// save folder. It must be discovered with a readable source label, not `undefined` — an unset source
+// save folder. It must be discovered with a readable source label, not `undefined` - an unset source
 // downstream left the game with no consistent attribution.
 test('steam.scan() attributes a readable source to an unrecognized custom folder', async () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-custom-scan-src-'));

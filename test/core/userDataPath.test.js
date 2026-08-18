@@ -17,7 +17,7 @@ const previousAw = process.env.AW_USER_DATA;
     process.env.APPDATA = tmp;
     delete process.env.AW_USER_DATA;
 
-    // AW Next must live in its own directory — never either predecessor's folder (issue #6).
+    // AW Next must live in its own directory - never either predecessor's folder (issue #6).
     // The app and the Watchdog have to agree on it, or the monitor writes somewhere the UI never reads.
     assert.equal(appPaths.userDataDir(), path.join(tmp, 'Achievement Watcher Next'));
     assert.equal(appPaths.aw3UserDataDir(), path.join(tmp, 'Achievement Watcher 3.0'));

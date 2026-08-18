@@ -76,7 +76,7 @@ const CONTROLLER_MODE_ALLOWED = new Set([
 
 function normalizeControllerBindingSetting(value, allowedButtons, fallback) {
   // An unknown/disallowed button anywhere rejects the whole binding (strict=false -> fallback), but
-  // a repeated valid button is just deduplicated, not rejected — matching app/settings.js's
+  // a repeated valid button is just deduplicated, not rejected - matching app/settings.js's
   // normalizeControllerBindingSetting() (backed by controllerLabels.normalizeControllerBinding()).
   // The two used to disagree here: the app would save "A+A" as the single-button binding "A", but
   // the watchdog would reject that same on-disk value and silently fall back to the hardcoded
@@ -322,7 +322,7 @@ module.exports.load = async (cfg_file) => {
 
     //Transport
 
-    // Drop legacy display-transport flags from old configs. NOTE: `mode` is intentionally kept —
+    // Drop legacy display-transport flags from old configs. NOTE: `mode` is intentionally kept -
     // it is the (re-introduced) notification delivery mode (toast/overlay/both) and must persist
     // across restarts; it is validated/defaulted a few lines below. Deleting it here used to reset
     // the user's choice back to 'toast' on every watchdog settings load.
@@ -385,7 +385,7 @@ module.exports.load = async (cfg_file) => {
       fixFile = true;
     }
 
-    //Souvenir — drop the stale flat keys (OBS video stays removed); keep the simple screenshot section.
+    //Souvenir - drop the stale flat keys (OBS video stays removed); keep the simple screenshot section.
     if (options.souvenir_screenshot != null || options.souvenir_video != null) {
       delete options.souvenir_screenshot;
       delete options.souvenir_video;

@@ -194,7 +194,7 @@ async function runTest(kind, { rumble = true, game = null } = {}) {
           : notificationSound.resolveSoundFile(ov.notificationSound);
     }
     // The test runs in the Watchdog process but reloads options itself, so it has to apply the
-    // urgency preference too — otherwise the button would not exercise what a real unlock does.
+    // urgency preference too - otherwise the button would not exercise what a real unlock does.
     require('./notification/transport/toast.js').setUrgentUnlocks(options.notification_toast?.urgent === true);
     await prepare();
     // Settings may have changed since background preparation. Identity resolution is now cheap
@@ -216,7 +216,7 @@ async function runTest(kind, { rumble = true, game = null } = {}) {
     } catch (err) {
       // The balloon fallback made a failing toast look like a working one: the test resolved, the
       // Settings dialog reported success, the pad still rumbled, and the only visible difference
-      // was that no toast appeared — which is precisely how issue #18 was reported. Say what broke.
+      // was that no toast appeared - which is precisely how issue #18 was reported. Say what broke.
       require('./util/log.js').warn(`[Toast] failed, falling back to a tray balloon: ${err && (err.message || err)}`);
       if (options.notification_transport.balloon) {
         await balloon({

@@ -79,7 +79,7 @@ without a backup, and no repair runs without a confirmation.
 | *No achievement progress has been found yet* | Normal for a game you have not played since setting it up. Launch it and unlock something. |
 | *AW Next isn't watching this game while it runs* | **Watch this game** adds it to the tracker. |
 | *The last notification could not be sent* | Send a test notification, then see [Notifications](notifications.md#if-a-test-or-unlock-does-not-appear). |
-| *Working — Windows fallback active* | Not a fault. Automatic delivery chose a Windows notification for this game; see [how Automatic decides](notifications.md#how-automatic-decides). |
+| *Working - Windows fallback active* | Not a fault. Automatic delivery chose a Windows notification for this game; see [how Automatic decides](notifications.md#how-automatic-decides). |
 
 ---
 

@@ -132,7 +132,7 @@ function parseSteamLibraryFolders(steamPath) {
 // (steam, steamapps, steamlibrary, "steam library", "steam games"). Automatic detection must
 // never add these as library roots: legit Steam games are handled by the Steam source, not by
 // the emulator scans. A neutral folder like C:\Games that merely *contains* a steamapps
-// subtree stays eligible — the scans skip that subtree themselves.
+// subtree stays eligible - the scans skip that subtree themselves.
 function isSteamLikePath(p) {
   const value = String(p || '');
   if (!value) return false;
@@ -267,7 +267,7 @@ function isLibraryLikeFolderName(name) {
 
 // Per-user game-library candidates: portable/repack installs often live under the user profile
 // (%USERPROFILE%\Games, %USERPROFILE%\Jeux) or inside AppData (%APPDATA%/%LOCALAPPDATA%\Games).
-// Only library-like names are probed, never the raw AppData/LocalAppData roots themselves — those
+// Only library-like names are probed, never the raw AppData/LocalAppData roots themselves - those
 // hold application config and would produce false positives.
 function profileLibraryRoots() {
   const roots = [];
@@ -320,7 +320,7 @@ async function discoverLibraryRoots() {
     }
   }
 
-  // Probe every drive/profile candidate in parallel — disk stats dominate this pass.
+  // Probe every drive/profile candidate in parallel - disk stats dominate this pass.
   const results = await Promise.all(
     candidates.map(async (p) => {
       try {

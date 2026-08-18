@@ -180,7 +180,7 @@ breaks upgrades rather than merely renaming something, and `test/core/branding.t
 The repository was renamed `Achievement-Watcher-3.0` → `Achievement-Watcher-Next` for 3.9.0. Clients
 released before 3.9.0 shipped an `app-update.yml` naming the **old** repository, so they reach new
 releases only through GitHub's permanent rename redirect. That redirect was verified end to end
-against electron-updater's own HTTP stack — the `releases.atom` feed, the `latest.yml` channel file
+against electron-updater's own HTTP stack - the `releases.atom` feed, the `latest.yml` channel file
 and the installer asset all follow the 301 transparently.
 
 **Never create a new repository at `Shirowwww/Achievement-Watcher-3.0`.** Doing so takes over the old

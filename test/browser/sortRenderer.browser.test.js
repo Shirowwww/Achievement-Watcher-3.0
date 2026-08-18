@@ -104,7 +104,7 @@ function buildHarness() {
 test('game sort snapshots DOM values while preserving every ordering rule', { concurrency: 1, timeout: 180000 }, async (t) => {
   const { browser, userDataDir, failures } = await launchBrowser();
   if (!browser) {
-    t.skip(failures.length ? `no usable Chromium-family browser — ${failures.join(' | ')}` : 'no Chromium-family browser installed');
+    t.skip(failures.length ? `no usable Chromium-family browser - ${failures.join(' | ')}` : 'no Chromium-family browser installed');
     return;
   }
 
@@ -145,7 +145,7 @@ test('game sort snapshots DOM values while preserving every ordering rule', { co
 test('installed-only toggle refreshes profile statistics and visible games together', { concurrency: 1, timeout: 180000 }, async (t) => {
   const { browser, userDataDir, failures } = await launchBrowser();
   if (!browser) {
-    t.skip(failures.length ? `no usable Chromium-family browser — ${failures.join(' | ')}` : 'no Chromium-family browser installed');
+    t.skip(failures.length ? `no usable Chromium-family browser - ${failures.join(' | ')}` : 'no Chromium-family browser installed');
     return;
   }
 

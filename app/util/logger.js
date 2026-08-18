@@ -54,7 +54,7 @@ function rotateIfTooBig(file, maxBytes) {
     fs.rmSync(`${file}.1`, { force: true });
     fs.renameSync(file, `${file}.1`);
   } catch {
-    /* missing file (nothing to rotate) or a lock held by another instance — keep appending */
+    /* missing file (nothing to rotate) or a lock held by another instance - keep appending */
   }
 }
 

@@ -2,7 +2,7 @@
 
 /*
   The preset designer's controls, its markup and its labels are three views of one schema. Nothing
-  at runtime notices when they disagree — a property with no control is simply uneditable, a control
+  at runtime notices when they disagree - a property with no control is simply uneditable, a control
   with no label ships as a blank line, and a select whose options do not match the schema silently
   writes a value the generator will throw away. So the parity is asserted here instead.
 */
@@ -285,7 +285,7 @@ test('the tab disappears when notifications are Windows toasts', () => {
 });
 
 test('the preview borrows real game artwork instead of shipping a picture', () => {
-  // A notification is seen over a game, so that is what the preview is judged against — taken from
+  // A notification is seen over a game, so that is what the preview is judged against - taken from
   // the covers the app already downloaded, which also keeps copyrighted art out of the repository.
   assert.match(settings, /path\.join\(userData, 'covers'\)/, 'the preview does not use the library artwork');
   assert.match(settings, /function imageDimensions\(file\)/, 'landscape art is not preferred');
@@ -369,7 +369,7 @@ test('the template status strings exist and are translated in every locale', () 
     const designerStrings = JSON.parse(fs.readFileSync(path.join(langDir, file), 'utf8')).settings.notification.option.designer;
     for (const key of ['applied', 'randomized', 'duplicated']) {
       const value = String((designerStrings.templates || {})[key] || '').trim();
-      assert.ok(value, `${file}: designer.templates.${key} must be translated — there is no English fallback at runtime`);
+      assert.ok(value, `${file}: designer.templates.${key} must be translated - there is no English fallback at runtime`);
     }
   }
 });

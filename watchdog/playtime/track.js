@@ -1,6 +1,6 @@
 'use strict';
 
-// regodit is ESM-only (koffi); load it lazily and use the SYNC API — under the pinned koffi the async
+// regodit is ESM-only (koffi); load it lazily and use the SYNC API - under the pinned koffi the async
 // DWORD write segfaults after storing `total`, which is why `last` never reached the registry.
 let regeditPromise = null;
 const loadRegedit = () => regeditPromise || (regeditPromise = import('regodit'));

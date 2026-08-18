@@ -7,7 +7,7 @@ const path = require('node:path');
 const htmlParser = require(path.join(__dirname, '..', '..', 'app', 'node_modules', 'node-html-parser'));
 
 /*
-  The product name changed everywhere a user reads it — including the executable's FileDescription,
+  The product name changed everywhere a user reads it - including the executable's FileDescription,
   which is the label Task Manager shows. What did not change is every string Windows keys an
   existing install on: the AppUserModelID, the executable filename, the install directory, the
   uninstaller filename and the update artifact. `executableName` is what keeps those pinned while
@@ -95,7 +95,7 @@ test('the uninstaller speaks the new name in every language but keeps the data p
 
 test('the Settings About block is compact and matches what the locale loader binds', () => {
   // app/locale/loader.js still addresses the first row purely by position. Reordering it without
-  // updating those selectors shifts every label silently — the labels are not defaulted in markup,
+  // updating those selectors shifts every label silently - the labels are not defaulted in markup,
   // so a mismatch ships as blank text rather than as an error.
   const root = htmlParser.parse(appHtml);
   const notice = root.querySelector('#settings .footer .notice');
@@ -115,7 +115,7 @@ test('the Settings About block is compact and matches what the locale loader bin
   assert.doesNotMatch(notice.text, /achievement-watcher-3\.0/i, 'the About block must not show the old repository slug');
 
   // The upstream credits live at the foot of the Advanced tab now, bound by id rather than by
-  // position — so this block can grow or shrink again without touching them.
+  // position - so this block can grow or shrink again without touching them.
   const lineageRow = root.querySelector('#advanced-lineage');
   assert.ok(lineageRow, 'the lineage must still be credited somewhere');
   const lineage = lineageRow.querySelectorAll('a');
@@ -191,7 +191,7 @@ test('help links point at this project, not the upstream wiki', () => {
 
 test('the main window resolves its icon absolutely and prefers the multi-size .ico', () => {
   // BrowserWindow and fs resolve a relative icon path against the working directory, which is the
-  // install folder rather than the app — the icon was silently dropped and the window fell back to
+  // install folder rather than the app - the icon was silently dropped and the window fell back to
   // the runtime's own logo. Windows also picks small frames out of an .ico far better than it
   // downscales a lone 256px PNG.
   assert.match(initJs, /path\.isAbsolute\(configured\) \? configured : path\.join\(__dirname, '\.\.', configured\)/, 'the icon path must be resolved against the app root');
@@ -206,7 +206,7 @@ test('the main window resolves its icon absolutely and prefers the multi-size .i
   }
 
   // The installer header paints the mark white over a dark gradient, so it must be fed the bare
-  // logo — handing it the outlined app icon floods the whole silhouette into one white blob.
+  // logo - handing it the outlined app icon floods the whole silhouette into one white blob.
   const ps1 = read('app', 'build', 'generate-installer-images.ps1');
   assert.match(ps1, /LogoPath = \(Join-Path \$PSScriptRoot 'brandMark\.png'\)/, 'the header must use the un-outlined mark');
   assert.ok(fs.existsSync(path.join(repoRoot, 'app', 'build', 'brandMark.png')), 'brandMark.png must ship with the build resources');

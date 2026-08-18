@@ -13,7 +13,7 @@ const ROOT = process.argv[2] || 'C:\\Jeux';
 // This is a standalone validation against a real game-install library. When that
 // library isn't present (e.g. a clean CI runner), skip cleanly instead of failing.
 if (!fs.existsSync(ROOT)) {
-  console.log(`exeDetect.test.js: ${ROOT} not present — skipping standalone validation.`);
+  console.log(`exeDetect.test.js: ${ROOT} not present - skipping standalone validation.`);
   process.exit(0);
 }
 
@@ -92,8 +92,8 @@ for (const c of nameCases) {
   const onDisk = fs.existsSync(path.join(ROOT, c.game));
   const isClaimed = claimed.has(path.join(ROOT, c.game).toLowerCase());
   // Name-based resolution is the fallback ONLY for non-Steam installs. If the folder isn't installed,
-  // or it carries steam markers (steam_api dll / steam_appid.txt) — so findCompatibleGames already
-  // claimed it and resolves it by appid — the name pool legitimately excludes it: SKIP, don't FAIL.
+  // or it carries steam markers (steam_api dll / steam_appid.txt) - so findCompatibleGames already
+  // claimed it and resolves it by appid - the name pool legitimately excludes it: SKIP, don't FAIL.
   if (!onDisk) {
     console.log(`  ${c.game.padEnd(42)} -> not installed -> SKIP`);
     continue;

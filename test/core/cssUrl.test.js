@@ -8,7 +8,7 @@ const { pathToFileURL } = require('node:url');
 const { cssUrl } = require(path.join(__dirname, '..', '..', 'app', 'util', 'cssUrl.js'));
 
 // A CSS declaration is dropped wholesale when the url() token is malformed, so a broken path does
-// not throw anywhere — the cover just silently never appears. These assertions pin the two shapes
+// not throw anywhere - the cover just silently never appears. These assertions pin the two shapes
 // that used to slip through.
 
 test('an apostrophe in the path cannot close the quoted url() early', () => {

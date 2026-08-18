@@ -52,7 +52,7 @@ function getGlobalStat(appid, source, gameName, achievements, context) {
     const remote = require('@electron/remote');
     rarity = require(path.join(remote.app.getAppPath(), 'util/rarity.js'));
   } catch (err) {
-    return; // rarity is a non-essential enrichment — never let it break the game view
+    return; // rarity is a non-essential enrichment - never let it break the game view
   }
 
   // 1. Instant paint from the on-disk sidecar so a repeat/offline view shows tiers immediately
@@ -60,7 +60,7 @@ function getGlobalStat(appid, source, gameName, achievements, context) {
   try {
     applyRarity(rarity.readRarityCacheEntries(appid));
   } catch (err) {
-    /* no cache yet — the refresh below will populate it */
+    /* no cache yet - the refresh below will populate it */
   }
 
   // 2. Background refresh: hits the network only when the cache is stale (TTL-gated inside the util),
@@ -97,8 +97,8 @@ function getGlobalStat(appid, source, gameName, achievements, context) {
       });
     });
 
-    // Mouse side-button navigation (app-wide): Back (4) closes Settings first — it overlays
-    // everything — then the game detail view; Forward (5) reopens the game closed with Back.
+    // Mouse side-button navigation (app-wide): Back (4) closes Settings first - it overlays
+    // everything - then the game detail view; Forward (5) reopens the game closed with Back.
     $(document).mouseup(function (e) {
       if ($('#onboarding').is(':visible')) return;
       if (e.which === 4) {

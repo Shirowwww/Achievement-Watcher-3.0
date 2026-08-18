@@ -3,15 +3,15 @@
 /*
   Pure matching rules behind the Settings search box (driven by app/ui/settings.js).
 
-  Kept DOM-free on purpose. The settings panel is translated positionally — locale/loader.js binds
-  most labels with `li:nth-child(n)` — so the filter must hide rows rather than move or remove them,
+  Kept DOM-free on purpose. The settings panel is translated positionally - locale/loader.js binds
+  most labels with `li:nth-child(n)` - so the filter must hide rows rather than move or remove them,
   and the selectors it walks are as much a part of the contract as the matching itself. Both live
   here so test/ui/settingsSearch.test.js can exercise them against the real app.html without a browser.
 */
 
 /*
   Rows a search can hide. Only the OUTERMOST match inside a tab counts as a row: settings rows are
-  never nested in one another, so anything matching this inside another match is part of that row —
+  never nested in one another, so anything matching this inside another match is part of that row -
   a folder entry's edit/unlink buttons are `<li>`s inside the path row, and a guide panel's bullets
   are `<li>`s inside the help panel. Filtering them independently would strip a visible row of its
   controls and leave containers standing empty.
@@ -35,7 +35,7 @@ function normalize(text) {
 }
 
 // Split a query into words. Matching is per-word and order-independent, so "hide zero" and
-// "zero hide" both find "Hide 0% games" — that is how a half-remembered setting is actually typed.
+// "zero hide" both find "Hide 0% games" - that is how a half-remembered setting is actually typed.
 function parseTerms(query) {
   return normalize(query).split(' ').filter(Boolean);
 }
@@ -49,7 +49,7 @@ function matches(haystack, terms) {
 /*
   Everything a row can reasonably be found by: its visible text (label, help, option values) plus
   the option ids it contains. The ids matter because they are the only stable, language-independent
-  handle on a setting — searching "hideZero" works in a Japanese UI too.
+  handle on a setting - searching "hideZero" works in a Japanese UI too.
 */
 function buildHaystack({ text = '', ids = [], placeholders = [] } = {}) {
   return normalize([text, ...ids.map((id) => String(id).replace(/^option_/, '')), ...placeholders].join(' '));
@@ -77,7 +77,7 @@ function haystackFor($, row) {
 
 /*
   Hide every non-matching settings row and collapse empty blocks. Rows are hidden with a class, never
-  moved — positional i18n breaks if the DOM order changes. Returns { total, perView }.
+  moved - positional i18n breaks if the DOM order changes. Returns { total, perView }.
 */
 // The rows of one tab: matches of ROW_SELECTOR with no other match between them and the tab.
 function rowsIn($, section) {
@@ -94,7 +94,7 @@ function filterSections($, query, scope = '#settings') {
   $(`${scope} .box section.content[data-view]`).each(function () {
     const section = $(this);
     // Simple mode hides whole tabs and individual rows with MODE_HIDDEN_CLASS. Searching must not
-    // count them, and must never clear their class — the search owns `search-hidden` and nothing
+    // count them, and must never clear their class - the search owns `search-hidden` and nothing
     // else. A hidden tab reports zero hits so its nav counter stays empty.
     const modeHidden = section.hasClass(MODE_HIDDEN_CLASS);
     const rows = modeHidden ? $() : rowsIn($, section).not(`.${MODE_HIDDEN_CLASS}`);

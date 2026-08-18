@@ -3,7 +3,7 @@
 /*
   Registry access. `registry-js` is a compiled addon, and a checkout whose install script never ran
   has no build/Release/registry.node at all. Before the reg.exe fallback existed that turned every
-  read into null/[]/false — the same answer as "this key is not on the machine" — so Steam accounts
+  read into null/[]/false - the same answer as "this key is not on the machine" - so Steam accounts
   (and therefore every Steam game), Uplay, GreenLuma, playtime and the avatar all went quiet with
   nothing written to any log. What matters here is that losing the binary costs speed, not answers:
   each case is run through both backends and the two must agree.

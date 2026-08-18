@@ -4,7 +4,7 @@ let modulePromise;
 const load = () => modulePromise || (modulePromise = import('powertoast'));
 
 // Boundary contract enforcement: powertoast only understands `aumid`, but the old codebase used
-// `appID` for years (silently falling back to the Microsoft Store identity — issue #8). Every
+// `appID` for years (silently falling back to the Microsoft Store identity - issue #8). Every
 // call site is fixed, and this normalizer guarantees a future `appID` slip can never silently
 // break toasts again.
 function normalizeToastOptions(options) {

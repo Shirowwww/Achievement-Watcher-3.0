@@ -53,7 +53,7 @@ module.exports.scan = async () => {
 
 // Set of Ubisoft Connect appids that are actually INSTALLED (have an Installs registry key with an
 // InstallDir), as opposed to merely owned/seen (which is what scanLegit() enumerates from the
-// achievements cache). Memoized for the session — registry rarely changes mid-run, and this is hit
+// achievements cache). Memoized for the session - registry rarely changes mid-run, and this is hit
 // once per uPlay game during a scan. Used to drive the "show installed only" filter.
 let _installedUplayAppids = null;
 module.exports.getInstalledAppids = () => {
@@ -75,7 +75,7 @@ module.exports.getInstalledAppids = () => {
           }
         }
       } catch {
-        /* key absent on this hive/bitness — try the next one */
+        /* key absent on this hive/bitness - try the next one */
       }
     }
   }
@@ -169,7 +169,7 @@ module.exports.getGameData = async (appid, lang) => {
       }
       fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
       // fs.writeFile (callback API) throws synchronously without a callback; use the promise API
-      // so the .catch() is valid — otherwise this threw and the uPlay game failed its first load.
+      // so the .catch() is valid - otherwise this threw and the uPlay game failed its first load.
       fs.promises.writeFile(cacheFile, JSON.stringify(schema, null, 2)).catch((err) => {});
     }
 

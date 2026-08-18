@@ -89,7 +89,7 @@ async function resolveEpicArtifactIdentityUncached(sourceId, options) {
         if (!namespace) namespace = cleanId(item?.namespace || item?.catalogNamespace || item?.catalog_namespace);
       }
     } catch {
-      /* the asset lookup alone is still useful (namespace/artifactId) — displayName is best-effort */
+      /* the asset lookup alone is still useful (namespace/artifactId) - displayName is best-effort */
     }
   }
 

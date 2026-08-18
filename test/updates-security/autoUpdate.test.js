@@ -89,7 +89,7 @@ test('a sha512 checksum mismatch clears the update cache and retries the full do
   assert.equal(devConfig.repo, builder.publish.repo, 'dev-app-update.yml repo must match the publish target');
 
   // The clear action also sweeps the re-fetchable app caches (Steam/Ubisoft schema, icon and
-  // downloaded emulator-tool caches), through the same explicit, unit-tested allowlist —
+  // downloaded emulator-tool caches), through the same explicit, unit-tested allowlist -
   // never a blanket folder wipe that could catch an irreplaceable file by accident.
   assert.match(init, /require\(path\.join\(__dirname, '\.\.\/util\/clearableCaches\.js'\)\)/);
   assert.match(init, /clearSafeCaches\(userData\)/);

@@ -39,7 +39,7 @@ function exeArch(exePath) {
 
 // Detect Valve's SteamStub DRM by scanning the PE section table for a ".bind" section (SteamStub's
 // tell). Read-only, offline. When present, a plain steam_api DLL swap usually fails because the stub
-// runs first — so the caller strips it with Steamless before replacing the DLL. Returns true/false.
+// runs first - so the caller strips it with Steamless before replacing the DLL. Returns true/false.
 function detectSteamStub(exePath) {
   let fd;
   try {
@@ -142,7 +142,7 @@ function readExeProductName(exePath) {
         const isDir = (offset & 0x80000000) !== 0;
         const target = offset & 0x7fffffff;
         if (name >= 0x80000000) {
-          // Named resource entries (icons etc.) — not the version block we are after.
+          // Named resource entries (icons etc.) - not the version block we are after.
           base += 8;
           continue;
         }

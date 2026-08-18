@@ -13,7 +13,7 @@ const uplayR2 = require('../../watchdog/util/uplayR2.js');
   A Goldberg Uplay R2 unlock has to survive two translations before the watchdog can notify on it:
   the folder name is a Ubisoft product id rather than a Steam AppID, and on a legacy loader the keys
   inside are bare objective ids rather than Steam api-names. Both were missing entirely, so these
-  games never fired a live notification — they only appeared on the next manual library refresh.
+  games never fired a live notification - they only appeared on the next manual library refresh.
 */
 
 test('the Ubisoft product id resolves to the Steam AppID the app recorded', () => {
@@ -50,8 +50,8 @@ test('objective ids are rewritten onto the schema api-names', () => {
   const parsed = [
     { name: '1', Achieved: true },
     { name: '7', Achieved: true },
-    { name: 'ACObsidian_Ach_12', Achieved: true }, // already an api-name (newer loader) — untouched
-    { name: '99', Achieved: true }, // belongs to no achievement here — left alone, never guessed
+    { name: 'ACObsidian_Ach_12', Achieved: true }, // already an api-name (newer loader) - untouched
+    { name: '99', Achieved: true }, // belongs to no achievement here - left alone, never guessed
   ];
 
   assert.equal(uplayR2.remapObjectiveIds(parsed, schema), 2);
@@ -108,7 +108,7 @@ test('the watchdog watches the Goldberg SocialClub save root', async () => {
   // Folders here are named after the GAME, not an AppID, so a numeric filter would match nothing.
   assert.equal(typeof entry.options.filter, 'function', 'game-name folders must pass the traversal filter');
   assert.ok(entry.options.file.includes('achievements.json'));
-  // Rockstar's own save blobs are rewritten constantly during play and nothing can decode them —
+  // Rockstar's own save blobs are rewritten constantly during play and nothing can decode them -
   // watching them would wake the monitor for no possible result.
   assert.ok(!entry.options.file.includes('cfg.dat'));
 });

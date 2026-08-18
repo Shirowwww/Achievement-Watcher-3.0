@@ -9,7 +9,7 @@ const { resolveEpicArtifactIdentity } = require('./epicIdentity.js');
 const { userDataDir } = require('./userDataPath.js');
 
 const CACHE_DIR = path.join(userDataDir(), 'steam_cache', 'rarity');
-const DEFAULT_TTL_MS = 6 * 60 * 60 * 1000; // 6h — global unlock % drifts slowly, no need to refetch per view
+const DEFAULT_TTL_MS = 6 * 60 * 60 * 1000; // 6h - global unlock % drifts slowly, no need to refetch per view
 const DEFAULT_TIMEOUT_MS = 8000;
 
 const RARITY_SOURCES = Object.freeze({
@@ -91,7 +91,7 @@ async function fetchEpicGlobalAchievementPercentages(productId, options = {}) {
 }
 
 // `appid` here is parser/epic.js's NemirtingasEpicEmu artifact id (a hex string), not the Epic
-// productId the public achievements endpoint expects — resolve the real productId (catalogItemId)
+// productId the public achievements endpoint expects - resolve the real productId (catalogItemId)
 // via egdata.app first so legacy Epic-emu installs get real rarity instead of a near-always-empty
 // lookup against the wrong id. Falls back to the raw id when resolution fails (unchanged behavior).
 async function fetchEpicRarityByArtifactId(appid, options = {}) {
@@ -100,13 +100,13 @@ async function fetchEpicRarityByArtifactId(appid, options = {}) {
     const identity = await resolveEpicArtifactIdentity(appid);
     if (identity?.catalogItemId) productId = identity.catalogItemId;
   } catch {
-    /* identity lookup is best-effort — fall back to the raw id below */
+    /* identity lookup is best-effort - fall back to the raw id below */
   }
   return fetchEpicGlobalAchievementPercentages(productId, options);
 }
 
 // GOG gameplay % requires a logged-in user id + access token (the desktop client's). When those are
-// not available the caller simply gets an empty set — rarity is a non-essential enrichment.
+// not available the caller simply gets an empty set - rarity is a non-essential enrichment.
 async function fetchGogGlobalAchievementPercentages(productId, options = {}) {
   const userId = String(options.userId || '').trim();
   const accessToken = String(options.accessToken || '').trim();
@@ -205,7 +205,7 @@ async function getSteamBridgeRarity(cacheId, steamAppId, names, options = {}) {
       return entries;
     }
   } catch {
-    /* network failed — fall through to stale cache below */
+    /* network failed - fall through to stale cache below */
   }
   return cached ? cached.entries : [];
 }
@@ -228,7 +228,7 @@ function resolveGameRarityContext(game, options = {}) {
   }
 
   // Official Ubisoft Connect / Lumaplay: namespaced appid ("uplay-…"/"UPLAY…") whose schema names
-  // are native numeric ids — the Steam percentages live in the bridge cache keyed on this appid.
+  // are native numeric ids - the Steam percentages live in the bridge cache keyed on this appid.
   if (system === 'uplay' && !/^\d+$/.test(appid) && /^\d+$/.test(steamappid)) {
     return {
       kind: 'steam-bridge',
@@ -272,7 +272,7 @@ function cacheFilePath(appid) {
   return path.join(CACHE_DIR, `${appid}.json`);
 }
 
-// Synchronous read of whatever is on disk (no freshness gate) — used for the instant first paint so a
+// Synchronous read of whatever is on disk (no freshness gate) - used for the instant first paint so a
 // repeat/offline view never flashes an unranked list while the network refresh is in flight.
 function readRarityCacheEntries(appid) {
   try {
@@ -327,7 +327,7 @@ async function getRarityEntries(appid, source = 'steam', options = {}) {
       return entries;
     }
   } catch {
-    /* network failed — fall through to stale cache below */
+    /* network failed - fall through to stale cache below */
   }
   return cached ? cached.entries : [];
 }

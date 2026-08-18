@@ -207,7 +207,7 @@ switch ($Command) {
     # Launch Electron directly so the shell is not kept alive. -WindowStyle Hidden must NOT be used
     # here: Windows applies that show-state hint to the child process's own first top-level window,
     # so the app's main window comes up with isVisible()=false and never recovers on its own (the
-    # app's later BrowserWindow.show() does not override it) — electron.exe has no console window to
+    # app's later BrowserWindow.show() does not override it) - electron.exe has no console window to
     # hide in the first place, so the flag serves no purpose here and only breaks the launch.
     Start-Process -FilePath $Electron -ArgumentList '.' -WorkingDirectory $AppDir
 
@@ -233,7 +233,7 @@ switch ($Command) {
   'Send' {
     if (-not $Arguments) { throw 'Send requires -Arguments (e.g. ''--wintype=overlay --appid=0 --description=close'')' }
     # The running instance owns the single-instance lock, so this process forwards its argv and
-    # exits — the same path the Watchdog uses via SpawnOverlayNotification.
+    # exits - the same path the Watchdog uses via SpawnOverlayNotification.
     Remove-Item Env:\ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
     Push-Location $AppDir
     try {
@@ -271,7 +271,7 @@ switch ($Command) {
   }
 
   'Hover' {
-    # Native submenus open on hover, and a click on the parent item closes the whole menu instead —
+    # Native submenus open on hover, and a click on the parent item closes the whole menu instead -
     # so reaching one needs a cursor move with no button press. Coordinates are absolute here: a
     # popup menu is its own window, not a child of the app's.
     [void][AwProbe]::SetCursorPos($X, $Y)

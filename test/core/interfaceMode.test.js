@@ -95,7 +95,7 @@ test('the niche-source rule is asymmetric on purpose: it only ever hides a row t
       assert.ok(!result.includes(key), `${key} is ${why} and must keep its switch`);
     }
   }
-  // Explicitly enabled is the same as untouched — `true` is the default, not an opinion.
+  // Explicitly enabled is the same as untouched - `true` is the default, not an opinion.
   assert.deepEqual(
     interfaceMode.hiddenOptionalSources({ mode: 'simple', enabled: Object.fromEntries(keys.map((k) => [k, true])) }).sort(),
     [...keys].sort()

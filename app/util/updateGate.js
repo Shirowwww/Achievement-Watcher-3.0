@@ -12,7 +12,7 @@ const POSTPONE_MS = 24 * 60 * 60 * 1000;
 
 /*
   When the next check runs. The update dialog is modal and parentless, so it lands on top of
-  whatever is on screen — including a fullscreen game. While one is running the check is skipped
+  whatever is on screen - including a fullscreen game. While one is running the check is skipped
   entirely (no dialog, no network), and the moment the session ends the app looks again shortly
   after, which is the polite time to offer an update.
 */
@@ -46,7 +46,7 @@ function covers(remembered, offered) {
 /*
   Is the offered version actually an upgrade?
 
-  `latest.yml` has to be fetched to answer "am I up to date?" at all — it is the manifest that
+  `latest.yml` has to be fetched to answer "am I up to date?" at all - it is the manifest that
   carries the published version, so there is no way to skip reading it and still know. What can be
   guaranteed is what happens afterwards: a manifest naming the version already installed, or an
   older one (a rolled-back release, a stale CDN copy, a local build ahead of the published tag),
@@ -80,7 +80,7 @@ function isUpdatePostponed(general, offered, now = Date.now()) {
 /*
   The single decision the updater asks before showing anything.
   `manual` is an explicit "Check for updates" from Settings: the user asked, so a postpone they set
-  earlier no longer applies — but an explicit "skip this version" still does.
+  earlier no longer applies - but an explicit "skip this version" still does.
   Returns { suppress, reason }.
 */
 function shouldSuppressUpdatePrompt(general, offered, { manual = false, now = Date.now(), currentVersion = '' } = {}) {

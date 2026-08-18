@@ -328,7 +328,7 @@ module.exports.getAchievements = async (gpdPath) => {
   Relock every achievement in a GPD, in place.
 
   A GPD holds the achievement definitions and their unlock state in the same file, so a reset cannot
-  simply delete it — that would take the game's whole achievement list with it. Instead each
+  simply delete it - that would take the game's whole achievement list with it. Instead each
   achievement payload is edited where it lies: the earned bit in `flags` (0x10) is cleared and the
   unlock timestamp (0x14) is zeroed. Nothing moves, no length changes, so the entry table, the free
   table, the icons and the strings are all still valid afterwards.

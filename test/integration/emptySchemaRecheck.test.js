@@ -4,7 +4,7 @@
   A schema cached with a name but zero achievements used to be permanent: getCachedData has no TTL
   and getGameData only tested `name`, so an entry written by a fetch that reached the store page but
   not the schema stayed empty forever. Every scan then fell back to getLocalAchievementSchema, which
-  walks the whole install synchronously — that is what turned a 4s scan into 13-34s.
+  walks the whole install synchronously - that is what turned a 4s scan into 13-34s.
 
   The re-check must never cost the entry itself: offline, the retry fails for EVERY appid, and
   dropping the record there would empty the game list on a single offline scan.
@@ -64,7 +64,7 @@ test('an empty cached schema is stale until a check is stamped on it', () => {
 });
 
 test('anything that is not an ambiguous empty entry is left alone', () => {
-  // A populated schema is the normal cache hit — re-fetching it would undo the cache entirely.
+  // A populated schema is the normal cache hit - re-fetching it would undo the cache entirely.
   assert.equal(steam.isStaleEmptySchema({ name: 'Big Walk', achievement: { total: 1, list: [{ name: 'ACH' }] } }), false);
   // No name: already handled by the existing miss path, not ours to claim.
   assert.equal(steam.isStaleEmptySchema({ achievement: { total: 0, list: [] } }), false);
@@ -79,8 +79,8 @@ test('anything that is not an ambiguous empty entry is left alone', () => {
 
 test('a re-check that cannot run hands back the cached entry instead of dropping the game', async () => {
   // The one branch that reaches a verdict with no network: the appid is in the negative cache, so
-  // getGameData returns without fetching. Before the fix it returned undefined here — which is the
-  // game vanishing from the list — even though a perfectly usable record was on disk.
+  // getGameData returns without fetching. Before the fix it returned undefined here - which is the
+  // game vanishing from the list - even though a perfectly usable record was on disk.
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-empty-schema-'));
   fs.mkdirSync(path.join(temp, 'logs'), { recursive: true });
   steam.initDebug({ isDev: false, userDataPath: temp });
@@ -99,7 +99,7 @@ test('a re-check that cannot run hands back the cached entry instead of dropping
 test('an offline re-check keeps the game, even though the lookups throw', async () => {
   /*
     The regression this pins was found by running the real scan with the network cut: offline the
-    lookups do not return empty, they THROW, and the throw escaped the guard above — so every
+    lookups do not return empty, they THROW, and the throw escaped the guard above - so every
     re-checked game was dropped at once. A real library went from 19 games to 8.
   */
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-empty-offline-'));

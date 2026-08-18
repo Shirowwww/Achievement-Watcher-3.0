@@ -77,7 +77,7 @@ function collectProcessNames(options = []) {
   return names.join(';');
 }
 
-// Single best process name (basename only) — gameIndex/the watchdog match one filename per appid.
+// Single best process name (basename only) - gameIndex/the watchdog match one filename per appid.
 function bestProcessName(options = []) {
   const best = pickBestLaunchOption(options);
   if (!best?.executable) return '';
@@ -108,7 +108,7 @@ function parseLaunchOptionsFromHtml(html) {
       if (cells.length < 2) continue;
       const key = normalizeText(cells[0].text);
       // The value is the second column; SteamDB wraps it in <code>. Trailing cells are tooltip
-      // icons (SVG, no text) — read the value cell specifically rather than joining everything.
+      // icons (SVG, no text) - read the value cell specifically rather than joining everything.
       const valueCell = cells[1];
       const code = valueCell.querySelector('code');
       const value = normalizeText(code ? code.text : valueCell.text);

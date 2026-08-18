@@ -61,7 +61,7 @@ function coverFromHtml(appid, html) {
 }
 
 // Every library asset URL found on a SteamDB info page (deduplicated). The 600x900 portrait comes
-// first when present, then any wider library_capsule variants — callers filter by orientation.
+// first when present, then any wider library_capsule variants - callers filter by orientation.
 function coversFromHtml(appid, html) {
   const source = String(html || '');
   if (!source) return [];

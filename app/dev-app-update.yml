@@ -1,5 +1,5 @@
 # electron-updater's standard dev-mode config (read only when app.isPackaged is false). Real update
-# checks stay disabled in dev regardless (see the app.isPackaged guard in init.js) — this file exists
+# checks stay disabled in dev regardless (see the app.isPackaged guard in init.js) - this file exists
 # so autoUpdater.getOrCreateDownloadHelper() can resolve the cache directory during dev testing.
 # Mirrors resources/app-update.yml, which electron-builder generates for packaged builds.
 owner: Shirowwww

@@ -76,7 +76,7 @@ function getNameIndex(filePath) {
 }
 
 // Instant, offline appid → name lookup. Returns the name or null (never throws).
-// opts: { runtimePath?, fallbackPath? } — explicit paths, mainly for tests.
+// opts: { runtimePath?, fallbackPath? } - explicit paths, mainly for tests.
 function lookupSteamDbName(appid, opts = {}) {
   const id = String(appid ?? '').trim();
   if (!id) return null;
@@ -91,7 +91,7 @@ function lookupSteamDbName(appid, opts = {}) {
   (steam_cache/schema/<lang>/<appid>.db, shaped { name, appid, … }).
 
   Every language folder is tried, because the app only ever writes the one matching the user's
-  setting: hard-coding "english" made this silently return nothing for every non-English profile —
+  setting: hard-coding "english" made this silently return nothing for every non-English profile -
   which is how a GOG game and its cracked Steam twin both stayed in the library instead of merging.
   Unlike the 250k-row appList dump, this cache exists as soon as a game has been listed once.
 */
@@ -111,7 +111,7 @@ function lookupSchemaCacheName(userDataPath, appid) {
       const name = String((parsed && parsed.name) || '').trim();
       if (name) return name;
     } catch {
-      /* missing/corrupt entry for this language — try the next one */
+      /* missing/corrupt entry for this language - try the next one */
     }
   }
   return '';

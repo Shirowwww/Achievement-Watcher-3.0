@@ -2,7 +2,7 @@
 
 /*
   How Simple / Advanced is wired into the real UI: the onboarding choice, the Settings switch, what
-  each mode hides, and the two properties that must never break —
+  each mode hides, and the two properties that must never break -
 
     * nothing is REMOVED from the DOM, only classed, because the settings panel is translated
       positionally (locale/loader.js binds `li:nth-child(n)`);
@@ -73,7 +73,7 @@ test('the guide still counts its steps correctly after gaining one', () => {
 test('the mode switch sits in the settings header, beside the title and outside every tab', () => {
   const header = document.querySelector('#settings .box .header');
   const control = header.querySelector('#settings-mode');
-  assert.ok(control, 'the switch belongs to the header — it decides which tabs exist');
+  assert.ok(control, 'the switch belongs to the header - it decides which tabs exist');
   assert.equal(document.querySelectorAll('#settings-mode').length, 1, 'exactly one switch');
   // Right of the title, left of the search: the header's own order is what puts it there.
   const headerHtml = header.outerHTML;
@@ -86,7 +86,7 @@ test('the mode switch sits in the settings header, beside the title and outside 
 
 test('nothing the switch adds to the header can break the positional title binding', () => {
   // locale/loader.js binds the panel title with `#settings .box .header span`, so the header must
-  // contain exactly one <span> — the title itself. The switch labels itself with <b> for this.
+  // contain exactly one <span> - the title itself. The switch labels itself with <b> for this.
   const header = document.querySelector('#settings .box .header');
   const spans = header.querySelectorAll('span');
   assert.equal(spans.length, 1, 'the header must keep exactly one <span>: the title');
@@ -274,7 +274,7 @@ test('Simple never hides a source that is switched off or that the library uses'
   // Switched off: the row is the ONLY control that could bring those games back, so it stays.
   for (const key of every) {
     const hidden = interfaceMode.hiddenOptionalSources({ mode: 'simple', enabled: { [key]: false } });
-    assert.ok(!hidden.includes(key), `${key} is off — hiding its switch would strand the user`);
+    assert.ok(!hidden.includes(key), `${key} is off - hiding its switch would strand the user`);
   }
 
   // Already contributing games: if you use it, you get its switch.
@@ -333,7 +333,7 @@ test('advanced-only rows inside kept tabs are marked, and only ever inside kept 
     const view = row.closest('section.content').getAttribute('data-view');
     assert.ok(
       interfaceMode.SIMPLE_VIEWS.includes(view),
-      `marking a row in ${view} is redundant — Simple already hides the whole tab`
+      `marking a row in ${view} is redundant - Simple already hides the whole tab`
     );
   }
 });

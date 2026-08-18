@@ -110,8 +110,8 @@ test('a destination that already holds settings is left completely alone', () =>
 test('an interrupted import resumes without rolling newer files back', () => {
   // A first run that died partway (power loss, antivirus, a locked file) leaves files in the
   // destination but no marker and no cfg/options.ini, so the next launch legitimately runs the
-  // import again. Anything already in the destination is the newer copy — the app may have written
-  // it since — and must survive the resume untouched.
+  // import again. Anything already in the destination is the newer copy - the app may have written
+  // it since - and must survive the resume untouched.
   const root = tempRoot();
   try {
     const aw3 = seedAw3(root);
@@ -185,7 +185,7 @@ test('a souvenir folder the user picked is never relocated', () => {
 
 /*
   The restore-point index. `backups/` migrates like any other folder, but each entry records an
-  absolute backupDir, and copying a file does not rewrite what is inside it — so every entry kept
+  absolute backupDir, and copying a file does not rewrite what is inside it - so every entry kept
   naming the folder it came from. That looks fine while the old folder is still on disk, and the
   uninstaller deletes it outright.
 */

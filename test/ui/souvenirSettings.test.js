@@ -28,7 +28,7 @@ test('the souvenir section offers both picking the folder and opening it', () =>
   assert.ok(picker.querySelector('#souvenir-dir-display'), 'the picker must keep showing the current path');
   assert.ok(open.querySelector('#souvenir-open-label'), 'the open button needs a span for its translation');
 
-  // The section stays about where screenshots go — no exposure, tone mapping or colour controls.
+  // The section stays about where screenshots go - no exposure, tone mapping or colour controls.
   assert.doesNotMatch(list.toString(), /hdr|tone|nits|colou?r space|gamma/i);
 });
 

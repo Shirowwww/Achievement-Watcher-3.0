@@ -2,7 +2,7 @@
 
 /*
  * Root detection cascade for the Watchdog: classify a folder from file signatures and return
- * monitor-style watch entries. Discovery only — it never generates configs or writes preferences.
+ * monitor-style watch entries. Discovery only - it never generates configs or writes preferences.
  */
 
 const fs = require('fs');

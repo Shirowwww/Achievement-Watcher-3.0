@@ -1,9 +1,9 @@
 'use strict';
 
 /*
-  Uplay R2 emulator-DLL installer — the Ubisoft counterpart of gbeInstaller.js. The demde build has no
+  Uplay R2 emulator-DLL installer - the Ubisoft counterpart of gbeInstaller.js. The demde build has no
   stable download, so the user seeds cacheDir once; this module then drops the matching loader dll into
-  game folders with a one-time .bak. Never throws for an unseeded cache — callers check `seeded`.
+  game folders with a one-time .bak. Never throws for an unseeded cache - callers check `seeded`.
 */
 
 const fs = require('fs');

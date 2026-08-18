@@ -35,7 +35,7 @@ test('every named notification position is anchored to the corresponding work-ar
 test('edge anchors sit flush against the display, taskbar included', () => {
   // What the app passes since bottom-anchored presets stopped floating above the taskbar: the full
   // display bounds (not the work area) and no margin, so "bottom" is the bottom of the screen.
-  // A 1080p display whose taskbar takes the last 40px — the work area would end at y=1040.
+  // A 1080p display whose taskbar takes the last 40px - the work area would end at y=1040.
   const display = { x: 0, y: 0, width: 1920, height: 1080 };
   const at = (position) => placeNotification({ position, width: 600, height: 200, workArea: display, margin: 0 });
 

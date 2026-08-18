@@ -5,7 +5,7 @@ const path = require('path');
 const { userDataDir } = require('./userData.js');
 
 // Achievement files the SocialClub parser can actually read (kept in sync with
-// ACHIEVEMENT_FILE_GLOB in app/parser/socialclub.js — the watchdog has its own module tree and
+// ACHIEVEMENT_FILE_GLOB in app/parser/socialclub.js - the watchdog has its own module tree and
 // cannot require the app's parsers). Rockstar's own save blobs (SGTA*/SRDR*/cfg.dat) are
 // deliberately NOT here: nothing can decode them yet, so waking the watchdog on every autosave
 // would be pure churn during play.
@@ -30,7 +30,7 @@ const SOCIALCLUB_ACHIEVEMENT_FILES = [
 
 // Same slug the app derives in parser/socialclub.js (socialClubAppId). The folder name is the ONLY
 // stable link from a changed save path back to a library entry, and the entry's `name` is the
-// RESOLVED Steam title ("Grand Theft Auto V") rather than the folder ("GTA V") — so matching on the
+// RESOLVED Steam title ("Grand Theft Auto V") rather than the folder ("GTA V") - so matching on the
 // name alone never fires. The slug is derived from the folder name on both sides, so it always does.
 function socialClubSlug(gameName) {
   const slug = String(gameName || '')

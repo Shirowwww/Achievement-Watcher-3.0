@@ -4,7 +4,7 @@
   Read-only view of what actually delivered each game's last notification
   (<userData>/cfg/notificationHealth.json). The Watchdog is the only writer
   (watchdog/util/transportMemory.js); the app reads it so Game Health can report the transport a
-  game really got rather than the one configured in Settings — the two differ exactly when the
+  game really got rather than the one configured in Settings - the two differ exactly when the
   automatic fallback did its job, which is the case worth telling the user about.
 
   Absent file, absent entry and unreadable JSON are all "nothing observed yet", never an error: a

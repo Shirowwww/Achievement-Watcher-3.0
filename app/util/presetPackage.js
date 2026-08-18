@@ -40,8 +40,8 @@ const PRESET_ENTRY = 'index.html';
 
 /*
   The installed manifest, kept beside the preset's files (the name lives in util/customPreset.js, so
-  the two modules that read it cannot disagree). It is what marks a preset as one the app installed —
-  and may therefore delete — which the builder's own options file cannot do: a preset written by hand
+  the two modules that read it cannot disagree). It is what marks a preset as one the app installed -
+  and may therefore delete - which the builder's own options file cannot do: a preset written by hand
   has no options, so without this marker an imported preset was installed but could never be listed
   or removed again. It also carries the metadata through a re-export.
 */
@@ -133,7 +133,7 @@ function fail(error, extra = {}) {
   The designer options a manifest carries, re-clamped.
 
   The one subtlety is the sound. A package written before presets could name their own sound recorded
-  it in  alone, and that was the author's intent — so it becomes the preset's sound.
+  it in  alone, and that was the author's intent - so it becomes the preset's sound.
   A package that DOES carry the field is respected exactly, including an empty value: that means "use
   whatever the Notifications tab is set to", and inheriting the exporter's sound over it would pin a
   sound onto a preset that deliberately had no opinion.
@@ -381,7 +381,7 @@ function readPackage(file, { appVersion = '' } = {}) {
 
 // --- install ----------------------------------------------------------------------------------
 
-// "Name", then "Name (2)", "Name (3)"… — the same shape the sound and theme-image importers use.
+// "Name", then "Name (2)", "Name (3)"… - the same shape the sound and theme-image importers use.
 function nextFreeName(presetsDir, name, taken) {
   for (let i = 2; i < 100; i += 1) {
     const candidate = sanitizePresetName(`${name} (${i})`);
@@ -417,12 +417,12 @@ function installSound(soundsDir, name, data) {
   `duplicate` decides what an existing preset of the same name means: 'fail' (report it and change
   nothing, so the caller can ask), 'rename' (install beside it) or 'replace'.
 
-  `takenNames` are names already in use outside this folder — the presets bundled with the app. A
+  `takenNames` are names already in use outside this folder - the presets bundled with the app. A
   preset installed here wins over a bundled one of the same name, so without them an import would
   silently hide a bundled preset instead of asking.
 
   The preset is built in a staging folder next to its destination and moved in one rename at the
-  end, so a failure anywhere leaves the storage exactly as it was — including the preset being
+  end, so a failure anywhere leaves the storage exactly as it was - including the preset being
   replaced, which is only deleted once its replacement is in place.
 */
 function installPackage({ file, presetsDir, soundsDir, appVersion = '', duplicate = 'fail', reservedNames = [], takenNames = [] }) {
@@ -485,7 +485,7 @@ function installPackage({ file, presetsDir, soundsDir, appVersion = '', duplicat
     /*
       A sound has to follow the name it was actually installed under, or importing beside an existing
       sound of the same name leaves the preset pointing at a file that is not the one in the package
-      — silently playing someone else's sound.
+      - silently playing someone else's sound.
     */
     const installedSound = (name) => (name && installedAs.has(name) ? installedAs.get(name) : name);
 

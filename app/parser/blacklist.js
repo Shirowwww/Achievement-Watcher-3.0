@@ -50,7 +50,7 @@ module.exports.get = async () => {
 };
 
 // Human-readable names for user-blacklisted appids, kept in a sidecar so exclusion.db stays a plain
-// id array (back-compat with every existing install). Best-effort only — a missing name renders as
+// id array (back-compat with every existing install). Best-effort only - a missing name renders as
 // the bare appid in the Settings manager.
 const namesFile = () => path.join(path.dirname(exclusionFile), 'exclusion-names.json');
 
@@ -68,7 +68,7 @@ function writeNames(names) {
     fs.mkdirSync(path.dirname(exclusionFile), { recursive: true });
     fs.writeFileSync(namesFile(), JSON.stringify(names, null, 2), 'utf8');
   } catch (e) {
-    /* names are cosmetic — never fail the caller */
+    /* names are cosmetic - never fail the caller */
   }
 }
 
@@ -79,7 +79,7 @@ module.exports.reset = async () => {
 };
 
 // The app's own index of every game it has seen (cfg/gameIndex.json). This is the only local source
-// that covers non-Steam ids — `local-…`, Uplay, Xbox — which is exactly what the blacklist is full
+// that covers non-Steam ids - `local-…`, Uplay, Xbox - which is exactly what the blacklist is full
 // of, and it already carries the display name the library showed.
 function lookupGameIndexName(cfgDir, id) {
   try {
@@ -145,7 +145,7 @@ function localInstallIndex(cfgDir) {
     try {
       entries = fs.readdirSync(dir, { withFileTypes: true });
     } catch {
-      return; // unreadable/missing root — just skip it
+      return; // unreadable/missing root - just skip it
     }
     for (const entry of entries) {
       if (!entry.isDirectory()) continue;
@@ -169,13 +169,13 @@ function resolveLocalInstallName(cfgDir, id) {
   return localInstallIndex(cfgDir).get(String(id).toLowerCase()) || '';
 }
 
-// Forget the cached folder map — the scan roots changed (a library folder was added or removed), so
+// Forget the cached folder map - the scan roots changed (a library folder was added or removed), so
 // an id that could not be resolved before may be resolvable now.
 module.exports.forgetLocalInstallIndex = () => localInstallIndexCache.clear();
 
 // Per-game Steam schema caches the app writes for every game it displays. A game you blacklisted is
 // by definition a game the app had already listed, so its schema is almost always sitting right
-// here — unlike the 250k-row appList dump, which only exists once GetAppList has answered at least
+// here - unlike the 250k-row appList dump, which only exists once GetAppList has answered at least
 // once. Shared with the library's cross-source dedupe, which needs the same offline name.
 function lookupSchemaCacheName(userDataDir, id) {
   return require(path.join(__dirname, '../util/gameNameCache.js')).lookupSchemaCacheName(userDataDir, id);
@@ -223,7 +223,7 @@ module.exports.setName = async (appid, name) => {
   return true;
 };
 
-// User exclusions only (what the Settings blacklist manager shows) — the builtin/server lists are
+// User exclusions only (what the Settings blacklist manager shows) - the builtin/server lists are
 // not the user's to edit. Missing names are backfilled offline and, once resolved, written back to
 // the sidecar so the next render is instant.
 module.exports.getUserDetailed = async () => {
@@ -288,7 +288,7 @@ module.exports.add = async (appid, name) => {
     } else {
       debug.log('Already blacklisted.');
     }
-    // Capture the title BEFORE dropping the game from gameIndex below — that index is the only
+    // Capture the title BEFORE dropping the game from gameIndex below - that index is the only
     // local record of a non-Steam id's name, so resolving afterwards would always come up empty and
     // the entry would be stuck rendering as a bare id in the Settings manager forever.
     const resolved = String(name || '').trim() || resolveNameOffline(appid);

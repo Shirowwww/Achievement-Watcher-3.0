@@ -31,7 +31,7 @@ function addKey(obj, key, value) {
   } else obj[key] = value;
 }
 
-// Keep the on-disk value type available (non-enumerable) — float stats need it to decode.
+// Keep the on-disk value type available (non-enumerable) - float stats need it to decode.
 function recordKeyType(obj, key, type) {
   if (!obj || !key) return;
   if (!Object.prototype.hasOwnProperty.call(obj, '__kvTypes')) {
@@ -242,7 +242,7 @@ function inferStatIdAndBit(pathArr) {
   return { statId: null, bit: null };
 }
 
-// [{api, displayName, description, hidden, icon, icon_gray, statId, bit, progress*}] — displayName
+// [{api, displayName, description, hidden, icon, icon_gray, statId, bit, progress*}] - displayName
 // and description stay language-keyed objects here; pick with `lang` at the call site.
 function extractSchemaAchievements(schemaRootObj) {
   const results = [];
@@ -287,7 +287,7 @@ function extractSchemaAchievements(schemaRootObj) {
       }
     }
 
-    // Legacy shape: name+bit inferred from the numeric path. Never inside a bits subtree — that's
+    // Legacy shape: name+bit inferred from the numeric path. Never inside a bits subtree - that's
     // the modern branch's territory, and a display node whose name is a plain string would
     // otherwise produce a phantom entry (upstream has this bug; fixed here).
     if (typeof node.name === 'string' && node.name && !node.bits && !pathArr.includes('bits')) {
@@ -414,7 +414,7 @@ function listUserBins(statsDir, appid) {
 
 // Read a legit game's unlock state entirely from the local appcache. Returns the same array shape
 // as the network user-stats fetchers ([{apiname, achieved, unlocktime, progress?, max_progress?}]),
-// or null when either bin is missing/unreadable — callers fall back to the network path.
+// or null when either bin is missing/unreadable - callers fall back to the network path.
 function readLocalUserStats({ statsDir, appid, accountId } = {}) {
   try {
     const schemaBin = path.join(String(statsDir || ''), `UserGameStatsSchema_${appid}.bin`);

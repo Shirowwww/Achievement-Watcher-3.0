@@ -1,7 +1,7 @@
 'use strict';
 
 // getLocalAchievementSchema falls back to the emulator's own steam_settings/achievements.json
-// (Goldberg / GBE Fork) when there is no TENOKE schema — so cracked, brand-new titles that aren't on
+// (Goldberg / GBE Fork) when there is no TENOKE schema - so cracked, brand-new titles that aren't on
 // SteamHunters yet still surface their real achievement names/descriptions/icons offline.
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
@@ -61,7 +61,7 @@ test('handles plain-string fields and hidden coercion', () => {
 });
 
 test('ignores a Goldberg SAVE file (object, not array) and returns []', () => {
-  // The unlock-state file has the same name but is an object keyed by apiname — never a schema.
+  // The unlock-state file has the same name but is an object keyed by apiname - never a schema.
   const dir = gameDirWith({ ACH_WIN: { earned: true, earned_time: 123 } });
   assert.deepEqual(steam.getLocalAchievementSchema(dir, '3751950', 'english'), []);
 });
