@@ -185,6 +185,34 @@ const overlayHotkey = new GlobalHotkey({ debug });
 let runningGames = [];
 const localProgressSchemaCache = new Map();
 
+/*
+  Heartbeat. The app supervises this process over the same IPC channel, but a live channel only
+  proves the process still EXISTS - a monitor whose event loop is wedged (a blocking native call, a
+  runaway sync loop) keeps its channel and its named pipe open while tracking nothing. A
+  timer-driven ping is the one signal that distinguishes the two, because a blocked loop stops
+  firing it. The app turns a missing beat into the "not responding" state (see getWatchdogState in
+  app/electron/init.js).
+*/
+const HEARTBEAT_INTERVAL_MS = 5000;
+
+function sendHeartbeat() {
+  if (typeof process.send !== 'function' || !process.connected) return;
+  try {
+    process.send({ heartbeat: { at: Date.now() } });
+  } catch {
+    // The channel closed under us (the app is quitting). Its own exit handling covers this; a log
+    // line here would fire every 5s for the rest of the shutdown.
+  }
+}
+
+function startHeartbeat() {
+  sendHeartbeat(); // report responsive at once instead of one interval late
+  const timer = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS);
+  // Never let the heartbeat alone hold this process open: it must exit when its real work is done.
+  if (typeof timer.unref === 'function') timer.unref();
+  return timer;
+}
+
 // Tell the app how many games are running so updates can wait.
 function forwardGameActivity() {
   if (typeof process.send !== 'function' || !process.connected) return;
@@ -1158,6 +1186,10 @@ var app = {
 (async () => {
   try {
     await instance.lock();
+
+    // Only once the single-instance lock is held: a second copy that is about to exit must not
+    // report itself as the live monitor.
+    startHeartbeat();
 
     // Start WQL before other COM clients initialize security.
     const playtimeMonitorReady = playtimeMonitor

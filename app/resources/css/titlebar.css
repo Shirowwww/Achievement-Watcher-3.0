@@ -34,21 +34,30 @@
   background: inherit;
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  /* Only pulse while the watchdog is starting/checking (orange): a permanent pulse
+  /* Only pulse while the watchdog is starting (status-pulse): a permanent pulse
      on the steady green dot keeps the GPU compositor busy forever (~100% of one core
-     on some machines) for zero user value. */
+     on some machines) for zero user value. The pulse is also what separates the two
+     orange states - a starting watchdog pulses, one that has stopped responding does
+     not - so it is bound to its own class rather than to the colour. */
   opacity: 0;
   animation: none;
 }
 
-.sf-indicator .status-dot.status-orange::before,
-.sf-indicator .status-dot.status-orange::after {
+.sf-indicator .status-dot.status-pulse::before,
+.sf-indicator .status-dot.status-pulse::after {
   opacity: 0.3;
   animation: sf-indicator-pulse 2s infinite linear;
 }
 
-.sf-indicator .status-dot.status-orange::after {
+.sf-indicator .status-dot.status-pulse::after {
   animation-delay: 1s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-indicator .status-dot.status-pulse::before,
+  .sf-indicator .status-dot.status-pulse::after {
+    animation: none;
+  }
 }
 
 @keyframes sf-indicator-pulse {

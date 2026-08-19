@@ -4,6 +4,7 @@ const path = require('path');
 const { app } = require('electron');
 const { APP_DATA_DIR_NAME } = require('../util/userDataPath.js');
 const { migrateLegacyUserData, migrateAw3UserData, migrateSouvenirFolder, retargetBackupIndex } = require('../util/migrateUserData.js');
+const { deriveWatchdogState } = require('../util/watchdogState.js');
 app.setName('Achievement Watcher');
 // Keep 3.x data separate from the legacy folder; --user-data-dir still overrides it for tests.
 const cliUserDataDir = (() => {
@@ -1715,11 +1716,30 @@ let monitorRespawnTimer = null;
 let watchdogStatusInterval = null;
 let monitorRespawnDelay = 3000;
 let watchdogSwept = false;
+let monitorStartedAt = 0;
+let monitorHeartbeatAt = 0;
+
+// What to show on the title-bar indicator. Null means "no supervised child to speak for" (a dev
+// run, or the gap between a crash and its respawn) and the caller falls back to the named-pipe
+// probe. See util/watchdogState.js for why the heartbeat beats the probe when we do have a child.
+function getWatchdogState() {
+  return deriveWatchdogState({
+    alive: Boolean(monitorProc && monitorProc.exitCode === null && !monitorProc.killed),
+    startedAt: monitorStartedAt,
+    heartbeatAt: monitorHeartbeatAt,
+  });
+}
 
 // Route a monitor IPC message. It sends { argv: ['--wintype=overlay'|'notification', ...] } in place
 // of the legacy `Achievement Watcher.exe --wintype=...` spawn; feed it through the existing dispatch.
 function handleMonitorMessage(msg) {
   try {
+    // Checked first: this is by far the most frequent message, and it must be recorded even while
+    // something below it would throw.
+    if (msg && msg.heartbeat) {
+      monitorHeartbeatAt = Date.now();
+      return;
+    }
     if (msg && Array.isArray(msg.argv)) parseArgs(minimist(msg.argv));
     else if (msg && msg.overlayControl) handleOverlayControl(msg.overlayControl.action, msg.overlayControl.payload);
     else if (msg && msg.gameActivity) setGameActivity(msg.gameActivity.count);
@@ -1860,6 +1880,10 @@ function launchWatchdog() {
       stdio: ['ignore', 'pipe', 'pipe', 'ipc'], // 'ipc' => process.send()/'message' in the child
     });
     monitorProc = child;
+    // Reset before any beat can arrive: a stale timestamp from the previous child would make a
+    // freshly spawned monitor look instantly healthy (or instantly wedged).
+    monitorStartedAt = Date.now();
+    monitorHeartbeatAt = 0;
     child.stdout?.on('data', (d) => debug.log(`[monitor] ${String(d).trimEnd()}`));
     child.stderr?.on('data', (d) => debug.log(`[monitor:err] ${String(d).trimEnd()}`));
     child.on('message', handleMonitorMessage);
@@ -3155,10 +3179,14 @@ function createMainWindow() {
       // is no auto-launch here. Stored + cleared on window close so repeated open/close never leaks
       // intervals.
       clearInterval(watchdogStatusInterval);
+      const sendWatchdogStatus = (state) => {
+        if (MainWin) MainWin.webContents.send('watchdog-status', state);
+      };
       watchdogStatusInterval = setInterval(() => {
-        checkWatchdogStatus((running) => {
-          if (MainWin) MainWin.webContents.send('watchdog-status', running);
-        });
+        const state = getWatchdogState();
+        if (state) return sendWatchdogStatus(state);
+        // No supervised child to read a heartbeat from; fall back to the pipe probe.
+        checkWatchdogStatus((running) => sendWatchdogStatus(running ? 'running' : 'stopped'));
       }, 5000);
     };
 
