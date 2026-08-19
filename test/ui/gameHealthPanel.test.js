@@ -207,3 +207,45 @@ test('the derivation module stays free of renderer and filesystem dependencies',
   // The call form the locale layer scans for; a match would mean wording had leaked into the logic.
   assert.doesNotMatch(source, /\bt\(\s*['"]/, 'user-visible wording is resolved by the renderer, not baked into the logic');
 });
+
+/*
+  The last-check stamp. Steam announces nothing when a game update adds achievements, so the list is
+  re-read on a three-day cadence and this line is the only place the panel admits how old what you
+  are looking at is. It navigates to the control that forces the check rather than running a
+  full-library rescan from a line of small print.
+*/
+
+test('the last-check stamp sits in the panel footer and is Advanced-only', () => {
+  const footer = document.querySelector('#game-health .gh-footer');
+  assert.ok(footer, 'the footer must exist to place the stamp opposite Technical details');
+  assert.ok(footer.querySelector('.gh-technical'), 'Technical details stays in the footer');
+
+  const stamp = footer.querySelector('.gh-verified');
+  assert.ok(stamp, 'the stamp belongs to the footer, not to the checks list');
+  assert.ok(stamp.hasAttribute('data-advanced'), 'the 3-day cadence is machinery Simple mode omits');
+  assert.ok(stamp.hasAttribute('hidden'), 'it must not flash unlabelled before the first report');
+  assert.equal(stamp.tagName, 'BUTTON', 'a control the keyboard can reach, not a bare span');
+});
+
+test('the Advanced attribute is honoured inside the game panel, not only in Settings', () => {
+  // #game-config is a sibling of #settings: a selector scoped to #settings never reaches the panel,
+  // which would leave anything marked advanced in there visible in Simple mode.
+  const settingsSource = fs.readFileSync(path.join(appDir, 'ui', 'settings.js'), 'utf8');
+  const gating = settingsSource.split('\n').find((line) => line.includes('ADVANCED_ATTRIBUTE}]`).toggleClass'));
+  assert.ok(gating, 'the mode gating line must still exist');
+  assert.ok(gating.includes('#game-config'), 'the gating has to reach the per-game panel');
+
+  const css = fs.readFileSync(path.join(appDir, 'resources', 'css', 'app.css'), 'utf8');
+  assert.match(css, /#game-config \.mode-hidden/, 'and the class has to actually hide there');
+});
+
+test('the stamp navigates to the recheck setting instead of starting a library rescan', () => {
+  const handler = appSource.slice(appSource.indexOf("$('#game-health').on('click', '.gh-verified'"));
+  assert.ok(handler.startsWith("$('#game-health').on('click', '.gh-verified'"), 'the handler must exist');
+  const body = handler.slice(0, handler.indexOf('\n    });'));
+  assert.ok(body.includes("data-view='advanced'"), 'it opens the Advanced tab');
+  assert.ok(body.includes('#force-achievement-recheck'), 'and points at the control that forces the check');
+  assert.ok(!/onStart\(/.test(body), 'it must not run the rescan itself');
+  // The game panel sits above Settings, so leaving it open would hide the row just flashed.
+  assert.ok(body.includes('btn-game-config-cancel'), 'the game panel is closed first');
+});

@@ -97,8 +97,21 @@ window.addEventListener('unhandledrejection', (e) => {
     debug.error(`[unhandledrejection] ${(e.reason && e.reason.stack) || e.reason}`);
   } catch {}
 });
+/*
+  "ResizeObserver loop completed with undelivered notifications" is not an error.
+
+  Chromium raises it whenever an observer callback resizes something and the browser postpones the
+  remaining notifications to the next frame - which is ordinary behaviour for a responsive grid, and
+  the layout is already correct by then. It reaches window.onerror with no Error object and no stack,
+  so it was landing in the log at ERROR level and was the only thing in a user's exported log that
+  looked like a fault. Everything else is still reported unchanged.
+*/
+const BENIGN_WINDOW_ERRORS = [/^ResizeObserver loop /i];
+
 window.addEventListener('error', (e) => {
   try {
+    const message = String(e.message || '');
+    if (!e.error && BENIGN_WINDOW_ERRORS.some((pattern) => pattern.test(message))) return;
     debug.error(`[window.error] ${(e.error && e.error.stack) || e.message}`);
   } catch {}
 });
@@ -2174,6 +2187,10 @@ var app = {
                     skipped: repaired.icons.skipped,
                   })
                 );
+                // A whole set that 404s is Steam not having published the art yet, not a broken
+                // install. Without this the report is a bare "150 failed" and the user goes
+                // hunting for a fault in their game folder that is not there.
+                if (repaired.icons.unavailable) lines.push(t('diagnosis-icons-unavailable', 'Steam has no achievement artwork for this game yet, so no icon could be downloaded. The achievement list itself is complete; run the repair again once the artwork is published.', "Steam n'a pas encore d'illustrations de succès pour ce jeu : aucune icône n'a pu être téléchargée. La liste des succès est complète ; relancez la réparation une fois les illustrations publiées."));
                 if (repaired.wroteAppId) lines.push(t('diagnosis-steam-appid-created', 'steam_appid.txt created', 'steam_appid.txt créé'));
                 if (repaired.main && repaired.main.changed) {
                   lines.push(t('diagnosis-configs-main-updated', 'configs.main.ini updated (new_app_ticket + gc_token)', 'configs.main.ini mis à jour (new_app_ticket + gc_token)'));
@@ -2230,6 +2247,7 @@ var app = {
                         failed: summary.icons.failed,
                         skipped: summary.icons.skipped,
                       }) +
+                      (summary.icons.unavailable ? '\n' + t('diagnosis-icons-unavailable', 'Steam has no achievement artwork for this game yet, so no icon could be downloaded. The achievement list itself is complete; run the repair again once the artwork is published.', "Steam n'a pas encore d'illustrations de succès pour ce jeu : aucune icône n'a pu être téléchargée. La liste des succès est complète ; relancez la réparation une fois les illustrations publiées.") : '') +
                       (summary.wroteAppId ? '\n' + t('diagnosis-steam-appid-created', 'steam_appid.txt created', 'steam_appid.txt créé') : '') +
                       (summary.main && summary.main.changed ? '\n' + t('diagnosis-configs-main-updated', 'configs.main.ini updated (new_app_ticket + gc_token)', 'configs.main.ini mis à jour (new_app_ticket + gc_token)') : '') +
                       (summary.dlc
@@ -4826,7 +4844,15 @@ var app = {
     // Health opens first: it answers "is this game ready" without the user knowing which tab to
     // look in. The executable configuration is one click away and still loads below either way.
     setGameConfigView('health');
-    renderGameHealth(appid);
+
+    /*
+      Resolve (and persist) the executable BEFORE the report is collected.
+
+      renderGameHealth() reads the same exeList this block writes to. Started first - it used to be
+      fired un-awaited right here - it raced the auto-detection below and almost always won, so the
+      report was built from the pre-detection state and announced "no executable" for a game whose
+      Executable tab showed a perfectly good detected path one click away.
+    */
     let cfg = await exeList.get(appid);
     if (!cfg?.exe || cfg.exe === '' || !fs.existsSync(cfg.exe)) {
       const game = gameList.find((g) => g.appid == appid);
@@ -4839,6 +4865,7 @@ var app = {
         await exeList.add(cfg);
       }
     }
+    renderGameHealth(appid);
     let exeLbl = $('#game-config').find('.constant');
     let argsInput = $('#launch-args');
     exeLbl.attr('title', cfg.exe);
@@ -4860,6 +4887,17 @@ var app = {
     cfg.exe = exeLbl.text();
     cfg.args = argsInput.val() === undefined ? '' : argsInput.val();
     await exeList.add(cfg);
+    /*
+      Carry the choice into the in-memory game too. exeList is the persisted truth, but the loaded
+      gameList entry is what the rest of this session reads - Game Health's own fallback, "Track this
+      game", the play button. Left stale, picking the executable by hand looked like it did nothing
+      until the next full library scan.
+    */
+    const chosen = gameList.find((g) => g.appid == appid);
+    if (chosen && cfg.exe) {
+      chosen.exe = cfg.exe;
+      chosen.exeConfident = true;
+    }
     this.onGameConfigCancelClick(self);
   },
 };
@@ -4919,6 +4957,8 @@ async function collectGameHealthSignals(appid) {
 
   const gameDir = game.gameDir || '';
   const gameDirExists = !!gameDir && fs.existsSync(gameDir);
+  // steam.js stamps this on the cached schema every time it re-reads the list from Steam.
+  const achievementsCheckedAt = Number(game.descBackfilledAt) || 0;
   const exe = cfg.exe || (game.exeConfident ? game.exe : '') || '';
   const source = String(game.source || '');
   const system = String(game.system || '');
@@ -4988,6 +5028,7 @@ async function collectGameHealthSignals(appid) {
     exeExists: !!exe && fs.existsSync(exe),
     achievements: { total: (game.achievement && game.achievement.total) || 0, unlocked: (game.achievement && game.achievement.unlocked) || 0 },
     emulated,
+    achievementsCheckedAt,
     saveSources,
     goldberg: goldbergReport,
     uplay: uplayReport,
@@ -5233,6 +5274,7 @@ function gameHealthCheckValue(entry, simple) {
       return [p.appid, p.source].filter(Boolean).join(' · ') || missing;
     case 'achievement-data':
       if (p.missing) return t('gh-value-missing-entries', '{missing} of {total} missing from the emulator file', '{missing} sur {total} absents du fichier de l’émulateur', p);
+      if (p.missingIcons && p.iconsUnavailable) return t('gh-value-icons-unavailable', 'icons not published by Steam yet', 'illustrations pas encore publiées par Steam', p);
       if (p.missingIcons) return t('gh-value-missing-icons', '{missingIcons} icons not downloaded', '{missingIcons} icônes non téléchargées', p);
       if (p.total || p.found) return t('gh-value-achievements', '{total} achievements', '{total} succès', { total: p.total || p.found });
       return missing;
@@ -5326,6 +5368,80 @@ function paintGameHealth(report) {
   root.find('.gh-technical-label').text(t('gh-technical', 'Technical details', 'Détails techniques'));
   root.find('.gh-copy').html(`<i class="fas fa-copy"></i> ${escapeHtml(t('gh-copy', 'Copy', 'Copier'))}`);
   root.find('.gh-technical-dump').text(JSON.stringify(report.technical, null, 2));
+  paintGameHealthVerified(root, report);
+}
+
+/*
+  "Achievements checked N days ago", bottom right of the panel, linking to the control that forces
+  the check now.
+
+  Steam announces nothing when a game update adds achievements, so the list is re-read on a 3-day
+  cadence (steam.js, descBackfilledAt) and that stamp is the only honest answer to "is what I am
+  looking at current?". Advanced only: the cadence is machinery, and a Simple user is not being
+  asked to manage it.
+*/
+function gameHealthVerifiedLabel(stampMs) {
+  if (!stampMs) return t('gh-verified-never', 'Achievement list never checked', 'Liste des succès jamais vérifiée');
+  const days = Math.floor((Date.now() - stampMs) / 86400000);
+  if (days <= 0) return t('gh-verified-today', 'Achievements checked today', 'Succès vérifiés aujourd’hui');
+  if (days === 1) return t('gh-verified-yesterday', 'Achievements checked yesterday', 'Succès vérifiés hier');
+  return t('gh-verified-days', 'Achievements checked {days} days ago', 'Succès vérifiés il y a {days} jours', { days });
+}
+
+function paintGameHealthVerified(root, report) {
+  const el = root.find('.gh-verified');
+  if (!el.length) return;
+  // A negative or future stamp is a clock change, not a check: treat it as never rather than
+  // rendering "checked -3 days ago".
+  const raw = Number(report && report.technical && report.technical.achievementsCheckedAt) || 0;
+  const stamp = raw > 0 && raw <= Date.now() ? raw : 0;
+  el.text(gameHealthVerifiedLabel(stamp));
+  el.attr('title', t('gh-verified-hint', 'Open the setting that rechecks achievement lists', 'Ouvrir le réglage qui revérifie les listes de succès'));
+  el.removeAttr('hidden');
+}
+
+/*
+  Drive the Game Health repair progress bar.
+
+  "Repair the achievement data" downloads two icons per achievement, so on a large game it can sit
+  for a minute with the panel frozen and no sign it is doing anything - which reads as a hang. The
+  phases that have a countable unit of work (the icons) fill the bar; the ones that do not (backup,
+  schema and config writes) switch it to an indeterminate sweep rather than inventing a percentage.
+*/
+const GAME_HEALTH_PROGRESS_LABEL = {
+  backup: () => t('gh-progress-backup', 'Backing up the current files…', 'Sauvegarde des fichiers actuels…'),
+  icons: () => t('gh-progress-icons', 'Downloading achievement icons…', 'Téléchargement des icônes de succès…'),
+  schema: () => t('gh-progress-schema', 'Writing the achievement list…', 'Écriture de la liste des succès…'),
+  config: () => t('gh-progress-config', 'Writing the emulator settings…', 'Écriture des réglages de l’émulateur…'),
+};
+
+function setGameHealthProgress(progress) {
+  const box = $('#game-health').find('.gh-progress');
+  if (!box.length) return;
+  if (!progress || progress.phase === 'done') {
+    box.attr('hidden', 'hidden').removeAttr('data-indeterminate');
+    box.find('.gh-progress-fill').css('width', '0%');
+    box.find('.gh-progress-count').text('');
+    return;
+  }
+  const { phase, done = 0, total = 0 } = progress;
+  const label = GAME_HEALTH_PROGRESS_LABEL[phase];
+  box.removeAttr('hidden');
+  box.find('.gh-progress-label').text(label ? label() : '');
+  // total 0 means "no countable work here", which is not the same as "0 of 0 done".
+  const determinate = Number(total) > 0;
+  const track = box.find('.gh-progress-track');
+  if (determinate) {
+    const percent = Math.max(0, Math.min(100, Math.round((Number(done) / Number(total)) * 100)));
+    box.removeAttr('data-indeterminate');
+    box.find('.gh-progress-fill').css('width', `${percent}%`);
+    box.find('.gh-progress-count').text(`${done} / ${total}`);
+    track.attr('aria-valuenow', String(percent));
+  } else {
+    box.attr('data-indeterminate', 'true');
+    box.find('.gh-progress-count').text('');
+    track.removeAttr('aria-valuenow');
+  }
 }
 
 async function renderGameHealth(appid) {
@@ -5338,6 +5454,7 @@ async function renderGameHealth(appid) {
   root.find('.gh-explanation').text('');
   root.find('.gh-checks').empty();
   root.find('.gh-actions').empty();
+  setGameHealthProgress(null);
 
   try {
     const signals = await collectGameHealthSignals(appid);
@@ -5511,31 +5628,69 @@ async function runGameHealthAction(appid, action, button) {
     if (confirmed !== 1) return false;
 
     const request = require('request-zero');
-    const summary = await gameHealthRepair.repairAchievementData({
-      goldberg,
-      plan,
-      appid: writableAppid,
-      schema: game,
-      downloadIcon: async (url, dir) => {
-        const r = await request.download(url, dir);
-        return r && r.path;
-      },
-      fetchDlc: (id) => steamParser.getDLCList(id),
-      accountName: app.config?.general?.username,
-      language: app.config?.achievement?.lang,
-      // An explicit repair must be able to clear NO_USER_CONFIG / BAD_USER_CONFIG. Without this the
-      // file was only written when the app had a username or language to stamp into it, so on a
-      // default install the repair skipped it entirely and both warnings survived every run.
-      fillUserDefaults: true,
-    });
-    remote.dialog.showMessageBoxSync(remote.getCurrentWindow(), {
+    /*
+      Coalesce the per-icon updates: a big game reports several hundred of them, and re-laying out
+      the panel that many times is the one thing that would actually make the repair feel slower.
+
+      Throttled on a timestamp rather than requestAnimationFrame on purpose. rAF callbacks are not
+      dependable in this app's windows - Chromium's backgroundThrottling stops delivering them when
+      the window is not being composited, and a progress bar that silently stops updating is worse
+      than one that updates a little coarsely. A phase change always paints, so the label never lags
+      behind what the repair is really doing.
+    */
+    const PROGRESS_PAINT_MS = 80;
+    let lastProgressPaint = 0;
+    let lastProgressPhase = '';
+    const pushProgress = (progress) => {
+      const now = Date.now();
+      const phaseChanged = progress && progress.phase !== lastProgressPhase;
+      const finished = progress && (progress.phase === 'done' || (progress.total > 0 && progress.done >= progress.total));
+      if (!phaseChanged && !finished && now - lastProgressPaint < PROGRESS_PAINT_MS) return;
+      lastProgressPaint = now;
+      lastProgressPhase = progress ? progress.phase : '';
+      setGameHealthProgress(progress);
+    };
+    setGameHealthProgress({ phase: 'backup', done: 0, total: 0 });
+    // try/finally, not a plain await: a repair that throws must still take the bar down with it,
+    // otherwise the panel is left showing progress for something that already stopped.
+    let summary;
+    try {
+      summary = await gameHealthRepair.repairAchievementData({
+        goldberg,
+        plan,
+        appid: writableAppid,
+        schema: game,
+        onProgress: pushProgress,
+        downloadIcon: async (url, dir) => {
+          const r = await request.download(url, dir);
+          return r && r.path;
+        },
+        fetchDlc: (id) => steamParser.getDLCList(id),
+        accountName: app.config?.general?.username,
+        language: app.config?.achievement?.lang,
+        // An explicit repair must be able to clear NO_USER_CONFIG / BAD_USER_CONFIG. Without this
+        // the file was only written when the app had a username or language to stamp into it, so on
+        // a default install the repair skipped it entirely and both warnings survived every run.
+        fillUserDefaults: true,
+      });
+    } finally {
+      setGameHealthProgress(null);
+    }
+    /*
+      Async dialog, not showMessageBoxSync: the sync one freezes the renderer on the spot, so the
+      bar keeps whatever frame it last painted. The 80ms paint throttle means that frame is some
+      arbitrary mid-count - a repair that gave up early left "17 / 150" sitting behind the modal,
+      reading as a hang. Awaiting the async form lets the hide above reach the screen first.
+    */
+    await remote.dialog.showMessageBox(remote.getCurrentWindow(), {
       type: 'info',
       title: t('repair-complete', 'Repair complete', 'Réparation terminée'),
       message: t('repair-complete-message', 'Wrote {count} achievements to {path}', '{count} succès écrits dans {path}', {
         count: summary.achievementsJson.length,
         path: summary.steamSettings,
       }),
-      detail: t('diagnosis-icons-summary', 'icons: {downloaded} downloaded, {failed} failed, {skipped} skipped', 'icônes : {downloaded} téléchargées, {failed} en échec, {skipped} ignorées', summary.icons),
+      detail: t('diagnosis-icons-summary', 'icons: {downloaded} downloaded, {failed} failed, {skipped} skipped', 'icônes : {downloaded} téléchargées, {failed} en échec, {skipped} ignorées', summary.icons)
+        + (summary.icons.unavailable ? '\n' + t('diagnosis-icons-unavailable', 'Steam has no achievement artwork for this game yet, so no icon could be downloaded. The achievement list itself is complete; run the repair again once the artwork is published.', "Steam n'a pas encore d'illustrations de succès pour ce jeu : aucune icône n'a pu être téléchargée. La liste des succès est complète ; relancez la réparation une fois les illustrations publiées.") : ''),
       noLink: true,
     });
     return true;
@@ -5606,6 +5761,28 @@ async function runGameHealthAction(appid, action, button) {
       const icon = $(this).find('i');
       icon.attr('class', 'fas fa-check');
       setTimeout(() => icon.attr('class', 'fas fa-copy'), 1200);
+    });
+
+    /*
+      The last-check stamp navigates to the control that forces the check; it does not run it.
+
+      Running a full-library rescan from a per-game panel would be a surprising amount of work to
+      start from a line of small print, and the setting it points at already explains the cadence
+      and reports its own progress. Closing the game panel first is what makes the jump visible:
+      #game-config sits above #settings, so leaving it open would hide the row we just flashed.
+    */
+    $('#game-health').on('click', '.gh-verified', function () {
+      $('#btn-game-config-cancel').trigger('click');
+      $('title-bar').trigger('open-settings');
+      $("#settingNav li[data-view='advanced']").trigger('click');
+      const row = $('#force-achievement-recheck').closest('li');
+      if (!row.length) return;
+      row[0].scrollIntoView({ block: 'center', behavior: 'smooth' });
+      row.removeClass('gh-jump-flash');
+      // Reflow between removal and re-add, or re-clicking the link would not replay the animation.
+      void row[0].offsetWidth;
+      row.addClass('gh-jump-flash');
+      setTimeout(() => row.removeClass('gh-jump-flash'), 2000);
     });
 
     $('#game-health').on('click', '[data-gh-action]', async function () {
@@ -5848,7 +6025,7 @@ async function runGameHealthAction(appid, action, button) {
                 : undefined;
             for (const steamSettingsDir of repairDirs) {
               if (!steamSettingsDir) continue;
-              await goldberg.repair({
+              const summary = await goldberg.repair({
                 steamSettings: steamSettingsDir,
                 appid: game.appid,
                 schema,
@@ -5857,6 +6034,13 @@ async function runGameHealthAction(appid, action, button) {
                 accountName: app.config.general && app.config.general.username,
                 language: app.config.achievement && app.config.achievement.lang,
               });
+              // The bulk pass has no per-game dialog to report into, so the log is the only record.
+              // Worth keeping: it is the one path that can repair dozens of games in a row.
+              debug.log(
+                `[fix-all] ${game.appid} (${game.name}) wrote ${summary.achievementsJson.length} entries to ${steamSettingsDir}` +
+                  (downloadIcon ? ` + icons: ${summary.icons.downloaded} dl, ${summary.icons.failed} fail` : '') +
+                  (summary.icons.unavailable ? ' (no achievement artwork published for this appid yet)' : '')
+              );
               try {
                 goldberg.seedRuntimeSave({
                   appid: game.appid,

@@ -100,7 +100,7 @@ function applyInterfaceMode() {
   }
   // The group header above the advanced tabs would otherwise be left labelling nothing.
   $('#nav-group-advanced').toggleClass(hidden, simple);
-  $(`#settings [${interfaceMode.ADVANCED_ATTRIBUTE}]`).toggleClass(hidden, simple);
+  $(`#settings [${interfaceMode.ADVANCED_ATTRIBUTE}], #game-config [${interfaceMode.ADVANCED_ATTRIBUTE}]`).toggleClass(hidden, simple);
   applySourceVisibility(mode);
 
   // The header has no room for a caption, so what each side does is a tooltip on the side itself.

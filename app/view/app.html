@@ -2394,13 +2394,30 @@
                 </div>
                 <ul class="gh-checks"></ul>
                 <div class="gh-actions"></div>
-                <details class="gh-technical">
-                  <summary><i class="fas fa-microscope"></i> <span class="gh-technical-label"></span></summary>
-                  <div class="gh-technical-body">
-                    <pre class="gh-technical-dump"></pre>
-                    <button type="button" class="gh-copy inline-action-btn"></button>
+                <!-- Repair progress. Hidden until a repair starts; the bar switches to an
+                     indeterminate sweep for the phases that have no countable unit of work. -->
+                <div class="gh-progress" hidden>
+                  <div class="gh-progress-head">
+                    <span class="gh-progress-label"></span>
+                    <span class="gh-progress-count"></span>
                   </div>
-                </details>
+                  <div class="gh-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                    <div class="gh-progress-fill"></div>
+                  </div>
+                </div>
+                <div class="gh-footer">
+                  <details class="gh-technical">
+                    <summary><i class="fas fa-microscope"></i> <span class="gh-technical-label"></span></summary>
+                    <div class="gh-technical-body">
+                      <pre class="gh-technical-dump"></pre>
+                      <button type="button" class="gh-copy inline-action-btn"></button>
+                    </div>
+                  </details>
+                  <!-- When the achievement list was last rechecked against Steam, and a way to force
+                       it. Advanced only: the 3-day self-repair is machinery a Simple user never has
+                       to think about. data-advanced is honoured here as it is in #settings. -->
+                  <button type="button" class="gh-verified" data-advanced hidden></button>
+                </div>
               </div>
             </section>
 

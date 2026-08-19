@@ -553,3 +553,23 @@ test('the repairable-code list covers the account config the repair now always w
     assert.ok(REPAIRABLE_GOLDBERG_CODES.has(code), `${code} must be answerable by the repair button`);
   }
 });
+
+test('artwork Steam has not published is a statement, not a repair the user can run', () => {
+  const iconsMissing = (iconsUnavailable) =>
+    healthyGame({
+      goldberg: {
+        ...healthyGame().goldberg,
+        achievements: { expected: 63, found: 63, missing: [], missingIcons: new Array(126).fill('images/x.jpg'), iconsUnavailable },
+      },
+    });
+
+  const unavailable = checkFor(deriveHealth(iconsMissing(true)), 'achievement-data');
+  assert.equal(unavailable.level, LEVEL.INFO, 'an unrepairable fact must not sit at warning level');
+  assert.deepEqual(unavailable.actions || [], [], 'offering a repair that cannot work is the bug');
+  assert.equal(unavailable.params.iconsUnavailable, true, 'the renderer needs the reason to word the row');
+
+  // Icons that simply were never fetched keep their warning and their repair button.
+  const repairable = checkFor(deriveHealth(iconsMissing(false)), 'achievement-data');
+  assert.equal(repairable.level, LEVEL.WARN);
+  assert.ok((repairable.actions || []).includes(ACTION.REPAIR_DATA));
+});

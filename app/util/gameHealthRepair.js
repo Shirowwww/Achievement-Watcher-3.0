@@ -49,6 +49,8 @@ async function repairAchievementData({
   // Complete configs.user.ini even when the app has no name or language to stamp into it - the two
   // user-config warnings are listed as repairable, so the repair has to be able to clear them.
   fillUserDefaults = false,
+  // Passed straight to goldberg.repair(); see its onProgress for the phases and their counts.
+  onProgress = null,
 } = {}) {
   if (!plan || !plan.target) throw new Error('repairAchievementData: no steam_settings target resolved');
   return goldberg.repair({
@@ -60,6 +62,7 @@ async function repairAchievementData({
     accountName,
     language,
     fillUserDefaults,
+    onProgress,
   });
 }
 

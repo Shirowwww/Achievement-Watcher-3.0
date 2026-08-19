@@ -188,6 +188,11 @@ function achievementDataCheck(signals) {
       });
     }
     if (missingIcons.length > 0) {
+      // Steam has no achievement artwork for this appid yet: the list is complete and REPAIR_DATA
+      // has nothing left to fetch, so this is something to know, not something to fix.
+      if (goldberg.achievements && goldberg.achievements.iconsUnavailable) {
+        return check('achievement-data', LEVEL.INFO, { params: { total, missingIcons: missingIcons.length, iconsUnavailable: true } });
+      }
       return check('achievement-data', LEVEL.WARN, {
         params: { total, missingIcons: missingIcons.length },
         actions: [ACTION.REPAIR_DATA],
@@ -421,6 +426,9 @@ function buildTechnical(signals) {
       unlocked: num(signals.achievements && signals.achievements.unlocked),
     },
     emulated: !!signals.emulated,
+    // When the achievement list was last re-read from Steam (steam.js descBackfilledAt, every 3
+    // days). 0 means never checked, which is a different answer from "checked and unchanged".
+    achievementsCheckedAt: num(signals.achievementsCheckedAt),
     processTracking: signals.processTracking !== false,
     saveSources: Array.isArray(signals.saveSources) ? signals.saveSources : [],
     goldberg: goldberg
