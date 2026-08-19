@@ -85,6 +85,80 @@ function isTruthyFlag(v) {
   return false;
 }
 
+// Reduce one raw save-file entry to {Achieved, CurProgress, MaxProgress?, UnlockTime}.
+//
+// Every local save format - Goldberg/GSE, RLD!, RUNE/Codex, 3DM, TENOKE, CreamAPI, UniverseLAN -
+// funnels through here, which is why the key aliases are so long: each emulator picked its own
+// spelling for the same two facts. Pure, and exported through _internal, so a format's quirks can
+// be pinned by a test instead of only through a full scan.
+function normalizeSaveEntry(entry, source) {
+  // Does this entry carry an explicit unlocked/locked flag? Newer emu save formats
+  // (e.g. UniverseLAN for GOG) write every achievement with Unlocked=true/false, so we
+  // must trust that flag rather than assume "present == unlocked" (issue #48).
+  const hasExplicitState =
+    entry != null &&
+    typeof entry === 'object' &&
+    ['Achieved', 'achieved', 'State', 'HaveAchieved', 'Unlocked', 'unlocked', 'earned'].some((k) => k in entry);
+
+  // A non-object entry (e.g. the bare '1' some saves write) has no fields to read; guard the
+  // property access rather than special-casing it in every alias chain below.
+  const fields = entry != null && typeof entry === 'object' ? entry : {};
+
+  // Leave MaxProgress unset (rather than defaulting to 0) when the save file itself doesn't
+  // carry one: Object.assign at the call site would otherwise stamp achievement.MaxProgress = 0 and
+  // permanently hide the schema's own max_progress (app.js reads `MaxProgress ?? max_progress`,
+  // and 0 is not nullish, so the schema fallback never kicks in once a 0 is written).
+  const rawMaxProgress = fields.MaxProgress || fields.max_progress;
+  const parsed = {
+    Achieved:
+      isTruthyFlag(fields.Achieved) ||
+      isTruthyFlag(fields.achieved) ||
+      fields.State == 1 ||
+      isTruthyFlag(fields.HaveAchieved) ||
+      isTruthyFlag(fields.Unlocked) ||
+      isTruthyFlag(fields.unlocked) ||
+      isTruthyFlag(fields.earned) ||
+      entry === '1'
+        ? true
+        : false,
+    CurProgress: fields.CurProgress || fields.progress || 0,
+    ...(rawMaxProgress ? { MaxProgress: rawMaxProgress } : {}),
+    UnlockTime:
+      fields.UnlockTime ||
+      fields.unlocktime ||
+      fields.HaveAchievedTime ||
+      fields.HaveHaveAchievedTime ||
+      fields.Time ||
+      fields.earned_time ||
+      fields.unlock_time ||
+      fields.timestamp ||
+      0,
+  };
+
+  //CODEX Gears5 (09/2019) && Gears tactics (05/2020): progress maxed out but the
+  //Achieved flag was never written -> treat a fully completed progress bar as unlocked.
+  if (!parsed.Achieved && parsed.MaxProgress != 0 && parsed.CurProgress != 0 && parsed.MaxProgress == parsed.CurProgress) {
+    parsed.Achieved = true;
+  }
+
+  //RLD! writes no achieved flag of any kind: an entry carries only its timestamps, and a locked
+  //achievement is written with Time=0. Without this, every achievement from such a save reads as
+  //locked. Restricted to entries with no explicit flag at all, so a format that does say
+  //Unlocked=false is never overridden by a stray timestamp.
+  if (!parsed.Achieved && !hasExplicitState && Number(parsed.UnlockTime) > 0) {
+    parsed.Achieved = true;
+  }
+
+  //Legacy GOG/Epic emu saves list ONLY unlocked achievements with no explicit flag, so a
+  //bare entry means "unlocked". But formats that DO carry an explicit Unlocked=true/false
+  //(e.g. UniverseLAN) must be trusted instead of blanket-unlocking everything (issue #48).
+  if ((source === 'gog' || source === 'epic') && !hasExplicitState) {
+    parsed.Achieved = true;
+  }
+
+  return parsed;
+}
+
 // Normalize source names and fall back to the appid when needed.
 function normalizeGameName(name, appid) {
   if (typeof name === 'string') return name;
@@ -2746,57 +2820,7 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
             let achievement = findAchievementInSchema(schemaIndex, root[i], i);
             if (!achievement) throw 'ACH_NOT_FOUND_IN_SCHEMA';
 
-            // Does this entry carry an explicit unlocked/locked flag? Newer emu save formats
-            // (e.g. UniverseLAN for GOG) write every achievement with Unlocked=true/false, so we
-            // must trust that flag rather than assume "present == unlocked" (issue #48).
-            const hasExplicitState =
-              root[i] != null &&
-              typeof root[i] === 'object' &&
-              ['Achieved', 'achieved', 'State', 'HaveAchieved', 'Unlocked', 'unlocked', 'earned'].some((k) => k in root[i]);
-
-            // Leave MaxProgress unset (rather than defaulting to 0) when the save file itself doesn't
-            // carry one: Object.assign below would otherwise stamp achievement.MaxProgress = 0 and
-            // permanently hide the schema's own max_progress (app.js reads `MaxProgress ?? max_progress`,
-            // and 0 is not nullish, so the schema fallback never kicks in once a 0 is written).
-            const rawMaxProgress = root[i].MaxProgress || root[i].max_progress;
-            let parsed = {
-              Achieved:
-                isTruthyFlag(root[i].Achieved) ||
-                isTruthyFlag(root[i].achieved) ||
-                root[i].State == 1 ||
-                isTruthyFlag(root[i].HaveAchieved) ||
-                isTruthyFlag(root[i].Unlocked) ||
-                isTruthyFlag(root[i].unlocked) ||
-                isTruthyFlag(root[i].earned) ||
-                root[i] === '1'
-                  ? true
-                  : false,
-              CurProgress: root[i].CurProgress || root[i].progress || 0,
-              ...(rawMaxProgress ? { MaxProgress: rawMaxProgress } : {}),
-              UnlockTime:
-                root[i].UnlockTime ||
-                root[i].unlocktime ||
-                root[i].HaveAchievedTime ||
-                root[i].HaveHaveAchievedTime ||
-                root[i].Time ||
-                root[i].earned_time ||
-                root[i].unlock_time ||
-                root[i].timestamp ||
-                0,
-            };
-
-            //CODEX Gears5 (09/2019) && Gears tactics (05/2020): progress maxed out but the
-            //Achieved flag was never written -> treat a fully completed progress bar as unlocked.
-            if (!parsed.Achieved && parsed.MaxProgress != 0 && parsed.CurProgress != 0 && parsed.MaxProgress == parsed.CurProgress) {
-              parsed.Achieved = true;
-            }
-
-            //Legacy GOG/Epic emu saves list ONLY unlocked achievements with no explicit flag, so a
-            //bare entry means "unlocked". But formats that DO carry an explicit Unlocked=true/false
-            //(e.g. UniverseLAN) must be trusted instead of blanket-unlocking everything (issue #48).
-            if ((game.source === 'gog' || game.source === 'epic') && !hasExplicitState) {
-              parsed.Achieved = true;
-            }
+            let parsed = normalizeSaveEntry(root[i], game.source);
 
             if (isDuplicate) {
               if (parsed.Achieved && !achievement.Achieved) {
@@ -3005,6 +3029,7 @@ module.exports.makeList = async (option, callbackProgress, onGame = () => {}) =>
 
 // Exposed for unit tests.
 module.exports._internal = {
+  normalizeSaveEntry,
   buildProvisionalGame,
   resolveLocalGameName,
   buildDiscoveryLookup,

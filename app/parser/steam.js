@@ -439,6 +439,25 @@ module.exports.getGameData = async (cfg) => {
   }
 };
 
+// An RLD! value is a 5-byte hex blob with no separators: the first 4 bytes are a little-endian
+// uint32 and the trailing byte is discarded. Some builds write no State key at all, which used to
+// leave Time as raw hex downstream. Only convert a value that CANNOT also be read as a decimal
+// timestamp - exactly 10 hex digits including at least one a-f. An all-digit blob is left alone:
+// "1712253396" is both valid hex and a real unix timestamp, and guessing wrong there would move a
+// genuine unlock date back to the 1990s.
+const RLD_BLOB = /^[0-9a-fA-F]{10}$/;
+
+function isUnambiguousRldBlob(value) {
+  const s = String(value);
+  return RLD_BLOB.test(s) && /[a-fA-F]/.test(s);
+}
+
+function decodeRldBlob(value) {
+  return new DataView(new Uint8Array(Buffer.from(String(value), 'hex')).buffer).getUint32(0, true);
+}
+
+module.exports._internal = Object.assign({}, module.exports._internal, { isUnambiguousRldBlob, decodeRldBlob });
+
 module.exports.getAchievementsFromFile = async (filePath) => {
   try {
     const files = [
@@ -550,10 +569,19 @@ module.exports.getAchievementsFromFile = async (filePath) => {
           //RLD!
           try {
             //uint32 little endian
-            result[i].State = new DataView(new Uint8Array(Buffer.from(result[i].State.toString(), 'hex')).buffer).getUint32(0, true);
-            result[i].CurProgress = new DataView(new Uint8Array(Buffer.from(result[i].CurProgress.toString(), 'hex')).buffer).getUint32(0, true);
-            result[i].MaxProgress = new DataView(new Uint8Array(Buffer.from(result[i].MaxProgress.toString(), 'hex')).buffer).getUint32(0, true);
-            result[i].Time = new DataView(new Uint8Array(Buffer.from(result[i].Time.toString(), 'hex')).buffer).getUint32(0, true);
+            result[i].State = decodeRldBlob(result[i].State);
+            result[i].CurProgress = decodeRldBlob(result[i].CurProgress);
+            result[i].MaxProgress = decodeRldBlob(result[i].MaxProgress);
+            result[i].Time = decodeRldBlob(result[i].Time);
+          } catch (e) {}
+        } else if (result[i] && typeof result[i] === 'object' && isUnambiguousRldBlob(result[i].Time)) {
+          // RLD! build that writes no State key: the unlock is carried by Time alone, and
+          // achievements.js turns a non-zero Time into Achieved (a locked entry is written Time=0).
+          // Without decoding it here that timestamp reaches the normalizer as raw hex.
+          try {
+            result[i].Time = decodeRldBlob(result[i].Time);
+            if (isUnambiguousRldBlob(result[i].CurProgress)) result[i].CurProgress = decodeRldBlob(result[i].CurProgress);
+            if (isUnambiguousRldBlob(result[i].MaxProgress)) result[i].MaxProgress = decodeRldBlob(result[i].MaxProgress);
           } catch (e) {}
         } else if (result[i].unlocktime && result[i].unlocktime.length === 7) {
           //creamAPI
