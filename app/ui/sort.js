@@ -181,6 +181,8 @@ function applyAchievementSort(root, mode, direction) {
   });
 
   elem.prepend(li);
+  // Rows moved, so the rare halos that were running are no longer the ones on screen.
+  if (typeof window.scheduleRareGlowRefresh === 'function') window.scheduleRareGlowRefresh(0);
   root.find('.header .sort-ach .sort').removeClass('active direction-default direction-reversed').attr('aria-pressed', 'false');
   const button = root.find('.header .sort-ach .sort.' + (mode === 'percent' ? 'percentage' : mode));
   if (button.length) {

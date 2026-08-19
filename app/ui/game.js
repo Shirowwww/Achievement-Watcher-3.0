@@ -11,6 +11,50 @@ function indexAchievementRows($) {
   return rowsByName;
 }
 
+// The rare halo under an achievement icon is two infinite rotations that Blink cannot composite, so
+// every rare row repaints on the main thread every frame - including the rows scrolled out of view.
+// Pausing the off-screen ones is worth ~40% of the renderer's main-thread budget on a long list, but
+// it has to be done without asking the engine to test every row's position on every frame: both
+// `content-visibility: auto` and IntersectionObserver do exactly that, and the per-frame cost of the
+// test is itself enough to drop main-thread frames. Middle-button autoscroll advances once per
+// main-thread frame, so a dropped frame there is visible stutter (#35) while wheel scrolling, run by
+// the compositor, stays smooth either way.
+// Hence: while the scroll is moving nothing is measured and every halo runs (the `glow-all` class,
+// i.e. the behaviour that shipped before 3.9.1); the on-screen set is recomputed once it stops.
+const GLOW_MARGIN_PX = 400;
+const GLOW_SETTLE_MS = 150;
+let glowLive = [];
+let glowSettleTimer = null;
+
+function refreshRareGlow() {
+  const scroller = document.getElementById('achievement');
+  if (!scroller) return;
+  scroller.classList.remove('glow-all');
+
+  const view = scroller.getBoundingClientRect();
+  const top = view.top - GLOW_MARGIN_PX;
+  const bottom = view.bottom + GLOW_MARGIN_PX;
+  const next = [];
+  for (const box of scroller.querySelectorAll('.achievement.rare .box')) {
+    const rect = box.getBoundingClientRect();
+    // A row hidden by the search filter or a collapsed section has a zero-height rect: it paints
+    // nothing, so it never needs its halo running.
+    if (rect.height > 0 && rect.bottom >= top && rect.top <= bottom) next.push(box);
+  }
+  for (const box of glowLive) if (!next.includes(box)) box.classList.remove('glow-live');
+  for (const box of next) box.classList.add('glow-live');
+  glowLive = next;
+}
+
+// Anything that moves rows or changes which ones exist (rarity arriving, a sort, the search filter,
+// a section folding) goes through here rather than recomputing inline: it coalesces with the scroll
+// settle, so a burst of changes costs one pass.
+function scheduleRareGlowRefresh(delay = GLOW_SETTLE_MS) {
+  clearTimeout(glowSettleTimer);
+  glowSettleTimer = setTimeout(refreshRareGlow, delay);
+}
+window.scheduleRareGlowRefresh = scheduleRareGlowRefresh;
+
 // Paint the global unlock % (rarity) onto the rendered achievement rows. `entries` is the normalized
 // [{name, percent}] shape produced by util/rarity.js, identical for Steam/Epic/GOG.
 function applyRarity(entries) {
@@ -43,6 +87,8 @@ function applyRarity(entries) {
   $('.achievement-list > .header .sort-ach .sort.percentage').addClass('show');
   // Rarity arrives asynchronously; reapply a persisted percentage sort now that its values are real.
   if (typeof window.restoreAchievementSorts === 'function') window.restoreAchievementSorts();
+  // `.rare` was just handed out (or taken back), so this is where the halo set first exists at all.
+  scheduleRareGlowRefresh(0);
 }
 
 function getGlobalStat(appid, source, gameName, achievements, context) {
@@ -82,6 +128,23 @@ function getGlobalStat(appid, source, gameName, achievements, context) {
       $('#achievement .achievement-list ul > li').removeClass('search-hidden');
     });
 
+    // While the list is moving every rare halo runs, as it did before this budget existed; the
+    // on-screen set is worked out once it has come to rest. Passive: this must never be able to
+    // hold up the scroll it is watching.
+    const achievementScroller = document.getElementById('achievement');
+    if (achievementScroller) {
+      achievementScroller.addEventListener(
+        'scroll',
+        function () {
+          this.classList.add('glow-all');
+          scheduleRareGlowRefresh();
+        },
+        { passive: true }
+      );
+    }
+    // A taller window shows rows that were out of the picked set, and nothing else would notice.
+    window.addEventListener('resize', () => scheduleRareGlowRefresh(), { passive: true });
+
     // Filter the unlocked/locked achievement rows by title or (visible) description. Hidden-masked
     // descriptions are matched on their displayed label only, so spoilers don't leak through search.
     $('#achievement-search-input').on('input', function () {
@@ -95,6 +158,7 @@ function getGlobalStat(appid, source, gameName, achievements, context) {
         const desc = elem.find('.achievement .content .description').text().toUpperCase();
         elem.toggleClass('search-hidden', filter !== '' && !title.includes(filter) && !desc.includes(filter));
       });
+      scheduleRareGlowRefresh();
     });
 
     // Mouse side-button navigation (app-wide): Back (4) closes Settings first - it overlays
@@ -211,6 +275,8 @@ function getGlobalStat(appid, source, gameName, achievements, context) {
       }
       setTimeout(() => {
         self.css('pointer-events', 'initial');
+        // Folding a section moves everything below it, so re-pick the halos once it has settled.
+        scheduleRareGlowRefresh(0);
       }, speed);
     });
   });

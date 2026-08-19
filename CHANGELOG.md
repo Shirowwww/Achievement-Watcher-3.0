@@ -3,6 +3,19 @@
 All notable changes to AW Next are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- **Autoscroll on a game page is smooth again.** The 3.9.1 fix for #35 skipped the rare achievement
+  rows that were off screen, which did bound their repaint but replaced it with a worse cost: both
+  `content-visibility: auto` and an IntersectionObserver charge a viewport test for every row on
+  every frame. Measured on a 400-row list that charge alone took the main thread from 60fps to ~48
+  (16.8ms to 20.6ms per frame, 1 long frame to 27), and middle-button autoscroll advances once per
+  main-thread frame - so the release meant to fix the stutter made it worse, while wheel scrolling,
+  animated by the compositor, showed nothing either way. The halos are now simply paused off screen:
+  nothing is measured while the list is moving, and the on-screen set is picked once it stops.
+
 ## 3.9.1 - 2026-08-18
 
 A bug-fix release for the field reports that followed 3.9.0. The theme is the same in all of them:

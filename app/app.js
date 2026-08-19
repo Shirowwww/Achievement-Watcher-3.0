@@ -4535,6 +4535,11 @@ var app = {
           });
         }
 
+        // The rarity pass that hands out `.rare` runs before this fade, with the view still hidden
+        // and every row measuring zero, so this is the first moment the on-screen halos can be
+        // picked (see refreshRareGlow in ui/game.js).
+        if (typeof window.scheduleRareGlowRefresh === 'function') window.scheduleRareGlowRefresh(0);
+
         self.css('pointer-events', 'initial');
       });
     });

@@ -1796,21 +1796,32 @@ main {
   border-radius: 9px;
   overflow: hidden;
   transition: transform 0.21s ease-in-out;
-  /* A rare row runs two infinite rotate animations under its icon, and the one carrying
-     mix-blend-mode cannot be composited, so every rare row in the list repainted on the main thread
-     every frame - whether or not it was on screen. That is what made middle-button autoscroll
-     stutter while wheel scrolling, which Chromium animates on the compositor, stayed smooth.
-     Skipping off-screen boxes changes nothing that is painted: the box is a fixed 66x66 so the
-     declared intrinsic size is exact and no row offset moves, `overflow: hidden` already clipped
-     the glow exactly where paint containment does, and .glow.mask.ray is already a stacking context
-     (running transform animation plus a mask), so the .fx overlay blend never read a backdrop from
-     outside this box in the first place. */
-  content-visibility: auto;
-  contain-intrinsic-size: 66px 66px;
 }
 
 .achievement.rare .box {
   box-shadow: 0 0 0 2px rgba(255, 184, 78, 0.8), 0 0 12px 3px rgba(255, 184, 78, 0.58), 0 0 28px 5px rgba(255, 184, 78, 0.24);
+}
+
+/* A rare row runs two infinite rotate animations under its icon, and Blink composites neither, so
+   every rare row in the list repaints on the main thread every frame - the ones scrolled out of
+   view included. Bounding that to what is on screen is worth doing, but every per-element mechanism
+   the engine offers for it (`content-visibility: auto`, IntersectionObserver) charges a viewport
+   test for every row on every frame, and measured on a 400-row list that per-frame charge alone
+   drops the main thread from 60fps to ~48 (16.8ms -> 20.6ms per frame, 1 long frame -> 27).
+   Middle-button autoscroll advances once per main-thread frame, so those dropped frames are the
+   stutter of #35, while wheel scrolling - animated by the compositor - never shows it.
+   So the set is not measured while the scroll is moving: `glow-all` runs every halo, exactly as
+   before, and `refreshRareGlow` in ui/game.js narrows it back down once the scroll comes to rest. */
+.achievement.rare .box .mask.ray,
+.achievement.rare .box .fx {
+  animation-play-state: paused;
+}
+
+#achievement.glow-all .achievement.rare .box .mask.ray,
+#achievement.glow-all .achievement.rare .box .fx,
+.achievement.rare .box.glow-live .mask.ray,
+.achievement.rare .box.glow-live .fx {
+  animation-play-state: running;
 }
 
 .achievement.rare .box .glow {
