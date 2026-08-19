@@ -11,7 +11,7 @@ const fs = require('fs');
 const { pathToFileURL } = require('url');
 const args_split = require('argv-split');
 const { cssUrl } = require(path.join(appPath, 'util/cssUrl.js'));
-const { stripTags } = require(path.join(appPath, 'util/stripTags.js'));
+const { focusAchievementRow } = require(path.join(appPath, 'util/achievementFocus.js'));
 const { splitLaunchArgs } = require(path.join(appPath, 'util/launchArgs.js'));
 const windowsShellLaunch = require(path.join(appPath, 'util/windowsShellLaunch.js'));
 const { openExternalSafe } = require(path.join(appPath, 'util/externalLink.js'));
@@ -634,7 +634,9 @@ function openCoverPicker(game, appid, coverCacheAppid) {
   const portraitView = !!(app.config && app.config.achievement && app.config.achievement.thumbnailPortrait);
   const pickerOrientation = portraitView ? 'portrait' : 'landscape';
   const img = (game && game.img) || {};
-  const currentUrl = coverOverrideFor(appid, pickerOrientation) || (portraitView ? img.portrait || img.header : img.header || img.portrait);
+  const defaultUrl = portraitView ? img.portrait || img.header || img.landscape : img.header || img.landscape || img.portrait;
+  const overrideUrl = coverOverrideFor(appid, pickerOrientation);
+  const currentUrl = overrideUrl || defaultUrl;
   const overlay = document.createElement('div');
   overlay.className = 'aw-prompt-overlay aw-cover-picker-overlay';
   const box = document.createElement('div');
@@ -729,16 +731,21 @@ function openCoverPicker(game, appid, coverCacheAppid) {
 
   // Render the current cover independently from the provider lookup. Schema values such as
   // "library_600x900.jpg" are fetch-icon tokens, not browser-ready URLs; resolve them first so the
-  // "Current" tile never appears as an empty surface while SteamDB/SteamGridDB are loading.
-  const currentTilePromise = currentUrl
-    ? (async () => {
-        let preview = currentUrl;
-        if (!/^(?:https?|file|data):/i.test(String(preview)) && !path.isAbsolute(String(preview))) {
-          preview = (await ipcRenderer.invoke('fetch-icon', preview, coverCacheAppid).catch(() => null)) || currentUrl;
-        }
-        addTile(currentUrl, t('currentCover', 'Current', 'Actuelle'), preview);
-      })()
-    : Promise.resolve();
+  // "Current"/"Default" tiles never appear as an empty surface while SteamDB/SteamGridDB are loading.
+  const addResolvedTile = async (url, source) => {
+    let preview = url;
+    if (!/^(?:https?|file|data):/i.test(String(preview)) && !path.isAbsolute(String(preview))) {
+      preview = (await ipcRenderer.invoke('fetch-icon', preview, coverCacheAppid).catch(() => null)) || url;
+    }
+    addTile(url, source, preview);
+  };
+  const currentTilePromise = currentUrl ? addResolvedTile(currentUrl, t('currentCover', 'Current', 'Actuelle')) : Promise.resolve();
+  // Once an override is set, the schema-provided default drops out of currentUrl - without a
+  // dedicated tile it would only reappear via "Reset cover to default" in the context menu.
+  const defaultTilePromise =
+    overrideUrl && defaultUrl && defaultUrl !== overrideUrl
+      ? currentTilePromise.then(() => addResolvedTile(defaultUrl, t('defaultCover', 'Default', 'Par défaut')))
+      : Promise.resolve();
 
   const steamCoverId = /^\d+$/.test(String((game && (game.steamappid || game.appid)) || ''))
     ? String(game.steamappid || game.appid)
@@ -775,7 +782,7 @@ function openCoverPicker(game, appid, coverCacheAppid) {
 
   fastOptions
     .then(async (opts = {}) => {
-      await currentTilePromise;
+      await defaultTilePromise;
       for (const url of Array.isArray(opts.steam) ? opts.steam : []) addTile(url, 'Steam');
       // Tiles preview the SteamGridDB thumbnail; the full-size url is only downloaded on click.
       for (const cover of Array.isArray(opts.grids) ? opts.grids : []) {
@@ -789,7 +796,7 @@ function openCoverPicker(game, appid, coverCacheAppid) {
 
   steamdbOptions
     .then(async (urls) => {
-      await currentTilePromise;
+      await defaultTilePromise;
       for (const url of Array.isArray(urls) ? urls : []) addTile(url, 'SteamDB');
     })
     .catch((err) => {
@@ -1207,14 +1214,12 @@ function setWatchdogStatus(label, state, detail) {
   label.append(span);
 }
 
-ipcRenderer.on('reset-watchdog-status', (event) => {
-  let shadow = titleBarShadow();
-  if (!shadow) return;
-  let watchdogStatus = shadow.querySelector('.status-dot');
-  setWatchdogStatus(shadow.querySelector('.status-text'), t('checking-watchdog-status', 'Checking watchdog…', 'Vérification du Watchdog…'), '');
-  watchdogStatus.classList.remove('status-green', 'status-red');
-  watchdogStatus.classList.add('status-orange');
-  setStartWatchdogButton(shadow.querySelector('#start-watchdog'), '');
+// A manual restart was asked for: show the transient state immediately rather than leaving the old
+// one on screen until the next 5s poll. renderWatchdogStatus owns the markup, so the reset cannot
+// drift from what the poll paints.
+ipcRenderer.on('reset-watchdog-status', () => {
+  lastWatchdogState = 'starting';
+  renderWatchdogStatus(lastWatchdogState);
 });
 
 /*
@@ -1255,44 +1260,80 @@ new MutationObserver((records) => {
   }
 }).observe(document.documentElement, { childList: true, subtree: true });
 
+/*
+  The four states the main process can report, and what each one looks like.
+
+  'unresponsive' is the one the old up/down probe could not see: the monitor process is alive and
+  its named pipe still accepts connections, but its event loop has stopped turning, so nothing is
+  actually being tracked. It offers a restart rather than a start, because a wedged child has to be
+  killed before a new one can take over (see restartWatchdog in electron/init.js).
+
+  Colours reuse the three palette tokens the title bar already has: the pulse - not a fourth colour -
+  is what separates the transient 'starting' from the steady 'unresponsive'.
+*/
+function watchdogPresentation(state) {
+  switch (state) {
+    case 'running':
+      return {
+        dot: 'status-green',
+        pulse: false,
+        label: t('watchdog-running', 'Watchdog active', 'Watchdog actif'),
+        detail: t('watchdog-running-detail', 'Game and achievement tracking operational', 'Suivi des jeux et des succès opérationnel'),
+        button: '',
+      };
+    case 'starting':
+      return {
+        dot: 'status-orange',
+        pulse: true,
+        label: t('watchdog-starting', 'Watchdog starting…', 'Démarrage du Watchdog…'),
+        detail: t('watchdog-starting-detail', 'Tracking begins in a moment', 'Le suivi démarre dans un instant'),
+        button: '',
+      };
+    case 'unresponsive':
+      return {
+        dot: 'status-orange',
+        pulse: false,
+        label: t('watchdog-unresponsive', 'Watchdog not responding', 'Watchdog ne répond pas'),
+        detail: t('watchdog-unresponsive-detail', 'It is running but has stopped reporting', 'Il tourne mais ne répond plus'),
+        button: t('restart-watchdog', 'Restart Watchdog', 'Redémarrer le Watchdog'),
+      };
+    default:
+      return {
+        dot: 'status-red',
+        pulse: false,
+        label: t('watchdog-stopped', 'Watchdog stopped', 'Watchdog arrêté'),
+        detail: t('watchdog-stopped-detail', 'No in-game overlay or notifications', 'Ni overlay en jeu ni notifications'),
+        button: t('start-watchdog', 'Start Watchdog', 'Démarrer le Watchdog'),
+      };
+  }
+}
+
 // The status is always on screen but is only pushed by the monitor poll, so a language change has
 // to repaint it from the last known state instead of waiting for the next tick.
-let lastWatchdogFound = null;
-function renderWatchdogStatus(found) {
+let lastWatchdogState = null;
+function renderWatchdogStatus(state) {
   let shadow = titleBarShadow();
   if (!shadow) return;
   let watchdogStatus = shadow.querySelector('.status-dot');
-  let watchdoglbl = shadow.querySelector('.status-text');
-  let startBtn = shadow.querySelector('#start-watchdog');
-  if (found) {
-    watchdogStatus.classList.remove('status-orange', 'status-red');
-    watchdogStatus.classList.add('status-green');
-    setWatchdogStatus(
-      watchdoglbl,
-      t('watchdog-running', 'Watchdog active', 'Watchdog actif'),
-      t('watchdog-running-detail', 'Game and achievement tracking operational', 'Suivi des jeux et des succès opérationnel')
-    );
-    setStartWatchdogButton(startBtn, '');
-    return;
-  }
-  setWatchdogStatus(
-    watchdoglbl,
-    t('watchdog-stopped', 'Watchdog stopped', 'Watchdog arrêté'),
-    t('watchdog-stopped-detail', 'No in-game overlay or notifications', 'Ni overlay en jeu ni notifications')
-  );
-  watchdogStatus.classList.remove('status-green', 'status-orange');
-  watchdogStatus.classList.add('status-red');
-  setStartWatchdogButton(startBtn, t('start-watchdog', 'Start Watchdog', 'Démarrer le Watchdog'));
+  const view = watchdogPresentation(state);
+
+  watchdogStatus.classList.remove('status-green', 'status-orange', 'status-red');
+  watchdogStatus.classList.add(view.dot);
+  watchdogStatus.classList.toggle('status-pulse', view.pulse);
+  setWatchdogStatus(shadow.querySelector('.status-text'), view.label, view.detail);
+  setStartWatchdogButton(shadow.querySelector('#start-watchdog'), view.button);
 }
 
-ipcRenderer.on('watchdog-status', (event, found) => {
-  lastWatchdogFound = !!found;
-  renderWatchdogStatus(lastWatchdogFound);
+ipcRenderer.on('watchdog-status', (event, state) => {
+  // Booleans are what this channel carried before the heartbeat existed; keep reading them so a
+  // stale renderer never renders "stopped" for a healthy monitor.
+  lastWatchdogState = typeof state === 'string' ? state : state ? 'running' : 'stopped';
+  renderWatchdogStatus(lastWatchdogState);
 });
 
 // Repaint the title-bar status in the language that was just applied.
 window.refreshWatchdogStatusText = () => {
-  if (lastWatchdogFound !== null) renderWatchdogStatus(lastWatchdogFound);
+  if (lastWatchdogState !== null) renderWatchdogStatus(lastWatchdogState);
 };
 
 ipcRenderer.on('achievement-unlock', (event, { appid, ach_data }) => {
@@ -1310,6 +1351,24 @@ ipcRenderer.on('achievement-unlock', (event, { appid, ach_data }) => {
   updateGamePage(appid, ach_data);
 });
 
+// The achievement row to scroll to and flash the next time its game view renders. A toast carries
+// the achievement in its activation URI, so a click on it should land on that row rather than on the
+// top of the game page. Consumed exactly once: a request left pending would make every later game
+// view hunt for a row belonging to a game the user has already navigated past.
+let pendingAchievementFocus = null;
+
+function setAchievementFocus(appid, name) {
+  pendingAchievementFocus = appid && name ? { appid: String(appid), name: String(name) } : null;
+}
+
+// The achievement to focus for `appid`, clearing the request either way - a pending focus aimed at
+// another game is stale by definition once a different game is on screen.
+function takeAchievementFocus(appid) {
+  const focus = pendingAchievementFocus;
+  pendingAchievementFocus = null;
+  return focus && focus.appid === String(appid) ? focus.name : '';
+}
+
 // Open the library tile targeted by a Windows toast click.
 ipcRenderer.on('open-game', (event, { appid, achievement } = {}) => {
   if (!appid) return;
@@ -1320,7 +1379,11 @@ ipcRenderer.on('open-game', (event, { appid, achievement } = {}) => {
     .first();
   if (el.length && typeof app.onGameBoxClick === 'function') {
     debug.log(`[open-game] opening ${appid}${achievement ? ` (${achievement})` : ''}`);
-    app.onGameBoxClick(el, gameList);
+    setAchievementFocus(appid, achievement);
+    // Triggered rather than calling onGameBoxClick directly so the toast path is the same code a
+    // real click runs: it also resets the achievement search box and records the tile for the
+    // mouse "Forward" button, both bound as delegated handlers in ui/game.js.
+    el.trigger('click');
   } else {
     debug.warn(`[open-game] no library tile for appid=${appid}`);
   }
@@ -4461,19 +4524,15 @@ var app = {
       }
 
       $('#achievement').fadeIn(600, function () {
-        if (app.args.appid && app.args.name) {
-          let target = elem.find(`.achievement[data-name="${stripTags(app.args.name.toString())}"]`).parent('li');
-          target.addClass('highlight');
-
-          let pos = target.offset().top + $(this).scrollTop() - target.outerHeight(true);
-
-          $(this).animate(
-            {
-              scrollTop: pos,
-            },
-            250,
-            'swing'
-          );
+        // Focus is requested per open (see setAchievementFocus) instead of read from app.args on
+        // every render: the launch arguments never change, so the old check re-fired for every game
+        // opened afterwards, and `.offset()` on the resulting empty set threw before
+        // pointer-events could be restored - stranding the tile that was clicked.
+        const focusName = takeAchievementFocus(game.appid);
+        if (focusName) {
+          focusAchievementRow($, $(this), elem, focusName, {
+            onMissing: (missing) => debug.warn(`[open-game] no achievement row named '${missing}'`),
+          });
         }
 
         self.css('pointer-events', 'initial');

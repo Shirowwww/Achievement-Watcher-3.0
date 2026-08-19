@@ -1685,6 +1685,27 @@ main {
 
 #achievement .achievement-list ul > li.highlight {
   box-shadow: 0 0 8px 2px color-mix(in srgb, var(--accent) 62%, transparent);
+  /* A toast click scrolls straight to this row, which can land mid-list among near-identical rows.
+     Pulse twice so the eye catches it on arrival, then settle into the steady glow above. */
+  animation: achievement-focus-flash 800ms ease-out 2;
+}
+
+@keyframes achievement-focus-flash {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 70%, transparent);
+  }
+  40% {
+    box-shadow: 0 0 14px 5px color-mix(in srgb, var(--accent) 85%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 8px 2px color-mix(in srgb, var(--accent) 62%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #achievement .achievement-list ul > li.highlight {
+    animation: none;
+  }
 }
 
 .achievement-list > .header .sort-ach {
