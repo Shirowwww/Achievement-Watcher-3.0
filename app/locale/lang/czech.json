@@ -1044,6 +1044,12 @@
     "controllerMove": "Pohyb/rolování"
   },
   "dialogs": {
+    "folder-reason-ea-app": "Toto je vydání pro EA app. Hra spuštěná přes EA app ukládá své úspěchy na účet EA, nikoli do složky hry, takže tu není žádný soubor s odemčeními ke čtení. Tyto úspěchy načítá zdroj EA v Nastavení > Zdroje, ne sledovaná složka.",
+    "folder-reason-game-no-data": "Toto je složka hry, neobsahuje však žádnou konfiguraci emulátoru ani soubor s odemčeními ve formátu, který AW Next umí přečíst.",
+    "folder-reason-unreadable": "Tuto složku se nepodařilo přečíst.",
+    "folder-reason-no-marker": "Není zde uloženo nic, co by souviselo s úspěchy: žádná složka AppID, žádná konfigurace emulátoru a žádný soubor s odemčeními.",
+    "folder-reason-found-instead": "Nalezeno místo toho:",
+    "folder-reason-checked": "Zkontrolováno zde: podsložky AppID, všechny konfigurační soubory emulátorů, které AW Next zná, a {layouts} přenosných rozložení uložení. Složka byla prozkoumána, nic nebylo přeskočeno.",
     "game-health-title": "Stav hry",
     "game-config-title": "Nastavení spustitelného souboru",
     "launch-args-label": "Argumenty spuštění:",

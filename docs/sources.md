@@ -60,6 +60,18 @@ matching save tree is looked for beside it before the shared location is tried. 
 written yet the game is still added, at 0% - a missing card would be indistinguishable from a game
 that was never installed, and would say nothing about what went wrong.
 
+A release that ships **no emulator config at all**, or whose ini you deleted, is covered as well:
+the save tree itself is read, since `Steam\RUNE\<appid>` carries the AppID in its folder name.
+The same layouts are probed one level below the folder you add, so pointing AW at your games
+library works as well as pointing it at one game.
+
+When a folder cannot be used, AW says why rather than only that it is invalid: whether it holds a
+game but no readable unlock file, whether it holds nothing achievement related at all, or whether
+it is an **EA app** release. That last one never keeps achievements on disk - they live on the EA
+account, and AW reads them through the EA source rather than through a watched folder, so no folder
+you add can make such a game appear. The message also names how many layouts were probed, so
+"nothing found here" is distinguishable from "not looked at".
+
 Two of these have their own switch because they are a different shape:
 
 - **Goldberg SocialClub** - the Rockstar / Social Club variant.

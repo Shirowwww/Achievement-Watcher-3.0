@@ -1044,6 +1044,12 @@
     "controllerMove": "Move/scroll"
   },
   "dialogs": {
+    "folder-reason-ea-app": "This is an EA app release. A game started through the EA app keeps its achievements on the EA account rather than in the game folder, so there is no unlock file here to read. Those unlocks are picked up by the EA source in Settings > Sources instead of by a watched folder.",
+    "folder-reason-game-no-data": "This is a game folder, but it holds no emulator configuration and no unlock file in any layout AW Next can read.",
+    "folder-reason-unreadable": "This folder could not be read.",
+    "folder-reason-no-marker": "Nothing achievement related is stored here: no AppID folder, no emulator configuration and no unlock file.",
+    "folder-reason-found-instead": "Found instead:",
+    "folder-reason-checked": "Checked here: AppID subfolders, every emulator configuration file AW Next knows, and {layouts} portable save layouts. The folder was examined - nothing was skipped.",
     "game-health-title": "Game health",
     "game-config-title": "Executable configuration",
     "launch-args-label": "Launch arguments:",

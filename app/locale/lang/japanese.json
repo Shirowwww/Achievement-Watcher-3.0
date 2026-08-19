@@ -1044,6 +1044,12 @@
     "controllerMove": "移動/スクロール"
   },
   "dialogs": {
+    "folder-reason-ea-app": "これは EA app 版です。EA app から起動したゲームは実績をゲームフォルダーではなく EA アカウント側に保存するため、ここに読み取れる解除ファイルはありません。これらの実績は監視フォルダーではなく、設定 > ソースの EA ソースが取得します。",
+    "folder-reason-game-no-data": "ここはゲームフォルダーですが、エミュレーターの設定ファイルも、AW Next が読める形式の解除ファイルもありません。",
+    "folder-reason-unreadable": "このフォルダーを読み取れませんでした。",
+    "folder-reason-no-marker": "ここには実績に関するものが何も保存されていません。AppID フォルダーも、エミュレーター設定も、解除ファイルもありません。",
+    "folder-reason-found-instead": "代わりに見つかったもの:",
+    "folder-reason-checked": "ここで確認した内容: AppID サブフォルダー、AW Next が知るすべてのエミュレーター設定ファイル、そして {layouts} 種類のポータブル保存レイアウト。フォルダーは調査済みで、省略されたものはありません。",
     "game-health-title": "ゲームの状態",
     "game-config-title": "実行ファイルの設定",
     "launch-args-label": "起動引数:",

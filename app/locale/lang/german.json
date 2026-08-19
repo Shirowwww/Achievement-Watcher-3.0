@@ -1044,6 +1044,12 @@
     "controllerMove": "Bewegen/scrollen"
   },
   "dialogs": {
+    "folder-reason-ea-app": "Dies ist eine EA-app-Version. Ein über die EA app gestartetes Spiel speichert seine Erfolge im EA-Konto und nicht im Spielordner, hier gibt es also keine Freischaltdatei zu lesen. Diese Erfolge werden von der EA-Quelle unter Einstellungen > Quellen erfasst, nicht von einem überwachten Ordner.",
+    "folder-reason-game-no-data": "Dies ist ein Spielordner, er enthält jedoch keine Emulator-Konfiguration und keine Freischaltdatei in einem Format, das AW Next lesen kann.",
+    "folder-reason-unreadable": "Dieser Ordner konnte nicht gelesen werden.",
+    "folder-reason-no-marker": "Hier ist nichts zu Erfolgen gespeichert: kein AppID-Ordner, keine Emulator-Konfiguration und keine Freischaltdatei.",
+    "folder-reason-found-instead": "Stattdessen gefunden:",
+    "folder-reason-checked": "Hier geprüft: AppID-Unterordner, alle AW Next bekannten Emulator-Konfigurationsdateien und {layouts} portable Speicher-Layouts. Der Ordner wurde untersucht, nichts wurde übersprungen.",
     "game-health-title": "Spielzustand",
     "game-config-title": "Ausführbare Datei konfigurieren",
     "launch-args-label": "Startargumente:",

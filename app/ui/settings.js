@@ -16,6 +16,7 @@ const emulatorFixEligibility = require(path.join(appPath, 'util/emulatorFixEligi
 const { t } = require(path.join(appPath, 'locale/t.js'));
 const interfaceMode = require(path.join(appPath, 'util/interfaceMode.js'));
 const { legacyPresetAlias } = require(path.join(appPath, 'util/notificationPreset.js'));
+const { describeFolderDiagnosis } = require(path.join(appPath, 'util/folderDiagnosis.js'));
 
 /*
   What the sound dropdown stores when the user picks "Random". It is not a filename, so it can never
@@ -2204,19 +2205,22 @@ function withSettingsTimeout(promise, label, timeoutMs = SETTINGS_SAVE_TIMEOUT_M
         if (dialog.filePaths.length > 0) {
           debug.log(`Adding folder: ${dialog.filePaths}`);
 
-          if (await userDir.check(dialog.filePaths[0])) {
+          const diagnosis = await userDir.diagnose(dialog.filePaths[0]);
+          if (diagnosis.accepted) {
             populateUserDirList({ dir: dialog.filePaths[0], origin: 'manual' });
             reportFolderScan(dialog.filePaths[0]);
           } else {
-            debug.log('-> Invalid folder');
+            // Say why, not just no: a rejected folder and a folder AW never looked at used to be
+            // indistinguishable, which is what left issue #32 with nowhere to go.
+            debug.log(`-> Invalid folder (${diagnosis.code}): ${JSON.stringify(diagnosis.evidence)}`);
             remote.dialog.showMessageBoxSync({
               type: 'warning',
               title: t('invalid-folder', 'Invalid folder', 'Dossier invalide'),
-              message: $("#settings .content[data-view='folder'] > .controls .info p")
+              message: describeFolderDiagnosis(diagnosis, t),
+              detail: $("#settings .content[data-view='folder'] > .controls .info p")
                 .html()
                 .replace(/\s{2,}/g, '')
                 .replace(/<br>/g, '\n'),
-              detail: $('#folder-action-result').attr('data-invalid') || '',
             });
           }
         } else {
@@ -4253,7 +4257,8 @@ function populateUserDirList(option) {
       if (filePaths) {
         debug.log(`Editing folder to: ${filePaths}`);
 
-        if (await userDir.check(filePaths[0])) {
+        const diagnosis = await userDir.diagnose(filePaths[0]);
+        if (diagnosis.accepted) {
           elem.find('.path').attr('title', filePaths[0]);
           elem.find('.path span').text(filePaths[0]);
           elem.find('.path').removeClass('overflow');
@@ -4263,11 +4268,12 @@ function populateUserDirList(option) {
           $(document).trigger('folder-rescan-locations-changed');
           debug.log('-> Edited');
         } else {
-          debug.log('-> Invalid folder');
+          debug.log(`-> Invalid folder (${diagnosis.code})`);
           remote.dialog.showMessageBoxSync({
             type: 'warning',
             title: t('invalid-folder', 'Invalid folder', 'Dossier invalide'),
-            message: $("#settings .content[data-view='folder'] > .controls .info p")
+            message: describeFolderDiagnosis(diagnosis, t),
+            detail: $("#settings .content[data-view='folder'] > .controls .info p")
               .html()
               .replace(/\s{2,}/g, '')
               .replace(/<br>/g, '\n'),

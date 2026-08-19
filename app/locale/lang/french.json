@@ -1044,6 +1044,12 @@
     "controllerMove": "Déplacer/défiler"
   },
   "dialogs": {
+    "folder-reason-ea-app": "Il s'agit d'une version EA app. Un jeu lancé via l'EA app conserve ses succès sur le compte EA et non dans le dossier du jeu : il n'y a donc ici aucun fichier de déblocage à lire. Ces succès sont récupérés par la source EA dans Paramètres > Sources, pas par un dossier surveillé.",
+    "folder-reason-game-no-data": "Il s'agit bien d'un dossier de jeu, mais il ne contient aucune configuration d'émulateur ni fichier de déblocage dans un format lisible par AW Next.",
+    "folder-reason-unreadable": "Ce dossier n'a pas pu être lu.",
+    "folder-reason-no-marker": "Rien de lié aux succès n'est stocké ici : aucun dossier AppID, aucune configuration d'émulateur et aucun fichier de déblocage.",
+    "folder-reason-found-instead": "Trouvé à la place :",
+    "folder-reason-checked": "Vérifié ici : les sous-dossiers AppID, tous les fichiers de configuration d'émulateur connus d'AW Next et {layouts} dispositions de sauvegarde portables. Le dossier a bien été examiné, rien n'a été ignoré.",
     "game-health-title": "État des jeux",
     "game-config-title": "Configuration de l’exécutable",
     "launch-args-label": "Arguments de lancement :",

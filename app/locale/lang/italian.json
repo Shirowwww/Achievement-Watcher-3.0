@@ -1044,6 +1044,12 @@
     "controllerMove": "Sposta/scorri"
   },
   "dialogs": {
+    "folder-reason-ea-app": "È una versione EA app. Un gioco avviato tramite EA app conserva i suoi obiettivi sull'account EA e non nella cartella del gioco, quindi qui non c'è alcun file di sblocco da leggere. Quegli obiettivi vengono raccolti dalla sorgente EA in Impostazioni > Sorgenti, non da una cartella sorvegliata.",
+    "folder-reason-game-no-data": "Questa è una cartella di gioco, ma non contiene alcuna configurazione di emulatore né file di sblocco in un formato leggibile da AW Next.",
+    "folder-reason-unreadable": "Non è stato possibile leggere questa cartella.",
+    "folder-reason-no-marker": "Qui non è memorizzato nulla che riguardi gli obiettivi: nessuna cartella AppID, nessuna configurazione di emulatore e nessun file di sblocco.",
+    "folder-reason-found-instead": "Trovato invece:",
+    "folder-reason-checked": "Controllati qui: le sottocartelle AppID, tutti i file di configurazione degli emulatori noti ad AW Next e {layouts} strutture di salvataggio portatili. La cartella è stata esaminata, nulla è stato ignorato.",
     "game-health-title": "Stato dei giochi",
     "game-config-title": "Configurazione dell’eseguibile",
     "launch-args-label": "Argomenti di avvio:",

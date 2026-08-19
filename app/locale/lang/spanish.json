@@ -1044,6 +1044,12 @@
     "controllerMove": "Mover/desplazar"
   },
   "dialogs": {
+    "folder-reason-ea-app": "Es una versión de EA app. Un juego iniciado desde la EA app guarda sus logros en la cuenta de EA y no en la carpeta del juego, así que aquí no hay ningún archivo de desbloqueo que leer. Esos logros los recoge la fuente EA en Ajustes > Fuentes, no una carpeta vigilada.",
+    "folder-reason-game-no-data": "Es una carpeta de juego, pero no contiene ninguna configuración de emulador ni archivo de desbloqueo en un formato que AW Next pueda leer.",
+    "folder-reason-unreadable": "No se ha podido leer esta carpeta.",
+    "folder-reason-no-marker": "Aquí no hay nada relacionado con logros: ninguna carpeta AppID, ninguna configuración de emulador y ningún archivo de desbloqueo.",
+    "folder-reason-found-instead": "Se encontró en su lugar:",
+    "folder-reason-checked": "Comprobado aquí: subcarpetas AppID, todos los archivos de configuración de emulador que AW Next conoce y {layouts} disposiciones de guardado portátiles. La carpeta se examinó, no se omitió nada.",
     "game-health-title": "Estado del juego",
     "game-config-title": "Configuración del ejecutable",
     "launch-args-label": "Argumentos de lanzamiento:",

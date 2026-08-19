@@ -1044,6 +1044,12 @@
     "controllerMove": "Mozgatás/görgetés"
   },
   "dialogs": {
+    "folder-reason-ea-app": "Ez egy EA app kiadás. Az EA appon keresztül indított játék az EA-fiókban tárolja a teljesítményeit, nem a játék mappájában, így itt nincs feloldásokat tartalmazó fájl, amit be lehetne olvasni. Ezeket a teljesítményeket a Beállítások > Források alatti EA forrás gyűjti be, nem egy figyelt mappa.",
+    "folder-reason-game-no-data": "Ez egy játékmappa, de nem tartalmaz emulátor-konfigurációt és olyan feloldásfájlt sem, amelyet az AW Next be tudna olvasni.",
+    "folder-reason-unreadable": "Ezt a mappát nem sikerült beolvasni.",
+    "folder-reason-no-marker": "Itt semmi teljesítményhez kapcsolódó nincs tárolva: nincs AppID mappa, nincs emulátor-konfiguráció és nincs feloldásfájl.",
+    "folder-reason-found-instead": "Ehelyett ez található:",
+    "folder-reason-checked": "Itt ellenőrizve: az AppID almappák, az AW Next által ismert összes emulátor-konfigurációs fájl és {layouts} hordozható mentési elrendezés. A mappa át lett vizsgálva, semmi nem maradt ki.",
     "game-health-title": "Játék állapota",
     "game-config-title": "Futtatható fájl beállítása",
     "launch-args-label": "Indítási argumentumok:",

@@ -6,6 +6,8 @@ const onboardingAvatar = require(path.join(appPath, 'components/userAvatar/avata
 const onboardingAvatarStore = require(path.join(appPath, 'util/avatarStore.js'));
 const uiLanguages = require(path.join(appPath, 'locale/uiLanguages.js'));
 const onboardingInterfaceMode = require(path.join(appPath, 'util/interfaceMode.js'));
+const onboardingFolderDiagnosis = require(path.join(appPath, 'util/folderDiagnosis.js')).describeFolderDiagnosis;
+const onboardingT = require(path.join(appPath, 'locale/t.js')).t;
 
 (function ($, window, document) {
   const STEP_COUNT = 6;
@@ -382,7 +384,8 @@ const onboardingInterfaceMode = require(path.join(appPath, 'util/interfaceMode.j
     try {
       const dialog = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), { properties: ['openDirectory', 'showHiddenFiles'] });
       if (!dialog.filePaths || dialog.filePaths.length === 0) return;
-      if (await userDir.check(dialog.filePaths[0])) {
+      const diagnosis = await userDir.diagnose(dialog.filePaths[0]);
+      if (diagnosis.accepted) {
         addSaveDir(dialog.filePaths[0]);
         reportFolderScan(dialog.filePaths[0]);
       } else {
@@ -390,6 +393,9 @@ const onboardingInterfaceMode = require(path.join(appPath, 'util/interfaceMode.j
           type: 'warning',
           title: 'AW Next',
           message: text().invalidFolder,
+          // Which folder, and why it cannot be used - the guide is where a first-run user is most
+          // likely to point AW at a game folder that keeps nothing readable (issue #32).
+          detail: onboardingFolderDiagnosis(diagnosis, onboardingT),
         });
       }
     } catch (err) {

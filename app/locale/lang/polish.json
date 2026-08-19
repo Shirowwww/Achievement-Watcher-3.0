@@ -1044,6 +1044,12 @@
     "controllerMove": "Przesuń/przewiń"
   },
   "dialogs": {
+    "folder-reason-ea-app": "To wydanie uruchamiane przez EA app. Gra startowana z EA app przechowuje osiągnięcia na koncie EA, a nie w folderze gry, więc nie ma tu żadnego pliku odblokowań do odczytania. Takie osiągnięcia pobiera źródło EA w Ustawienia > Źródła, a nie obserwowany folder.",
+    "folder-reason-game-no-data": "To folder gry, ale nie zawiera żadnej konfiguracji emulatora ani pliku odblokowań w formacie, który AW Next potrafi odczytać.",
+    "folder-reason-unreadable": "Nie udało się odczytać tego folderu.",
+    "folder-reason-no-marker": "Nie ma tu niczego związanego z osiągnięciami: brak folderu AppID, konfiguracji emulatora i pliku odblokowań.",
+    "folder-reason-found-instead": "Znaleziono zamiast tego:",
+    "folder-reason-checked": "Sprawdzono tutaj: podfoldery AppID, wszystkie znane AW Next pliki konfiguracyjne emulatorów oraz {layouts} przenośnych układów zapisu. Folder został zbadany, nic nie zostało pominięte.",
     "game-health-title": "Stan gry",
     "game-config-title": "Konfiguracja pliku wykonywalnego",
     "launch-args-label": "Argumenty uruchamiania:",

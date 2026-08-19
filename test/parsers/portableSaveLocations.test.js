@@ -17,6 +17,7 @@ const os = require('node:os');
 const path = require('node:path');
 const goldberg = require('../../app/parser/goldberg.js');
 const userDir = require('../../app/parser/userDir.js');
+const { describeFolderDiagnosis } = require('../../app/util/folderDiagnosis.js');
 
 function tempGame(name) {
   return fs.mkdtempSync(path.join(os.tmpdir(), `aw-${name}-`));
@@ -253,5 +254,131 @@ test('adding the library folder finds the portable releases inside it', async ()
     assert.equal(jedi.data.gameDir, game);
   } finally {
     fs.rmSync(lib, { recursive: true, force: true });
+  }
+});
+
+/*
+  issue #32, second report: the portable probing added in 3.9.1 was anchored on the emulator config,
+  so a release that ships none (or whose ini the user deleted) fell outside it however many layouts
+  were covered. The save tree carries the appid in its own folder name, so it can be read directly.
+*/
+test('a portable save tree with no emulator config at all is still discovered', async () => {
+  const gameDir = tempGame('rune-noini');
+  try {
+    fs.writeFileSync(path.join(gameDir, 'Game.exe'), 'x');
+    const saveDir = path.join(gameDir, 'Steam', 'RUNE', '1774580');
+    fs.mkdirSync(saveDir, { recursive: true });
+    fs.writeFileSync(path.join(saveDir, 'achievements.ini'), '[SteamAchievements]\r\nACH_ONE=1\r\n');
+
+    const diagnosis = await userDir.diagnose(gameDir);
+    assert.equal(diagnosis.accepted, true);
+    assert.equal(diagnosis.code, 'portable-save-tree');
+
+    const found = await userDir.scan(gameDir);
+    assert.equal(found.length, 1);
+    assert.equal(found[0].appid, '1774580');
+    assert.equal(found[0].source, 'Rune');
+    assert.equal(found[0].data.path, saveDir);
+    assert.equal(found[0].data.gameDir, gameDir);
+  } finally {
+    fs.rmSync(gameDir, { recursive: true, force: true });
+  }
+});
+
+test('the config-less probe works one level down, so adding the library folder finds it too', async () => {
+  const lib = tempGame('rune-noini-library');
+  try {
+    const game = path.join(lib, 'Some Portable Game');
+    const saveDir = path.join(game, 'Documents', 'Steam', 'CODEX', '292030');
+    fs.mkdirSync(saveDir, { recursive: true });
+    fs.writeFileSync(path.join(saveDir, 'achievements.ini'), '[Steam]\r\nACH=1\r\n');
+
+    assert.equal(await userDir.check(lib), true);
+    const found = await userDir.scan(lib);
+    assert.equal(found.length, 1);
+    assert.equal(found[0].appid, '292030');
+    assert.equal(found[0].data.path, saveDir);
+    assert.equal(found[0].data.gameDir, game);
+  } finally {
+    fs.rmSync(lib, { recursive: true, force: true });
+  }
+});
+
+test('a save-shaped folder holding nothing readable is not turned into a game', async () => {
+  const gameDir = tempGame('rune-noini-decoy');
+  try {
+    fs.mkdirSync(path.join(gameDir, 'Steam', 'RUNE', '1774580'), { recursive: true });
+    fs.writeFileSync(path.join(gameDir, 'Steam', 'RUNE', '1774580', 'readme.txt'), 'not a save');
+    assert.deepEqual(userDir.collectPortableSceneSaves(gameDir), []);
+    assert.deepEqual(await userDir.scan(gameDir), []);
+  } finally {
+    fs.rmSync(gameDir, { recursive: true, force: true });
+  }
+});
+
+// --- issue #32: why a folder was refused ---------------------------------------------------------
+
+test('an EA app release is named as such instead of being refused as an empty folder', async () => {
+  const gameDir = tempGame('ea-app');
+  try {
+    fs.mkdirSync(path.join(gameDir, '__Installer'), { recursive: true });
+    fs.writeFileSync(path.join(gameDir, '__Installer', 'installerdata.xml'), '<DiPManifest/>');
+    const assets = path.join(gameDir, 'Engine', 'Binaries', 'Win64', 'assets');
+    fs.mkdirSync(assets, { recursive: true });
+    fs.writeFileSync(path.join(assets, 'eadpsdk.json'), '{}');
+    fs.mkdirSync(path.join(gameDir, 'SwGame', 'Binaries', 'Win64', 'Core'), { recursive: true });
+    fs.writeFileSync(path.join(gameDir, 'SwGame', 'Binaries', 'Win64', 'Core', 'Activation64.dll'), 'x');
+    fs.writeFileSync(path.join(gameDir, 'JediSurvivor.exe'), 'x');
+
+    const diagnosis = await userDir.diagnose(gameDir);
+    assert.equal(diagnosis.accepted, false);
+    assert.equal(diagnosis.code, 'ea-app-release');
+    assert.ok(diagnosis.evidence.markers.length > 0, 'the markers behind the verdict are reported');
+
+    const message = describeFolderDiagnosis(diagnosis, (key, english) => english);
+    assert.match(message, /EA app/);
+    assert.match(message, /nothing was skipped/, 'the user is told the folder WAS examined');
+  } finally {
+    fs.rmSync(gameDir, { recursive: true, force: true });
+  }
+});
+
+test('a plain game folder and an empty folder are refused for different, stated reasons', async () => {
+  const gameDir = tempGame('plain-game');
+  const empty = tempGame('empty');
+  try {
+    fs.writeFileSync(path.join(gameDir, 'Game.exe'), 'x');
+
+    const game = await userDir.diagnose(gameDir);
+    assert.equal(game.accepted, false);
+    assert.equal(game.code, 'game-folder-no-data');
+    assert.equal(game.evidence.executable, 'Game.exe');
+
+    const nothing = await userDir.diagnose(empty);
+    assert.equal(nothing.accepted, false);
+    assert.equal(nothing.code, 'no-marker');
+
+    const gameMessage = describeFolderDiagnosis(game, (key, english) => english);
+    const emptyMessage = describeFolderDiagnosis(nothing, (key, english) => english);
+    assert.notEqual(gameMessage, emptyMessage, '"no data here" must not read like "nothing looked at"');
+    assert.match(gameMessage, /Found instead: Game\.exe/);
+    // Every rejection ends on the number of layouts probed, which is what makes it checkable.
+    for (const message of [gameMessage, emptyMessage]) assert.match(message, /portable save layouts/);
+  } finally {
+    fs.rmSync(gameDir, { recursive: true, force: true });
+    fs.rmSync(empty, { recursive: true, force: true });
+  }
+});
+
+test('an accepted folder still reports which rule accepted it', async () => {
+  const gameDir = tempGame('accepted-code');
+  try {
+    fs.writeFileSync(path.join(gameDir, 'steam_emu.ini'), '[Settings]\r\nAppId=1774580\r\n');
+    const diagnosis = await userDir.diagnose(gameDir);
+    assert.equal(diagnosis.accepted, true);
+    assert.equal(diagnosis.code, 'emulator-config');
+    assert.equal(diagnosis.evidence.config, 'steam_emu.ini');
+  } finally {
+    fs.rmSync(gameDir, { recursive: true, force: true });
   }
 });

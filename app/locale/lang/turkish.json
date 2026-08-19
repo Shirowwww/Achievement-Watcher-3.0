@@ -1044,6 +1044,12 @@
     "controllerMove": "Taşı/kaydır"
   },
   "dialogs": {
+    "folder-reason-ea-app": "Bu bir EA app sürümüdür. EA app üzerinden başlatılan bir oyun başarımlarını oyun klasöründe değil EA hesabında tutar, bu yüzden burada okunacak bir kilit açma dosyası yoktur. Bu başarımları izlenen bir klasör değil, Ayarlar > Kaynaklar altındaki EA kaynağı toplar.",
+    "folder-reason-game-no-data": "Burası bir oyun klasörü, ancak içinde ne bir emülatör yapılandırması ne de AW Next’in okuyabileceği bir kilit açma dosyası var.",
+    "folder-reason-unreadable": "Bu klasör okunamadı.",
+    "folder-reason-no-marker": "Burada başarımlarla ilgili hiçbir şey saklanmıyor: AppID klasörü yok, emülatör yapılandırması yok, kilit açma dosyası yok.",
+    "folder-reason-found-instead": "Bunun yerine bulunanlar:",
+    "folder-reason-checked": "Burada denetlenenler: AppID alt klasörleri, AW Next’in bildiği tüm emülatör yapılandırma dosyaları ve {layouts} taşınabilir kayıt düzeni. Klasör incelendi, hiçbir şey atlanmadı.",
     "game-health-title": "Oyun durumu",
     "game-config-title": "Yürütülebilir dosya yapılandırması",
     "launch-args-label": "Başlatma bağımsız değişkenleri:",

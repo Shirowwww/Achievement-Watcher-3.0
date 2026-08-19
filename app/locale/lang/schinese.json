@@ -1044,6 +1044,12 @@
     "controllerMove": "移动/滚动"
   },
   "dialogs": {
+    "folder-reason-ea-app": "这是 EA app 版本。通过 EA app 启动的游戏会把成就保存在 EA 账户中，而不是游戏文件夹里，因此这里没有可读取的解锁文件。这类成就由设置 > 来源中的 EA 来源获取，而不是由被监视的文件夹获取。",
+    "folder-reason-game-no-data": "这是一个游戏文件夹，但其中既没有模拟器配置，也没有 AW Next 能够读取的任何解锁文件。",
+    "folder-reason-unreadable": "无法读取此文件夹。",
+    "folder-reason-no-marker": "这里没有存放任何与成就相关的内容：没有 AppID 文件夹，没有模拟器配置，也没有解锁文件。",
+    "folder-reason-found-instead": "实际找到的是：",
+    "folder-reason-checked": "已在此检查：AppID 子文件夹、AW Next 已知的全部模拟器配置文件，以及 {layouts} 种便携存档布局。该文件夹已被检查，没有任何遗漏。",
     "game-health-title": "游戏状态",
     "game-config-title": "可执行文件配置",
     "launch-args-label": "启动参数:",

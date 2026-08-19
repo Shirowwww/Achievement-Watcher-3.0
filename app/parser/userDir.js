@@ -103,6 +103,88 @@ function findSceneSaveDir(dir, appid) {
   return null;
 }
 
+/*
+  A portable release whose emulator config is missing, renamed or never shipped still keeps the save
+  tree next to the game. findSceneSaveDir() cannot help there because it needs the appid the config
+  would have carried, so the tree is read the other way round: walk the known portable layouts and
+  take the appid from the folder that actually holds a readable unlock file (issue #32).
+*/
+function collectPortableSceneSaves(dir) {
+  const found = [];
+  for (const relative of PORTABLE_SCENE_SAVE_DIRS) {
+    const base = path.join(dir, relative);
+    let entries;
+    try {
+      entries = fs.readdirSync(base, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    const source = /rune/i.test(relative) ? 'Rune' : /codex|cpy/i.test(relative) ? 'Codex' : 'Steam-emulator';
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      // Only a numeric Steam appid: a hex profile folder here belongs to a different emulator family.
+      if (!/^\d{3,10}$/.test(entry.name)) continue;
+      const candidate = path.join(base, entry.name);
+      if (!hasSceneSaveFile(candidate)) continue;
+      found.push({ appid: entry.name, source, data: { type: 'file', path: candidate, gameDir: dir } });
+    }
+  }
+  return found;
+}
+
+// The same probe over a games LIBRARY: one level of game folders, each looked at as if it had been
+// added directly. Bounded on purpose - a library root is routinely 100 GB and deep globbing it is
+// what a user notices as "adding a folder hangs".
+function collectPortableSceneSavesBelow(dir) {
+  const result = [];
+  const seen = new Set();
+  const push = (records) => {
+    for (const record of records) {
+      const key = `${record.appid}|${path.resolve(record.data.path).toLowerCase()}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push(record);
+    }
+  };
+  push(collectPortableSceneSaves(dir));
+  let entries;
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return result;
+  }
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    push(collectPortableSceneSaves(path.join(dir, entry.name)));
+  }
+  return result;
+}
+
+/*
+  Markers of an EA app (EA Desktop / Origin) release. Such a game keeps no Steam-shaped anything in
+  its folder - no steam_api dll, no appid file, no emulator ini - and no unlock file either, because
+  the achievement state lives with the EA account rather than on disk. Without this, the folder is
+  rejected with the same "nothing found" as a random directory, which is precisely the "cannot tell
+  nothing-found from not-looked-at" the report asks to fix (issue #32).
+*/
+const EA_APP_MARKER_GLOBS = [
+  '__Installer/installerdata.xml',
+  'Support/mnfst.txt',
+  '**/eadpsdk.json',
+  '**/Activation.dll',
+  '**/Activation64.dll',
+  '**/EADesktop.exe',
+  '**/EACoreServer.exe',
+];
+
+async function detectEaAppMarkers(dirpath) {
+  try {
+    return await glob(EA_APP_MARKER_GLOBS, { cwd: dirpath, onlyFiles: true, deep: 5, caseSensitiveMatch: false, suppressErrors: true });
+  } catch {
+    return [];
+  }
+}
+
 function isProbableAppIdFolderName(name) {
   const value = String(name || '').trim();
   if (!/^[0-9a-fA-F]+$/.test(value)) return false;
@@ -208,43 +290,86 @@ module.exports.findEntries = async () => {
   }
 };
 
-module.exports.check = async (dirpath) => {
+/*
+  Why a folder was accepted or rejected, not just whether it was.
+
+  A boolean answer is what made issue #32 impossible to act on: a rejected folder and a folder that
+  was never examined produce the same silence, so a user cannot tell "AW looked here and there is
+  nothing" from "AW does not look at folders like this at all". Every branch below therefore names
+  itself, and the rejection branches say what WAS found instead.
+
+  Returns { accepted, code, evidence } where evidence carries the concrete paths/names behind the
+  verdict. The UI turns the code into a sentence; nothing here is user-visible text.
+*/
+module.exports.diagnose = async (dirpath) => {
+  const accepted_files = steam_emu_cfg_file_supported.concat(['rpcs3.exe', 'shadPS4.exe', 'shadps4.exe', 'xenia.exe', 'xenia_canary.exe']);
+  const evidence = { layouts: PORTABLE_SCENE_SAVE_DIRS.length };
+
+  let entries;
   try {
-    let result = false;
-
-    const accepted_files = steam_emu_cfg_file_supported.concat(['rpcs3.exe', 'shadPS4.exe', 'shadps4.exe', 'xenia.exe', 'xenia_canary.exe']);
-
-    // Goldberg SocialClub Emu Saves keeps game folders named after the game (GTA V, RDR2, …) with
-    // hex profile subfolders - there is no numeric AppID and no emulator .ini to match. Accept the
-    // root, a game folder or a profile folder explicitly (issue #9).
-    const socialclub = require('./socialclub.js');
-    if (socialclub.isSocialClubPath(dirpath)) return (result = true);
-
-    //check for appID folder(s). Some emulators use hex ids; reject obvious user-id/noise folders.
-    let scan = await glob('*', { cwd: dirpath, onlyDirectories: true, deep: 1, suppressErrors: true });
-    if (scan.some(isProbableAppIdFolderName)) return (result = true);
-
-    // Accept parent community roots like Public\Documents\Steam when the real appid folders are inside
-    // RUNE/CODEX. Users commonly add the parent from guides, while AW scans the concrete child source.
-    const expandedRoots = saveRoots.expandKnownSteamSourceRoots(dirpath).filter((root) => path.resolve(root) !== path.resolve(dirpath));
-    for (const root of expandedRoots) {
-      const nested = await glob('*', { cwd: root, onlyDirectories: true, deep: 1, suppressErrors: true });
-      if (nested.some(isProbableAppIdFolderName)) return (result = true);
-    }
-
-    scan = await glob('*.{ini,exe}', { cwd: dirpath, onlyFiles: true });
-    for (let file of scan) if (accepted_files.some((filename) => filename === file)) return (result = true);
-
-    // Some GOG/UniverseLAN and repack layouts keep the config below the selected game root
-    // (for example <Game>/Engine/Binaries/.../UniverseLAN.ini). Accept that root, then scan()
-    // will resolve the real config folder at low depth.
-    scan = await glob(steam_emu_cfg_file_supported.map((name) => `**/${name}`), { cwd: dirpath, onlyFiles: true, deep: 4, suppressErrors: true });
-    if (scan.length > 0) return (result = true);
-
-    return result;
+    entries = await glob('*', { cwd: dirpath, onlyDirectories: true, deep: 1, suppressErrors: true });
   } catch (err) {
-    throw err;
+    return { accepted: false, code: 'unreadable', evidence: { ...evidence, error: err.message } };
   }
+
+  // Goldberg SocialClub Emu Saves keeps game folders named after the game (GTA V, RDR2, ...) with
+  // hex profile subfolders - there is no numeric AppID and no emulator .ini to match. Accept the
+  // root, a game folder or a profile folder explicitly (issue #9).
+  const socialclub = require('./socialclub.js');
+  if (socialclub.isSocialClubPath(dirpath)) return { accepted: true, code: 'socialclub', evidence };
+
+  //check for appID folder(s). Some emulators use hex ids; reject obvious user-id/noise folders.
+  const appidFolders = entries.filter(isProbableAppIdFolderName);
+  if (appidFolders.length > 0) return { accepted: true, code: 'appid-folders', evidence: { ...evidence, appidFolders } };
+
+  // Accept parent community roots like Public\Documents\Steam when the real appid folders are inside
+  // RUNE/CODEX. Users commonly add the parent from guides, while AW scans the concrete child source.
+  const expandedRoots = saveRoots.expandKnownSteamSourceRoots(dirpath).filter((root) => path.resolve(root) !== path.resolve(dirpath));
+  for (const root of expandedRoots) {
+    const nested = await glob('*', { cwd: root, onlyDirectories: true, deep: 1, suppressErrors: true });
+    const found = nested.filter(isProbableAppIdFolderName);
+    if (found.length > 0) return { accepted: true, code: 'known-root', evidence: { ...evidence, root, appidFolders: found } };
+  }
+
+  const topLevel = await glob('*.{ini,exe}', { cwd: dirpath, onlyFiles: true, suppressErrors: true });
+  const config = topLevel.find((name) => accepted_files.some((filename) => filename === name));
+  if (config) return { accepted: true, code: 'emulator-config', evidence: { ...evidence, config } };
+
+  // Some GOG/UniverseLAN and repack layouts keep the config below the selected game root
+  // (for example <Game>/Engine/Binaries/.../UniverseLAN.ini). Accept that root, then scan()
+  // will resolve the real config folder at low depth.
+  const nestedConfigs = await glob(steam_emu_cfg_file_supported.map((name) => `**/${name}`), { cwd: dirpath, onlyFiles: true, deep: 4, suppressErrors: true });
+  if (nestedConfigs.length > 0) return { accepted: true, code: 'emulator-config-nested', evidence: { ...evidence, config: nestedConfigs[0] } };
+
+  /*
+    No config anywhere - which is where 3.9.1 stopped, because its portable probing was anchored on
+    the emulator ini. The save tree itself is the better anchor: it carries the appid in its folder
+    name and it is what the parser reads anyway, so a release that ships no ini (or whose ini the
+    user deleted) is still discoverable.
+  */
+  const portable = collectPortableSceneSavesBelow(dirpath);
+  if (portable.length > 0) {
+    return { accepted: true, code: 'portable-save-tree', evidence: { ...evidence, saves: portable.map((record) => record.data.path) } };
+  }
+
+  /*
+    Rejected. Say which kind of folder this is instead of stopping at "nothing found", so the answer
+    separates a layout AW cannot read from a folder that genuinely holds no unlock data.
+  */
+  const eaMarkers = await detectEaAppMarkers(dirpath);
+  if (eaMarkers.length > 0) return { accepted: false, code: 'ea-app-release', evidence: { ...evidence, markers: eaMarkers.slice(0, 5) } };
+
+  const executables = topLevel.filter((name) => /\.exe$/i.test(name));
+  const nestedExecutables = executables.length > 0 ? executables : await glob('**/*.exe', { cwd: dirpath, onlyFiles: true, deep: 4, suppressErrors: true });
+  if (nestedExecutables.length > 0) {
+    return { accepted: false, code: 'game-folder-no-data', evidence: { ...evidence, executable: nestedExecutables[0] } };
+  }
+
+  return { accepted: false, code: 'no-marker', evidence };
+};
+
+module.exports.check = async (dirpath) => {
+  return (await module.exports.diagnose(dirpath)).accepted;
 };
 
 /*
@@ -292,7 +417,16 @@ module.exports.scan = async (dir) => {
       Returning empty here is what left a portable release with no library entry at all (issue #32):
       the folder was accepted, then read as holding nothing.
     */
-    if (!info) return await scanBelow(dir);
+    if (!info) {
+      const below = await scanBelow(dir);
+      /*
+        Still nothing: no config at the top and none below it either. A release can ship without an
+        emulator ini at all (or the user removed it), and 3.9.1 anchored every portable layout on
+        that file - so the save tree sitting right there went unread and the game stayed absent from
+        the library. Read the tree directly instead: the appid is in its folder name (issue #32).
+      */
+      return below.length > 0 ? below : collectPortableSceneSavesBelow(dir);
+    }
 
     /*
       parentFind:
@@ -516,6 +650,7 @@ module.exports.scan = async (dir) => {
     }
 
     if (result.length === 0) result.push(...(await scanBelow(dir)));
+    if (result.length === 0) result.push(...collectPortableSceneSavesBelow(dir));
   } catch (err) {
     /*Do nothing*/
     console.warn(err);
@@ -527,3 +662,6 @@ module.exports.scan = async (dir) => {
 // Exposed so the library scan can point a scene-emulator game at the folder its release actually
 // writes to, instead of the %APPDATA% root that only the Goldberg family uses.
 module.exports.findSceneSaveDir = findSceneSaveDir;
+// Exposed for the same reason, for a release that carries no emulator config to anchor on.
+module.exports.collectPortableSceneSaves = collectPortableSceneSaves;
+module.exports.collectPortableSceneSavesBelow = collectPortableSceneSavesBelow;

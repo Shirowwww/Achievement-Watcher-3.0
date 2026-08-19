@@ -1044,6 +1044,12 @@
     "controllerMove": "Mover/deslocar"
   },
   "dialogs": {
+    "folder-reason-ea-app": "Esta é uma versão EA app. Um jogo iniciado através da EA app guarda as suas proezas na conta EA e não na pasta do jogo, por isso não existe aqui qualquer ficheiro de desbloqueio para ler. Essas proezas são recolhidas pela fonte EA em Definições > Fontes e não por uma pasta vigiada.",
+    "folder-reason-game-no-data": "Esta é uma pasta de jogo, mas não contém qualquer configuração de emulador nem ficheiro de desbloqueio num formato que o AW Next consiga ler.",
+    "folder-reason-unreadable": "Não foi possível ler esta pasta.",
+    "folder-reason-no-marker": "Nada relacionado com proezas está guardado aqui: nenhuma pasta AppID, nenhuma configuração de emulador e nenhum ficheiro de desbloqueio.",
+    "folder-reason-found-instead": "Encontrado em vez disso:",
+    "folder-reason-checked": "Verificado aqui: subpastas AppID, todos os ficheiros de configuração de emulador que o AW Next conhece e {layouts} disposições de gravação portáteis. A pasta foi examinada, nada foi ignorado.",
     "game-health-title": "Estado do jogo",
     "game-config-title": "Configuração do executável",
     "launch-args-label": "Argumentos de arranque:",

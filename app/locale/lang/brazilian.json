@@ -1044,6 +1044,12 @@
     "controllerMove": "Mover/rolar"
   },
   "dialogs": {
+    "folder-reason-ea-app": "Esta é uma versão do EA app. Um jogo iniciado pelo EA app mantém suas conquistas na conta EA e não na pasta do jogo, então não há aqui nenhum arquivo de desbloqueio para ler. Essas conquistas são captadas pela fonte EA em Configurações > Fontes, e não por uma pasta monitorada.",
+    "folder-reason-game-no-data": "Esta é uma pasta de jogo, mas não contém nenhuma configuração de emulador nem arquivo de desbloqueio em um formato que o AW Next consiga ler.",
+    "folder-reason-unreadable": "Não foi possível ler esta pasta.",
+    "folder-reason-no-marker": "Nada relacionado a conquistas está armazenado aqui: nenhuma pasta AppID, nenhuma configuração de emulador e nenhum arquivo de desbloqueio.",
+    "folder-reason-found-instead": "Encontrado em vez disso:",
+    "folder-reason-checked": "Verificado aqui: subpastas AppID, todos os arquivos de configuração de emulador conhecidos pelo AW Next e {layouts} disposições de salvamento portáteis. A pasta foi examinada, nada foi ignorado.",
     "game-health-title": "Estado do jogo",
     "game-config-title": "Configuração do executável",
     "launch-args-label": "Argumentos de inicialização:",

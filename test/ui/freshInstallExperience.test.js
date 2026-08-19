@@ -50,11 +50,14 @@ test('artwork fallbacks fill missing assets without replacing existing ones', ()
 
 test('the alternate-cover picker resolves and shows the actual current cover', () => {
   const app = fs.readFileSync(path.join(root, 'app', 'app.js'), 'utf8');
-  assert.match(app, /const currentUrl = coverOverrideFor\(appid, pickerOrientation\) \|\|/);
+  assert.match(app, /const overrideUrl = coverOverrideFor\(appid, pickerOrientation\);/);
+  assert.match(app, /const currentUrl = overrideUrl \|\| defaultUrl;/);
   assert.match(app, /const currentTilePromise = currentUrl/);
   assert.match(app, /ipcRenderer\.invoke\('fetch-icon', preview, coverCacheAppid\)/);
   assert.match(app, /game\.steamappid \|\| game\.appid/);
-  assert.match(app, /addTile\(currentUrl, t\('currentCover'/);
+  // Resolved rather than drawn straight: a schema token such as "library_600x900.jpg" is not a
+  // browser-ready URL, and the Current tile used to sit empty while the providers loaded.
+  assert.match(app, /addResolvedTile\(currentUrl, t\('currentCover'/);
 });
 
 test('streaming scans retain a skeleton tail until the list actually completes', () => {
