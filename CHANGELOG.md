@@ -5,6 +5,20 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Unreleased
 
+## 3.9.2 - 2026-08-20
+
+### Added
+
+- **A wedged Watchdog monitor is now detected.** A named-pipe probe only proved the monitor process
+  still existed, not that it was doing anything - a blocking native call or a runaway sync loop kept
+  the pipe open while tracking nothing. The monitor now pings the app over its own IPC channel every
+  5 seconds, and the title bar shows one of four states (running, starting, unresponsive, stopped);
+  a manual restart repaints it immediately instead of waiting for the next poll.
+- **Clicking an achievement toast lands on that achievement's row**, scrolling to and flashing it
+  instead of only opening the game page.
+- **The cover picker keeps the schema's default cover as its own tile** once a per-game override is
+  set, so it stays reachable without going through "Reset cover to default".
+
 ### Fixed
 
 - **Autoscroll on a game page is smooth again.** The 3.9.1 fix for #35 skipped the rare achievement
@@ -15,6 +29,30 @@ This project adheres to [Semantic Versioning](https://semver.org/).
   main-thread frame - so the release meant to fix the stutter made it worse, while wheel scrolling,
   animated by the compositor, showed nothing either way. The halos are now simply paused off screen:
   nothing is measured while the list is moving, and the on-screen set is picked once it stops.
+- **RLD! saves that record an unlock through Time alone are read correctly.** Some RLD! builds write
+  no State key at all, so the unlock signal lives only in Time (a locked entry writes Time=0); that
+  unambiguous case is now decoded before the normalizer sees it, instead of every achievement from
+  that save reading as locked.
+- **A portable release with no emulator config is discovered.** The portable probing added in 3.9.1
+  was anchored on the emulator ini, so a release that ships none - or whose ini the user deleted -
+  fell outside it. The save tree is now the anchor instead: known layouts (for example
+  `Steam\RUNE\<appid>`) are walked directly, so the game is found without any config, and adding a
+  games library works the same as adding one game folder. A refused folder now says which kind of
+  folder it is and what was checked, instead of only "invalid" - including recognizing an EA app
+  release, whose achievements live on the EA account rather than on disk. (#32)
+- **The Steam API check bypass no longer fires on games that don't need it.** It is meant to redirect
+  a SteamStub integrity re-check back to the original DLL; without a re-check to absorb that
+  redirect, it landed on the game's real runtime load instead, so Steam's own "no license" prompt
+  won and the GBE Fork DLL just installed was never reached - achievements silently stopped working.
+  It now only runs when a SteamStub was actually detected.
+- **Icon downloads used during a repair or a background re-check now try the same CDN mirrors as a
+  normal icon fetch.** A schema `icon`/`icongray` URL routinely 404s for a new appid whose
+  achievement art isn't on Steam's primary CDN yet, well after the store art is; the repair and
+  background-icon paths used to give up on the raw URL alone and mark the art unobtainable.
+- **A Goldberg save no longer loses progress to its own unwritten twin folder.** The automatic
+  emulator fix pre-creates both the GBE Fork and classic Goldberg save roots for an appid, since it
+  can't know in advance which one the installed build will write to; when both showed up, whichever
+  folder actually holds `achievements.json` is now kept.
 
 ## 3.9.1 - 2026-08-18
 
