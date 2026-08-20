@@ -93,6 +93,23 @@ module.exports.scan = async (additionalSearch = []) => {
         game.source = 'Goldberg Uplay';
       } else if (dirKeyLower.includes('goldberg') || dirKeyLower.includes('gse')) {
         game.source = 'Goldberg';
+        /*
+          GBE Fork writes to %APPDATA%\GSE Saves, classic Goldberg to %APPDATA%\Goldberg SteamEmu
+          Saves - and the automatic emulator fix pre-creates BOTH roots for every appid, since it
+          cannot know in advance which one this build's DLL will actually write to (app.js "Pre-
+          create both GBE Fork and classic Goldberg runtime folders"). When the same appid turns up
+          under both, only one of them ever gets real save data; keeping the other one here means a
+          later duplicate can shadow real unlock progress with a folder that was never written to
+          (or vice versa). Resolve it now, while both candidates are still on hand, instead of
+          leaving it to the "first source wins" merge downstream.
+        */
+        const dupIndex = data.findIndex((g) => g.source === 'Goldberg' && String(g.appid) === String(game.appid));
+        if (dupIndex !== -1) {
+          const hasNew = fs.existsSync(path.join(dir, 'achievements.json'));
+          const hasExisting = fs.existsSync(path.join(data[dupIndex].data.path, 'achievements.json'));
+          if (hasNew && !hasExisting) data[dupIndex] = game;
+          continue;
+        }
       } else if (dirKeyLower.includes('empress')) {
         game.source = 'Goldberg (EMPRESS)';
         game.data.path = path.join(game.data.path, 'remote', game.appid);
@@ -1668,6 +1685,37 @@ async function GetMissingData(data, showHidden, lang, steamSettings) {
   return updated;
 }
 
+/*
+  A schema `icon`/`icongray` URL, checked and swapped for a mirror that actually answers.
+
+  New appids routinely have their store art (header/capsule) live on Steam's primary CDN well before
+  the per-achievement icons are - the schema URL 404s for days. fetchIcon() below already tolerates
+  that for AW's own icon cache by trying findWorkingLink()'s CDN list; goldberg.repair()'s icon
+  downloader used the raw schema URL directly and had no such fallback, so it declared every icon
+  unobtainable (and wrote the "Steam has no artwork" marker) for games whose art AW's own cache had
+  already fetched successfully through this exact fallback.
+*/
+async function resolveWorkingIconUrl(appID, url) {
+  if (!url || typeof url !== 'string' || !url.startsWith('http')) return url;
+  let isValid = false;
+  try {
+    new URL(url);
+    const res = await request(url, { method: 'HEAD' });
+    isValid = res.code === 200 && !!res.headers['content-type'];
+  } catch (e) {}
+  if (isValid) return url;
+  const working = await findWorkingLink(
+    appID,
+    url
+      .split('/')
+      .pop()
+      .split('?')[0]
+      .replace(/\.[^.]+$/, '')
+  );
+  return working || url;
+}
+module.exports.resolveWorkingIconUrl = resolveWorkingIconUrl;
+
 const fetchIcon = (module.exports.fetchIcon = async (url, appID) => {
   // Some games have no icon/background/portrait URL (null in the schema). Bail out instead of letting
   // `url.startsWith`/`path.parse(null)` throw - that surfaced as a noisy "Error occurred in handler
@@ -1695,28 +1743,7 @@ const fetchIcon = (module.exports.fetchIcon = async (url, appID) => {
         if (fs.existsSync(filePath)) return filePath;
       }
     //legacy url are full urls, check if they are still valid
-    let isValid = false;
-    validUrl = url;
-    try {
-      new URL(url);
-      const res = await request(url, { method: 'HEAD' });
-      isValid = res.code !== 200 ? false : true;
-      isValid = isValid ? res.headers['content-type'] : isValid;
-    } catch (e) {}
-
-    if (!isValid)
-      validUrl = await findWorkingLink(
-        appID,
-        url.startsWith('http')
-          ? url
-              .split('/')
-              .pop()
-              .split('?')[0]
-              .replace(/\.[^.]+$/, '')
-          : url.endsWith('.jpg') || url.endsWith('.png')
-          ? url.slice(0, url.length - 4)
-          : url
-      );
+    validUrl = await resolveWorkingIconUrl(appID, url);
 
     filename = path.parse(urlParser.parse(validUrl).pathname).base;
 

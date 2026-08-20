@@ -2483,7 +2483,11 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
                 ? (() => {
                     const request = require('request-zero');
                     return async (url, dir) => {
-                      const r = await request.download(url, dir);
+                      // The raw schema URL routinely 404s for a new appid whose achievement art is
+                      // not on Steam's primary CDN yet (see resolveWorkingIconUrl); try the mirror
+                      // list the same way AW's own icon cache already does before giving up on it.
+                      const resolved = (await steam.resolveWorkingIconUrl(bgAppid, url)) || url;
+                      const r = await request.download(resolved, dir);
                       return r && r.path;
                     };
                   })()
@@ -2538,7 +2542,8 @@ module.exports.getSavedAchievementsForAppid = async (option, requestedAppid, cac
                   appid: bgAppid,
                   schema: bgSchema,
                   downloadIcon: async (url, dir) => {
-                    const r = await request.download(url, dir);
+                    const resolved = (await steam.resolveWorkingIconUrl(bgAppid, url)) || url;
+                    const r = await request.download(resolved, dir);
                     return r && r.path;
                   },
                   // Art only: leave the schema, the appid file and every config exactly as they are.

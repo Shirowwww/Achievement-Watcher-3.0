@@ -2203,7 +2203,10 @@ var app = {
             const request = require('request-zero');
             const target = report.steamSettings || path.join(gameDir, 'steam_settings');
             const downloadIcon = async (url, dir) => {
-              const r = await request.download(url, dir);
+              // See steam.js resolveWorkingIconUrl: the raw schema URL 404s for a new appid whose
+              // achievement art is not on Steam's primary CDN yet, well after the store art is.
+              const resolved = (await steamParser.resolveWorkingIconUrl(writableAppid, url)) || url;
+              const r = await request.download(resolved, dir);
               return r && r.path;
             };
             // Also enable all DLCs (configs.app.ini) and stamp the app's username/language into
@@ -2980,6 +2983,9 @@ var app = {
                       };
 
                       let drmNote = '';
+                      // Read below (Steam API check bypass): only meaningful with a SteamStub-wrapped
+                      // exe - see that block for why.
+                      let hasSteamStub = false;
 
                       // SteamStub: strip it with Steamless so the plain DLL works (the SteamAutoCrack
                       // way). There is no ColdClient fallback - if Steamless can't strip a detected stub
@@ -2988,7 +2994,7 @@ var app = {
                         const pe = require(path.join(appPath, 'util/pe.js'));
                         // Skip DRM stripping when the community crack already replaced the runtime - a
                         // cracked exe is DRM-free, same call the auto flow makes.
-                        const hasSteamStub = !crackApplied && !!(detectedRuntimeExe && detectedRuntimeExe.full && pe.detectSteamStub(detectedRuntimeExe.full));
+                        hasSteamStub = !crackApplied && !!(detectedRuntimeExe && detectedRuntimeExe.full && pe.detectSteamStub(detectedRuntimeExe.full));
                         const shouldRunSteamless = !crackApplied && !!(detectedRuntimeExe && detectedRuntimeExe.full && (emuCfg.steamlessAutoUnpack || hasSteamStub));
                         if (shouldRunSteamless) {
                           setGameBoxBusy(self, t('downloading-steamless', 'Downloading Steamless…', 'Téléchargement de Steamless…'));
@@ -3058,8 +3064,20 @@ var app = {
                         } catch (e) {
                           debug.log(`[${writableAppid}] could not pre-create Goldberg/GBE save folder => ${e}`);
                         }
-                        // Optional, opt-in: SteamAutoCrack's Steam API ownership-check bypass (proxy DLL).
-                        if (emuCfg.apiCheckBypass && detectedRuntimeExe && detectedRuntimeExe.full) {
+                        /*
+                          Optional, opt-in: SteamAutoCrack's Steam API ownership-check bypass (proxy DLL).
+
+                          Its only job is redirecting steam_api64.dll back to the pre-swap original
+                          (steam_api64.dll.bak) on the exe's FIRST access to that file - so a SteamStub
+                          integrity re-check, which runs before the game's own functional Steam init,
+                          sees the untouched DLL and passes. Windows loads a DLL once per process, so
+                          without a SteamStub re-check to absorb that "first access", the redirect lands
+                          on the game's actual runtime load instead: the real DLL initializes, Steam
+                          shows its own "no license" prompt, and the GBE Fork DLL just installed is
+                          never reached - achievements silently stop working (issue: Sovereign Tower).
+                          hasSteamStub is exactly the signal for whether that re-check exists at all.
+                        */
+                        if (emuCfg.apiCheckBypass && hasSteamStub && detectedRuntimeExe && detectedRuntimeExe.full) {
                           try {
                             const apiCheckBypass = require(path.join(appPath, 'parser/apiCheckBypass.js'));
                             setGameBoxBusy(self, t('steam-api-check-bypass', 'Steam API check bypass…', 'Contournement du contrôle API Steam…'));
@@ -5726,7 +5744,8 @@ async function runGameHealthAction(appid, action, button) {
         schema: game,
         onProgress: pushProgress,
         downloadIcon: async (url, dir) => {
-          const r = await request.download(url, dir);
+          const resolved = (await steamParser.resolveWorkingIconUrl(writableAppid, url)) || url;
+          const r = await request.download(resolved, dir);
           return r && r.path;
         },
         fetchDlc: (id) => steamParser.getDLCList(id),
